@@ -17,6 +17,11 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  
+  // 日付フィルター用
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _selectedDateFilter = '全期間';
 
   @override
   void initState() {
@@ -33,22 +38,48 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onSearchChanged() {
-    _filterNotes(_searchController.text);
+    _applyFilters();
   }
 
-  void _filterNotes(String query) {
+  void _applyFilters() {
     setState(() {
-      if (query.isEmpty) {
-        _filteredNotes = List.from(_notes);
-      } else {
-        _filteredNotes = _notes.where((note) {
+      List<Note> filtered = List.from(_notes);
+
+      // 検索キーワードでフィルター
+      if (_searchController.text.isNotEmpty) {
+        final query = _searchController.text.toLowerCase();
+        filtered = filtered.where((note) {
           final titleLower = note.title.toLowerCase();
           final contentLower = note.content.toLowerCase();
-          final queryLower = query.toLowerCase();
-          return titleLower.contains(queryLower) || 
-                 contentLower.contains(queryLower);
+          return titleLower.contains(query) || contentLower.contains(query);
         }).toList();
       }
+
+      // 日付範囲でフィルター
+      if (_startDate != null || _endDate != null) {
+        filtered = filtered.where((note) {
+          if (_startDate != null && note.updatedAt.isBefore(_startDate!)) {
+            return false;
+          }
+          if (_endDate != null) {
+            // 終了日の23:59:59まで含める
+            final endOfDay = DateTime(
+              _endDate!.year,
+              _endDate!.month,
+              _endDate!.day,
+              23,
+              59,
+              59,
+            );
+            if (note.updatedAt.isAfter(endOfDay)) {
+              return false;
+            }
+          }
+          return true;
+        }).toList();
+      }
+
+      _filteredNotes = filtered;
     });
   }
 
@@ -66,7 +97,7 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _notes = (response as List).map((note) => Note.fromJson(note)).toList();
-        _filteredNotes = List.from(_notes);
+        _applyFilters();
         _isLoading = false;
       });
     } catch (error) {
@@ -113,20 +144,231 @@ class _HomePageState extends State<HomePage> {
       _isSearching = !_isSearching;
       if (!_isSearching) {
         _searchController.clear();
-        _filteredNotes = List.from(_notes);
+        _applyFilters();
       }
     });
   }
 
+  void _showDateFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('日付で絞り込み'),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // プリセットボタン
+                  const Text(
+                    'プリセット',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildPresetChip('今日', setDialogState),
+                      _buildPresetChip('昨日', setDialogState),
+                      _buildPresetChip('今週', setDialogState),
+                      _buildPresetChip('先週', setDialogState),
+                      _buildPresetChip('今月', setDialogState),
+                      _buildPresetChip('先月', setDialogState),
+                      _buildPresetChip('全期間', setDialogState),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  // カスタム日付範囲
+                  const Text(
+                    'カスタム範囲',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 開始日
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_today),
+                    title: const Text('開始日'),
+                    subtitle: Text(
+                      _startDate != null
+                          ? _formatDateFull(_startDate!)
+                          : '指定なし',
+                    ),
+                    trailing: _startDate != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setDialogState(() {
+                                _startDate = null;
+                                _selectedDateFilter = 'カスタム';
+                              });
+                            },
+                          )
+                        : null,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _startDate ?? DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _startDate = date;
+                          _selectedDateFilter = 'カスタム';
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  // 終了日
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.event),
+                    title: const Text('終了日'),
+                    subtitle: Text(
+                      _endDate != null
+                          ? _formatDateFull(_endDate!)
+                          : '指定なし',
+                    ),
+                    trailing: _endDate != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setDialogState(() {
+                                _endDate = null;
+                                _selectedDateFilter = 'カスタム';
+                              });
+                            },
+                          )
+                        : null,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _endDate ?? DateTime.now(),
+                        firstDate: _startDate ?? DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _endDate = date;
+                          _selectedDateFilter = 'カスタム';
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _startDate = null;
+                _endDate = null;
+                _selectedDateFilter = '全期間';
+                _applyFilters();
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('リセット'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _applyFilters();
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('適用'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String label, StateSetter setDialogState) {
+    final isSelected = _selectedDateFilter == label;
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setDialogState(() {
+          _selectedDateFilter = label;
+          _applyDatePreset(label);
+        });
+      },
+    );
+  }
+
+  void _applyDatePreset(String preset) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (preset) {
+      case '今日':
+        _startDate = today;
+        _endDate = today;
+        break;
+      case '昨日':
+        final yesterday = today.subtract(const Duration(days: 1));
+        _startDate = yesterday;
+        _endDate = yesterday;
+        break;
+      case '今週':
+        final weekday = now.weekday;
+        final firstDayOfWeek = today.subtract(Duration(days: weekday - 1));
+        _startDate = firstDayOfWeek;
+        _endDate = today;
+        break;
+      case '先週':
+        final weekday = now.weekday;
+        final lastWeekEnd = today.subtract(Duration(days: weekday));
+        final lastWeekStart = lastWeekEnd.subtract(const Duration(days: 6));
+        _startDate = lastWeekStart;
+        _endDate = lastWeekEnd;
+        break;
+      case '今月':
+        _startDate = DateTime(now.year, now.month, 1);
+        _endDate = today;
+        break;
+      case '先月':
+        final lastMonth = DateTime(now.year, now.month - 1, 1);
+        final lastMonthEnd = DateTime(now.year, now.month, 0);
+        _startDate = lastMonth;
+        _endDate = lastMonthEnd;
+        break;
+      case '全期間':
+        _startDate = null;
+        _endDate = null;
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = supabase.auth.currentUser;
+    final hasDateFilter = _startDate != null || _endDate != null;
+    final hasAnyFilter = _searchController.text.isNotEmpty || hasDateFilter;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[700],
-        foregroundColor: Colors.white,
-        elevation: 2,
         title: _isSearching
             ? TextField(
                 controller: _searchController,
@@ -137,7 +379,6 @@ class _HomePageState extends State<HomePage> {
                   hintStyle: TextStyle(color: Colors.white70),
                 ),
                 style: const TextStyle(color: Colors.white, fontSize: 18),
-                cursorColor: Colors.white,
               )
             : const Text('マイメモ'),
         actions: [
@@ -153,6 +394,29 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
+          ),
+          // 日付フィルターボタン
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: _showDateFilterDialog,
+                tooltip: '日付で絞り込み',
+              ),
+              if (hasDateFilter)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -170,21 +434,48 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 検索結果の件数表示
-                if (_isSearching && _searchController.text.isNotEmpty)
+                // フィルター情報表示
+                if (hasAnyFilter)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.all(12),
                     color: Colors.blue.withOpacity(0.1),
-                    child: Text(
-                      '${_filteredNotes.length}件のメモが見つかりました',
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (_searchController.text.isNotEmpty)
+                          Chip(
+                            avatar: const Icon(Icons.search, size: 18),
+                            label: Text('検索: "${_searchController.text}"'),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              _searchController.clear();
+                            },
+                          ),
+                        if (hasDateFilter)
+                          Chip(
+                            avatar: const Icon(Icons.calendar_today, size: 18),
+                            label: Text(_getDateFilterLabel()),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _startDate = null;
+                                _endDate = null;
+                                _selectedDateFilter = '全期間';
+                                _applyFilters();
+                              });
+                            },
+                          ),
+                        Text(
+                          '${_filteredNotes.length}件',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 // メモ一覧
@@ -195,7 +486,7 @@ class _HomePageState extends State<HomePage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                _isSearching && _searchController.text.isNotEmpty
+                                hasAnyFilter
                                     ? Icons.search_off
                                     : Icons.note_add_outlined,
                                 size: 80,
@@ -203,8 +494,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                _isSearching && _searchController.text.isNotEmpty
-                                    ? '検索結果が見つかりません'
+                                hasAnyFilter
+                                    ? '該当するメモが見つかりません'
                                     : 'メモがありません',
                                 style: TextStyle(
                                   fontSize: 18,
@@ -213,8 +504,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                _isSearching && _searchController.text.isNotEmpty
-                                    ? '別のキーワードで検索してみてください'
+                                hasAnyFilter
+                                    ? 'フィルター条件を変更してみてください'
                                     : '右下の + ボタンから新しいメモを作成',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -297,7 +588,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 検索キーワードをハイライト表示するウィジェット
+  String _getDateFilterLabel() {
+    if (_selectedDateFilter == 'カスタム' || _selectedDateFilter == '全期間') {
+      if (_startDate != null && _endDate != null) {
+        return '${_formatDateShort(_startDate!)} 〜 ${_formatDateShort(_endDate!)}';
+      } else if (_startDate != null) {
+        return '${_formatDateShort(_startDate!)} 以降';
+      } else if (_endDate != null) {
+        return '${_formatDateShort(_endDate!)} まで';
+      }
+    }
+    return _selectedDateFilter;
+  }
+
+  String _formatDateShort(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  String _formatDateFull(DateTime date) {
+    return '${date.year}年${date.month}月${date.day}日';
+  }
+
   Widget _buildHighlightedText(
     String text,
     String query, {
@@ -323,19 +634,16 @@ class _HomePageState extends State<HomePage> {
     while (true) {
       final index = lowerText.indexOf(lowerQuery, start);
       if (index == -1) {
-        // 残りのテキストを追加
         if (start < text.length) {
           spans.add(TextSpan(text: text.substring(start)));
         }
         break;
       }
 
-      // マッチ前のテキストを追加
       if (index > start) {
         spans.add(TextSpan(text: text.substring(start, index)));
       }
 
-      // マッチしたテキストをハイライト
       spans.add(
         TextSpan(
           text: text.substring(index, index + query.length),
