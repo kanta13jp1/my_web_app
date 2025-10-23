@@ -325,35 +325,35 @@ class _HomePageState extends State<HomePage> {
     switch (preset) {
       case '今日':
         _startDate = today;
-        _endDate = today;
+        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
         break;
       case '昨日':
         final yesterday = today.subtract(const Duration(days: 1));
         _startDate = yesterday;
-        _endDate = yesterday;
+        _endDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
         break;
       case '今週':
         final weekday = now.weekday;
         final firstDayOfWeek = today.subtract(Duration(days: weekday - 1));
         _startDate = firstDayOfWeek;
-        _endDate = today;
+        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
         break;
       case '先週':
         final weekday = now.weekday;
         final lastWeekEnd = today.subtract(Duration(days: weekday));
         final lastWeekStart = lastWeekEnd.subtract(const Duration(days: 6));
         _startDate = lastWeekStart;
-        _endDate = lastWeekEnd;
+        _endDate = DateTime(lastWeekEnd.year, lastWeekEnd.month, lastWeekEnd.day, 23, 59, 59);
         break;
       case '今月':
         _startDate = DateTime(now.year, now.month, 1);
-        _endDate = today;
+        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
         break;
       case '先月':
         final lastMonth = DateTime(now.year, now.month - 1, 1);
         final lastMonthEnd = DateTime(now.year, now.month, 0);
         _startDate = lastMonth;
-        _endDate = lastMonthEnd;
+        _endDate = DateTime(lastMonthEnd.year, lastMonthEnd.month, lastMonthEnd.day, 23, 59, 59);
         break;
       case '全期間':
         _startDate = null;
