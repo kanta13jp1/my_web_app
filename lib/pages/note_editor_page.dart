@@ -4,8 +4,7 @@ import '../models/note.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
-
-  const NoteEditorPage({Key? key, this.note}) : super(key: key);
+  const NoteEditorPage({super.key, this.note});
 
   @override
   State<NoteEditorPage> createState() => _NoteEditorPageState();

@@ -4,8 +4,21 @@ import '../models/note.dart';
 import 'auth_page.dart';
 import 'note_editor_page.dart';
 
+// 並び替えの種類
+enum SortType {
+  updatedDesc('更新日時（新しい順）'),
+  updatedAsc('更新日時（古い順）'),
+  createdDesc('作成日時（新しい順）'),
+  createdAsc('作成日時（古い順）'),
+  titleAsc('タイトル（A→Z）'),
+  titleDesc('タイトル（Z→A）');
+
+  const SortType(this.label);
+  final String label;
+}
+
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -22,6 +35,9 @@ class _HomePageState extends State<HomePage> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedDateFilter = '全期間';
+  
+  // 並び替え用
+  SortType _sortType = SortType.updatedDesc;
 
   @override
   void initState() {
@@ -62,7 +78,6 @@ class _HomePageState extends State<HomePage> {
             return false;
           }
           if (_endDate != null) {
-            // 終了日の23:59:59まで含める
             final endOfDay = DateTime(
               _endDate!.year,
               _endDate!.month,
@@ -79,8 +94,50 @@ class _HomePageState extends State<HomePage> {
         }).toList();
       }
 
+      // 並び替え
+      _sortNotes(filtered);
+
       _filteredNotes = filtered;
     });
+  }
+
+  void _sortNotes(List<Note> notes) {
+    switch (_sortType) {
+      case SortType.updatedDesc:
+        notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+        break;
+      case SortType.updatedAsc:
+        notes.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+        break;
+      case SortType.createdDesc:
+        notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case SortType.createdAsc:
+        notes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        break;
+      case SortType.titleAsc:
+        notes.sort((a, b) {
+          final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
+          final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
+          // タイトルがない場合は最後に配置
+          if (aTitle.isEmpty && bTitle.isEmpty) return 0;
+          if (aTitle.isEmpty) return 1;
+          if (bTitle.isEmpty) return -1;
+          return aTitle.compareTo(bTitle);
+        });
+        break;
+      case SortType.titleDesc:
+        notes.sort((a, b) {
+          final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
+          final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
+          // タイトルがない場合は最後に配置
+          if (aTitle.isEmpty && bTitle.isEmpty) return 0;
+          if (aTitle.isEmpty) return 1;
+          if (bTitle.isEmpty) return -1;
+          return bTitle.compareTo(aTitle);
+        });
+        break;
+    }
   }
 
   Future<void> _loadNotes() async {
@@ -92,8 +149,7 @@ class _HomePageState extends State<HomePage> {
       final response = await supabase
           .from('notes')
           .select()
-          .eq('user_id', supabase.auth.currentUser!.id)
-          .order('updated_at', ascending: false);
+          .eq('user_id', supabase.auth.currentUser!.id);
 
       setState(() {
         _notes = (response as List).map((note) => Note.fromJson(note)).toList();
@@ -149,6 +205,89 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _showSortDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.sort, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '並び替え',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('完了'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  ...SortType.values.map((sortType) {
+                    final isSelected = _sortType == sortType;
+                    return ListTile(
+                      leading: Icon(
+                        _getSortIcon(sortType),
+                        color: isSelected ? Colors.blue : Colors.grey,
+                      ),
+                      title: Text(
+                        sortType.label,
+                        style: TextStyle(
+                          color: isSelected ? Colors.blue : Colors.black,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check, color: Colors.blue)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _sortType = sortType;
+                          _applyFilters();
+                        });
+                        setSheetState(() {});
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  IconData _getSortIcon(SortType sortType) {
+    switch (sortType) {
+      case SortType.updatedDesc:
+      case SortType.createdDesc:
+        return Icons.arrow_downward;
+      case SortType.updatedAsc:
+      case SortType.createdAsc:
+        return Icons.arrow_upward;
+      case SortType.titleAsc:
+        return Icons.sort_by_alpha;
+      case SortType.titleDesc:
+        return Icons.sort_by_alpha;
+    }
+  }
+
   void _showDateFilterDialog() {
     showDialog(
       context: context,
@@ -161,7 +300,6 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // プリセットボタン
                   const Text(
                     'プリセット',
                     style: TextStyle(
@@ -186,7 +324,6 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
-                  // カスタム日付範囲
                   const Text(
                     'カスタム範囲',
                     style: TextStyle(
@@ -195,7 +332,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // 開始日
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.calendar_today),
@@ -232,7 +368,6 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  // 終了日
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.event),
@@ -325,35 +460,35 @@ class _HomePageState extends State<HomePage> {
     switch (preset) {
       case '今日':
         _startDate = today;
-        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+        _endDate = today;
         break;
       case '昨日':
         final yesterday = today.subtract(const Duration(days: 1));
         _startDate = yesterday;
-        _endDate = DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59);
+        _endDate = yesterday;
         break;
       case '今週':
         final weekday = now.weekday;
         final firstDayOfWeek = today.subtract(Duration(days: weekday - 1));
         _startDate = firstDayOfWeek;
-        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+        _endDate = today;
         break;
       case '先週':
         final weekday = now.weekday;
         final lastWeekEnd = today.subtract(Duration(days: weekday));
         final lastWeekStart = lastWeekEnd.subtract(const Duration(days: 6));
         _startDate = lastWeekStart;
-        _endDate = DateTime(lastWeekEnd.year, lastWeekEnd.month, lastWeekEnd.day, 23, 59, 59);
+        _endDate = lastWeekEnd;
         break;
       case '今月':
         _startDate = DateTime(now.year, now.month, 1);
-        _endDate = DateTime(today.year, today.month, today.day, 23, 59, 59);
+        _endDate = today;
         break;
       case '先月':
         final lastMonth = DateTime(now.year, now.month - 1, 1);
         final lastMonthEnd = DateTime(now.year, now.month, 0);
         _startDate = lastMonth;
-        _endDate = DateTime(lastMonthEnd.year, lastMonthEnd.month, lastMonthEnd.day, 23, 59, 59);
+        _endDate = lastMonthEnd;
         break;
       case '全期間':
         _startDate = null;
@@ -395,6 +530,12 @@ class _HomePageState extends State<HomePage> {
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
           ),
+          // 並び替えボタン
+          IconButton(
+            icon: const Icon(Icons.sort),
+            onPressed: _showSortDialog,
+            tooltip: '並び替え',
+          ),
           // 日付フィルターボタン
           Stack(
             children: [
@@ -435,7 +576,7 @@ class _HomePageState extends State<HomePage> {
           : Column(
               children: [
                 // フィルター情報表示
-                if (hasAnyFilter)
+                if (hasAnyFilter || _sortType != SortType.updatedDesc)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -467,6 +608,12 @@ class _HomePageState extends State<HomePage> {
                                 _applyFilters();
                               });
                             },
+                          ),
+                        if (_sortType != SortType.updatedDesc)
+                          Chip(
+                            avatar: Icon(_getSortIcon(_sortType), size: 18),
+                            label: Text(_sortType.label),
+                            backgroundColor: Colors.green.withOpacity(0.1),
                           ),
                         Text(
                           '${_filteredNotes.length}件',
@@ -668,7 +815,7 @@ class _HomePageState extends State<HomePage> {
         children: spans,
       ),
       maxLines: maxLines,
-      overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.visible,
+      overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
     );
   }
 
