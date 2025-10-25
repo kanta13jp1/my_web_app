@@ -5,6 +5,7 @@ class Note {
   final String content;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? categoryId;  // 追加
 
   Note({
     required this.id,
@@ -13,6 +14,7 @@ class Note {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
+    this.categoryId,  // 追加
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Note {
       content: json['content'] ?? '',
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+      categoryId: json['category_id']?.toString(),  // 追加
     );
   }
 
@@ -32,6 +35,7 @@ class Note {
       'title': title,
       'content': content,
       'updated_at': DateTime.now().toIso8601String(),
+      'category_id': categoryId,  // 追加
     };
   }
 }

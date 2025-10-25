@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
+import '../models/category.dart';
 import 'auth_page.dart';
 import 'note_editor_page.dart';
+import 'categories_page.dart';
 
 // 並び替えの種類
 enum SortType {
@@ -27,6 +29,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Note> _notes = [];
   List<Note> _filteredNotes = [];
+  List<Category> _categories = [];
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -38,10 +41,14 @@ class _HomePageState extends State<HomePage> {
   
   // 並び替え用
   SortType _sortType = SortType.updatedDesc;
+  
+  // カテゴリフィルター用
+  String? _selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     _loadNotes();
     _searchController.addListener(_onSearchChanged);
   }
@@ -55,6 +62,24 @@ class _HomePageState extends State<HomePage> {
 
   void _onSearchChanged() {
     _applyFilters();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final response = await supabase
+          .from('categories')
+          .select()
+          .eq('user_id', supabase.auth.currentUser!.id)
+          .order('name', ascending: true);
+
+      setState(() {
+        _categories = (response as List)
+            .map((category) => Category.fromJson(category))
+            .toList();
+      });
+    } catch (error) {
+      // カテゴリがなくても動作可能
+    }
   }
 
   void _applyFilters() {
@@ -94,6 +119,17 @@ class _HomePageState extends State<HomePage> {
         }).toList();
       }
 
+      // カテゴリでフィルター
+      if (_selectedCategoryId != null) {
+        if (_selectedCategoryId == 'uncategorized') {
+          // 未分類のメモのみ
+          filtered = filtered.where((note) => note.categoryId == null).toList();
+        } else {
+          // 特定のカテゴリのメモのみ
+          filtered = filtered.where((note) => note.categoryId == _selectedCategoryId).toList();
+        }
+      }
+
       // 並び替え
       _sortNotes(filtered);
 
@@ -119,7 +155,6 @@ class _HomePageState extends State<HomePage> {
         notes.sort((a, b) {
           final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
           final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
-          // タイトルがない場合は最後に配置
           if (aTitle.isEmpty && bTitle.isEmpty) return 0;
           if (aTitle.isEmpty) return 1;
           if (bTitle.isEmpty) return -1;
@@ -130,7 +165,6 @@ class _HomePageState extends State<HomePage> {
         notes.sort((a, b) {
           final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
           final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
-          // タイトルがない場合は最後に配置
           if (aTitle.isEmpty && bTitle.isEmpty) return 0;
           if (aTitle.isEmpty) return 1;
           if (bTitle.isEmpty) return -1;
@@ -203,6 +237,159 @@ class _HomePageState extends State<HomePage> {
         _applyFilters();
       }
     });
+  }
+
+  void _showCategoryFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.category, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'カテゴリで絞り込み',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('完了'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              // 全て表示
+              ListTile(
+                leading: const Icon(Icons.all_inclusive, color: Colors.blue),
+                title: const Text('すべて表示'),
+                trailing: _selectedCategoryId == null
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryId = null;
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              // 未分類
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.inbox, color: Colors.grey),
+                ),
+                title: const Text('未分類'),
+                trailing: _selectedCategoryId == 'uncategorized'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryId = 'uncategorized';
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              // カテゴリリスト
+              if (_categories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text(
+                        'カテゴリがありません',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('カテゴリを作成'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CategoriesPage(),
+                            ),
+                          ).then((_) {
+                            _loadCategories();
+                            _loadNotes();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...(_categories.map((category) {
+                  final color = Color(
+                    int.parse(category.color.substring(1), radix: 16) +
+                        0xFF000000,
+                  );
+                  final isSelected = _selectedCategoryId == category.id;
+                  
+                  // このカテゴリのメモ数を計算
+                  final noteCount = _notes.where((note) => note.categoryId == category.id).length;
+
+                  return ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          category.icon,
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      category.name,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text('$noteCount件のメモ'),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: Colors.blue)
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        _selectedCategoryId = category.id;
+                        _applyFilters();
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList()),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showSortDialog() {
@@ -282,7 +469,6 @@ class _HomePageState extends State<HomePage> {
       case SortType.createdAsc:
         return Icons.arrow_upward;
       case SortType.titleAsc:
-        return Icons.sort_by_alpha;
       case SortType.titleDesc:
         return Icons.sort_by_alpha;
     }
@@ -497,10 +683,27 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Category? _getCategoryById(String? categoryId) {
+    if (categoryId == null) return null;
+    try {
+      return _categories.firstWhere((c) => c.id == categoryId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  String _getCategoryFilterLabel() {
+    if (_selectedCategoryId == null) return '';
+    if (_selectedCategoryId == 'uncategorized') return '未分類';
+    final category = _getCategoryById(_selectedCategoryId);
+    return category?.name ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasDateFilter = _startDate != null || _endDate != null;
-    final hasAnyFilter = _searchController.text.isNotEmpty || hasDateFilter;
+    final hasCategoryFilter = _selectedCategoryId != null;
+    final hasAnyFilter = _searchController.text.isNotEmpty || hasDateFilter || hasCategoryFilter;
 
     return Scaffold(
       appBar: AppBar(
@@ -529,6 +732,29 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
+          ),
+          // カテゴリフィルターボタン
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.category),
+                onPressed: _showCategoryFilterDialog,
+                tooltip: 'カテゴリで絞り込み',
+              ),
+              if (hasCategoryFilter)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
           ),
           // 並び替えボタン
           IconButton(
@@ -561,13 +787,49 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadNotes,
+            onPressed: () {
+              _loadCategories();
+              _loadNotes();
+            },
             tooltip: '更新',
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-            tooltip: 'ログアウト',
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'categories') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriesPage()),
+                ).then((_) {
+                  _loadCategories();
+                  _loadNotes();
+                });
+              } else if (value == 'logout') {
+                _signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'categories',
+                child: Row(
+                  children: [
+                    Icon(Icons.category, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('カテゴリ管理'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('ログアウト'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -593,6 +855,44 @@ class _HomePageState extends State<HomePage> {
                             deleteIcon: const Icon(Icons.close, size: 18),
                             onDeleted: () {
                               _searchController.clear();
+                            },
+                          ),
+                        if (hasCategoryFilter)
+                          Builder(
+                            builder: (context) {
+                              if (_selectedCategoryId == 'uncategorized') {
+                                return Chip(
+                                  avatar: const Icon(Icons.inbox, size: 18),
+                                  label: const Text('未分類'),
+                                  backgroundColor: Colors.grey.withOpacity(0.1),
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedCategoryId = null;
+                                      _applyFilters();
+                                    });
+                                  },
+                                );
+                              }
+                              final category = _getCategoryById(_selectedCategoryId);
+                              if (category == null) return const SizedBox.shrink();
+                              final color = Color(
+                                int.parse(category.color.substring(1), radix: 16) +
+                                    0xFF000000,
+                              );
+                              return Chip(
+                                avatar: Text(category.icon, style: const TextStyle(fontSize: 16)),
+                                label: Text(category.name),
+                                backgroundColor: color.withOpacity(0.1),
+                                side: BorderSide(color: color, width: 1),
+                                deleteIcon: const Icon(Icons.close, size: 18),
+                                onDeleted: () {
+                                  setState(() {
+                                    _selectedCategoryId = null;
+                                    _applyFilters();
+                                  });
+                                },
+                              );
                             },
                           ),
                         if (hasDateFilter)
@@ -663,18 +963,51 @@ class _HomePageState extends State<HomePage> {
                           ),
                         )
                       : RefreshIndicator(
-                          onRefresh: _loadNotes,
+                          onRefresh: () async {
+                            await _loadCategories();
+                            await _loadNotes();
+                          },
                           child: ListView.builder(
                             padding: const EdgeInsets.all(8),
                             itemCount: _filteredNotes.length,
                             itemBuilder: (context, index) {
                               final note = _filteredNotes[index];
+                              final category = _getCategoryById(note.categoryId);
+                              
+                              Color? categoryColor;
+                              if (category != null) {
+                                categoryColor = Color(
+                                  int.parse(category.color.substring(1), radix: 16) +
+                                      0xFF000000,
+                                );
+                              }
+
                               return Card(
                                 margin: const EdgeInsets.symmetric(
                                   vertical: 4,
                                   horizontal: 8,
                                 ),
                                 child: ListTile(
+                                  leading: category != null
+                                      ? Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: categoryColor!.withOpacity(0.2),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: categoryColor,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              category.icon,
+                                              style: const TextStyle(fontSize: 20),
+                                            ),
+                                          ),
+                                        )
+                                      : null,
                                   title: _buildHighlightedText(
                                     note.title.isEmpty ? '(タイトルなし)' : note.title,
                                     _searchController.text,
@@ -692,12 +1025,37 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       ],
                                       const SizedBox(height: 4),
-                                      Text(
-                                        '更新: ${_formatDate(note.updatedAt)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
+                                      Row(
+                                        children: [
+                                          if (category != null) ...[
+                                            Text(
+                                              category.icon,
+                                              style: const TextStyle(fontSize: 12),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              category.name,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: categoryColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '•',
+                                              style: TextStyle(color: Colors.grey[600]),
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
+                                          Text(
+                                            '更新: ${_formatDate(note.updatedAt)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -769,7 +1127,7 @@ class _HomePageState extends State<HomePage> {
           fontWeight: isTitle ? FontWeight.bold : FontWeight.normal,
         ),
         maxLines: maxLines,
-        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+        overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
       );
     }
 
