@@ -185,7 +185,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.2),
+                        color: color.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(color: color, width: 2),
                       ),
@@ -253,7 +253,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         category.name,
         style: TextStyle(color: color, fontWeight: FontWeight.bold),
       ),
-      backgroundColor: color.withOpacity(0.1),
+      backgroundColor: color.withValues(alpha: 0.1),
       side: BorderSide(color: color, width: 1),
       onDeleted: () => _showCategoryPicker(),
       deleteIcon: const Icon(Icons.edit, size: 18),

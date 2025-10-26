@@ -354,7 +354,7 @@ class _HomePageState extends State<HomePage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.2),
+                        color: color.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(color: color, width: 2),
                       ),
@@ -450,7 +450,7 @@ class _HomePageState extends State<HomePage> {
                         setSheetState(() {});
                       },
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             );
@@ -692,13 +692,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  String _getCategoryFilterLabel() {
-    if (_selectedCategoryId == null) return '';
-    if (_selectedCategoryId == 'uncategorized') return '未分類';
-    final category = _getCategoryById(_selectedCategoryId);
-    return category?.name ?? '';
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasDateFilter = _startDate != null || _endDate != null;
@@ -842,7 +835,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -864,7 +857,7 @@ class _HomePageState extends State<HomePage> {
                                 return Chip(
                                   avatar: const Icon(Icons.inbox, size: 18),
                                   label: const Text('未分類'),
-                                  backgroundColor: Colors.grey.withOpacity(0.1),
+                                  backgroundColor: Colors.grey.withValues(alpha: 0.1),
                                   deleteIcon: const Icon(Icons.close, size: 18),
                                   onDeleted: () {
                                     setState(() {
@@ -883,7 +876,7 @@ class _HomePageState extends State<HomePage> {
                               return Chip(
                                 avatar: Text(category.icon, style: const TextStyle(fontSize: 16)),
                                 label: Text(category.name),
-                                backgroundColor: color.withOpacity(0.1),
+                                backgroundColor: color.withValues(alpha: 0.1),
                                 side: BorderSide(color: color, width: 1),
                                 deleteIcon: const Icon(Icons.close, size: 18),
                                 onDeleted: () {
@@ -913,7 +906,7 @@ class _HomePageState extends State<HomePage> {
                           Chip(
                             avatar: Icon(_getSortIcon(_sortType), size: 18),
                             label: Text(_sortType.label),
-                            backgroundColor: Colors.green.withOpacity(0.1),
+                            backgroundColor: Colors.green.withValues(alpha: 0.1),
                           ),
                         Text(
                           '${_filteredNotes.length}件',
@@ -993,7 +986,7 @@ class _HomePageState extends State<HomePage> {
                                           width: 40,
                                           height: 40,
                                           decoration: BoxDecoration(
-                                            color: categoryColor!.withOpacity(0.2),
+                                            color: categoryColor!.withValues(alpha: 0.2),
                                             shape: BoxShape.circle,
                                             border: Border.all(
                                               color: categoryColor,

@@ -443,7 +443,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.2),
+                            color: color.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                             border: Border.all(color: color, width: 2),
                           ),
