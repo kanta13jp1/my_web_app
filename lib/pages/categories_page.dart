@@ -345,7 +345,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
                   try {
                     if (category == null) {
-                      // 新規作成
                       await supabase.from('categories').insert({
                         'user_id': supabase.auth.currentUser!.id,
                         'name': nameController.text.trim(),
@@ -353,7 +352,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         'icon': selectedIcon,
                       });
                     } else {
-                      // 更新
                       await supabase.from('categories').update({
                         'name': nameController.text.trim(),
                         'color': selectedColor,
@@ -361,22 +359,22 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       }).eq('id', category.id);
                     }
 
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _loadCategories();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              category == null ? 'カテゴリを作成しました' : 'カテゴリを更新しました'),
-                        ),
-                      );
-                    }
+                    if (!context.mounted) return; // ← mounted チェックを先に
+
+                    Navigator.pop(context);
+                    _loadCategories();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            category == null ? 'カテゴリを作成しました' : 'カテゴリを更新しました'),
+                      ),
+                    );
                   } catch (error) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('エラー: $error')),
-                      );
-                    }
+                    if (!context.mounted) return; // ← mounted チェックを先に
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('エラー: $error')),
+                    );
                   }
                 },
                 child: Text(category == null ? '作成' : '更新'),
