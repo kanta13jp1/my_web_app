@@ -18,7 +18,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isSaving = false;
   List<Category> _categories = [];
   String? _selectedCategoryId;
-  bool _isFavorite = false; // 追加
+  bool _isFavorite = false;
+  DateTime? _reminderDate; // 追加
 
   @override
   void initState() {
@@ -27,7 +28,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _contentController =
         TextEditingController(text: widget.note?.content ?? '');
     _selectedCategoryId = widget.note?.categoryId;
-    _isFavorite = widget.note?.isFavorite ?? false; // 追加
+    _isFavorite = widget.note?.isFavorite ?? false;
+    _reminderDate = widget.note?.reminderDate; // 追加
     _loadCategories();
   }
 
@@ -56,6 +58,150 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  Future<void> _showReminderDialog() async {
+    DateTime? selectedDate;
+    TimeOfDay? selectedTime;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('リマインダーを設定'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 日付選択
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today),
+                  title: const Text('日付'),
+                  subtitle: Text(
+                    selectedDate != null
+                        ? '${selectedDate!.year}/${selectedDate!.month}/${selectedDate!.day}'
+                        : '日付を選択',
+                  ),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (date != null) {
+                      setDialogState(() {
+                        selectedDate = date;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                // 時刻選択
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.access_time),
+                  title: const Text('時刻'),
+                  subtitle: Text(
+                    selectedTime != null
+                        ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+                        : '時刻を選択',
+                  ),
+                  onTap: () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime ?? TimeOfDay.now(),
+                    );
+                    if (time != null) {
+                      setDialogState(() {
+                        selectedTime = time;
+                      });
+                    }
+                  },
+                ),
+                if (_reminderDate != null) ...[
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '現在の設定: ${_formatReminderDate(_reminderDate!)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              if (_reminderDate != null)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _reminderDate = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('削除'),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: selectedDate != null && selectedTime != null
+                    ? () {
+                        setState(() {
+                          _reminderDate = DateTime(
+                            selectedDate!.year,
+                            selectedDate!.month,
+                            selectedDate!.day,
+                            selectedTime!.hour,
+                            selectedTime!.minute,
+                          );
+                        });
+                        Navigator.pop(context);
+                      }
+                    : null,
+                child: const Text('設定'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatReminderDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final targetDay = DateTime(date.year, date.month, date.day);
+
+    String dateStr;
+    if (targetDay == today) {
+      dateStr = '今日';
+    } else if (targetDay == tomorrow) {
+      dateStr = '明日';
+    } else {
+      dateStr = '${date.month}/${date.day}';
+    }
+
+    return '$dateStr ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _saveNote() async {
     if (_titleController.text.isEmpty && _contentController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +224,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           'title': _titleController.text.trim(),
           'content': _contentController.text.trim(),
           'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite, // 追加
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         });
       } else {
@@ -87,7 +234,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           'title': _titleController.text.trim(),
           'content': _contentController.text.trim(),
           'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite, // 追加
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(), // 追加
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', widget.note!.id);
       }
@@ -271,7 +419,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
-          // お気に入りボタンを追加
+          // リマインダーボタン（追加）
+          IconButton(
+            icon: Icon(
+              _reminderDate != null ? Icons.alarm : Icons.alarm_add,
+              color: _reminderDate != null ? Colors.orange : null,
+            ),
+            onPressed: _showReminderDialog,
+            tooltip: _reminderDate != null ? 'リマインダー設定済み' : 'リマインダーを設定',
+          ),
+          // お気に入りボタン
           IconButton(
             icon: Icon(
               _isFavorite ? Icons.star : Icons.star_border,
@@ -305,7 +462,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       ),
       body: Column(
         children: [
-          // カテゴリ選択エリア
+          // カテゴリとリマインダー情報エリア
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -314,11 +471,63 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 bottom: BorderSide(color: Colors.grey[300]!),
               ),
             ),
-            child: Row(
+            child: Column(
               children: [
-                const Icon(Icons.label_outline, color: Colors.grey),
-                const SizedBox(width: 8),
-                _buildCategoryChip(),
+                // カテゴリ選択
+                Row(
+                  children: [
+                    const Icon(Icons.label_outline, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip(),
+                  ],
+                ),
+                // リマインダー表示
+                if (_reminderDate != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _reminderDate!.isBefore(DateTime.now())
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.alarm,
+                          color: _reminderDate!.isBefore(DateTime.now())
+                              ? Colors.red
+                              : Colors.orange,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'リマインダー: ${_formatReminderDate(_reminderDate!)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: _reminderDate!.isBefore(DateTime.now())
+                                  ? Colors.red
+                                  : Colors.orange.shade800,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _reminderDate = null;
+                            });
+                          },
+                          tooltip: 'リマインダーを削除',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -46,6 +46,9 @@ class _HomePageState extends State<HomePage> {
   // カテゴリフィルター用
   String? _selectedCategoryId;
 
+  // リマインダーフィルター（追加）
+  String? _reminderFilter; // null, 'overdue', 'upcoming', 'today'
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +66,287 @@ class _HomePageState extends State<HomePage> {
 
   void _onSearchChanged() {
     _applyFilters();
+  }
+
+  String _formatReminderDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final targetDay = DateTime(date.year, date.month, date.day);
+
+    String dateStr;
+    if (targetDay == today) {
+      dateStr = '今日';
+    } else if (targetDay == tomorrow) {
+      dateStr = '明日';
+    } else {
+      dateStr = '${date.month}/${date.day}';
+    }
+
+    return '$dateStr ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showReminderFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.alarm, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'リマインダーで絞り込み',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('完了'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              // 全て表示
+              ListTile(
+                leading: const Icon(Icons.all_inclusive, color: Colors.blue),
+                title: const Text('すべて表示'),
+                trailing: _reminderFilter == null
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _reminderFilter = null;
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              // 期限切れ
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.alarm_off, color: Colors.red),
+                ),
+                title: const Text('期限切れ'),
+                subtitle: Text(
+                  '${_notes.where((n) => n.reminderDate != null && n.isOverdue).length}件',
+                  style: const TextStyle(color: Colors.red),
+                ),
+                trailing: _reminderFilter == 'overdue'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _reminderFilter = 'overdue';
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              // 今日
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.today, color: Colors.orange),
+                ),
+                title: const Text('今日'),
+                subtitle: Text(
+                  '${_notes.where((n) {
+                    if (n.reminderDate == null) return false;
+                    final now = DateTime.now();
+                    final today = DateTime(now.year, now.month, now.day);
+                    final tomorrow = today.add(const Duration(days: 1));
+                    return n.reminderDate!.isAfter(today) &&
+                        n.reminderDate!.isBefore(tomorrow);
+                  }).length}件',
+                  style: TextStyle(color: Colors.orange[800]),
+                ),
+                trailing: _reminderFilter == 'today'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _reminderFilter = 'today';
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              // 24時間以内
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.access_alarm, color: Colors.amber),
+                ),
+                title: const Text('24時間以内'),
+                subtitle: Text(
+                  '${_notes.where((n) => n.reminderDate != null && n.isDueSoon).length}件',
+                  style: TextStyle(color: Colors.amber[800]),
+                ),
+                trailing: _reminderFilter == 'upcoming'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _reminderFilter = 'upcoming';
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _quickSetReminder(Note note) async {
+    final now = DateTime.now();
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'クイックリマインダー',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.access_time, color: Colors.blue),
+                title: const Text('1時間後'),
+                onTap: () async {
+                  final reminderDate = now.add(const Duration(hours: 1));
+                  await _updateReminder(note, reminderDate);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.today, color: Colors.orange),
+                title: const Text('今日の18:00'),
+                onTap: () async {
+                  final reminderDate =
+                      DateTime(now.year, now.month, now.day, 18, 0);
+                  await _updateReminder(note, reminderDate);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.event, color: Colors.green),
+                title: const Text('明日の9:00'),
+                onTap: () async {
+                  final tomorrow = now.add(const Duration(days: 1));
+                  final reminderDate = DateTime(
+                      tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
+                  await _updateReminder(note, reminderDate);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month, color: Colors.purple),
+                title: const Text('カスタム設定'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NoteEditorPage(note: note),
+                    ),
+                  ).then((_) => _loadNotes());
+                },
+              ),
+              if (note.reminderDate != null)
+                ListTile(
+                  leading: const Icon(Icons.alarm_off, color: Colors.red),
+                  title: const Text('リマインダーを削除'),
+                  onTap: () async {
+                    await _updateReminder(note, null);
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _updateReminder(Note note, DateTime? reminderDate) async {
+    try {
+      await supabase.from('notes').update({
+        'reminder_date': reminderDate?.toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', note.id);
+
+      if (!mounted) {
+        return;
+      }
+
+      _loadNotes();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            reminderDate != null ? 'リマインダーを設定しました' : 'リマインダーを削除しました',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
   }
 
   Future<void> _toggleFavorite(Note note) async {
@@ -167,6 +451,32 @@ class _HomePageState extends State<HomePage> {
             }
           }
           return true;
+        }).toList();
+      }
+
+      // リマインダーフィルター（追加）
+      if (_reminderFilter != null) {
+        final now = DateTime.now();
+        filtered = filtered.where((note) {
+          if (note.reminderDate == null) {
+            return false;
+          }
+
+          switch (_reminderFilter) {
+            case 'overdue':
+              return note.reminderDate!.isBefore(now);
+            case 'today':
+              final today = DateTime(now.year, now.month, now.day);
+              final tomorrow = today.add(const Duration(days: 1));
+              return note.reminderDate!.isAfter(today) &&
+                  note.reminderDate!.isBefore(tomorrow);
+            case 'upcoming':
+              final tomorrow = now.add(const Duration(days: 1));
+              return note.reminderDate!.isAfter(now) &&
+                  note.reminderDate!.isBefore(tomorrow);
+            default:
+              return true;
+          }
         }).toList();
       }
 
@@ -753,7 +1063,22 @@ class _HomePageState extends State<HomePage> {
     final hasAnyFilter = _searchController.text.isNotEmpty ||
         hasDateFilter ||
         hasCategoryFilter ||
-        _showFavoritesOnly; // 追加
+        _showFavoritesOnly ||
+        _reminderFilter != null; // 追加
+
+    // リマインダー統計を計算
+    final overdueCount =
+        _notes.where((n) => n.reminderDate != null && n.isOverdue).length;
+    final dueSoonCount =
+        _notes.where((n) => n.reminderDate != null && n.isDueSoon).length;
+    final todayCount = _notes.where((n) {
+      if (n.reminderDate == null) return false;
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      return n.reminderDate!.isAfter(today) &&
+          n.reminderDate!.isBefore(tomorrow);
+    }).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -783,7 +1108,33 @@ class _HomePageState extends State<HomePage> {
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
           ),
-          // お気に入りフィルターボタン（追加）
+          // リマインダーフィルターボタン（追加）
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(
+                  _reminderFilter != null ? Icons.alarm_on : Icons.alarm,
+                  color: _reminderFilter != null ? Colors.orange : null,
+                ),
+                onPressed: _showReminderFilterDialog,
+                tooltip: 'リマインダーで絞り込み',
+              ),
+              if (_reminderFilter != null)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          // お気に入りフィルターボタン
           Stack(
             children: [
               IconButton(
@@ -918,10 +1269,118 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                // リマインダー統計バナー（追加）
+                if (overdueCount > 0 || dueSoonCount > 0 || todayCount > 0)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: overdueCount > 0
+                            ? [Colors.red.shade50, Colors.red.shade100]
+                            : [Colors.orange.shade50, Colors.orange.shade100],
+                      ),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: overdueCount > 0 ? Colors.red : Colors.orange,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              overdueCount > 0
+                                  ? Icons.warning
+                                  : Icons.info_outline,
+                              color:
+                                  overdueCount > 0 ? Colors.red : Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                overdueCount > 0
+                                    ? 'リマインダー通知があります'
+                                    : '期限が近いメモがあります',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: overdueCount > 0
+                                      ? Colors.red
+                                      : Colors.orange.shade900,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _reminderFilter = null;
+                                  _applyFilters();
+                                });
+                              },
+                              child: const Text('すべて表示'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            if (overdueCount > 0)
+                              _buildReminderStatChip(
+                                icon: Icons.alarm_off,
+                                label: '期限切れ',
+                                count: overdueCount,
+                                color: Colors.red,
+                                onTap: () {
+                                  setState(() {
+                                    _reminderFilter = 'overdue';
+                                    _applyFilters();
+                                  });
+                                },
+                              ),
+                            if (todayCount > 0)
+                              _buildReminderStatChip(
+                                icon: Icons.today,
+                                label: '今日',
+                                count: todayCount,
+                                color: Colors.orange,
+                                onTap: () {
+                                  setState(() {
+                                    _reminderFilter = 'today';
+                                    _applyFilters();
+                                  });
+                                },
+                              ),
+                            if (dueSoonCount > 0)
+                              _buildReminderStatChip(
+                                icon: Icons.access_alarm,
+                                label: '24時間以内',
+                                count: dueSoonCount,
+                                color: Colors.amber,
+                                onTap: () {
+                                  setState(() {
+                                    _reminderFilter = 'upcoming';
+                                    _applyFilters();
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 // フィルター情報表示
                 if (hasAnyFilter ||
                     _sortType != SortType.updatedDesc ||
-                    _showFavoritesOnly)
+                    _showFavoritesOnly ||
+                    _reminderFilter != null)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -938,6 +1397,39 @@ class _HomePageState extends State<HomePage> {
                             deleteIcon: const Icon(Icons.close, size: 18),
                             onDeleted: () {
                               _searchController.clear();
+                            },
+                          ),
+                        // リマインダーフィルターチップ（追加）
+                        if (_reminderFilter != null)
+                          Chip(
+                            avatar: Icon(
+                              _reminderFilter == 'overdue'
+                                  ? Icons.alarm_off
+                                  : _reminderFilter == 'today'
+                                      ? Icons.today
+                                      : Icons.access_alarm,
+                              size: 18,
+                              color: _reminderFilter == 'overdue'
+                                  ? Colors.red
+                                  : Colors.orange,
+                            ),
+                            label: Text(
+                              _reminderFilter == 'overdue'
+                                  ? '期限切れ'
+                                  : _reminderFilter == 'today'
+                                      ? '今日'
+                                      : '24時間以内',
+                            ),
+                            backgroundColor: (_reminderFilter == 'overdue'
+                                    ? Colors.red
+                                    : Colors.orange)
+                                .withValues(alpha: 0.1),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _reminderFilter = null;
+                                _applyFilters();
+                              });
                             },
                           ),
                         if (_showFavoritesOnly)
@@ -1020,7 +1512,7 @@ class _HomePageState extends State<HomePage> {
                             backgroundColor:
                                 Colors.green.withValues(alpha: 0.1),
                           ),
-                        // 件数表示を更新
+// 件数表示を更新
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -1031,7 +1523,8 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            if (!_showFavoritesOnly) ...[
+                            if (!_showFavoritesOnly &&
+                                _reminderFilter == null) ...[
                               Text(
                                 ' / ',
                                 style: TextStyle(color: Colors.grey[600]),
@@ -1045,6 +1538,23 @@ class _HomePageState extends State<HomePage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              if (_notes
+                                  .where((n) => n.reminderDate != null)
+                                  .isNotEmpty) ...[
+                                Text(
+                                  ' / ',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                                const Icon(Icons.alarm,
+                                    color: Colors.orange, size: 16),
+                                Text(
+                                  ' ${_notes.where((n) => n.reminderDate != null).length}',
+                                  style: const TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ],
                           ],
                         ),
@@ -1085,6 +1595,33 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.grey[500],
                                 ),
                               ),
+                              // リマインダーフィルター時の特別メッセージ
+                              if (_reminderFilter != null &&
+                                  _notes.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Text(
+                                  _reminderFilter == 'overdue'
+                                      ? '期限切れのメモはありません'
+                                      : _reminderFilter == 'today'
+                                          ? '今日のリマインダーはありません'
+                                          : '24時間以内のリマインダーはありません',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.alarm_add),
+                                  label: const Text('メモにリマインダーを設定'),
+                                  onPressed: () {
+                                    setState(() {
+                                      _reminderFilter = null;
+                                      _applyFilters();
+                                    });
+                                  },
+                                ),
+                              ],
                               if (_showFavoritesOnly && _notes.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Text(
@@ -1136,6 +1673,15 @@ class _HomePageState extends State<HomePage> {
                                   vertical: 4,
                                   horizontal: 8,
                                 ),
+                                // 期限切れの場合は赤枠（追加）
+                                shape: note.reminderDate != null &&
+                                        note.isOverdue
+                                    ? RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                        side: const BorderSide(
+                                            color: Colors.red, width: 2),
+                                      )
+                                    : null,
                                 child: ListTile(
                                   leading: category != null
                                       ? Container(
@@ -1164,6 +1710,23 @@ class _HomePageState extends State<HomePage> {
                                           : null,
                                   title: Row(
                                     children: [
+                                      // リマインダーアイコン（追加）
+                                      if (note.reminderDate != null) ...[
+                                        Icon(
+                                          note.isOverdue
+                                              ? Icons.alarm_off
+                                              : note.isDueSoon
+                                                  ? Icons.alarm_on
+                                                  : Icons.alarm,
+                                          color: note.isOverdue
+                                              ? Colors.red
+                                              : note.isDueSoon
+                                                  ? Colors.orange
+                                                  : Colors.grey,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
                                       // お気に入りマーク（カテゴリがある場合も表示）
                                       if (note.isFavorite &&
                                           category != null) ...[
@@ -1197,6 +1760,42 @@ class _HomePageState extends State<HomePage> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
+                                          // リマインダー日時表示（追加）
+                                          if (note.reminderDate != null) ...[
+                                            Icon(
+                                              Icons.alarm,
+                                              size: 12,
+                                              color: note.isOverdue
+                                                  ? Colors.red
+                                                  : note.isDueSoon
+                                                      ? Colors.orange
+                                                      : Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              _formatReminderDate(
+                                                  note.reminderDate!),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: note.isOverdue
+                                                    ? Colors.red
+                                                    : note.isDueSoon
+                                                        ? Colors.orange
+                                                        : Colors.grey[600],
+                                                fontWeight: note.isOverdue ||
+                                                        note.isDueSoon
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '•',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
                                           if (category != null) ...[
                                             Text(
                                               category.icon,
@@ -1234,7 +1833,16 @@ class _HomePageState extends State<HomePage> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // お気に入りトグルボタン（追加）
+                                      // リマインダークイック設定ボタン（オプション）
+                                      if (note.reminderDate == null)
+                                        IconButton(
+                                          icon: const Icon(Icons.alarm_add,
+                                              color: Colors.grey),
+                                          onPressed: () =>
+                                              _quickSetReminder(note),
+                                          tooltip: 'リマインダーを設定',
+                                        ),
+                                      // お気に入りトグルボタン
                                       IconButton(
                                         icon: Icon(
                                           note.isFavorite
@@ -1284,6 +1892,59 @@ class _HomePageState extends State<HomePage> {
           _loadNotes();
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+// リマインダー統計チップを作成するヘルパーメソッド
+  Widget _buildReminderStatChip({
+    required IconData icon,
+    required String label,
+    required int count,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count.toString(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

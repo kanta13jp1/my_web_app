@@ -6,7 +6,8 @@ class Note {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? categoryId;
-  final bool isFavorite;  // 追加
+  final bool isFavorite;
+  final DateTime? reminderDate;  // 追加
 
   Note({
     required this.id,
@@ -16,7 +17,8 @@ class Note {
     required this.createdAt,
     required this.updatedAt,
     this.categoryId,
-    this.isFavorite = false,  // 追加（デフォルトはfalse）
+    this.isFavorite = false,
+    this.reminderDate,  // 追加
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -28,7 +30,10 @@ class Note {
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       categoryId: json['category_id']?.toString(),
-      isFavorite: json['is_favorite'] ?? false,  // 追加
+      isFavorite: json['is_favorite'] ?? false,
+      reminderDate: json['reminder_date'] != null  // 追加
+          ? DateTime.parse(json['reminder_date'])
+          : null,
     );
   }
 
@@ -39,7 +44,22 @@ class Note {
       'content': content,
       'updated_at': DateTime.now().toIso8601String(),
       'category_id': categoryId,
-      'is_favorite': isFavorite,  // 追加
+      'is_favorite': isFavorite,
+      'reminder_date': reminderDate?.toIso8601String(),  // 追加
     };
+  }
+
+  // 期限切れかどうかを判定
+  bool get isOverdue {
+    if (reminderDate == null) return false;
+    return reminderDate!.isBefore(DateTime.now());
+  }
+
+  // 期限が近いかどうかを判定（24時間以内）
+  bool get isDueSoon {
+    if (reminderDate == null) return false;
+    final now = DateTime.now();
+    final difference = reminderDate!.difference(now);
+    return difference.inHours > 0 && difference.inHours <= 24;
   }
 }
