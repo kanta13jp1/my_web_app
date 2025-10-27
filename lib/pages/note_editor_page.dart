@@ -18,13 +18,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isSaving = false;
   List<Category> _categories = [];
   String? _selectedCategoryId;
+  bool _isFavorite = false; // 追加
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note?.title ?? '');
-    _contentController = TextEditingController(text: widget.note?.content ?? '');
+    _contentController =
+        TextEditingController(text: widget.note?.content ?? '');
     _selectedCategoryId = widget.note?.categoryId;
+    _isFavorite = widget.note?.isFavorite ?? false; // 追加
     _loadCategories();
   }
 
@@ -75,6 +78,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           'title': _titleController.text.trim(),
           'content': _contentController.text.trim(),
           'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite, // 追加
           'updated_at': DateTime.now().toIso8601String(),
         });
       } else {
@@ -83,6 +87,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           'title': _titleController.text.trim(),
           'content': _contentController.text.trim(),
           'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite, // 追加
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', widget.note!.id);
       }
@@ -266,6 +271,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
+          // お気に入りボタンを追加
+          IconButton(
+            icon: Icon(
+              _isFavorite ? Icons.star : Icons.star_border,
+              color: _isFavorite ? Colors.amber : null,
+            ),
+            onPressed: () {
+              setState(() {
+                _isFavorite = !_isFavorite;
+              });
+            },
+            tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
+          ),
           if (_isSaving)
             const Center(
               child: Padding(

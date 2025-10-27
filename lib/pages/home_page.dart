@@ -33,15 +33,16 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
-  
+
   // 日付フィルター用
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedDateFilter = '全期間';
-  
+  bool _showFavoritesOnly = false; // 追加：お気に入りフィルター
+
   // 並び替え用
   SortType _sortType = SortType.updatedDesc;
-  
+
   // カテゴリフィルター用
   String? _selectedCategoryId;
 
@@ -62,6 +63,51 @@ class _HomePageState extends State<HomePage> {
 
   void _onSearchChanged() {
     _applyFilters();
+  }
+
+  Future<void> _toggleFavorite(Note note) async {
+    try {
+      await supabase.from('notes').update({
+        'is_favorite': !note.isFavorite,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', note.id);
+
+      if (!mounted) return; // ← setState前にmountedをチェック
+
+      setState(() {
+        final index = _notes.indexWhere((n) => n.id == note.id);
+        if (index != -1) {
+          _notes[index] = Note(
+            id: note.id,
+            userId: note.userId,
+            title: note.title,
+            content: note.content,
+            createdAt: note.createdAt,
+            updatedAt: DateTime.now(),
+            categoryId: note.categoryId,
+            isFavorite: !note.isFavorite,
+          );
+        }
+        _applyFilters();
+      });
+
+      if (!context.mounted) return; // ← context使用前にチェック
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            note.isFavorite ? 'お気に入りから削除しました' : 'お気に入りに追加しました',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return; // ← context使用前にチェック
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -96,6 +142,11 @@ class _HomePageState extends State<HomePage> {
         }).toList();
       }
 
+      // お気に入りフィルター（追加）
+      if (_showFavoritesOnly) {
+        filtered = filtered.where((note) => note.isFavorite).toList();
+      }
+
       // 日付範囲でフィルター
       if (_startDate != null || _endDate != null) {
         filtered = filtered.where((note) {
@@ -126,7 +177,9 @@ class _HomePageState extends State<HomePage> {
           filtered = filtered.where((note) => note.categoryId == null).toList();
         } else {
           // 特定のカテゴリのメモのみ
-          filtered = filtered.where((note) => note.categoryId == _selectedCategoryId).toList();
+          filtered = filtered
+              .where((note) => note.categoryId == _selectedCategoryId)
+              .toList();
         }
       }
 
@@ -345,9 +398,11 @@ class _HomePageState extends State<HomePage> {
                         0xFF000000,
                   );
                   final isSelected = _selectedCategoryId == category.id;
-                  
+
                   // このカテゴリのメモ数を計算
-                  final noteCount = _notes.where((note) => note.categoryId == category.id).length;
+                  final noteCount = _notes
+                      .where((note) => note.categoryId == category.id)
+                      .length;
 
                   return ListTile(
                     leading: Container(
@@ -436,7 +491,8 @@ class _HomePageState extends State<HomePage> {
                         sortType.label,
                         style: TextStyle(
                           color: isSelected ? Colors.blue : Colors.black,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       trailing: isSelected
@@ -559,9 +615,7 @@ class _HomePageState extends State<HomePage> {
                     leading: const Icon(Icons.event),
                     title: const Text('終了日'),
                     subtitle: Text(
-                      _endDate != null
-                          ? _formatDateFull(_endDate!)
-                          : '指定なし',
+                      _endDate != null ? _formatDateFull(_endDate!) : '指定なし',
                     ),
                     trailing: _endDate != null
                         ? IconButton(
@@ -696,7 +750,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final hasDateFilter = _startDate != null || _endDate != null;
     final hasCategoryFilter = _selectedCategoryId != null;
-    final hasAnyFilter = _searchController.text.isNotEmpty || hasDateFilter || hasCategoryFilter;
+    final hasAnyFilter = _searchController.text.isNotEmpty ||
+        hasDateFilter ||
+        hasCategoryFilter ||
+        _showFavoritesOnly; // 追加
 
     return Scaffold(
       appBar: AppBar(
@@ -725,6 +782,37 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
+          ),
+          // お気に入りフィルターボタン（追加）
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(
+                  _showFavoritesOnly ? Icons.star : Icons.star_border,
+                  color: _showFavoritesOnly ? Colors.amber : null,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showFavoritesOnly = !_showFavoritesOnly;
+                    _applyFilters();
+                  });
+                },
+                tooltip: _showFavoritesOnly ? 'すべて表示' : 'お気に入りのみ表示',
+              ),
+              if (_showFavoritesOnly)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.amber,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
           ),
           // カテゴリフィルターボタン
           Stack(
@@ -831,7 +919,9 @@ class _HomePageState extends State<HomePage> {
           : Column(
               children: [
                 // フィルター情報表示
-                if (hasAnyFilter || _sortType != SortType.updatedDesc)
+                if (hasAnyFilter ||
+                    _sortType != SortType.updatedDesc ||
+                    _showFavoritesOnly)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -850,6 +940,21 @@ class _HomePageState extends State<HomePage> {
                               _searchController.clear();
                             },
                           ),
+                        if (_showFavoritesOnly)
+                          Chip(
+                            avatar: const Icon(Icons.star,
+                                size: 18, color: Colors.amber),
+                            label: const Text('お気に入りのみ'),
+                            backgroundColor:
+                                Colors.amber.withValues(alpha: 0.1),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _showFavoritesOnly = false;
+                                _applyFilters();
+                              });
+                            },
+                          ),
                         if (hasCategoryFilter)
                           Builder(
                             builder: (context) {
@@ -857,7 +962,8 @@ class _HomePageState extends State<HomePage> {
                                 return Chip(
                                   avatar: const Icon(Icons.inbox, size: 18),
                                   label: const Text('未分類'),
-                                  backgroundColor: Colors.grey.withValues(alpha: 0.1),
+                                  backgroundColor:
+                                      Colors.grey.withValues(alpha: 0.1),
                                   deleteIcon: const Icon(Icons.close, size: 18),
                                   onDeleted: () {
                                     setState(() {
@@ -867,14 +973,19 @@ class _HomePageState extends State<HomePage> {
                                   },
                                 );
                               }
-                              final category = _getCategoryById(_selectedCategoryId);
-                              if (category == null) return const SizedBox.shrink();
+                              final category =
+                                  _getCategoryById(_selectedCategoryId);
+                              if (category == null) {
+                                return const SizedBox.shrink();
+                              }
                               final color = Color(
-                                int.parse(category.color.substring(1), radix: 16) +
+                                int.parse(category.color.substring(1),
+                                        radix: 16) +
                                     0xFF000000,
                               );
                               return Chip(
-                                avatar: Text(category.icon, style: const TextStyle(fontSize: 16)),
+                                avatar: Text(category.icon,
+                                    style: const TextStyle(fontSize: 16)),
                                 label: Text(category.name),
                                 backgroundColor: color.withValues(alpha: 0.1),
                                 side: BorderSide(color: color, width: 1),
@@ -906,14 +1017,36 @@ class _HomePageState extends State<HomePage> {
                           Chip(
                             avatar: Icon(_getSortIcon(_sortType), size: 18),
                             label: Text(_sortType.label),
-                            backgroundColor: Colors.green.withValues(alpha: 0.1),
+                            backgroundColor:
+                                Colors.green.withValues(alpha: 0.1),
                           ),
-                        Text(
-                          '${_filteredNotes.length}件',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        // 件数表示を更新
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${_filteredNotes.length}件',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (!_showFavoritesOnly) ...[
+                              Text(
+                                ' / ',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              const Icon(Icons.star,
+                                  color: Colors.amber, size: 16),
+                              Text(
+                                ' ${_notes.where((n) => n.isFavorite).length}',
+                                style: const TextStyle(
+                                  color: Colors.amber,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
@@ -926,7 +1059,7 @@ class _HomePageState extends State<HomePage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                hasAnyFilter
+                                hasAnyFilter || _showFavoritesOnly
                                     ? Icons.search_off
                                     : Icons.note_add_outlined,
                                 size: 80,
@@ -934,7 +1067,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                hasAnyFilter
+                                hasAnyFilter || _showFavoritesOnly
                                     ? '該当するメモが見つかりません'
                                     : 'メモがありません',
                                 style: TextStyle(
@@ -944,7 +1077,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                hasAnyFilter
+                                hasAnyFilter || _showFavoritesOnly
                                     ? 'フィルター条件を変更してみてください'
                                     : '右下の + ボタンから新しいメモを作成',
                                 style: TextStyle(
@@ -952,6 +1085,27 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.grey[500],
                                 ),
                               ),
+                              if (_showFavoritesOnly && _notes.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Text(
+                                  'お気に入りメモがまだありません',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.star_border),
+                                  label: const Text('メモにスターをつけてみましょう'),
+                                  onPressed: () {
+                                    setState(() {
+                                      _showFavoritesOnly = false;
+                                      _applyFilters();
+                                    });
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         )
@@ -965,12 +1119,14 @@ class _HomePageState extends State<HomePage> {
                             itemCount: _filteredNotes.length,
                             itemBuilder: (context, index) {
                               final note = _filteredNotes[index];
-                              final category = _getCategoryById(note.categoryId);
-                              
+                              final category =
+                                  _getCategoryById(note.categoryId);
+
                               Color? categoryColor;
                               if (category != null) {
                                 categoryColor = Color(
-                                  int.parse(category.color.substring(1), radix: 16) +
+                                  int.parse(category.color.substring(1),
+                                          radix: 16) +
                                       0xFF000000,
                                 );
                               }
@@ -986,7 +1142,8 @@ class _HomePageState extends State<HomePage> {
                                           width: 40,
                                           height: 40,
                                           decoration: BoxDecoration(
-                                            color: categoryColor!.withValues(alpha: 0.2),
+                                            color: categoryColor!
+                                                .withValues(alpha: 0.2),
                                             shape: BoxShape.circle,
                                             border: Border.all(
                                               color: categoryColor,
@@ -996,18 +1153,38 @@ class _HomePageState extends State<HomePage> {
                                           child: Center(
                                             child: Text(
                                               category.icon,
-                                              style: const TextStyle(fontSize: 20),
+                                              style:
+                                                  const TextStyle(fontSize: 20),
                                             ),
                                           ),
                                         )
-                                      : null,
-                                  title: _buildHighlightedText(
-                                    note.title.isEmpty ? '(タイトルなし)' : note.title,
-                                    _searchController.text,
-                                    isTitle: true,
+                                      : note.isFavorite // お気に入りの場合はスターアイコン
+                                          ? const Icon(Icons.star,
+                                              color: Colors.amber, size: 32)
+                                          : null,
+                                  title: Row(
+                                    children: [
+                                      // お気に入りマーク（カテゴリがある場合も表示）
+                                      if (note.isFavorite &&
+                                          category != null) ...[
+                                        const Icon(Icons.star,
+                                            color: Colors.amber, size: 18),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      Expanded(
+                                        child: _buildHighlightedText(
+                                          note.title.isEmpty
+                                              ? '(タイトルなし)'
+                                              : note.title,
+                                          _searchController.text,
+                                          isTitle: true,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       if (note.content.isNotEmpty) ...[
                                         const SizedBox(height: 4),
@@ -1023,7 +1200,8 @@ class _HomePageState extends State<HomePage> {
                                           if (category != null) ...[
                                             Text(
                                               category.icon,
-                                              style: const TextStyle(fontSize: 12),
+                                              style:
+                                                  const TextStyle(fontSize: 12),
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -1037,7 +1215,8 @@ class _HomePageState extends State<HomePage> {
                                             const SizedBox(width: 8),
                                             Text(
                                               '•',
-                                              style: TextStyle(color: Colors.grey[600]),
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
                                             ),
                                             const SizedBox(width: 8),
                                           ],
@@ -1052,15 +1231,38 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ],
                                   ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () => _showDeleteDialog(note),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // お気に入りトグルボタン（追加）
+                                      IconButton(
+                                        icon: Icon(
+                                          note.isFavorite
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: note.isFavorite
+                                              ? Colors.amber
+                                              : Colors.grey,
+                                        ),
+                                        onPressed: () => _toggleFavorite(note),
+                                        tooltip: note.isFavorite
+                                            ? 'お気に入りから削除'
+                                            : 'お気に入りに追加',
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () =>
+                                            _showDeleteDialog(note),
+                                      ),
+                                    ],
                                   ),
                                   onTap: () async {
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => NoteEditorPage(note: note),
+                                        builder: (_) =>
+                                            NoteEditorPage(note: note),
                                       ),
                                     );
                                     _loadNotes();
