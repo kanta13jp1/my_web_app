@@ -5,6 +5,7 @@ import '../models/category.dart';
 import 'auth_page.dart';
 import 'note_editor_page.dart';
 import 'categories_page.dart';
+import 'share_note_dialog.dart';
 
 // 並び替えの種類
 enum SortType {
@@ -1825,7 +1826,14 @@ class _HomePageState extends State<HomePage> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // リマインダークイック設定ボタン（オプション）
+                                      // 共有ボタン（追加）
+                                      IconButton(
+                                        icon: const Icon(Icons.share,
+                                            color: Colors.blue),
+                                        onPressed: () => _showShareDialog(note),
+                                        tooltip: 'メモを共有',
+                                      ),
+                                      // リマインダークイック設定ボタン
                                       if (note.reminderDate == null)
                                         IconButton(
                                           icon: const Icon(Icons.alarm_add,
@@ -2063,6 +2071,13 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showShareDialog(Note note) {
+    showDialog(
+      context: context,
+      builder: (context) => ShareNoteDialog(note: note),
     );
   }
 }
