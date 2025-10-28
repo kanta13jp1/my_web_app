@@ -251,10 +251,8 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('1時間後'),
                 onTap: () async {
                   final reminderDate = now.add(const Duration(hours: 1));
-                  await _updateReminder(note, reminderDate);
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
+                  Navigator.pop(context); // ← 先にpop
+                  await _updateReminder(note, reminderDate); // ← その後update
                 },
               ),
               ListTile(
@@ -263,10 +261,8 @@ class _HomePageState extends State<HomePage> {
                 onTap: () async {
                   final reminderDate =
                       DateTime(now.year, now.month, now.day, 18, 0);
-                  await _updateReminder(note, reminderDate);
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
+                  Navigator.pop(context); // ← 先にpop
+                  await _updateReminder(note, reminderDate); // ← その後update
                 },
               ),
               ListTile(
@@ -276,10 +272,8 @@ class _HomePageState extends State<HomePage> {
                   final tomorrow = now.add(const Duration(days: 1));
                   final reminderDate = DateTime(
                       tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
-                  await _updateReminder(note, reminderDate);
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
+                  Navigator.pop(context); // ← 先にpop
+                  await _updateReminder(note, reminderDate); // ← その後update
                 },
               ),
               ListTile(
@@ -300,10 +294,8 @@ class _HomePageState extends State<HomePage> {
                   leading: const Icon(Icons.alarm_off, color: Colors.red),
                   title: const Text('リマインダーを削除'),
                   onTap: () async {
-                    await _updateReminder(note, null);
-                    if (mounted) {
-                      Navigator.pop(context);
-                    }
+                    Navigator.pop(context); // ← 先にpop
+                    await _updateReminder(note, null); // ← その後update
                   },
                 ),
             ],
