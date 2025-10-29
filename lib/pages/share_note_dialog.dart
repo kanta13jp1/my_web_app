@@ -70,22 +70,37 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
 
     try {
       // トークンを生成
-      final token = await supabase.rpc('generate_share_token');
+      final tokenResponse = await supabase.rpc('generate_share_token');
 
-      // 共有リンクを作成
-      await supabase.from('shared_notes').insert({
-        'note_id': widget.note.id,
-        'share_token': token,
-        'permission': _selectedPermission,
-        'created_by': supabase.auth.currentUser!.id,
-        'expires_at': _expiresAt?.toIso8601String(),
-      });
+      // tokenResponseから文字列を取得
+      final token = tokenResponse.toString();
 
       if (!mounted) {
         return;
       }
 
+      debugPrint('Generated token: $token'); // デバッグ用
+
+      // 共有リンクを作成
+      final response = await supabase.from('shared_notes').insert({
+        'note_id': widget.note.id,
+        'share_token': token,
+        'permission': _selectedPermission,
+        'created_by': supabase.auth.currentUser!.id,
+        'expires_at': _expiresAt?.toIso8601String(),
+      }).select();
+
+      if (!mounted) {
+        return;
+      }
+
+      debugPrint('Insert response: $response'); // デバッグ用
+
       await _loadShares();
+
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _isCreating = false;
@@ -93,6 +108,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
       });
 
       if (!context.mounted) {
+        // ← contextチェックを追加
         return;
       }
 
@@ -104,11 +120,14 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
         return;
       }
 
+      debugPrint('Error creating share: $error'); // デバッグ用
+
       setState(() {
         _isCreating = false;
       });
 
       if (!context.mounted) {
+        // ← contextチェックを追加
         return;
       }
 
