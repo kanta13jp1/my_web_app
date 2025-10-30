@@ -399,17 +399,16 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     );
   }
 
-  // マークダウンヘルプボタン
   void _showMarkdownHelp() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('マークダウン記法'),
-        content: SingleChildScrollView(
+        content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text('# 見出し1', style: TextStyle(fontWeight: FontWeight.bold)),
               Text('## 見出し2', style: TextStyle(fontWeight: FontWeight.bold)),
               SizedBox(height: 8),
@@ -431,7 +430,11 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
             child: const Text('閉じる'),
           ),
         ],
