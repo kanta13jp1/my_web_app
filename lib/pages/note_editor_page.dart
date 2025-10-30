@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
+import '../widgets/markdown_preview.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -12,14 +13,18 @@ class NoteEditorPage extends StatefulWidget {
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
-class _NoteEditorPageState extends State<NoteEditorPage> {
+class _NoteEditorPageState extends State<NoteEditorPage>
+    with SingleTickerProviderStateMixin {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   bool _isSaving = false;
   List<Category> _categories = [];
   String? _selectedCategoryId;
   bool _isFavorite = false;
-  DateTime? _reminderDate; // 追加
+  DateTime? _reminderDate;
+
+  // マークダウン関連
+  late TabController _tabController;
 
   @override
   void initState() {
@@ -29,14 +34,18 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         TextEditingController(text: widget.note?.content ?? '');
     _selectedCategoryId = widget.note?.categoryId;
     _isFavorite = widget.note?.isFavorite ?? false;
-    _reminderDate = widget.note?.reminderDate; // 追加
+    _reminderDate = widget.note?.reminderDate;
     _loadCategories();
+
+    // タブコントローラーを初期化
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -48,13 +57,96 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           .eq('user_id', supabase.auth.currentUser!.id)
           .order('name', ascending: true);
 
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _categories = (response as List)
             .map((category) => Category.fromJson(category))
             .toList();
       });
     } catch (error) {
-      // エラーは無視（カテゴリなしでも動作可能）
+      // カテゴリがなくても動作可能
+    }
+  }
+
+  Future<void> _saveNote() async {
+    if (_titleController.text.isEmpty && _contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タイトルまたは内容を入力してください')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final userId = supabase.auth.currentUser!.id;
+
+      if (widget.note == null) {
+        await supabase.from('notes').insert({
+          'user_id': userId,
+          'title': _titleController.text.trim(),
+          'content': _contentController.text.trim(),
+          'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      } else {
+        await supabase.from('notes').update({
+          'title': _titleController.text.trim(),
+          'content': _contentController.text.trim(),
+          'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', widget.note!.id);
+      }
+
+      if (!mounted) {
+        // ← 追加
+        return;
+      }
+
+      if (!context.mounted) {
+        // ← 追加（114行目付近）
+        return;
+      }
+
+      Navigator.pop(context);
+
+      if (!context.mounted) {
+        // ← 追加
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('保存しました')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        // ← 追加
+        return;
+      }
+
+      if (!context.mounted) {
+        // ← 追加
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -72,7 +164,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 日付選択
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.calendar_today),
@@ -97,7 +188,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   },
                 ),
                 const SizedBox(height: 8),
-                // 時刻選択
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.access_time),
@@ -202,108 +292,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return '$dateStr ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _saveNote() async {
-    if (_titleController.text.isEmpty && _contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タイトルまたは内容を入力してください')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      final userId = supabase.auth.currentUser!.id;
-
-      if (widget.note == null) {
-        // 新規作成
-        await supabase.from('notes').insert({
-          'user_id': userId,
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
-          'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
-          'reminder_date': _reminderDate?.toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      } else {
-        // 更新
-        await supabase.from('notes').update({
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
-          'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
-          'reminder_date': _reminderDate?.toIso8601String(), // 追加
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', widget.note!.id);
-      }
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存しました')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    }
-  }
-
-  void _showCategoryPicker() {
-    showModalBottomSheet(
+  void _showCategoryDialog() {
+    showDialog(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      builder: (context) => AlertDialog(
+        title: const Text('カテゴリを選択'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.category, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'カテゴリを選択',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('完了'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-              // 未分類オプション
               ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.clear, color: Colors.grey),
-                ),
-                title: const Text('未分類'),
+                leading: const Icon(Icons.clear),
+                title: const Text('カテゴリなし'),
                 trailing: _selectedCategoryId == null
                     ? const Icon(Icons.check, color: Colors.blue)
                     : null,
@@ -315,101 +316,126 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 },
               ),
               const Divider(),
-              // カテゴリリスト
-              if (_categories.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'カテゴリがありません\nカテゴリ管理画面から作成してください',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                )
-              else
-                ...(_categories.map((category) {
-                  final color = Color(
+              ..._categories.map((category) {
+                final color = Color(
                     int.parse(category.color.substring(1), radix: 16) +
-                        0xFF000000,
-                  );
-                  final isSelected = _selectedCategoryId == category.id;
-
-                  return ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: color, width: 2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          category.icon,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      ),
+                        0xFF000000);
+                return ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
                     ),
-                    title: Text(
-                      category.name,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Center(
+                      child: Text(category.icon,
+                          style: const TextStyle(fontSize: 20)),
                     ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check, color: Colors.blue)
-                        : null,
-                    onTap: () {
-                      setState(() {
-                        _selectedCategoryId = category.id;
-                      });
-                      Navigator.pop(context);
-                    },
-                  );
-                }).toList()),
+                  ),
+                  title: Text(category.name),
+                  trailing: _selectedCategoryId == category.id
+                      ? const Icon(Icons.check, color: Colors.blue)
+                      : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = category.id;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              }),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   Widget _buildCategoryChip() {
-    if (_selectedCategoryId == null) {
-      return Chip(
-        avatar: const Icon(Icons.category_outlined, size: 18),
-        label: const Text('カテゴリ未設定'),
-        onDeleted: () => _showCategoryPicker(),
-        deleteIcon: const Icon(Icons.edit, size: 18),
+    final category = _categories.cast<Category?>().firstWhere(
+          (c) => c?.id == _selectedCategoryId,
+          orElse: () => null,
+        );
+
+    if (category == null) {
+      return TextButton.icon(
+        icon: const Icon(Icons.add, size: 16),
+        label: const Text('カテゴリを選択'),
+        onPressed: _showCategoryDialog,
       );
     }
 
-    final category = _categories.firstWhere(
-      (c) => c.id == _selectedCategoryId,
-      orElse: () => Category(
-        id: '',
-        userId: '',
-        name: '未分類',
-        color: '#9E9E9E',
-        icon: '📁',
-        createdAt: DateTime.now(),
+    final color =
+        Color(int.parse(category.color.substring(1), radix: 16) + 0xFF000000);
+
+    return InkWell(
+      onTap: _showCategoryDialog,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(category.icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            Text(
+              category.name,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.edit, size: 14, color: color),
+          ],
+        ),
       ),
     );
+  }
 
-    final color = Color(
-      int.parse(category.color.substring(1), radix: 16) + 0xFF000000,
-    );
-
-    return Chip(
-      avatar: Text(category.icon, style: const TextStyle(fontSize: 16)),
-      label: Text(
-        category.name,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold),
+  // マークダウンヘルプボタン
+  void _showMarkdownHelp() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('マークダウン記法'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text('# 見出し1', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('## 見出し2', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text('**太字**'),
+              Text('*斜体*'),
+              Text('~~取り消し線~~'),
+              SizedBox(height: 8),
+              Text('- リスト項目'),
+              Text('1. 番号付きリスト'),
+              SizedBox(height: 8),
+              Text('[リンク](https://example.com)'),
+              SizedBox(height: 8),
+              Text('```dart\nコードブロック\n```'),
+              Text('`インラインコード`'),
+              SizedBox(height: 8),
+              Text('> 引用'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
       ),
-      backgroundColor: color.withValues(alpha: 0.1),
-      side: BorderSide(color: color, width: 1),
-      onDeleted: () => _showCategoryPicker(),
-      deleteIcon: const Icon(Icons.edit, size: 18),
     );
   }
 
@@ -419,7 +445,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
-          // リマインダーボタン（追加）
+          // マークダウンヘルプ
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: _showMarkdownHelp,
+            tooltip: 'マークダウン記法ヘルプ',
+          ),
+          // リマインダーボタン
           IconButton(
             icon: Icon(
               _reminderDate != null ? Icons.alarm : Icons.alarm_add,
@@ -459,6 +491,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               tooltip: '保存',
             ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.edit), text: '編集'),
+            Tab(icon: Icon(Icons.visibility), text: 'プレビュー'),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -473,7 +512,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             ),
             child: Column(
               children: [
-                // カテゴリ選択
                 Row(
                   children: [
                     const Icon(Icons.label_outline, color: Colors.grey),
@@ -481,7 +519,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     _buildCategoryChip(),
                   ],
                 ),
-                // リマインダー表示
                 if (_reminderDate != null) ...[
                   const SizedBox(height: 8),
                   Container(
@@ -531,38 +568,77 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               ],
             ),
           ),
-          // メモ編集エリア
+          // タブビュー
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      hintText: 'タイトル',
-                      border: InputBorder.none,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: TextField(
-                      controller: _contentController,
-                      decoration: const InputDecoration(
-                        hintText: 'メモを入力...',
-                        border: InputBorder.none,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // 編集モード
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          hintText: 'タイトル',
+                          border: InputBorder.none,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                    ),
+                      const Divider(),
+                      Expanded(
+                        child: TextField(
+                          controller: _contentController,
+                          decoration: const InputDecoration(
+                            hintText: 'メモを入力（マークダウン記法が使えます）',
+                            border: InputBorder.none,
+                          ),
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                // プレビューモード
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_titleController.text.isNotEmpty) ...[
+                        Text(
+                          _titleController.text,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Divider(),
+                      ],
+                      Expanded(
+                        child: _contentController.text.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'プレビューする内容がありません',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              )
+                            : MarkdownPreview(
+                                // ← カスタムウィジェットを使用
+                                data: _contentController.text,
+                                selectable: true,
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
