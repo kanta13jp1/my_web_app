@@ -6,6 +6,9 @@ import 'auth_page.dart';
 import 'note_editor_page.dart';
 import 'categories_page.dart';
 import 'share_note_dialog.dart';
+import '../widgets/advanced_search_dialog.dart';
+import '../services/search_history_service.dart';
+import 'package:intl/intl.dart'; // 追加
 
 // 並び替えの種類
 enum SortType {
@@ -49,6 +52,14 @@ class _HomePageState extends State<HomePage> {
 
   // リマインダーフィルター（追加）
   String? _reminderFilter; // null, 'overdue', 'upcoming', 'today'
+
+// 検索関連（既存）
+  String _searchQuery = '';
+
+// 高度な検索用の追加変数
+  String? _searchCategoryId;
+  DateTime? _searchStartDate;
+  DateTime? _searchEndDate;
 
   @override
   void initState() {
@@ -419,13 +430,48 @@ class _HomePageState extends State<HomePage> {
         }).toList();
       }
 
-      // お気に入りフィルター（追加）
-      if (_showFavoritesOnly) {
-        filtered = filtered.where((note) => note.isFavorite).toList();
+      // 高度な検索：カテゴリフィルター（検索ダイアログから）
+      if (_searchCategoryId != null) {
+        filtered = filtered
+            .where((note) => note.categoryId == _searchCategoryId)
+            .toList();
+      }
+      // 通常のカテゴリフィルター（メニューから）
+      else if (_selectedCategoryId != null) {
+        if (_selectedCategoryId == 'uncategorized') {
+          filtered = filtered.where((note) => note.categoryId == null).toList();
+        } else {
+          filtered = filtered
+              .where((note) => note.categoryId == _selectedCategoryId)
+              .toList();
+        }
       }
 
-      // 日付範囲でフィルター
-      if (_startDate != null || _endDate != null) {
+      // 高度な検索：日付範囲フィルター（検索ダイアログから）
+      if (_searchStartDate != null || _searchEndDate != null) {
+        filtered = filtered.where((note) {
+          if (_searchStartDate != null &&
+              note.createdAt.isBefore(_searchStartDate!)) {
+            return false;
+          }
+          if (_searchEndDate != null) {
+            final endOfDay = DateTime(
+              _searchEndDate!.year,
+              _searchEndDate!.month,
+              _searchEndDate!.day,
+              23,
+              59,
+              59,
+            );
+            if (note.createdAt.isAfter(endOfDay)) {
+              return false;
+            }
+          }
+          return true;
+        }).toList();
+      }
+      // 通常の日付フィルター（メニューから）
+      else if (_startDate != null || _endDate != null) {
         filtered = filtered.where((note) {
           if (_startDate != null && note.updatedAt.isBefore(_startDate!)) {
             return false;
@@ -447,7 +493,12 @@ class _HomePageState extends State<HomePage> {
         }).toList();
       }
 
-      // リマインダーフィルター（追加）
+      // お気に入りフィルター
+      if (_showFavoritesOnly) {
+        filtered = filtered.where((note) => note.isFavorite).toList();
+      }
+
+      // リマインダーフィルター
       if (_reminderFilter != null) {
         final now = DateTime.now();
         filtered = filtered.where((note) {
@@ -471,19 +522,6 @@ class _HomePageState extends State<HomePage> {
               return true;
           }
         }).toList();
-      }
-
-      // カテゴリでフィルター
-      if (_selectedCategoryId != null) {
-        if (_selectedCategoryId == 'uncategorized') {
-          // 未分類のメモのみ
-          filtered = filtered.where((note) => note.categoryId == null).toList();
-        } else {
-          // 特定のカテゴリのメモのみ
-          filtered = filtered
-              .where((note) => note.categoryId == _selectedCategoryId)
-              .toList();
-        }
       }
 
       // 並び替え
@@ -1085,6 +1123,12 @@ class _HomePageState extends State<HomePage> {
                   hintStyle: TextStyle(color: Colors.white70),
                 ),
                 style: const TextStyle(color: Colors.white, fontSize: 18),
+                onSubmitted: (value) {
+                  // ← 追加
+                  if (value.isNotEmpty) {
+                    SearchHistoryService.saveSearch(value);
+                  }
+                },
               )
             : const Text('マイメモ'),
         actions: [
@@ -1100,6 +1144,15 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
             tooltip: _isSearching ? '検索を閉じる' : '検索',
+          ),
+          // 詳細検索ボタン（追加）
+          IconButton(
+            icon: Icon(
+              Icons.tune,
+              color: _hasActiveAdvancedFilters() ? Colors.purple : null,
+            ),
+            tooltip: '詳細検索',
+            onPressed: _showAdvancedSearch,
           ),
           // リマインダーフィルターボタン（追加）
           Stack(
@@ -1373,7 +1426,8 @@ class _HomePageState extends State<HomePage> {
                 if (hasAnyFilter ||
                     _sortType != SortType.updatedDesc ||
                     _showFavoritesOnly ||
-                    _reminderFilter != null)
+                    _reminderFilter != null ||
+                    _hasActiveAdvancedFilters())
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -1392,7 +1446,62 @@ class _HomePageState extends State<HomePage> {
                               _searchController.clear();
                             },
                           ),
-                        // リマインダーフィルターチップ（追加）
+                        // 高度な検索カテゴリフィルター（追加）
+                        if (_searchCategoryId != null)
+                          Builder(
+                            builder: (context) {
+                              final category =
+                                  _getCategoryById(_searchCategoryId);
+                              if (category == null)
+                                return const SizedBox.shrink();
+                              final color = Color(
+                                int.parse(category.color.substring(1),
+                                        radix: 16) +
+                                    0xFF000000,
+                              );
+                              return Chip(
+                                avatar: Text(category.icon,
+                                    style: const TextStyle(fontSize: 16)),
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(category.name),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.tune, size: 14),
+                                  ],
+                                ),
+                                backgroundColor: color.withValues(alpha: 0.2),
+                                side: BorderSide(color: color, width: 2),
+                                deleteIcon: const Icon(Icons.close, size: 18),
+                                onDeleted: () {
+                                  setState(() {
+                                    _searchCategoryId = null;
+                                    _applyFilters();
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        // 高度な検索日付フィルター（追加）
+                        if (_searchStartDate != null || _searchEndDate != null)
+                          Chip(
+                            avatar: const Icon(Icons.tune,
+                                size: 18, color: Colors.purple),
+                            label: Text(_getAdvancedDateFilterLabel()),
+                            backgroundColor:
+                                Colors.purple.withValues(alpha: 0.1),
+                            side: const BorderSide(
+                                color: Colors.purple, width: 2),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              setState(() {
+                                _searchStartDate = null;
+                                _searchEndDate = null;
+                                _applyFilters();
+                              });
+                            },
+                          ),
+                        // リマインダーフィルターチップ
                         if (_reminderFilter != null)
                           Chip(
                             avatar: Icon(
@@ -2079,5 +2188,49 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => ShareNoteDialog(note: note),
     );
+  }
+
+  // 高度な検索フィルターがアクティブか確認
+  bool _hasActiveAdvancedFilters() {
+    return _searchCategoryId != null ||
+        _searchStartDate != null ||
+        _searchEndDate != null;
+  }
+
+// 詳細検索ダイアログを表示
+  Future<void> _showAdvancedSearch() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AdvancedSearchDialog(
+        categories: _categories,
+        initialQuery: _searchController.text,
+        initialCategoryId: _searchCategoryId,
+        initialStartDate: _searchStartDate,
+        initialEndDate: _searchEndDate,
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        final query = result['query'] ?? '';
+        _searchController.text = query;
+        _searchCategoryId = result['categoryId'];
+        _searchStartDate = result['startDate'];
+        _searchEndDate = result['endDate'];
+      });
+      _applyFilters();
+    }
+  }
+
+  // 高度な検索の日付範囲ラベル
+  String _getAdvancedDateFilterLabel() {
+    if (_searchStartDate != null && _searchEndDate != null) {
+      return '${DateFormat('MM/dd').format(_searchStartDate!)} 〜 ${DateFormat('MM/dd').format(_searchEndDate!)}';
+    } else if (_searchStartDate != null) {
+      return '${DateFormat('MM/dd').format(_searchStartDate!)} 以降';
+    } else if (_searchEndDate != null) {
+      return '${DateFormat('MM/dd').format(_searchEndDate!)} まで';
+    }
+    return '日付';
   }
 }
