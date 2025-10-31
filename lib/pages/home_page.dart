@@ -1449,8 +1449,9 @@ class _HomePageState extends State<HomePage> {
                             builder: (context) {
                               final category =
                                   _getCategoryById(_searchCategoryId);
-                              if (category == null)
+                              if (category == null) {
                                 return const SizedBox.shrink();
+                              }
                               final color = Color(
                                 int.parse(category.color.substring(1),
                                         radix: 16) +
