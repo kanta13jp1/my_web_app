@@ -9,6 +9,8 @@ import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
 import '../services/search_history_service.dart';
 import 'package:intl/intl.dart'; // 追加
+import 'archive_page.dart';
+import '../services/auto_archive_service.dart';
 
 // 並び替えの種類
 enum SortType {
@@ -64,6 +66,9 @@ class _HomePageState extends State<HomePage> {
     _loadCategories();
     _loadNotes();
     _searchController.addListener(_onSearchChanged);
+
+    // 自動アーカイブを実行（追加）
+    _runAutoArchive();
   }
 
   @override
@@ -75,6 +80,28 @@ class _HomePageState extends State<HomePage> {
 
   void _onSearchChanged() {
     _applyFilters();
+  }
+
+  Future<void> _runAutoArchive() async {
+    final archivedCount = await AutoArchiveService.autoArchiveOverdueNotes();
+
+    if (archivedCount > 0 && mounted && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('期限切れのメモ$archivedCount件を自動アーカイブしました'),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: '表示',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ArchivePage()),
+              ).then((_) => _loadNotes());
+            },
+          ),
+        ),
+      );
+    }
   }
 
   String _formatReminderDate(DateTime date) {
@@ -233,6 +260,122 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _archiveNote(Note note) async {
+    try {
+      await supabase.from('notes').update({
+        'is_archived': true,
+        'archived_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', note.id);
+
+      if (!mounted) return;
+
+      _loadNotes();
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('メモをアーカイブしました'),
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: '元に戻す',
+            onPressed: () => _restoreNote(note.id),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
+  }
+
+  Future<void> _restoreNote(String noteId) async {
+    try {
+      await supabase.from('notes').update({
+        'is_archived': false,
+        'archived_at': null,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', noteId);
+
+      if (!mounted) return;
+
+      _loadNotes();
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('メモを復元しました'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
+  }
+
+  void _showArchiveDialog(Note note) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('メモをアーカイブ'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」をアーカイブしますか？'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'アーカイブから復元できます',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _archiveNote(note);
+            },
+            child: const Text('アーカイブ'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -574,7 +717,8 @@ class _HomePageState extends State<HomePage> {
       final response = await supabase
           .from('notes')
           .select()
-          .eq('user_id', supabase.auth.currentUser!.id);
+          .eq('user_id', supabase.auth.currentUser!.id)
+          .eq('is_archived', false); // ← アーカイブされていないメモのみ取得
 
       setState(() {
         _notes = (response as List).map((note) => Note.fromJson(note)).toList();
@@ -1279,6 +1423,14 @@ class _HomePageState extends State<HomePage> {
                   _loadCategories();
                   _loadNotes();
                 });
+              } else if (value == 'archive') {
+                // 追加
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ArchivePage()),
+                ).then((_) {
+                  _loadNotes();
+                });
               } else if (value == 'logout') {
                 _signOut();
               }
@@ -1291,6 +1443,17 @@ class _HomePageState extends State<HomePage> {
                     Icon(Icons.category, color: Colors.blue),
                     SizedBox(width: 8),
                     Text('カテゴリ管理'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                // 追加
+                value: 'archive',
+                child: Row(
+                  children: [
+                    Icon(Icons.archive, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('アーカイブ'),
                   ],
                 ),
               ),
@@ -1933,7 +2096,15 @@ class _HomePageState extends State<HomePage> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // 共有ボタン（追加）
+                                      // アーカイブボタン（追加）
+                                      IconButton(
+                                        icon: const Icon(Icons.archive,
+                                            color: Colors.grey),
+                                        onPressed: () =>
+                                            _showArchiveDialog(note),
+                                        tooltip: 'アーカイブ',
+                                      ),
+                                      // 共有ボタン
                                       IconButton(
                                         icon: const Icon(Icons.share,
                                             color: Colors.blue),
