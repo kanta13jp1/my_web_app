@@ -53,10 +53,7 @@ class _HomePageState extends State<HomePage> {
   // リマインダーフィルター（追加）
   String? _reminderFilter; // null, 'overdue', 'upcoming', 'today'
 
-// 検索関連（既存）
-  String _searchQuery = '';
-
-// 高度な検索用の追加変数
+  // 高度な検索用の追加変数
   String? _searchCategoryId;
   DateTime? _searchStartDate;
   DateTime? _searchEndDate;
