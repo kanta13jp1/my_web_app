@@ -26,29 +26,23 @@ class Note {
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
-    try {
-      return Note(
-        id: json['id'].toString(),  // ← int/String両方に対応
-        userId: json['user_id'] as String,
-        title: json['title'] as String? ?? '',
-        content: json['content'] as String? ?? '',
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
-        categoryId: json['category_id']?.toString(),  // ← int/String両方に対応
-        isFavorite: json['is_favorite'] as bool? ?? false,
-        reminderDate: json['reminder_date'] != null
-            ? DateTime.parse(json['reminder_date'] as String)
-            : null,
-        isArchived: json['is_archived'] as bool? ?? false,
-        archivedAt: json['archived_at'] != null
-            ? DateTime.parse(json['archived_at'] as String)
-            : null,
-      );
-    } catch (e) {
-      print('Note.fromJson エラー: $e');
-      print('問題のあるJSON: $json');
-      rethrow;
-    }
+    return Note(
+      id: json['id'].toString(),
+      userId: json['user_id'] as String,
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      categoryId: json['category_id']?.toString(),
+      isFavorite: json['is_favorite'] as bool? ?? false,
+      reminderDate: json['reminder_date'] != null
+          ? DateTime.parse(json['reminder_date'] as String)
+          : null,
+      isArchived: json['is_archived'] as bool? ?? false,
+      archivedAt: json['archived_at'] != null
+          ? DateTime.parse(json['archived_at'] as String)
+          : null,
+    );
   }
 
   Map<String, dynamic> toJson() {
