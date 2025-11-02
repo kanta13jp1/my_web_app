@@ -82,6 +82,36 @@ class _HomePageState extends State<HomePage> {
     _applyFilters();
   }
 
+  Future<void> _togglePin(Note note) async {
+    try {
+      await supabase.from('notes').update({
+        'is_pinned': !note.isPinned,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', note.id);
+
+      if (!mounted) return;
+
+      _loadNotes();
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            note.isPinned ? 'ピン留めを解除しました' : 'ピン留めしました',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
+  }
+
   Future<void> _runAutoArchive() async {
     final archivedCount = await AutoArchiveService.autoArchiveOverdueNotes();
 
@@ -672,6 +702,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _sortNotes(List<Note> notes) {
+    // まず通常のソートを適用
     switch (_sortType) {
       case SortType.updatedDesc:
         notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -706,6 +737,13 @@ class _HomePageState extends State<HomePage> {
         });
         break;
     }
+
+    // ピン留めメモを最上部に移動（安定ソート）
+    notes.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return 0;
+    });
   }
 
   Future<void> _loadNotes() async {
@@ -1792,6 +1830,20 @@ class _HomePageState extends State<HomePage> {
                                 ' / ',
                                 style: TextStyle(color: Colors.grey[600]),
                               ),
+                              // ピン留めアイコンと件数（追加）
+                              const Icon(Icons.push_pin,
+                                  color: Colors.amber, size: 16),
+                              Text(
+                                ' ${_notes.where((n) => n.isPinned).length}',
+                                style: const TextStyle(
+                                  color: Colors.amber,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                ' / ',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
                               const Icon(Icons.star,
                                   color: Colors.amber, size: 16),
                               Text(
@@ -1852,11 +1904,12 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 hasAnyFilter || _showFavoritesOnly
                                     ? 'フィルター条件を変更してみてください'
-                                    : '右下の + ボタンから新しいメモを作成',
+                                    : '右下の + ボタンから新しいメモを作成\n📌でピン留めして重要なメモを上部に固定',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[500],
                                 ),
+                                textAlign: TextAlign.center,
                               ),
                               // リマインダーフィルター時の特別メッセージ
                               if (_reminderFilter != null &&
@@ -1936,7 +1989,14 @@ class _HomePageState extends State<HomePage> {
                                   vertical: 4,
                                   horizontal: 8,
                                 ),
-                                // 期限切れの場合は赤枠（追加）
+                                // ピン留めメモの背景色を変更（追加）
+                                color: note.isPinned
+                                    ? Colors.amber.withValues(alpha: 0.1)
+                                    : note.reminderDate != null &&
+                                            note.isOverdue
+                                        ? Colors.red.withValues(alpha: 0.05)
+                                        : null,
+                                // 期限切れの場合は赤枠
                                 shape: note.reminderDate != null &&
                                         note.isOverdue
                                     ? RoundedRectangleBorder(
@@ -1973,7 +2033,14 @@ class _HomePageState extends State<HomePage> {
                                           : null,
                                   title: Row(
                                     children: [
-                                      // リマインダーアイコン（追加）
+                                      // ピン留めアイコン（追加）
+                                      if (note.isPinned) ...[
+                                        Icon(Icons.push_pin,
+                                            color: Colors.amber.shade700,
+                                            size: 18),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      // リマインダーアイコン
                                       if (note.reminderDate != null) ...[
                                         Icon(
                                           note.isOverdue
@@ -2023,6 +2090,40 @@ class _HomePageState extends State<HomePage> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
+                                          // ピン留めバッジ（追加）
+                                          if (note.isPinned) ...[
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.amber.shade700,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.push_pin,
+                                                      size: 10,
+                                                      color: Colors.white),
+                                                  SizedBox(width: 2),
+                                                  Text(
+                                                    'ピン留め',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
                                           // リマインダー日時表示（追加）
                                           if (note.reminderDate != null) ...[
                                             Icon(
@@ -2096,7 +2197,21 @@ class _HomePageState extends State<HomePage> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // アーカイブボタン（追加）
+                                      // ピン留めボタン（追加）
+                                      IconButton(
+                                        icon: Icon(
+                                          note.isPinned
+                                              ? Icons.push_pin
+                                              : Icons.push_pin_outlined,
+                                          color: note.isPinned
+                                              ? Colors.amber.shade700
+                                              : Colors.grey,
+                                        ),
+                                        onPressed: () => _togglePin(note),
+                                        tooltip:
+                                            note.isPinned ? 'ピン留めを解除' : 'ピン留め',
+                                      ),
+                                      // アーカイブボタン
                                       IconButton(
                                         icon: const Icon(Icons.archive,
                                             color: Colors.grey),

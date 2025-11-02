@@ -22,24 +22,26 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   String? _selectedCategoryId;
   bool _isFavorite = false;
   DateTime? _reminderDate;
+  bool _isPinned = false; // 追加
 
   // マークダウン関連
   late TabController _tabController;
 
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController(text: widget.note?.title ?? '');
-    _contentController =
-        TextEditingController(text: widget.note?.content ?? '');
-    _selectedCategoryId = widget.note?.categoryId;
-    _isFavorite = widget.note?.isFavorite ?? false;
-    _reminderDate = widget.note?.reminderDate;
-    _loadCategories();
+@override
+void initState() {
+  super.initState();
+  _titleController = TextEditingController(text: widget.note?.title ?? '');
+  _contentController =
+      TextEditingController(text: widget.note?.content ?? '');
+  _selectedCategoryId = widget.note?.categoryId;
+  _isFavorite = widget.note?.isFavorite ?? false;
+  _reminderDate = widget.note?.reminderDate;
+  _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
+  _loadCategories();
 
-    // タブコントローラーを初期化
-    _tabController = TabController(length: 2, vsync: this);
-  }
+  // タブコントローラーを初期化
+  _tabController = TabController(length: 2, vsync: this);
+}
 
   @override
   void dispose() {
@@ -72,81 +74,40 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   }
 
   Future<void> _saveNote() async {
-    if (_titleController.text.isEmpty && _contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タイトルまたは内容を入力してください')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
     try {
-      final userId = supabase.auth.currentUser!.id;
-
       if (widget.note == null) {
+        // 新規作成
         await supabase.from('notes').insert({
-          'user_id': userId,
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
+          'user_id': supabase.auth.currentUser!.id,
+          'title': _titleController.text,
+          'content': _contentController.text,
           'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
           'reminder_date': _reminderDate?.toIso8601String(),
+          'is_pinned': _isPinned, // 追加
+          'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         });
       } else {
+        // 更新
         await supabase.from('notes').update({
-          'title': _titleController.text.trim(),
-          'content': _contentController.text.trim(),
+          'title': _titleController.text,
+          'content': _contentController.text,
           'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
           'reminder_date': _reminderDate?.toIso8601String(),
+          'is_pinned': _isPinned, // 追加
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', widget.note!.id);
       }
 
-      if (!mounted) {
-        // ← 追加
-        return;
-      }
-
-      if (!context.mounted) {
-        // ← 追加（114行目付近）
-        return;
-      }
+      if (!mounted) return;
 
       Navigator.pop(context);
-
-      if (!context.mounted) {
-        // ← 追加
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存しました')),
-      );
     } catch (error) {
-      if (!mounted) {
-        // ← 追加
-        return;
-      }
-
-      if (!context.mounted) {
-        // ← 追加
-        return;
-      }
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
     }
   }
 
@@ -448,6 +409,20 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
+          // ピン留めトグルボタン（追加）
+          if (widget.note != null)
+            IconButton(
+              icon: Icon(
+                _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                color: _isPinned ? Colors.amber : null,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPinned = !_isPinned;
+                });
+              },
+              tooltip: _isPinned ? 'ピン留めを解除' : 'ピン留め',
+            ),
           // マークダウンヘルプ
           IconButton(
             icon: const Icon(Icons.help_outline),
