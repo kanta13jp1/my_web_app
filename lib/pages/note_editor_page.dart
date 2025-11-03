@@ -17,7 +17,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     with SingleTickerProviderStateMixin {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  bool _isSaving = false;
   List<Category> _categories = [];
   String? _selectedCategoryId;
   bool _isFavorite = false;
@@ -27,21 +26,21 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   // マークダウン関連
   late TabController _tabController;
 
-@override
-void initState() {
-  super.initState();
-  _titleController = TextEditingController(text: widget.note?.title ?? '');
-  _contentController =
-      TextEditingController(text: widget.note?.content ?? '');
-  _selectedCategoryId = widget.note?.categoryId;
-  _isFavorite = widget.note?.isFavorite ?? false;
-  _reminderDate = widget.note?.reminderDate;
-  _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
-  _loadCategories();
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.note?.title ?? '');
+    _contentController =
+        TextEditingController(text: widget.note?.content ?? '');
+    _selectedCategoryId = widget.note?.categoryId;
+    _isFavorite = widget.note?.isFavorite ?? false;
+    _reminderDate = widget.note?.reminderDate;
+    _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
+    _loadCategories();
 
-  // タブコントローラーを初期化
-  _tabController = TabController(length: 2, vsync: this);
-}
+    // タブコントローラーを初期化
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   void dispose() {
@@ -451,23 +450,11 @@ void initState() {
             },
             tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
           ),
-          if (_isSaving)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _saveNote,
-              tooltip: '保存',
-            ),
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _saveNote,
+            tooltip: '保存',
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
