@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/attachment.dart';
-import '../services/attachment_service.dart';
 import 'attachment_preview_dialog.dart';
 
 class AttachmentListWidget extends StatelessWidget {

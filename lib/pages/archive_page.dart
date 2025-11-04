@@ -167,7 +167,8 @@ class _ArchivePageState extends State<ArchivePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('メモを復元'),
-        content: Text('「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を復元しますか？'),
+        content:
+            Text('「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を復元しますか？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -194,7 +195,8 @@ class _ArchivePageState extends State<ArchivePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？'),
+            Text(
+                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？'),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -438,7 +440,8 @@ class _ArchivePageState extends State<ArchivePage> {
                                         note.content,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: Colors.grey[600]),
+                                        style:
+                                            TextStyle(color: Colors.grey[600]),
                                       ),
                                     ],
                                     const SizedBox(height: 4),
@@ -451,12 +454,18 @@ class _ArchivePageState extends State<ArchivePage> {
                                                 const TextStyle(fontSize: 12),
                                           ),
                                           const SizedBox(width: 4),
-                                          Text(
-                                            category.name,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: categoryColor,
-                                              fontWeight: FontWeight.bold,
+                                          Flexible(
+                                            // ← 追加
+                                            child: Text(
+                                              category.name,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: categoryColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              overflow:
+                                                  TextOverflow.ellipsis, // ← 追加
+                                              maxLines: 1, // ← 追加
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -470,15 +479,21 @@ class _ArchivePageState extends State<ArchivePage> {
                                         Icon(Icons.archive,
                                             size: 12, color: Colors.grey[600]),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          'アーカイブ: ${note.archivedAt != null ? _formatDate(note.archivedAt!) : '不明'}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
+                                        Flexible(
+                                          // ← 追加
+                                          child: Text(
+                                            'アーカイブ: ${note.archivedAt != null ? _formatDate(note.archivedAt!) : '不明'}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                            overflow:
+                                                TextOverflow.ellipsis, // ← 追加
+                                            maxLines: 1, // ← 追加
                                           ),
                                         ),
                                       ],
-                                    ),
+                                    )
                                   ],
                                 ),
                                 trailing: Row(

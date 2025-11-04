@@ -8,7 +8,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
-    final isDark = themeService.getCurrentBrightness(context) == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(

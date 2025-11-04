@@ -3,7 +3,6 @@ import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../widgets/markdown_preview.dart';
-import 'package:file_picker/file_picker.dart'; // 追加
 import '../models/attachment.dart'; // 追加
 import '../services/attachment_service.dart'; // 追加
 import '../widgets/attachment_list_widget.dart'; // 追加

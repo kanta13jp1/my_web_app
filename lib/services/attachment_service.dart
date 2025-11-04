@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:mime/mime.dart';
-import 'package:path/path.dart' as path;
 import '../main.dart';
 import '../models/attachment.dart';
 
@@ -67,7 +66,6 @@ class AttachmentService {
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
       final fileType = _getFileType(mimeType);
-      final extension = path.extension(file.name);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = '${timestamp}_${file.name}';
       final filePath = '$userId/$noteId/$fileName';
