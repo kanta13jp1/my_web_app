@@ -3,6 +3,10 @@ import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../widgets/markdown_preview.dart';
+import 'package:file_picker/file_picker.dart'; // 追加
+import '../models/attachment.dart'; // 追加
+import '../services/attachment_service.dart'; // 追加
+import '../widgets/attachment_list_widget.dart'; // 追加
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -21,7 +25,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   String? _selectedCategoryId;
   bool _isFavorite = false;
   DateTime? _reminderDate;
-  bool _isPinned = false; // 追加
+  bool _isPinned = false;
+
+  // 添付ファイル関連（追加）
+  List<Attachment> _attachments = [];
+  bool _isLoadingAttachments = false;
+  bool _isUploadingFile = false;
 
   // マークダウン関連
   late TabController _tabController;
@@ -40,6 +49,11 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
     // タブコントローラーを初期化
     _tabController = TabController(length: 2, vsync: this);
+
+    // 添付ファイルを読み込み（追加）
+    if (widget.note != null) {
+      _loadAttachments();
+    }
   }
 
   @override
@@ -48,6 +62,103 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _contentController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+// 添付ファイルを読み込み
+  Future<void> _loadAttachments() async {
+    if (widget.note == null) return;
+
+    setState(() {
+      _isLoadingAttachments = true;
+    });
+
+    try {
+      final attachments =
+          await AttachmentService.getAttachments(widget.note!.id);
+      if (mounted) {
+        setState(() {
+          _attachments = attachments;
+          _isLoadingAttachments = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _isLoadingAttachments = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('添付ファイルの読み込みエラー: $error')),
+        );
+      }
+    }
+  }
+
+// ファイルを添付
+  Future<void> _attachFile() async {
+    if (widget.note == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('先にメモを保存してからファイルを添付してください')),
+      );
+      return;
+    }
+
+    try {
+      final file = await AttachmentService.pickFile();
+      if (file == null) return;
+
+      setState(() {
+        _isUploadingFile = true;
+      });
+
+      final attachment = await AttachmentService.uploadFile(
+        noteId: widget.note!.id,
+        file: file,
+      );
+
+      if (mounted && attachment != null) {
+        setState(() {
+          _attachments.add(attachment);
+          _isUploadingFile = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ファイルを添付しました')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _isUploadingFile = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $error')),
+        );
+      }
+    }
+  }
+
+// 添付ファイルを削除
+  Future<void> _deleteAttachment(Attachment attachment) async {
+    try {
+      await AttachmentService.deleteAttachment(attachment);
+
+      if (mounted) {
+        setState(() {
+          _attachments.removeWhere((a) => a.id == attachment.id);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('添付ファイルを削除しました')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除エラー: $error')),
+        );
+      }
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -408,7 +519,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
-          // ピン留めトグルボタン（追加）
+          // ピン留めトグルボタン
           if (widget.note != null)
             IconButton(
               icon: Icon(
@@ -422,6 +533,46 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               },
               tooltip: _isPinned ? 'ピン留めを解除' : 'ピン留め',
             ),
+          // 添付ファイルボタン（追加）
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.attach_file),
+                onPressed: _isUploadingFile ? null : _attachFile,
+                tooltip: '添付ファイル',
+              ),
+              if (_attachments.isNotEmpty)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${_attachments.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              if (_isUploadingFile)
+                const Positioned.fill(
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           // マークダウンヘルプ
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -529,6 +680,22 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                       ],
                     ),
                   ),
+                ],
+                // 添付ファイル一覧（追加）
+                if (_attachments.isNotEmpty || _isLoadingAttachments) ...[
+                  const SizedBox(height: 12),
+                  _isLoadingAttachments
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : AttachmentListWidget(
+                          attachments: _attachments,
+                          onDelete: _deleteAttachment,
+                          isEditing: true,
+                        ),
                 ],
               ],
             ),

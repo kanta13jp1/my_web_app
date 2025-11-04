@@ -8,9 +8,34 @@ import 'categories_page.dart';
 import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
 import '../services/search_history_service.dart';
-import 'package:intl/intl.dart'; // 追加
+import 'package:intl/intl.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
+import 'settings_page.dart';
+import '../models/attachment.dart'; // 追加
+
+// クラスの先頭に追加
+final Map<int, int> _attachmentCountCache = {};
+
+Future<int> _getAttachmentCount(int noteId) async {
+  // キャッシュをチェック
+  if (_attachmentCountCache.containsKey(noteId)) {
+    return _attachmentCountCache[noteId]!;
+  }
+
+  try {
+    final response =
+        await supabase.from('attachments').select('id').eq('note_id', noteId);
+    final count = (response as List).length;
+
+    // キャッシュに保存
+    _attachmentCountCache[noteId] = count;
+
+    return count;
+  } catch (e) {
+    return 0;
+  }
+}
 
 // 並び替えの種類
 enum SortType {
@@ -326,7 +351,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _restoreNote(String noteId) async {
+  Future<void> _restoreNote(int noteId) async {
     try {
       await supabase.from('notes').update({
         'is_archived': false,
@@ -749,6 +774,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadNotes() async {
     setState(() {
       _isLoading = true;
+      _attachmentCountCache.clear();  // 追加
     });
 
     try {
@@ -775,7 +801,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _deleteNote(String noteId) async {
+  Future<void> _deleteNote(int noteId) async {
     try {
       await supabase.from('notes').delete().eq('id', noteId);
       _loadNotes();
@@ -1469,6 +1495,12 @@ class _HomePageState extends State<HomePage> {
                 ).then((_) {
                   _loadNotes();
                 });
+              } else if (value == 'settings') {
+                // 追加
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
+                );
               } else if (value == 'logout') {
                 _signOut();
               }
@@ -1492,6 +1524,17 @@ class _HomePageState extends State<HomePage> {
                     Icon(Icons.archive, color: Colors.grey),
                     SizedBox(width: 8),
                     Text('アーカイブ'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                // 追加
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('設定'),
                   ],
                 ),
               ),
@@ -1522,8 +1565,18 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: overdueCount > 0
-                            ? [Colors.red.shade50, Colors.red.shade100]
-                            : [Colors.orange.shade50, Colors.orange.shade100],
+                            ? (Theme.of(context).brightness == Brightness.dark
+                                ? [Colors.red.shade900, Colors.red.shade800]
+                                : [Colors.red.shade50, Colors.red.shade100])
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? [
+                                    Colors.orange.shade900,
+                                    Colors.orange.shade800
+                                  ]
+                                : [
+                                    Colors.orange.shade50,
+                                    Colors.orange.shade100
+                                  ]),
                       ),
                       border: Border(
                         bottom: BorderSide(
@@ -1888,7 +1941,10 @@ class _HomePageState extends State<HomePage> {
                                     ? Icons.search_off
                                     : Icons.note_add_outlined,
                                 size: 80,
-                                color: Colors.grey[400],
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey[700]
+                                    : Colors.grey[400],
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -1989,14 +2045,21 @@ class _HomePageState extends State<HomePage> {
                                   vertical: 4,
                                   horizontal: 8,
                                 ),
-                                // ピン留めメモの背景色を変更（追加）
+                                // ピン留めメモの背景色を変更（ダークモード対応）
                                 color: note.isPinned
-                                    ? Colors.amber.withValues(alpha: 0.1)
+                                    ? (Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.amber.withValues(alpha: 0.15)
+                                        : Colors.amber.withValues(alpha: 0.1))
                                     : note.reminderDate != null &&
                                             note.isOverdue
-                                        ? Colors.red.withValues(alpha: 0.05)
+                                        ? (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.red.withValues(alpha: 0.15)
+                                            : Colors.red
+                                                .withValues(alpha: 0.05))
                                         : null,
-                                // 期限切れの場合は赤枠
+                                // 期限切れの場合は赤枠、ピン留めの場合は黄色枠
                                 shape: note.reminderDate != null &&
                                         note.isOverdue
                                     ? RoundedRectangleBorder(
@@ -2004,7 +2067,20 @@ class _HomePageState extends State<HomePage> {
                                         side: const BorderSide(
                                             color: Colors.red, width: 2),
                                       )
-                                    : null,
+                                    : note.isPinned
+                                        ? RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            side: BorderSide(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.amber.shade600
+                                                  : Colors.amber.shade700,
+                                              width: 2,
+                                            ),
+                                          )
+                                        : null,
                                 child: ListTile(
                                   leading: category != null
                                       ? Container(
@@ -2160,6 +2236,7 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             const SizedBox(width: 8),
                                           ],
+                                          // カテゴリ表示
                                           if (category != null) ...[
                                             Text(
                                               category.icon,
@@ -2183,6 +2260,45 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             const SizedBox(width: 8),
                                           ],
+                                          // 添付ファイル数表示（追加）
+                                          FutureBuilder<int>(
+                                            future:
+                                                _getAttachmentCount(note.id),
+                                            builder: (context, snapshot) {
+                                              final count = snapshot.data ?? 0;
+                                              if (count == 0)
+                                                return const SizedBox.shrink();
+
+                                              return Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.attach_file,
+                                                    size: 12,
+                                                    color: Colors.blue,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '$count',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.blue,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    '•',
+                                                    style: TextStyle(
+                                                        color:
+                                                            Colors.grey[600]),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                ],
+                                              );
+                                            },
+                                          ),
+                                          // 更新日時
                                           Text(
                                             '更新: ${_formatDate(note.updatedAt)}',
                                             style: TextStyle(
@@ -2516,5 +2632,16 @@ class _HomePageState extends State<HomePage> {
       return '${DateFormat('MM/dd').format(_searchEndDate!)} まで';
     }
     return '日付';
+  }
+
+  // 添付ファイル数を取得
+  Future<int> _getAttachmentCount(int noteId) async {
+    try {
+      final response =
+          await supabase.from('attachments').select('id').eq('note_id', noteId);
+      return (response as List).length;
+    } catch (e) {
+      return 0;
+    }
   }
 }

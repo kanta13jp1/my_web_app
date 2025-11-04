@@ -18,6 +18,10 @@ dependencies:
   markdown: ^7.2.2                 # マークダウンパース
   highlight: ^0.7.0                # シンタックスハイライト
   shared_preferences: ^2.3.3       # 追加：ローカルストレージ
+  provider: ^6.1.2  # 追加
+  file_picker: ^8.1.2  # 追加
+  mime: ^1.0.6  # 追加
+  path: ^1.9.0  # 追加
 
 dev_dependencies:
   flutter_test:
