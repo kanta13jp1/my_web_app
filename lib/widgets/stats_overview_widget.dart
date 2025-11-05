@@ -42,7 +42,7 @@ class StatsOverviewWidget extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 2.5,
+              childAspectRatio: 2.8,
               children: [
                 _buildStatItem(
                   context,
@@ -148,6 +148,7 @@ class StatsOverviewWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   label,
@@ -155,6 +156,7 @@ class StatsOverviewWidget extends StatelessWidget {
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 Text(
                   value,
@@ -162,6 +164,8 @@ class StatsOverviewWidget extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),
