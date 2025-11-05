@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class UserStats {
   final String userId;
   int totalPoints;
@@ -34,7 +36,7 @@ class UserStats {
     // Level 3: 400-899 points
     // etc.
     if (points < 100) return 1;
-    return (points / 100).sqrt().floor() + 1;
+    return sqrt(points / 100).floor() + 1;
   }
 
   // Calculate points needed for next level
