@@ -107,49 +107,57 @@ class NoteCardService {
       }
       
       debugPrint('RenderRepaintBoundary found, waiting for render...');
-      
-      // 十分に待つ（Web版では必須）
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      // フレームコールバックを待つ
-      final completer = Completer<void>();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        debugPrint('Post frame callback fired');
-        completer.complete();
-      });
-      WidgetsBinding.instance.scheduleFrame();
-      await completer.future;
-      
-      // さらに待つ
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      debugPrint('Attempting to capture image...');
-      
-      // 画像として変換（debugNeedsPaintチェックなし）
-      try {
-        final image = await renderObject.toImage(pixelRatio: 2.0);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        
-        if (byteData != null) {
-          debugPrint('SUCCESS: Image captured successfully!');
-          return byteData.buffer.asUint8List();
-        } else {
-          debugPrint('ERROR: ByteData is null');
-          return null;
-        }
-      } catch (e) {
-        debugPrint('ERROR during toImage: $e');
-        // 一度だけリトライ
-        await Future.delayed(const Duration(milliseconds: 1000));
-        debugPrint('Retrying image capture...');
-        final image = await renderObject.toImage(pixelRatio: 2.0);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        if (byteData != null) {
-          debugPrint('SUCCESS on retry!');
-          return byteData.buffer.asUint8List();
-        }
-        return null;
+
+      // 複数フレームを待つ（Web版では必須）
+      for (int i = 0; i < 3; i++) {
+        final completer = Completer<void>();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          completer.complete();
+        });
+        WidgetsBinding.instance.scheduleFrame();
+        await completer.future;
+        await Future.delayed(const Duration(milliseconds: 300));
       }
+
+      debugPrint('Post frame callback fired');
+
+      // レンダリングが完全に完了するまで待つ
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      debugPrint('Attempting to capture image...');
+
+      // 画像として変換（リトライロジック付き）
+      for (int attempt = 0; attempt < 3; attempt++) {
+        try {
+          debugPrint('Capture attempt ${attempt + 1}/3');
+
+          // レンダーオブジェクトが有効かチェック
+          if (!renderObject.attached) {
+            debugPrint('RenderObject is not attached, waiting...');
+            await Future.delayed(const Duration(milliseconds: 500));
+            continue;
+          }
+
+          final image = await renderObject.toImage(pixelRatio: 2.0);
+          final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+          if (byteData != null) {
+            debugPrint('SUCCESS: Image captured on attempt ${attempt + 1}!');
+            return byteData.buffer.asUint8List();
+          } else {
+            debugPrint('ERROR: ByteData is null on attempt ${attempt + 1}');
+          }
+        } catch (e) {
+          debugPrint('ERROR during toImage attempt ${attempt + 1}: $e');
+          if (attempt < 2) {
+            debugPrint('Waiting before retry...');
+            await Future.delayed(const Duration(milliseconds: 1000));
+          }
+        }
+      }
+
+      debugPrint('FAILED: All capture attempts exhausted');
+      return null;
     } catch (e, stackTrace) {
       debugPrint('FATAL ERROR capturing widget: $e');
       debugPrint('Stack trace: $stackTrace');
