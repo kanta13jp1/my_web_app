@@ -39,4 +39,23 @@ class DateFormatter {
     }
     return '';
   }
+
+  /// リマインダーの日付を表示（例: "今日 14:30", "明日 10:00", "12/25 15:00"）
+  static String formatReminder(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final targetDay = DateTime(date.year, date.month, date.day);
+
+    String dateStr;
+    if (targetDay == today) {
+      dateStr = '今日';
+    } else if (targetDay == tomorrow) {
+      dateStr = '明日';
+    } else {
+      dateStr = '${date.month}/${date.day}';
+    }
+
+    return '$dateStr ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
 }
