@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../models/shared_note.dart';
+import '../services/gamification_service.dart'; // ゲーミフィケーション追加
+import '../widgets/achievement_notification.dart'; // 実績通知追加
 
 class ShareNoteDialog extends StatefulWidget {
   final Note note;
@@ -20,9 +22,13 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
   DateTime? _expiresAt;
   bool _isCreating = false;
 
+  // ゲーミフィケーション用
+  late final GamificationService _gamificationService;
+
   @override
   void initState() {
     super.initState();
+    _gamificationService = GamificationService();
     _loadShares();
   }
 
@@ -98,6 +104,11 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
 
       await _loadShares();
 
+      // ゲーミフィケーション: 共有イベント
+      final achievements = await _gamificationService.onNoteShared(
+        supabase.auth.currentUser!.id,
+      );
+
       if (!mounted) {
         return;
       }
@@ -110,6 +121,14 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
       if (!context.mounted) {
         // ← contextチェックを追加
         return;
+      }
+
+      // 実績通知を表示
+      for (final achievement in achievements) {
+        AchievementNotification.show(
+          context: context,
+          achievement: achievement,
+        );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

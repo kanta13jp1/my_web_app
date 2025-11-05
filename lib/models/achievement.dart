@@ -91,6 +91,8 @@ enum AchievementCategory {
   sharing,
   organization,
   streak,
+  level,
+  points,
 }
 
 // Predefined achievements
@@ -230,6 +232,162 @@ class AchievementDefinitions {
           pointsReward: 200,
           category: AchievementCategory.streak,
           targetValue: 30,
+        ),
+
+        // Extended Notes achievements
+        Achievement(
+          id: 'note_creator_200',
+          title: 'メモコレクター',
+          description: '200個のメモを作成する',
+          icon: '📖',
+          pointsReward: 300,
+          category: AchievementCategory.notes,
+          targetValue: 200,
+        ),
+        Achievement(
+          id: 'note_creator_500',
+          title: 'メモアーキビスト',
+          description: '500個のメモを作成する',
+          icon: '🎖️',
+          pointsReward: 500,
+          category: AchievementCategory.notes,
+          targetValue: 500,
+        ),
+        Achievement(
+          id: 'note_creator_1000',
+          title: 'メモの神',
+          description: '1000個のメモを作成する',
+          icon: '👑',
+          pointsReward: 1000,
+          category: AchievementCategory.notes,
+          targetValue: 1000,
+        ),
+
+        // Extended Category achievements
+        Achievement(
+          id: 'category_expert',
+          title: 'カテゴリエキスパート',
+          description: '10個のカテゴリを作成する',
+          icon: '🎯',
+          pointsReward: 150,
+          category: AchievementCategory.categories,
+          targetValue: 10,
+        ),
+
+        // Extended Sharing achievements
+        Achievement(
+          id: 'share_expert',
+          title: 'シェアエキスパート',
+          description: '50個のメモを共有する',
+          icon: '📡',
+          pointsReward: 250,
+          category: AchievementCategory.sharing,
+          targetValue: 50,
+        ),
+        Achievement(
+          id: 'share_legend',
+          title: 'シェアの伝説',
+          description: '100個のメモを共有する',
+          icon: '🌍',
+          pointsReward: 500,
+          category: AchievementCategory.sharing,
+          targetValue: 100,
+        ),
+
+        // Extended Streak achievements
+        Achievement(
+          id: 'streak_60',
+          title: '60日連続',
+          description: '60日連続でメモを作成する',
+          icon: '🏅',
+          pointsReward: 400,
+          category: AchievementCategory.streak,
+          targetValue: 60,
+        ),
+        Achievement(
+          id: 'streak_90',
+          title: '90日連続',
+          description: '90日連続でメモを作成する',
+          icon: '🎊',
+          pointsReward: 600,
+          category: AchievementCategory.streak,
+          targetValue: 90,
+        ),
+        Achievement(
+          id: 'streak_365',
+          title: '1年連続',
+          description: '365日連続でメモを作成する',
+          icon: '🎆',
+          pointsReward: 2000,
+          category: AchievementCategory.streak,
+          targetValue: 365,
+        ),
+
+        // Level achievements
+        Achievement(
+          id: 'level_5',
+          title: 'レベル5到達',
+          description: 'レベル5に到達する',
+          icon: '⚡',
+          pointsReward: 50,
+          category: AchievementCategory.level,
+          targetValue: 5,
+        ),
+        Achievement(
+          id: 'level_10',
+          title: 'レベル10到達',
+          description: 'レベル10に到達する',
+          icon: '✨',
+          pointsReward: 100,
+          category: AchievementCategory.level,
+          targetValue: 10,
+        ),
+        Achievement(
+          id: 'level_20',
+          title: 'レベル20到達',
+          description: 'レベル20に到達する',
+          icon: '🌠',
+          pointsReward: 200,
+          category: AchievementCategory.level,
+          targetValue: 20,
+        ),
+        Achievement(
+          id: 'level_50',
+          title: 'レベル50到達',
+          description: 'レベル50に到達する',
+          icon: '💫',
+          pointsReward: 500,
+          category: AchievementCategory.level,
+          targetValue: 50,
+        ),
+
+        // Points achievements
+        Achievement(
+          id: 'points_1000',
+          title: '1000ポイント獲得',
+          description: '累計1000ポイントを獲得する',
+          icon: '💰',
+          pointsReward: 100,
+          category: AchievementCategory.points,
+          targetValue: 1000,
+        ),
+        Achievement(
+          id: 'points_5000',
+          title: '5000ポイント獲得',
+          description: '累計5000ポイントを獲得する',
+          icon: '💎',
+          pointsReward: 250,
+          category: AchievementCategory.points,
+          targetValue: 5000,
+        ),
+        Achievement(
+          id: 'points_10000',
+          title: '10000ポイント獲得',
+          description: '累計10000ポイントを獲得する',
+          icon: '👑',
+          pointsReward: 500,
+          category: AchievementCategory.points,
+          targetValue: 10000,
         ),
       ];
 }

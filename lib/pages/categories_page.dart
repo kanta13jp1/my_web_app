@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/category.dart';
+import '../services/gamification_service.dart'; // ゲーミフィケーション追加
+import '../widgets/achievement_notification.dart'; // 実績通知追加
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -12,6 +14,9 @@ class CategoriesPage extends StatefulWidget {
 class _CategoriesPageState extends State<CategoriesPage> {
   List<Category> _categories = [];
   bool _isLoading = true;
+
+  // ゲーミフィケーション用
+  late final GamificationService _gamificationService;
 
   final List<String> _colorOptions = [
     '#F44336', // Red
@@ -72,6 +77,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   void initState() {
     super.initState();
+    _gamificationService = GamificationService();
     _loadCategories();
   }
 
@@ -344,13 +350,25 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   }
 
                   try {
+                    final userId = supabase.auth.currentUser!.id;
                     if (category == null) {
                       await supabase.from('categories').insert({
-                        'user_id': supabase.auth.currentUser!.id,
+                        'user_id': userId,
                         'name': nameController.text.trim(),
                         'color': selectedColor,
                         'icon': selectedIcon,
                       });
+
+                      // ゲーミフィケーション: カテゴリ作成イベント
+                      final achievements = await _gamificationService.onCategoryCreated(userId);
+                      if (context.mounted) {
+                        for (final achievement in achievements) {
+                          AchievementNotification.show(
+                            context: context,
+                            achievement: achievement,
+                          );
+                        }
+                      }
                     } else {
                       await supabase.from('categories').update({
                         'name': nameController.text.trim(),
