@@ -216,7 +216,7 @@ class SettingsPage extends StatelessWidget {
             itemCount: colors.length,
             itemBuilder: (context, index) {
               final color = colors[index];
-              final isSelected = color.value == themeService.primaryColor.value;
+              final isSelected = color == themeService.primaryColor;
               
               return InkWell(
                 onTap: () {
