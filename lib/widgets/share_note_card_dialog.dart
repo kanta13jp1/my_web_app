@@ -40,8 +40,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   List<String> _contentChunks = [];
 
   // 1ページあたりの最大文字数（調整可能）
-  static const int _maxCharsPerPage = 800;
-  static const int _maxPages = 4;
+  // 元の高さの約1/3にするため、800文字から267文字に変更
+  static const int _maxCharsPerPage = 267;
 
   @override
   Widget build(BuildContext context) {
@@ -342,7 +342,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
-  // コンテンツを複数のチャンクに分割
+  // コンテンツを複数のチャンクに分割（枚数制限なし）
   List<String> _splitContent(String content) {
     if (content.length <= _maxCharsPerPage) {
       return [content];
@@ -351,11 +351,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     final List<String> chunks = [];
     int startIndex = 0;
 
-    while (startIndex < content.length && chunks.length < _maxPages) {
+    while (startIndex < content.length) {
       int endIndex = startIndex + _maxCharsPerPage;
 
-      // 最後のチャンクの場合、または最大ページ数に達した場合
-      if (endIndex >= content.length || chunks.length == _maxPages - 1) {
+      // 最後のチャンクの場合
+      if (endIndex >= content.length) {
         chunks.add(content.substring(startIndex));
         break;
       }
