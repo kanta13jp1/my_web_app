@@ -52,11 +52,14 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                     children: [
                       const Icon(Icons.share, color: Colors.blue, size: 28),
                       const SizedBox(width: 12),
-                      const Text(
-                        'メモカードを作成',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                      const Flexible(
+                        child: Text(
+                          'メモカードを作成',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const Spacer(),
@@ -298,12 +301,22 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
               ],
             ),
             
-            // プレビュー表示エリア（画面外に配置）
+            // プレビュー表示エリア（透明にして配置）
             if (_showPreview)
               Positioned(
-                left: -10000,
+                left: 0,
                 top: 0,
-                child: _buildCardWidget(),
+                child: Opacity(
+                  opacity: 0.01,
+                  child: SizedBox(
+                    width: 1,
+                    height: 1,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: _buildCardWidget(),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),
