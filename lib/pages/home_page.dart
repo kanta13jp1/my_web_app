@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
 import 'settings_page.dart';
+import '../widgets/share_note_card_dialog.dart';
 
 // クラスの先頭に追加
 final Map<int, int> _attachmentCountCache = {};
@@ -103,6 +104,50 @@ class _HomePageState extends State<HomePage> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _showShareOptionsDialog(Note note) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('共有方法を選択'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image, color: Colors.blue),
+              title: const Text('メモカードとして共有'),
+              subtitle: const Text('SNSで映える画像を作成'),
+              onTap: () {
+                Navigator.pop(context);
+                _showNoteCardDialog(note);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.link, color: Colors.green),
+              title: const Text('リンクとして共有'),
+              subtitle: const Text('テキストURLで共有'),
+              onTap: () {
+                Navigator.pop(context);
+                _showShareOptionsDialog(note);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNoteCardDialog(Note note) {
+    final category = _getCategoryById(note.categoryId);
+    showDialog(
+      context: context,
+      builder: (context) => ShareNoteCardDialog(
+        note: note,
+        category: category,
+      ),
+    );
   }
 
   void _onSearchChanged() {
@@ -2559,7 +2604,7 @@ class _HomePageState extends State<HomePage> {
                                             } else if (value == 'archive') {
                                               _showArchiveDialog(note);
                                             } else if (value == 'share') {
-                                              _showShareDialog(note);
+                                              _showShareOptionsDialog(note);
                                             } else if (value == 'reminder') {
                                               _quickSetReminder(note);
                                             } else if (value == 'favorite') {
@@ -2685,7 +2730,7 @@ class _HomePageState extends State<HomePage> {
                                               icon: const Icon(Icons.share,
                                                   color: Colors.blue),
                                               onPressed: () =>
-                                                  _showShareDialog(note),
+                                                  _showShareOptionsDialog(note),
                                               tooltip: 'メモを共有',
                                             ),
                                             if (note.reminderDate == null)
