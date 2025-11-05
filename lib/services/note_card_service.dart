@@ -143,15 +143,23 @@ class NoteCardService {
 
           if (byteData != null) {
             debugPrint('SUCCESS: Image captured on attempt ${attempt + 1}!');
-            return byteData.buffer.asUint8List();
+            final result = byteData.buffer.asUint8List();
+
+            // 画像オブジェクトを破棄してWebGLリソースを解放
+            image.dispose();
+
+            return result;
           } else {
             debugPrint('ERROR: ByteData is null on attempt ${attempt + 1}');
+            // エラーの場合も画像を破棄
+            image.dispose();
           }
         } catch (e) {
           debugPrint('ERROR during toImage attempt ${attempt + 1}: $e');
           if (attempt < 2) {
             debugPrint('Waiting before retry...');
-            await Future.delayed(const Duration(milliseconds: 1000));
+            // WebGLコンテキストのリカバリーのため、より長い待機時間
+            await Future.delayed(const Duration(milliseconds: 2000));
           }
         }
       }
