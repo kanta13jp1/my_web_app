@@ -5,6 +5,8 @@ import '../../pages/stats_page.dart';
 import '../../pages/leaderboard_page.dart';
 import '../../pages/settings_page.dart';
 import '../../services/search_history_service.dart';
+import '../../services/app_share_service.dart';
+import '../../models/user_stats.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isSearching;
@@ -25,6 +27,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showFavoritesOnly;
   final bool hasCategoryFilter;
   final bool hasDateFilter;
+  final UserStats? userStats;
 
   const HomeAppBar({
     Key? key,
@@ -46,6 +49,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.showFavoritesOnly,
     required this.hasCategoryFilter,
     required this.hasDateFilter,
+    this.userStats,
   }) : super(key: key);
 
   @override
@@ -248,6 +252,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ).then((_) {
             onLoadUserStats();
           });
+        } else if (value == 'share_app') {
+          _showShareDialog(context);
         } else if (value == 'settings') {
           Navigator.push(
             context,
@@ -364,6 +370,17 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
         ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'share_app',
+          child: Row(
+            children: [
+              Icon(Icons.share, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('アプリをシェア'),
+            ],
+          ),
+        ),
         const PopupMenuItem(
           value: 'settings',
           child: Row(
@@ -386,6 +403,174 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showShareDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.share, color: Colors.blue),
+            SizedBox(width: 12),
+            Text('マイメモをシェア'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '友達にマイメモを紹介しよう！',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            if (userStats != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      '🎮 あなたの実績も一緒にシェア',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('レベル ${userStats!.level} / ${userStats!.totalPoints}ポイント'),
+                    Text('🔥 ${userStats!.currentStreak}日連続'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            _buildShareButton(
+              context,
+              icon: Icons.share,
+              label: '通常シェア',
+              color: Colors.blue,
+              onTap: () async {
+                Navigator.pop(context);
+                try {
+                  await AppShareService.shareApp();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('シェアしました！')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('クリップボードにコピーしました'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            if (userStats != null) ...[
+              const SizedBox(height: 8),
+              _buildShareButton(
+                context,
+                icon: Icons.emoji_events,
+                label: '実績付きでシェア',
+                color: Colors.amber,
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    await AppShareService.shareWithUserStats(
+                      level: userStats!.level,
+                      totalPoints: userStats!.totalPoints,
+                      currentStreak: userStats!.currentStreak,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('実績付きでシェアしました！')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('クリップボードにコピーしました'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+            const SizedBox(height: 8),
+            _buildShareButton(
+              context,
+              icon: Icons.link,
+              label: 'URLをコピー',
+              color: Colors.grey,
+              onTap: () async {
+                Navigator.pop(context);
+                await AppShareService.copyAppUrlToClipboard();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('URLをクリップボードにコピーしました'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+            const Spacer(),
+            Icon(Icons.arrow_forward_ios, size: 16, color: color),
+          ],
+        ),
+      ),
     );
   }
 }

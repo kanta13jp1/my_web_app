@@ -573,6 +573,7 @@ class _HomePageState extends State<HomePage> {
         showFavoritesOnly: _showFavoritesOnly,
         hasCategoryFilter: hasCategoryFilter,
         hasDateFilter: hasDateFilter,
+        userStats: _userStats,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

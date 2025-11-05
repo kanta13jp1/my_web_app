@@ -1,11 +1,11 @@
 {
-    "name": "my_web_app",
-    "short_name": "my_web_app",
+    "name": "マイメモ - ゲーミフィケーションで楽しくメモ習慣を！",
+    "short_name": "マイメモ",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "レベルアップ、アチーブメント、ストリーク機能で毎日のメモが楽しくなる！28種類のアチーブメント、リーダーボード、美しい共有カード機能を搭載。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
