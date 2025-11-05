@@ -25,6 +25,9 @@ import '../widgets/home_page/sort_dialog.dart';
 import '../widgets/home_page/date_filter_dialog.dart';
 import '../widgets/home_page/reminder_filter_dialog.dart';
 import '../widgets/home_page/category_filter_dialog.dart';
+import '../widgets/home_page/reminder_stats_banner.dart';
+import '../widgets/home_page/filter_chips_area.dart';
+import '../widgets/home_page/note_card_item.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -790,6 +793,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  IconData _getSortIcon(SortType sortType) {
+    switch (sortType) {
+      case SortType.updatedDesc:
+      case SortType.updatedAsc:
+        return Icons.update;
+      case SortType.createdDesc:
+      case SortType.createdAsc:
+        return Icons.event;
+      case SortType.titleAsc:
+      case SortType.titleDesc:
+        return Icons.sort_by_alpha;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasDateFilter = _startDate != null || _endDate != null;
@@ -1285,480 +1302,80 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                // リマインダー統計バナー（追加）
-                if (overdueCount > 0 || dueSoonCount > 0 || todayCount > 0)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: _isMobile ? 12 : 16, // モバイルで小さく
-                      vertical: _isMobile ? 8 : 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: overdueCount > 0
-                            ? (Theme.of(context).brightness == Brightness.dark
-                                ? [Colors.red.shade900, Colors.red.shade800]
-                                : [Colors.red.shade50, Colors.red.shade100])
-                            : (Theme.of(context).brightness == Brightness.dark
-                                ? [
-                                    Colors.orange.shade900,
-                                    Colors.orange.shade800
-                                  ]
-                                : [
-                                    Colors.orange.shade50,
-                                    Colors.orange.shade100
-                                  ]),
-                      ),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: overdueCount > 0 ? Colors.red : Colors.orange,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              overdueCount > 0
-                                  ? Icons.warning
-                                  : Icons.info_outline,
-                              color:
-                                  overdueCount > 0 ? Colors.red : Colors.orange,
-                              size: _isMobile ? 18 : 20, // モバイルで小さく
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                overdueCount > 0
-                                    ? 'リマインダー通知があります'
-                                    : '期限が近いメモがあります',
-                                style: TextStyle(
-                                  fontSize: _isMobile ? 14 : 16, // モバイルで小さく
-                                  fontWeight: FontWeight.bold,
-                                  color: overdueCount > 0
-                                      ? Colors.red
-                                      : Colors.orange.shade900,
-                                ),
-                              ),
-                            ),
-                            if (!_isMobile) // モバイルではボタンを非表示
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _reminderFilter = null;
-                                    _applyFilters();
-                                  });
-                                },
-                                child: const Text('すべて表示'),
-                              ),
-                          ],
-                        ),
-                        SizedBox(height: _isMobile ? 6 : 8), // モバイルで小さく
-                        Wrap(
-                          spacing: _isMobile ? 8 : 12, // モバイルで小さく
-                          runSpacing: _isMobile ? 6 : 8,
-                          children: [
-                            if (overdueCount > 0)
-                              _buildReminderStatChip(
-                                icon: Icons.alarm_off,
-                                label: '期限切れ',
-                                count: overdueCount,
-                                color: Colors.red,
-                                onTap: () {
-                                  setState(() {
-                                    _reminderFilter = 'overdue';
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                            if (todayCount > 0)
-                              _buildReminderStatChip(
-                                icon: Icons.today,
-                                label: '今日',
-                                count: todayCount,
-                                color: Colors.orange,
-                                onTap: () {
-                                  setState(() {
-                                    _reminderFilter = 'today';
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                            if (dueSoonCount > 0)
-                              _buildReminderStatChip(
-                                icon: Icons.access_alarm,
-                                label: '24時間以内',
-                                count: dueSoonCount,
-                                color: Colors.amber,
-                                onTap: () {
-                                  setState(() {
-                                    _reminderFilter = 'upcoming';
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                // リマインダー統計バナー
+                ReminderStatsBanner(
+                  notes: _notes,
+                  overdueCount: overdueCount,
+                  dueSoonCount: dueSoonCount,
+                  todayCount: todayCount,
+                  isMobile: _isMobile,
+                  onFilterChanged: (filter) {
+                    setState(() {
+                      _reminderFilter = filter;
+                      _applyFilters();
+                    });
+                  },
+                ),
                 // フィルター情報表示
-                if (hasAnyFilter ||
-                    _sortType != SortType.updatedDesc ||
-                    _showFavoritesOnly ||
-                    _reminderFilter != null ||
-                    _hasActiveAdvancedFilters())
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(_isMobile ? 8 : 12), // モバイルで小さく
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    child: Wrap(
-                      spacing: _isMobile ? 6 : 8, // モバイルで小さく
-                      runSpacing: _isMobile ? 6 : 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        // 検索キーワード
-                        if (_searchController.text.isNotEmpty)
-                          Chip(
-                            avatar:
-                                const Icon(Icons.search, size: 16), // アイコンを小さく
-                            label: Text(
-                              '検索: "${_searchController.text}"',
-                              style: TextStyle(
-                                  fontSize: _isMobile ? 11 : 13), // モバイルで小さく
-                            ),
-                            deleteIcon: const Icon(Icons.close, size: 16),
-                            onDeleted: () {
-                              _searchController.clear();
-                            },
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap, // 追加
-                            visualDensity: VisualDensity.compact, // 追加
-                          ),
-
-                        // 高度な検索カテゴリフィルター
-                        if (_searchCategoryId != null)
-                          Builder(
-                            builder: (context) {
-                              final category =
-                                  _getCategoryById(_searchCategoryId);
-                              if (category == null) {
-                                return const SizedBox.shrink();
-                              }
-                              final color = Color(
-                                int.parse(category.color.substring(1),
-                                        radix: 16) +
-                                    0xFF000000,
-                              );
-                              return Chip(
-                                avatar: Text(
-                                  category.icon,
-                                  style:
-                                      TextStyle(fontSize: _isMobile ? 14 : 16),
-                                ),
-                                label: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      category.name,
-                                      style: TextStyle(
-                                          fontSize: _isMobile ? 11 : 13),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.tune, size: _isMobile ? 12 : 14),
-                                  ],
-                                ),
-                                backgroundColor: color.withValues(alpha: 0.2),
-                                side: BorderSide(color: color, width: 2),
-                                deleteIcon: Icon(Icons.close,
-                                    size: _isMobile ? 14 : 16),
-                                onDeleted: () {
-                                  setState(() {
-                                    _searchCategoryId = null;
-                                    _applyFilters();
-                                  });
-                                },
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              );
-                            },
-                          ),
-
-                        // 高度な検索日付フィルター
-                        if (_searchStartDate != null || _searchEndDate != null)
-                          Chip(
-                            avatar: const Icon(Icons.tune,
-                                size: 16, color: Colors.purple),
-                            label: Text(
-                              _getAdvancedDateFilterLabel(),
-                              style: TextStyle(fontSize: _isMobile ? 11 : 13),
-                            ),
-                            backgroundColor:
-                                Colors.purple.withValues(alpha: 0.1),
-                            side: const BorderSide(
-                                color: Colors.purple, width: 2),
-                            deleteIcon:
-                                Icon(Icons.close, size: _isMobile ? 14 : 16),
-                            onDeleted: () {
-                              setState(() {
-                                _searchStartDate = null;
-                                _searchEndDate = null;
-                                _applyFilters();
-                              });
-                            },
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // リマインダーフィルターチップ
-                        if (_reminderFilter != null)
-                          Chip(
-                            avatar: Icon(
-                              _reminderFilter == 'overdue'
-                                  ? Icons.alarm_off
-                                  : _reminderFilter == 'today'
-                                      ? Icons.today
-                                      : Icons.access_alarm,
-                              size: 16,
-                              color: _reminderFilter == 'overdue'
-                                  ? Colors.red
-                                  : Colors.orange,
-                            ),
-                            label: Text(
-                              _reminderFilter == 'overdue'
-                                  ? '期限切れ'
-                                  : _reminderFilter == 'today'
-                                      ? '今日'
-                                      : '24時間以内',
-                              style: TextStyle(fontSize: _isMobile ? 11 : 13),
-                            ),
-                            backgroundColor: (_reminderFilter == 'overdue'
-                                    ? Colors.red
-                                    : Colors.orange)
-                                .withValues(alpha: 0.1),
-                            deleteIcon:
-                                Icon(Icons.close, size: _isMobile ? 14 : 16),
-                            onDeleted: () {
-                              setState(() {
-                                _reminderFilter = null;
-                                _applyFilters();
-                              });
-                            },
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // お気に入りフィルター
-                        if (_showFavoritesOnly)
-                          Chip(
-                            avatar: const Icon(Icons.star,
-                                size: 16, color: Colors.amber),
-                            label: Text(
-                              'お気に入りのみ',
-                              style: TextStyle(fontSize: _isMobile ? 11 : 13),
-                            ),
-                            backgroundColor:
-                                Colors.amber.withValues(alpha: 0.1),
-                            deleteIcon:
-                                Icon(Icons.close, size: _isMobile ? 14 : 16),
-                            onDeleted: () {
-                              setState(() {
-                                _showFavoritesOnly = false;
-                                _applyFilters();
-                              });
-                            },
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // カテゴリフィルター
-                        if (hasCategoryFilter)
-                          Builder(
-                            builder: (context) {
-                              if (_selectedCategoryId == 'uncategorized') {
-                                return Chip(
-                                  avatar: const Icon(Icons.inbox, size: 16),
-                                  label: Text(
-                                    '未分類',
-                                    style: TextStyle(
-                                        fontSize: _isMobile ? 11 : 13),
-                                  ),
-                                  backgroundColor:
-                                      Colors.grey.withValues(alpha: 0.1),
-                                  deleteIcon: Icon(Icons.close,
-                                      size: _isMobile ? 14 : 16),
-                                  onDeleted: () {
-                                    setState(() {
-                                      _selectedCategoryId = null;
-                                      _applyFilters();
-                                    });
-                                  },
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                );
-                              }
-                              final category =
-                                  _getCategoryById(_selectedCategoryId);
-                              if (category == null) {
-                                return const SizedBox.shrink();
-                              }
-                              final color = Color(
-                                int.parse(category.color.substring(1),
-                                        radix: 16) +
-                                    0xFF000000,
-                              );
-                              return Chip(
-                                avatar: Text(
-                                  category.icon,
-                                  style:
-                                      TextStyle(fontSize: _isMobile ? 14 : 16),
-                                ),
-                                label: Text(
-                                  category.name,
-                                  style:
-                                      TextStyle(fontSize: _isMobile ? 11 : 13),
-                                ),
-                                backgroundColor: color.withValues(alpha: 0.1),
-                                side: BorderSide(color: color, width: 1),
-                                deleteIcon: Icon(Icons.close,
-                                    size: _isMobile ? 14 : 16),
-                                onDeleted: () {
-                                  setState(() {
-                                    _selectedCategoryId = null;
-                                    _applyFilters();
-                                  });
-                                },
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              );
-                            },
-                          ),
-
-                        // 日付フィルター
-                        if (hasDateFilter)
-                          Chip(
-                            avatar: const Icon(Icons.calendar_today, size: 16),
-                            label: Text(
-                              _getDateFilterLabel(),
-                              style: TextStyle(fontSize: _isMobile ? 11 : 13),
-                            ),
-                            deleteIcon:
-                                Icon(Icons.close, size: _isMobile ? 14 : 16),
-                            onDeleted: () {
-                              setState(() {
-                                _startDate = null;
-                                _endDate = null;
-                                _selectedDateFilter = '全期間';
-                                _applyFilters();
-                              });
-                            },
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // ソート表示
-                        if (_sortType != SortType.updatedDesc)
-                          Chip(
-                            avatar: Icon(_getSortIcon(_sortType), size: 16),
-                            label: Text(
-                              _sortType.label,
-                              style: TextStyle(fontSize: _isMobile ? 11 : 13),
-                            ),
-                            backgroundColor:
-                                Colors.green.withValues(alpha: 0.1),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // 件数表示
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${_filteredNotes.length}件',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                                fontSize: _isMobile ? 11 : 13,
-                              ),
-                            ),
-                            if (!_showFavoritesOnly &&
-                                _reminderFilter == null) ...[
-                              Text(
-                                ' / ',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: _isMobile ? 11 : 13,
-                                ),
-                              ),
-                              Icon(Icons.push_pin,
-                                  color: Colors.amber,
-                                  size: _isMobile ? 14 : 16),
-                              Text(
-                                ' ${_notes.where((n) => n.isPinned).length}',
-                                style: TextStyle(
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: _isMobile ? 11 : 13,
-                                ),
-                              ),
-                              Text(
-                                ' / ',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: _isMobile ? 11 : 13,
-                                ),
-                              ),
-                              Icon(Icons.star,
-                                  color: Colors.amber,
-                                  size: _isMobile ? 14 : 16),
-                              Text(
-                                ' ${_notes.where((n) => n.isFavorite).length}',
-                                style: TextStyle(
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: _isMobile ? 11 : 13,
-                                ),
-                              ),
-                              if (_notes
-                                  .where((n) => n.reminderDate != null)
-                                  .isNotEmpty) ...[
-                                Text(
-                                  ' / ',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: _isMobile ? 11 : 13,
-                                  ),
-                                ),
-                                Icon(Icons.alarm,
-                                    color: Colors.orange,
-                                    size: _isMobile ? 14 : 16),
-                                Text(
-                                  ' ${_notes.where((n) => n.reminderDate != null).length}',
-                                  style: TextStyle(
-                                    color: Colors.orange,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: _isMobile ? 11 : 13,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                FilterChipsArea(
+                  hasAnyFilter: hasAnyFilter,
+                  sortType: _sortType,
+                  showFavoritesOnly: _showFavoritesOnly,
+                  reminderFilter: _reminderFilter,
+                  searchText: _searchController.text,
+                  searchCategoryId: _searchCategoryId,
+                  searchStartDate: _searchStartDate,
+                  searchEndDate: _searchEndDate,
+                  selectedCategoryId: _selectedCategoryId,
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  selectedDateFilter: _selectedDateFilter,
+                  filteredNotes: _filteredNotes,
+                  notes: _notes,
+                  categories: _categories,
+                  isMobile: _isMobile,
+                  onClearSearch: (_) => _searchController.clear(),
+                  onClearSearchCategory: (_) {
+                    setState(() {
+                      _searchCategoryId = null;
+                      _applyFilters();
+                    });
+                  },
+                  onClearSearchDates: (_, __) {
+                    setState(() {
+                      _searchStartDate = null;
+                      _searchEndDate = null;
+                      _applyFilters();
+                    });
+                  },
+                  onClearReminderFilter: (_) {
+                    setState(() {
+                      _reminderFilter = null;
+                      _applyFilters();
+                    });
+                  },
+                  onClearFavoriteFilter: (value) {
+                    setState(() {
+                      _showFavoritesOnly = value;
+                      _applyFilters();
+                    });
+                  },
+                  onClearCategoryFilter: (_) {
+                    setState(() {
+                      _selectedCategoryId = null;
+                      _applyFilters();
+                    });
+                  },
+                  onClearDateFilter: (_, __, filter) {
+                    setState(() {
+                      _startDate = null;
+                      _endDate = null;
+                      _selectedDateFilter = filter;
+                      _applyFilters();
+                    });
+                  },
+                  getSortIcon: _getSortIcon,
+                ),
                 // メモ一覧
                 Expanded(
                   child: _filteredNotes.isEmpty
@@ -1858,490 +1475,28 @@ class _HomePageState extends State<HomePage> {
                             itemCount: _filteredNotes.length,
                             itemBuilder: (context, index) {
                               final note = _filteredNotes[index];
-                              final category =
-                                  _getCategoryById(note.categoryId);
+                              final category = _getCategoryById(note.categoryId);
 
-                              Color? categoryColor;
-                              if (category != null) {
-                                categoryColor = Color(
-                                  int.parse(category.color.substring(1),
-                                          radix: 16) +
-                                      0xFF000000,
-                                );
-                              }
-
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                  horizontal: 8,
-                                ),
-                                // ピン留めメモの背景色を変更（ダークモード対応）
-                                color: note.isPinned
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.amber.withValues(alpha: 0.15)
-                                        : Colors.amber.withValues(alpha: 0.1))
-                                    : note.reminderDate != null &&
-                                            note.isOverdue
-                                        ? (Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.red.withValues(alpha: 0.15)
-                                            : Colors.red
-                                                .withValues(alpha: 0.05))
-                                        : null,
-                                // 期限切れの場合は赤枠、ピン留めの場合は黄色枠
-                                shape: note.reminderDate != null &&
-                                        note.isOverdue
-                                    ? RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                        side: const BorderSide(
-                                            color: Colors.red, width: 2),
-                                      )
-                                    : note.isPinned
-                                        ? RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            side: BorderSide(
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.amber.shade600
-                                                  : Colors.amber.shade700,
-                                              width: 2,
-                                            ),
-                                          )
-                                        : null,
-                                child: ListTile(
-                                  leading: category != null
-                                      ? Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: categoryColor!
-                                                .withValues(alpha: 0.2),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: categoryColor,
-                                              width: 2,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              category.icon,
-                                              style:
-                                                  const TextStyle(fontSize: 20),
-                                            ),
-                                          ),
-                                        )
-                                      : note.isFavorite // お気に入りの場合はスターアイコン
-                                          ? const Icon(Icons.star,
-                                              color: Colors.amber, size: 32)
-                                          : null,
-                                  title: Row(
-                                    children: [
-                                      // ピン留めアイコン（追加）
-                                      if (note.isPinned) ...[
-                                        Icon(Icons.push_pin,
-                                            color: Colors.amber.shade700,
-                                            size: 18),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      // リマインダーアイコン
-                                      if (note.reminderDate != null) ...[
-                                        Icon(
-                                          note.isOverdue
-                                              ? Icons.alarm_off
-                                              : note.isDueSoon
-                                                  ? Icons.alarm_on
-                                                  : Icons.alarm,
-                                          color: note.isOverdue
-                                              ? Colors.red
-                                              : note.isDueSoon
-                                                  ? Colors.orange
-                                                  : Colors.grey,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      // お気に入りマーク（カテゴリがある場合も表示）
-                                      if (note.isFavorite &&
-                                          category != null) ...[
-                                        const Icon(Icons.star,
-                                            color: Colors.amber, size: 18),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      Expanded(
-                                        child: _buildHighlightedText(
-                                          note.title.isEmpty
-                                              ? '(タイトルなし)'
-                                              : note.title,
-                                          _searchController.text,
-                                          isTitle: true,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (note.content.isNotEmpty) ...[
-                                        SizedBox(height: _isMobile ? 2 : 4),
-                                        _buildHighlightedText(
-                                          note.content,
-                                          _searchController.text,
-                                          maxLines: _isMobile ? 1 : 2,
-                                        ),
-                                      ],
-                                      SizedBox(height: _isMobile ? 2 : 4),
-                                      // メタ情報を2行に分ける（修正）
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // 1行目：ピン留め、リマインダー、カテゴリ
-                                          Row(
-                                            children: [
-                                              // ピン留めバッジ
-                                              if (note.isPinned) ...[
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        Colors.amber.shade700,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: const Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Icon(Icons.push_pin,
-                                                          size: 10,
-                                                          color: Colors.white),
-                                                      SizedBox(width: 2),
-                                                      Text(
-                                                        'ピン留め',
-                                                        style: TextStyle(
-                                                          fontSize: 10,
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              // リマインダー日時表示
-                                              if (note.reminderDate !=
-                                                  null) ...[
-                                                Icon(
-                                                  Icons.alarm,
-                                                  size: 12,
-                                                  color: note.isOverdue
-                                                      ? Colors.red
-                                                      : note.isDueSoon
-                                                          ? Colors.orange
-                                                          : Colors.grey[600],
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  _formatReminderDate(
-                                                      note.reminderDate!),
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: note.isOverdue
-                                                        ? Colors.red
-                                                        : note.isDueSoon
-                                                            ? Colors.orange
-                                                            : Colors.grey[600],
-                                                    fontWeight:
-                                                        note.isOverdue ||
-                                                                note.isDueSoon
-                                                            ? FontWeight.bold
-                                                            : FontWeight.normal,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text('•',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.grey[600])),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              // カテゴリ表示（Flexibleでラップ）
-                                              if (category != null) ...[
-                                                Text(category.icon,
-                                                    style: const TextStyle(
-                                                        fontSize: 12)),
-                                                const SizedBox(width: 4),
-                                                Flexible(
-                                                  child: Text(
-                                                    category.name,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: categoryColor,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    maxLines: 1,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                          // 2行目：添付ファイル数と更新日時
-                                          SizedBox(height: _isMobile ? 2 : 4),
-                                          Row(
-                                            children: [
-                                              // 添付ファイル数表示
-                                              FutureBuilder<int>(
-                                                future: AttachmentCacheService.getAttachmentCount(
-                                                    note.id),
-                                                builder: (context, snapshot) {
-                                                  final count =
-                                                      snapshot.data ?? 0;
-                                                  if (count == 0) {
-                                                    return const SizedBox
-                                                        .shrink();
-                                                  }
-                                                  return Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(
-                                                          Icons.attach_file,
-                                                          size: 12,
-                                                          color: Colors.blue),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '$count',
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.blue,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Text('•',
-                                                          style: TextStyle(
-                                                              color: Colors
-                                                                  .grey[600])),
-                                                      const SizedBox(width: 8),
-                                                    ],
-                                                  );
-                                                },
-                                              ),
-                                              // 更新日時
-                                              Flexible(
-                                                child: Text(
-                                                  '更新: ${DateFormatter.formatRelative(note.updatedAt)}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: _isMobile
-                                      ? PopupMenuButton<String>(
-                                          icon: const Icon(Icons.more_vert),
-                                          onSelected: (value) {
-                                            if (value == 'pin') {
-                                              _togglePin(note);
-                                            } else if (value == 'archive') {
-                                              _showArchiveDialog(note);
-                                            } else if (value == 'share') {
-                                              _showShareOptionsDialog(note);
-                                            } else if (value == 'reminder') {
-                                              _quickSetReminder(note);
-                                            } else if (value == 'favorite') {
-                                              _toggleFavorite(note);
-                                            } else if (value == 'delete') {
-                                              _showDeleteDialog(note);
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem(
-                                              value: 'pin',
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    note.isPinned
-                                                        ? Icons.push_pin
-                                                        : Icons
-                                                            .push_pin_outlined,
-                                                    color: note.isPinned
-                                                        ? Colors.amber
-                                                        : Colors.grey,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(note.isPinned
-                                                      ? 'ピン留め解除'
-                                                      : 'ピン留め'),
-                                                ],
-                                              ),
-                                            ),
-                                            PopupMenuItem(
-                                              value: 'favorite',
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    note.isFavorite
-                                                        ? Icons.star
-                                                        : Icons.star_border,
-                                                    color: note.isFavorite
-                                                        ? Colors.amber
-                                                        : Colors.grey,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(note.isFavorite
-                                                      ? 'お気に入り解除'
-                                                      : 'お気に入り'),
-                                                ],
-                                              ),
-                                            ),
-                                            if (note.reminderDate == null)
-                                              const PopupMenuItem(
-                                                value: 'reminder',
-                                                child: Row(
-                                                  children: [
-                                                    Icon(Icons.alarm_add,
-                                                        color: Colors.orange),
-                                                    SizedBox(width: 8),
-                                                    Text('リマインダー'),
-                                                  ],
-                                                ),
-                                              ),
-                                            const PopupMenuItem(
-                                              value: 'share',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.share,
-                                                      color: Colors.blue),
-                                                  SizedBox(width: 8),
-                                                  Text('共有'),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'archive',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.archive,
-                                                      color: Colors.grey),
-                                                  SizedBox(width: 8),
-                                                  Text('アーカイブ'),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuDivider(),
-                                            const PopupMenuItem(
-                                              value: 'delete',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.delete,
-                                                      color: Colors.red),
-                                                  SizedBox(width: 8),
-                                                  Text('削除'),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      : Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            // デスクトップ版（既存のコード）
-                                            IconButton(
-                                              icon: Icon(
-                                                note.isPinned
-                                                    ? Icons.push_pin
-                                                    : Icons.push_pin_outlined,
-                                                color: note.isPinned
-                                                    ? Colors.amber.shade700
-                                                    : Colors.grey,
-                                              ),
-                                              onPressed: () => _togglePin(note),
-                                              tooltip: note.isPinned
-                                                  ? 'ピン留めを解除'
-                                                  : 'ピン留め',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.archive,
-                                                  color: Colors.grey),
-                                              onPressed: () =>
-                                                  _showArchiveDialog(note),
-                                              tooltip: 'アーカイブ',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.share,
-                                                  color: Colors.blue),
-                                              onPressed: () =>
-                                                  _showShareOptionsDialog(note),
-                                              tooltip: 'メモを共有',
-                                            ),
-                                            if (note.reminderDate == null)
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.alarm_add,
-                                                    color: Colors.grey),
-                                                onPressed: () =>
-                                                    _quickSetReminder(note),
-                                                tooltip: 'リマインダーを設定',
-                                              ),
-                                            IconButton(
-                                              icon: Icon(
-                                                note.isFavorite
-                                                    ? Icons.star
-                                                    : Icons.star_border,
-                                                color: note.isFavorite
-                                                    ? Colors.amber
-                                                    : Colors.grey,
-                                              ),
-                                              onPressed: () =>
-                                                  _toggleFavorite(note),
-                                              tooltip: note.isFavorite
-                                                  ? 'お気に入りから削除'
-                                                  : 'お気に入りに追加',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete,
-                                                  color: Colors.red),
-                                              onPressed: () =>
-                                                  _showDeleteDialog(note),
-                                            ),
-                                          ],
-                                        ),
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            NoteEditorPage(note: note),
-                                      ),
-                                    );
-                                    _loadNotes();
-                                  },
-                                ),
+                              return NoteCardItem(
+                                note: note,
+                                category: category,
+                                searchQuery: _searchController.text,
+                                isMobile: _isMobile,
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => NoteEditorPage(note: note),
+                                    ),
+                                  );
+                                  _loadNotes();
+                                },
+                                onTogglePin: _togglePin,
+                                onArchive: _showArchiveDialog,
+                                onShare: _showShareOptionsDialog,
+                                onSetReminder: _quickSetReminder,
+                                onToggleFavorite: _toggleFavorite,
+                                onDelete: _showDeleteDialog,
                               );
                             },
                           ),
@@ -2363,134 +1518,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// リマインダー統計チップを作成するヘルパーメソッド
-  Widget _buildReminderStatChip({
-    required IconData icon,
-    required String label,
-    required int count,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color, width: 1.5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                count.toString(),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  String _getDateFilterLabel() {
-    if (_selectedDateFilter == 'カスタム' || _selectedDateFilter == '全期間') {
-      final label = DateFormatter.getDateRangeLabel(_startDate, _endDate);
-      if (label.isNotEmpty) return label;
-    }
-    return _selectedDateFilter;
-  }
-
-  Widget _buildHighlightedText(
-    String text,
-    String query, {
-    bool isTitle = false,
-    int? maxLines,
-  }) {
-    if (query.isEmpty) {
-      return Text(
-        text,
-        style: TextStyle(
-          fontWeight: isTitle ? FontWeight.bold : FontWeight.normal,
-          fontSize: _isMobile
-              ? (isTitle ? 14 : 12) // モバイルで小さく
-              : (isTitle ? 16 : 14),
-        ),
-        maxLines: maxLines,
-        overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
-      );
-    }
-
-    final lowerText = text.toLowerCase();
-    final lowerQuery = query.toLowerCase();
-    final spans = <TextSpan>[];
-    int start = 0;
-
-    while (true) {
-      final index = lowerText.indexOf(lowerQuery, start);
-      if (index == -1) {
-        if (start < text.length) {
-          spans.add(TextSpan(text: text.substring(start)));
-        }
-        break;
-      }
-
-      if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index)));
-      }
-
-      spans.add(
-        TextSpan(
-          text: text.substring(index, index + query.length),
-          style: const TextStyle(
-            backgroundColor: Colors.yellow,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-
-      start = index + query.length;
-    }
-
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          color: Colors.black87,
-          fontWeight: isTitle ? FontWeight.bold : FontWeight.normal,
-          fontSize: _isMobile
-              ? (isTitle ? 14 : 12) // モバイルで小さく
-              : (isTitle ? 16 : 14),
-        ),
-        children: spans,
-      ),
-      maxLines: maxLines,
-      overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
-    );
-  }
 
   void _showDeleteDialog(Note note) {
     showDialog(
@@ -2556,14 +1584,4 @@ class _HomePageState extends State<HomePage> {
   }
 
   // 高度な検索の日付範囲ラベル
-  String _getAdvancedDateFilterLabel() {
-    if (_searchStartDate != null && _searchEndDate != null) {
-      return '${DateFormat('MM/dd').format(_searchStartDate!)} 〜 ${DateFormat('MM/dd').format(_searchEndDate!)}';
-    } else if (_searchStartDate != null) {
-      return '${DateFormat('MM/dd').format(_searchStartDate!)} 以降';
-    } else if (_searchEndDate != null) {
-      return '${DateFormat('MM/dd').format(_searchEndDate!)} まで';
-    }
-    return '日付';
-  }
 }
