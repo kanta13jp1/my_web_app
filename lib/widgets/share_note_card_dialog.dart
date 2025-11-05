@@ -303,11 +303,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
               Positioned(
                 left: -10000,
                 top: 0,
-                child: SizedBox(
-                  width: 1080,
-                  height: 1080,
-                  child: _buildCardWidget(),
-                ),
+                child: _buildCardWidget(),
               ),
           ],
         ),

@@ -36,14 +36,15 @@ class NoteCardWidget extends StatelessWidget {
     }
   }
 
-  // ミニマルテンプレート
+  // ミニマルテンプレート（全内容表示）
   Widget _buildMinimalCard() {
     return Container(
       width: 1080,
-      height: 1080,
+      constraints: const BoxConstraints(minHeight: 1080),
       color: Colors.white,
       padding: const EdgeInsets.all(80),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // タイトル
@@ -55,22 +56,16 @@ class NoteCardWidget extends StatelessWidget {
               color: Colors.black87,
               height: 1.3,
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 40),
           
-          // コンテンツ
-          Expanded(
-            child: Text(
-              note.content,
-              style: const TextStyle(
-                fontSize: 42,
-                color: Colors.black54,
-                height: 1.6,
-              ),
-              maxLines: 12,
-              overflow: TextOverflow.ellipsis,
+          // コンテンツ（全内容）
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 42,
+              color: Colors.black54,
+              height: 1.6,
             ),
           ),
           
@@ -83,7 +78,7 @@ class NoteCardWidget extends StatelessWidget {
     );
   }
 
-  // モダンテンプレート
+  // モダンテンプレート（全内容表示）
   Widget _buildModernCard() {
     final categoryColor = category != null
         ? Color(int.parse(category!.color.substring(1), radix: 16) + 0xFF000000)
@@ -91,7 +86,7 @@ class NoteCardWidget extends StatelessWidget {
 
     return Container(
       width: 1080,
-      height: 1080,
+      constraints: const BoxConstraints(minHeight: 1080),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -100,6 +95,7 @@ class NoteCardWidget extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(80),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // カテゴリバッジ
@@ -107,58 +103,41 @@ class NoteCardWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: categoryColor.withValues(alpha: 0.1),
+                color: categoryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: categoryColor, width: 2),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    category!.icon,
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    category!.name,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: categoryColor,
-                    ),
-                  ),
-                ],
+              child: Text(
+                '# ${category!.name}',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
+                  color: categoryColor,
+                ),
               ),
             ),
           
-          const SizedBox(height: 40),
+          if (category != null) const SizedBox(height: 30),
           
           // タイトル
           Text(
             note.title.isEmpty ? '(タイトルなし)' : note.title,
             style: const TextStyle(
-              fontSize: 64,
+              fontSize: 56,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
               height: 1.3,
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
           
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
           
-          // コンテンツ
-          Expanded(
-            child: Text(
-              note.content,
-              style: const TextStyle(
-                fontSize: 42,
-                color: Colors.black54,
-                height: 1.6,
-              ),
-              maxLines: 10,
-              overflow: TextOverflow.ellipsis,
+          // コンテンツ（全内容）
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 38,
+              color: Colors.black54,
+              height: 1.6,
             ),
           ),
           
@@ -171,27 +150,24 @@ class NoteCardWidget extends StatelessWidget {
     );
   }
 
-  // グラデーションテンプレート
+  // グラデーションテンプレート（全内容表示）
   Widget _buildGradientCard() {
-    final categoryColor = category != null
-        ? Color(int.parse(category!.color.substring(1), radix: 16) + 0xFF000000)
-        : Colors.blue;
-
     return Container(
       width: 1080,
-      height: 1080,
-      decoration: BoxDecoration(
+      constraints: const BoxConstraints(minHeight: 1080),
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            categoryColor,
-            categoryColor.withValues(alpha: 0.6),
+            Color(0xFF667eea),
+            Color(0xFF764ba2),
           ],
         ),
       ),
       padding: const EdgeInsets.all(80),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // タイトル
@@ -202,67 +178,39 @@ class NoteCardWidget extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: Colors.white,
               height: 1.3,
-              shadows: [
-                Shadow(
-                  color: Colors.black26,
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
-                ),
-              ],
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
           
           const SizedBox(height: 40),
           
-          // コンテンツ
-          Expanded(
-            child: Text(
-              note.content,
-              style: const TextStyle(
-                fontSize: 42,
-                color: Colors.white,
-                height: 1.6,
-                shadows: [
-                  Shadow(
-                    color: Colors.black26,
-                    offset: Offset(1, 1),
-                    blurRadius: 2,
-                  ),
-                ],
-              ),
-              maxLines: 12,
-              overflow: TextOverflow.ellipsis,
+          // コンテンツ（全内容）
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 42,
+              color: Colors.white70,
+              height: 1.6,
             ),
           ),
           
           const SizedBox(height: 40),
           
           // フッター
-          _buildFooter(Colors.white70, Colors.white),
+          _buildFooter(Colors.white24, Colors.white),
         ],
       ),
     );
   }
 
-  // ダークモードテンプレート
+  // ダークモードテンプレート（全内容表示）
   Widget _buildDarkModeCard() {
     return Container(
       width: 1080,
-      height: 1080,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1a1a1a),
-            Color(0xFF0d0d0d),
-          ],
-        ),
-      ),
+      constraints: const BoxConstraints(minHeight: 1080),
+      color: const Color(0xFF1a1a1a),
       padding: const EdgeInsets.all(80),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // タイトル
@@ -274,164 +222,146 @@ class NoteCardWidget extends StatelessWidget {
               color: Colors.white,
               height: 1.3,
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
           
           const SizedBox(height: 40),
           
-          // コンテンツ
-          Expanded(
-            child: Text(
-              note.content,
-              style: const TextStyle(
-                fontSize: 42,
-                color: Colors.white70,
-                height: 1.6,
-              ),
-              maxLines: 12,
-              overflow: TextOverflow.ellipsis,
+          // コンテンツ（全内容）
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 42,
+              color: Colors.white60,
+              height: 1.6,
             ),
           ),
           
           const SizedBox(height: 40),
           
           // フッター
-          _buildFooter(Colors.white24, Colors.white70),
+          _buildFooter(Colors.white12, Colors.white70),
         ],
       ),
     );
   }
 
-  // カラフルテンプレート
+  // カラフルテンプレート（全内容表示）
   Widget _buildColorfulCard() {
     return Container(
       width: 1080,
-      height: 1080,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFF6B6B),
-            Color(0xFFFFE66D),
-            Color(0xFF4ECDC4),
-            Color(0xFF95E1D3),
-          ],
-          stops: [0.0, 0.33, 0.66, 1.0],
-        ),
+      constraints: const BoxConstraints(minHeight: 1080),
+      decoration: BoxDecoration(
+        color: Colors.orange[50],
+        border: Border.all(color: Colors.orange, width: 8),
       ),
       padding: const EdgeInsets.all(80),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // タイトル
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Text(
-              note.title.isEmpty ? '(タイトルなし)' : note.title,
-              style: const TextStyle(
-                fontSize: 56,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                height: 1.3,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+          Text(
+            note.title.isEmpty ? '(タイトルなし)' : note.title,
+            style: const TextStyle(
+              fontSize: 64,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFe65100),
+              height: 1.3,
             ),
           ),
           
           const SizedBox(height: 40),
           
-          // コンテンツ
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                note.content,
-                style: const TextStyle(
-                  fontSize: 38,
-                  color: Colors.black87,
-                  height: 1.6,
-                ),
-                maxLines: 10,
-                overflow: TextOverflow.ellipsis,
-              ),
+          // コンテンツ（全内容）
+          Text(
+            note.content,
+            style: const TextStyle(
+              fontSize: 42,
+              color: Color(0xFF5d4037),
+              height: 1.6,
             ),
           ),
           
           const SizedBox(height: 40),
           
           // フッター
-          _buildFooter(Colors.white, Colors.white),
+          _buildFooter(Colors.orange[200]!, const Color(0xFFe65100)),
         ],
       ),
     );
   }
 
-  // 共通フッター
+  // フッター（統計情報 + ロゴ）
   Widget _buildFooter(Color dividerColor, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Divider(color: dividerColor, thickness: 2),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 統計情報
-            if (cardStyle.includeStats)
-              Row(
-                children: [
-                  Icon(Icons.text_fields, color: textColor, size: 32),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$characterCount文字',
-                    style: TextStyle(fontSize: 28, color: textColor),
-                  ),
-                  const SizedBox(width: 24),
-                  Icon(Icons.calendar_today, color: textColor, size: 32),
-                  const SizedBox(width: 8),
-                  Text(
-                    DateFormat('yyyy/MM/dd').format(note.createdAt),
-                    style: TextStyle(fontSize: 28, color: textColor),
-                  ),
-                ],
-              ),
-            
-            // ロゴ
-            if (cardStyle.includeLogo)
-              Row(
-                children: [
-                  Icon(Icons.note_alt, color: textColor, size: 40),
-                  const SizedBox(width: 12),
-                  Text(
-                    'マイメモ',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ],
-              ),
-          ],
+        // 区切り線
+        Container(
+          height: 2,
+          color: dividerColor,
         ),
+        
+        const SizedBox(height: 30),
+        
+        // 統計情報
+        if (cardStyle.includeStats)
+          Row(
+            children: [
+              Icon(
+                Icons.text_fields,
+                size: 32,
+                color: textColor.withOpacity(0.7),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${characterCount}文字',
+                style: TextStyle(
+                  fontSize: 28,
+                  color: textColor.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(width: 40),
+              Icon(
+                Icons.calendar_today,
+                size: 32,
+                color: textColor.withOpacity(0.7),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                DateFormat('yyyy/MM/dd').format(note.createdAt),
+                style: TextStyle(
+                  fontSize: 28,
+                  color: textColor.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        
+        if (cardStyle.includeStats && cardStyle.includeLogo)
+          const SizedBox(height: 20),
+        
+        // ロゴ
+        if (cardStyle.includeLogo)
+          Row(
+            children: [
+              Icon(
+                Icons.edit_note,
+                size: 40,
+                color: textColor.withOpacity(0.7),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'マイメモ',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: textColor.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
