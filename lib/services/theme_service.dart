@@ -68,7 +68,9 @@ class ThemeService extends ChangeNotifier {
         seedColor: _primaryColor,
         brightness: Brightness.light,
       ),
-      textTheme: GoogleFonts.notoSansJpTextTheme(), // ← 追加
+      textTheme: GoogleFonts.notoSansJpTextTheme().apply(
+        fontFamilyFallback: ['Noto Sans', 'Noto Color Emoji', 'sans-serif'],
+      ),
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
@@ -100,8 +102,9 @@ class ThemeService extends ChangeNotifier {
         brightness: Brightness.dark,
       ),
       textTheme: GoogleFonts.notoSansJpTextTheme(
-        // ← 追加
         ThemeData.dark().textTheme,
+      ).apply(
+        fontFamilyFallback: ['Noto Sans', 'Noto Color Emoji', 'sans-serif'],
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
