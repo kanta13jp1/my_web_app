@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:io';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../models/card_template.dart';
 import '../widgets/note_card_widget.dart';
 import '../services/note_card_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 // Web用
 import 'dart:html' as html;
 
@@ -29,10 +33,15 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   bool _includeLogo = true;
   bool _isGenerating = false;
   bool _isLoadingPreview = false;
-  
-  // プレビュー用のGlobalKey
-  final GlobalKey _repaintKey = GlobalKey();
+
+  // プレビュー用のGlobalKey（複数ページ対応）
+  final List<GlobalKey> _repaintKeys = [];
   bool _showPreview = false;
+  List<String> _contentChunks = [];
+
+  // 1ページあたりの最大文字数（調整可能）
+  static const int _maxCharsPerPage = 800;
+  static const int _maxPages = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -208,12 +217,13 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                   onPressed: () async {
                                     setState(() {
                                       _isLoadingPreview = true;
+                                      _prepareContentChunks(); // コンテンツチャンクを準備
                                       _showPreview = true;
                                     });
-                                    
+
                                     // レンダリング待機
                                     await Future.delayed(const Duration(milliseconds: 500));
-                                    
+
                                     // フレーム完了を待つ
                                     final completer = Completer<void>();
                                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -221,19 +231,24 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     });
                                     WidgetsBinding.instance.scheduleFrame();
                                     await completer.future;
-                                    
+
                                     // さらに待機
                                     await Future.delayed(const Duration(milliseconds: 1500));
-                                    
+
                                     if (mounted) {
                                       setState(() {
                                         _isLoadingPreview = false;
                                       });
-                                      
+
+                                      final pageCount = _contentChunks.length;
+                                      final message = pageCount > 1
+                                          ? '✓ プレビュー準備完了！$pageCount枚の画像を生成します'
+                                          : '✓ プレビュー準備完了！「ダウンロード」ボタンをクリックしてください';
+
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('✓ プレビュー準備完了！「ダウンロード」ボタンをクリックしてください'),
-                                          duration: Duration(seconds: 2),
+                                        SnackBar(
+                                          content: Text(message),
+                                          duration: const Duration(seconds: 2),
                                           backgroundColor: Colors.green,
                                         ),
                                       );
@@ -309,13 +324,16 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
             
             // プレビュー表示エリア（画面外に配置）
             if (_showPreview)
-              Positioned(
-                left: -10000,
-                top: -10000,
-                child: SizedBox(
-                  width: 1080,
-                  // 高さの制約を削除し、コンテンツに応じて自動調整
-                  child: _buildCardWidget(),
+              ...List.generate(
+                _contentChunks.length,
+                (index) => Positioned(
+                  left: -10000,
+                  top: -10000 - (index * 3000), // 各カードを異なる位置に配置
+                  child: SizedBox(
+                    width: 1080,
+                    // 高さの制約を削除し、コンテンツに応じて自動調整
+                    child: _buildCardWidget(index),
+                  ),
                 ),
               ),
           ],
@@ -324,7 +342,55 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
-  Widget _buildCardWidget() {
+  // コンテンツを複数のチャンクに分割
+  List<String> _splitContent(String content) {
+    if (content.length <= _maxCharsPerPage) {
+      return [content];
+    }
+
+    final List<String> chunks = [];
+    int startIndex = 0;
+
+    while (startIndex < content.length && chunks.length < _maxPages) {
+      int endIndex = startIndex + _maxCharsPerPage;
+
+      // 最後のチャンクの場合、または最大ページ数に達した場合
+      if (endIndex >= content.length || chunks.length == _maxPages - 1) {
+        chunks.add(content.substring(startIndex));
+        break;
+      }
+
+      // 文の区切りで分割を試みる
+      int splitIndex = endIndex;
+
+      // 句点、改行、スペースで区切りを探す
+      for (int i = endIndex; i > startIndex + (_maxCharsPerPage ~/ 2); i--) {
+        if (i < content.length && (content[i] == '。' || content[i] == '.' ||
+            content[i] == '\n' || content[i] == ' ')) {
+          splitIndex = i + 1;
+          break;
+        }
+      }
+
+      chunks.add(content.substring(startIndex, splitIndex));
+      startIndex = splitIndex;
+    }
+
+    return chunks;
+  }
+
+  // 初期化または再構築時にキーとチャンクを準備
+  void _prepareContentChunks() {
+    _contentChunks = _splitContent(widget.note.content);
+
+    // 必要な数のGlobalKeyを生成
+    _repaintKeys.clear();
+    for (int i = 0; i < _contentChunks.length; i++) {
+      _repaintKeys.add(GlobalKey());
+    }
+  }
+
+  Widget _buildCardWidget(int pageIndex) {
     final cardStyle = CardStyle(
       template: _selectedTemplate,
       includeStats: _includeStats,
@@ -336,13 +402,16 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     final wordCount = widget.note.content.split(RegExp(r'\s+')).length;
 
     return RepaintBoundary(
-      key: _repaintKey,
+      key: _repaintKeys[pageIndex],
       child: NoteCardWidget(
         note: widget.note,
         category: widget.category,
         cardStyle: cardStyle,
         wordCount: wordCount,
         characterCount: characterCount,
+        contentChunk: _contentChunks[pageIndex],
+        pageNumber: _contentChunks.length > 1 ? pageIndex + 1 : null,
+        totalPages: _contentChunks.length > 1 ? _contentChunks.length : null,
       ),
     );
   }
@@ -397,28 +466,42 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       // 少し待ってからキャプチャ開始
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // スクリーンショットを撮る
-      final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKey);
-
-      if (imageBytes == null) {
-        throw Exception('画像の生成に失敗しました。もう一度「プレビューを表示」ボタンを押してから再度お試しください。');
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      // Web版: ダウンロード
-      final blob = html.Blob([imageBytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filename = 'note_card_$timestamp.png';
-      
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
-        ..click();
-      
-      html.Url.revokeObjectUrl(url);
+      int successCount = 0;
+
+      // 各ページをキャプチャしてダウンロード
+      for (int i = 0; i < _repaintKeys.length; i++) {
+        // スクリーンショットを撮る
+        final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
+
+        if (imageBytes == null) {
+          throw Exception('画像 ${i + 1}/${_repaintKeys.length} の生成に失敗しました。');
+        }
+
+        if (!mounted) {
+          return;
+        }
+
+        // Web版: ダウンロード
+        final blob = html.Blob([imageBytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final filename = _repaintKeys.length > 1
+            ? 'note_card_${timestamp}_${i + 1}of${_repaintKeys.length}.png'
+            : 'note_card_$timestamp.png';
+
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute('download', filename)
+          ..click();
+
+        html.Url.revokeObjectUrl(url);
+
+        successCount++;
+
+        // 次の画像キャプチャまで少し待つ
+        if (i < _repaintKeys.length - 1) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
 
       if (!mounted) {
         return;
@@ -426,10 +509,14 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       Navigator.pop(context);
 
+      final message = successCount > 1
+          ? 'メモカード${successCount}枚をダウンロードしました！'
+          : 'メモカードをダウンロードしました！';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('メモカードをダウンロードしました！'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
@@ -439,7 +526,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('エラー: $e'),
+          content: Text('エラー: $e\nもう一度「プレビューを表示」ボタンを押してから再度お試しください。'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
@@ -463,24 +550,31 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       // 少し待ってからキャプチャ開始
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // スクリーンショットを撮る
-      final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKey);
+      final List<Uint8List> allImageBytes = [];
 
-      if (imageBytes == null) {
-        throw Exception('画像の生成に失敗しました。もう一度「プレビューを表示」ボタンを押してから再度お試しください。');
+      // 各ページをキャプチャ
+      for (int i = 0; i < _repaintKeys.length; i++) {
+        // スクリーンショットを撮る
+        final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
+
+        if (imageBytes == null) {
+          throw Exception('画像 ${i + 1}/${_repaintKeys.length} の生成に失敗しました。');
+        }
+
+        allImageBytes.add(imageBytes);
+
+        // 次の画像キャプチャまで少し待つ
+        if (i < _repaintKeys.length - 1) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
       }
 
       if (!mounted) {
         return;
       }
 
-      // 共有
-      await NoteCardService.shareNoteCard(
-        imageBytes: imageBytes,
-        noteTitle: widget.note.title.isEmpty
-            ? '(タイトルなし)'
-            : widget.note.title,
-      );
+      // 複数の画像を共有
+      await _shareMultipleImages(allImageBytes);
 
       if (!mounted) {
         return;
@@ -488,10 +582,14 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       Navigator.pop(context);
 
+      final message = allImageBytes.length > 1
+          ? 'メモカード${allImageBytes.length}枚を共有しました！'
+          : 'メモカードを共有しました！';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('メモカードを共有しました！'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
@@ -501,7 +599,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('エラー: $e'),
+          content: Text('エラー: $e\nもう一度「プレビューを表示」ボタンを押してから再度お試しください。'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
@@ -512,6 +610,33 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
           _isGenerating = false;
         });
       }
+    }
+  }
+
+  // 複数の画像を共有するヘルパー関数
+  Future<void> _shareMultipleImages(List<Uint8List> imageBytesList) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final List<XFile> files = [];
+
+      for (int i = 0; i < imageBytesList.length; i++) {
+        final filename = imageBytesList.length > 1
+            ? 'note_card_${timestamp}_${i + 1}of${imageBytesList.length}.png'
+            : 'note_card_$timestamp.png';
+        final file = File('${tempDir.path}/$filename');
+        await file.writeAsBytes(imageBytesList[i]);
+        files.add(XFile(file.path));
+      }
+
+      // 共有
+      await Share.shareXFiles(
+        files,
+        text: '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',
+      );
+    } catch (e) {
+      debugPrint('Error sharing note cards: $e');
+      rethrow;
     }
   }
 }

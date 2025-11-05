@@ -10,6 +10,9 @@ class NoteCardWidget extends StatelessWidget {
   final CardStyle cardStyle;
   final int wordCount;
   final int characterCount;
+  final String? contentChunk; // 分割されたコンテンツのチャンク（nullの場合は全コンテンツ）
+  final int? pageNumber; // 現在のページ番号（1から始まる）
+  final int? totalPages; // 総ページ数
 
   const NoteCardWidget({
     super.key,
@@ -18,6 +21,9 @@ class NoteCardWidget extends StatelessWidget {
     required this.cardStyle,
     required this.wordCount,
     required this.characterCount,
+    this.contentChunk,
+    this.pageNumber,
+    this.totalPages,
   });
 
   @override
@@ -38,6 +44,8 @@ class NoteCardWidget extends StatelessWidget {
 
   // ミニマルテンプレート（全内容表示）
   Widget _buildMinimalCard() {
+    final displayContent = contentChunk ?? note.content;
+
     return Container(
       width: 1080,
       constraints: const BoxConstraints(minHeight: 1080),
@@ -47,30 +55,53 @@ class NoteCardWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // タイトル
-          Text(
-            note.title.isEmpty ? '(タイトルなし)' : note.title,
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-              height: 1.3,
-            ),
+          // タイトル（ページ番号付き）
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  note.title.isEmpty ? '(タイトルなし)' : note.title,
+                  style: const TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              if (pageNumber != null && totalPages != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pageNumber/$totalPages',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 40),
-          
-          // コンテンツ（全内容）
+
+          // コンテンツ（全内容またはチャンク）
           Text(
-            note.content,
+            displayContent,
             style: const TextStyle(
               fontSize: 42,
               color: Colors.black54,
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // フッター
           _buildFooter(Colors.black26, Colors.black54),
         ],
@@ -83,6 +114,7 @@ class NoteCardWidget extends StatelessWidget {
     final categoryColor = category != null
         ? Color(int.parse(category!.color.substring(1), radix: 16) + 0xFF000000)
         : Colors.blue;
+    final displayContent = contentChunk ?? note.content;
 
     return Container(
       width: 1080,
@@ -98,26 +130,51 @@ class NoteCardWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // カテゴリバッジ
-          if (category != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '# ${category!.name}',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w600,
-                  color: categoryColor,
+          // カテゴリバッジとページ番号
+          Row(
+            children: [
+              if (category != null)
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '# ${category!.name}',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        color: categoryColor,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              if (pageNumber != null && totalPages != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pageNumber/$totalPages',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: categoryColor,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          
-          if (category != null) const SizedBox(height: 30),
-          
+            ],
+          ),
+
+          if (category != null || (pageNumber != null && totalPages != null))
+            const SizedBox(height: 30),
+
           // タイトル
           Text(
             note.title.isEmpty ? '(タイトルなし)' : note.title,
@@ -128,21 +185,21 @@ class NoteCardWidget extends StatelessWidget {
               height: 1.3,
             ),
           ),
-          
+
           const SizedBox(height: 30),
-          
-          // コンテンツ（全内容）
+
+          // コンテンツ（全内容またはチャンク）
           Text(
-            note.content,
+            displayContent,
             style: const TextStyle(
               fontSize: 38,
               color: Colors.black54,
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // フッター
           _buildFooter(Colors.black26, categoryColor),
         ],
@@ -152,6 +209,8 @@ class NoteCardWidget extends StatelessWidget {
 
   // グラデーションテンプレート（全内容表示）
   Widget _buildGradientCard() {
+    final displayContent = contentChunk ?? note.content;
+
     return Container(
       width: 1080,
       constraints: const BoxConstraints(minHeight: 1080),
@@ -170,31 +229,54 @@ class NoteCardWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // タイトル
-          Text(
-            note.title.isEmpty ? '(タイトルなし)' : note.title,
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.3,
-            ),
+          // タイトルとページ番号
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  note.title.isEmpty ? '(タイトルなし)' : note.title,
+                  style: const TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              if (pageNumber != null && totalPages != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pageNumber/$totalPages',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          
+
           const SizedBox(height: 40),
-          
-          // コンテンツ（全内容）
+
+          // コンテンツ（全内容またはチャンク）
           Text(
-            note.content,
+            displayContent,
             style: const TextStyle(
               fontSize: 42,
               color: Colors.white70,
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // フッター
           _buildFooter(Colors.white24, Colors.white),
         ],
@@ -204,6 +286,8 @@ class NoteCardWidget extends StatelessWidget {
 
   // ダークモードテンプレート（全内容表示）
   Widget _buildDarkModeCard() {
+    final displayContent = contentChunk ?? note.content;
+
     return Container(
       width: 1080,
       constraints: const BoxConstraints(minHeight: 1080),
@@ -213,31 +297,54 @@ class NoteCardWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // タイトル
-          Text(
-            note.title.isEmpty ? '(タイトルなし)' : note.title,
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.3,
-            ),
+          // タイトルとページ番号
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  note.title.isEmpty ? '(タイトルなし)' : note.title,
+                  style: const TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              if (pageNumber != null && totalPages != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pageNumber/$totalPages',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          
+
           const SizedBox(height: 40),
-          
-          // コンテンツ（全内容）
+
+          // コンテンツ（全内容またはチャンク）
           Text(
-            note.content,
+            displayContent,
             style: const TextStyle(
               fontSize: 42,
               color: Colors.white60,
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // フッター
           _buildFooter(Colors.white12, Colors.white70),
         ],
@@ -247,6 +354,8 @@ class NoteCardWidget extends StatelessWidget {
 
   // カラフルテンプレート（全内容表示）
   Widget _buildColorfulCard() {
+    final displayContent = contentChunk ?? note.content;
+
     return Container(
       width: 1080,
       constraints: const BoxConstraints(minHeight: 1080),
@@ -259,31 +368,54 @@ class NoteCardWidget extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // タイトル
-          Text(
-            note.title.isEmpty ? '(タイトルなし)' : note.title,
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFe65100),
-              height: 1.3,
-            ),
+          // タイトルとページ番号
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  note.title.isEmpty ? '(タイトルなし)' : note.title,
+                  style: const TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFe65100),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              if (pageNumber != null && totalPages != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pageNumber/$totalPages',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFe65100),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          
+
           const SizedBox(height: 40),
-          
-          // コンテンツ（全内容）
+
+          // コンテンツ（全内容またはチャンク）
           Text(
-            note.content,
+            displayContent,
             style: const TextStyle(
               fontSize: 42,
               color: Color(0xFF5d4037),
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // フッター
           _buildFooter(Colors.orange[200]!, const Color(0xFFe65100)),
         ],
