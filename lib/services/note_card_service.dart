@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../models/note.dart';
 import '../models/category.dart';
-import '../models/card_template.dart';
+import '../models/card_template.dart' as template;
 import '../widgets/note_card_widget.dart';
 
 class NoteCardService {
@@ -177,7 +177,7 @@ class NoteCardService {
   static Future<Uint8List?> generateNoteCard({
     required Note note,
     Category? category,
-    required CardStyle cardStyle,
+    required template.CardStyle cardStyle,
   }) async {
     // 文字数と単語数を計算
     final characterCount = note.content.length;
