@@ -1,0 +1,122 @@
+/// 哲学者の名言データモデル
+class PhilosopherQuote {
+  final String quote;
+  final String author;
+  final String imageUrl;
+  final String? authorDescription; // オプション: 哲学者の簡単な説明
+
+  const PhilosopherQuote({
+    required this.quote,
+    required this.author,
+    required this.imageUrl,
+    this.authorDescription,
+  });
+
+  /// 哲学者の名言リスト（日本語）
+  static const List<PhilosopherQuote> quotes = [
+    PhilosopherQuote(
+      quote: '何かを学ぶとき、実際にそれを行なうことによって我々は学ぶ。',
+      author: 'アリストテレス',
+      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '無知の知。私が知っているのは、自分が何も知らないということだけだ。',
+      author: 'ソクラテス',
+      imageUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '知恵の始まりは定義にあり。',
+      author: 'プラトン',
+      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '我思う、ゆえに我あり。',
+      author: 'ルネ・デカルト',
+      imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&h=800&fit=crop',
+      authorDescription: '近世哲学の祖',
+    ),
+    PhilosopherQuote(
+      quote: '経験なき概念は空虚であり、概念なき経験は盲目である。',
+      author: 'イマヌエル・カント',
+      imageUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&h=800&fit=crop',
+      authorDescription: 'ドイツの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '深淵を覗く時、深淵もまたこちらを覗いている。',
+      author: 'フリードリヒ・ニーチェ',
+      imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&h=800&fit=crop',
+      authorDescription: 'ドイツの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '千里の道も一歩から。',
+      author: '老子',
+      imageUrl: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=800&h=800&fit=crop',
+      authorDescription: '古代中国の哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '学びて思わざれば則ち罔し、思いて学ばざれば則ち殆し。',
+      author: '孔子',
+      imageUrl: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=800&fit=crop',
+      authorDescription: '古代中国の思想家',
+    ),
+    PhilosopherQuote(
+      quote: '人間は自由の刑に処せられている。',
+      author: 'ジャン＝ポール・サルトル',
+      imageUrl: 'https://images.unsplash.com/photo-1528892952291-009c663ce843?w=800&h=800&fit=crop',
+      authorDescription: 'フランスの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '汝自身を知れ。',
+      author: 'ソクラテス',
+      imageUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '習慣は第二の天性なり。',
+      author: 'アリストテレス',
+      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '真の知恵とは、自分が無知であることを知ることである。',
+      author: 'ソクラテス',
+      imageUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '人間は考える葦である。',
+      author: 'ブレーズ・パスカル',
+      imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=800&fit=crop',
+      authorDescription: 'フランスの哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '善く生きることは、善く考えることである。',
+      author: 'マルクス・アウレリウス',
+      imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&h=800&fit=crop',
+      authorDescription: 'ローマ皇帝・ストア派哲学者',
+    ),
+    PhilosopherQuote(
+      quote: '継続は力なり。小さな一歩の積み重ねが偉大な達成につながる。',
+      author: 'アリストテレス',
+      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=800&fit=crop',
+      authorDescription: '古代ギリシアの哲学者',
+    ),
+  ];
+
+  /// ランダムに名言を取得
+  static PhilosopherQuote getRandom() {
+    final now = DateTime.now();
+    // 日付ベースで名言を選択（毎日同じ名言）
+    final index = (now.day + now.month + now.year) % quotes.length;
+    return quotes[index];
+  }
+
+  /// 完全にランダムに名言を取得（毎回異なる）
+  static PhilosopherQuote getRandomAlways() {
+    final randomIndex = DateTime.now().microsecondsSinceEpoch % quotes.length;
+    return quotes[randomIndex];
+  }
+}

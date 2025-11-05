@@ -4,6 +4,7 @@ import '../../pages/categories_page.dart';
 import '../../pages/stats_page.dart';
 import '../../pages/leaderboard_page.dart';
 import '../../pages/settings_page.dart';
+import '../../pages/share_philosopher_quote_dialog.dart';
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -644,6 +645,28 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
+                    // 哲学者の名言をシェア（NEW!）
+                    _buildShareButton(
+                      context,
+                      icon: Icons.format_quote,
+                      label: '哲学者の名言をシェア',
+                      color: Colors.purple.shade700,
+                      subtitle: '今日の名言を美しいカードでシェア',
+                      badge: 'NEW',
+                      onTap: () {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (_) => SharePhilosopherQuoteDialog(
+                            userLevel: userStats?.currentLevel,
+                            totalPoints: userStats?.totalPoints,
+                            currentStreak: userStats?.currentStreak,
+                            levelTitle: userStats?.levelTitle,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
                     if (userStats != null) ...[
                       _buildShareButton(
                         context,
@@ -937,6 +960,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required Color color,
     required VoidCallback onTap,
     String? subtitle,
+    String? badge,
   }) {
     return InkWell(
       onTap: onTap,
@@ -963,13 +987,39 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.pink.shade400, Colors.orange.shade400],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:html' as html;
+import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
 class AppShareService {
@@ -161,6 +162,92 @@ $appUrl
     // 日付ベースでメッセージを選択（毎日同じユーザーは同じメッセージ）
     final index = (now.day + now.month) % shareMessages.length;
     return shareMessages[index];
+  }
+
+  /// 哲学者の名言を含むシェアメッセージを取得
+  static String getPhilosopherQuoteMessage() {
+    final quote = PhilosopherQuote.getRandom();
+
+    return '''💭 今日の名言 - ${quote.author}
+
+「${quote.quote}」
+
+━━━━━━━━━━━━━━
+✨ 日々の学びを記録しよう ✨
+━━━━━━━━━━━━━━
+
+$appNameは、哲学者たちの知恵とともに
+あなたの学びをサポートします。
+
+メモを書くことで：
+📝 学びを深く定着させる
+🎯 思考を整理する
+🏆 継続の習慣を身につける
+
+━━━━━━━━━━━━━━
+🎮 ゲーム感覚で楽しく継続 🎮
+━━━━━━━━━━━━━━
+
+✨ レベルアップシステム
+✨ 28種類のアチーブメント
+✨ 連続記録の可視化
+✨ 全国ランキング
+
+完全無料で今すぐ始める👇
+$appUrl
+
+#マイメモ #${quote.author} #名言 #哲学 #学び #メモ習慣 #自己成長 #継続は力なり''';
+  }
+
+  /// 哲学者の名言を含むカスタムメッセージ（実績付き）
+  static String getPhilosopherQuoteWithStats({
+    required int level,
+    required int totalPoints,
+    required int currentStreak,
+    String? levelTitle,
+  }) {
+    final quote = PhilosopherQuote.getRandom();
+    final title = levelTitle ?? _getLevelTitle(level);
+
+    // レベルに応じた追加メッセージ
+    String achievement = '';
+    if (level >= 20) {
+      achievement = '🌟 最高レベル到達！';
+    } else if (level >= 15) {
+      achievement = '🏆 上級者レベル！';
+    } else if (level >= 10) {
+      achievement = '📈 成長中！';
+    } else if (level >= 5) {
+      achievement = '🚀 順調に継続中！';
+    } else {
+      achievement = '✨ 習慣化への第一歩！';
+    }
+
+    return '''💭 今日の名言 - ${quote.author}
+
+「${quote.quote}」
+
+$achievement
+継続の力を実感しています！
+
+━━━━━━━━━━━━━━
+💎 私の実績 💎
+━━━━━━━━━━━━━━
+
+🏆 称号: $title
+📊 レベル: Lv.$level
+⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
+🔥 連続記録: ${currentStreak}日継続中
+
+━━━━━━━━━━━━━━
+
+$appNameで、哲学者たちの知恵とともに
+あなたも学びの習慣を始めませんか？
+
+完全無料で今すぐ体験👇
+$appUrl
+
+#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #${currentStreak}日連続''';
   }
 
   /// カスタムメッセージでシェア
