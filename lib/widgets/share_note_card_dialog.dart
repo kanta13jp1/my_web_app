@@ -8,6 +8,7 @@ import '../models/category.dart';
 import '../models/card_template.dart' as template;
 import '../widgets/note_card_widget.dart';
 import '../services/note_card_service.dart';
+import '../utils/content_chunk_processor.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web用
@@ -404,48 +405,12 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
-  // コンテンツを複数のチャンクに分割（動的文字数制限）
-  List<String> _splitContent(String content) {
-    final maxChars = _selectedContentMode.maxCharsPerPage;
-
-    if (content.length <= maxChars) {
-      return [content];
-    }
-
-    final List<String> chunks = [];
-    int startIndex = 0;
-
-    while (startIndex < content.length) {
-      int endIndex = startIndex + maxChars;
-
-      // 最後のチャンクの場合
-      if (endIndex >= content.length) {
-        chunks.add(content.substring(startIndex));
-        break;
-      }
-
-      // 文の区切りで分割を試みる
-      int splitIndex = endIndex;
-
-      // 句点、改行、スペースで区切りを探す
-      for (int i = endIndex; i > startIndex + (maxChars ~/ 2); i--) {
-        if (i < content.length && (content[i] == '。' || content[i] == '.' ||
-            content[i] == '\n' || content[i] == ' ')) {
-          splitIndex = i + 1;
-          break;
-        }
-      }
-
-      chunks.add(content.substring(startIndex, splitIndex));
-      startIndex = splitIndex;
-    }
-
-    return chunks;
-  }
-
   // 初期化または再構築時にキーとチャンクを準備
   void _prepareContentChunks() {
-    _contentChunks = _splitContent(widget.note.content);
+    _contentChunks = ContentChunkProcessor.splitContent(
+      widget.note.content,
+      _selectedContentMode,
+    );
 
     // 必要な数のGlobalKeyを生成
     _repaintKeys.clear();

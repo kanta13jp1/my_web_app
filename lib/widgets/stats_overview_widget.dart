@@ -42,7 +42,7 @@ class StatsOverviewWidget extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 2.5,
+              childAspectRatio: 3.0,
               children: [
                 _buildStatItem(
                   context,
@@ -127,7 +127,7 @@ class StatsOverviewWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -141,7 +141,7 @@ class StatsOverviewWidget extends StatelessWidget {
           Icon(
             icon,
             color: color,
-            size: 24,
+            size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -154,13 +154,15 @@ class StatsOverviewWidget extends StatelessWidget {
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),

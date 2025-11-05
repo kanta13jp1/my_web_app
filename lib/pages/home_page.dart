@@ -5,7 +5,6 @@ import '../models/category.dart';
 import '../models/sort_type.dart';
 import 'auth_page.dart';
 import 'note_editor_page.dart';
-import 'categories_page.dart';
 import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
 import '../services/search_history_service.dart';
@@ -22,6 +21,8 @@ import '../utils/date_formatter.dart';
 import '../widgets/home_page/sort_dialog.dart';
 import '../widgets/home_page/date_filter_dialog.dart';
 import '../widgets/home_page/reminder_filter_dialog.dart';
+import '../widgets/home_page/user_stats_header.dart';
+import '../widgets/home_page/empty_state_view.dart';
 import '../widgets/home_page/category_filter_dialog.dart';
 import '../widgets/home_page/reminder_stats_banner.dart';
 import '../widgets/home_page/filter_chips_area.dart';
@@ -579,116 +580,9 @@ class _HomePageState extends State<HomePage> {
               children: [
                 // レベル表示（ゲーミフィケーション）
                 if (_userStats != null)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const StatsPage()),
-                      ).then((_) {
-                        _loadUserStats();
-                      });
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer,
-                            Theme.of(context).colorScheme.secondaryContainer,
-                          ],
-                        ),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'レベル ${_userStats!.currentLevel}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                          ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _userStats!.levelTitle,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.stars,
-                                      size: 16,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${_userStats!.totalPoints} pt',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                    if (_userStats!.currentStreak > 0) ...[
-                                      const SizedBox(width: 12),
-                                      Icon(
-                                        Icons.local_fire_department,
-                                        size: 16,
-                                        color: Colors.orange,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_userStats!.currentStreak}日連続',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: Colors.orange,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.chevron_right,
-                            color:
-                                Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
-                        ],
-                      ),
-                    ),
+                  UserStatsHeader(
+                    userStats: _userStats!,
+                    onStatsUpdated: _loadUserStats,
                   ),
                 // リマインダー統計バナー
                 ReminderStatsBanner(
@@ -767,91 +661,23 @@ class _HomePageState extends State<HomePage> {
                 // メモ一覧
                 Expanded(
                   child: _filteredNotes.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                hasAnyFilter || _showFavoritesOnly
-                                    ? Icons.search_off
-                                    : Icons.note_add_outlined,
-                                size: 80,
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.grey[700]
-                                    : Colors.grey[400],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                hasAnyFilter || _showFavoritesOnly
-                                    ? '該当するメモが見つかりません'
-                                    : 'メモがありません',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                hasAnyFilter || _showFavoritesOnly
-                                    ? 'フィルター条件を変更してみてください'
-                                    : '右下の + ボタンから新しいメモを作成\n📌でピン留めして重要なメモを上部に固定',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              // リマインダーフィルター時の特別メッセージ
-                              if (_reminderFilter != null &&
-                                  _notes.isNotEmpty) ...[
-                                const SizedBox(height: 16),
-                                Text(
-                                  _reminderFilter == 'overdue'
-                                      ? '期限切れのメモはありません'
-                                      : _reminderFilter == 'today'
-                                          ? '今日のリマインダーはありません'
-                                          : '24時間以内のリマインダーはありません',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.alarm_add),
-                                  label: const Text('メモにリマインダーを設定'),
-                                  onPressed: () {
-                                    setState(() {
-                                      _reminderFilter = null;
-                                      _applyFilters();
-                                    });
-                                  },
-                                ),
-                              ],
-                              if (_showFavoritesOnly && _notes.isNotEmpty) ...[
-                                const SizedBox(height: 16),
-                                Text(
-                                  'お気に入りメモがまだありません',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.star_border),
-                                  label: const Text('メモにスターをつけてみましょう'),
-                                  onPressed: () {
-                                    setState(() {
-                                      _showFavoritesOnly = false;
-                                      _applyFilters();
-                                    });
-                                  },
-                                ),
-                              ],
-                            ],
-                          ),
+                      ? EmptyStateView(
+                          hasAnyFilter: hasAnyFilter,
+                          showFavoritesOnly: _showFavoritesOnly,
+                          reminderFilter: _reminderFilter,
+                          allNotes: _notes,
+                          onClearReminderFilter: () {
+                            setState(() {
+                              _reminderFilter = null;
+                              _applyFilters();
+                            });
+                          },
+                          onClearFavoritesFilter: () {
+                            setState(() {
+                              _showFavoritesOnly = false;
+                              _applyFilters();
+                            });
+                          },
                         )
                       : RefreshIndicator(
                           onRefresh: () async {
