@@ -13,6 +13,10 @@ import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
 import 'settings_page.dart';
 import '../widgets/share_note_card_dialog.dart';
+import 'stats_page.dart';
+import '../services/gamification_service.dart';
+import '../models/user_stats.dart';
+import '../widgets/level_display_widget.dart';
 
 // クラスの先頭に追加
 final Map<int, int> _attachmentCountCache = {};
@@ -88,15 +92,41 @@ class _HomePageState extends State<HomePage> {
   // モバイル判定用（追加）
   bool get _isMobile => MediaQuery.of(context).size.width < 600;
 
+  // ゲーミフィケーション用
+  late final GamificationService _gamificationService;
+  UserStats? _userStats;
+
   @override
   void initState() {
     super.initState();
+    _gamificationService = GamificationService(supabase);
     _loadCategories();
     _loadNotes();
+    _loadUserStats();
     _searchController.addListener(_onSearchChanged);
 
     // 自動アーカイブを実行（追加）
     _runAutoArchive();
+  }
+
+  Future<void> _loadUserStats() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      var stats = await _gamificationService.getUserStats(userId);
+      if (stats == null) {
+        stats = await _gamificationService.initializeUserStats(userId);
+      }
+
+      if (mounted) {
+        setState(() {
+          _userStats = stats;
+        });
+      }
+    } catch (e) {
+      print('Error loading user stats: $e');
+    }
   }
 
   @override
@@ -1593,6 +1623,13 @@ class _HomePageState extends State<HomePage> {
                 ).then((_) {
                   _loadNotes();
                 });
+              } else if (value == 'stats') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StatsPage()),
+                ).then((_) {
+                  _loadUserStats();
+                });
               } else if (value == 'settings') {
                 Navigator.push(
                   context,
@@ -1692,6 +1729,16 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const PopupMenuItem(
+                value: 'stats',
+                child: Row(
+                  children: [
+                    Icon(Icons.emoji_events, color: Colors.amber),
+                    SizedBox(width: 8),
+                    Text('統計・実績'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
                 value: 'settings',
                 child: Row(
                   children: [
@@ -1719,6 +1766,119 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                // レベル表示（ゲーミフィケーション）
+                if (_userStats != null)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StatsPage()),
+                      ).then((_) {
+                        _loadUserStats();
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primaryContainer,
+                            Theme.of(context).colorScheme.secondaryContainer,
+                          ],
+                        ),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'レベル ${_userStats!.currentLevel}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _userStats!.levelTitle,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.stars,
+                                      size: 16,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${_userStats!.totalPoints} pt',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                    if (_userStats!.currentStreak > 0) ...[
+                                      const SizedBox(width: 12),
+                                      Icon(
+                                        Icons.local_fire_department,
+                                        size: 16,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${_userStats!.currentStreak}日連続',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Colors.orange,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color:
+                                Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 // リマインダー統計バナー（追加）
                 if (overdueCount > 0 || dueSoonCount > 0 || todayCount > 0)
                   Container(
