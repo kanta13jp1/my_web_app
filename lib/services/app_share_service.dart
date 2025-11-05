@@ -68,19 +68,51 @@ $appUrl
     required int level,
     required int totalPoints,
     required int currentStreak,
+    String? levelTitle,
   }) {
-    return '''🎉 私は$appNameでレベル$levelに到達しました！
+    // レベルに応じた称号を取得
+    final title = levelTitle ?? _getLevelTitle(level);
 
-📊 総ポイント: ${totalPoints}pt
-🔥 連続記録: ${currentStreak}日
-🏆 ランキング参加中
+    // レベルに応じたメッセージをカスタマイズ
+    String achievement = '';
+    if (level >= 20) {
+      achievement = '🌟 ついに最高位に到達しました！';
+    } else if (level >= 15) {
+      achievement = '🎖️ 上級者の仲間入りを果たしました！';
+    } else if (level >= 10) {
+      achievement = '🏅 メモマスターになりました！';
+    } else if (level >= 5) {
+      achievement = '📈 着実にレベルアップ中！';
+    } else {
+      achievement = '🚀 メモ習慣を楽しんでいます！';
+    }
 
-あなたも一緒にメモ習慣を楽しもう！✨
+    return '''$achievement 🎉
+
+私は$appNameで「$title」（レベル$level）に到達！
+
+【私の実績】
+📊 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}pt
+🔥 連続記録: ${currentStreak}日継続中
+🏆 全国ランキング参加中
+
+ゲーミフィケーションでメモが楽しく続く！
+あなたも一緒に習慣化を楽しもう！✨
 
 今すぐ無料で始める👇
 $appUrl
 
-#マイメモ #メモアプリ #レベル$level #生産性向上 #習慣化''';
+#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション''';
+  }
+
+  /// レベルから称号を取得
+  static String _getLevelTitle(int level) {
+    if (level >= 20) return 'メモの神';
+    if (level >= 15) return 'メモの達人';
+    if (level >= 10) return 'メモマスター';
+    if (level >= 5) return 'メモの使い手';
+    if (level >= 3) return 'メモ学習者';
+    return 'メモ初心者';
   }
 
   /// アプリをシェアする（Web版）
@@ -149,11 +181,13 @@ $appUrl
     required int level,
     required int totalPoints,
     required int currentStreak,
+    String? levelTitle,
   }) async {
     final message = getCustomShareMessage(
       level: level,
       totalPoints: totalPoints,
       currentStreak: currentStreak,
+      levelTitle: levelTitle,
     );
     await shareApp(customMessage: message);
   }
