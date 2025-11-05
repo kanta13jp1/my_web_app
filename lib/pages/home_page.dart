@@ -13,7 +13,6 @@ import '../services/attachment_cache_service.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
 import 'settings_page.dart';
-import '../widgets/share_note_card_dialog.dart';
 import 'stats_page.dart';
 import 'leaderboard_page.dart';
 import '../services/gamification_service.dart';
@@ -30,6 +29,7 @@ import '../widgets/home_page/note_card_item.dart';
 import '../widgets/home_page/note_dialogs.dart' as dialogs;
 import '../services/note_operations_service.dart';
 import '../services/note_filter_service.dart';
+import '../widgets/home_page/home_app_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -545,358 +545,33 @@ class _HomePageState extends State<HomePage> {
     final todayCount = reminderStats['today'] ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'メモを検索...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
-                ),
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                onSubmitted: (value) {
-                  // ← 追加
-                  if (value.isNotEmpty) {
-                    SearchHistoryService.saveSearch(value);
-                  }
-                },
-              )
-            : const Text('マイメモ'),
-        actions: [
-          if (_isSearching)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
-              },
-              tooltip: 'クリア',
-            ),
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: _toggleSearch,
-            tooltip: _isSearching ? '検索を閉じる' : '検索',
-          ),
-          // モバイルでは主要なアイコンのみ表示（修正）
-          if (!_isMobile) ...[
-            // 詳細検索ボタン
-            IconButton(
-              icon: Icon(
-                Icons.tune,
-                color: _hasActiveAdvancedFilters() ? Colors.purple : null,
-              ),
-              tooltip: '詳細検索',
-              onPressed: _showAdvancedSearch,
-            ),
-            // リマインダーフィルターボタン
-            Stack(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _reminderFilter != null ? Icons.alarm_on : Icons.alarm,
-                    color: _reminderFilter != null ? Colors.orange : null,
-                  ),
-                  onPressed: _showReminderFilterDialog,
-                  tooltip: 'リマインダーで絞り込み',
-                ),
-                if (_reminderFilter != null)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.orange,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            // お気に入りフィルターボタン
-            Stack(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _showFavoritesOnly ? Icons.star : Icons.star_border,
-                    color: _showFavoritesOnly ? Colors.amber : null,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showFavoritesOnly = !_showFavoritesOnly;
-                      _applyFilters();
-                    });
-                  },
-                  tooltip: _showFavoritesOnly ? 'すべて表示' : 'お気に入りのみ表示',
-                ),
-                if (_showFavoritesOnly)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.amber,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            // カテゴリフィルターボタン
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.category),
-                  onPressed: _showCategoryFilterDialog,
-                  tooltip: 'カテゴリで絞り込み',
-                ),
-                if (hasCategoryFilter)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            // 並び替えボタン
-            IconButton(
-              icon: const Icon(Icons.sort),
-              onPressed: _showSortDialog,
-              tooltip: '並び替え',
-            ),
-            // 日付フィルターボタン
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: _showDateFilterDialog,
-                  tooltip: '日付で絞り込み',
-                ),
-                if (hasDateFilter)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-          // 更新ボタン
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _loadCategories();
-              _loadNotes();
-            },
-            tooltip: '更新',
-          ),
-          // メニュー（モバイル時はフィルターも含む）
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'advanced_search') {
-                _showAdvancedSearch();
-              } else if (value == 'reminder_filter') {
-                _showReminderFilterDialog();
-              } else if (value == 'favorite_filter') {
-                setState(() {
-                  _showFavoritesOnly = !_showFavoritesOnly;
-                  _applyFilters();
-                });
-              } else if (value == 'category_filter') {
-                _showCategoryFilterDialog();
-              } else if (value == 'sort') {
-                _showSortDialog();
-              } else if (value == 'date_filter') {
-                _showDateFilterDialog();
-              } else if (value == 'categories') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CategoriesPage()),
-                ).then((_) {
-                  _loadCategories();
-                  _loadNotes();
-                });
-              } else if (value == 'archive') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ArchivePage()),
-                ).then((_) {
-                  _loadNotes();
-                });
-              } else if (value == 'stats') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const StatsPage()),
-                ).then((_) {
-                  _loadUserStats();
-                });
-              } else if (value == 'leaderboard') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LeaderboardPage()),
-                ).then((_) {
-                  _loadUserStats();
-                });
-              } else if (value == 'settings') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsPage()),
-                );
-              } else if (value == 'logout') {
-                _signOut();
-              }
-            },
-            itemBuilder: (context) => [
-              // モバイル専用のフィルターメニュー項目
-              if (_isMobile) ...[
-                const PopupMenuItem(
-                  value: 'advanced_search',
-                  child: Row(
-                    children: [
-                      Icon(Icons.tune, color: Colors.purple),
-                      SizedBox(width: 8),
-                      Text('詳細検索'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'reminder_filter',
-                  child: Row(
-                    children: [
-                      Icon(Icons.alarm, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('リマインダー'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'favorite_filter',
-                  child: Row(
-                    children: [
-                      Icon(
-                        _showFavoritesOnly ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(_showFavoritesOnly ? 'すべて表示' : 'お気に入り'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'category_filter',
-                  child: Row(
-                    children: [
-                      Icon(Icons.category, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('カテゴリ'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'sort',
-                  child: Row(
-                    children: [
-                      Icon(Icons.sort, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('並び替え'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'date_filter',
-                  child: Row(
-                    children: [
-                      Icon(Icons.filter_list, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('日付'),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-              ],
-              // 共通メニュー項目
-              const PopupMenuItem(
-                value: 'categories',
-                child: Row(
-                  children: [
-                    Icon(Icons.category, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text('カテゴリ管理'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'archive',
-                child: Row(
-                  children: [
-                    Icon(Icons.archive, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text('アーカイブ'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'stats',
-                child: Row(
-                  children: [
-                    Icon(Icons.emoji_events, color: Colors.amber),
-                    SizedBox(width: 8),
-                    Text('統計・実績'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'leaderboard',
-                child: Row(
-                  children: [
-                    Icon(Icons.leaderboard, color: Colors.purple),
-                    SizedBox(width: 8),
-                    Text('リーダーボード'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text('設定'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('ログアウト'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+      appBar: HomeAppBar(
+        isSearching: _isSearching,
+        searchController: _searchController,
+        onToggleSearch: _toggleSearch,
+        onShowAdvancedSearch: _showAdvancedSearch,
+        onShowReminderFilter: _showReminderFilterDialog,
+        onShowCategoryFilter: _showCategoryFilterDialog,
+        onShowSortDialog: _showSortDialog,
+        onShowDateFilter: _showDateFilterDialog,
+        onToggleFavorites: () {
+          setState(() {
+            _showFavoritesOnly = !_showFavoritesOnly;
+            _applyFilters();
+          });
+        },
+        onRefresh: () {
+          _loadCategories();
+          _loadNotes();
+        },
+        onSignOut: _signOut,
+        onLoadUserStats: _loadUserStats,
+        isMobile: _isMobile,
+        hasActiveAdvancedFilters: _hasActiveAdvancedFilters(),
+        reminderFilter: _reminderFilter,
+        showFavoritesOnly: _showFavoritesOnly,
+        hasCategoryFilter: hasCategoryFilter,
+        hasDateFilter: hasDateFilter,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
