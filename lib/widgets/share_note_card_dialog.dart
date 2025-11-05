@@ -497,9 +497,10 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
         successCount++;
 
-        // 次の画像キャプチャまで少し待つ
+        // 次の画像キャプチャまで少し待つ（WebGLリソースの解放を待つ）
         if (i < _repaintKeys.length - 1) {
-          await Future.delayed(const Duration(milliseconds: 300));
+          // Web環境ではより長い待機時間が必要
+          await Future.delayed(const Duration(milliseconds: 2000));
         }
       }
 
@@ -563,9 +564,10 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
         allImageBytes.add(imageBytes);
 
-        // 次の画像キャプチャまで少し待つ
+        // 次の画像キャプチャまで少し待つ（WebGLリソースの解放を待つ）
         if (i < _repaintKeys.length - 1) {
-          await Future.delayed(const Duration(milliseconds: 300));
+          // Web環境ではより長い待機時間が必要
+          await Future.delayed(const Duration(milliseconds: 2000));
         }
       }
 
