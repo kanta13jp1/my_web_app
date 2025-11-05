@@ -10,7 +10,6 @@ import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
 import '../services/search_history_service.dart';
 import '../services/attachment_cache_service.dart';
-import 'package:intl/intl.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
 import 'settings_page.dart';
@@ -30,6 +29,7 @@ import '../widgets/home_page/filter_chips_area.dart';
 import '../widgets/home_page/note_card_item.dart';
 import '../widgets/home_page/note_dialogs.dart' as dialogs;
 import '../services/note_operations_service.dart';
+import '../services/note_filter_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -184,24 +184,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-  }
-
-  String _formatReminderDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final targetDay = DateTime(date.year, date.month, date.day);
-
-    String dateStr;
-    if (targetDay == today) {
-      dateStr = '今日';
-    } else if (targetDay == tomorrow) {
-      dateStr = '明日';
-    } else {
-      dateStr = '${date.month}/${date.day}';
-    }
-
-    return '$dateStr ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   void _showReminderFilterDialog() {
@@ -386,128 +368,21 @@ class _HomePageState extends State<HomePage> {
 
   void _applyFilters() {
     setState(() {
-      List<Note> filtered = List.from(_notes);
+      final filterService = NoteFilterService(
+        searchQuery: _searchController.text,
+        searchCategoryId: _searchCategoryId,
+        searchStartDate: _searchStartDate,
+        searchEndDate: _searchEndDate,
+        selectedCategoryId: _selectedCategoryId,
+        startDate: _startDate,
+        endDate: _endDate,
+        showFavoritesOnly: _showFavoritesOnly,
+        reminderFilter: _reminderFilter,
+      );
 
-      // 検索キーワードでフィルター
-      if (_searchController.text.isNotEmpty) {
-        final query = _searchController.text.toLowerCase();
-        filtered = filtered.where((note) {
-          final titleLower = note.title.toLowerCase();
-          final contentLower = note.content.toLowerCase();
-          return titleLower.contains(query) || contentLower.contains(query);
-        }).toList();
-      }
-
-      // 高度な検索：カテゴリフィルター（検索ダイアログから）
-      if (_searchCategoryId != null) {
-        filtered = filtered
-            .where((note) => note.categoryId == _searchCategoryId)
-            .toList();
-      }
-      // 通常のカテゴリフィルター（メニューから）
-      else if (_selectedCategoryId != null) {
-        if (_selectedCategoryId == 'uncategorized') {
-          filtered = filtered.where((note) => note.categoryId == null).toList();
-        } else {
-          filtered = filtered
-              .where((note) => note.categoryId == _selectedCategoryId)
-              .toList();
-        }
-      }
-
-      // 高度な検索：日付範囲フィルター（検索ダイアログから）
-      if (_searchStartDate != null || _searchEndDate != null) {
-        filtered = filtered.where((note) {
-          if (_searchStartDate != null &&
-              note.createdAt.isBefore(_searchStartDate!)) {
-            return false;
-          }
-          if (_searchEndDate != null) {
-            final endOfDay = DateTime(
-              _searchEndDate!.year,
-              _searchEndDate!.month,
-              _searchEndDate!.day,
-              23,
-              59,
-              59,
-            );
-            if (note.createdAt.isAfter(endOfDay)) {
-              return false;
-            }
-          }
-          return true;
-        }).toList();
-      }
-      // 通常の日付フィルター（メニューから）
-      else if (_startDate != null || _endDate != null) {
-        filtered = filtered.where((note) {
-          if (_startDate != null && note.updatedAt.isBefore(_startDate!)) {
-            return false;
-          }
-          if (_endDate != null) {
-            final endOfDay = DateTime(
-              _endDate!.year,
-              _endDate!.month,
-              _endDate!.day,
-              23,
-              59,
-              59,
-            );
-            if (note.updatedAt.isAfter(endOfDay)) {
-              return false;
-            }
-          }
-          return true;
-        }).toList();
-      }
-
-      // お気に入りフィルター
-      if (_showFavoritesOnly) {
-        filtered = filtered.where((note) => note.isFavorite).toList();
-      }
-
-      // リマインダーフィルター
-      if (_reminderFilter != null) {
-        final now = DateTime.now();
-        filtered = filtered.where((note) {
-          if (note.reminderDate == null) {
-            return false;
-          }
-
-          switch (_reminderFilter) {
-            case 'overdue':
-              return note.reminderDate!.isBefore(now);
-            case 'today':
-              final today = DateTime(now.year, now.month, now.day);
-              final tomorrow = today.add(const Duration(days: 1));
-              return note.reminderDate!.isAfter(today) &&
-                  note.reminderDate!.isBefore(tomorrow);
-            case 'upcoming':
-              final tomorrow = now.add(const Duration(days: 1));
-              return note.reminderDate!.isAfter(now) &&
-                  note.reminderDate!.isBefore(tomorrow);
-            default:
-              return true;
-          }
-        }).toList();
-      }
-
-      // 並び替え
-      _sortNotes(filtered);
-
+      final filtered = filterService.filterNotes(_notes);
+      NoteFilterService.sortNotes(filtered, _sortType);
       _filteredNotes = filtered;
-    });
-  }
-
-  void _sortNotes(List<Note> notes) {
-    // まず通常のソートを適用
-    _sortType.sortNotes(notes);
-
-    // ピン留めメモを最上部に移動（安定ソート）
-    notes.sort((a, b) {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return 0;
     });
   }
 
@@ -664,18 +539,10 @@ class _HomePageState extends State<HomePage> {
         _reminderFilter != null; // 追加
 
     // リマインダー統計を計算
-    final overdueCount =
-        _notes.where((n) => n.reminderDate != null && n.isOverdue).length;
-    final dueSoonCount =
-        _notes.where((n) => n.reminderDate != null && n.isDueSoon).length;
-    final todayCount = _notes.where((n) {
-      if (n.reminderDate == null) return false;
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(const Duration(days: 1));
-      return n.reminderDate!.isAfter(today) &&
-          n.reminderDate!.isBefore(tomorrow);
-    }).length;
+    final reminderStats = NoteFilterService.calculateReminderStats(_notes);
+    final overdueCount = reminderStats['overdue'] ?? 0;
+    final dueSoonCount = reminderStats['dueSoon'] ?? 0;
+    final todayCount = reminderStats['today'] ?? 0;
 
     return Scaffold(
       appBar: AppBar(

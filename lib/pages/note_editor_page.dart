@@ -10,6 +10,7 @@ import '../services/gamification_service.dart'; // ゲーミフィケーショ�
 import '../widgets/achievement_notification.dart'; // 実績通知追加
 import '../widgets/note_editor/editor_dialogs.dart' as editor_dialogs;
 import '../widgets/note_editor/category_chip.dart';
+import '../utils/date_formatter.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -471,7 +472,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'リマインダー: ${_formatReminderDate(_reminderDate!)}',
+                            'リマインダー: ${DateFormatter.formatReminder(_reminderDate!)}',
                             style: TextStyle(
                               fontSize: 14,
                               color: _reminderDate!.isBefore(DateTime.now())
