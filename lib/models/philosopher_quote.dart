@@ -194,6 +194,24 @@ class PhilosopherQuote {
       imageUrl: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=800&h=800&fit=crop',
       authorDescription: '古代ギリシアの哲学者',
     ),
+    PhilosopherQuote(
+      quote: '愛は、人間の実存という問題への、唯一の健全で満足のいく答えである。',
+      author: 'エーリッヒ・フロム',
+      imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=800&fit=crop',
+      authorDescription: 'ドイツの精神分析学者・社会心理学者',
+    ),
+    PhilosopherQuote(
+      quote: '現代人は、自分自身になることを恐れている。',
+      author: 'エーリッヒ・フロム',
+      imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=800&fit=crop',
+      authorDescription: 'ドイツの精神分析学者・社会心理学者',
+    ),
+    PhilosopherQuote(
+      quote: '愛するということは、愛される者の成長と幸福を積極的に求めることである。',
+      author: 'エーリッヒ・フロム',
+      imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=800&fit=crop',
+      authorDescription: 'ドイツの精神分析学者・社会心理学者',
+    ),
   ];
 
   /// ランダムに名言を取得

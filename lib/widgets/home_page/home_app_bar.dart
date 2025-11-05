@@ -590,15 +590,15 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.blue.shade400, Colors.purple.shade400],
+                              colors: [Colors.purple.shade400, Colors.pink.shade400],
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.smartphone, color: Colors.white, size: 18),
+                          child: const Icon(Icons.format_quote, color: Colors.white, size: 18),
                         ),
                         const SizedBox(width: 8),
                         const Text(
-                          'SNSでシェア',
+                          '哲学者の名言をシェア',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -609,24 +609,47 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
+                            gradient: LinearGradient(
+                              colors: [Colors.purple.shade400, Colors.pink.shade400],
+                            ),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange.shade300),
                           ),
-                          child: Text(
+                          child: const Text(
                             'おすすめ',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange.shade800,
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // SNS別シェアボタン
+                    // SNS別シェアボタン（哲学者の名言版）
                     _buildSnsShareButtons(context),
+                    const SizedBox(height: 12),
+                    // 画像カードを作成
+                    _buildShareButton(
+                      context,
+                      icon: Icons.image,
+                      label: '名言カードを作成してシェア',
+                      color: Colors.purple.shade700,
+                      subtitle: '美しいOGPカード画像を生成',
+                      badge: 'NEW',
+                      onTap: () {
+                        Navigator.pop(context);
+                        showDialog(
+                          context: context,
+                          builder: (_) => SharePhilosopherQuoteDialog(
+                            userLevel: userStats?.currentLevel,
+                            totalPoints: userStats?.totalPoints,
+                            currentStreak: userStats?.currentStreak,
+                            levelTitle: userStats?.levelTitle,
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 16),
                     Divider(color: Colors.grey.shade300, thickness: 1),
                     const SizedBox(height: 16),
@@ -645,27 +668,6 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // 哲学者の名言をシェア（NEW!）
-                    _buildShareButton(
-                      context,
-                      icon: Icons.format_quote,
-                      label: '哲学者の名言をシェア',
-                      color: Colors.purple.shade700,
-                      subtitle: '今日の名言を美しいカードでシェア',
-                      badge: 'NEW',
-                      onTap: () {
-                        Navigator.pop(context);
-                        showDialog(
-                          context: context,
-                          builder: (_) => SharePhilosopherQuoteDialog(
-                            userLevel: userStats?.currentLevel,
-                            totalPoints: userStats?.totalPoints,
-                            currentStreak: userStats?.currentStreak,
-                            levelTitle: userStats?.levelTitle,
-                          ),
-                        );
-                      },
-                    ),
                     const SizedBox(height: 8),
                     if (userStats != null) ...[
                       _buildShareButton(
@@ -804,20 +806,21 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () async {
               Navigator.pop(context);
               try {
+                // 哲学者の名言を使用
                 await AppShareService.shareToTwitter(
                   customMessage: userStats != null
-                      ? AppShareService.getCustomShareMessage(
+                      ? AppShareService.getPhilosopherQuoteWithStats(
                           level: userStats!.currentLevel,
                           totalPoints: userStats!.totalPoints,
                           currentStreak: userStats!.currentStreak,
                           levelTitle: userStats!.levelTitle,
                         )
-                      : null,
+                      : AppShareService.getPhilosopherQuoteMessage(),
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Xでシェアしました！'),
+                      content: Text('哲学者の名言をXでシェアしました！'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -877,20 +880,21 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () async {
               Navigator.pop(context);
               try {
+                // 哲学者の名言を使用
                 await AppShareService.shareToLine(
                   customMessage: userStats != null
-                      ? AppShareService.getCustomShareMessage(
+                      ? AppShareService.getPhilosopherQuoteWithStats(
                           level: userStats!.currentLevel,
                           totalPoints: userStats!.totalPoints,
                           currentStreak: userStats!.currentStreak,
                           levelTitle: userStats!.levelTitle,
                         )
-                      : null,
+                      : AppShareService.getPhilosopherQuoteMessage(),
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('LINEでシェアしました！'),
+                      content: Text('哲学者の名言をLINEでシェアしました！'),
                       backgroundColor: Colors.green,
                     ),
                   );
