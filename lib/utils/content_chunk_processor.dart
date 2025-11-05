@@ -1,11 +1,11 @@
-import '../models/share_card_content_mode.dart';
+import '../models/card_template.dart';
 
 /// コンテンツを複数のチャンクに分割するユーティリティクラス
 class ContentChunkProcessor {
   /// コンテンツを複数のチャンクに分割（動的文字数制限）
   static List<String> splitContent(
     String content,
-    ShareCardContentMode contentMode,
+    ContentMode contentMode,
   ) {
     final maxChars = contentMode.maxCharsPerPage;
 
