@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
+import '../models/sort_type.dart';
 import 'auth_page.dart';
 import 'note_editor_page.dart';
 import 'categories_page.dart';
 import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
 import '../services/search_history_service.dart';
+import '../services/attachment_cache_service.dart';
 import 'package:intl/intl.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
@@ -18,42 +20,11 @@ import 'leaderboard_page.dart';
 import '../services/gamification_service.dart';
 import '../models/user_stats.dart';
 import '../widgets/level_display_widget.dart';
-
-// クラスの先頭に追加
-final Map<int, int> _attachmentCountCache = {};
-
-Future<int> _getAttachmentCount(int noteId) async {
-  // キャッシュをチェック
-  if (_attachmentCountCache.containsKey(noteId)) {
-    return _attachmentCountCache[noteId]!;
-  }
-
-  try {
-    final response =
-        await supabase.from('attachments').select('id').eq('note_id', noteId);
-    final count = (response as List).length;
-
-    // キャッシュに保存
-    _attachmentCountCache[noteId] = count;
-
-    return count;
-  } catch (e) {
-    return 0;
-  }
-}
-
-// 並び替えの種類
-enum SortType {
-  updatedDesc('更新日時（新しい順）'),
-  updatedAsc('更新日時（古い順）'),
-  createdDesc('作成日時（新しい順）'),
-  createdAsc('作成日時（古い順）'),
-  titleAsc('タイトル（A→Z）'),
-  titleDesc('タイトル（Z→A）');
-
-  const SortType(this.label);
-  final String label;
-}
+import '../utils/date_formatter.dart';
+import '../widgets/home_page/sort_dialog.dart';
+import '../widgets/home_page/date_filter_dialog.dart';
+import '../widgets/home_page/reminder_filter_dialog.dart';
+import '../widgets/home_page/category_filter_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -258,158 +229,16 @@ class _HomePageState extends State<HomePage> {
   void _showReminderFilterDialog() {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ヘッダー部分（固定）
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.alarm, color: Colors.orange),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'リマインダーで絞り込み',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('完了'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-
-              // スクロール可能なコンテンツ部分（修正）
-              Flexible(
-                // ← 追加
-                child: SingleChildScrollView(
-                  // ← 追加
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 全て表示
-                      ListTile(
-                        leading:
-                            const Icon(Icons.all_inclusive, color: Colors.blue),
-                        title: const Text('すべて表示'),
-                        trailing: _reminderFilter == null
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _reminderFilter = null;
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // 期限切れ
-                      ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.alarm_off, color: Colors.red),
-                        ),
-                        title: const Text('期限切れ'),
-                        subtitle: Text(
-                          '${_notes.where((n) => n.reminderDate != null && n.isOverdue).length}件',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        trailing: _reminderFilter == 'overdue'
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _reminderFilter = 'overdue';
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // 今日
-                      ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.today, color: Colors.orange),
-                        ),
-                        title: const Text('今日'),
-                        subtitle: Text(
-                          '${_notes.where((n) {
-                            if (n.reminderDate == null) return false;
-                            final now = DateTime.now();
-                            final today =
-                                DateTime(now.year, now.month, now.day);
-                            final tomorrow = today.add(const Duration(days: 1));
-                            return n.reminderDate!.isAfter(today) &&
-                                n.reminderDate!.isBefore(tomorrow);
-                          }).length}件',
-                          style: TextStyle(color: Colors.orange[800]),
-                        ),
-                        trailing: _reminderFilter == 'today'
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _reminderFilter = 'today';
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // 24時間以内
-                      ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.access_alarm,
-                              color: Colors.amber),
-                        ),
-                        title: const Text('24時間以内'),
-                        subtitle: Text(
-                          '${_notes.where((n) => n.reminderDate != null && n.isDueSoon).length}件',
-                          style: TextStyle(color: Colors.amber[800]),
-                        ),
-                        trailing: _reminderFilter == 'upcoming'
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _reminderFilter = 'upcoming';
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  ),
-                ), // ← 追加
-              ), // ← 追加
-            ],
-          ),
-        );
-      },
+      builder: (context) => ReminderFilterDialog(
+        currentFilter: _reminderFilter,
+        notes: _notes,
+        onFilterChanged: (filter) {
+          setState(() {
+            _reminderFilter = filter;
+            _applyFilters();
+          });
+        },
+      ),
     );
   }
 
@@ -823,40 +652,7 @@ class _HomePageState extends State<HomePage> {
 
   void _sortNotes(List<Note> notes) {
     // まず通常のソートを適用
-    switch (_sortType) {
-      case SortType.updatedDesc:
-        notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-        break;
-      case SortType.updatedAsc:
-        notes.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
-        break;
-      case SortType.createdDesc:
-        notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        break;
-      case SortType.createdAsc:
-        notes.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        break;
-      case SortType.titleAsc:
-        notes.sort((a, b) {
-          final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
-          final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
-          if (aTitle.isEmpty && bTitle.isEmpty) return 0;
-          if (aTitle.isEmpty) return 1;
-          if (bTitle.isEmpty) return -1;
-          return aTitle.compareTo(bTitle);
-        });
-        break;
-      case SortType.titleDesc:
-        notes.sort((a, b) {
-          final aTitle = a.title.isEmpty ? '' : a.title.toLowerCase();
-          final bTitle = b.title.isEmpty ? '' : b.title.toLowerCase();
-          if (aTitle.isEmpty && bTitle.isEmpty) return 0;
-          if (aTitle.isEmpty) return 1;
-          if (bTitle.isEmpty) return -1;
-          return bTitle.compareTo(aTitle);
-        });
-        break;
-    }
+    _sortType.sortNotes(notes);
 
     // ピン留めメモを最上部に移動（安定ソート）
     notes.sort((a, b) {
@@ -869,7 +665,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadNotes() async {
     setState(() {
       _isLoading = true;
-      _attachmentCountCache.clear(); // 追加
+      AttachmentCacheService.clearCache();
     });
 
     try {
@@ -936,460 +732,52 @@ class _HomePageState extends State<HomePage> {
   void _showCategoryFilterDialog() {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // これを保持
-            children: [
-              // ヘッダー部分（固定）
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.category, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'カテゴリで絞り込み',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('完了'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-
-              // スクロール可能なコンテンツ部分（修正）
-              Flexible(
-                // ← 追加
-                child: SingleChildScrollView(
-                  // ← 追加
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 全て表示
-                      ListTile(
-                        leading:
-                            const Icon(Icons.all_inclusive, color: Colors.blue),
-                        title: const Text('すべて表示'),
-                        trailing: _selectedCategoryId == null
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedCategoryId = null;
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // 未分類
-                      ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.inbox, color: Colors.grey),
-                        ),
-                        title: const Text('未分類'),
-                        trailing: _selectedCategoryId == 'uncategorized'
-                            ? const Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedCategoryId = 'uncategorized';
-                            _applyFilters();
-                          });
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const Divider(),
-                      // カテゴリリスト
-                      if (_categories.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              Text(
-                                'カテゴリがありません',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                              TextButton.icon(
-                                icon: const Icon(Icons.add),
-                                label: const Text('カテゴリを作成'),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const CategoriesPage(),
-                                    ),
-                                  ).then((_) {
-                                    _loadCategories();
-                                    _loadNotes();
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        ...(_categories.map((category) {
-                          final color = Color(
-                            int.parse(category.color.substring(1), radix: 16) +
-                                0xFF000000,
-                          );
-                          final isSelected = _selectedCategoryId == category.id;
-
-                          // このカテゴリのメモ数を計算
-                          final noteCount = _notes
-                              .where((note) => note.categoryId == category.id)
-                              .length;
-
-                          return ListTile(
-                            leading: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: color, width: 2),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  category.icon,
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              category.name,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text('$noteCount件のメモ'),
-                            trailing: isSelected
-                                ? const Icon(Icons.check, color: Colors.blue)
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryId = category.id;
-                                _applyFilters();
-                              });
-                              Navigator.pop(context);
-                            },
-                          );
-                        }).toList()),
-                    ],
-                  ),
-                ), // ← 追加
-              ), // ← 追加
-            ],
-          ),
-        );
-      },
+      builder: (context) => CategoryFilterDialog(
+        selectedCategoryId: _selectedCategoryId,
+        categories: _categories,
+        notes: _notes,
+        onCategoryChanged: (categoryId) {
+          setState(() {
+            _selectedCategoryId = categoryId;
+            _applyFilters();
+          });
+        },
+      ),
     );
   }
 
   void _showSortDialog() {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.sort, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '並び替え',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('完了'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
-                  ...SortType.values.map((sortType) {
-                    final isSelected = _sortType == sortType;
-                    return ListTile(
-                      leading: Icon(
-                        _getSortIcon(sortType),
-                        color: isSelected ? Colors.blue : Colors.grey,
-                      ),
-                      title: Text(
-                        sortType.label,
-                        style: TextStyle(
-                          color: isSelected ? Colors.blue : Colors.black,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check, color: Colors.blue)
-                          : null,
-                      onTap: () {
-                        setState(() {
-                          _sortType = sortType;
-                          _applyFilters();
-                        });
-                        setSheetState(() {});
-                      },
-                    );
-                  }),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  IconData _getSortIcon(SortType sortType) {
-    switch (sortType) {
-      case SortType.updatedDesc:
-      case SortType.createdDesc:
-        return Icons.arrow_downward;
-      case SortType.updatedAsc:
-      case SortType.createdAsc:
-        return Icons.arrow_upward;
-      case SortType.titleAsc:
-      case SortType.titleDesc:
-        return Icons.sort_by_alpha;
-    }
-  }
-
-  void _showDateFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('日付で絞り込み'),
-        content: StatefulBuilder(
-          builder: (context, setDialogState) {
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'プリセット',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildPresetChip('今日', setDialogState),
-                      _buildPresetChip('昨日', setDialogState),
-                      _buildPresetChip('今週', setDialogState),
-                      _buildPresetChip('先週', setDialogState),
-                      _buildPresetChip('今月', setDialogState),
-                      _buildPresetChip('先月', setDialogState),
-                      _buildPresetChip('全期間', setDialogState),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'カスタム範囲',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.calendar_today),
-                    title: const Text('開始日'),
-                    subtitle: Text(
-                      _startDate != null
-                          ? _formatDateFull(_startDate!)
-                          : '指定なし',
-                    ),
-                    trailing: _startDate != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setDialogState(() {
-                                _startDate = null;
-                                _selectedDateFilter = 'カスタム';
-                              });
-                            },
-                          )
-                        : null,
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _startDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _startDate = date;
-                          _selectedDateFilter = 'カスタム';
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.event),
-                    title: const Text('終了日'),
-                    subtitle: Text(
-                      _endDate != null ? _formatDateFull(_endDate!) : '指定なし',
-                    ),
-                    trailing: _endDate != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setDialogState(() {
-                                _endDate = null;
-                                _selectedDateFilter = 'カスタム';
-                              });
-                            },
-                          )
-                        : null,
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _endDate ?? DateTime.now(),
-                        firstDate: _startDate ?? DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _endDate = date;
-                          _selectedDateFilter = 'カスタム';
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _startDate = null;
-                _endDate = null;
-                _selectedDateFilter = '全期間';
-                _applyFilters();
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('リセット'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _applyFilters();
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('適用'),
-          ),
-        ],
+      builder: (context) => SortDialog(
+        currentSortType: _sortType,
+        onSortTypeChanged: (sortType) {
+          setState(() {
+            _sortType = sortType;
+            _applyFilters();
+          });
+        },
       ),
     );
   }
 
-  Widget _buildPresetChip(String label, StateSetter setDialogState) {
-    final isSelected = _selectedDateFilter == label;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        setDialogState(() {
-          _selectedDateFilter = label;
-          _applyDatePreset(label);
-        });
-      },
+  void _showDateFilterDialog() async {
+    final result = await showDialog<DateFilterResult>(
+      context: context,
+      builder: (context) => DateFilterDialog(
+        initialStartDate: _startDate,
+        initialEndDate: _endDate,
+        initialPreset: _selectedDateFilter,
+      ),
     );
-  }
 
-  void _applyDatePreset(String preset) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    switch (preset) {
-      case '今日':
-        _startDate = today;
-        _endDate = today;
-        break;
-      case '昨日':
-        final yesterday = today.subtract(const Duration(days: 1));
-        _startDate = yesterday;
-        _endDate = yesterday;
-        break;
-      case '今週':
-        final weekday = now.weekday;
-        final firstDayOfWeek = today.subtract(Duration(days: weekday - 1));
-        _startDate = firstDayOfWeek;
-        _endDate = today;
-        break;
-      case '先週':
-        final weekday = now.weekday;
-        final lastWeekEnd = today.subtract(Duration(days: weekday));
-        final lastWeekStart = lastWeekEnd.subtract(const Duration(days: 6));
-        _startDate = lastWeekStart;
-        _endDate = lastWeekEnd;
-        break;
-      case '今月':
-        _startDate = DateTime(now.year, now.month, 1);
-        _endDate = today;
-        break;
-      case '先月':
-        final lastMonth = DateTime(now.year, now.month - 1, 1);
-        final lastMonthEnd = DateTime(now.year, now.month, 0);
-        _startDate = lastMonth;
-        _endDate = lastMonthEnd;
-        break;
-      case '全期間':
-        _startDate = null;
-        _endDate = null;
-        break;
+    if (result != null && mounted) {
+      setState(() {
+        _startDate = result.startDate;
+        _endDate = result.endDate;
+        _selectedDateFilter = result.selectedPreset;
+        _applyFilters();
+      });
     }
   }
 
@@ -2717,7 +2105,7 @@ class _HomePageState extends State<HomePage> {
                                             children: [
                                               // 添付ファイル数表示
                                               FutureBuilder<int>(
-                                                future: _getAttachmentCount(
+                                                future: AttachmentCacheService.getAttachmentCount(
                                                     note.id),
                                                 builder: (context, snapshot) {
                                                   final count =
@@ -2757,7 +2145,7 @@ class _HomePageState extends State<HomePage> {
                                               // 更新日時
                                               Flexible(
                                                 child: Text(
-                                                  '更新: ${_formatDate(note.updatedAt)}',
+                                                  '更新: ${DateFormatter.formatRelative(note.updatedAt)}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey[600],
@@ -3030,23 +2418,10 @@ class _HomePageState extends State<HomePage> {
 
   String _getDateFilterLabel() {
     if (_selectedDateFilter == 'カスタム' || _selectedDateFilter == '全期間') {
-      if (_startDate != null && _endDate != null) {
-        return '${_formatDateShort(_startDate!)} 〜 ${_formatDateShort(_endDate!)}';
-      } else if (_startDate != null) {
-        return '${_formatDateShort(_startDate!)} 以降';
-      } else if (_endDate != null) {
-        return '${_formatDateShort(_endDate!)} まで';
-      }
+      final label = DateFormatter.getDateRangeLabel(_startDate, _endDate);
+      if (label.isNotEmpty) return label;
     }
     return _selectedDateFilter;
-  }
-
-  String _formatDateShort(DateTime date) {
-    return '${date.month}/${date.day}';
-  }
-
-  String _formatDateFull(DateTime date) {
-    return '${date.year}年${date.month}月${date.day}日';
   }
 
   Widget _buildHighlightedText(
@@ -3115,23 +2490,6 @@ class _HomePageState extends State<HomePage> {
       maxLines: maxLines,
       overflow: maxLines != null ? TextOverflow.ellipsis : TextOverflow.clip,
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 1) {
-      return 'たった今';
-    } else if (diff.inHours < 1) {
-      return '${diff.inMinutes}分前';
-    } else if (diff.inDays < 1) {
-      return '${diff.inHours}時間前';
-    } else if (diff.inDays < 7) {
-      return '${diff.inDays}日前';
-    } else {
-      return '${date.year}/${date.month}/${date.day}';
-    }
   }
 
   void _showDeleteDialog(Note note) {
