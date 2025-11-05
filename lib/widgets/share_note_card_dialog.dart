@@ -34,14 +34,19 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   bool _isGenerating = false;
   bool _isLoadingPreview = false;
 
+  // 新しいオプション
+  AspectRatio _selectedAspectRatio = AspectRatio.square;
+  ContentMode _selectedContentMode = ContentMode.smart;
+  FontSizeOption _selectedFontSize = FontSizeOption.medium;
+  bool _autoHashtags = true;
+
   // プレビュー用のGlobalKey（複数ページ対応）
   final List<GlobalKey> _repaintKeys = [];
   bool _showPreview = false;
   List<String> _contentChunks = [];
 
-  // 1ページあたりの最大文字数（調整可能）
-  // 元の高さの約1/3にするため、800文字から267文字に変更
-  static const int _maxCharsPerPage = 267;
+  // プログレス表示用
+  int _currentGeneratingIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +156,99 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         ),
                         
                         const SizedBox(height: 24),
-                        
+
+                        // アスペクト比選択
+                        const Text(
+                          'アスペクト比',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: AspectRatio.values.map((ratio) {
+                            final isSelected = _selectedAspectRatio == ratio;
+                            return ChoiceChip(
+                              label: Text(ratio.label),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedAspectRatio = ratio;
+                                  _showPreview = false;
+                                  _isLoadingPreview = false;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // コンテンツモード選択
+                        const Text(
+                          'コンテンツモード',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_selectedContentMode.label} - 1ページ最大${_selectedContentMode.maxCharsPerPage}文字',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: ContentMode.values.map((mode) {
+                            final isSelected = _selectedContentMode == mode;
+                            return ChoiceChip(
+                              label: Text(mode.label),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedContentMode = mode;
+                                  _showPreview = false;
+                                  _isLoadingPreview = false;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // フォントサイズ選択
+                        const Text(
+                          'フォントサイズ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: FontSizeOption.values.map((fontSize) {
+                            final isSelected = _selectedFontSize == fontSize;
+                            return ChoiceChip(
+                              label: Text(fontSize.label),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedFontSize = fontSize;
+                                  _showPreview = false;
+                                  _isLoadingPreview = false;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 24),
+
                         // オプション
                         const Text(
                           'オプション',
@@ -214,46 +311,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                           foregroundColor: Colors.green,
                                         )
                                       : null,
-                                  onPressed: () async {
-                                    setState(() {
-                                      _isLoadingPreview = true;
-                                      _prepareContentChunks(); // コンテンツチャンクを準備
-                                      _showPreview = true;
-                                    });
-
-                                    // レンダリング待機
-                                    await Future.delayed(const Duration(milliseconds: 500));
-
-                                    // フレーム完了を待つ
-                                    final completer = Completer<void>();
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      completer.complete();
-                                    });
-                                    WidgetsBinding.instance.scheduleFrame();
-                                    await completer.future;
-
-                                    // さらに待機
-                                    await Future.delayed(const Duration(milliseconds: 1500));
-
-                                    if (mounted) {
-                                      setState(() {
-                                        _isLoadingPreview = false;
-                                      });
-
-                                      final pageCount = _contentChunks.length;
-                                      final message = pageCount > 1
-                                          ? '✓ プレビュー準備完了！$pageCount枚の画像を生成します'
-                                          : '✓ プレビュー準備完了！「ダウンロード」ボタンをクリックしてください';
-
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(message),
-                                          duration: const Duration(seconds: 2),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onPressed: _handlePreview,
                                 ),
                         ),
                       ],
@@ -290,7 +348,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     ),
                                   )
                                 : const Icon(Icons.download),
-                            label: Text(_isGenerating ? '生成中...' : 'ダウンロード'),
+                            label: Text(_isGenerating
+                                ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
+                                : 'ダウンロード'),
                             onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
                                 ? null
                                 : _generateAndDownload,
@@ -310,7 +370,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     ),
                                   )
                                 : const Icon(Icons.share),
-                            label: Text(_isGenerating ? '生成中...' : '共有する'),
+                            label: Text(_isGenerating
+                                ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
+                                : '共有する'),
                             onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
                                 ? null
                                 : _generateAndShare,
@@ -330,7 +392,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                   left: -10000,
                   top: -10000 - (index * 3000), // 各カードを異なる位置に配置
                   child: SizedBox(
-                    width: 1080,
+                    width: _selectedAspectRatio.width.toDouble(),
                     // 高さの制約を削除し、コンテンツに応じて自動調整
                     child: _buildCardWidget(index),
                   ),
@@ -342,9 +404,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
-  // コンテンツを複数のチャンクに分割（枚数制限なし）
+  // コンテンツを複数のチャンクに分割（動的文字数制限）
   List<String> _splitContent(String content) {
-    if (content.length <= _maxCharsPerPage) {
+    final maxChars = _selectedContentMode.maxCharsPerPage;
+
+    if (content.length <= maxChars) {
       return [content];
     }
 
@@ -352,7 +416,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     int startIndex = 0;
 
     while (startIndex < content.length) {
-      int endIndex = startIndex + _maxCharsPerPage;
+      int endIndex = startIndex + maxChars;
 
       // 最後のチャンクの場合
       if (endIndex >= content.length) {
@@ -364,7 +428,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       int splitIndex = endIndex;
 
       // 句点、改行、スペースで区切りを探す
-      for (int i = endIndex; i > startIndex + (_maxCharsPerPage ~/ 2); i--) {
+      for (int i = endIndex; i > startIndex + (maxChars ~/ 2); i--) {
         if (i < content.length && (content[i] == '。' || content[i] == '.' ||
             content[i] == '\n' || content[i] == ' ')) {
           splitIndex = i + 1;
@@ -395,6 +459,10 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       template: _selectedTemplate,
       includeStats: _includeStats,
       includeLogo: _includeLogo,
+      aspectRatio: _selectedAspectRatio,
+      contentMode: _selectedContentMode,
+      fontSize: _selectedFontSize,
+      autoHashtags: _autoHashtags,
     );
 
     // 文字数と単語数を計算
@@ -419,7 +487,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   Widget _getTemplatePreview(CardTemplate template) {
     Color color;
     IconData icon;
-    
+
     switch (template) {
       case CardTemplate.minimal:
         color = Colors.white;
@@ -442,7 +510,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon = Icons.color_lens;
         break;
     }
-    
+
     return Container(
       width: 60,
       height: 60,
@@ -456,10 +524,133 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
+  // プレビュー処理（画像数警告付き）
+  Future<void> _handlePreview() async {
+    // まずコンテンツを分割して枚数を確認
+    _prepareContentChunks();
+    final imageCount = _contentChunks.length;
+
+    // 5枚以上の場合は警告ダイアログを表示
+    if (imageCount >= 5) {
+      final shouldContinue = await _showImageCountWarning(imageCount);
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
+    // プレビュー生成を開始
+    setState(() {
+      _isLoadingPreview = true;
+      _showPreview = true;
+    });
+
+    // レンダリング待機
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // フレーム完了を待つ
+    final completer = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      completer.complete();
+    });
+    WidgetsBinding.instance.scheduleFrame();
+    await completer.future;
+
+    // さらに待機
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (mounted) {
+      setState(() {
+        _isLoadingPreview = false;
+      });
+
+      final pageCount = _contentChunks.length;
+      final message = pageCount > 1
+          ? '✓ プレビュー準備完了！$pageCount枚の画像を生成します'
+          : '✓ プレビュー準備完了！「ダウンロード」ボタンをクリックしてください';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  // 画像数警告ダイアログ
+  Future<bool> _showImageCountWarning(int imageCount) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange, size: 32),
+            SizedBox(width: 12),
+            Text('画像数が多いです'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'このメモは $imageCount 枚の画像になります。',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text('以下をお勧めします：'),
+            const SizedBox(height: 8),
+            _buildSuggestion('📝 コンテンツモードを「要約モード」に変更'),
+            _buildSuggestion('✂️ 「スマート分割」で適度な枚数に調整'),
+            _buildSuggestion('🔗 リンク共有機能を使用'),
+            const SizedBox(height: 16),
+            const Text(
+              '※ 大量の画像生成は時間がかかり、デバイスのメモリを消費します',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+            ),
+            child: const Text('このまま続行'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
+  Widget _buildSuggestion(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_right, size: 20, color: Colors.grey),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 14)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Web版: ダウンロード機能
   Future<void> _generateAndDownload() async {
     setState(() {
       _isGenerating = true;
+      _currentGeneratingIndex = 0;
     });
 
     try {
@@ -471,6 +662,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       // 各ページをキャプチャしてダウンロード
       for (int i = 0; i < _repaintKeys.length; i++) {
+        // プログレス更新
+        setState(() {
+          _currentGeneratingIndex = i + 1;
+        });
+
         // スクリーンショットを撮る
         final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
 
@@ -545,6 +741,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   Future<void> _generateAndShare() async {
     setState(() {
       _isGenerating = true;
+      _currentGeneratingIndex = 0;
     });
 
     try {
@@ -555,6 +752,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
 
       // 各ページをキャプチャ
       for (int i = 0; i < _repaintKeys.length; i++) {
+        // プログレス更新
+        setState(() {
+          _currentGeneratingIndex = i + 1;
+        });
+
         // スクリーンショットを撮る
         final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
 

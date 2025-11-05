@@ -45,10 +45,12 @@ class NoteCardWidget extends StatelessWidget {
   // ミニマルテンプレート（全内容表示）
   Widget _buildMinimalCard() {
     final displayContent = contentChunk ?? note.content;
+    final fontScale = cardStyle.fontSize.scale;
+    final aspectRatio = cardStyle.aspectRatio;
 
     return Container(
-      width: 1080,
-      constraints: const BoxConstraints(minHeight: 1080),
+      width: aspectRatio.width.toDouble(),
+      constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       color: Colors.white,
       padding: const EdgeInsets.all(80),
       child: Column(
@@ -62,8 +64,8 @@ class NoteCardWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   note.title.isEmpty ? '(タイトルなし)' : note.title,
-                  style: const TextStyle(
-                    fontSize: 64,
+                  style: TextStyle(
+                    fontSize: 64 * fontScale,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                     height: 1.3,
@@ -79,8 +81,8 @@ class NoteCardWidget extends StatelessWidget {
                   ),
                   child: Text(
                     '$pageNumber/$totalPages',
-                    style: const TextStyle(
-                      fontSize: 32,
+                    style: TextStyle(
+                      fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
                       color: Colors.black54,
                     ),
@@ -93,8 +95,8 @@ class NoteCardWidget extends StatelessWidget {
           // コンテンツ（全内容またはチャンク）
           Text(
             displayContent,
-            style: const TextStyle(
-              fontSize: 42,
+            style: TextStyle(
+              fontSize: 42 * fontScale,
               color: Colors.black54,
               height: 1.6,
             ),
@@ -103,7 +105,7 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.black26, Colors.black54),
+          _buildFooter(Colors.black26, Colors.black54, fontScale),
         ],
       ),
     );
@@ -115,10 +117,12 @@ class NoteCardWidget extends StatelessWidget {
         ? Color(int.parse(category!.color.substring(1), radix: 16) + 0xFF000000)
         : Colors.blue;
     final displayContent = contentChunk ?? note.content;
+    final fontScale = cardStyle.fontSize.scale;
+    final aspectRatio = cardStyle.aspectRatio;
 
     return Container(
-      width: 1080,
-      constraints: const BoxConstraints(minHeight: 1080),
+      width: aspectRatio.width.toDouble(),
+      constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -144,7 +148,7 @@ class NoteCardWidget extends StatelessWidget {
                     child: Text(
                       '# ${category!.name}',
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 32 * fontScale,
                         fontWeight: FontWeight.w600,
                         color: categoryColor,
                       ),
@@ -163,7 +167,7 @@ class NoteCardWidget extends StatelessWidget {
                   child: Text(
                     '$pageNumber/$totalPages',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
                       color: categoryColor,
                     ),
@@ -178,8 +182,8 @@ class NoteCardWidget extends StatelessWidget {
           // タイトル
           Text(
             note.title.isEmpty ? '(タイトルなし)' : note.title,
-            style: const TextStyle(
-              fontSize: 56,
+            style: TextStyle(
+              fontSize: 56 * fontScale,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
               height: 1.3,
@@ -191,8 +195,8 @@ class NoteCardWidget extends StatelessWidget {
           // コンテンツ（全内容またはチャンク）
           Text(
             displayContent,
-            style: const TextStyle(
-              fontSize: 38,
+            style: TextStyle(
+              fontSize: 38 * fontScale,
               color: Colors.black54,
               height: 1.6,
             ),
@@ -201,7 +205,7 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.black26, categoryColor),
+          _buildFooter(Colors.black26, categoryColor, fontScale),
         ],
       ),
     );
@@ -210,10 +214,12 @@ class NoteCardWidget extends StatelessWidget {
   // グラデーションテンプレート（全内容表示）
   Widget _buildGradientCard() {
     final displayContent = contentChunk ?? note.content;
+    final fontScale = cardStyle.fontSize.scale;
+    final aspectRatio = cardStyle.aspectRatio;
 
     return Container(
-      width: 1080,
-      constraints: const BoxConstraints(minHeight: 1080),
+      width: aspectRatio.width.toDouble(),
+      constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -236,8 +242,8 @@ class NoteCardWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   note.title.isEmpty ? '(タイトルなし)' : note.title,
-                  style: const TextStyle(
-                    fontSize: 64,
+                  style: TextStyle(
+                    fontSize: 64 * fontScale,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     height: 1.3,
@@ -253,8 +259,8 @@ class NoteCardWidget extends StatelessWidget {
                   ),
                   child: Text(
                     '$pageNumber/$totalPages',
-                    style: const TextStyle(
-                      fontSize: 32,
+                    style: TextStyle(
+                      fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -268,8 +274,8 @@ class NoteCardWidget extends StatelessWidget {
           // コンテンツ（全内容またはチャンク）
           Text(
             displayContent,
-            style: const TextStyle(
-              fontSize: 42,
+            style: TextStyle(
+              fontSize: 42 * fontScale,
               color: Colors.white70,
               height: 1.6,
             ),
@@ -278,7 +284,7 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.white24, Colors.white),
+          _buildFooter(Colors.white24, Colors.white, fontScale),
         ],
       ),
     );
@@ -287,10 +293,12 @@ class NoteCardWidget extends StatelessWidget {
   // ダークモードテンプレート（全内容表示）
   Widget _buildDarkModeCard() {
     final displayContent = contentChunk ?? note.content;
+    final fontScale = cardStyle.fontSize.scale;
+    final aspectRatio = cardStyle.aspectRatio;
 
     return Container(
-      width: 1080,
-      constraints: const BoxConstraints(minHeight: 1080),
+      width: aspectRatio.width.toDouble(),
+      constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       color: const Color(0xFF1a1a1a),
       padding: const EdgeInsets.all(80),
       child: Column(
@@ -304,8 +312,8 @@ class NoteCardWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   note.title.isEmpty ? '(タイトルなし)' : note.title,
-                  style: const TextStyle(
-                    fontSize: 64,
+                  style: TextStyle(
+                    fontSize: 64 * fontScale,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     height: 1.3,
@@ -321,8 +329,8 @@ class NoteCardWidget extends StatelessWidget {
                   ),
                   child: Text(
                     '$pageNumber/$totalPages',
-                    style: const TextStyle(
-                      fontSize: 32,
+                    style: TextStyle(
+                      fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
                       color: Colors.white70,
                     ),
@@ -336,8 +344,8 @@ class NoteCardWidget extends StatelessWidget {
           // コンテンツ（全内容またはチャンク）
           Text(
             displayContent,
-            style: const TextStyle(
-              fontSize: 42,
+            style: TextStyle(
+              fontSize: 42 * fontScale,
               color: Colors.white60,
               height: 1.6,
             ),
@@ -346,7 +354,7 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.white12, Colors.white70),
+          _buildFooter(Colors.white12, Colors.white70, fontScale),
         ],
       ),
     );
@@ -355,10 +363,12 @@ class NoteCardWidget extends StatelessWidget {
   // カラフルテンプレート（全内容表示）
   Widget _buildColorfulCard() {
     final displayContent = contentChunk ?? note.content;
+    final fontScale = cardStyle.fontSize.scale;
+    final aspectRatio = cardStyle.aspectRatio;
 
     return Container(
-      width: 1080,
-      constraints: const BoxConstraints(minHeight: 1080),
+      width: aspectRatio.width.toDouble(),
+      constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       decoration: BoxDecoration(
         color: Colors.orange[50],
         border: Border.all(color: Colors.orange, width: 8),
@@ -375,10 +385,10 @@ class NoteCardWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   note.title.isEmpty ? '(タイトルなし)' : note.title,
-                  style: const TextStyle(
-                    fontSize: 64,
+                  style: TextStyle(
+                    fontSize: 64 * fontScale,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFe65100),
+                    color: const Color(0xFFe65100),
                     height: 1.3,
                   ),
                 ),
@@ -392,10 +402,10 @@ class NoteCardWidget extends StatelessWidget {
                   ),
                   child: Text(
                     '$pageNumber/$totalPages',
-                    style: const TextStyle(
-                      fontSize: 32,
+                    style: TextStyle(
+                      fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFe65100),
+                      color: const Color(0xFFe65100),
                     ),
                   ),
                 ),
@@ -407,9 +417,9 @@ class NoteCardWidget extends StatelessWidget {
           // コンテンツ（全内容またはチャンク）
           Text(
             displayContent,
-            style: const TextStyle(
-              fontSize: 42,
-              color: Color(0xFF5d4037),
+            style: TextStyle(
+              fontSize: 42 * fontScale,
+              color: const Color(0xFF5d4037),
               height: 1.6,
             ),
           ),
@@ -417,14 +427,14 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.orange[200]!, const Color(0xFFe65100)),
+          _buildFooter(Colors.orange[200]!, const Color(0xFFe65100), fontScale),
         ],
       ),
     );
   }
 
   // フッター（統計情報 + ロゴ）
-  Widget _buildFooter(Color dividerColor, Color textColor) {
+  Widget _buildFooter(Color dividerColor, Color textColor, double fontScale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -434,60 +444,60 @@ class NoteCardWidget extends StatelessWidget {
           height: 2,
           color: dividerColor,
         ),
-        
+
         const SizedBox(height: 30),
-        
+
         // 統計情報
         if (cardStyle.includeStats)
           Row(
             children: [
               Icon(
                 Icons.text_fields,
-                size: 32,
+                size: 32 * fontScale,
                 color: textColor.withOpacity(0.7),
               ),
               const SizedBox(width: 12),
               Text(
                 '${characterCount}文字',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 28 * fontScale,
                   color: textColor.withOpacity(0.7),
                 ),
               ),
               const SizedBox(width: 40),
               Icon(
                 Icons.calendar_today,
-                size: 32,
+                size: 32 * fontScale,
                 color: textColor.withOpacity(0.7),
               ),
               const SizedBox(width: 12),
               Text(
                 DateFormat('yyyy/MM/dd').format(note.createdAt),
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 28 * fontScale,
                   color: textColor.withOpacity(0.7),
                 ),
               ),
             ],
           ),
-        
+
         if (cardStyle.includeStats && cardStyle.includeLogo)
           const SizedBox(height: 20),
-        
+
         // ロゴ
         if (cardStyle.includeLogo)
           Row(
             children: [
               Icon(
                 Icons.edit_note,
-                size: 40,
+                size: 40 * fontScale,
                 color: textColor.withOpacity(0.7),
               ),
               const SizedBox(width: 12),
               Text(
                 'マイメモ',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 32 * fontScale,
                   fontWeight: FontWeight.bold,
                   color: textColor.withOpacity(0.7),
                 ),
