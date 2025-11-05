@@ -254,46 +254,52 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('キャンセル'),
+                      Flexible(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('キャンセル'),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       // Web版ではダウンロードボタンを表示
                       if (kIsWeb)
-                        ElevatedButton.icon(
-                          icon: _isGenerating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.download),
-                          label: Text(_isGenerating ? '生成中...' : 'ダウンロード'),
-                          onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
-                              ? null
-                              : _generateAndDownload,
+                        Flexible(
+                          child: ElevatedButton.icon(
+                            icon: _isGenerating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.download),
+                            label: Text(_isGenerating ? '生成中...' : 'ダウンロード'),
+                            onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
+                                ? null
+                                : _generateAndDownload,
+                          ),
                         )
                       else
                         // モバイル版では共有ボタン
-                        ElevatedButton.icon(
-                          icon: _isGenerating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.share),
-                          label: Text(_isGenerating ? '生成中...' : '共有する'),
-                          onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
-                              ? null
-                              : _generateAndShare,
+                        Flexible(
+                          child: ElevatedButton.icon(
+                            icon: _isGenerating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.share),
+                            label: Text(_isGenerating ? '生成中...' : '共有する'),
+                            onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
+                                ? null
+                                : _generateAndShare,
+                          ),
                         ),
                     ],
                   ),
@@ -301,21 +307,15 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
               ],
             ),
             
-            // プレビュー表示エリア（透明にして配置）
+            // プレビュー表示エリア（画面外に配置）
             if (_showPreview)
               Positioned(
-                left: 0,
-                top: 0,
-                child: Opacity(
-                  opacity: 0.01,
-                  child: SizedBox(
-                    width: 1,
-                    height: 1,
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      child: _buildCardWidget(),
-                    ),
-                  ),
+                left: -10000,
+                top: -10000,
+                child: SizedBox(
+                  width: 1080,
+                  height: 1080,
+                  child: _buildCardWidget(),
                 ),
               ),
           ],
