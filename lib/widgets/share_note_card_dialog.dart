@@ -314,7 +314,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                 top: -10000,
                 child: SizedBox(
                   width: 1080,
-                  height: 1080,
+                  // 高さの制約を削除し、コンテンツに応じて自動調整
                   child: _buildCardWidget(),
                 ),
               ),
