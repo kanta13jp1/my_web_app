@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/achievement.dart';
 
 class AchievementNotification {
-  static void show(BuildContext context, Achievement achievement) {
+  static void show({required BuildContext context, required Achievement achievement}) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -38,7 +38,7 @@ class AchievementNotification {
     for (var i = 0; i < achievements.length; i++) {
       Future.delayed(Duration(milliseconds: i * 300), () {
         if (context.mounted) {
-          show(context, achievements[i]);
+          show(context: context, achievement: achievements[i]);
         }
       });
     }

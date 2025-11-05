@@ -566,7 +566,7 @@ class GamificationService {
         }
 
         // Check points requirement
-        if (reward.requiredPoints != null && stats.totalPoints < reward.requiredPoints) {
+        if (reward.requiredPoints != null && stats.totalPoints < reward.requiredPoints!) {
           isUnlocked = false;
         }
 
