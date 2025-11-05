@@ -14,6 +14,7 @@ import '../services/auto_archive_service.dart';
 import 'settings_page.dart';
 import '../widgets/share_note_card_dialog.dart';
 import 'stats_page.dart';
+import 'leaderboard_page.dart';
 import '../services/gamification_service.dart';
 import '../models/user_stats.dart';
 import '../widgets/level_display_widget.dart';
@@ -1630,6 +1631,13 @@ class _HomePageState extends State<HomePage> {
                 ).then((_) {
                   _loadUserStats();
                 });
+              } else if (value == 'leaderboard') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LeaderboardPage()),
+                ).then((_) {
+                  _loadUserStats();
+                });
               } else if (value == 'settings') {
                 Navigator.push(
                   context,
@@ -1735,6 +1743,16 @@ class _HomePageState extends State<HomePage> {
                     Icon(Icons.emoji_events, color: Colors.amber),
                     SizedBox(width: 8),
                     Text('統計・実績'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'leaderboard',
+                child: Row(
+                  children: [
+                    Icon(Icons.leaderboard, color: Colors.purple),
+                    SizedBox(width: 8),
+                    Text('リーダーボード'),
                   ],
                 ),
               ),

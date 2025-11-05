@@ -6,6 +6,8 @@ import '../widgets/markdown_preview.dart';
 import '../models/attachment.dart'; // 追加
 import '../services/attachment_service.dart'; // 追加
 import '../widgets/attachment_list_widget.dart'; // 追加
+import '../services/gamification_service.dart'; // ゲーミフィケーション追加
+import '../widgets/achievement_notification.dart'; // 実績通知追加
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -34,9 +36,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   // マークダウン関連
   late TabController _tabController;
 
+  // ゲーミフィケーション用
+  late final GamificationService _gamificationService;
+
   @override
   void initState() {
     super.initState();
+    _gamificationService = GamificationService();
     _titleController = TextEditingController(text: widget.note?.title ?? '');
     _contentController =
         TextEditingController(text: widget.note?.content ?? '');
@@ -123,6 +129,14 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('ファイルを添付しました')),
         );
+
+        // ゲーミフィケーション: 添付ファイル追加イベント
+        final achievements = await _gamificationService.onAttachmentAdded(
+          supabase.auth.currentUser!.id,
+        );
+        if (mounted) {
+          _showAchievementNotifications(achievements);
+        }
       }
     } catch (error) {
       if (mounted) {
@@ -184,28 +198,71 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   Future<void> _saveNote() async {
     try {
-      if (widget.note == null) {
+      final userId = supabase.auth.currentUser!.id;
+      final isNewNote = widget.note == null;
+      final wasNotFavorite = widget.note?.isFavorite == false;
+      final hadNoReminder = widget.note?.reminderDate == null;
+
+      if (isNewNote) {
         // 新規作成
         await supabase.from('notes').insert({
-          'user_id': supabase.auth.currentUser!.id,
+          'user_id': userId,
           'title': _titleController.text,
           'content': _contentController.text,
           'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
           'reminder_date': _reminderDate?.toIso8601String(),
-          'is_pinned': _isPinned, // 追加
+          'is_pinned': _isPinned,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         });
+
+        // ゲーミフィケーション: メモ作成イベント
+        final achievements = await _gamificationService.onNoteCreated(userId);
+        if (mounted) {
+          _showAchievementNotifications(achievements);
+        }
+
+        // 初回のお気に入りまたはリマインダー設定
+        if (_isFavorite) {
+          final favAchievements = await _gamificationService.onNoteFavorited(userId);
+          if (mounted) {
+            _showAchievementNotifications(favAchievements);
+          }
+        }
+        if (_reminderDate != null) {
+          final reminderAchievements = await _gamificationService.onReminderSet(userId);
+          if (mounted) {
+            _showAchievementNotifications(reminderAchievements);
+          }
+        }
       } else {
         // 更新
         await supabase.from('notes').update({
           'title': _titleController.text,
           'content': _contentController.text,
           'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
           'reminder_date': _reminderDate?.toIso8601String(),
-          'is_pinned': _isPinned, // 追加
+          'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', widget.note!.id);
+
+        // お気に入りが新たに設定された場合
+        if (_isFavorite && wasNotFavorite) {
+          final achievements = await _gamificationService.onNoteFavorited(userId);
+          if (mounted) {
+            _showAchievementNotifications(achievements);
+          }
+        }
+
+        // リマインダーが新たに設定された場合
+        if (_reminderDate != null && hadNoReminder) {
+          final achievements = await _gamificationService.onReminderSet(userId);
+          if (mounted) {
+            _showAchievementNotifications(achievements);
+          }
+        }
       }
 
       if (!mounted) return;
@@ -216,6 +273,16 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
+      );
+    }
+  }
+
+  // 実績通知を表示
+  void _showAchievementNotifications(List<dynamic> achievements) {
+    for (final achievement in achievements) {
+      AchievementNotification.show(
+        context: context,
+        achievement: achievement,
       );
     }
   }

@@ -6,6 +6,7 @@ import '../services/gamification_service.dart';
 import '../widgets/level_display_widget.dart';
 import '../widgets/stats_overview_widget.dart';
 import '../widgets/achievement_card_widget.dart';
+import 'rewards_page.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({Key? key}) : super(key: key);
@@ -79,6 +80,16 @@ class _StatsPageState extends State<StatsPage> {
       appBar: AppBar(
         title: const Text('統計・実績'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.card_giftcard),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RewardsPage()),
+              );
+            },
+            tooltip: '報酬',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,

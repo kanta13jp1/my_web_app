@@ -1,11 +1,15 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_stats.dart';
 import '../models/achievement.dart';
+import '../models/leaderboard_entry.dart';
+import '../models/reward.dart';
+import '../main.dart';
 
 class GamificationService {
   final SupabaseClient _supabase;
 
-  GamificationService(this._supabase);
+  GamificationService([SupabaseClient? supabaseClient])
+      : _supabase = supabaseClient ?? supabase;
 
   // Initialize user stats for a new user
   Future<UserStats> initializeUserStats(String userId) async {
@@ -265,6 +269,9 @@ class GamificationService {
         'note_creator_10': 10,
         'note_creator_50': 50,
         'note_creator_100': 100,
+        'note_creator_200': 200,
+        'note_creator_500': 500,
+        'note_creator_1000': 1000,
       };
 
       for (var entry in noteAchievements.entries) {
@@ -282,6 +289,7 @@ class GamificationService {
       final categoryAchievements = {
         'first_category': 1,
         'category_master': 5,
+        'category_expert': 10,
       };
 
       for (var entry in categoryAchievements.entries) {
@@ -299,6 +307,8 @@ class GamificationService {
       final shareAchievements = {
         'first_share': 1,
         'share_master': 10,
+        'share_expert': 50,
+        'share_legend': 100,
       };
 
       for (var entry in shareAchievements.entries) {
@@ -317,6 +327,9 @@ class GamificationService {
         'streak_3': 3,
         'streak_7': 7,
         'streak_30': 30,
+        'streak_60': 60,
+        'streak_90': 90,
+        'streak_365': 365,
       };
 
       for (var entry in streakAchievements.entries) {
@@ -325,6 +338,43 @@ class GamificationService {
             userId,
             entry.key,
             stats.currentStreak,
+          );
+          if (achievement != null) newlyUnlocked.add(achievement);
+        }
+      }
+
+      // Check level achievements
+      final levelAchievements = {
+        'level_5': 5,
+        'level_10': 10,
+        'level_20': 20,
+        'level_50': 50,
+      };
+
+      for (var entry in levelAchievements.entries) {
+        if (stats.currentLevel >= entry.value) {
+          final achievement = await updateAchievementProgress(
+            userId,
+            entry.key,
+            stats.currentLevel,
+          );
+          if (achievement != null) newlyUnlocked.add(achievement);
+        }
+      }
+
+      // Check points achievements
+      final pointsAchievements = {
+        'points_1000': 1000,
+        'points_5000': 5000,
+        'points_10000': 10000,
+      };
+
+      for (var entry in pointsAchievements.entries) {
+        if (stats.totalPoints >= entry.value) {
+          final achievement = await updateAchievementProgress(
+            userId,
+            entry.key,
+            stats.totalPoints,
           );
           if (achievement != null) newlyUnlocked.add(achievement);
         }
@@ -403,35 +453,178 @@ class GamificationService {
   }
 
   // Handle favorite event
-  Future<Achievement?> onNoteFavorited(String userId) async {
+  Future<List<Achievement>> onNoteFavorited(String userId) async {
     try {
       await addPoints(userId, 5);
-      return await updateAchievementProgress(userId, 'first_favorite', 1);
+      final achievement = await updateAchievementProgress(userId, 'first_favorite', 1);
+      return achievement != null ? [achievement] : [];
     } catch (e) {
       print('Error handling note favorite: $e');
-      return null;
+      return [];
     }
   }
 
   // Handle reminder event
-  Future<Achievement?> onReminderSet(String userId) async {
+  Future<List<Achievement>> onReminderSet(String userId) async {
     try {
       await addPoints(userId, 10);
-      return await updateAchievementProgress(userId, 'first_reminder', 1);
+      final achievement = await updateAchievementProgress(userId, 'first_reminder', 1);
+      return achievement != null ? [achievement] : [];
     } catch (e) {
       print('Error handling reminder set: $e');
-      return null;
+      return [];
     }
   }
 
   // Handle attachment event
-  Future<Achievement?> onAttachmentAdded(String userId) async {
+  Future<List<Achievement>> onAttachmentAdded(String userId) async {
     try {
       await addPoints(userId, 10);
-      return await updateAchievementProgress(userId, 'first_attachment', 1);
+      final achievement = await updateAchievementProgress(userId, 'first_attachment', 1);
+      return achievement != null ? [achievement] : [];
     } catch (e) {
       print('Error handling attachment added: $e');
+      return [];
+    }
+  }
+
+  // Get leaderboard
+  Future<List<LeaderboardEntry>> getLeaderboard({
+    int limit = 100,
+    String orderBy = 'total_points',
+  }) async {
+    try {
+      final response = await _supabase
+          .from('user_stats')
+          .select()
+          .order(orderBy, ascending: false)
+          .limit(limit);
+
+      final entries = <LeaderboardEntry>[];
+      for (int i = 0; i < (response as List).length; i++) {
+        entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
+      }
+
+      return entries;
+    } catch (e) {
+      print('Error getting leaderboard: $e');
+      return [];
+    }
+  }
+
+  // Get user's rank
+  Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
+    try {
+      final allUsers = await _supabase
+          .from('user_stats')
+          .select('user_id, $orderBy')
+          .order(orderBy, ascending: false);
+
+      final userList = allUsers as List;
+      for (int i = 0; i < userList.length; i++) {
+        if (userList[i]['user_id'] == userId) {
+          return i + 1;
+        }
+      }
+
       return null;
+    } catch (e) {
+      print('Error getting user rank: $e');
+      return null;
+    }
+  }
+
+  // Get user rewards (check unlocked status)
+  Future<List<Reward>> getUserRewards(String userId) async {
+    try {
+      // Get user stats and achievements
+      final stats = await getUserStats(userId);
+      final achievements = await getUserAchievements(userId);
+
+      if (stats == null) return RewardDefinitions.getDefaultRewards();
+
+      final allRewards = RewardDefinitions.getDefaultRewards();
+      final achievementMap = {for (var a in achievements) a.id: a};
+
+      // Check which rewards are unlocked
+      return allRewards.map((reward) {
+        bool isUnlocked = false;
+
+        // Check level requirement
+        if (reward.requiredLevel > 0 && stats.currentLevel >= reward.requiredLevel) {
+          isUnlocked = true;
+        }
+
+        // Check achievement requirement
+        if (reward.requiredAchievementId != null) {
+          final requiredAchievement = achievementMap[reward.requiredAchievementId];
+          if (requiredAchievement != null && requiredAchievement.isUnlocked) {
+            isUnlocked = true;
+          } else {
+            isUnlocked = false;
+          }
+        }
+
+        // Check points requirement
+        if (reward.requiredPoints != null && stats.totalPoints < reward.requiredPoints) {
+          isUnlocked = false;
+        }
+
+        return reward.copyWith(
+          isUnlocked: isUnlocked,
+          unlockedAt: isUnlocked ? DateTime.now() : null,
+        );
+      }).toList();
+    } catch (e) {
+      print('Error getting user rewards: $e');
+      return RewardDefinitions.getDefaultRewards();
+    }
+  }
+
+  // Get unlocked themes
+  Future<List<Reward>> getUnlockedThemes(String userId) async {
+    try {
+      final rewards = await getUserRewards(userId);
+      return rewards
+          .where((r) => r.type == RewardType.theme && r.isUnlocked)
+          .toList();
+    } catch (e) {
+      print('Error getting unlocked themes: $e');
+      return [];
+    }
+  }
+
+  // Get unlocked badges
+  Future<List<Reward>> getUnlockedBadges(String userId) async {
+    try {
+      final rewards = await getUserRewards(userId);
+      return rewards
+          .where((r) => r.type == RewardType.badge && r.isUnlocked)
+          .toList();
+    } catch (e) {
+      print('Error getting unlocked badges: $e');
+      return [];
+    }
+  }
+
+  // Check if a specific feature is unlocked
+  Future<bool> isFeatureUnlocked(String userId, String featureId) async {
+    try {
+      final rewards = await getUserRewards(userId);
+      final feature = rewards.firstWhere(
+        (r) => r.id == featureId && r.type == RewardType.feature,
+        orElse: () => Reward(
+          id: featureId,
+          title: '',
+          description: '',
+          icon: '',
+          type: RewardType.feature,
+        ),
+      );
+      return feature.isUnlocked;
+    } catch (e) {
+      print('Error checking feature unlock: $e');
+      return false;
     }
   }
 }
