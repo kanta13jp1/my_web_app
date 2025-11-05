@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'dart:io';
 import '../models/note.dart';
 import '../models/category.dart';
-import '../models/card_template.dart';
+import '../models/card_template.dart' as template;
 import '../widgets/note_card_widget.dart';
 import '../services/note_card_service.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,16 +28,16 @@ class ShareNoteCardDialog extends StatefulWidget {
 }
 
 class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
-  CardTemplate _selectedTemplate = CardTemplate.minimal;
+  template.CardTemplate _selectedTemplate = template.CardTemplate.minimal;
   bool _includeStats = true;
   bool _includeLogo = true;
   bool _isGenerating = false;
   bool _isLoadingPreview = false;
 
   // 新しいオプション
-  AspectRatio _selectedAspectRatio = AspectRatio.square;
-  ContentMode _selectedContentMode = ContentMode.smart;
-  FontSizeOption _selectedFontSize = FontSizeOption.medium;
+  template.AspectRatio _selectedAspectRatio = template.AspectRatio.square;
+  template.ContentMode _selectedContentMode = template.ContentMode.smart;
+  template.FontSizeOption _selectedFontSize = template.FontSizeOption.medium;
   bool _autoHashtags = true;
 
   // プレビュー用のGlobalKey（複数ページ対応）
@@ -109,15 +109,15 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           height: 120,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            itemCount: CardTemplate.values.length,
+                            itemCount: template.CardTemplate.values.length,
                             itemBuilder: (context, index) {
-                              final template = CardTemplate.values[index];
-                              final isSelected = _selectedTemplate == template;
+                              final cardTemplate = template.CardTemplate.values[index];
+                              final isSelected = _selectedTemplate == cardTemplate;
                               
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    _selectedTemplate = template;
+                                    _selectedTemplate = cardTemplate;
                                     _showPreview = false;
                                     _isLoadingPreview = false;
                                   });
@@ -135,10 +135,10 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _getTemplatePreview(template),
+                                      _getTemplatePreview(cardTemplate),
                                       const SizedBox(height: 8),
                                       Text(
-                                        template.label,
+                                        cardTemplate.label,
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: isSelected
@@ -168,7 +168,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: AspectRatio.values.map((ratio) {
+                          children: template.AspectRatio.values.map((ratio) {
                             final isSelected = _selectedAspectRatio == ratio;
                             return ChoiceChip(
                               label: Text(ratio.label),
@@ -202,7 +202,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: ContentMode.values.map((mode) {
+                          children: template.ContentMode.values.map((mode) {
                             final isSelected = _selectedContentMode == mode;
                             return ChoiceChip(
                               label: Text(mode.label),
@@ -231,7 +231,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: FontSizeOption.values.map((fontSize) {
+                          children: template.FontSizeOption.values.map((fontSize) {
                             final isSelected = _selectedFontSize == fontSize;
                             return ChoiceChip(
                               label: Text(fontSize.label),
@@ -455,7 +455,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   }
 
   Widget _buildCardWidget(int pageIndex) {
-    final cardStyle = CardStyle(
+    final cardStyle = template.CardStyle(
       template: _selectedTemplate,
       includeStats: _includeStats,
       includeLogo: _includeLogo,
@@ -484,28 +484,28 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
     );
   }
 
-  Widget _getTemplatePreview(CardTemplate template) {
+  Widget _getTemplatePreview(template.CardTemplate cardTemplate) {
     Color color;
     IconData icon;
 
-    switch (template) {
-      case CardTemplate.minimal:
+    switch (cardTemplate) {
+      case template.CardTemplate.minimal:
         color = Colors.white;
         icon = Icons.minimize;
         break;
-      case CardTemplate.modern:
+      case template.CardTemplate.modern:
         color = Colors.blue;
         icon = Icons.style;
         break;
-      case CardTemplate.gradient:
+      case template.CardTemplate.gradient:
         color = Colors.purple;
         icon = Icons.gradient;
         break;
-      case CardTemplate.darkMode:
+      case template.CardTemplate.darkMode:
         color = Colors.black87;
         icon = Icons.dark_mode;
         break;
-      case CardTemplate.colorful:
+      case template.CardTemplate.colorful:
         color = Colors.orange;
         icon = Icons.color_lens;
         break;
@@ -519,7 +519,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Icon(icon, color: template == CardTemplate.darkMode
+      child: Icon(icon, color: cardTemplate == template.CardTemplate.darkMode
           ? Colors.white : Colors.black54),
     );
   }

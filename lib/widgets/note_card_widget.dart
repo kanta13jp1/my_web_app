@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
 import '../models/category.dart';
-import '../models/card_template.dart';
+import '../models/card_template.dart' as template;
 import 'package:intl/intl.dart';
 
 class NoteCardWidget extends StatelessWidget {
   final Note note;
   final Category? category;
-  final CardStyle cardStyle;
+  final template.CardStyle cardStyle;
   final int wordCount;
   final int characterCount;
   final String? contentChunk; // 分割されたコンテンツのチャンク（nullの場合は全コンテンツ）
@@ -29,15 +29,15 @@ class NoteCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (cardStyle.template) {
-      case CardTemplate.minimal:
+      case template.CardTemplate.minimal:
         return _buildMinimalCard();
-      case CardTemplate.modern:
+      case template.CardTemplate.modern:
         return _buildModernCard();
-      case CardTemplate.gradient:
+      case template.CardTemplate.gradient:
         return _buildGradientCard();
-      case CardTemplate.darkMode:
+      case template.CardTemplate.darkMode:
         return _buildDarkModeCard();
-      case CardTemplate.colorful:
+      case template.CardTemplate.colorful:
         return _buildColorfulCard();
     }
   }
