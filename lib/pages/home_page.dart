@@ -28,6 +28,8 @@ import '../widgets/home_page/category_filter_dialog.dart';
 import '../widgets/home_page/reminder_stats_banner.dart';
 import '../widgets/home_page/filter_chips_area.dart';
 import '../widgets/home_page/note_card_item.dart';
+import '../widgets/home_page/note_dialogs.dart' as dialogs;
+import '../services/note_operations_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -112,46 +114,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showShareOptionsDialog(Note note) {
-    showDialog(
+    final category = _getCategoryById(note.categoryId);
+    dialogs.showShareOptionsDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('共有方法を選択'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.blue),
-              title: const Text('メモカードとして共有'),
-              subtitle: const Text('SNSで映える画像を作成'),
-              onTap: () {
-                Navigator.pop(context);
-                _showNoteCardDialog(note);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.link, color: Colors.green),
-              title: const Text('リンクとして共有'),
-              subtitle: const Text('テキストURLで共有'),
-              onTap: () {
-                Navigator.pop(context);
-                _showShareOptionsDialog(note);
-              },
-            ),
-          ],
-        ),
-      ),
+      note: note,
+      category: category,
+      onShareAsCard: () => _showNoteCardDialog(note),
+      onShareAsLink: () => _showShareDialog(note),
     );
   }
 
   void _showNoteCardDialog(Note note) {
     final category = _getCategoryById(note.categoryId);
-    showDialog(
+    dialogs.showNoteCardDialog(
       context: context,
-      builder: (context) => ShareNoteCardDialog(
-        note: note,
-        category: category,
-      ),
+      note: note,
+      category: category,
     );
   }
 
@@ -161,10 +139,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _togglePin(Note note) async {
     try {
-      await supabase.from('notes').update({
-        'is_pinned': !note.isPinned,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', note.id);
+      await NoteOperationsService.togglePin(note);
 
       if (!mounted) return;
 
@@ -247,11 +222,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _archiveNote(Note note) async {
     try {
-      await supabase.from('notes').update({
-        'is_archived': true,
-        'archived_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', note.id);
+      await NoteOperationsService.archiveNote(note);
 
       if (!mounted) return;
 
@@ -280,11 +251,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _restoreNote(int noteId) async {
     try {
-      await supabase.from('notes').update({
-        'is_archived': false,
-        'archived_at': null,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', noteId);
+      await NoteOperationsService.restoreNote(noteId);
 
       if (!mounted) return;
 
@@ -308,143 +275,25 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showArchiveDialog(Note note) {
-    showDialog(
+    dialogs.showArchiveDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('メモをアーカイブ'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」をアーカイブしますか？'),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'アーカイブから復元できます',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _archiveNote(note);
-            },
-            child: const Text('アーカイブ'),
-          ),
-        ],
-      ),
+      note: note,
+      onArchive: () => _archiveNote(note),
     );
   }
 
   Future<void> _quickSetReminder(Note note) async {
-    final now = DateTime.now();
-
-    await showModalBottomSheet(
+    await dialogs.showQuickReminderDialog(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'クイックリマインダー',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.access_time, color: Colors.blue),
-                title: const Text('1時間後'),
-                onTap: () async {
-                  final reminderDate = now.add(const Duration(hours: 1));
-                  Navigator.pop(context); // ← 先にpop
-                  await _updateReminder(note, reminderDate); // ← その後update
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.today, color: Colors.orange),
-                title: const Text('今日の18:00'),
-                onTap: () async {
-                  final reminderDate =
-                      DateTime(now.year, now.month, now.day, 18, 0);
-                  Navigator.pop(context); // ← 先にpop
-                  await _updateReminder(note, reminderDate); // ← その後update
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.event, color: Colors.green),
-                title: const Text('明日の9:00'),
-                onTap: () async {
-                  final tomorrow = now.add(const Duration(days: 1));
-                  final reminderDate = DateTime(
-                      tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
-                  Navigator.pop(context); // ← 先にpop
-                  await _updateReminder(note, reminderDate); // ← その後update
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.calendar_month, color: Colors.purple),
-                title: const Text('カスタム設定'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NoteEditorPage(note: note),
-                    ),
-                  ).then((_) => _loadNotes());
-                },
-              ),
-              if (note.reminderDate != null)
-                ListTile(
-                  leading: const Icon(Icons.alarm_off, color: Colors.red),
-                  title: const Text('リマインダーを削除'),
-                  onTap: () async {
-                    Navigator.pop(context); // ← 先にpop
-                    await _updateReminder(note, null); // ← その後update
-                  },
-                ),
-            ],
-          ),
-        );
-      },
+      note: note,
+      onReminderSet: (reminderDate) => _updateReminder(note, reminderDate),
+      onLoadNotes: _loadNotes,
     );
   }
 
   Future<void> _updateReminder(Note note, DateTime? reminderDate) async {
     try {
-      await supabase.from('notes').update({
-        'reminder_date': reminderDate?.toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', note.id);
+      await NoteOperationsService.updateReminder(note, reminderDate);
 
       if (!mounted) {
         return;
@@ -477,12 +326,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _toggleFavorite(Note note) async {
     try {
-      await supabase.from('notes').update({
-        'is_favorite': !note.isFavorite,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', note.id);
+      await NoteOperationsService.toggleFavorite(note);
 
-      if (!mounted) return; // ← setState前にmountedをチェック
+      if (!mounted) return;
 
       setState(() {
         final index = _notes.indexWhere((n) => n.id == note.id);
@@ -501,7 +347,7 @@ class _HomePageState extends State<HomePage> {
         _applyFilters();
       });
 
-      if (!context.mounted) return; // ← context使用前にチェック
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -512,7 +358,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } catch (error) {
-      if (!context.mounted) return; // ← context使用前にチェック
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
@@ -697,7 +543,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteNote(int noteId) async {
     try {
-      await supabase.from('notes').delete().eq('id', noteId);
+      await NoteOperationsService.deleteNote(noteId);
       _loadNotes();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1521,26 +1367,10 @@ class _HomePageState extends State<HomePage> {
 
 
   void _showDeleteDialog(Note note) {
-    showDialog(
+    dialogs.showDeleteDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('メモを削除'),
-        content: const Text('このメモを削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteNote(note.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
+      note: note,
+      onDelete: () => _deleteNote(note.id),
     );
   }
 
