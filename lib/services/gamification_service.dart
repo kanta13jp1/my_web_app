@@ -4,6 +4,7 @@ import '../models/achievement.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/reward.dart';
 import '../main.dart';
+import '../utils/app_logger.dart';
 
 class GamificationService {
   final SupabaseClient _supabase;
@@ -34,8 +35,8 @@ class GamificationService {
           .single();
 
       return UserStats.fromJson(response);
-    } catch (e) {
-      print('Error initializing user stats: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error initializing user stats', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -51,8 +52,8 @@ class GamificationService {
 
       if (response == null) return null;
       return UserStats.fromJson(response);
-    } catch (e) {
-      print('Error getting user stats: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting user stats', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -72,8 +73,8 @@ class GamificationService {
           .single();
 
       return UserStats.fromJson(response);
-    } catch (e) {
-      print('Error updating user stats: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error updating user stats', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -96,8 +97,8 @@ class GamificationService {
       );
 
       return await updateUserStats(updatedStats);
-    } catch (e) {
-      print('Error adding points: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error adding points', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -148,8 +149,8 @@ class GamificationService {
       );
 
       return await updateUserStats(updatedStats);
-    } catch (e) {
-      print('Error tracking activity: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error tracking activity', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -180,8 +181,8 @@ class GamificationService {
         }
         return achievement;
       }).toList();
-    } catch (e) {
-      print('Error getting user achievements: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting user achievements', error: e, stackTrace: stackTrace);
       return AchievementDefinitions.getDefaultAchievements();
     }
   }
@@ -249,8 +250,8 @@ class GamificationService {
       }
 
       return null; // Not newly unlocked
-    } catch (e) {
-      print('Error updating achievement progress: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error updating achievement progress', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -381,8 +382,8 @@ class GamificationService {
       }
 
       return newlyUnlocked;
-    } catch (e) {
-      print('Error checking achievements: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error checking achievements', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -404,8 +405,8 @@ class GamificationService {
 
       // Check for newly unlocked achievements
       return await checkAchievements(userId);
-    } catch (e) {
-      print('Error handling note creation: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling note creation', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -425,8 +426,8 @@ class GamificationService {
       await addPoints(userId, 15);
 
       return await checkAchievements(userId);
-    } catch (e) {
-      print('Error handling category creation: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling category creation', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -446,8 +447,8 @@ class GamificationService {
       await addPoints(userId, 15);
 
       return await checkAchievements(userId);
-    } catch (e) {
-      print('Error handling note share: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling note share', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -458,8 +459,8 @@ class GamificationService {
       await addPoints(userId, 5);
       final achievement = await updateAchievementProgress(userId, 'first_favorite', 1);
       return achievement != null ? [achievement] : [];
-    } catch (e) {
-      print('Error handling note favorite: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling note favorite', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -470,8 +471,8 @@ class GamificationService {
       await addPoints(userId, 10);
       final achievement = await updateAchievementProgress(userId, 'first_reminder', 1);
       return achievement != null ? [achievement] : [];
-    } catch (e) {
-      print('Error handling reminder set: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling reminder set', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -482,8 +483,8 @@ class GamificationService {
       await addPoints(userId, 10);
       final achievement = await updateAchievementProgress(userId, 'first_attachment', 1);
       return achievement != null ? [achievement] : [];
-    } catch (e) {
-      print('Error handling attachment added: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error handling attachment added', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -506,8 +507,8 @@ class GamificationService {
       }
 
       return entries;
-    } catch (e) {
-      print('Error getting leaderboard: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -528,8 +529,8 @@ class GamificationService {
       }
 
       return null;
-    } catch (e) {
-      print('Error getting user rank: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting user rank', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -575,8 +576,8 @@ class GamificationService {
           unlockedAt: isUnlocked ? DateTime.now() : null,
         );
       }).toList();
-    } catch (e) {
-      print('Error getting user rewards: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting user rewards', error: e, stackTrace: stackTrace);
       return RewardDefinitions.getDefaultRewards();
     }
   }
@@ -588,8 +589,8 @@ class GamificationService {
       return rewards
           .where((r) => r.type == RewardType.theme && r.isUnlocked)
           .toList();
-    } catch (e) {
-      print('Error getting unlocked themes: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting unlocked themes', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -601,8 +602,8 @@ class GamificationService {
       return rewards
           .where((r) => r.type == RewardType.badge && r.isUnlocked)
           .toList();
-    } catch (e) {
-      print('Error getting unlocked badges: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting unlocked badges', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -622,8 +623,8 @@ class GamificationService {
         ),
       );
       return feature.isUnlocked;
-    } catch (e) {
-      print('Error checking feature unlock: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error checking feature unlock', error: e, stackTrace: stackTrace);
       return false;
     }
   }

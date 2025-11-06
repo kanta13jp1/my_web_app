@@ -4,6 +4,7 @@ import '../models/note.dart';
 import '../models/category.dart';
 import '../models/sort_type.dart';
 import 'auth_page.dart';
+import '../utils/app_logger.dart';
 import 'note_editor_page.dart';
 import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
@@ -101,8 +102,8 @@ class _HomePageState extends State<HomePage> {
           _userStats = stats;
         });
       }
-    } catch (e) {
-      print('Error loading user stats: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error loading user stats', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -389,7 +390,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadNotes() async {
     setState(() {
       _isLoading = true;
-      AttachmentCacheService.clearCache();
+      // キャッシュクリアは必要な時のみ実行（パフォーマンス改善）
     });
 
     try {
@@ -435,6 +436,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _signOut() async {
+    // ログアウト時にキャッシュをクリア
+    AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
     if (mounted) {
       Navigator.of(context).pushReplacement(
