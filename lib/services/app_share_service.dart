@@ -9,6 +9,9 @@ class AppShareService {
   static const String appUrl = 'https://my-web-app-b67f4.web.app/';
   static const String appName = 'マイメモ';
 
+  /// Supabase Edge FunctionsのベースURL
+  static const String supabaseFunctionsUrl = 'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
@@ -166,7 +169,7 @@ $appUrl
 
   /// 哲学者の名言を含むシェアメッセージを取得
   static String getPhilosopherQuoteMessage() {
-    final quote = PhilosopherQuote.getRandom();
+    final quote = PhilosopherQuote.getRandomAlways();
 
     return '''💭 今日の名言 - ${quote.author}
 
@@ -206,7 +209,7 @@ $appUrl
     required int currentStreak,
     String? levelTitle,
   }) {
-    final quote = PhilosopherQuote.getRandom();
+    final quote = PhilosopherQuote.getRandomAlways();
     final title = levelTitle ?? _getLevelTitle(level);
 
     // レベルに応じた追加メッセージ
@@ -451,5 +454,138 @@ $appUrl
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
     }
+  }
+
+  // ==========================================
+  // 動的OGP画像付きシェアリンク機能
+  // ==========================================
+
+  /// 動的OGP付きシェアリンクを生成
+  /// [quoteId] 名言のID（nullの場合はランダム）
+  static String generateDynamicShareLink({int? quoteId}) {
+    if (quoteId != null) {
+      return '$supabaseFunctionsUrl/share-quote?id=$quoteId';
+    } else {
+      // ランダムな名言ID
+      final randomId = DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length;
+      return '$supabaseFunctionsUrl/share-quote?id=$randomId';
+    }
+  }
+
+  /// Twitter向けシェア（動的OGP対応）
+  static Future<void> shareToTwitterWithDynamicOgp({
+    int? quoteId,
+    int? level,
+    int? totalPoints,
+    int? currentStreak,
+  }) async {
+    // 名言IDを取得
+    final selectedQuoteId = quoteId ??
+      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+
+    // 動的OGPリンクを生成
+    final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
+
+    // 名言を取得
+    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+
+    // シェアメッセージ
+    String message = '''💭 今日の名言 - ${quote.author}
+
+「${quote.quote}」
+
+マイメモで学びの習慣を始めよう！
+$shareLink
+
+#マイメモ #${quote.author} #名言 #哲学''';
+
+    if (level != null && totalPoints != null && currentStreak != null) {
+      message = '''💭 今日の名言 - ${quote.author}
+
+「${quote.quote}」
+
+✨ 私の実績 ✨
+📊 レベル: Lv.$level
+⭐ ポイント: $totalPoints pt
+🔥 連続: ${currentStreak}日
+
+マイメモで、あなたも習慣化！
+$shareLink
+
+#マイメモ #${quote.author} #レベル$level #名言''';
+    }
+
+    final twitterUrl = Uri.encodeFull(
+      'https://twitter.com/intent/tweet?text=$message',
+    );
+
+    if (kIsWeb) {
+      html.window.open(twitterUrl, '_blank');
+    } else {
+      await shareAppMobile(customMessage: message);
+    }
+  }
+
+  /// Facebook向けシェア（動的OGP対応）
+  static Future<void> shareToFacebookWithDynamicOgp({int? quoteId}) async {
+    final shareLink = generateDynamicShareLink(quoteId: quoteId);
+    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
+
+    if (kIsWeb) {
+      html.window.open(facebookUrl, '_blank');
+    } else {
+      await shareAppMobile(customMessage: shareLink);
+    }
+  }
+
+  /// LINE向けシェア（動的OGP対応）
+  static Future<void> shareToLineWithDynamicOgp({
+    int? quoteId,
+    int? level,
+    int? totalPoints,
+    int? currentStreak,
+  }) async {
+    // 名言IDを取得
+    final selectedQuoteId = quoteId ??
+      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+
+    // 動的OGPリンクを生成
+    final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
+
+    // 名言を取得
+    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+
+    String message = '''💭 ${quote.author}の名言
+
+「${quote.quote}」
+
+マイメモで学びの習慣を！
+$shareLink''';
+
+    if (level != null && totalPoints != null && currentStreak != null) {
+      message = '''💭 ${quote.author}の名言
+
+「${quote.quote}」
+
+私の実績: Lv.$level / $totalPoints pt / ${currentStreak}日連続
+
+$shareLink''';
+    }
+
+    final lineUrl = Uri.encodeFull(
+      'https://line.me/R/msg/text/?$message',
+    );
+
+    if (kIsWeb) {
+      html.window.open(lineUrl, '_blank');
+    } else {
+      await shareAppMobile(customMessage: message);
+    }
+  }
+
+  /// URLをクリップボードにコピー（動的OGP対応）
+  static Future<void> copyDynamicShareLinkToClipboard({int? quoteId}) async {
+    final shareLink = generateDynamicShareLink(quoteId: quoteId);
+    await Clipboard.setData(ClipboardData(text: shareLink));
   }
 }
