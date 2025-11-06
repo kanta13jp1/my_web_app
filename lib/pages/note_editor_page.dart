@@ -546,6 +546,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                           maxLines: null,
                           expands: true,
                           textAlignVertical: TextAlignVertical.top,
+                          keyboardType: TextInputType.multiline,
+                          textInputAction: TextInputAction.newline,
                         ),
                       ),
                     ],
