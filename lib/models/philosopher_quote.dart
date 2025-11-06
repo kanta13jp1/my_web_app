@@ -212,6 +212,18 @@ class PhilosopherQuote {
       imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=800&fit=crop',
       authorDescription: 'ドイツの精神分析学者・社会心理学者',
     ),
+    PhilosopherQuote(
+      quote: '義を見てせざるは勇無きなり',
+      author: '孔子',
+      imageUrl: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=800&fit=crop',
+      authorDescription: '古代中国の思想家',
+    ),
+    PhilosopherQuote(
+      quote: '祈りは神を変えず、祈る者を変える',
+      author: 'セーレン・キルケゴール',
+      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop',
+      authorDescription: 'デンマークの哲学者',
+    ),
   ];
 
   /// ランダムに名言を取得
@@ -224,7 +236,13 @@ class PhilosopherQuote {
 
   /// 完全にランダムに名言を取得（毎回異なる）
   static PhilosopherQuote getRandomAlways() {
-    final randomIndex = DateTime.now().microsecondsSinceEpoch % quotes.length;
+    // より良いランダム性を確保するため、複数の要素を組み合わせる
+    final now = DateTime.now();
+    final seed = now.microsecondsSinceEpoch +
+                 now.millisecondsSinceEpoch * 31 +
+                 now.second * 97 +
+                 now.millisecond * 197;
+    final randomIndex = seed % quotes.length;
     return quotes[randomIndex];
   }
 }
