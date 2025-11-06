@@ -10,6 +10,7 @@ import '../models/note.dart';
 import '../models/category.dart';
 import '../models/card_template.dart' as template;
 import '../widgets/note_card_widget.dart';
+import '../utils/app_logger.dart';
 
 class NoteCardService {
   // Widgetを画像に変換
@@ -64,10 +65,10 @@ class NoteCardService {
       // 画像として変換
       final ui.Image image = await renderRepaintBoundary.toImage(pixelRatio: 2.0);
       final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      
+
       return byteData?.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('Error capturing widget: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error capturing widget', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -77,36 +78,36 @@ class NoteCardService {
     GlobalKey key,
   ) async {
     try {
-      debugPrint('Starting capture process...');
-      
+      AppLogger.debug('Starting capture process...');
+
       // まず、currentContextが存在するまで待つ
       for (int i = 0; i < 20; i++) {
         if (key.currentContext != null) {
-          debugPrint('Context found on attempt ${i + 1}');
+          AppLogger.debug('Context found on attempt ${i + 1}');
           break;
         }
-        debugPrint('Waiting for context... attempt ${i + 1}/20');
+        AppLogger.debug('Waiting for context... attempt ${i + 1}/20');
         await Future.delayed(const Duration(milliseconds: 200));
       }
-      
+
       if (key.currentContext == null) {
-        debugPrint('ERROR: Context is null after waiting');
+        AppLogger.warning('Context is null after waiting');
         return null;
       }
-      
+
       // RenderObjectを取得
       final renderObject = key.currentContext!.findRenderObject();
       if (renderObject == null) {
-        debugPrint('ERROR: RenderObject is null');
+        AppLogger.warning('RenderObject is null');
         return null;
       }
-      
+
       if (renderObject is! RenderRepaintBoundary) {
-        debugPrint('ERROR: RenderObject is not RepaintBoundary');
+        AppLogger.warning('RenderObject is not RepaintBoundary');
         return null;
       }
-      
-      debugPrint('RenderRepaintBoundary found, waiting for render...');
+
+      AppLogger.debug('RenderRepaintBoundary found, waiting for render...');
 
       // 複数フレームを待つ（Web版では必須）
       for (int i = 0; i < 3; i++) {
@@ -119,21 +120,21 @@ class NoteCardService {
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
-      debugPrint('Post frame callback fired');
+      AppLogger.debug('Post frame callback fired');
 
       // レンダリングが完全に完了するまで待つ
       await Future.delayed(const Duration(milliseconds: 500));
 
-      debugPrint('Attempting to capture image...');
+      AppLogger.debug('Attempting to capture image...');
 
       // 画像として変換（リトライロジック付き）
       for (int attempt = 0; attempt < 3; attempt++) {
         try {
-          debugPrint('Capture attempt ${attempt + 1}/3');
+          AppLogger.debug('Capture attempt ${attempt + 1}/3');
 
           // レンダーオブジェクトが有効かチェック
           if (!renderObject.attached) {
-            debugPrint('RenderObject is not attached, waiting...');
+            AppLogger.debug('RenderObject is not attached, waiting...');
             await Future.delayed(const Duration(milliseconds: 500));
             continue;
           }
@@ -142,7 +143,7 @@ class NoteCardService {
           final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
           if (byteData != null) {
-            debugPrint('SUCCESS: Image captured on attempt ${attempt + 1}!');
+            AppLogger.info('Image captured successfully on attempt ${attempt + 1}');
             final result = byteData.buffer.asUint8List();
 
             // 画像オブジェクトを破棄してWebGLリソースを解放
@@ -150,25 +151,24 @@ class NoteCardService {
 
             return result;
           } else {
-            debugPrint('ERROR: ByteData is null on attempt ${attempt + 1}');
+            AppLogger.warning('ByteData is null on attempt ${attempt + 1}');
             // エラーの場合も画像を破棄
             image.dispose();
           }
         } catch (e) {
-          debugPrint('ERROR during toImage attempt ${attempt + 1}: $e');
+          AppLogger.warning('Error during toImage attempt ${attempt + 1}', error: e);
           if (attempt < 2) {
-            debugPrint('Waiting before retry...');
+            AppLogger.debug('Waiting before retry...');
             // WebGLコンテキストのリカバリーのため、より長い待機時間
             await Future.delayed(const Duration(milliseconds: 2000));
           }
         }
       }
 
-      debugPrint('FAILED: All capture attempts exhausted');
+      AppLogger.error('All capture attempts exhausted');
       return null;
     } catch (e, stackTrace) {
-      debugPrint('FATAL ERROR capturing widget: $e');
-      debugPrint('Stack trace: $stackTrace');
+      AppLogger.error('Fatal error capturing widget', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -211,8 +211,8 @@ class NoteCardService {
         [XFile(file.path)],
         text: '📝 $noteTitle\n\n#マイメモ #メモ習慣',
       );
-    } catch (e) {
-      debugPrint('Error sharing note card: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error sharing note card', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -229,10 +229,10 @@ class NoteCardService {
       final fileName = 'note_${sanitizedTitle}_$timestamp.png';
       final file = File('${appDocDir.path}/$fileName');
       await file.writeAsBytes(imageBytes);
-      
+
       return file.path;
-    } catch (e) {
-      debugPrint('Error saving note card: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error saving note card', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }

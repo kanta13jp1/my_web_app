@@ -28,6 +28,7 @@ dependencies:
   share_plus: ^10.1.2         # SNS共有
   path_provider: ^2.1.5       # ファイルパス取得
   image_gallery_saver: ^2.0.3 # ギャラリー保存（オプション）
+  logger: ^2.0.2              # ロギング
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +37,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - web/assets/images/ogp-image.svg
