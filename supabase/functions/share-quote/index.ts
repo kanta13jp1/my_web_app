@@ -38,6 +38,9 @@ serve(async (req) => {
     // アプリのURL
     const appUrl = 'https://my-web-app-b67f4.web.app';
 
+    // 共有ページのURL（必ずhttpsを使用）
+    const shareUrl = `${functionsBaseUrl}/functions/v1/share-quote?id=${quoteId}`;
+
     // HTMLを生成（OGPメタタグを含む）
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -53,7 +56,7 @@ serve(async (req) => {
     <meta property="og:image" content="${ogImageUrl}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="${url.href}">
+    <meta property="og:url" content="${shareUrl}">
     <meta property="og:locale" content="ja_JP">
 
     <!-- Twitter Card Meta Tags -->
@@ -210,7 +213,7 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=3600', // 1時間キャッシュ
-        'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'none'; img-src *; font-src *;",
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data: https:; img-src * data: https:; connect-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none';",
       },
     });
   } catch (error) {
