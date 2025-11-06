@@ -5,6 +5,10 @@ import '../../pages/stats_page.dart';
 import '../../pages/leaderboard_page.dart';
 import '../../pages/settings_page.dart';
 import '../../pages/share_philosopher_quote_dialog.dart';
+import '../../pages/statistics_page.dart';
+import '../../pages/referral_page.dart';
+import '../../pages/daily_challenges_page.dart';
+import '../../pages/memo_gallery_page.dart';
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -253,6 +257,30 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ).then((_) {
             onLoadUserStats();
           });
+        } else if (value == 'site_stats') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StatisticsPage()),
+          );
+        } else if (value == 'referral') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ReferralPage()),
+          ).then((_) {
+            onLoadUserStats();
+          });
+        } else if (value == 'daily_challenges') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DailyChallengesPage()),
+          ).then((_) {
+            onLoadUserStats();
+          });
+        } else if (value == 'memo_gallery') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MemoGalleryPage()),
+          );
         } else if (value == 'share_app') {
           _showShareDialog(context);
         } else if (value == 'settings') {
@@ -368,6 +396,47 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               Icon(Icons.emoji_events),
               SizedBox(width: 8),
               Text('リーダーボード'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'site_stats',
+          child: Row(
+            children: [
+              Icon(Icons.analytics, color: Colors.green),
+              SizedBox(width: 8),
+              Text('サイト統計'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'memo_gallery',
+          child: Row(
+            children: [
+              Icon(Icons.collections, color: Colors.purple),
+              SizedBox(width: 8),
+              Text('メモギャラリー'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'daily_challenges',
+          child: Row(
+            children: [
+              Icon(Icons.task_alt, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('デイリーチャレンジ'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'referral',
+          child: Row(
+            children: [
+              Icon(Icons.card_giftcard, color: Colors.pink),
+              SizedBox(width: 8),
+              Text('紹介プログラム'),
             ],
           ),
         ),

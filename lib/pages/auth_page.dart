@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'home_page.dart';
+import '../services/referral_service.dart';
+import '../services/daily_login_service.dart';
+import '../utils/app_logger.dart';
 
 enum AuthMode { signIn, signUp }
 
 class AuthPage extends StatefulWidget {
   final AuthMode initialMode;
+  final String? referralCode;
 
   const AuthPage({
     super.key,
     this.initialMode = AuthMode.signIn,
+    this.referralCode,
   });
 
   @override
@@ -19,19 +24,30 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _referralCodeController = TextEditingController();
   bool _isLoading = false;
   late bool _isSignUp;
+  late ReferralService _referralService;
+  late DailyLoginService _dailyLoginService;
 
   @override
   void initState() {
     super.initState();
     _isSignUp = widget.initialMode == AuthMode.signUp;
+    _referralService = ReferralService(supabase);
+    _dailyLoginService = DailyLoginService(supabase);
+
+    // If referral code is provided, pre-fill it
+    if (widget.referralCode != null) {
+      _referralCodeController.text = widget.referralCode!;
+    }
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -43,14 +59,57 @@ class _AuthPageState extends State<AuthPage> {
     try {
       if (_isSignUp) {
         // サインアップ
-        await supabase.auth.signUp(
+        final response = await supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+
+        final userId = response.user?.id;
+
+        // Apply referral code if provided
+        if (userId != null && _referralCodeController.text.trim().isNotEmpty) {
+          try {
+            final success = await _referralService.applyReferralCode(
+              userId,
+              _referralCodeController.text.trim(),
+            );
+
+            if (success) {
+              AppLogger.info('Referral code applied successfully');
+            }
+          } catch (e, stackTrace) {
+            AppLogger.error('Failed to apply referral code', e, stackTrace);
+          }
+        }
+
+        // Award welcome bonus (500 points)
+        if (userId != null) {
+          try {
+            final stats = await supabase
+                .from('user_stats')
+                .select('total_points')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (stats != null) {
+              final currentPoints = stats['total_points'] as int;
+              await supabase
+                  .from('user_stats')
+                  .update({'total_points': currentPoints + 500})
+                  .eq('user_id', userId);
+
+              AppLogger.info('Welcome bonus awarded: 500 points');
+            }
+          } catch (e, stackTrace) {
+            AppLogger.error('Failed to award welcome bonus', e, stackTrace);
+          }
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('確認メールを送信しました。メールをチェックしてください。'),
+              content: Text('確認メールを送信しました。ウェルカムボーナス500ポイント獲得！'),
+              backgroundColor: Colors.green,
             ),
           );
         }
@@ -60,6 +119,33 @@ class _AuthPageState extends State<AuthPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+
+        // Check and award daily login bonus
+        final userId = supabase.auth.currentUser?.id;
+        if (userId != null) {
+          try {
+            final bonus = await _dailyLoginService.checkDailyLoginBonus(userId);
+
+            if (bonus != null && bonus['is_new_bonus'] == true) {
+              final consecutiveDays = bonus['consecutive_days'] as int;
+              final bonusPoints = bonus['bonus_points'] as int;
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'デイリーログインボーナス！+${bonusPoints}ポイント (${consecutiveDays}日連続)',
+                    ),
+                    backgroundColor: Colors.amber,
+                  ),
+                );
+              }
+            }
+          } catch (e, stackTrace) {
+            AppLogger.error('Failed to check daily login bonus', e, stackTrace);
+          }
+        }
+
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HomePage()),
@@ -156,6 +242,10 @@ class _AuthPageState extends State<AuthPage> {
                           _buildBenefit(Icons.leaderboard, 'リーダーボードで競争', theme),
                           const SizedBox(height: 8),
                           _buildBenefit(Icons.local_fire_department, '連続記録でストリーク', theme),
+                          const SizedBox(height: 8),
+                          _buildBenefit(Icons.card_giftcard, '新規登録で500ポイント', theme),
+                          const SizedBox(height: 8),
+                          _buildBenefit(Icons.celebration, 'デイリーログインボーナス', theme),
                         ],
                       ),
                     ),
@@ -199,7 +289,57 @@ class _AuthPageState extends State<AuthPage> {
                   obscureText: true,
                   enabled: !_isLoading,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Referral Code Field (only for sign up)
+                if (_isSignUp) ...[
+                  TextField(
+                    controller: _referralCodeController,
+                    decoration: InputDecoration(
+                      labelText: '紹介コード (任意)',
+                      hintText: '友達から受け取ったコードを入力',
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      prefixIcon: const Icon(Icons.card_giftcard),
+                      suffixIcon: const Icon(Icons.stars, color: Colors.amber),
+                      filled: true,
+                      fillColor: theme.brightness == Brightness.light
+                          ? Colors.amber[50]
+                          : Colors.grey[900],
+                    ),
+                    enabled: !_isLoading,
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.emoji_events, color: Colors.green[700], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '紹介コード入力でボーナスポイント獲得！',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                const SizedBox(height: 8),
 
                 // Submit Button
                 SizedBox(

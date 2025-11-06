@@ -31,6 +31,8 @@ import '../widgets/home_page/note_dialogs.dart' as dialogs;
 import '../services/note_operations_service.dart';
 import '../services/note_filter_service.dart';
 import '../widgets/home_page/home_app_bar.dart';
+import '../services/presence_service.dart';
+import '../services/daily_login_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -74,10 +76,17 @@ class _HomePageState extends State<HomePage> {
   late final GamificationService _gamificationService;
   UserStats? _userStats;
 
+  // プレゼンストラッキング用
+  late final PresenceService _presenceService;
+  late final DailyLoginService _dailyLoginService;
+
   @override
   void initState() {
     super.initState();
     _gamificationService = GamificationService(supabase);
+    _presenceService = PresenceService(supabase);
+    _dailyLoginService = DailyLoginService(supabase);
+
     _loadCategories();
     _loadNotes();
     _loadUserStats();
@@ -85,6 +94,50 @@ class _HomePageState extends State<HomePage> {
 
     // 自動アーカイブを実行（追加）
     _runAutoArchive();
+
+    // プレゼンストラッキングを開始
+    _startPresenceTracking();
+
+    // デイリーログインボーナスをチェック
+    _checkDailyLoginBonus();
+  }
+
+  void _startPresenceTracking() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      await _presenceService.startPresenceTracking(userId, pagePath: '/home');
+    }
+  }
+
+  void _checkDailyLoginBonus() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final bonus = await _dailyLoginService.checkDailyLoginBonus(userId);
+
+      if (bonus != null && bonus['is_new_bonus'] == true) {
+        final consecutiveDays = bonus['consecutive_days'] as int;
+        final bonusPoints = bonus['bonus_points'] as int;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'デイリーログインボーナス！+${bonusPoints}ポイント (${consecutiveDays}日連続)',
+              ),
+              backgroundColor: Colors.amber,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+
+        // Reload user stats to show updated points
+        _loadUserStats();
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to check daily login bonus', error: e, stackTrace: stackTrace);
+    }
   }
 
   Future<void> _loadUserStats() async {
@@ -111,6 +164,12 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+
+    // プレゼンストラッキングを停止
+    final userId = supabase.auth.currentUser?.id;
+    _presenceService.stopPresenceTracking(userId);
+    _presenceService.dispose();
+
     super.dispose();
   }
 
