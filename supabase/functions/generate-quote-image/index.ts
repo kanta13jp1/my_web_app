@@ -120,7 +120,7 @@ serve(async (req) => {
     return new Response(svg, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': 'image/svg+xml; charset=utf-8',
         'Cache-Control': 'public, max-age=31536000', // 1年間キャッシュ
       },
     });
