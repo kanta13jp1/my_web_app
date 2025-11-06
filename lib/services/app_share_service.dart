@@ -166,7 +166,7 @@ $appUrl
 
   /// 哲学者の名言を含むシェアメッセージを取得
   static String getPhilosopherQuoteMessage() {
-    final quote = PhilosopherQuote.getRandom();
+    final quote = PhilosopherQuote.getRandomAlways();
 
     return '''💭 今日の名言 - ${quote.author}
 
@@ -206,7 +206,7 @@ $appUrl
     required int currentStreak,
     String? levelTitle,
   }) {
-    final quote = PhilosopherQuote.getRandom();
+    final quote = PhilosopherQuote.getRandomAlways();
     final title = levelTitle ?? _getLevelTitle(level);
 
     // レベルに応じた追加メッセージ

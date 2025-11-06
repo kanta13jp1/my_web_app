@@ -33,7 +33,7 @@ class SharePhilosopherQuoteDialog extends StatefulWidget {
 
 class _SharePhilosopherQuoteDialogState
     extends State<SharePhilosopherQuoteDialog> {
-  PhilosopherQuote _selectedQuote = PhilosopherQuote.getRandom();
+  PhilosopherQuote _selectedQuote = PhilosopherQuote.getRandomAlways();
   bool _includeAppLogo = true;
   bool _isGenerating = false;
   bool _showPreview = false;

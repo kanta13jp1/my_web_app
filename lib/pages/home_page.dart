@@ -7,7 +7,6 @@ import 'auth_page.dart';
 import 'note_editor_page.dart';
 import 'share_note_dialog.dart';
 import '../widgets/advanced_search_dialog.dart';
-import '../services/search_history_service.dart';
 import '../services/attachment_cache_service.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
