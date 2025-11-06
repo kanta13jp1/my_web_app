@@ -29,8 +29,8 @@ serve(async (req) => {
 
     const quote = getQuoteById(quoteId);
 
-    // Supabase Functions のベースURL
-    const functionsBaseUrl = url.origin;
+    // Supabase Functions のベースURL（必ずhttpsを使用）
+    const functionsBaseUrl = 'https://smmkxxavexumewbfaqpy.supabase.co';
 
     // OGP画像URLを生成
     const ogImageUrl = `${functionsBaseUrl}/functions/v1/generate-quote-image?id=${quoteId}`;
@@ -210,6 +210,7 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=3600', // 1時間キャッシュ
+        'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'none'; img-src *; font-src *;",
       },
     });
   } catch (error) {
