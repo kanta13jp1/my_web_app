@@ -18,7 +18,7 @@ class ReferralService {
 
       return ReferralCode.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user referral code', e, stackTrace);
+      AppLogger.error('Failed to get user referral code', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -34,7 +34,7 @@ class ReferralService {
 
       return response != null;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to validate referral code', e, stackTrace);
+      AppLogger.error('Failed to validate referral code', error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -94,7 +94,7 @@ class ReferralService {
       AppLogger.info('Referral code applied successfully');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to apply referral code', e, stackTrace);
+      AppLogger.error('Failed to apply referral code', error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -160,7 +160,7 @@ class ReferralService {
 
       AppLogger.info('Referral completed successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to complete referral', e, stackTrace);
+      AppLogger.error('Failed to complete referral', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -176,7 +176,7 @@ class ReferralService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get referral leaderboard', e, stackTrace);
+      AppLogger.error('Failed to get referral leaderboard', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -192,7 +192,7 @@ class ReferralService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user referrals', e, stackTrace);
+      AppLogger.error('Failed to get user referrals', error: e, stackTrace: stackTrace);
       return [];
     }
   }
