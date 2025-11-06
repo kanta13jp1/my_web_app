@@ -204,6 +204,18 @@ export const quotes: PhilosopherQuote[] = [
     author: "エーリッヒ・フロム",
     imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=800&fit=crop",
     authorDescription: "ドイツの精神分析学者・社会心理学者"
+  },
+  {
+    quote: "義を見てせざるは勇無きなり",
+    author: "孔子",
+    imageUrl: "https://images.unsplash.com/photo-1557862921-37829c790f19?w=800&h=800&fit=crop",
+    authorDescription: "古代中国の思想家"
+  },
+  {
+    quote: "祈りは神を変えず、祈る者を変える",
+    author: "セーレン・キルケゴール",
+    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop",
+    authorDescription: "デンマークの哲学者"
   }
 ];
 

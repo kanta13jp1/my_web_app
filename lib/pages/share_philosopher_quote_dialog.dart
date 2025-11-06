@@ -34,10 +34,23 @@ class SharePhilosopherQuoteDialog extends StatefulWidget {
 class _SharePhilosopherQuoteDialogState
     extends State<SharePhilosopherQuoteDialog> {
   PhilosopherQuote _selectedQuote = PhilosopherQuote.getRandomAlways();
+  int _selectedQuoteId = 0;
   bool _includeAppLogo = true;
   bool _isGenerating = false;
   bool _showPreview = false;
   final GlobalKey _repaintKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _updateSelectedQuoteId();
+  }
+
+  void _updateSelectedQuoteId() {
+    // 現在選択されている名言のIDを取得
+    _selectedQuoteId = PhilosopherQuote.quotes.indexOf(_selectedQuote);
+    if (_selectedQuoteId < 0) _selectedQuoteId = 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +172,7 @@ class _SharePhilosopherQuoteDialogState
                             onPressed: () {
                               setState(() {
                                 _selectedQuote = PhilosopherQuote.getRandomAlways();
+                                _updateSelectedQuoteId();
                                 _showPreview = false;
                               });
                             },
@@ -212,6 +226,100 @@ class _SharePhilosopherQuoteDialogState
                           ),
                         ),
 
+                        const SizedBox(height: 24),
+
+                        // SNSシェアセクション
+                        const Divider(),
+                        const SizedBox(height: 16),
+
+                        const Text(
+                          'SNSで直接シェア（OGP画像付き）',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '下のボタンから、哲学者の名言と画像をSNSに直接シェアできます',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // SNSシェアボタン
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            // Twitter
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.share, size: 20),
+                              label: const Text('Twitter'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1DA1F2),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                              ),
+                              onPressed: _shareToTwitter,
+                            ),
+                            // Facebook
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.share, size: 20),
+                              label: const Text('Facebook'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1877F2),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                              ),
+                              onPressed: _shareToFacebook,
+                            ),
+                            // LINE
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.share, size: 20),
+                              label: const Text('LINE'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF06C755),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                              ),
+                              onPressed: _shareToLine,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+
+                        // 画像ダウンロードセクション
+                        const Text(
+                          '画像をダウンロード',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '画像だけをダウンロードしたい場合は、プレビューを表示してからダウンロードしてください',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
                         const SizedBox(height: 16),
 
                         // シェアメッセージプレビュー
@@ -494,6 +602,97 @@ class _SharePhilosopherQuoteDialogState
     } catch (e) {
       debugPrint('Error sharing philosopher quote card: $e');
       rethrow;
+    }
+  }
+
+  // SNSシェアメソッド（動的OGP対応）
+  Future<void> _shareToTwitter() async {
+    try {
+      await AppShareService.shareToTwitterWithDynamicOgp(
+        quoteId: _selectedQuoteId,
+        level: widget.userLevel,
+        totalPoints: widget.totalPoints,
+        currentStreak: widget.currentStreak,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Twitterシェア画面を開きました！'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareToFacebook() async {
+    try {
+      await AppShareService.shareToFacebookWithDynamicOgp(
+        quoteId: _selectedQuoteId,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Facebookシェア画面を開きました！'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareToLine() async {
+    try {
+      await AppShareService.shareToLineWithDynamicOgp(
+        quoteId: _selectedQuoteId,
+        level: widget.userLevel,
+        totalPoints: widget.totalPoints,
+        currentStreak: widget.currentStreak,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('LINEシェア画面を開きました！'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 }
