@@ -6,6 +6,10 @@ import 'pages/home_page.dart';
 import 'pages/landing_page.dart';
 import 'pages/leaderboard_page.dart';
 import 'pages/shared_note_page.dart';
+import 'pages/statistics_page.dart';
+import 'pages/referral_page.dart';
+import 'pages/daily_challenges_page.dart';
+import 'pages/memo_gallery_page.dart';
 import 'services/theme_service.dart';
 
 Future<void> main() async {
@@ -49,8 +53,12 @@ class MyApp extends StatelessWidget {
           );
         }
 
+        // Parse query parameters for referral code
+        final uri = Uri.parse(settings.name ?? '/');
+        final queryParams = uri.queryParameters;
+
         // 通常のルーティング
-        switch (settings.name) {
+        switch (uri.path) {
           case '/':
             // ルートは認証状態で分岐
             return MaterialPageRoute(
@@ -74,9 +82,39 @@ class MyApp extends StatelessWidget {
               builder: (_) => const HomePage(),
             );
           case '/auth':
-            // 認証ページ
+            // 認証ページ（紹介コードサポート）
             return MaterialPageRoute(
-              builder: (_) => const AuthPage(),
+              builder: (_) => AuthPage(
+                referralCode: queryParams['ref'],
+              ),
+            );
+          case '/signup':
+            // サインアップページ（紹介コードサポート）
+            return MaterialPageRoute(
+              builder: (_) => AuthPage(
+                initialMode: AuthMode.signUp,
+                referralCode: queryParams['ref'],
+              ),
+            );
+          case '/statistics':
+            // サイト統計ページ（認証必要）
+            return MaterialPageRoute(
+              builder: (_) => const StatisticsPage(),
+            );
+          case '/referral':
+            // 紹介プログラムページ（認証必要）
+            return MaterialPageRoute(
+              builder: (_) => const ReferralPage(),
+            );
+          case '/challenges':
+            // デイリーチャレンジページ（認証必要）
+            return MaterialPageRoute(
+              builder: (_) => const DailyChallengesPage(),
+            );
+          case '/gallery':
+            // メモギャラリーページ（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const MemoGalleryPage(),
             );
           default:
             // デフォルトはランディングページ
