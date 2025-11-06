@@ -332,6 +332,8 @@ class _SharedNotePageState extends State<SharedNotePage> {
                                 maxLines: null,
                                 expands: true,
                                 textAlignVertical: TextAlignVertical.top,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
                                 readOnly: !(_shareInfo?.canWrite ?? false),
                               ),
                             ),
