@@ -208,7 +208,11 @@ serve(async (req) => {
   </body>
 </html>`;
 
-    return new Response(html, {
+    // UTF-8エンコーディングを明示的に行う
+    const encoder = new TextEncoder();
+    const encodedHtml = encoder.encode(html);
+
+    return new Response(encodedHtml, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
