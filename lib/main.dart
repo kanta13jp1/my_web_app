@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'pages/auth_page.dart';
 import 'pages/home_page.dart';
+import 'pages/landing_page.dart';
+import 'pages/leaderboard_page.dart';
 import 'pages/shared_note_page.dart';
 import 'services/theme_service.dart';
 
@@ -47,25 +49,39 @@ class MyApp extends StatelessWidget {
           );
         }
 
-        // 通常のルーティング（認証チェック）
+        // 通常のルーティング
         switch (settings.name) {
           case '/':
+            // ルートは認証状態で分岐
             return MaterialPageRoute(
               builder: (_) => supabase.auth.currentSession != null
                   ? const HomePage()
-                  : const AuthPage(),
+                  : const LandingPage(),
+            );
+          case '/landing':
+            // ランディングページ（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const LandingPage(),
+            );
+          case '/leaderboard':
+            // リーダーボード（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const LeaderboardPage(),
             );
           case '/home':
+            // ホームページ（認証必要）
             return MaterialPageRoute(
               builder: (_) => const HomePage(),
             );
           case '/auth':
+            // 認証ページ
             return MaterialPageRoute(
               builder: (_) => const AuthPage(),
             );
           default:
+            // デフォルトはランディングページ
             return MaterialPageRoute(
-              builder: (_) => const AuthPage(),
+              builder: (_) => const LandingPage(),
             );
         }
       },

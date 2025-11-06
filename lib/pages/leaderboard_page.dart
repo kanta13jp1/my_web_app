@@ -3,6 +3,7 @@ import '../main.dart';
 import '../services/gamification_service.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/user_stats.dart';
+import 'auth_page.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -18,6 +19,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   String _orderBy = 'total_points';
   int? _userRank;
   UserStats? _userStats;
+  bool _isAuthenticated = false;
 
   final Map<String, String> _orderByLabels = {
     'total_points': '総ポイント',
@@ -30,8 +32,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   void initState() {
     super.initState();
     _gamificationService = GamificationService();
+    _isAuthenticated = supabase.auth.currentUser != null;
     _loadLeaderboard();
-    _loadUserStats();
+    if (_isAuthenticated) {
+      _loadUserStats();
+    }
   }
 
   Future<void> _loadLeaderboard() async {
@@ -44,10 +49,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         limit: 100,
         orderBy: _orderBy,
       );
-      final rank = await _gamificationService.getUserRank(
-        supabase.auth.currentUser!.id,
-        orderBy: _orderBy,
-      );
+
+      // 認証済みユーザーの場合のみランクを取得
+      int? rank;
+      if (_isAuthenticated) {
+        rank = await _gamificationService.getUserRank(
+          supabase.auth.currentUser!.id,
+          orderBy: _orderBy,
+        );
+      }
 
       if (mounted) {
         setState(() {
@@ -69,6 +79,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   Future<void> _loadUserStats() async {
+    if (!_isAuthenticated) return;
+
     try {
       final stats = await _gamificationService.getUserStats(
         supabase.auth.currentUser!.id,
@@ -111,7 +123,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = supabase.auth.currentUser!.id;
+    final currentUserId = _isAuthenticated ? supabase.auth.currentUser!.id : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -126,8 +138,104 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       ),
       body: Column(
         children: [
-          // ユーザーの順位表示
-          if (_userStats != null && _userRank != null)
+          // 未認証ユーザー向けバナー
+          if (!_isAuthenticated)
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor,
+                    Theme.of(context).primaryColor.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.emoji_events,
+                    size: 48,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'ランキングに参加しよう！',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'アカウントを作成してメモを書き始めると\nリーダーボードに参加できます',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AuthPage(initialMode: AuthMode.signUp),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).primaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        child: const Text(
+                          '無料で始める',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AuthPage(initialMode: AuthMode.signIn),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white, width: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        child: const Text(
+                          'ログイン',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+          // ユーザーの順位表示（認証済みのみ）
+          if (_isAuthenticated && _userStats != null && _userRank != null)
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
@@ -266,7 +374,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         itemCount: _entries.length,
                         itemBuilder: (context, index) {
                           final entry = _entries[index];
-                          final isCurrentUser = entry.userId == currentUserId;
+                          final isCurrentUser = _isAuthenticated && entry.userId == currentUserId;
                           final rankEmoji = _getRankEmoji(entry.rank);
 
                           return Card(
