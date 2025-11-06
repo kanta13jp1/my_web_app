@@ -21,7 +21,7 @@ class DailyChallengeService {
           .map((json) => DailyChallenge.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get today\'s challenges', e, stackTrace);
+      AppLogger.error('Failed to get today\'s challenges', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -68,7 +68,7 @@ class DailyChallengeService {
       }).toList();
     } catch (e, stackTrace) {
       AppLogger.error(
-          'Failed to get challenges with progress', e, stackTrace);
+          'Failed to get challenges with progress', error: e, stackTrace: stackTrace);
       return [];
     }
   }
