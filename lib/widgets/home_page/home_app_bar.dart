@@ -806,21 +806,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () async {
               Navigator.pop(context);
               try {
-                // 哲学者の名言を使用
-                await AppShareService.shareToTwitter(
-                  customMessage: userStats != null
-                      ? AppShareService.getPhilosopherQuoteWithStats(
-                          level: userStats!.currentLevel,
-                          totalPoints: userStats!.totalPoints,
-                          currentStreak: userStats!.currentStreak,
-                          levelTitle: userStats!.levelTitle,
-                        )
-                      : AppShareService.getPhilosopherQuoteMessage(),
+                // 動的OGP対応: 哲学者の名言シェア
+                await AppShareService.shareToTwitterWithDynamicOgp(
+                  level: userStats?.currentLevel,
+                  totalPoints: userStats?.totalPoints,
+                  currentStreak: userStats?.currentStreak,
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('哲学者の名言をXでシェアしました！'),
+                      content: Text('動的OGP対応の名言をXでシェアしました！🎨'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -848,11 +843,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () async {
               Navigator.pop(context);
               try {
-                await AppShareService.shareToFacebook();
+                // 動的OGP対応: Facebookシェア
+                await AppShareService.shareToFacebookWithDynamicOgp();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Facebookでシェアしました！'),
+                      content: Text('動的OGP対応の名言をFacebookでシェアしました！🎨'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -880,21 +876,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () async {
               Navigator.pop(context);
               try {
-                // 哲学者の名言を使用
-                await AppShareService.shareToLine(
-                  customMessage: userStats != null
-                      ? AppShareService.getPhilosopherQuoteWithStats(
-                          level: userStats!.currentLevel,
-                          totalPoints: userStats!.totalPoints,
-                          currentStreak: userStats!.currentStreak,
-                          levelTitle: userStats!.levelTitle,
-                        )
-                      : AppShareService.getPhilosopherQuoteMessage(),
+                // 動的OGP対応: LINEシェア
+                await AppShareService.shareToLineWithDynamicOgp(
+                  level: userStats?.currentLevel,
+                  totalPoints: userStats?.totalPoints,
+                  currentStreak: userStats?.currentStreak,
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('哲学者の名言をLINEでシェアしました！'),
+                      content: Text('動的OGP対応の名言をLINEでシェアしました！🎨'),
                       backgroundColor: Colors.green,
                     ),
                   );
