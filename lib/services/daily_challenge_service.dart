@@ -39,7 +39,7 @@ class DailyChallengeService {
           .map((json) => UserChallengeProgress.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user challenge progress', e, stackTrace);
+      AppLogger.error('Failed to get user challenge progress', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -126,7 +126,7 @@ class DailyChallengeService {
 
       AppLogger.info('Challenge progress updated');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update challenge progress', e, stackTrace);
+      AppLogger.error('Failed to update challenge progress', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -183,7 +183,7 @@ class DailyChallengeService {
       AppLogger.info('Challenge reward claimed: $rewardPoints points');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to claim challenge reward', e, stackTrace);
+      AppLogger.error('Failed to claim challenge reward', error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -213,7 +213,7 @@ class DailyChallengeService {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to track activity for challenges', e, stackTrace);
+      AppLogger.error('Failed to track activity for challenges', error: e, stackTrace: stackTrace);
     }
   }
 }

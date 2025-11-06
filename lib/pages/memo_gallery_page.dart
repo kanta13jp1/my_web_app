@@ -57,7 +57,7 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load memos', e, stackTrace);
+      AppLogger.error('Failed to load memos', error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }
@@ -82,7 +82,7 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
 
       _loadMemos(); // Reload to update counts
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to toggle like', e, stackTrace);
+      AppLogger.error('Failed to toggle like', error: e, stackTrace: stackTrace);
     }
   }
 

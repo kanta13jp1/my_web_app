@@ -45,7 +45,7 @@ class PresenceService {
 
       AppLogger.info('Presence tracking started successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to start presence tracking', e, stackTrace);
+      AppLogger.error('Failed to start presence tracking', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -70,7 +70,7 @@ class PresenceService {
 
       AppLogger.info('Guest presence tracking started successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to start guest presence tracking', e, stackTrace);
+      AppLogger.error('Failed to start guest presence tracking', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -85,7 +85,7 @@ class PresenceService {
         'page_path': pagePath,
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update presence', e, stackTrace);
+      AppLogger.error('Failed to update presence', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -98,7 +98,7 @@ class PresenceService {
         'page_path': pagePath,
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update guest presence', e, stackTrace);
+      AppLogger.error('Failed to update guest presence', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -128,7 +128,7 @@ class PresenceService {
 
       AppLogger.info('Presence tracking stopped');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to stop presence tracking', e, stackTrace);
+      AppLogger.error('Failed to stop presence tracking', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -145,7 +145,7 @@ class PresenceService {
 
       return (response as List).length;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get online users count', e, stackTrace);
+      AppLogger.error('Failed to get online users count', error: e, stackTrace: stackTrace);
       return 0;
     }
   }
@@ -162,7 +162,7 @@ class PresenceService {
 
       return (response as List).length;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get online guests count', e, stackTrace);
+      AppLogger.error('Failed to get online guests count', error: e, stackTrace: stackTrace);
       return 0;
     }
   }
@@ -186,7 +186,7 @@ class PresenceService {
 
       return SiteStatistics.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get site statistics', e, stackTrace);
+      AppLogger.error('Failed to get site statistics', error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -197,7 +197,7 @@ class PresenceService {
       await _supabase.rpc('update_site_statistics');
       AppLogger.info('Site statistics updated successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update site statistics', e, stackTrace);
+      AppLogger.error('Failed to update site statistics', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -207,7 +207,7 @@ class PresenceService {
       await _supabase.rpc('cleanup_old_presence');
       AppLogger.info('Old presence records cleaned up');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to cleanup old presence', e, stackTrace);
+      AppLogger.error('Failed to cleanup old presence', error: e, stackTrace: stackTrace);
     }
   }
 

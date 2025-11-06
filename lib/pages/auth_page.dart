@@ -78,7 +78,7 @@ class _AuthPageState extends State<AuthPage> {
               AppLogger.info('Referral code applied successfully');
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to apply referral code', e, stackTrace);
+            AppLogger.error('Failed to apply referral code', error: e, stackTrace: stackTrace);
           }
         }
 
@@ -101,7 +101,7 @@ class _AuthPageState extends State<AuthPage> {
               AppLogger.info('Welcome bonus awarded: 500 points');
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to award welcome bonus', e, stackTrace);
+            AppLogger.error('Failed to award welcome bonus', error: e, stackTrace: stackTrace);
           }
         }
 
@@ -142,7 +142,7 @@ class _AuthPageState extends State<AuthPage> {
               }
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to check daily login bonus', e, stackTrace);
+            AppLogger.error('Failed to check daily login bonus', error: e, stackTrace: stackTrace);
           }
         }
 
