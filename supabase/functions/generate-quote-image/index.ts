@@ -116,8 +116,12 @@ serve(async (req) => {
   </g>
 </svg>`;
 
+    // UTF-8エンコーディングを明示的に行う
+    const encoder = new TextEncoder();
+    const encodedSvg = encoder.encode(svg);
+
     // SVGを返す
-    return new Response(svg, {
+    return new Response(encodedSvg, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'image/svg+xml; charset=utf-8',
