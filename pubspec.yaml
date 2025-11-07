@@ -42,3 +42,15 @@ flutter:
 
   assets:
     - web/assets/images/ogp-image.svg
+    - web/assets/fonts/
+
+  fonts:
+    - family: NotoSansJP
+      fonts:
+        - asset: web/assets/fonts/NotoSansJP-Regular.ttf
+    - family: NotoSans
+      fonts:
+        - asset: web/assets/fonts/NotoSans-Regular.ttf
+    - family: NotoColorEmoji
+      fonts:
+        - asset: web/assets/fonts/NotoColorEmoji.ttf
