@@ -151,7 +151,7 @@ class CommunityService {
       final profiles = await _supabase
           .from('user_profiles')
           .select()
-          .in_('user_id', followerIds);
+          .inFilter('user_id', followerIds);
 
       return (profiles as List)
           .map((profile) => UserProfile.fromJson(profile))
@@ -180,7 +180,7 @@ class CommunityService {
       final profiles = await _supabase
           .from('user_profiles')
           .select()
-          .in_('user_id', followingIds);
+          .inFilter('user_id', followingIds);
 
       return (profiles as List)
           .map((profile) => UserProfile.fromJson(profile))
