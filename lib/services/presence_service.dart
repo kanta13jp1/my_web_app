@@ -28,13 +28,16 @@ class PresenceService {
       AppLogger.info('Starting presence tracking for user: $userId');
 
       // Insert or update presence
-      await _supabase.from('user_presence').upsert({
-        'user_id': userId,
-        'session_id': _sessionId,
-        'is_online': true,
-        'last_seen': DateTime.now().toIso8601String(),
-        'page_path': pagePath,
-      });
+      await _supabase.from('user_presence').upsert(
+        {
+          'user_id': userId,
+          'session_id': _sessionId,
+          'is_online': true,
+          'last_seen': DateTime.now().toIso8601String(),
+          'page_path': pagePath,
+        },
+        onConflict: 'user_id,session_id',
+      );
 
       // Start heartbeat timer (update every 2 minutes)
       _heartbeatTimer?.cancel();
@@ -45,7 +48,12 @@ class PresenceService {
 
       AppLogger.info('Presence tracking started successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to start presence tracking', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to start presence tracking for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow; // Propagate error to caller for handling
     }
   }
 
@@ -55,11 +63,14 @@ class PresenceService {
       AppLogger.info('Starting guest presence tracking');
 
       // Insert or update guest presence
-      await _supabase.from('guest_presence').upsert({
-        'session_id': _sessionId,
-        'last_seen': DateTime.now().toIso8601String(),
-        'page_path': pagePath,
-      });
+      await _supabase.from('guest_presence').upsert(
+        {
+          'session_id': _sessionId,
+          'last_seen': DateTime.now().toIso8601String(),
+          'page_path': pagePath,
+        },
+        onConflict: 'session_id',
+      );
 
       // Start heartbeat timer
       _heartbeatTimer?.cancel();
@@ -70,35 +81,56 @@ class PresenceService {
 
       AppLogger.info('Guest presence tracking started successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to start guest presence tracking', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to start guest presence tracking with session: $_sessionId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow; // Propagate error to caller for handling
     }
   }
 
   // Update presence (heartbeat)
   Future<void> _updatePresence(String userId, {String? pagePath}) async {
     try {
-      await _supabase.from('user_presence').upsert({
-        'user_id': userId,
-        'session_id': _sessionId,
-        'is_online': true,
-        'last_seen': DateTime.now().toIso8601String(),
-        'page_path': pagePath,
-      });
+      await _supabase.from('user_presence').upsert(
+        {
+          'user_id': userId,
+          'session_id': _sessionId,
+          'is_online': true,
+          'last_seen': DateTime.now().toIso8601String(),
+          'page_path': pagePath,
+        },
+        onConflict: 'user_id,session_id',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update presence', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to update presence heartbeat for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // Don't rethrow - heartbeat failures shouldn't crash the app
     }
   }
 
   // Update guest presence (heartbeat)
   Future<void> _updateGuestPresence({String? pagePath}) async {
     try {
-      await _supabase.from('guest_presence').upsert({
-        'session_id': _sessionId,
-        'last_seen': DateTime.now().toIso8601String(),
-        'page_path': pagePath,
-      });
+      await _supabase.from('guest_presence').upsert(
+        {
+          'session_id': _sessionId,
+          'last_seen': DateTime.now().toIso8601String(),
+          'page_path': pagePath,
+        },
+        onConflict: 'session_id',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update guest presence', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to update guest presence heartbeat for session: $_sessionId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // Don't rethrow - heartbeat failures shouldn't crash the app
     }
   }
 
@@ -145,7 +177,11 @@ class PresenceService {
 
       return (response as List).length;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get online users count', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get online users count - this may be due to CORS or network issues',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
@@ -162,7 +198,11 @@ class PresenceService {
 
       return (response as List).length;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get online guests count', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get online guests count - this may be due to CORS or network issues',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
