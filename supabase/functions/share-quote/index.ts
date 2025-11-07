@@ -222,11 +222,7 @@ serve(async (req) => {
       "frame-ancestors 'none'"
     ].join('; ');
 
-    // UTF-8エンコーディングを明示的に行う
-    const encoder = new TextEncoder();
-    const encodedHtml = encoder.encode(html);
-
-    return new Response(encodedHtml, {
+    return new Response(html, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
