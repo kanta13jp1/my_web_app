@@ -193,13 +193,11 @@ FROM note_comments
 GROUP BY note_id;
 
 -- トリガー: updated_atの自動更新
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Note: update_updated_at_column() function already exists from growth_features migration
+-- We only need to create triggers for new tables
+
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
+DROP TRIGGER IF EXISTS update_note_comments_updated_at ON note_comments;
 
 CREATE TRIGGER update_user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
@@ -223,7 +221,9 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- トリガー: 新規ユーザー登録時にデフォルトプロフィールを作成
-CREATE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created_profile ON auth.users;
+
+CREATE TRIGGER on_auth_user_created_profile
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION create_default_user_profile();
