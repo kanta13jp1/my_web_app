@@ -14,6 +14,12 @@ DROP POLICY IF EXISTS "Only service role can modify site statistics" ON site_sta
 -- These policies explicitly deny non-service-role modifications
 -- while allowing the SELECT policy to work properly
 
+-- Drop existing policies if they exist to avoid conflicts
+DROP POLICY IF EXISTS "Only service role can insert site statistics" ON site_statistics;
+DROP POLICY IF EXISTS "Only service role can update site statistics" ON site_statistics;
+DROP POLICY IF EXISTS "Only service role can delete site statistics" ON site_statistics;
+
+-- Create new policies
 CREATE POLICY "Only service role can insert site statistics"
     ON site_statistics
     FOR INSERT
