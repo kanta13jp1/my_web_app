@@ -160,7 +160,7 @@ class LandingPage extends StatelessWidget {
                       const SizedBox(height: 40),
 
                       // Live Stats Banner
-                      const ConstrainedBox(
+                      ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: 600),
                         child: LiveStatsBanner(),
                       ),
