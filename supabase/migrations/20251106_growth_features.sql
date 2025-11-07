@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS site_statistics (
 );
 
 -- Index for fast date lookups
-CREATE INDEX idx_site_statistics_date ON site_statistics(stat_date DESC);
+CREATE INDEX IF NOT EXISTS idx_site_statistics_date ON site_statistics(stat_date DESC);
 
 -- ============================================================
 -- 2. USER PRESENCE TABLE
@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS user_presence (
 );
 
 -- Indexes for presence tracking
-CREATE INDEX idx_user_presence_user_id ON user_presence(user_id);
-CREATE INDEX idx_user_presence_online ON user_presence(is_online, last_seen);
-CREATE INDEX idx_user_presence_last_seen ON user_presence(last_seen DESC);
+CREATE INDEX IF NOT EXISTS idx_user_presence_user_id ON user_presence(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_presence_online ON user_presence(is_online, last_seen);
+CREATE INDEX IF NOT EXISTS idx_user_presence_last_seen ON user_presence(last_seen DESC);
 
 -- ============================================================
 -- 3. GUEST PRESENCE TABLE
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS guest_presence (
     UNIQUE(session_id)
 );
 
-CREATE INDEX idx_guest_presence_last_seen ON guest_presence(last_seen DESC);
+CREATE INDEX IF NOT EXISTS idx_guest_presence_last_seen ON guest_presence(last_seen DESC);
 
 -- ============================================================
 -- 4. REFERRAL CODES TABLE
@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS referral_codes (
     UNIQUE(user_id)
 );
 
-CREATE INDEX idx_referral_codes_code ON referral_codes(referral_code);
-CREATE INDEX idx_referral_codes_user_id ON referral_codes(user_id);
+CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(referral_code);
+CREATE INDEX IF NOT EXISTS idx_referral_codes_user_id ON referral_codes(user_id);
 
 -- ============================================================
 -- 5. REFERRALS TABLE
@@ -94,9 +94,9 @@ CREATE TABLE IF NOT EXISTS referrals (
     UNIQUE(referred_user_id)
 );
 
-CREATE INDEX idx_referrals_referrer ON referrals(referrer_user_id);
-CREATE INDEX idx_referrals_referred ON referrals(referred_user_id);
-CREATE INDEX idx_referrals_status ON referrals(status);
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_user_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_user_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_status ON referrals(status);
 
 -- ============================================================
 -- 6. DAILY CHALLENGES TABLE
@@ -115,8 +115,8 @@ CREATE TABLE IF NOT EXISTS daily_challenges (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_daily_challenges_date ON daily_challenges(challenge_date DESC);
-CREATE INDEX idx_daily_challenges_active ON daily_challenges(is_active, challenge_date);
+CREATE INDEX IF NOT EXISTS idx_daily_challenges_date ON daily_challenges(challenge_date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_challenges_active ON daily_challenges(is_active, challenge_date);
 
 -- ============================================================
 -- 7. USER DAILY CHALLENGE PROGRESS TABLE
@@ -135,9 +135,9 @@ CREATE TABLE IF NOT EXISTS user_challenge_progress (
     UNIQUE(user_id, challenge_id)
 );
 
-CREATE INDEX idx_user_challenge_progress_user ON user_challenge_progress(user_id);
-CREATE INDEX idx_user_challenge_progress_challenge ON user_challenge_progress(challenge_id);
-CREATE INDEX idx_user_challenge_progress_completed ON user_challenge_progress(is_completed);
+CREATE INDEX IF NOT EXISTS idx_user_challenge_progress_user ON user_challenge_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_challenge_progress_challenge ON user_challenge_progress(challenge_id);
+CREATE INDEX IF NOT EXISTS idx_user_challenge_progress_completed ON user_challenge_progress(is_completed);
 
 -- ============================================================
 -- 8. DAILY LOGIN REWARDS TABLE
@@ -153,8 +153,8 @@ CREATE TABLE IF NOT EXISTS daily_login_rewards (
     UNIQUE(user_id, login_date)
 );
 
-CREATE INDEX idx_daily_login_user ON daily_login_rewards(user_id);
-CREATE INDEX idx_daily_login_date ON daily_login_rewards(login_date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_login_user ON daily_login_rewards(user_id);
+CREATE INDEX IF NOT EXISTS idx_daily_login_date ON daily_login_rewards(login_date DESC);
 
 -- ============================================================
 -- 9. PUBLIC MEMOS TABLE
@@ -176,10 +176,10 @@ CREATE TABLE IF NOT EXISTS public_memos (
     UNIQUE(note_id, user_id)
 );
 
-CREATE INDEX idx_public_memos_user ON public_memos(user_id);
-CREATE INDEX idx_public_memos_public ON public_memos(is_public, published_at DESC);
-CREATE INDEX idx_public_memos_likes ON public_memos(like_count DESC);
-CREATE INDEX idx_public_memos_views ON public_memos(view_count DESC);
+CREATE INDEX IF NOT EXISTS idx_public_memos_user ON public_memos(user_id);
+CREATE INDEX IF NOT EXISTS idx_public_memos_public ON public_memos(is_public, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_public_memos_likes ON public_memos(like_count DESC);
+CREATE INDEX IF NOT EXISTS idx_public_memos_views ON public_memos(view_count DESC);
 
 -- ============================================================
 -- 10. MEMO LIKES TABLE
@@ -193,8 +193,8 @@ CREATE TABLE IF NOT EXISTS memo_likes (
     UNIQUE(memo_id, user_id)
 );
 
-CREATE INDEX idx_memo_likes_memo ON memo_likes(memo_id);
-CREATE INDEX idx_memo_likes_user ON memo_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_memo_likes_memo ON memo_likes(memo_id);
+CREATE INDEX IF NOT EXISTS idx_memo_likes_user ON memo_likes(user_id);
 
 -- ============================================================
 -- 11. ONBOARDING STATUS TABLE
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS user_onboarding (
     UNIQUE(user_id)
 );
 
-CREATE INDEX idx_user_onboarding_user ON user_onboarding(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_onboarding_user ON user_onboarding(user_id);
 
 -- ============================================================
 -- TRIGGERS FOR AUTO-UPDATING updated_at
@@ -228,6 +228,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply trigger to all tables with updated_at
+DROP TRIGGER IF EXISTS update_site_statistics_updated_at ON site_statistics;
+DROP TRIGGER IF EXISTS update_user_presence_updated_at ON user_presence;
+DROP TRIGGER IF EXISTS update_referral_codes_updated_at ON referral_codes;
+DROP TRIGGER IF EXISTS update_daily_challenges_updated_at ON daily_challenges;
+DROP TRIGGER IF EXISTS update_user_challenge_progress_updated_at ON user_challenge_progress;
+DROP TRIGGER IF EXISTS update_public_memos_updated_at ON public_memos;
+DROP TRIGGER IF EXISTS update_user_onboarding_updated_at ON user_onboarding;
+
 CREATE TRIGGER update_site_statistics_updated_at BEFORE UPDATE ON site_statistics FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_presence_updated_at BEFORE UPDATE ON user_presence FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_referral_codes_updated_at BEFORE UPDATE ON referral_codes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -242,11 +250,17 @@ CREATE TRIGGER update_user_onboarding_updated_at BEFORE UPDATE ON user_onboardin
 
 -- Site statistics: Read-only for all authenticated users
 ALTER TABLE site_statistics ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Site statistics are viewable by everyone" ON site_statistics;
+DROP POLICY IF EXISTS "Only service role can modify site statistics" ON site_statistics;
 CREATE POLICY "Site statistics are viewable by everyone" ON site_statistics FOR SELECT USING (true);
 CREATE POLICY "Only service role can modify site statistics" ON site_statistics FOR ALL USING (false);
 
 -- User presence: Users can manage their own presence
 ALTER TABLE user_presence ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view all presence data" ON user_presence;
+DROP POLICY IF EXISTS "Users can insert own presence" ON user_presence;
+DROP POLICY IF EXISTS "Users can update own presence" ON user_presence;
+DROP POLICY IF EXISTS "Users can delete own presence" ON user_presence;
 CREATE POLICY "Users can view all presence data" ON user_presence FOR SELECT USING (true);
 CREATE POLICY "Users can insert own presence" ON user_presence FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own presence" ON user_presence FOR UPDATE USING (auth.uid() = user_id);
@@ -254,6 +268,10 @@ CREATE POLICY "Users can delete own presence" ON user_presence FOR DELETE USING 
 
 -- Guest presence: Publicly accessible
 ALTER TABLE guest_presence ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Guest presence viewable by all" ON guest_presence;
+DROP POLICY IF EXISTS "Anyone can insert guest presence" ON guest_presence;
+DROP POLICY IF EXISTS "Anyone can update guest presence" ON guest_presence;
+DROP POLICY IF EXISTS "Anyone can delete old guest presence" ON guest_presence;
 CREATE POLICY "Guest presence viewable by all" ON guest_presence FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert guest presence" ON guest_presence FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can update guest presence" ON guest_presence FOR UPDATE USING (true);
@@ -261,33 +279,49 @@ CREATE POLICY "Anyone can delete old guest presence" ON guest_presence FOR DELET
 
 -- Referral codes: Users can view all, manage their own
 ALTER TABLE referral_codes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Referral codes viewable by all authenticated" ON referral_codes;
+DROP POLICY IF EXISTS "Users can insert own referral code" ON referral_codes;
+DROP POLICY IF EXISTS "Users can update own referral code" ON referral_codes;
 CREATE POLICY "Referral codes viewable by all authenticated" ON referral_codes FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Users can insert own referral code" ON referral_codes FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own referral code" ON referral_codes FOR UPDATE USING (auth.uid() = user_id);
 
 -- Referrals: Users can view their referrals
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their referrals" ON referrals;
+DROP POLICY IF EXISTS "System can insert referrals" ON referrals;
+DROP POLICY IF EXISTS "System can update referrals" ON referrals;
 CREATE POLICY "Users can view their referrals" ON referrals FOR SELECT USING (auth.uid() = referrer_user_id OR auth.uid() = referred_user_id);
 CREATE POLICY "System can insert referrals" ON referrals FOR INSERT WITH CHECK (true);
 CREATE POLICY "System can update referrals" ON referrals FOR UPDATE USING (true);
 
 -- Daily challenges: Readable by all authenticated users
 ALTER TABLE daily_challenges ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Challenges viewable by authenticated" ON daily_challenges;
 CREATE POLICY "Challenges viewable by authenticated" ON daily_challenges FOR SELECT USING (auth.role() = 'authenticated');
 
 -- User challenge progress: Users can view and update their own
 ALTER TABLE user_challenge_progress ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own progress" ON user_challenge_progress;
+DROP POLICY IF EXISTS "Users can insert own progress" ON user_challenge_progress;
+DROP POLICY IF EXISTS "Users can update own progress" ON user_challenge_progress;
 CREATE POLICY "Users can view own progress" ON user_challenge_progress FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own progress" ON user_challenge_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own progress" ON user_challenge_progress FOR UPDATE USING (auth.uid() = user_id);
 
 -- Daily login rewards: Users can view their own
 ALTER TABLE daily_login_rewards ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own login rewards" ON daily_login_rewards;
+DROP POLICY IF EXISTS "Users can insert own login rewards" ON daily_login_rewards;
 CREATE POLICY "Users can view own login rewards" ON daily_login_rewards FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own login rewards" ON daily_login_rewards FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Public memos: Viewable by all, manageable by owner
 ALTER TABLE public_memos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public memos viewable by all" ON public_memos;
+DROP POLICY IF EXISTS "Users can insert own public memos" ON public_memos;
+DROP POLICY IF EXISTS "Users can update own public memos" ON public_memos;
+DROP POLICY IF EXISTS "Users can delete own public memos" ON public_memos;
 CREATE POLICY "Public memos viewable by all" ON public_memos FOR SELECT USING (is_public = true OR auth.uid() = user_id);
 CREATE POLICY "Users can insert own public memos" ON public_memos FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own public memos" ON public_memos FOR UPDATE USING (auth.uid() = user_id);
@@ -295,12 +329,18 @@ CREATE POLICY "Users can delete own public memos" ON public_memos FOR DELETE USI
 
 -- Memo likes: Users can like and view likes
 ALTER TABLE memo_likes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Likes viewable by all" ON memo_likes;
+DROP POLICY IF EXISTS "Authenticated users can like" ON memo_likes;
+DROP POLICY IF EXISTS "Users can unlike own likes" ON memo_likes;
 CREATE POLICY "Likes viewable by all" ON memo_likes FOR SELECT USING (true);
 CREATE POLICY "Authenticated users can like" ON memo_likes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Users can unlike own likes" ON memo_likes FOR DELETE USING (auth.uid() = user_id);
 
 -- User onboarding: Users can view and update their own
 ALTER TABLE user_onboarding ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own onboarding" ON user_onboarding;
+DROP POLICY IF EXISTS "Users can insert own onboarding" ON user_onboarding;
+DROP POLICY IF EXISTS "Users can update own onboarding" ON user_onboarding;
 CREATE POLICY "Users can view own onboarding" ON user_onboarding FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own onboarding" ON user_onboarding FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own onboarding" ON user_onboarding FOR UPDATE USING (auth.uid() = user_id);
@@ -405,6 +445,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to create referral code when user signs up
+DROP TRIGGER IF EXISTS create_referral_code_on_signup ON auth.users;
 CREATE TRIGGER create_referral_code_on_signup
     AFTER INSERT ON auth.users
     FOR EACH ROW
@@ -417,7 +458,8 @@ INSERT INTO daily_challenges (challenge_date, challenge_type, challenge_title, c
 VALUES
     (CURRENT_DATE, 'create_notes', '今日のメモ作成', '3つのメモを作成しよう', 3, 50),
     (CURRENT_DATE, 'earn_points', 'ポイント獲得', '100ポイントを獲得しよう', 100, 30),
-    (CURRENT_DATE, 'share_notes', 'メモを共有', '1つのメモを共有しよう', 1, 40);
+    (CURRENT_DATE, 'share_notes', 'メモを共有', '1つのメモを共有しよう', 1, 40)
+ON CONFLICT (challenge_date, challenge_type) DO NOTHING;
 
 -- ============================================================
 -- COMMENTS
