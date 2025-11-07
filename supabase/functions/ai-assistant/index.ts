@@ -125,7 +125,7 @@ serve(async (req) => {
     const result = openaiData.choices[0]?.message?.content || ''
 
     // Track AI usage in database
-    await supabaseClient.from('ai_usage_log').insert({
+    const { error: insertError } = await supabaseClient.from('ai_usage_log').insert({
       user_id: user.id,
       action: action,
       input_tokens: openaiData.usage?.prompt_tokens || 0,
@@ -134,6 +134,11 @@ serve(async (req) => {
       cost_estimate: (openaiData.usage?.total_tokens || 0) * 0.00001, // Rough estimate
       created_at: new Date().toISOString(),
     })
+
+    // Log error but don't fail the request if usage tracking fails
+    if (insertError) {
+      console.error('Error logging AI usage:', insertError)
+    }
 
     return new Response(
       JSON.stringify({
