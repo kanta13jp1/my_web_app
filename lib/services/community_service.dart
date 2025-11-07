@@ -197,14 +197,16 @@ class CommunityService {
       // フォロワー数
       final followersResponse = await _supabase
           .from('user_follows')
-          .select('id', const FetchOptions(count: CountOption.exact, head: true))
-          .eq('following_id', userId);
+          .select()
+          .eq('following_id', userId)
+          .count(CountOption.exact);
 
       // フォロー数
       final followingResponse = await _supabase
           .from('user_follows')
-          .select('id', const FetchOptions(count: CountOption.exact, head: true))
-          .eq('follower_id', userId);
+          .select()
+          .eq('follower_id', userId)
+          .count(CountOption.exact);
 
       return {
         'followers': followersResponse.count ?? 0,
@@ -365,8 +367,9 @@ class CommunityService {
     try {
       final response = await _supabase
           .from('note_likes')
-          .select('id', const FetchOptions(count: CountOption.exact, head: true))
-          .eq('note_id', noteId);
+          .select()
+          .eq('note_id', noteId)
+          .count(CountOption.exact);
 
       return response.count ?? 0;
     } catch (e, stackTrace) {
@@ -380,8 +383,9 @@ class CommunityService {
     try {
       final response = await _supabase
           .from('note_comments')
-          .select('id', const FetchOptions(count: CountOption.exact, head: true))
-          .eq('note_id', noteId);
+          .select()
+          .eq('note_id', noteId)
+          .count(CountOption.exact);
 
       return response.count ?? 0;
     } catch (e, stackTrace) {
