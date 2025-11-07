@@ -112,7 +112,8 @@ CREATE TABLE IF NOT EXISTS daily_challenges (
     reward_points INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(challenge_date, challenge_type)
 );
 
 CREATE INDEX IF NOT EXISTS idx_daily_challenges_date ON daily_challenges(challenge_date DESC);
@@ -454,12 +455,20 @@ CREATE TRIGGER create_referral_code_on_signup
 -- ============================================================
 -- SEED DATA: Initial Daily Challenges
 -- ============================================================
-INSERT INTO daily_challenges (challenge_date, challenge_type, challenge_title, challenge_description, target_value, reward_points)
-VALUES
-    (CURRENT_DATE, 'create_notes', '今日のメモ作成', '3つのメモを作成しよう', 3, 50),
-    (CURRENT_DATE, 'earn_points', 'ポイント獲得', '100ポイントを獲得しよう', 100, 30),
-    (CURRENT_DATE, 'share_notes', 'メモを共有', '1つのメモを共有しよう', 1, 40)
-ON CONFLICT (challenge_date, challenge_type) DO NOTHING;
+-- Use DO block to handle conflicts gracefully
+DO $$
+BEGIN
+    INSERT INTO daily_challenges (challenge_date, challenge_type, challenge_title, challenge_description, target_value, reward_points)
+    VALUES
+        (CURRENT_DATE, 'create_notes', '今日のメモ作成', '3つのメモを作成しよう', 3, 50),
+        (CURRENT_DATE, 'earn_points', 'ポイント獲得', '100ポイントを獲得しよう', 100, 30),
+        (CURRENT_DATE, 'share_notes', 'メモを共有', '1つのメモを共有しよう', 1, 40)
+    ON CONFLICT (challenge_date, challenge_type) DO NOTHING;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Ignore errors if challenges already exist
+        NULL;
+END $$;
 
 -- ============================================================
 -- COMMENTS
