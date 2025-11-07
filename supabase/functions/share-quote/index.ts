@@ -6,6 +6,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// HTML escaping function that converts all non-ASCII characters to HTML entities
+// This ensures Japanese characters survive any encoding issues during deployment/transmission
+function escapeHtml(text: string): string {
+  let result = '';
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    if (char === '&') {
+      result += '&amp;';
+    } else if (char === '<') {
+      result += '&lt;';
+    } else if (char === '>') {
+      result += '&gt;';
+    } else if (char === '"') {
+      result += '&quot;';
+    } else if (char === "'") {
+      result += '&#39;';
+    } else if (code > 127) {
+      // Convert all non-ASCII characters to numeric HTML entities
+      result += `&#${code};`;
+    } else {
+      result += char;
+    }
+  }
+  return result;
+}
+
 serve(async (req) => {
   // CORSプリフライトリクエストへの対応
   if (req.method === 'OPTIONS') {
@@ -50,9 +76,9 @@ serve(async (req) => {
 
     <!-- OGP Meta Tags -->
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="マイメモ">
-    <meta property="og:title" content="💭 今日の名言 - ${quote.author}">
-    <meta property="og:description" content="${quote.quote}">
+    <meta property="og:site_name" content="${escapeHtml('マイメモ')}">
+    <meta property="og:title" content="${escapeHtml('💭 今日の名言 - ' + quote.author)}">
+    <meta property="og:description" content="${escapeHtml(quote.quote)}">
     <meta property="og:image" content="${ogImageUrl}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -61,12 +87,12 @@ serve(async (req) => {
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="💭 今日の名言 - ${quote.author}">
-    <meta name="twitter:description" content="${quote.quote}">
+    <meta name="twitter:title" content="${escapeHtml('💭 今日の名言 - ' + quote.author)}">
+    <meta name="twitter:description" content="${escapeHtml(quote.quote)}">
     <meta name="twitter:image" content="${ogImageUrl}">
-    <meta name="twitter:image:alt" content="${quote.author}の名言">
+    <meta name="twitter:image:alt" content="${escapeHtml(quote.author + 'の名言')}">
 
-    <title>💭 ${quote.author}の名言 | マイメモ</title>
+    <title>${escapeHtml('💭 ' + quote.author + 'の名言 | マイメモ')}</title>
 
     <style>
       * {
@@ -177,32 +203,32 @@ serve(async (req) => {
   </head>
   <body>
     <div class="container">
-      <div class="quote-icon">💭</div>
+      <div class="quote-icon">${escapeHtml('💭')}</div>
 
       <div class="quote-text">
-        「${quote.quote}」
+        ${escapeHtml('「' + quote.quote + '」')}
       </div>
 
       <div class="quote-author">
-        - ${quote.author} -
+        ${escapeHtml('- ' + quote.author + ' -')}
       </div>
 
       ${quote.authorDescription ? `
         <div class="author-description">
-          ${quote.authorDescription}
+          ${escapeHtml(quote.authorDescription)}
         </div>
       ` : ''}
 
       <a href="${appUrl}" class="cta-button">
-        🎮 マイメモで学びの習慣を始める
+        ${escapeHtml('🎮 マイメモで学びの習慣を始める')}
       </a>
 
       <div class="app-name">
-        マイメモ
+        ${escapeHtml('マイメモ')}
       </div>
 
       <div class="app-tagline">
-        哲学者の知恵とともに、メモ習慣を楽しく継続
+        ${escapeHtml('哲学者の知恵とともに、メモ習慣を楽しく継続')}
       </div>
     </div>
   </body>
@@ -222,7 +248,11 @@ serve(async (req) => {
       "frame-ancestors 'none'"
     ].join('; ');
 
-    return new Response(html, {
+    // UTF-8エンコーディングを明示的に行う（generate-quote-imageと同じパターン）
+    const encoder = new TextEncoder();
+    const encodedHtml = encoder.encode(html);
+
+    return new Response(encodedHtml, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
