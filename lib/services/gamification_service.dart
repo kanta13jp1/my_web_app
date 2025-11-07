@@ -103,6 +103,23 @@ class GamificationService {
     }
   }
 
+  // Award points with optional reason for tracking
+  Future<UserStats> awardPoints(
+    String userId,
+    int points, {
+    String? reason,
+  }) async {
+    try {
+      if (reason != null) {
+        AppLogger.info('Awarding $points points to user $userId: $reason');
+      }
+      return await addPoints(userId, points);
+    } catch (e, stackTrace) {
+      AppLogger.error('Error awarding points', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
   // Track activity and update streak
   Future<UserStats> trackActivity(String userId) async {
     try {
