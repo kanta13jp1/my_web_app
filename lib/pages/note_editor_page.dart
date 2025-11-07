@@ -412,6 +412,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     );
   }
 
+  // AIエラーメッセージのフォーマット
+  String _formatAIError(dynamic error) {
+    if (error is AIServiceException) {
+      if (error.isRateLimitError) {
+        return 'AI機能の使用制限に達しました。しばらく待ってから再度お試しください。';
+      }
+      return error.message;
+    }
+    // その他のエラーは一般的なメッセージ
+    return 'AI処理に失敗しました。しばらく待ってから再度お試しください。';
+  }
+
   // AI文章改善
   Future<void> _improveText() async {
     if (_contentController.text.isEmpty) {
@@ -440,7 +452,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -474,7 +489,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -508,7 +526,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -545,7 +566,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -597,7 +621,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -671,7 +698,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted) {
         setState(() => _isAIProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text(_formatAIError(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
