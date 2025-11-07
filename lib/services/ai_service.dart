@@ -6,7 +6,7 @@ import '../main.dart';
 class AIServiceException implements Exception {
   final String message;
   final String? errorType;
-  final int? retryAfter;
+  final String? retryAfter;
 
   AIServiceException(this.message, {this.errorType, this.retryAfter});
 
