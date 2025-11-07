@@ -6,30 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// HTML escaping function that converts all non-ASCII characters to HTML entities
-// This ensures Japanese characters survive any encoding issues during deployment/transmission
+// HTML escaping function that escapes only HTML special characters
+// Japanese characters and emoji are preserved as UTF-8 since we use charset=utf-8
 function escapeHtml(text: string): string {
-  let result = '';
-  for (const char of text) {
-    const code = char.charCodeAt(0);
-    if (char === '&') {
-      result += '&amp;';
-    } else if (char === '<') {
-      result += '&lt;';
-    } else if (char === '>') {
-      result += '&gt;';
-    } else if (char === '"') {
-      result += '&quot;';
-    } else if (char === "'") {
-      result += '&#39;';
-    } else if (code > 127) {
-      // Convert all non-ASCII characters to numeric HTML entities
-      result += `&#${code};`;
-    } else {
-      result += char;
-    }
-  }
-  return result;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 serve(async (req) => {
@@ -248,11 +233,8 @@ serve(async (req) => {
       "frame-ancestors 'none'"
     ].join('; ');
 
-    // UTF-8エンコーディングを明示的に行う（generate-quote-imageと同じパターン）
-    const encoder = new TextEncoder();
-    const encodedHtml = encoder.encode(html);
-
-    return new Response(encodedHtml, {
+    // HTMLを文字列として直接返す（Content-Typeが正しく認識されるように）
+    return new Response(html, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
