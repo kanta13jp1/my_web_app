@@ -33,6 +33,8 @@ import '../services/note_filter_service.dart';
 import '../widgets/home_page/home_app_bar.dart';
 import '../services/presence_service.dart';
 import '../services/daily_login_service.dart';
+import '../widgets/growth_metrics_banner.dart';
+import '../widgets/campaigns_banner.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -640,6 +642,10 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                // キャンペーンバナー
+                const CampaignsBanner(),
+                // 成長メトリクスバナー（登録者数・閲覧者数）
+                const GrowthMetricsBanner(),
                 // レベル表示（ゲーミフィケーション）
                 if (_userStats != null)
                   UserStatsHeader(

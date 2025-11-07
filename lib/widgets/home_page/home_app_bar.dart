@@ -9,6 +9,10 @@ import '../../pages/statistics_page.dart';
 import '../../pages/referral_page.dart';
 import '../../pages/daily_challenges_page.dart';
 import '../../pages/memo_gallery_page.dart';
+import '../../pages/growth_dashboard_page.dart';
+import '../../pages/template_marketplace_page.dart';
+import '../../pages/import_page.dart';
+import '../../pages/activity_feed_page.dart';
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -281,6 +285,28 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             context,
             MaterialPageRoute(builder: (_) => const MemoGalleryPage()),
           );
+        } else if (value == 'growth_dashboard') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const GrowthDashboardPage()),
+          );
+        } else if (value == 'templates') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TemplateMarketplacePage()),
+          );
+        } else if (value == 'import') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ImportPage()),
+          ).then((_) {
+            onRefresh();
+          });
+        } else if (value == 'activity_feed') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ActivityFeedPage()),
+          );
         } else if (value == 'share_app') {
           _showShareDialog(context);
         } else if (value == 'settings') {
@@ -437,6 +463,47 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               Icon(Icons.card_giftcard, color: Colors.pink),
               SizedBox(width: 8),
               Text('紹介プログラム'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'growth_dashboard',
+          child: Row(
+            children: [
+              Icon(Icons.trending_up, color: Colors.green),
+              SizedBox(width: 8),
+              Text('🚀 成長ダッシュボード'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'templates',
+          child: Row(
+            children: [
+              Icon(Icons.library_books, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('テンプレート'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'import',
+          child: Row(
+            children: [
+              Icon(Icons.upload_file, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('インポート'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'activity_feed',
+          child: Row(
+            children: [
+              Icon(Icons.timeline, color: Colors.purple),
+              SizedBox(width: 8),
+              Text('コミュニティ'),
             ],
           ),
         ),

@@ -29,6 +29,7 @@ dependencies:
   path_provider: ^2.1.5       # ファイルパス取得
   image_gallery_saver: ^2.0.3 # ギャラリー保存（オプション）
   logger: ^2.0.2              # ロギング
+  timeago: ^3.7.0             # 相対時間表示
 
 dev_dependencies:
   flutter_test:

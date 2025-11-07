@@ -14,8 +14,10 @@ import '../utils/date_formatter.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
+  final String? initialTitle;
+  final String? initialContent;
 
-  const NoteEditorPage({super.key, this.note});
+  const NoteEditorPage({super.key, this.note, this.initialTitle, this.initialContent});
 
   @override
   State<NoteEditorPage> createState() => _NoteEditorPageState();
@@ -46,9 +48,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   void initState() {
     super.initState();
     _gamificationService = GamificationService();
-    _titleController = TextEditingController(text: widget.note?.title ?? '');
+    _titleController = TextEditingController(text: widget.note?.title ?? widget.initialTitle ?? '');
     _contentController =
-        TextEditingController(text: widget.note?.content ?? '');
+        TextEditingController(text: widget.note?.content ?? widget.initialContent ?? '');
     _selectedCategoryId = widget.note?.categoryId;
     _isFavorite = widget.note?.isFavorite ?? false;
     _reminderDate = widget.note?.reminderDate;
