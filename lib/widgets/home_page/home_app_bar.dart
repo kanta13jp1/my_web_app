@@ -5,7 +5,7 @@ import '../../pages/stats_page.dart';
 import '../../pages/leaderboard_page.dart';
 import '../../pages/settings_page.dart';
 import '../../pages/share_philosopher_quote_dialog.dart';
-import '../../pages/statistics_page.dart';
+import '../../pages/enhanced_statistics_page.dart';
 import '../../pages/referral_page.dart';
 import '../../pages/daily_challenges_page.dart';
 import '../../pages/memo_gallery_page.dart';
@@ -264,7 +264,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         } else if (value == 'site_stats') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const StatisticsPage()),
+            MaterialPageRoute(builder: (_) => const EnhancedStatisticsPage()),
           );
         } else if (value == 'referral') {
           Navigator.push(

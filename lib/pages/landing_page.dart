@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import 'auth_page.dart';
 import 'leaderboard_page.dart';
+import '../widgets/live_stats_banner.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -155,6 +156,13 @@ class LandingPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Live Stats Banner
+                      const ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: 600),
+                        child: LiveStatsBanner(),
                       ),
                     ],
                   ),

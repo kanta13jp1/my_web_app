@@ -6,7 +6,7 @@ import 'pages/home_page.dart';
 import 'pages/landing_page.dart';
 import 'pages/leaderboard_page.dart';
 import 'pages/shared_note_page.dart';
-import 'pages/statistics_page.dart';
+import 'pages/enhanced_statistics_page.dart';
 import 'pages/referral_page.dart';
 import 'pages/daily_challenges_page.dart';
 import 'pages/memo_gallery_page.dart';
@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
           case '/statistics':
             // サイト統計ページ（認証必要）
             return MaterialPageRoute(
-              builder: (_) => const StatisticsPage(),
+              builder: (_) => const EnhancedStatisticsPage(),
             );
           case '/referral':
             // 紹介プログラムページ（認証必要）
