@@ -2,31 +2,134 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import '../main.dart';
 
+/// AI機能のカスタム例外
+class AIServiceException implements Exception {
+  final String message;
+  final String? errorType;
+  final int? retryAfter;
+
+  AIServiceException(this.message, {this.errorType, this.retryAfter});
+
+  bool get isRateLimitError => errorType == 'RATE_LIMIT';
+
+  @override
+  String toString() => message;
+}
+
 /// AI機能を提供するサービス
 /// NotionのAI機能に対抗する包括的なAI支援機能
 class AIService {
   final SupabaseClient _supabase;
+  static const int _maxRetries = 3;
+  static const int _initialRetryDelayMs = 1000;
 
   AIService([SupabaseClient? supabaseClient])
       : _supabase = supabaseClient ?? supabase;
+
+  /// 指数バックオフでリトライを実行するヘルパーメソッド
+  Future<T> _retryWithBackoff<T>(
+    Future<T> Function() operation, {
+    String operationName = 'AI operation',
+  }) async {
+    int retryCount = 0;
+    int delayMs = _initialRetryDelayMs;
+
+    while (true) {
+      try {
+        return await operation();
+      } catch (e) {
+        // AIServiceExceptionの場合、レート制限エラーかチェック
+        if (e is AIServiceException && e.isRateLimitError) {
+          if (retryCount >= _maxRetries) {
+            AppLogger.error(
+              'Max retries reached for $operationName after rate limit',
+              error: e,
+            );
+            rethrow;
+          }
+
+          // retryAfterがあればそれを使用、なければ指数バックオフ
+          final waitTimeMs = e.retryAfter != null
+              ? int.parse(e.retryAfter!) * 1000
+              : delayMs;
+
+          AppLogger.info(
+            'Rate limit hit for $operationName. Retrying in ${waitTimeMs}ms (attempt ${retryCount + 1}/$_maxRetries)',
+          );
+
+          await Future.delayed(Duration(milliseconds: waitTimeMs));
+          retryCount++;
+          delayMs *= 2; // 指数バックオフ
+          continue;
+        }
+
+        // その他のエラーはそのまま投げる
+        rethrow;
+      }
+    }
+  }
+
+  /// Supabase Functionsを呼び出すヘルパーメソッド（エラーハンドリング付き）
+  Future<Map<String, dynamic>> _invokeFunction(
+    String functionName,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        functionName,
+        body: body,
+      );
+
+      // エラーレスポンスのチェック
+      if (response.data['success'] != true) {
+        final errorMessage = response.data['error'] ?? 'AI処理に失敗しました';
+        final errorType = response.data['errorType'] as String?;
+        final retryAfter = response.data['retryAfter']?.toString();
+
+        throw AIServiceException(
+          errorMessage,
+          errorType: errorType,
+          retryAfter: retryAfter,
+        );
+      }
+
+      return response.data as Map<String, dynamic>;
+    } on FunctionException catch (e) {
+      // FunctionExceptionの場合、詳細を解析
+      final details = e.details;
+      if (details is Map<String, dynamic>) {
+        final errorMessage = details['error']?.toString() ?? 'AI処理に失敗しました';
+        final errorType = details['errorType'] as String?;
+        final retryAfter = details['retryAfter']?.toString();
+
+        throw AIServiceException(
+          errorMessage,
+          errorType: errorType,
+          retryAfter: retryAfter,
+        );
+      }
+
+      throw AIServiceException(e.toString());
+    }
+  }
 
   /// 文章改善
   /// ユーザーの文章をより明確で読みやすく改善
   Future<String> improveText(String content) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'improve',
-          'content': content,
+      return await _retryWithBackoff(
+        () async {
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'improve',
+              'content': content,
+            },
+          );
+          return data['result'] as String;
         },
+        operationName: 'improveText',
       );
-
-      if (response.data['success'] == true) {
-        return response.data['result'] as String;
-      } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
-      }
     } catch (e, stackTrace) {
       AppLogger.error('Error improving text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -37,19 +140,19 @@ class AIService {
   /// 長い文章を簡潔に要約
   Future<String> summarizeText(String content) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'summarize',
-          'content': content,
+      return await _retryWithBackoff(
+        () async {
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'summarize',
+              'content': content,
+            },
+          );
+          return data['result'] as String;
         },
+        operationName: 'summarizeText',
       );
-
-      if (response.data['success'] == true) {
-        return response.data['result'] as String;
-      } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
-      }
     } catch (e, stackTrace) {
       AppLogger.error('Error summarizing text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -60,19 +163,19 @@ class AIService {
   /// 短い文章やアイデアを詳細に展開
   Future<String> expandText(String content) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'expand',
-          'content': content,
+      return await _retryWithBackoff(
+        () async {
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'expand',
+              'content': content,
+            },
+          );
+          return data['result'] as String;
         },
+        operationName: 'expandText',
       );
-
-      if (response.data['success'] == true) {
-        return response.data['result'] as String;
-      } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
-      }
     } catch (e, stackTrace) {
       AppLogger.error('Error expanding text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -86,20 +189,20 @@ class AIService {
     String targetLanguage = 'en',
   }) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'translate',
-          'content': content,
-          'targetLanguage': targetLanguage,
+      return await _retryWithBackoff(
+        () async {
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'translate',
+              'content': content,
+              'targetLanguage': targetLanguage,
+            },
+          );
+          return data['result'] as String;
         },
+        operationName: 'translateText',
       );
-
-      if (response.data['success'] == true) {
-        return response.data['result'] as String;
-      } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
-      }
     } catch (e, stackTrace) {
       AppLogger.error('Error translating text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -110,28 +213,28 @@ class AIService {
   /// 文章内容から魅力的なタイトルを提案
   Future<List<String>> suggestTitles(String content) async {
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'suggest_title',
-          'content': content,
+      return await _retryWithBackoff(
+        () async {
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'suggest_title',
+              'content': content,
+            },
+          );
+          final result = data['result'] as String;
+          // Parse the result to extract title suggestions
+          // Assuming the result contains titles separated by newlines or numbers
+          final titles = result
+              .split('\n')
+              .where((line) => line.trim().isNotEmpty)
+              .map((line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim())
+              .where((line) => line.isNotEmpty)
+              .toList();
+          return titles;
         },
+        operationName: 'suggestTitles',
       );
-
-      if (response.data['success'] == true) {
-        final result = response.data['result'] as String;
-        // Parse the result to extract title suggestions
-        // Assuming the result contains titles separated by newlines or numbers
-        final titles = result
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .map((line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim())
-            .where((line) => line.isNotEmpty)
-            .toList();
-        return titles;
-      } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
-      }
     } catch (e, stackTrace) {
       AppLogger.error('Error suggesting titles', error: e, stackTrace: stackTrace);
       rethrow;

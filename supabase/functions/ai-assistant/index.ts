@@ -118,6 +118,17 @@ serve(async (req) => {
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.text()
       console.error('OpenAI API error:', errorData)
+
+      // Handle rate limit errors specifically
+      if (openaiResponse.status === 429) {
+        const retryAfter = openaiResponse.headers.get('retry-after') || '60'
+        const error = new Error('Rate limit exceeded')
+        ;(error as any).statusCode = 429
+        ;(error as any).retryAfter = retryAfter
+        ;(error as any).errorType = 'RATE_LIMIT'
+        throw error
+      }
+
       throw new Error(`OpenAI API error: ${openaiResponse.status}`)
     }
 
@@ -154,14 +165,25 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error in AI assistant:', error)
+
+    // Return appropriate status code and details based on error type
+    const statusCode = (error as any).statusCode || 400
+    const errorResponse: any = {
+      success: false,
+      error: error.message,
+    }
+
+    // Add additional details for rate limit errors
+    if ((error as any).errorType === 'RATE_LIMIT') {
+      errorResponse.errorType = 'RATE_LIMIT'
+      errorResponse.retryAfter = (error as any).retryAfter
+    }
+
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
+      JSON.stringify(errorResponse),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: statusCode,
       }
     )
   }
