@@ -91,7 +91,7 @@ CREATE POLICY "Users can unfollow"
 -- メモコメントテーブル
 CREATE TABLE IF NOT EXISTS note_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  note_id UUID NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  note_id BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -133,7 +133,7 @@ CREATE POLICY "Users can delete their own comments"
 -- メモいいねテーブル
 CREATE TABLE IF NOT EXISTS note_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  note_id UUID NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  note_id BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(note_id, user_id)
