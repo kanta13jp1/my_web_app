@@ -7,6 +7,7 @@ import '../models/attachment.dart'; // 追加
 import '../services/attachment_service.dart'; // 追加
 import '../widgets/attachment_list_widget.dart'; // 追加
 import '../services/gamification_service.dart'; // ゲーミフィケーション追加
+import '../services/ai_service.dart'; // AI機能追加
 import '../widgets/achievement_notification.dart'; // 実績通知追加
 import '../widgets/note_editor/editor_dialogs.dart' as editor_dialogs;
 import '../widgets/note_editor/category_chip.dart';
@@ -44,10 +45,15 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   // ゲーミフィケーション用
   late final GamificationService _gamificationService;
 
+  // AI機能用
+  late final AIService _aiService;
+  bool _isAIProcessing = false;
+
   @override
   void initState() {
     super.initState();
     _gamificationService = GamificationService();
+    _aiService = AIService();
     _titleController = TextEditingController(text: widget.note?.title ?? widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.note?.content ?? widget.initialContent ?? '');
@@ -329,12 +335,370 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     editor_dialogs.showMarkdownHelp(context);
   }
 
+  // AI機能メニューを表示
+  void _showAIMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🤖 AI アシスタント',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.auto_fix_high, color: Colors.purple),
+              title: const Text('文章を改善'),
+              subtitle: const Text('より明確で読みやすい文章に改善します'),
+              onTap: () {
+                Navigator.pop(context);
+                _improveText();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.summarize, color: Colors.blue),
+              title: const Text('要約を生成'),
+              subtitle: const Text('長い文章を簡潔に要約します'),
+              onTap: () {
+                Navigator.pop(context);
+                _summarizeText();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.expand, color: Colors.green),
+              title: const Text('文章を展開'),
+              subtitle: const Text('短い文章を詳しく展開します'),
+              onTap: () {
+                Navigator.pop(context);
+                _expandText();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.translate, color: Colors.orange),
+              title: const Text('英語に翻訳'),
+              subtitle: const Text('文章を英語に翻訳します'),
+              onTap: () {
+                Navigator.pop(context);
+                _translateText();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.title, color: Colors.red),
+              title: const Text('タイトルを提案'),
+              subtitle: const Text('内容から適切なタイトルを提案します'),
+              onTap: () {
+                Navigator.pop(context);
+                _suggestTitle();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.label, color: Colors.teal),
+              title: const Text('タグ・カテゴリを提案'),
+              subtitle: const Text('自動的にタグとカテゴリを提案します'),
+              onTap: () {
+                Navigator.pop(context);
+                _suggestTags();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // AI文章改善
+  Future<void> _improveText() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('改善する文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final improvedText = await _aiService.improveText(_contentController.text);
+      if (mounted) {
+        setState(() {
+          _contentController.text = improvedText;
+          _isAIProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ 文章を改善しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  // AI要約生成
+  Future<void> _summarizeText() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('要約する文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final summary = await _aiService.summarizeText(_contentController.text);
+      if (mounted) {
+        setState(() {
+          _contentController.text = summary;
+          _isAIProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📝 要約を生成しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  // AI文章展開
+  Future<void> _expandText() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('展開する文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final expandedText = await _aiService.expandText(_contentController.text);
+      if (mounted) {
+        setState(() {
+          _contentController.text = expandedText;
+          _isAIProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📝 文章を展開しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  // AI翻訳
+  Future<void> _translateText() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('翻訳する文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final translatedText = await _aiService.translateText(
+        _contentController.text,
+        targetLanguage: 'en',
+      );
+      if (mounted) {
+        setState(() {
+          _contentController.text = translatedText;
+          _isAIProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🌐 英語に翻訳しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  // AIタイトル提案
+  Future<void> _suggestTitle() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タイトルを提案するための文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final titles = await _aiService.suggestTitles(_contentController.text);
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        // タイトル選択ダイアログを表示
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('💡 タイトル提案'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: titles.map((title) {
+                return ListTile(
+                  title: Text(title),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _titleController.text = title;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  // AIタグ・カテゴリ提案
+  Future<void> _suggestTags() async {
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タグ・カテゴリを提案するための文章を入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAIProcessing = true);
+    try {
+      final suggestion = await _aiService.suggestTags(
+        content: _contentController.text,
+        title: _titleController.text,
+        existingCategories: _categories.map((c) => c.name).toList(),
+      );
+
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        // 提案結果を表示
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('🏷️ タグ・カテゴリ提案'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '提案理由: ${suggestion.reason}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '推奨カテゴリ: ${suggestion.category}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text('推奨タグ:', style: TextStyle(fontWeight: FontWeight.bold)),
+                ...suggestion.tags.map((tag) => Chip(label: Text(tag))),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // カテゴリを適用（既存のカテゴリから検索または新規作成を促す）
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('提案を参考にカテゴリとタグを設定してください')),
+                  );
+                },
+                child: const Text('適用'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAIProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
         actions: [
+          // AI機能ボタン
+          if (_isAIProcessing)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+              onPressed: _showAIMenu,
+              tooltip: 'AI アシスタント',
+            ),
           // ピン留めトグルボタン
           if (widget.note != null)
             IconButton(
