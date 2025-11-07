@@ -113,7 +113,7 @@ CREATE POLICY "Comments on public notes are viewable by everyone"
       SELECT 1 FROM notes
       WHERE notes.id = note_comments.note_id
       AND (notes.user_id = auth.uid() OR notes.id IN (
-        SELECT note_id FROM shared_notes WHERE shared_notes.is_public = true
+        SELECT note_id FROM public_memos WHERE public_memos.is_public = true
       ))
     )
   );
