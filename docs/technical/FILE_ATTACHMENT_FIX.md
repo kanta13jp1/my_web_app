@@ -10,21 +10,63 @@
 
 ### 症状
 - デプロイ先（本番環境）で添付ファイルのアップロードができない
-- 開発環境では正常に動作する可能性
+- エラー: `LateInitializationError: Field '' has not been initialized.`
+- 開発環境でも発生する可能性がある
 
 ### 根本原因
-1. **attachmentsテーブルが存在しない**
+
+#### 1. **Supabaseクライアントの初期化エラー** 🔴 **最優先**
+**問題のコード** (`lib/main.dart:33`):
+```dart
+final supabase = Supabase.instance.client;  // ← 初期化前にアクセス
+```
+
+この変数は`main()`関数の外側で宣言されているため、`Supabase.initialize()`が完了する**前**に評価されてしまい、`LateInitializationError`が発生していました。
+
+**修正**:
+```dart
+// ゲッターに変更（呼ばれるたびに取得）
+SupabaseClient get supabase => Supabase.instance.client;
+```
+
+#### 2. **attachmentsテーブルが存在しない**
    - マイグレーションファイルに定義がない
 
-2. **Supabase Storageのattachmentsバケットが作成されていない**
+#### 3. **Supabase Storageのattachmentsバケットが作成されていない**
    - ストレージバケットの設定がない
 
-3. **Storage RLS（Row Level Security）ポリシーが設定されていない**
+#### 4. **Storage RLS（Row Level Security）ポリシーが設定されていない**
    - ファイルのアップロード/ダウンロード権限が未設定
 
 ---
 
 ## ✅ 解決策
+
+### ステップ0: Supabaseクライアントの初期化修正 🔴 **最優先**
+
+**ファイル**: `lib/main.dart`
+
+**修正内容**:
+```dart
+// 旧コード（削除）
+final supabase = Supabase.instance.client;
+
+// 新コード（追加）
+SupabaseClient get supabase => Supabase.instance.client;
+```
+
+**理由**:
+- `final`変数は宣言時に即座に評価される
+- `get`ゲッターは呼ばれるたびに評価される
+- これにより`Supabase.initialize()`完了後にのみアクセス可能
+
+**影響範囲**:
+- この修正により、アプリ全体で`supabase`を使用している箇所すべてが正常に動作
+- コードの変更は不要（使用方法は同じ）
+
+✅ **この修正により`LateInitializationError`が完全に解決します**
+
+---
 
 ### ステップ1: マイグレーションファイルの適用
 
