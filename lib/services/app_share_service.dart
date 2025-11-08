@@ -9,8 +9,10 @@ class AppShareService {
   static const String appUrl = 'https://my-web-app-b67f4.web.app/';
   static const String appName = 'マイメモ';
 
-  /// Supabase Edge FunctionsのベースURL
-  static const String supabaseFunctionsUrl = 'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+  /// Netlify FunctionsのベースURL
+  /// TODO: Netlifyサイト作成後、実際のURLに置き換えてください
+  /// 例: 'https://my-web-app-share.netlify.app'
+  static const String netlifyBaseUrl = 'https://your-site-name.netlify.app';
 
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
@@ -460,15 +462,15 @@ $appUrl
   // 動的OGP画像付きシェアリンク機能
   // ==========================================
 
-  /// 動的OGP付きシェアリンクを生成
+  /// 動的OGP付きシェアリンクを生成（Netlify Functions使用）
   /// [quoteId] 名言のID（nullの場合はランダム）
   static String generateDynamicShareLink({int? quoteId}) {
     if (quoteId != null) {
-      return '$supabaseFunctionsUrl/share-quote?id=$quoteId';
+      return '$netlifyBaseUrl/share?id=$quoteId';
     } else {
       // ランダムな名言ID
       final randomId = DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length;
-      return '$supabaseFunctionsUrl/share-quote?id=$randomId';
+      return '$netlifyBaseUrl/share?id=$randomId';
     }
   }
 

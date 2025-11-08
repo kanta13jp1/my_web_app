@@ -236,6 +236,14 @@ firebase deploy --only hosting
 
 ## ✍️ 変更履歴
 
+### 2025-11-08
+- ✅ **SNSシェア機能の実装**（Netlify Functions使用）
+  - 動的OGP画像生成（SVG、1200x630px）
+  - シェアページHTML生成
+  - Twitter/Facebook/LINE対応
+  - 完全無料（クレジットカード不要）
+  - 詳細: [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md)
+
 ### 2025-11-06
 - ✅ OGP画像の作成と実装
 - ✅ Loggerパッケージの導入
