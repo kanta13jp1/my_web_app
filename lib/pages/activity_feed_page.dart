@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
@@ -14,6 +15,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _activities = [];
   bool _isLoading = true;
+  StreamSubscription? _periodicSubscription;
 
   @override
   void initState() {
@@ -99,9 +101,15 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
 
   void _startRealTimeUpdates() {
     // 30秒ごとにアクティビティを更新
-    Stream.periodic(const Duration(seconds: 30), (_) {
+    _periodicSubscription = Stream.periodic(const Duration(seconds: 30), (_) {
       _loadActivities();
     }).listen((_) {});
+  }
+
+  @override
+  void dispose() {
+    _periodicSubscription?.cancel();
+    super.dispose();
   }
 
   @override
