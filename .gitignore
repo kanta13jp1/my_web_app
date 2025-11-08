@@ -45,3 +45,7 @@ app.*.map.json
 # Firebase Functions
 functions/node_modules/
 functions/.runtimeconfig.json
+
+# Netlify
+.netlify/
+netlify/functions/node_modules/
