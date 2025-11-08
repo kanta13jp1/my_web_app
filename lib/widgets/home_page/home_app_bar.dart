@@ -14,7 +14,6 @@ import '../../pages/template_marketplace_page.dart';
 import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../services/search_history_service.dart';
-import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
