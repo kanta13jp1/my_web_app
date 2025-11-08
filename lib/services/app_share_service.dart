@@ -10,9 +10,9 @@ class AppShareService {
   static const String appName = 'マイメモ';
 
   /// Netlify FunctionsのベースURL
-  /// 本番環境: https://my-web-app-share.netlify.app
-  /// デプロイ日: 2025-11-08
-  static const String netlifyBaseUrl = 'https://my-web-app-share.netlify.app';
+  /// 本番環境: https://legendary-gecko-d6850b.netlify.app/
+  /// デプロイ日: 2025-11-09
+  static const String netlifyBaseUrl = 'https://legendary-gecko-d6850b.netlify.app';
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
