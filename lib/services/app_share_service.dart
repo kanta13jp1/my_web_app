@@ -12,8 +12,7 @@ class AppShareService {
   /// Netlify FunctionsのベースURL
   /// TODO: Netlifyサイト作成後、実際のURLに置き換えてください
   /// 例: 'https://my-web-app-share.netlify.app'
-  static const String netlifyBaseUrl = 'https://your-site-name.netlify.app';
-
+  static const String netlifyBaseUrl = 'https://690ebbd7d08d9c0008efc305--ubiquitous-longma-2a7c17.netlify.app';
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
