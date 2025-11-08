@@ -147,11 +147,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
       await supabase.from('notes').insert(sampleNotes);
 
       // Award points for completing onboarding
-      await supabase.rpc('award_gamification_points', {
-        'p_user_id': userId,
-        'p_action': 'onboarding_complete',
-        'p_points': 100,
-      });
+      // Update user_stats directly to award 100 points
+      final statsResponse = await supabase
+          .from('user_stats')
+          .select('total_points')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (statsResponse != null) {
+        final currentPoints = statsResponse['total_points'] as int;
+        await supabase
+            .from('user_stats')
+            .update({'total_points': currentPoints + 100})
+            .eq('user_id', userId);
+      }
 
       setState(() {
         _sampleNotesCreated = true;
