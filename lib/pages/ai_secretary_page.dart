@@ -45,8 +45,11 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading task recommendations',
-        error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading task recommendations',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;

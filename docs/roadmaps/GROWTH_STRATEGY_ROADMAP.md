@@ -934,18 +934,42 @@
     - 今日/今週/今月/今年やるべきことをAIが提案
     - Supabase Edge Function統合
     - ホームページメニューから簡単アクセス
-- ⬜ Week 5-6（次のステップ）: Product Huntローンチ、バックエンド移行フェーズ1、マーケティング開始
+- ✅ **Week 5 Day 4 (2025-11-08 午後)**:
+  - ✅ **重大な問題の発見と分析**
+    - OpenAI APIレート制限問題（429エラー頻発）
+    - Netlifyコスト超過問題（300クレジット/月超過）
+    - プラットフォーム重複問題の発見
+  - ✅ **包括的な解決策の策定**
+    - Google Geminiへの移行計画作成
+    - Netlify Functions削除計画
+    - プラットフォーム統合戦略
+  - ✅ **ドキュメント作成**
+    - レート制限・コスト問題の分析レポート
+    - Gemini移行ガイド（完全実装コード付き）
+  - ✅ **Linterエラー修正** (ai_secretary_page.dart)
+- ⬜ **Week 6（最優先）**: 🔴 **緊急対応**
+  1. ⬜ Google Gemini APIへの移行（AI機能の安定化）
+  2. ⬜ Netlify Functions削除（コスト削減）
+  3. ⬜ プラットフォーム統合の完了
+  4. ⬜ モニタリング機能の実装
+- ⬜ Week 7-8（次のステップ）: Product Huntローンチ、バックエンド移行フェーズ1、マーケティング開始
 
-**プラットフォーム戦略** (詳細: [PROJECT_ANALYSIS_2025-11-08.md](../session-summaries/PROJECT_ANALYSIS_2025-11-08.md)):
-- **短期**: Firebase Hosting + Supabase + Netlify Functions（現状維持）
+**🚨 緊急対応事項** (詳細: [SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)):
+- **OpenAI レート制限問題**: 無料枠3 RPMでは不十分 → Google Gemini (15 RPM、完全無料)へ移行
+- **Netlify コスト超過**: 300クレジット/月超過 → Supabase Edge Functionsに統合、Netlify削除
+- **プラットフォーム重複**: Netlify + Supabase で同じ機能が重複 → Supabase一本化
+
+**プラットフォーム戦略** ⚠️ **大幅変更** (詳細: [GEMINI_MIGRATION_GUIDE.md](../technical/GEMINI_MIGRATION_GUIDE.md)):
+- **即時対応**: Firebase Hosting + Supabase（Netlify削除、OpenAI→Gemini移行）
+- **短期**: 上記構成で安定化、監視機能追加
 - **中期**: Cloudflare Workers追加（統計、リーダーボード）
 - **長期**: マルチクラウド最適化（グローバル展開）
 
-**コスト予測**:
-- 現在（2ユーザー）: $0/月
-- 短期目標（10,000ユーザー）: $25-30/月
-- 中期目標（500,000ユーザー）: $673-723/月
-- 長期目標（10,000,000ユーザー）: $2,700-6,500/月
+**コスト予測** ⚠️ **大幅改善**:
+- **現在（2ユーザー）**: $5-10/月（問題あり） → **$0/月**（移行後）
+- **短期目標（10,000ユーザー）**: $94-279/月 → **$25/月**（73-91%削減）
+- **中期目標（500,000ユーザー）**: → **$673-723/月**（変更なし）
+- **長期目標（10,000,000ユーザー）**: → **$2,700-6,500/月**（変更なし）
 - **予想収益** (500Kユーザー、5%有料転換): $125,000-375,000/月
 
 **注意**: この計画は生きたドキュメントです。市場の変化、ユーザーフィードバック、競合の動きに応じて柔軟に調整していきます。
@@ -958,14 +982,17 @@
 - [事業運営計画書](./BUSINESS_OPERATIONS_PLAN.md) - 開発、保守、運用、マーケティング、人事、経理、調達、事業計画の詳細
 
 ### 技術
+- 🚨 **[レート制限・コスト問題の解決](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)** - 最優先対応事項（2025-11-08）
+- 🚨 **[Google Gemini 移行ガイド](../technical/GEMINI_MIGRATION_GUIDE.md)** - OpenAI→Gemini 完全移行手順（2025-11-08）
 - [プロジェクト総合分析](../session-summaries/PROJECT_ANALYSIS_2025-11-08.md) - 技術スタック分析、プラットフォーム戦略、コスト予測
 - [バックエンド移行計画](../technical/BACKEND_MIGRATION_PLAN.md) - フロントエンド処理のバックエンド移行計画
 - [Supabase Edge Functions デプロイ](../technical/SUPABASE_EDGE_FUNCTIONS_DEPLOY.md) - Edge Functions実装ガイド
-- [Netlify デプロイ](../technical/NETLIFY_DEPLOY.md) - SNSシェア機能実装ガイド
+- [Netlify デプロイ](../technical/NETLIFY_DEPLOY.md) - SNSシェア機能実装ガイド（⚠️非推奨予定）
 - [改善提案](../technical/IMPROVEMENTS.md) - 技術的改善履歴
 
 ### セッション履歴
-- [コードベースレビューとプロジェクト整理 (2025-11-08)](../session-summaries/SESSION_SUMMARY_2025-11-08_CODEBASE_REVIEW.md) - 最新セッション
+- 🚨 **[レート制限とコスト問題の解決 (2025-11-08)](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)** - 最新・最優先
+- [コードベースレビューとプロジェクト整理 (2025-11-08)](../session-summaries/SESSION_SUMMARY_2025-11-08_CODEBASE_REVIEW.md)
 - [事業計画策定 (2025-11-08)](../session-summaries/SESSION_SUMMARY_2025-11-08_BUSINESS_PLAN.md)
 - [一般セッション (2025-11-08)](../session-summaries/SESSION_SUMMARY_2025-11-08.md)
 
