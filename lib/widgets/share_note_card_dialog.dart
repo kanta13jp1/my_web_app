@@ -650,7 +650,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
             ? 'note_card_${timestamp}_${i + 1}of${_repaintKeys.length}.png'
             : 'note_card_$timestamp.png';
 
-        final anchor = html.AnchorElement(href: url)
+        html.AnchorElement(href: url)
           ..setAttribute('download', filename)
           ..click();
 

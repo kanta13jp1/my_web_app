@@ -54,7 +54,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       {
         'id': '1',
         'type': 'new_user',
-        'user_name': 'ユーザー${_supabase.auth.currentUser?.id?.substring(0, 4) ?? 'XXXX'}',
+        'user_name': 'ユーザー${_supabase.auth.currentUser?.id.substring(0, 4) ?? 'XXXX'}',
         'action': '新しいメンバーが参加しました',
         'timestamp': now.subtract(const Duration(minutes: 5)),
         'icon': Icons.person_add,

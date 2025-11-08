@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/note.dart';
 import '../utils/app_logger.dart';
 import 'gamification_service.dart';
 

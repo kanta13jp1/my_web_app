@@ -489,7 +489,7 @@ class _SharePhilosopherQuoteDialogState
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'philosopher_quote_$timestamp.png';
 
-      final anchor = html.AnchorElement(href: url)
+      html.AnchorElement(href: url)
         ..setAttribute('download', filename)
         ..click();
 

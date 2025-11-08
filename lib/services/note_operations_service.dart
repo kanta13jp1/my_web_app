@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
 

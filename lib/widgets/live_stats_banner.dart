@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../services/presence_service.dart';
-import '../models/site_statistics.dart';
 
 class LiveStatsBanner extends StatefulWidget {
   const LiveStatsBanner({super.key});

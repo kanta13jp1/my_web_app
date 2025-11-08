@@ -209,8 +209,8 @@ class CommunityService {
           .count(CountOption.exact);
 
       return {
-        'followers': followersResponse.count ?? 0,
-        'following': followingResponse.count ?? 0,
+        'followers': followersResponse.count,
+        'following': followingResponse.count,
       };
     } catch (e, stackTrace) {
       AppLogger.error('Error getting follow counts', error: e, stackTrace: stackTrace);
@@ -371,7 +371,7 @@ class CommunityService {
           .eq('note_id', noteId)
           .count(CountOption.exact);
 
-      return response.count ?? 0;
+      return response.count;
     } catch (e, stackTrace) {
       AppLogger.error('Error getting like count', error: e, stackTrace: stackTrace);
       return 0;
@@ -387,7 +387,7 @@ class CommunityService {
           .eq('note_id', noteId)
           .count(CountOption.exact);
 
-      return response.count ?? 0;
+      return response.count;
     } catch (e, stackTrace) {
       AppLogger.error('Error getting comment count', error: e, stackTrace: stackTrace);
       return 0;
