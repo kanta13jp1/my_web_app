@@ -342,6 +342,65 @@ class AIService {
       );
     }
   }
+
+  /// AI秘書機能：タスク推奨を取得
+  /// ユーザーのメモ、タスク、目標に基づいて今日/今週/今月/今年やるべきことをAIが提案
+  Future<TaskRecommendations> getTaskRecommendations({
+    required String userId,
+    List<Map<String, dynamic>>? recentNotes,
+  }) async {
+    try {
+      return await _retryWithBackoff(
+        () async {
+          // ユーザーの最近のメモを取得（パラメータで渡されていない場合）
+          List<Map<String, dynamic>> notes = recentNotes ?? [];
+
+          if (notes.isEmpty) {
+            final notesResponse = await _supabase
+                .from('notes')
+                .select('id, title, content, created_at, updated_at')
+                .eq('user_id', userId)
+                .eq('is_archived', false)
+                .order('updated_at', ascending: false)
+                .limit(20);
+
+            notes = List<Map<String, dynamic>>.from(notesResponse);
+          }
+
+          // ユーザーの統計情報を取得
+          final statsResponse = await _supabase
+              .from('user_stats')
+              .select('level, points, streak_days')
+              .eq('user_id', userId)
+              .single();
+
+          final data = await _invokeFunction(
+            'ai-assistant',
+            {
+              'action': 'task_recommendations',
+              'userId': userId,
+              'recentNotes': notes,
+              'userStats': statsResponse,
+            },
+          );
+
+          final result = data['result'] as Map<String, dynamic>;
+
+          return TaskRecommendations(
+            daily: List<String>.from(result['daily'] ?? []),
+            weekly: List<String>.from(result['weekly'] ?? []),
+            monthly: List<String>.from(result['monthly'] ?? []),
+            yearly: List<String>.from(result['yearly'] ?? []),
+            insights: result['insights'] as String? ?? '',
+          );
+        },
+        operationName: 'getTaskRecommendations',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error('Error getting task recommendations', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
 }
 
 /// タグ提案の結果
@@ -382,5 +441,22 @@ class AIUsageStats {
     required this.totalCost,
     required this.usageByAction,
     required this.recentUsageCount,
+  });
+}
+
+/// AI秘書のタスク推奨
+class TaskRecommendations {
+  final List<String> daily;    // 今日やるべきこと
+  final List<String> weekly;   // 今週やるべきこと
+  final List<String> monthly;  // 今月やるべきこと
+  final List<String> yearly;   // 今年やるべきこと
+  final String insights;       // AIからのインサイト
+
+  TaskRecommendations({
+    required this.daily,
+    required this.weekly,
+    required this.monthly,
+    required this.yearly,
+    required this.insights,
   });
 }

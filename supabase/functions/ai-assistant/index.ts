@@ -10,10 +10,13 @@ const corsHeaders = {
 }
 
 interface AIRequest {
-  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title'
-  content: string
+  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations'
+  content?: string
   language?: string
   targetLanguage?: string
+  userId?: string
+  recentNotes?: Array<{ id: string; title: string; content: string; created_at: string; updated_at: string }>
+  userStats?: { level: number; points: number; streak_days: number }
 }
 
 serve(async (req) => {
@@ -51,10 +54,19 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { action, content, language = 'ja', targetLanguage = 'en' }: AIRequest = await req.json()
+    const { action, content, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
 
-    if (!action || !content) {
+    if (!action) {
       throw new Error('Missing required parameters')
+    }
+
+    // Validate parameters based on action
+    if (action === 'task_recommendations') {
+      if (!recentNotes || !userStats) {
+        throw new Error('Missing required parameters for task recommendations')
+      }
+    } else if (!content) {
+      throw new Error('Missing content parameter')
     }
 
     // Get OpenAI API key from environment
@@ -91,6 +103,41 @@ serve(async (req) => {
       case 'suggest_title':
         systemPrompt = 'あなたはクリエイティブなタイトル作成の専門家です。ユーザーの文章内容から、魅力的で適切なタイトルを3つ提案してください。'
         userPrompt = `以下の文章に最適なタイトルを3つ提案してください:\n\n${content}`
+        break
+
+      case 'task_recommendations':
+        systemPrompt = `あなたはAI秘書です。ユーザーのメモやタスクを分析し、今日/今週/今月/今年やるべきことを提案してください。
+
+        提案は以下の形式で返してください（JSON形式）：
+        {
+          "daily": ["今日のタスク1", "今日のタスク2", "今日のタスク3"],
+          "weekly": ["今週のタスク1", "今週のタスク2", "今週のタスク3"],
+          "monthly": ["今月のタスク1", "今月のタスク2", "今月のタスク3"],
+          "yearly": ["今年の目標1", "今年の目標2", "今年の目標3"],
+          "insights": "ユーザーの活動パターンや傾向に基づくインサイト（2-3文）"
+        }
+
+        重要：
+        - 各期間ごとに3-5個のタスクを提案してください
+        - ユーザーのメモ内容と目標に基づいて、具体的で実行可能なタスクを提案してください
+        - insightsには、ユーザーの習慣や傾向、改善提案を含めてください
+        - 必ずJSON形式で返してください（他のテキストは含めない）`
+
+        const notesContent = recentNotes!.map((note, index) =>
+          `メモ${index + 1}:\nタイトル: ${note.title}\n内容: ${note.content.substring(0, 500)}...\n`
+        ).join('\n')
+
+        userPrompt = `以下はユーザーの情報です：
+
+【ユーザー統計】
+- レベル: ${userStats!.level}
+- ポイント: ${userStats!.points}
+- 連続ログイン: ${userStats!.streak_days}日
+
+【最近のメモ（${recentNotes!.length}件）】
+${notesContent}
+
+上記の情報を分析して、今日/今週/今月/今年やるべきことを提案してください。`
         break
 
       default:
@@ -133,7 +180,27 @@ serve(async (req) => {
     }
 
     const openaiData = await openaiResponse.json()
-    const result = openaiData.choices[0]?.message?.content || ''
+    let result = openaiData.choices[0]?.message?.content || ''
+
+    // For task_recommendations, parse JSON result
+    if (action === 'task_recommendations') {
+      try {
+        // Remove markdown code blocks if present
+        result = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+        const parsedResult = JSON.parse(result)
+        result = parsedResult
+      } catch (e) {
+        console.error('Error parsing task recommendations JSON:', e)
+        // Return a default structure if parsing fails
+        result = {
+          daily: ['メモを確認する', '優先タスクを完了する', '進捗を記録する'],
+          weekly: ['目標を見直す', '長期タスクに取り組む', '新しいアイデアを考える'],
+          monthly: ['月次レビューを行う', '新しいスキルを学ぶ', '成果を振り返る'],
+          yearly: ['年間目標を設定する', '大きな挑戦をする', '成長を実感する'],
+          insights: 'メモを定期的に確認し、タスクを整理することで、生産性を向上させましょう。'
+        }
+      }
+    }
 
     // Track AI usage in database
     const { error: insertError } = await supabaseClient.from('ai_usage_log').insert({
