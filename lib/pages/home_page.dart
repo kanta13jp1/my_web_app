@@ -11,7 +11,6 @@ import '../widgets/advanced_search_dialog.dart';
 import '../services/attachment_cache_service.dart';
 import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
-import 'stats_page.dart';
 import 'leaderboard_page.dart';
 import '../services/gamification_service.dart';
 import '../models/user_stats.dart';
