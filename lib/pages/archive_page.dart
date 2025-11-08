@@ -478,7 +478,8 @@ class _ArchivePageState extends State<ArchivePage> {
                                           Text(
                                             '•',
                                             style: TextStyle(
-                                                color: Colors.grey[600]),
+                                                color: Colors.grey[600],
+                                            ),
                                           ),
                                           const SizedBox(width: 8),
                                         ],

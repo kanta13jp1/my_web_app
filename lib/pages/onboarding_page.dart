@@ -88,7 +88,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           .select()
           .single();
 
-      final categoryId = categoryResponse['id'] as String;
+      final categoryId = categoryResponse['id'].toString();
 
       // Create sample notes
       final sampleNotes = [

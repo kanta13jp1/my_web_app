@@ -30,9 +30,10 @@ class LandingPage extends StatelessWidget {
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                       // App Icon
                       Container(
                         width: 120,
@@ -159,10 +160,11 @@ class LandingPage extends StatelessWidget {
 
                       // Live Stats Banner
                       ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: 600),
-                        child: LiveStatsBanner(),
+                        constraints: const BoxConstraints(maxWidth: 600),
+                        child: const LiveStatsBanner(),
                       ),
                     ],
+                    ),
                   ),
                 ),
               ),

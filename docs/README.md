@@ -2,6 +2,24 @@
 
 このフォルダには、プロジェクトに関連するすべてのドキュメントが含まれています。
 
+---
+
+## 🚨 最優先ドキュメント
+
+### ユーザー獲得・成長戦略
+- **[成長加速セッション (2025-11-08)](./session-summaries/SESSION_SUMMARY_2025-11-08_GROWTH_ACCELERATION.md)** - 今すぐ実行すべきマーケティング施策の詳細
+- **[成長戦略ロードマップ](./roadmaps/GROWTH_STRATEGY_ROADMAP.md)** - 2人→1億ユーザーへの全体戦略
+- **[競合分析 2025](./roadmaps/COMPETITOR_ANALYSIS_2025.md)** - Notion/Evernote等との差別化戦略
+
+### 事業運営
+- **[事業運営計画書](./roadmaps/BUSINESS_OPERATIONS_PLAN.md)** - 開発、マーケティング、財務計画
+
+### 技術実装
+- **[プロジェクト総合分析](./session-summaries/PROJECT_ANALYSIS_2025-11-08.md)** - 技術スタック、プラットフォーム戦略
+- **[バックエンド移行計画](./technical/BACKEND_MIGRATION_PLAN.md)** - フロントエンド→バックエンド移行計画
+
+---
+
 ## フォルダ構成
 
 ### 📝 release-notes/
@@ -28,10 +46,28 @@ Claude Codeセッションのサマリーやプロジェクト分析を格納し
 - `BACKEND_MIGRATION_PLAN.md` - バックエンド移行計画
 - `CORS_FIX.md` - CORS問題の修正方法
 - `NETLIFY_DEPLOY.md` - Netlifyデプロイガイド
+- `NETLIFY_COST_OPTIMIZATION.md` - Netlifyコスト最適化ガイド
+- `GEMINI_MIGRATION_GUIDE.md` - OpenAI→Gemini API移行ガイド
 - `SUPABASE_EDGE_FUNCTIONS_DEPLOY.md` - Supabase Edge Functionsデプロイガイド
 - `IMPROVEMENTS.md` - 改善提案
+
+### 📦 archive/
+古くなったトラブルシューティングドキュメントや、完了したタスクのドキュメントを格納します。
+歴史的参照用として保管。
+
+## トップレベルドキュメント
+
+### docs/
+- `IMMEDIATE_ACTION_PLAN.md` - AI機能修正の緊急対応ガイド
+- `COMPREHENSIVE_SOLUTION_PLAN.md` - サイト復旧・成長戦略の包括プラン
+- `README.md` - このファイル
 
 ## ドキュメントの追加
 
 新しいドキュメントを追加する際は、適切なカテゴリフォルダに配置してください。
 新しいカテゴリが必要な場合は、適切なフォルダ名で作成してください。
+
+---
+
+**最終更新**: 2025年11月8日
+**次回レビュー**: 2週間後（2025年11月22日）
