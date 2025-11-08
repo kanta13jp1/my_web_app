@@ -10,6 +10,7 @@
 ### 🗺️ roadmaps/
 プロジェクトのロードマップや将来の計画を格納します。
 - `GROWTH_STRATEGY_ROADMAP.md` - 成長戦略とロードマップ
+- `BUSINESS_OPERATIONS_PLAN.md` - 事業運営計画書（開発、保守、運用、マーケティング、人事、経理、調達、事業計画）
 
 ### 📚 user-docs/
 ユーザー向けのドキュメントを格納します。
@@ -19,6 +20,7 @@
 ### 📊 session-summaries/
 Claude Codeセッションのサマリーやプロジェクト分析を格納します。
 - `SESSION_SUMMARY_2025-11-08.md` - セッションサマリー
+- `SESSION_SUMMARY_2025-11-08_BUSINESS_PLAN.md` - 事業計画策定セッション
 - `PROJECT_ANALYSIS_2025-11-08.md` - プロジェクト分析
 
 ### 🔧 technical/
