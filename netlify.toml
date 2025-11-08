@@ -1,9 +1,10 @@
 # Netlify configuration for マイメモ share page
+# このプロジェクトはNetlify Functionsのみを使用
+# アプリ本体はFirebase Hostingにデプロイされています
 
 [build]
-  # Firebase Hostingと競合しないように、buildは行わない
-  # このプロジェクトはNetlify Functionsのみを使用
-  publish = "build/web"
+  # 静的ファイル用（リダイレクトページのみ）
+  publish = "public"
   functions = "netlify/functions"
 
 # Share page redirect - /share?id=X -> Netlify Function
