@@ -226,6 +226,96 @@ Netlify Dashboard → Team settings → Notifications
 
 ## 🔍 トラブルシューティング
 
+### 問題0: プロジェクトがPauseになってリジュームできない ⚠️ **最優先**
+
+**症状**:
+```
+Your project is paused due to exceeding the credit limit.
+Cannot resume - credit limit already exceeded for this billing cycle.
+```
+
+**原因**:
+- ビルドリミット（300クレジット）を超過
+- 現在の請求サイクル中はリジュームできない
+- 請求サイクルは月初にリセットされる
+
+**解決策**:
+
+#### 解決策A: 請求サイクルのリセットを待つ（推奨）
+```
+現在: 2025-11-08
+次回リセット: 2025-12-08（請求サイクル開始日）
+
+手順:
+1. 2025-12-08まで待つ（または請求サイクルの開始日を確認）
+2. リセット後、自動的にプロジェクトが再開される
+3. その間、以下の設定を確認：
+   - Stop builds を有効化
+   - Production branch を 'production' に変更
+   - Deploy contexts をすべて無効化
+```
+
+#### 解決策B: 新しいNetlifyチームを作成（即座の解決）
+```
+手順:
+1. Netlify Dashboard → チーム切り替え → 「Create a new team」
+2. 新しいチーム名を入力（例: my-memo-app-team-2）
+3. Freeプランを選択
+4. 既存のプロジェクトをインポート：
+   - 「Add new site」 → 「Import an existing project」
+   - GitHubリポジトリを選択
+   - Build settings:
+     - Build command: （空欄）
+     - Publish directory: public
+     - Functions directory: netlify/functions
+5. デプロイ後、以下の設定を即座に実施：
+   - Site settings → Build & deploy → Build settings → Stop builds
+   - Site settings → Build & deploy → Deploy contexts → すべて無効化
+   - Site settings → Build & deploy → Production branch → 'production'
+6. 環境変数を設定（もしあれば）
+7. カスタムドメインを移行（もしあれば）
+8. 古いプロジェクトを削除
+```
+
+#### 解決策C: Netlify Pro にアップグレード（有料）
+```
+コスト: $19/月
+メリット:
+- 1,000クレジット/月（無料枠の3.3倍）
+- より頻繁なデプロイが可能
+- 優先サポート
+
+手順:
+1. Netlify Dashboard → Team settings → Billing
+2. Upgrade to Pro
+3. 支払い情報を入力
+```
+
+#### 解決策D: 代替プラットフォームへの移行（中期的）
+```
+オプション1: Vercel
+- 無料枠: より寛大（月100デプロイ、100GB帯域幅）
+- Serverless Functions対応
+- 簡単な移行
+
+オプション2: Cloudflare Workers
+- 無料枠: 10万リクエスト/日
+- 超高速エッジコンピューティング
+- 月$5でUnlimited
+
+オプション3: Firebase Cloud Functions
+- 無料枠: 125K invocations/月
+- Google Cloud統合
+- スケーラビリティ
+```
+
+**推奨アクション**:
+1. **即座の解決**: 解決策B（新しいチーム作成）
+2. **中期的**: 解決策D（Cloudflare Workersへの移行）を検討
+3. **長期的**: プラットフォーム統合戦略の見直し
+
+---
+
 ### 問題1: 自動デプロイが停止したのに課金される
 
 **原因**:

@@ -418,8 +418,11 @@ class _ArchivePageState extends State<ArchivePage> {
                                       ),
                                 title: Row(
                                   children: [
-                                    const Icon(Icons.archive,
-                                        color: Colors.grey, size: 16),
+                                    const Icon(
+                                      Icons.archive,
+                                      color: Colors.grey,
+                                      size: 16,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
