@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'home_page.dart';
+import 'onboarding_page.dart';
 import '../services/referral_service.dart';
 import '../services/daily_login_service.dart';
 import '../utils/app_logger.dart';
@@ -49,6 +50,31 @@ class _AuthPageState extends State<AuthPage> {
     _passwordController.dispose();
     _referralCodeController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _shouldShowOnboarding(String userId) async {
+    try {
+      final response = await supabase
+          .from('user_stats')
+          .select('metadata')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response == null) {
+        // New user, show onboarding
+        return true;
+      }
+
+      final metadata = response['metadata'] as Map<String, dynamic>?;
+      final onboardingCompleted = metadata?['onboarding_completed'] as bool?;
+
+      // Show onboarding if not completed
+      return onboardingCompleted != true;
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to check onboarding status', error: e, stackTrace: stackTrace);
+      // Default to not showing onboarding on error
+      return false;
+    }
   }
 
   Future<void> _handleAuth() async {
@@ -146,9 +172,16 @@ class _AuthPageState extends State<AuthPage> {
           }
         }
 
-        if (mounted) {
+        // Check if user has completed onboarding
+        if (mounted && userId != null) {
+          final shouldShowOnboarding = await _shouldShowOnboarding(userId);
+
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(
+              builder: (_) => shouldShowOnboarding
+                  ? const OnboardingPage()
+                  : const HomePage(),
+            ),
           );
         }
       }

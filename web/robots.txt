@@ -1,0 +1,46 @@
+# robots.txt for マイメモ (MyMemo)
+# https://my-web-app-b67f4.web.app/
+
+User-agent: *
+Allow: /
+Allow: /landing
+Allow: /auth
+Allow: /signup
+Allow: /leaderboard
+Allow: /statistics
+Allow: /gallery
+Allow: /documents
+
+# Disallow private/authenticated pages from being crawled
+Disallow: /home
+Disallow: /referral
+Disallow: /challenges
+
+# Allow shared notes to be crawled
+Allow: /shared/*
+
+# Sitemap
+Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1
+
+# Specific user agents
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+# Block bad bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10

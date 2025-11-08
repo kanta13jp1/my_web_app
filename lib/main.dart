@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'pages/auth_page.dart';
 import 'pages/home_page.dart';
+import 'pages/onboarding_page.dart';
 import 'pages/landing_page.dart';
 import 'pages/leaderboard_page.dart';
 import 'pages/shared_note_page.dart';
@@ -30,6 +31,57 @@ Future<void> main() async {
 }
 
 final supabase = Supabase.instance.client;
+
+// Helper widget to check onboarding status
+class _AuthenticatedHomePage extends StatelessWidget {
+  const _AuthenticatedHomePage();
+
+  Future<bool> _shouldShowOnboarding() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      final response = await supabase
+          .from('user_stats')
+          .select('metadata')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response == null) {
+        // New user, show onboarding
+        return true;
+      }
+
+      final metadata = response['metadata'] as Map<String, dynamic>?;
+      final onboardingCompleted = metadata?['onboarding_completed'] as bool?;
+
+      // Show onboarding if not completed
+      return onboardingCompleted != true;
+    } catch (e) {
+      // Default to not showing onboarding on error
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _shouldShowOnboarding(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final shouldShowOnboarding = snapshot.data ?? false;
+        return shouldShowOnboarding ? const OnboardingPage() : const HomePage();
+      },
+    );
+  }
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -64,7 +116,7 @@ class MyApp extends StatelessWidget {
             // ルートは認証状態で分岐
             return MaterialPageRoute(
               builder: (_) => supabase.auth.currentSession != null
-                  ? const HomePage()
+                  ? const _AuthenticatedHomePage()
                   : const LandingPage(),
             );
           case '/landing':
