@@ -1,0 +1,22 @@
+# Netlify configuration for マイメモ share page
+
+[build]
+  # Firebase Hostingと競合しないように、buildは行わない
+  # このプロジェクトはNetlify Functionsのみを使用
+  publish = "build/web"
+  functions = "netlify/functions"
+
+# Share page redirect - /share?id=X -> Netlify Function
+[[redirects]]
+  from = "/share"
+  to = "/.netlify/functions/share-quote"
+  status = 200
+  force = true
+
+# CORS headers for all responses
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
