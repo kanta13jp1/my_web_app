@@ -219,29 +219,14 @@ serve(async (req) => {
   </body>
 </html>`;
 
-    // Content Security Policyを設定（インラインスタイルを許可）
-    const cspPolicy = [
-      "default-src 'none'",
-      "style-src 'unsafe-inline'",
-      "font-src data: https:",
-      "img-src * data: https: blob:",
-      "connect-src 'none'",
-      "script-src 'none'",
-      "object-src 'none'",
-      "base-uri 'none'",
-      "form-action 'none'",
-      "frame-ancestors 'none'"
-    ].join('; ');
-
     // HTMLを文字列として直接返す（Content-Typeが正しく認識されるように）
     return new Response(html, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Security-Policy': cspPolicy,
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'SAMEORIGIN',
-        'Cache-Control': 'public, max-age=3600', // 1時間キャッシュ
+        'Cache-Control': 'no-cache', // キャッシュを無効化してテスト
       },
     });
   } catch (error) {
