@@ -375,8 +375,10 @@ class _ArchivePageState extends State<ArchivePage> {
                             Color? categoryColor;
                             if (category != null) {
                               categoryColor = Color(
-                                int.parse(category.color.substring(1),
-                                        radix: 16) +
+                                int.parse(
+                                  category.color.substring(1),
+                                  radix: 16,
+                                ) +
                                     0xFF000000,
                               );
                             }
