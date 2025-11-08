@@ -947,26 +947,38 @@
     - レート制限・コスト問題の分析レポート
     - Gemini移行ガイド（完全実装コード付き）
   - ✅ **Linterエラー修正** (ai_secretary_page.dart)
+- ✅ **Week 5 Day 4 (2025-11-08 夜)**:
+  - ✅ **Netlify自動デプロイの無効化**（コスト問題解決）
+    - Production branchを `main` → `production` に変更
+    - 自動ビルドを停止（Stop builds）
+    - 月間コスト: 300クレジット → 15-30クレジット（90-95%削減）
+  - ✅ **ドキュメント更新**
+    - NETLIFY_COST_OPTIMIZATION.md 作成
+    - SESSION_SUMMARY更新（正確な原因と解決策を反映）
+    - GROWTH_STRATEGY_ROADMAP更新
 - ⬜ **Week 6（最優先）**: 🔴 **緊急対応**
   1. ⬜ Google Gemini APIへの移行（AI機能の安定化）
-  2. ⬜ Netlify Functions削除（コスト削減）
-  3. ⬜ プラットフォーム統合の完了
-  4. ⬜ モニタリング機能の実装
+  2. ⬜ Netlify設定の検証（サービス復旧確認）
+  3. ⬜ モニタリング機能の実装
+  4. ⬜ デプロイフローの確立
 - ⬜ Week 7-8（次のステップ）: Product Huntローンチ、バックエンド移行フェーズ1、マーケティング開始
 
 **🚨 緊急対応事項** (詳細: [SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)):
 - **OpenAI レート制限問題**: 無料枠3 RPMでは不十分 → Google Gemini (15 RPM、完全無料)へ移行
-- **Netlify コスト超過**: 300クレジット/月超過 → Supabase Edge Functionsに統合、Netlify削除
-- **プラットフォーム重複**: Netlify + Supabase で同じ機能が重複 → Supabase一本化
+- **Netlify コスト超過**: 自動デプロイで300クレジット超過 → 自動デプロイ無効化で解決 ✅
+- **プラットフォーム戦略**: Content-Type問題により、Netlify + Supabase の**適材適所な使い分けが必須**
 
-**プラットフォーム戦略** ⚠️ **大幅変更** (詳細: [GEMINI_MIGRATION_GUIDE.md](../technical/GEMINI_MIGRATION_GUIDE.md)):
-- **即時対応**: Firebase Hosting + Supabase（Netlify削除、OpenAI→Gemini移行）
+**プラットフォーム戦略** ⚠️ **修正** (詳細: [NETLIFY_COST_OPTIMIZATION.md](../technical/NETLIFY_COST_OPTIMIZATION.md)):
+- **即時対応**: Firebase Hosting + Netlify (自動デプロイ無効) + Supabase (OpenAI→Gemini移行)
+- **適材適所の使い分け**:
+  - Netlify: HTML/SVG（Content-Type対応）
+  - Supabase: JSON API、認証、DB統合
 - **短期**: 上記構成で安定化、監視機能追加
 - **中期**: Cloudflare Workers追加（統計、リーダーボード）
 - **長期**: マルチクラウド最適化（グローバル展開）
 
 **コスト予測** ⚠️ **大幅改善**:
-- **現在（2ユーザー）**: $5-10/月（問題あり） → **$0/月**（移行後）
+- **現在（2ユーザー）**: サービス停止 → **$0/月**（完全復旧）✅
 - **短期目標（10,000ユーザー）**: $94-279/月 → **$25/月**（73-91%削減）
 - **中期目標（500,000ユーザー）**: → **$673-723/月**（変更なし）
 - **長期目標（10,000,000ユーザー）**: → **$2,700-6,500/月**（変更なし）
@@ -984,10 +996,11 @@
 ### 技術
 - 🚨 **[レート制限・コスト問題の解決](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)** - 最優先対応事項（2025-11-08）
 - 🚨 **[Google Gemini 移行ガイド](../technical/GEMINI_MIGRATION_GUIDE.md)** - OpenAI→Gemini 完全移行手順（2025-11-08）
+- ✅ **[Netlify コスト最適化ガイド](../technical/NETLIFY_COST_OPTIMIZATION.md)** - 自動デプロイ無効化、90-95%コスト削減（2025-11-08）
 - [プロジェクト総合分析](../session-summaries/PROJECT_ANALYSIS_2025-11-08.md) - 技術スタック分析、プラットフォーム戦略、コスト予測
 - [バックエンド移行計画](../technical/BACKEND_MIGRATION_PLAN.md) - フロントエンド処理のバックエンド移行計画
 - [Supabase Edge Functions デプロイ](../technical/SUPABASE_EDGE_FUNCTIONS_DEPLOY.md) - Edge Functions実装ガイド
-- [Netlify デプロイ](../technical/NETLIFY_DEPLOY.md) - SNSシェア機能実装ガイド（⚠️非推奨予定）
+- [Netlify デプロイ](../technical/NETLIFY_DEPLOY.md) - SNSシェア機能実装ガイド
 - [改善提案](../technical/IMPROVEMENTS.md) - 技術的改善履歴
 
 ### セッション履歴
