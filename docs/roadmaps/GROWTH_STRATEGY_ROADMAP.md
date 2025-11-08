@@ -974,12 +974,18 @@
   3. ⬜ ai-assistant Edge Functionのデプロイ
   4. ⬜ 本番環境でのテスト（429エラー解消確認）
   5. ⬜ モニタリング機能の実装
+  - 📝 **詳細ガイド**: [IMMEDIATE_ACTION_PLAN.md](../IMMEDIATE_ACTION_PLAN.md)
 - ⬜ Week 7-8（次のステップ）: Product Huntローンチ、バックエンド移行フェーズ1、マーケティング開始
+  - 📝 **包括的プラン**: [COMPREHENSIVE_SOLUTION_PLAN.md](../COMPREHENSIVE_SOLUTION_PLAN.md)
 
-**🚨 緊急対応事項** (詳細: [SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md](../session-summaries/SESSION_SUMMARY_2025-11-08_RATE_LIMIT_PLATFORM_COST_FIX.md)):
-- ✅ **OpenAI レート制限問題**: Google Gemini (15 RPM、完全無料)へ移行完了 → デプロイ待ち
+**🚨 緊急対応事項**:
+- ✅ **OpenAI レート制限問題**: Google Gemini (15 RPM、完全無料)へ移行完了 → ⬜ デプロイ待ち
+  - 📝 **即時対応ガイド**: [IMMEDIATE_ACTION_PLAN.md](../IMMEDIATE_ACTION_PLAN.md)
+  - 📝 **技術詳細**: [SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md](../session-summaries/SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md)
 - ✅ **Netlify コスト超過**: 自動デプロイ無効化で解決（90-95%削減）
+  - 📝 **詳細**: [NETLIFY_COST_OPTIMIZATION.md](../technical/NETLIFY_COST_OPTIMIZATION.md)
 - ✅ **プラットフォーム戦略**: Netlify + Supabase の適材適所な使い分けを確立
+  - 📝 **包括的分析**: [COMPREHENSIVE_SOLUTION_PLAN.md](../COMPREHENSIVE_SOLUTION_PLAN.md)
 
 **プラットフォーム戦略** ⚠️ **修正** (詳細: [NETLIFY_COST_OPTIMIZATION.md](../technical/NETLIFY_COST_OPTIMIZATION.md)):
 - **即時対応**: Firebase Hosting + Netlify (自動デプロイ無効) + Supabase (OpenAI→Gemini移行)
@@ -1002,6 +1008,10 @@
 ---
 
 ## 📋 関連ドキュメント
+
+### 🔴 最優先ドキュメント（今すぐ読むべき）
+- 🚨 **[緊急対応アクションプラン](../IMMEDIATE_ACTION_PLAN.md)** - AI Assistant 400エラーの修正（15分で完了）
+- 📘 **[包括的解決策プラン](../COMPREHENSIVE_SOLUTION_PLAN.md)** - サイト復旧、AI秘書、成長戦略の全体像
 
 ### 戦略・計画
 - [事業運営計画書](./BUSINESS_OPERATIONS_PLAN.md) - 開発、保守、運用、マーケティング、人事、経理、調達、事業計画の詳細
