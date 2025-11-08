@@ -196,7 +196,8 @@ class _ArchivePageState extends State<ArchivePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？'),
+                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？',
+            ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
