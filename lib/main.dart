@@ -14,14 +14,17 @@ import 'pages/memo_gallery_page.dart';
 import 'pages/documents_page.dart';
 import 'services/theme_service.dart';
 
+// Supabaseクライアントのゲッター（late初期化を避ける）
+SupabaseClient get supabase => Supabase.instance.client;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
-  
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeService(),
@@ -29,8 +32,6 @@ Future<void> main() async {
     ),
   );
 }
-
-final supabase = Supabase.instance.client;
 
 // Helper widget to check onboarding status
 class _AuthenticatedHomePage extends StatelessWidget {
