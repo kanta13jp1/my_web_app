@@ -10,6 +10,7 @@ import 'pages/enhanced_statistics_page.dart';
 import 'pages/referral_page.dart';
 import 'pages/daily_challenges_page.dart';
 import 'pages/memo_gallery_page.dart';
+import 'pages/documents_page.dart';
 import 'services/theme_service.dart';
 
 Future<void> main() async {
@@ -115,6 +116,11 @@ class MyApp extends StatelessWidget {
             // メモギャラリーページ（認証不要）
             return MaterialPageRoute(
               builder: (_) => const MemoGalleryPage(),
+            );
+          case '/documents':
+            // ドキュメントページ（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const DocumentsPage(),
             );
           default:
             // デフォルトはランディングページ

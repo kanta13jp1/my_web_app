@@ -43,6 +43,12 @@ flutter:
   assets:
     - web/assets/images/ogp-image.svg
     - web/assets/fonts/
+    - docs/
+    - docs/release-notes/
+    - docs/roadmaps/
+    - docs/user-docs/
+    - docs/session-summaries/
+    - docs/technical/
 
   fonts:
     - family: NotoSansJP

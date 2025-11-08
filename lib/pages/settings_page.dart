@@ -77,7 +77,17 @@ class SettingsPage extends StatelessWidget {
 
           // アプリ情報
           _buildSectionHeader('アプリ情報', Icons.info),
-          
+
+          ListTile(
+            leading: const Icon(Icons.description),
+            title: const Text('ドキュメント'),
+            subtitle: const Text('ロードマップ、技術ドキュメント、サマリーなど'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.pushNamed(context, '/documents');
+            },
+          ),
+
           const ListTile(
             leading: Icon(Icons.info_outline),
             title: Text('バージョン'),
