@@ -37,6 +37,10 @@
     ],
     "rewrites": [
       {
+        "source": "/share",
+        "function": "shareQuote"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
