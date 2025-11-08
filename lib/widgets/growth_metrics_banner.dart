@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/presence_service.dart';
-import '../models/site_statistics.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// グロースメトリクス表示バナー - ホームページに表示

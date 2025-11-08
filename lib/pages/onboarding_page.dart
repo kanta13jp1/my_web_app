@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'home_page.dart';
-import '../models/note.dart';
-import '../models/category.dart';
 import '../utils/app_logger.dart';
 
 class OnboardingPage extends StatefulWidget {

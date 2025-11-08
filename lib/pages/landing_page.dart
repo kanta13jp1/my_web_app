@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
 import 'auth_page.dart';
 import 'leaderboard_page.dart';
 import '../widgets/live_stats_banner.dart';
@@ -10,7 +9,6 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLightMode = theme.brightness == Brightness.light;
 
     return Scaffold(
       body: CustomScrollView(

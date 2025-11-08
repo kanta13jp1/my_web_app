@@ -13,7 +13,6 @@ import 'archive_page.dart';
 import '../services/auto_archive_service.dart';
 import '../services/gamification_service.dart';
 import '../models/user_stats.dart';
-import '../utils/date_formatter.dart';
 import '../widgets/home_page/sort_dialog.dart';
 import '../widgets/home_page/date_filter_dialog.dart';
 import '../widgets/home_page/reminder_filter_dialog.dart';

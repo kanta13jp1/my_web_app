@@ -346,25 +346,25 @@ $appUrl
       // Web版: Web Share API または Twitter インテントを使用
       try {
         // Web Share APIを試みる（モバイルブラウザなどで利用可能）
-        if (html.window.navigator.share != null) {
-          await html.window.navigator.share({
-            'title': appName,
-            'text': message,
-            'url': appUrl,
-          });
-        } else {
-          // フォールバック: クリップボードにコピー
+        await html.window.navigator.share({
+          'title': appName,
+          'text': message,
+          'url': appUrl,
+        });
+      } catch (e) {
+        // Web Share APIが利用できない場合（デスクトップブラウザなど）
+        // フォールバック: クリップボードにコピー & Twitter インテント
+        try {
           await Clipboard.setData(ClipboardData(text: message));
           // Twitterインテント用のURLを開く
           final twitterUrl = Uri.encodeFull(
             'https://twitter.com/intent/tweet?text=$message',
           );
           html.window.open(twitterUrl, '_blank');
+        } catch (clipboardError) {
+          // クリップボードアクセスも失敗した場合はエラーを再スロー
+          rethrow;
         }
-      } catch (e) {
-        // エラー時はクリップボードにコピー
-        await Clipboard.setData(ClipboardData(text: message));
-        rethrow;
       }
     }
   }

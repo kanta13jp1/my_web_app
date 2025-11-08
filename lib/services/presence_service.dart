@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/user_presence.dart';
 import '../models/site_statistics.dart';
 import '../utils/app_logger.dart';
 
