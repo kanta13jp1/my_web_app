@@ -10,8 +10,8 @@ class AppShareService {
   static const String appName = 'マイメモ';
 
   /// Netlify FunctionsのベースURL
-  /// TODO: Netlifyサイト作成後、実際のURLに置き換えてください
-  /// 例: 'https://my-web-app-share.netlify.app'
+  /// 本番環境: https://my-web-app-share.netlify.app
+  /// デプロイ日: 2025-11-08
   static const String netlifyBaseUrl = 'https://my-web-app-share.netlify.app';
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
