@@ -1,8 +1,4 @@
 {
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs22"
-  },
   "hosting": {
     "public": "build/web",
     "ignore": [
@@ -40,10 +36,6 @@
       }
     ],
     "rewrites": [
-      {
-        "source": "/share",
-        "function": "shareQuote"
-      },
       {
         "source": "**",
         "destination": "/index.html"

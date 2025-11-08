@@ -44,14 +44,11 @@ exports.handler = async (event, context) => {
 
     const quote = getQuoteById(quoteId);
 
-    // URLs
-    const functionsBaseUrl = 'https://smmkxxavexumewbfaqpy.supabase.co';
-    const ogImageUrl = `${functionsBaseUrl}/functions/v1/generate-quote-image?id=${quoteId}`;
-    const appUrl = 'https://my-web-app-b67f4.web.app';
-
-    // Netlify URL will be different - we'll use the event URL
+    // URLs - Netlifyを使用
     const netlifyUrl = `https://${event.headers.host}`;
-    const shareUrl = `${netlifyUrl}/.netlify/functions/share-quote?id=${quoteId}`;
+    const ogImageUrl = `${netlifyUrl}/api/quote-image?id=${quoteId}`;
+    const shareUrl = `${netlifyUrl}/share?id=${quoteId}`;
+    const appUrl = 'https://my-web-app-b67f4.web.app';
 
     // Generate HTML with OGP meta tags
     const html = `<!DOCTYPE html>

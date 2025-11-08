@@ -13,6 +13,13 @@
   status = 200
   force = true
 
+# OGP image generation - /api/quote-image?id=X -> Netlify Function
+[[redirects]]
+  from = "/api/quote-image"
+  to = "/.netlify/functions/generate-quote-image"
+  status = 200
+  force = true
+
 # CORS headers for all responses
 [[headers]]
   for = "/*"
