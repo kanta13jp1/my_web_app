@@ -1,7 +1,7 @@
 {
   "functions": {
     "source": "functions",
-    "runtime": "nodejs18"
+    "runtime": "nodejs22"
   },
   "hosting": {
     "public": "build/web",
