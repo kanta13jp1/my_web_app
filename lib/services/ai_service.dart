@@ -370,7 +370,7 @@ class AIService {
           // ユーザーの統計情報を取得
           final statsResponse = await _supabase
               .from('user_stats')
-              .select('level, points, streak_days')
+              .select('current_level, total_points, current_streak, longest_streak, notes_created')
               .eq('user_id', userId)
               .single();
 
