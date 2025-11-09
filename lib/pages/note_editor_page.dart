@@ -33,6 +33,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   bool _isFavorite = false;
   DateTime? _reminderDate;
   bool _isPinned = false;
+  String? _currentNoteId;  // 保存後のnoteIDを保持
 
   // 添付ファイル関連（追加）
   List<Attachment> _attachments = [];
@@ -61,6 +62,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _isFavorite = widget.note?.isFavorite ?? false;
     _reminderDate = widget.note?.reminderDate;
     _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
+    _currentNoteId = widget.note?.id;  // 既存ノートのIDを保持
     _loadCategories();
 
     // タブコントローラーを初期化
@@ -211,13 +213,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   Future<void> _saveNoteWithoutClosing() async {
     try {
       final userId = supabase.auth.currentUser!.id;
-      final isNewNote = widget.note == null;
+      final isNewNote = _currentNoteId == null;  // 修正: _currentNoteIdで判定
       final wasNotFavorite = widget.note?.isFavorite == false;
       final hadNoReminder = widget.note?.reminderDate == null;
 
       if (isNewNote) {
         // 新規作成
-        await supabase.from('notes').insert({
+        final insertedData = await supabase.from('notes').insert({
           'user_id': userId,
           'title': _titleController.text,
           'content': _contentController.text,
@@ -227,7 +229,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'is_pinned': _isPinned,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
+        }).select();
+
+        // 挿入されたノートのIDを保存
+        if (insertedData.isNotEmpty) {
+          _currentNoteId = insertedData[0]['id'];
+        }
 
         // ゲーミフィケーション: メモ作成イベント
         final achievements = await _gamificationService.onNoteCreated(userId);
@@ -258,7 +265,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'reminder_date': _reminderDate?.toIso8601String(),
           'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', widget.note!.id);
+        }).eq('id', _currentNoteId!);  // 修正: _currentNoteIdを使用
 
         // お気に入りが新たに設定された場合
         if (_isFavorite && wasNotFavorite) {
@@ -299,13 +306,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   Future<void> _saveNote() async {
     try {
       final userId = supabase.auth.currentUser!.id;
-      final isNewNote = widget.note == null;
+      final isNewNote = _currentNoteId == null;  // 修正: _currentNoteIdで判定
       final wasNotFavorite = widget.note?.isFavorite == false;
       final hadNoReminder = widget.note?.reminderDate == null;
 
       if (isNewNote) {
         // 新規作成
-        await supabase.from('notes').insert({
+        final insertedData = await supabase.from('notes').insert({
           'user_id': userId,
           'title': _titleController.text,
           'content': _contentController.text,
@@ -315,7 +322,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'is_pinned': _isPinned,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
+        }).select();
+
+        // 挿入されたノートのIDを保存（将来的な利用のため）
+        if (insertedData.isNotEmpty) {
+          _currentNoteId = insertedData[0]['id'];
+        }
 
         // ゲーミフィケーション: メモ作成イベント
         final achievements = await _gamificationService.onNoteCreated(userId);
@@ -346,7 +358,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'reminder_date': _reminderDate?.toIso8601String(),
           'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', widget.note!.id);
+        }).eq('id', _currentNoteId!);  // 修正: _currentNoteIdを使用
 
         // お気に入りが新たに設定された場合
         if (_isFavorite && wasNotFavorite) {
