@@ -511,7 +511,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                   children: [
                                     IconButton(
                                       icon: const Icon(Icons.unarchive,
-                                          color: Colors.blue),
+                                          color: Colors.blue,),
                                       onPressed: () => _showRestoreDialog(note),
                                       tooltip: '復元',
                                     ),
