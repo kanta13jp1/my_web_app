@@ -483,8 +483,11 @@ class _ArchivePageState extends State<ArchivePage> {
                                           ),
                                           const SizedBox(width: 8),
                                         ],
-                                        Icon(Icons.archive,
-                                            size: 12, color: Colors.grey[600]),
+                                        Icon(
+                                          Icons.archive,
+                                          size: 12,
+                                          color: Colors.grey[600],
+                                        ),
                                         const SizedBox(width: 4),
                                         Flexible(
                                           // ← 追加
