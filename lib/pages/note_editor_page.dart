@@ -33,7 +33,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   bool _isFavorite = false;
   DateTime? _reminderDate;
   bool _isPinned = false;
-  String? _currentNoteId;  // 保存後のnoteIDを保持
+  int? _currentNoteId;  // 保存後のnoteIDを保持（int型に修正）
 
   // 添付ファイル関連（追加）
   List<Attachment> _attachments = [];
