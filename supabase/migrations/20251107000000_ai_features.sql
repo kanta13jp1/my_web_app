@@ -1,7 +1,7 @@
--- AI機能用のテーブル作成
--- AI使用ログ、ユーザープロフィール、フォロー機能、コメント機能を追加
+-- AI features table creation
+-- AI usage logs, user profiles, follow functionality, comments functionality
 
--- AI使用ログテーブル
+-- AI usage log table
 CREATE TABLE IF NOT EXISTS ai_usage_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -13,23 +13,25 @@ CREATE TABLE IF NOT EXISTS ai_usage_log (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- インデックス追加
+-- Add indexes
 CREATE INDEX IF NOT EXISTS idx_ai_usage_log_user_id ON ai_usage_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_log_created_at ON ai_usage_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_log_action ON ai_usage_log(action);
 
--- RLS設定
+-- RLS setup
 ALTER TABLE ai_usage_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own AI usage logs" ON ai_usage_log;
 CREATE POLICY "Users can view their own AI usage logs"
   ON ai_usage_log FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own AI usage logs" ON ai_usage_log;
 CREATE POLICY "Users can insert their own AI usage logs"
   ON ai_usage_log FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- ユーザープロフィールテーブル
+-- User profiles table
 CREATE TABLE IF NOT EXISTS user_profiles (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT,
@@ -44,22 +46,25 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS設定
+-- RLS setup
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON user_profiles;
 CREATE POLICY "Public profiles are viewable by everyone"
   ON user_profiles FOR SELECT
   USING (is_public = true OR auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON user_profiles;
 CREATE POLICY "Users can insert their own profile"
   ON user_profiles FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
 CREATE POLICY "Users can update their own profile"
   ON user_profiles FOR UPDATE
   USING (auth.uid() = user_id);
 
--- フォローテーブル
+-- Follow table
 CREATE TABLE IF NOT EXISTS user_follows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   follower_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -69,26 +74,29 @@ CREATE TABLE IF NOT EXISTS user_follows (
   CHECK (follower_id != following_id)
 );
 
--- インデックス追加
+-- Add indexes
 CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id);
 CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id);
 
--- RLS設定
+-- RLS setup
 ALTER TABLE user_follows ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view all follows" ON user_follows;
 CREATE POLICY "Users can view all follows"
   ON user_follows FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can follow others" ON user_follows;
 CREATE POLICY "Users can follow others"
   ON user_follows FOR INSERT
   WITH CHECK (auth.uid() = follower_id);
 
+DROP POLICY IF EXISTS "Users can unfollow" ON user_follows;
 CREATE POLICY "Users can unfollow"
   ON user_follows FOR DELETE
   USING (auth.uid() = follower_id);
 
--- メモコメントテーブル
+-- Note comments table
 CREATE TABLE IF NOT EXISTS note_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   note_id BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
@@ -98,14 +106,15 @@ CREATE TABLE IF NOT EXISTS note_comments (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- インデックス追加
+-- Add indexes
 CREATE INDEX IF NOT EXISTS idx_note_comments_note_id ON note_comments(note_id);
 CREATE INDEX IF NOT EXISTS idx_note_comments_user_id ON note_comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_note_comments_created_at ON note_comments(created_at DESC);
 
--- RLS設定
+-- RLS setup
 ALTER TABLE note_comments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Comments on public notes are viewable by everyone" ON note_comments;
 CREATE POLICY "Comments on public notes are viewable by everyone"
   ON note_comments FOR SELECT
   USING (
@@ -118,19 +127,22 @@ CREATE POLICY "Comments on public notes are viewable by everyone"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create comments" ON note_comments;
 CREATE POLICY "Users can create comments"
   ON note_comments FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own comments" ON note_comments;
 CREATE POLICY "Users can update their own comments"
   ON note_comments FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own comments" ON note_comments;
 CREATE POLICY "Users can delete their own comments"
   ON note_comments FOR DELETE
   USING (auth.uid() = user_id);
 
--- メモいいねテーブル
+-- Note likes table
 CREATE TABLE IF NOT EXISTS note_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   note_id BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
@@ -139,26 +151,29 @@ CREATE TABLE IF NOT EXISTS note_likes (
   UNIQUE(note_id, user_id)
 );
 
--- インデックス追加
+-- Add indexes
 CREATE INDEX IF NOT EXISTS idx_note_likes_note_id ON note_likes(note_id);
 CREATE INDEX IF NOT EXISTS idx_note_likes_user_id ON note_likes(user_id);
 
--- RLS設定
+-- RLS setup
 ALTER TABLE note_likes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Likes on public notes are viewable by everyone" ON note_likes;
 CREATE POLICY "Likes on public notes are viewable by everyone"
   ON note_likes FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can like notes" ON note_likes;
 CREATE POLICY "Users can like notes"
   ON note_likes FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can unlike notes" ON note_likes;
 CREATE POLICY "Users can unlike notes"
   ON note_likes FOR DELETE
   USING (auth.uid() = user_id);
 
--- フォロワー数とフォロー数を取得するビュー
+-- View to get follower and following counts
 CREATE OR REPLACE VIEW user_follow_counts AS
 SELECT
   u.id AS user_id,
@@ -176,7 +191,7 @@ LEFT JOIN (
   GROUP BY follower_id
 ) following_counts ON u.id = following_counts.follower_id;
 
--- いいね数を取得するビュー
+-- View to get like counts
 CREATE OR REPLACE VIEW note_like_counts AS
 SELECT
   note_id,
@@ -184,7 +199,7 @@ SELECT
 FROM note_likes
 GROUP BY note_id;
 
--- コメント数を取得するビュー
+-- View to get comment counts
 CREATE OR REPLACE VIEW note_comment_counts AS
 SELECT
   note_id,
@@ -192,7 +207,7 @@ SELECT
 FROM note_comments
 GROUP BY note_id;
 
--- トリガー: updated_atの自動更新
+-- Trigger: Auto-update updated_at
 -- Note: update_updated_at_column() function already exists from growth_features migration
 -- We only need to create triggers for new tables
 
@@ -209,7 +224,7 @@ CREATE TRIGGER update_note_comments_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- サンプルデータ: デフォルトプロフィールを作成する関数
+-- Sample data: Function to create default profile
 CREATE OR REPLACE FUNCTION create_default_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -220,7 +235,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- トリガー: 新規ユーザー登録時にデフォルトプロフィールを作成
+-- Trigger: Create default profile on new user registration
 DROP TRIGGER IF EXISTS on_auth_user_created_profile ON auth.users;
 
 CREATE TRIGGER on_auth_user_created_profile
