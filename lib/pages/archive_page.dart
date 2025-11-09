@@ -503,7 +503,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                           ),
                                         ),
                                       ],
-                                    )
+                                    ),
                                   ],
                                 ),
                                 trailing: Row(

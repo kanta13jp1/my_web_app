@@ -5,7 +5,7 @@
 **現状**: 登録ユーザー数 2人
 
 **作成日**: 2025年11月7日
-**最終更新**: 2025年11月8日
+**最終更新**: 2025年11月9日
 
 ---
 
@@ -975,7 +975,7 @@
 
 ---
 
-**最終更新**: 2025年11月8日
+**最終更新**: 2025年11月9日
 **次回レビュー**: 2週間後（2025年11月22日）
 
 **実装進捗**:
@@ -1044,13 +1044,31 @@
   - ✅ **ドキュメント作成**
     - SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md 作成
     - 詳細な移行ガイドと次のステップを記載
-- ⬜ **Week 6（最優先）**: 🔴 **デプロイ・検証**
+- ✅ **Week 6 (2025-11-09)**:
+  - ✅ **Linterエラー修正**
+    - archive_page.dart:507 trailing comma追加
+    - analysis_options.yamlのルール確認
+  - ✅ **バグレポート作成**（docs/BUG_REPORT.md）
+    - AI機能エラーの詳細分析
+    - 添付ファイル機能エラーの原因特定
+    - ドキュメント表示エラーの調査
+    - 修正優先順位の明確化
+  - ✅ **Twitterシェアテンプレート作成**（docs/TWITTER_SHARE_TEMPLATES.md）
+    - 新機能リリース用テンプレート10種類
+    - マーケティング用テンプレート5種類
+    - 使用ガイドライン策定
+  - ✅ **既存機能の動作確認**
+    - 添付ファイル機能：マイグレーション未デプロイが原因
+    - ドキュメント表示機能：コードレベルでは問題なし
+- ⬜ **Week 7（最優先）**: 🔴 **デプロイ・検証**
   1. ⬜ Google AI APIキーの取得（Google AI Studio）
   2. ⬜ Supabase Secretsへの設定
   3. ⬜ ai-assistant Edge Functionのデプロイ
-  4. ⬜ 本番環境でのテスト（429エラー解消確認）
-  5. ⬜ モニタリング機能の実装
+  4. ⬜ 添付ファイルマイグレーションのデプロイ（supabase db push）
+  5. ⬜ 本番環境でのテスト（429エラー解消確認）
+  6. ⬜ モニタリング機能の実装
   - 📝 **詳細ガイド**: [IMMEDIATE_ACTION_PLAN.md](../IMMEDIATE_ACTION_PLAN.md)
+  - 📝 **バグレポート**: [BUG_REPORT.md](../BUG_REPORT.md)
 
 - ⬜ **Week 6-7**: 🟡 **タイマー機能の実装**
   - ✅ フェーズ1: 保存ボタンの改善（2025-11-09完了）
@@ -1066,6 +1084,10 @@
 - ✅ **OpenAI レート制限問題**: Google Gemini (15 RPM、完全無料)へ移行完了 → ⬜ デプロイ待ち
   - 📝 **即時対応ガイド**: [IMMEDIATE_ACTION_PLAN.md](../IMMEDIATE_ACTION_PLAN.md)
   - 📝 **技術詳細**: [SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md](../session-summaries/SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md)
+- ✅ **添付ファイル機能エラー**: マイグレーション作成完了 → ⬜ デプロイ待ち
+  - 原因：attachmentsテーブル・Storageバケット未作成
+  - 📝 **修正ガイド**: [FILE_ATTACHMENT_FIX.md](../technical/FILE_ATTACHMENT_FIX.md)
+  - 📝 **バグレポート**: [BUG_REPORT.md](../BUG_REPORT.md)
 - ✅ **Netlify コスト超過**: 自動デプロイ無効化で解決（90-95%削減）
   - 📝 **詳細**: [NETLIFY_COST_OPTIMIZATION.md](../technical/NETLIFY_COST_OPTIMIZATION.md)
 - ✅ **プラットフォーム戦略**: Netlify + Supabase の適材適所な使い分けを確立
@@ -1095,10 +1117,12 @@
 
 ### 🔴 最優先ドキュメント（今すぐ読むべき）
 - 🚨 **[緊急対応アクションプラン](../IMMEDIATE_ACTION_PLAN.md)** - AI Assistant 400エラーの修正（15分で完了）
+- 🐛 **[バグレポート](../BUG_REPORT.md)** - 既知の問題と修正優先順位（2025-11-09更新）
 - 📘 **[包括的解決策プラン](../COMPREHENSIVE_SOLUTION_PLAN.md)** - サイト復旧、AI秘書、成長戦略の全体像
 
 ### 戦略・計画
 - [事業運営計画書](./BUSINESS_OPERATIONS_PLAN.md) - 開発、保守、運用、マーケティング、人事、経理、調達、事業計画の詳細
+- 📱 **[Twitterシェアテンプレート](../TWITTER_SHARE_TEMPLATES.md)** - リリース時のSNS投稿用テンプレート集（2025-11-09作成）
 
 ### 技術
 - ✅ **[Gemini移行セッション (2025-11-08 深夜)](../session-summaries/SESSION_SUMMARY_2025-11-08_GEMINI_MIGRATION.md)** - 最新：OpenAI→Gemini完全移行
