@@ -1,35 +1,35 @@
--- 添付ファイル機能の完全セットアップ
--- 既存のテーブル・ポリシーを削除して再作成
--- 作成日: 2025年11月8日
+-- Attachments feature complete setup
+-- Drop existing tables and policies then recreate
+-- Created: 2025-11-08
 
 -- ================================
--- 0. 完全クリーンアップ
+-- 0. Complete Cleanup
 -- ================================
 
--- トリガーを削除
+-- Drop triggers
 DROP TRIGGER IF EXISTS trigger_update_attachments_updated_at ON public.attachments;
 
--- 関数を削除
+-- Drop functions
 DROP FUNCTION IF EXISTS public.update_attachments_updated_at();
 DROP FUNCTION IF EXISTS public.get_attachment_stats(UUID);
 
--- Database policies削除
+-- Drop Database policies
 DROP POLICY IF EXISTS "Users can view their own attachments" ON public.attachments;
 DROP POLICY IF EXISTS "Users can insert their own attachments" ON public.attachments;
 DROP POLICY IF EXISTS "Users can update their own attachments" ON public.attachments;
 DROP POLICY IF EXISTS "Users can delete their own attachments" ON public.attachments;
 
--- Storage policies削除
+-- Drop Storage policies
 DROP POLICY IF EXISTS "Users can upload their own files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can view their own files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own files" ON storage.objects;
 
--- テーブルを削除（データも削除されます）
+-- Drop table (data will be deleted)
 DROP TABLE IF EXISTS public.attachments CASCADE;
 
 -- ================================
--- 1. attachmentsテーブルの作成
+-- 1. Create attachments table
 -- ================================
 
 CREATE TABLE public.attachments (
@@ -45,13 +45,13 @@ CREATE TABLE public.attachments (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- インデックス作成
+-- Create indexes
 CREATE INDEX idx_attachments_note_id ON public.attachments(note_id);
 CREATE INDEX idx_attachments_user_id ON public.attachments(user_id);
 CREATE INDEX idx_attachments_created_at ON public.attachments(created_at DESC);
 
 -- ================================
--- 2. RLS設定
+-- 2. RLS Setup
 -- ================================
 
 ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
@@ -74,7 +74,7 @@ CREATE POLICY "Users can delete their own attachments"
   USING (auth.uid() = user_id);
 
 -- ================================
--- 3. Storageバケット作成
+-- 3. Create Storage bucket
 -- ================================
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -88,7 +88,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ================================
--- 4. Storage RLSポリシー
+-- 4. Storage RLS policies
 -- ================================
 
 CREATE POLICY "Users can upload their own files"
@@ -124,7 +124,7 @@ CREATE POLICY "Users can delete their own files"
   );
 
 -- ================================
--- 5. トリガー関数
+-- 5. Trigger functions
 -- ================================
 
 CREATE FUNCTION public.update_attachments_updated_at()
@@ -141,7 +141,7 @@ CREATE TRIGGER trigger_update_attachments_updated_at
   EXECUTE FUNCTION public.update_attachments_updated_at();
 
 -- ================================
--- 6. 統計関数
+-- 6. Statistics function
 -- ================================
 
 CREATE FUNCTION public.get_attachment_stats(p_user_id UUID)
@@ -164,17 +164,17 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ================================
--- 7. コメント
+-- 7. Comments
 -- ================================
 
-COMMENT ON TABLE public.attachments IS '添付ファイルのメタデータを保存するテーブル';
-COMMENT ON COLUMN public.attachments.id IS '添付ファイルID';
-COMMENT ON COLUMN public.attachments.note_id IS 'メモID';
-COMMENT ON COLUMN public.attachments.user_id IS 'ユーザーID';
-COMMENT ON COLUMN public.attachments.file_name IS '元のファイル名';
-COMMENT ON COLUMN public.attachments.file_path IS 'Storageパス';
-COMMENT ON COLUMN public.attachments.file_size IS 'ファイルサイズ（バイト）';
-COMMENT ON COLUMN public.attachments.file_type IS 'ファイルタイプ';
-COMMENT ON COLUMN public.attachments.mime_type IS 'MIMEタイプ';
-COMMENT ON COLUMN public.attachments.created_at IS '作成日時';
-COMMENT ON COLUMN public.attachments.updated_at IS '更新日時';
+COMMENT ON TABLE public.attachments IS 'Stores metadata for file attachments';
+COMMENT ON COLUMN public.attachments.id IS 'Attachment ID';
+COMMENT ON COLUMN public.attachments.note_id IS 'Note ID';
+COMMENT ON COLUMN public.attachments.user_id IS 'User ID';
+COMMENT ON COLUMN public.attachments.file_name IS 'Original filename';
+COMMENT ON COLUMN public.attachments.file_path IS 'Storage path';
+COMMENT ON COLUMN public.attachments.file_size IS 'File size in bytes';
+COMMENT ON COLUMN public.attachments.file_type IS 'File type';
+COMMENT ON COLUMN public.attachments.mime_type IS 'MIME type';
+COMMENT ON COLUMN public.attachments.created_at IS 'Created timestamp';
+COMMENT ON COLUMN public.attachments.updated_at IS 'Updated timestamp';
