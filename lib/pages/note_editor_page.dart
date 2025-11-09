@@ -207,6 +207,95 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
+  // 保存（画面を閉じない）
+  Future<void> _saveNoteWithoutClosing() async {
+    try {
+      final userId = supabase.auth.currentUser!.id;
+      final isNewNote = widget.note == null;
+      final wasNotFavorite = widget.note?.isFavorite == false;
+      final hadNoReminder = widget.note?.reminderDate == null;
+
+      if (isNewNote) {
+        // 新規作成
+        await supabase.from('notes').insert({
+          'user_id': userId,
+          'title': _titleController.text,
+          'content': _contentController.text,
+          'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(),
+          'is_pinned': _isPinned,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+
+        // ゲーミフィケーション: メモ作成イベント
+        final achievements = await _gamificationService.onNoteCreated(userId);
+        if (mounted) {
+          _showAchievementNotifications(achievements);
+        }
+
+        // 初回のお気に入りまたはリマインダー設定
+        if (_isFavorite) {
+          final favAchievements = await _gamificationService.onNoteFavorited(userId);
+          if (mounted) {
+            _showAchievementNotifications(favAchievements);
+          }
+        }
+        if (_reminderDate != null) {
+          final reminderAchievements = await _gamificationService.onReminderSet(userId);
+          if (mounted) {
+            _showAchievementNotifications(reminderAchievements);
+          }
+        }
+      } else {
+        // 更新
+        await supabase.from('notes').update({
+          'title': _titleController.text,
+          'content': _contentController.text,
+          'category_id': _selectedCategoryId,
+          'is_favorite': _isFavorite,
+          'reminder_date': _reminderDate?.toIso8601String(),
+          'is_pinned': _isPinned,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', widget.note!.id);
+
+        // お気に入りが新たに設定された場合
+        if (_isFavorite && wasNotFavorite) {
+          final achievements = await _gamificationService.onNoteFavorited(userId);
+          if (mounted) {
+            _showAchievementNotifications(achievements);
+          }
+        }
+
+        // リマインダーが新たに設定された場合
+        if (_reminderDate != null && hadNoReminder) {
+          final achievements = await _gamificationService.onReminderSet(userId);
+          if (mounted) {
+            _showAchievementNotifications(achievements);
+          }
+        }
+      }
+
+      if (!mounted) return;
+
+      // 保存完了メッセージを表示（画面は閉じない）
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ 保存しました'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $error')),
+      );
+    }
+  }
+
+  // 保存して閉じる
   Future<void> _saveNote() async {
     try {
       final userId = supabase.auth.currentUser!.id;
@@ -811,10 +900,17 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             },
             tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
           ),
+          // 保存ボタン（画面を閉じない）
+          IconButton(
+            icon: const Icon(Icons.save_outlined),
+            onPressed: _saveNoteWithoutClosing,
+            tooltip: '保存',
+          ),
+          // 保存して閉じるボタン
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _saveNote,
-            tooltip: '保存',
+            tooltip: '保存して閉じる',
           ),
         ],
         bottom: TabBar(
