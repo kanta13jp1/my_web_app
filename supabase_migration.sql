@@ -42,10 +42,11 @@ ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
 -- 5. Create RLS policies for user_stats
--- Users can only read their own stats
-CREATE POLICY "Users can view their own stats"
+-- Allow anyone to read user stats (needed for leaderboard functionality)
+-- Updated: 2025-11-09 to fix 406 error on leaderboard
+CREATE POLICY "Anyone can view user stats for leaderboard"
   ON user_stats FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (true);
 
 -- Users can insert their own stats
 CREATE POLICY "Users can insert their own stats"

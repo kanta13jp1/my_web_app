@@ -507,6 +507,9 @@ class GamificationService {
   }
 
   // Get leaderboard
+  // Note: Requires public read access to user_stats table via RLS policy:
+  // "Anyone can view user stats for leaderboard"
+  // This allows the leaderboard to display all users' stats
   Future<List<LeaderboardEntry>> getLeaderboard({
     int limit = 100,
     String orderBy = 'total_points',
@@ -531,6 +534,8 @@ class GamificationService {
   }
 
   // Get user's rank
+  // Note: Requires public read access to user_stats table via RLS policy
+  // to compare user's stats against all other users
   Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
     try {
       final allUsers = await _supabase
