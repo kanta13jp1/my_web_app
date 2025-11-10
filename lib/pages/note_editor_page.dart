@@ -34,6 +34,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   DateTime? _reminderDate;
   bool _isPinned = false;
   int? _currentNoteId;  // 保存後のnoteIDを保持（int型に修正）
+  DateTime? _lastSavedTime;  // 最終保存日時
 
   // 添付ファイル関連（追加）
   List<Attachment> _attachments = [];
@@ -63,6 +64,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _reminderDate = widget.note?.reminderDate;
     _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
     _currentNoteId = widget.note?.id;  // 既存ノートのIDを保持
+    _lastSavedTime = widget.note?.updatedAt;  // 既存ノートの最終保存日時を設定
     _loadCategories();
 
     // タブコントローラーを初期化
@@ -286,6 +288,11 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
       if (!mounted) return;
 
+      // 最終保存日時を更新
+      setState(() {
+        _lastSavedTime = DateTime.now();
+      });
+
       // 保存完了メッセージを表示（画面は閉じない）
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -378,6 +385,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       }
 
       if (!mounted) return;
+
+      // 最終保存日時を更新
+      _lastSavedTime = DateTime.now();
 
       Navigator.pop(context);
     } catch (error) {
@@ -953,6 +963,24 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                     _buildCategoryChip(),
                   ],
                 ),
+                // 最終保存日時の表示
+                if (_lastSavedTime != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule, color: Colors.blue, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (_reminderDate != null) ...[
                   const SizedBox(height: 8),
                   Container(

@@ -517,7 +517,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete_forever,
-                                          color: Colors.red),
+                                          color: Colors.red,),
                                       onPressed: () => _showDeleteDialog(note),
                                       tooltip: '完全に削除',
                                     ),
