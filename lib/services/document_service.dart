@@ -6,12 +6,20 @@ class DocumentService {
   static const Map<String, List<String>> _documentFiles = {
     'roadmaps': [
       'GROWTH_STRATEGY_ROADMAP.md',
+      'BUSINESS_OPERATIONS_PLAN.md',
+      'COMPETITOR_ANALYSIS_2025.md',
     ],
     'user-docs': [
       'GAMIFICATION_README.md',
       'GROWTH_FEATURES.md',
     ],
     'session-summaries': [
+      'SESSION_SUMMARY_2025-11-10_GROWTH_STRATEGY.md',
+      'SESSION_SUMMARY_2025-11-10.md',
+      'SESSION_SUMMARY_2025-11-09_TIMER_FEATURE.md',
+      'SESSION_SUMMARY_2025-11-09_CRITICAL_BUG_FIXES.md',
+      'SESSION_SUMMARY_2025-11-08_GROWTH_ACCELERATION.md',
+      'SESSION_SUMMARY_2025-11-08_BUSINESS_PLAN.md',
       'SESSION_SUMMARY_2025-11-08.md',
       'PROJECT_ANALYSIS_2025-11-08.md',
     ],
@@ -21,6 +29,11 @@ class DocumentService {
       'NETLIFY_DEPLOY.md',
       'SUPABASE_EDGE_FUNCTIONS_DEPLOY.md',
       'IMPROVEMENTS.md',
+      'FILE_ATTACHMENT_FIX.md',
+      'GEMINI_MIGRATION_GUIDE.md',
+      'NETLIFY_COST_OPTIMIZATION.md',
+      'SUPABASE_MIGRATION_MANUAL_DEPLOY.md',
+      'TIMER_FEATURE_DESIGN.md',
     ],
     'release-notes': [],
   };
