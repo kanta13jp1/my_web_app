@@ -148,6 +148,62 @@ if (file.size > maxFileSize) {
 
 ### 4. `file_picker` Web版の問題 📁
 
+#### 問題A: LateInitializationError（ボタンクリック時）
+
+**症状**:
+- ❌ 添付ボタンを押した瞬間にエラーポップアップが表示される
+- ❌ ファイル選択ダイアログが開かない
+- ❌ APIの呼び出しまで到達しない（Network以前の問題）
+- ❌ エラー: `LateInitializationError: Field '' has not been Initialized.`
+
+**原因**:
+- Web版の`file_picker`パッケージの初期化エラー
+- `allowMultiple`や`allowCompression`パラメータが暗黙的に期待される状態で未初期化
+
+**解決策**:
+
+```dart
+// lib/services/attachment_service.dart
+static Future<PlatformFile?> pickFile() async {
+  try {
+    // Web版向けの修正：allowMultipleを明示的にfalseに設定
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
+      withData: true, // Web用（必須）
+      allowMultiple: false, // Web版で重要 - LateInitializationErrorを防ぐ
+      allowCompression: false, // 圧縮を無効化 - 初期化エラーを防ぐ
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+
+      // ファイルサイズチェック
+      if (file.size > maxFileSize) {
+        throw Exception('ファイルサイズは5MB以下にしてください');
+      }
+
+      return file;
+    }
+    return null;
+  } catch (e) {
+    // デバッグ用：エラーの詳細をログ出力
+    print('❌ File picker error: $e');
+    rethrow;
+  }
+}
+```
+
+**重要なポイント**:
+- ✅ `allowMultiple: false` を明示的に設定
+- ✅ `allowCompression: false` を設定
+- ✅ エラーログを追加して問題を追跡
+- ✅ これによりWeb版での初期化エラーが解消される
+
+---
+
+#### 問題B: bytes が null になる
+
 **症状**:
 - ファイル選択ダイアログは開くがアップロード時にエラー
 - `bytes` が null になる
@@ -158,30 +214,10 @@ if (file.size > maxFileSize) {
 
 **確認方法**:
 ```dart
-// lib/services/attachment_service.dart
-static Future<PlatformFile?> pickFile() async {
-  try {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
-      withData: true, // ← これが重要！
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-
-      // デバッグ: bytes が取得できているか確認
-      print('File name: ${file.name}');
-      print('File size: ${file.size}');
-      print('File bytes: ${file.bytes != null ? "OK" : "NULL"}');
-
-      // ...
-    }
-  } catch (e) {
-    print('Error picking file: $e');
-    rethrow;
-  }
-}
+// デバッグ: bytes が取得できているか確認
+print('File name: ${file.name}');
+print('File size: ${file.size}');
+print('File bytes: ${file.bytes != null ? "OK" : "NULL"}');
 ```
 
 **解決策**: `withData: true`が設定されているか確認
@@ -512,6 +548,10 @@ final url = await supabase.storage
 ```
 ファイルアップロードエラー
     │
+    ├─ 添付ボタンを押した瞬間にエラー？
+    │   └─ YES → LateInitializationError？
+    │       └─ YES → allowMultiple/allowCompressionを明示的に設定（セクション4-A）
+    │
     ├─ ブラウザコンソールにCORSエラー？
     │   └─ YES → CORS設定を追加（上記セクション1）
     │
@@ -522,7 +562,7 @@ final url = await supabase.storage
     │   └─ YES → ファイルサイズ制限を確認（上記セクション3）
     │
     ├─ bytes が null？
-    │   └─ YES → withData: true を確認（上記セクション4）
+    │   └─ YES → withData: true を確認（上記セクション4-B）
     │
     ├─ TimeoutException？
     │   └─ YES → タイムアウトを延長（上記セクション7）
