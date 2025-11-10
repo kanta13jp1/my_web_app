@@ -160,7 +160,7 @@ class _AuthPageState extends State<AuthPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'デイリーログインボーナス！+${bonusPoints}ポイント (${consecutiveDays}日連続)',
+                      'デイリーログインボーナス！+$bonusPointsポイント ($consecutiveDays日連続)',
                     ),
                     backgroundColor: Colors.amber,
                   ),
