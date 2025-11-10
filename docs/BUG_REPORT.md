@@ -506,6 +506,72 @@ Gemini API error: 404
   ```
 - **影響**: Linter警告解消、コード品質向上
 
+## 📝 2025年11月10日のセッション（第3回）で完了したこと
+
+### 1. deprecated_member_use警告の修正 ✅
+- **箇所**: `lib/pages/auth_page.dart:234, 268`
+- **問題**: `withOpacity`がdeprecated（Flutter 3.27以降）
+- **修正**: `withOpacity(0.7)` → `withValues(alpha: 0.7)`に置き換え
+- **影響**: 将来のFlutterバージョンでの互換性確保
+- **残存**: 他のファイルに約100箇所の`withOpacity`使用あり（今後対応予定）
+
+### 2. デバッグログの追加 ✅
+**目的**: 本番環境での問題診断を効率化
+
+#### a. 添付ファイル機能のデバッグログ強化
+- **ファイル**: `lib/services/attachment_service.dart`
+- **追加内容**:
+  - ファイルアップロード開始時のログ
+  - ファイル情報（名前、サイズ、MIMEタイプ）
+  - bytes読み込み成功/失敗のログ
+  - Supabase Storageアップロード状態
+  - データベース挿入状態
+  - エラー時の詳細ログ（エラータイプ、スタックトレース）
+  - CORS/RLS/Network エラーの自動検出
+- **ログ形式**: `📎 [AttachmentService]`
+
+#### b. ドキュメント表示機能のデバッグログ強化
+- **ファイル**:
+  - `lib/services/document_service.dart`
+  - `lib/pages/document_viewer_page.dart`
+- **追加内容**:
+  - ドキュメント読み込み開始時のログ
+  - ドキュメント情報（ID、タイトル、パス、カテゴリ）
+  - アセット読み込み成功/失敗のログ
+  - エラー時の詳細ログ（エラータイプ、スタックトレース）
+  - アセット未検出エラーの自動検出
+- **ログ形式**: `📄 [DocumentService]` / `📄 [DocumentViewerPage]`
+
+#### c. リーダーボード機能のデバッグログ強化
+- **ファイル**:
+  - `lib/pages/leaderboard_page.dart`
+  - `lib/services/gamification_service.dart`
+- **追加内容**:
+  - リーダーボード取得開始時のログ
+  - ソート条件、認証状態のログ
+  - 取得したエントリ数のログ
+  - 空のリーダーボード時の警告
+  - ユーザーランク取得の詳細ログ
+  - RLSポリシーエラーの自動検出
+  - エラー時の詳細ログ（エラータイプ、スタックトレース）
+- **ログ形式**: `🏆 [LeaderboardPage]` / `🏆 [GamificationService]`
+
+### 3. Linter警告の調査 ✅
+- **調査結果**: 約100箇所の`withOpacity`使用を確認
+- **対応**: 警告レベルのため、後で一括修正予定
+- **優先度**: 低（機能には影響なし）
+
+### 4. Twitterシェア文面の追加 ✅
+- **ファイル**: `docs/TWITTER_SHARE_TEMPLATES.md`
+- **追加内容**:
+  - パターン3: 品質改善リリース（2025年11月10日版）
+  - パターン4: 技術的改善の紹介
+- **目的**: 今回のリリース（デバッグログ追加）をアピール
+
+### 5. セッション内容の記録 ✅
+- **ドキュメント**: `docs/BUG_REPORT.md`（このファイル）
+- **内容**: 完了した作業の詳細記録
+
 ### 2. document_service.dartの更新 ✅
 - **更新内容**: `_documentFiles` マップに最新のドキュメントを追加
 - **追加ドキュメント**:

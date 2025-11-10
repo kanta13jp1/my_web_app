@@ -86,8 +86,22 @@ class DocumentService {
   /// ドキュメントの内容を読み込む
   static Future<String> loadDocument(String path) async {
     try {
-      return await rootBundle.loadString(path);
-    } catch (e) {
+      print('📄 [DocumentService] Loading document from path: $path');
+      final content = await rootBundle.loadString(path);
+      print('✅ [DocumentService] Document loaded successfully: ${content.length} characters');
+      return content;
+    } catch (e, stackTrace) {
+      print('❌ [DocumentService] Failed to load document from path: $path');
+      print('❌ [DocumentService] Error: $e');
+      print('❌ [DocumentService] Error type: ${e.runtimeType}');
+      print('❌ [DocumentService] Stack trace: $stackTrace');
+
+      // 特定のエラーを検出
+      if (e.toString().contains('Unable to load asset')) {
+        print('⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration');
+        print('⚠️ [DocumentService] Expected path: $path');
+      }
+
       return '# エラー\n\nドキュメントの読み込みに失敗しました。\n\nパス: $path\nエラー: $e';
     }
   }

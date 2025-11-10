@@ -62,11 +62,19 @@ class AttachmentService {
     required PlatformFile file,
   }) async {
     try {
+      print('📎 [AttachmentService] Starting file upload for noteId: $noteId');
+      print('📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
+
       final userId = supabase.auth.currentUser!.id;
+      print('📎 [AttachmentService] User ID: $userId');
+
       final bytes = file.bytes;
       if (bytes == null) {
+        print('❌ [AttachmentService] File bytes is null - this should not happen on Web');
+        print('📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
         throw Exception('ファイルデータが取得できません');
       }
+      print('✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
 
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -75,13 +83,19 @@ class AttachmentService {
       final fileName = '${timestamp}_${file.name}';
       final filePath = '$userId/$noteId/$fileName';
 
+      print('📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
+      print('📎 [AttachmentService] Upload path: $filePath');
+
       // Supabase Storageにアップロード
+      print('📤 [AttachmentService] Uploading to Supabase Storage...');
       await supabase.storage.from('attachments').uploadBinary(
             filePath,
             bytes,
           );
+      print('✅ [AttachmentService] File uploaded to storage successfully');
 
       // データベースに記録
+      print('💾 [AttachmentService] Inserting attachment record to database...');
       final response = await supabase
           .from('attachments')
           .insert({
@@ -96,8 +110,21 @@ class AttachmentService {
           .select()
           .single();
 
+      print('✅ [AttachmentService] Attachment record inserted successfully');
+      print('📎 [AttachmentService] Attachment ID: ${response['id']}');
+
       return Attachment.fromJson(response);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ [AttachmentService] Upload failed with error: $e');
+      print('❌ [AttachmentService] Stack trace: $stackTrace');
+      print('📎 [AttachmentService] Error type: ${e.runtimeType}');
+      if (e.toString().contains('row level security')) {
+        print('🔒 [AttachmentService] RLS policy error detected');
+      } else if (e.toString().contains('cors')) {
+        print('🌐 [AttachmentService] CORS error detected');
+      } else if (e.toString().contains('network')) {
+        print('📡 [AttachmentService] Network error detected');
+      }
       rethrow;
     }
   }

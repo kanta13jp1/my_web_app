@@ -231,7 +231,7 @@ class _AuthPageState extends State<AuthPage> {
                     gradient: LinearGradient(
                       colors: [
                         theme.primaryColor,
-                        theme.primaryColor.withOpacity(0.7),
+                        theme.primaryColor.withValues(alpha: 0.7),
                       ],
                     ),
                     shape: BoxShape.circle,
@@ -265,7 +265,7 @@ class _AuthPageState extends State<AuthPage> {
                 if (_isSignUp) ...[
                   Card(
                     elevation: 0,
-                    color: theme.primaryColor.withOpacity(0.1),
+                    color: theme.primaryColor.withValues(alpha: 0.1),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
