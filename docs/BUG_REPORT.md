@@ -103,46 +103,67 @@ Gemini API error: 404
 
 ---
 
-### 4. 添付ファイル機能が動作しない
+### 4. 添付ファイル機能が動作しない（Web版特有の問題）
 
-**ステータス**: 🔍 デプロイ済み、問題継続中（2025-11-10ユーザー報告）
+**ステータス**: 🔍 Web版デプロイ後の問題（2025-11-10ユーザー報告更新）
 
-**問題**:
-- マイグレーションはデプロイ済み
-- しかし、ファイルのアップロード機能がまだ使用不可
-- 原因の再調査が必要
+**重要な発見**:
+- ✅ ローカル開発環境では正常に動作
+- ❌ デプロイ後（Web版）でのみエラーが発生
+- DBの問題ではない（テーブル、バケット、RLSポリシーは正常）
+
+**問題の性質**:
+- **Web版特有の問題**または**環境設定の問題**
+- バックエンド（データベース、Storage）の設定は正常
+- フロントエンド（Web版）とStorageの通信に問題がある
 
 **可能性のある原因**:
-1. **Storageバケットが作成されていない**
-   - マイグレーションのINSERT文が失敗している可能性
-   - 手動でバケットを作成する必要があるかもしれない
+1. **CORS（Cross-Origin Resource Sharing）の問題**
+   - Supabase StorageのCORS設定が不足
+   - デプロイ先のドメインが許可リストに含まれていない
+   - ブラウザコンソールに`CORS policy`エラーが表示される
 
-2. **Storage RLSポリシーが正しく適用されていない**
-   - `storage.objects`テーブルへのポリシー作成に失敗
-   - 権限エラー（Permission denied）が発生している可能性
+2. **署名付きURLの問題**
+   - Storageバケットが`public: false`（プライベート）
+   - `getPublicUrl()`ではなく`createSignedUrl()`を使用する必要がある
+   - Status Code: `403 Forbidden`
 
-3. **Database RLSポリシーの問題**
-   - `attachments`テーブルへのアクセス権限の問題
+3. **file_picker Web版の問題**
+   - `withData: true`が設定されていない
+   - `bytes`が null になる
+
+4. **Content Security Policy (CSP) の問題**
+   - デプロイ先のCSP設定が厳しすぎる
+   - Supabase StorageのURLが許可されていない
+
+5. **環境変数の問題**
+   - デプロイ先でSupabase URLまたはAPIキーが正しく設定されていない
 
 **次のステップ**:
-1. **検証ガイドに従って診断**: `docs/DEPLOYMENT_VERIFICATION.md`
-2. 以下のSQLを実行して状態を確認:
-   ```sql
-   -- テーブルの存在確認
-   SELECT table_name FROM information_schema.tables WHERE table_name = 'attachments';
-
-   -- バケットの存在確認
-   SELECT * FROM storage.buckets WHERE id = 'attachments';
-
-   -- RLSポリシーの確認
-   SELECT * FROM pg_policies WHERE tablename = 'attachments';
-   SELECT * FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage';
+1. **Web版特有の問題診断**: `docs/WEB_DEPLOYMENT_ISSUES.md` ⭐ **最重要**
+2. ブラウザの開発者ツールでエラーを確認:
+   - **F12キー** → **Console**タブと**Network**タブ
+   - ファイルアップロード時のエラーメッセージを記録
+   - Status Codeを確認（403, 413, 0など）
+3. 以下を確認:
+   ```javascript
+   // ブラウザコンソールで確認すべきエラー
+   // - CORS policy エラー → CORS設定が必要
+   // - 403 Forbidden → 署名付きURL必要
+   // - bytes is null → withData: true 確認
    ```
-3. 問題箇所を特定して修正
+4. デバッグコードを追加して詳細ログを取得
 
-**詳細**:
-- `docs/DEPLOYMENT_VERIFICATION.md` - 検証手順
+**詳細ガイド**:
+- ⭐ **`docs/WEB_DEPLOYMENT_ISSUES.md`** - Web版特有の問題診断（最重要）
+- `docs/DEPLOYMENT_VERIFICATION.md` - 一般的な検証手順
 - `docs/technical/FILE_ATTACHMENT_FIX.md` - 修正ガイド
+
+**推奨される診断順序**:
+1. ブラウザコンソールの確認（CORSエラーがないか）
+2. Network タブの確認（Status Code確認）
+3. デバッグコードの追加（詳細ログ取得）
+4. 問題に応じた解決策の適用
 
 **推定修正時間**: 30分〜1時間（診断を含む）
 
