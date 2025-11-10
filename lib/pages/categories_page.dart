@@ -298,8 +298,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Color(
-                                int.parse(selectedColor.substring(1),
-                                        radix: 16) +
+                                int.parse(
+                                      selectedColor.substring(1),
+                                      radix: 16,
+                                    ) +
                                     0xFF000000,
                               ),
                               width: 2,
