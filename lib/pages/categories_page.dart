@@ -227,7 +227,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                   color: colorValue,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                      color: Colors.grey[400]!, width: 1),
+                                    color: Colors.grey[400]!,
+                                    width: 1,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 12),
