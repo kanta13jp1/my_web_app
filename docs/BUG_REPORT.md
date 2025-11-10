@@ -71,7 +71,7 @@ supabase db push
 
 ### 3. AI機能がエラー（400 Bad Request）
 
-**ステータス**: ⏳ デプロイ待ち（既存の問題）
+**ステータス**: ✅ デプロイ完了（2025-11-10ユーザー報告）
 
 **問題**:
 - AI文章改善機能が使用不可
@@ -105,32 +105,100 @@ Gemini API error: 404
 
 ### 4. 添付ファイル機能が動作しない
 
-**ステータス**: ⏳ デプロイ待ち（既存の問題）
+**ステータス**: 🔍 デプロイ済み、問題継続中（2025-11-10ユーザー報告）
 
 **問題**:
-- ファイルのアップロード機能が使用不可
-- 既存の添付ファイルが表示されない
-- データベースエラーが発生
+- マイグレーションはデプロイ済み
+- しかし、ファイルのアップロード機能がまだ使用不可
+- 原因の再調査が必要
 
-**根本原因**:
-1. `attachments`テーブルが存在しない
-2. Storageバケット（`attachments`）が作成されていない
-3. RLS（Row Level Security）ポリシーが未設定
+**可能性のある原因**:
+1. **Storageバケットが作成されていない**
+   - マイグレーションのINSERT文が失敗している可能性
+   - 手動でバケットを作成する必要があるかもしれない
 
-**解決策**:
-1. マイグレーションファイル（`supabase/migrations/20251108_attachments_complete_setup.sql`）をデプロイ
-   ```bash
-   supabase db push
+2. **Storage RLSポリシーが正しく適用されていない**
+   - `storage.objects`テーブルへのポリシー作成に失敗
+   - 権限エラー（Permission denied）が発生している可能性
+
+3. **Database RLSポリシーの問題**
+   - `attachments`テーブルへのアクセス権限の問題
+
+**次のステップ**:
+1. **検証ガイドに従って診断**: `docs/DEPLOYMENT_VERIFICATION.md`
+2. 以下のSQLを実行して状態を確認:
+   ```sql
+   -- テーブルの存在確認
+   SELECT table_name FROM information_schema.tables WHERE table_name = 'attachments';
+
+   -- バケットの存在確認
+   SELECT * FROM storage.buckets WHERE id = 'attachments';
+
+   -- RLSポリシーの確認
+   SELECT * FROM pg_policies WHERE tablename = 'attachments';
+   SELECT * FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage';
    ```
-2. 動作確認
-   - attachmentsテーブルの存在確認
-   - attachmentsバケットの存在確認
-   - ファイルアップロードテスト
+3. 問題箇所を特定して修正
 
-**詳細**: `docs/technical/FILE_ATTACHMENT_FIX.md`
-**関連セッション**: `docs/session-summaries/SESSION_SUMMARY_2025-11-08_FILE_ATTACHMENT_FIX.md`
+**詳細**:
+- `docs/DEPLOYMENT_VERIFICATION.md` - 検証手順
+- `docs/technical/FILE_ATTACHMENT_FIX.md` - 修正ガイド
 
-**推定修正時間**: 15分
+**推定修正時間**: 30分〜1時間（診断を含む）
+
+---
+
+### 5. リーダーボード問題（自分しか表示されない）
+
+**ステータス**: 🔍 デプロイ済み、問題継続中（2025-11-10ユーザー報告）
+
+**問題**:
+- マイグレーション `20251109120000_fix_user_stats_leaderboard_rls.sql` はデプロイ済み
+- しかし、リーダーボードに自分しか表示されない問題は継続
+
+**可能性のある原因**:
+1. **古いRLSポリシーが残っている**
+   - `DROP POLICY IF EXISTS`が失敗している可能性
+   - ポリシー名が微妙に異なる可能性
+
+2. **マイグレーションが正しく実行されていない**
+   - `supabase db push`が失敗している
+   - マイグレーションファイルが読み込まれていない
+
+3. **キャッシュの問題**
+   - Supabaseのキャッシュ
+   - アプリのキャッシュ
+
+4. **データが実際に1ユーザーしかない**
+   - user_statsテーブルに実際に1ユーザーのデータしかない
+
+**次のステップ**:
+1. **詳細診断ガイドに従う**: `docs/BUG_REPORT_LEADERBOARD_ISSUE.md`
+2. 以下のSQLを実行して状態を確認:
+   ```sql
+   -- データ確認
+   SELECT COUNT(*) as user_count FROM user_stats;
+
+   -- ポリシー確認
+   SELECT policyname, cmd, qual
+   FROM pg_policies
+   WHERE tablename = 'user_stats' AND cmd = 'SELECT';
+   ```
+3. ポリシーの強制再作成:
+   ```sql
+   DROP POLICY IF EXISTS "Users can view their own stats" ON user_stats;
+   DROP POLICY IF EXISTS "Anyone can view user stats for leaderboard" ON user_stats;
+
+   CREATE POLICY "Anyone can view user stats for leaderboard"
+     ON user_stats FOR SELECT
+     USING (true);
+   ```
+
+**詳細**:
+- `docs/BUG_REPORT_LEADERBOARD_ISSUE.md` - 詳細診断ガイド
+- `docs/DEPLOYMENT_VERIFICATION.md` - デプロイ検証ガイド
+
+**推定修正時間**: 30分〜1時間（診断を含む）
 
 ---
 
@@ -305,7 +373,7 @@ Gemini API error: 404
 **2025年11月10日のリクエスト**:
 1. ✅ **Linterエラー修正**（archive_page.dart:520）- 完了
 2. ✅ **最終保存日時の表示** - 実装完了（タイトル付近に大きく表示）
-3. ✅ **リーダーボード問題の調査** - 既に修正済み、デプロイ待ち
+3. 🔍 **リーダーボード問題** - デプロイ済み、問題継続中（要再調査）
 4. ⏳ タイマー機能の実装（設計完了、実装待ち）
 5. ⏳ 自動保存機能（中期計画）
 6. ⏳ UNDO/REDO機能（中期計画）
@@ -326,8 +394,12 @@ Gemini API error: 404
 
 ### 次回セッションでの対応
 
-1. **最優先**: サインイン500エラー修正のデプロイ（`supabase db push`）
-2. **高優先**: AI機能と添付ファイル機能のデプロイ
+1. **最優先**: 添付ファイルとリーダーボード問題の診断・修正
+   - 検証ガイドに従って診断: `docs/DEPLOYMENT_VERIFICATION.md`
+   - リーダーボード詳細ガイド: `docs/BUG_REPORT_LEADERBOARD_ISSUE.md`
+   - SQLクエリで実際の状態を確認
+   - 必要に応じてポリシーを再作成
+2. **高優先**: AI機能とサインイン機能の動作確認（デプロイ済みだが念のため）
 3. **短期**: ドキュメント表示エラーの調査と修正
 4. **中期**: タイマー機能の実装
 5. **長期**: リファクタリングとバックエンド移行
