@@ -326,8 +326,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                               color: nameController.text.isEmpty
                                   ? Colors.grey
                                   : Color(
-                                      int.parse(selectedColor.substring(1),
-                                              radix: 16) +
+                                      int.parse(
+                                              selectedColor.substring(1),
+                                              radix: 16,
+                                            ) +
                                           0xFF000000,
                                     ),
                             ),
