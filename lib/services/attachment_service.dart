@@ -80,7 +80,10 @@ class AttachmentService {
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
       final fileType = _getFileType(mimeType);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '${timestamp}_${file.name}';
+
+      // ファイル名をURLセーフな形式にサニタイズ
+      final safeFileName = _sanitizeFileName(file.name);
+      final fileName = '${timestamp}_$safeFileName';
       final filePath = '$userId/$noteId/$fileName';
 
       print('📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
@@ -138,6 +141,27 @@ class AttachmentService {
     } else {
       return 'other';
     }
+  }
+
+  // ファイル名をURLセーフな形式にサニタイズ
+  static String _sanitizeFileName(String fileName) {
+    // ファイル名から拡張子を分離
+    final lastDot = fileName.lastIndexOf('.');
+    final nameWithoutExt = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+    final extension = lastDot > 0 ? fileName.substring(lastDot) : '';
+
+    // 非ASCII文字と特殊文字をアンダースコアに置換
+    // ASCII文字、数字、ハイフン、ピリオドのみ許可
+    final sanitized = nameWithoutExt
+        .replaceAll(RegExp(r'[^\x00-\x7F]'), '_') // 非ASCII文字を置換
+        .replaceAll(RegExp(r'[^\w\-.]'), '_') // 英数字、ハイフン、ピリオド以外を置換
+        .replaceAll(RegExp(r'_+'), '_') // 連続するアンダースコアを1つに
+        .replaceAll(RegExp(r'^_|_$'), ''); // 先頭と末尾のアンダースコアを削除
+
+    // サニタイズ後のファイル名が空の場合は'file'を使用
+    final safeName = sanitized.isEmpty ? 'file' : sanitized;
+
+    return '$safeName$extension';
   }
 
 // getAttachments メソッドの引数を修正
