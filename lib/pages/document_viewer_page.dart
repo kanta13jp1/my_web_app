@@ -33,12 +33,25 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
     });
 
     try {
+      print('📄 [DocumentViewerPage] Starting document load');
+      print('📄 [DocumentViewerPage] Document ID: ${widget.document.id}');
+      print('📄 [DocumentViewerPage] Document title: ${widget.document.title}');
+      print('📄 [DocumentViewerPage] Document path: ${widget.document.path}');
+      print('📄 [DocumentViewerPage] Document category: ${widget.document.category}');
+
       final content = await DocumentService.loadDocument(widget.document.path);
+
+      print('✅ [DocumentViewerPage] Document content loaded successfully');
       setState(() {
         _content = content;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ [DocumentViewerPage] Failed to load document');
+      print('❌ [DocumentViewerPage] Error: $e');
+      print('❌ [DocumentViewerPage] Error type: ${e.runtimeType}');
+      print('❌ [DocumentViewerPage] Stack trace: $stackTrace');
+
       setState(() {
         _error = 'ドキュメントの読み込みに失敗しました: $e';
         _isLoading = false;

@@ -515,19 +515,43 @@ class GamificationService {
     String orderBy = 'total_points',
   }) async {
     try {
+      print('🏆 [GamificationService] Fetching leaderboard...');
+      print('🏆 [GamificationService] Order by: $orderBy, limit: $limit');
+      print('🏆 [GamificationService] Current user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
+
       final response = await _supabase
           .from('user_stats')
           .select()
           .order(orderBy, ascending: false)
           .limit(limit);
 
+      print('✅ [GamificationService] Query successful, processing response...');
+      print('🏆 [GamificationService] Response length: ${(response as List).length}');
+
       final entries = <LeaderboardEntry>[];
       for (int i = 0; i < (response as List).length; i++) {
         entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
       }
 
+      print('✅ [GamificationService] Leaderboard entries created: ${entries.length}');
+      if (entries.isNotEmpty) {
+        print('🏆 [GamificationService] Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
+      } else {
+        print('⚠️ [GamificationService] Empty leaderboard - check RLS policies');
+        print('⚠️ [GamificationService] Required RLS policy: SELECT on user_stats for anon/authenticated users');
+      }
+
       return entries;
     } catch (e, stackTrace) {
+      print('❌ [GamificationService] Error getting leaderboard: $e');
+      print('❌ [GamificationService] Error type: ${e.runtimeType}');
+      print('❌ [GamificationService] Stack trace: $stackTrace');
+
+      if (e.toString().contains('row level security')) {
+        print('🔒 [GamificationService] RLS policy error - users cannot read from user_stats table');
+        print('🔒 [GamificationService] Fix: Run migration 20251109120000_fix_user_stats_leaderboard_rls.sql');
+      }
+
       AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
       return [];
     }
@@ -538,20 +562,32 @@ class GamificationService {
   // to compare user's stats against all other users
   Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
     try {
+      print('🏆 [GamificationService] Getting user rank for: $userId');
+      print('🏆 [GamificationService] Order by: $orderBy');
+
       final allUsers = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
           .order(orderBy, ascending: false);
 
       final userList = allUsers as List;
+      print('✅ [GamificationService] Total users in ranking: ${userList.length}');
+
       for (int i = 0; i < userList.length; i++) {
         if (userList[i]['user_id'] == userId) {
+          print('✅ [GamificationService] User found at rank: ${i + 1}');
           return i + 1;
         }
       }
 
+      print('⚠️ [GamificationService] User not found in ranking');
+      print('⚠️ [GamificationService] This could mean user_stats record does not exist for this user');
       return null;
     } catch (e, stackTrace) {
+      print('❌ [GamificationService] Error getting user rank: $e');
+      print('❌ [GamificationService] Error type: ${e.runtimeType}');
+      print('❌ [GamificationService] Stack trace: $stackTrace');
+
       AppLogger.error('Error getting user rank', error: e, stackTrace: stackTrace);
       return null;
     }

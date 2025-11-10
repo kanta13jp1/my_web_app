@@ -45,18 +45,32 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     });
 
     try {
+      print('🏆 [LeaderboardPage] Loading leaderboard...');
+      print('🏆 [LeaderboardPage] Order by: $_orderBy');
+      print('🏆 [LeaderboardPage] Is authenticated: $_isAuthenticated');
+
       final entries = await _gamificationService.getLeaderboard(
         limit: 100,
         orderBy: _orderBy,
       );
 
+      print('✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
+      if (entries.isEmpty) {
+        print('⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
+      }
+
       // 認証済みユーザーの場合のみランクを取得
       int? rank;
       if (_isAuthenticated) {
+        print('🏆 [LeaderboardPage] Getting user rank...');
+        final userId = supabase.auth.currentUser!.id;
+        print('🏆 [LeaderboardPage] User ID: $userId');
+
         rank = await _gamificationService.getUserRank(
-          supabase.auth.currentUser!.id,
+          userId,
           orderBy: _orderBy,
         );
+        print('✅ [LeaderboardPage] User rank: $rank');
       }
 
       if (mounted) {
@@ -66,7 +80,17 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           _isLoading = false;
         });
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      print('❌ [LeaderboardPage] Failed to load leaderboard');
+      print('❌ [LeaderboardPage] Error: $error');
+      print('❌ [LeaderboardPage] Error type: ${error.runtimeType}');
+      print('❌ [LeaderboardPage] Stack trace: $stackTrace');
+
+      if (error.toString().contains('row level security')) {
+        print('🔒 [LeaderboardPage] RLS policy error detected');
+        print('🔒 [LeaderboardPage] Check user_stats table RLS policies');
+      }
+
       if (mounted) {
         setState(() {
           _isLoading = false;
