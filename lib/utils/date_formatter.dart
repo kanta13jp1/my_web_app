@@ -28,6 +28,11 @@ class DateFormatter {
     return '${date.year}年${date.month}月${date.day}日';
   }
 
+  /// 日時表示（例: "2024/12/25 14:30"）
+  static String formatDateTime(DateTime date) {
+    return '${date.year}/${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   /// 日付範囲のラベルを取得
   static String getDateRangeLabel(DateTime? startDate, DateTime? endDate) {
     if (startDate != null && endDate != null) {

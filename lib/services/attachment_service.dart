@@ -20,10 +20,13 @@ class AttachmentService {
   // ファイルを選択
   static Future<PlatformFile?> pickFile() async {
     try {
+      // Web版向けの修正：allowMultipleを明示的にfalseに設定
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
-        withData: true, // Web用
+        withData: true, // Web用（必須）
+        allowMultiple: false, // Web版で重要
+        allowCompression: false, // 圧縮を無効化
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -46,6 +49,8 @@ class AttachmentService {
       }
       return null;
     } catch (e) {
+      // デバッグ用：エラーの詳細をログ出力
+      print('❌ File picker error: $e');
       rethrow;
     }
   }

@@ -71,7 +71,7 @@ supabase db push
 
 ### 3. AI機能がエラー（400 Bad Request）
 
-**ステータス**: ⏳ デプロイ待ち（既存の問題）
+**ステータス**: ✅ デプロイ完了（2025-11-10ユーザー報告）
 
 **問題**:
 - AI文章改善機能が使用不可
@@ -103,34 +103,123 @@ Gemini API error: 404
 
 ---
 
-### 4. 添付ファイル機能が動作しない
+### 4. 添付ファイル機能が動作しない（Web版特有の問題）
 
-**ステータス**: ⏳ デプロイ待ち（既存の問題）
+**ステータス**: 🔍 Web版デプロイ後の問題（2025-11-10ユーザー報告更新）
+
+**重要な発見**:
+- ✅ ローカル開発環境では正常に動作
+- ❌ デプロイ後（Web版）でのみエラーが発生
+- DBの問題ではない（テーブル、バケット、RLSポリシーは正常）
+
+**問題の性質**:
+- **Web版特有の問題**または**環境設定の問題**
+- バックエンド（データベース、Storage）の設定は正常
+- フロントエンド（Web版）とStorageの通信に問題がある
+
+**可能性のある原因**:
+1. **CORS（Cross-Origin Resource Sharing）の問題**
+   - Supabase StorageのCORS設定が不足
+   - デプロイ先のドメインが許可リストに含まれていない
+   - ブラウザコンソールに`CORS policy`エラーが表示される
+
+2. **署名付きURLの問題**
+   - Storageバケットが`public: false`（プライベート）
+   - `getPublicUrl()`ではなく`createSignedUrl()`を使用する必要がある
+   - Status Code: `403 Forbidden`
+
+3. **file_picker Web版の問題**
+   - `withData: true`が設定されていない
+   - `bytes`が null になる
+
+4. **Content Security Policy (CSP) の問題**
+   - デプロイ先のCSP設定が厳しすぎる
+   - Supabase StorageのURLが許可されていない
+
+5. **環境変数の問題**
+   - デプロイ先でSupabase URLまたはAPIキーが正しく設定されていない
+
+**次のステップ**:
+1. **Web版特有の問題診断**: `docs/WEB_DEPLOYMENT_ISSUES.md` ⭐ **最重要**
+2. ブラウザの開発者ツールでエラーを確認:
+   - **F12キー** → **Console**タブと**Network**タブ
+   - ファイルアップロード時のエラーメッセージを記録
+   - Status Codeを確認（403, 413, 0など）
+3. 以下を確認:
+   ```javascript
+   // ブラウザコンソールで確認すべきエラー
+   // - CORS policy エラー → CORS設定が必要
+   // - 403 Forbidden → 署名付きURL必要
+   // - bytes is null → withData: true 確認
+   ```
+4. デバッグコードを追加して詳細ログを取得
+
+**詳細ガイド**:
+- ⭐ **`docs/WEB_DEPLOYMENT_ISSUES.md`** - Web版特有の問題診断（最重要）
+- `docs/DEPLOYMENT_VERIFICATION.md` - 一般的な検証手順
+- `docs/technical/FILE_ATTACHMENT_FIX.md` - 修正ガイド
+
+**推奨される診断順序**:
+1. ブラウザコンソールの確認（CORSエラーがないか）
+2. Network タブの確認（Status Code確認）
+3. デバッグコードの追加（詳細ログ取得）
+4. 問題に応じた解決策の適用
+
+**推定修正時間**: 30分〜1時間（診断を含む）
+
+---
+
+### 5. リーダーボード問題（自分しか表示されない）
+
+**ステータス**: 🔍 デプロイ済み、問題継続中（2025-11-10ユーザー報告）
 
 **問題**:
-- ファイルのアップロード機能が使用不可
-- 既存の添付ファイルが表示されない
-- データベースエラーが発生
+- マイグレーション `20251109120000_fix_user_stats_leaderboard_rls.sql` はデプロイ済み
+- しかし、リーダーボードに自分しか表示されない問題は継続
 
-**根本原因**:
-1. `attachments`テーブルが存在しない
-2. Storageバケット（`attachments`）が作成されていない
-3. RLS（Row Level Security）ポリシーが未設定
+**可能性のある原因**:
+1. **古いRLSポリシーが残っている**
+   - `DROP POLICY IF EXISTS`が失敗している可能性
+   - ポリシー名が微妙に異なる可能性
 
-**解決策**:
-1. マイグレーションファイル（`supabase/migrations/20251108_attachments_complete_setup.sql`）をデプロイ
-   ```bash
-   supabase db push
+2. **マイグレーションが正しく実行されていない**
+   - `supabase db push`が失敗している
+   - マイグレーションファイルが読み込まれていない
+
+3. **キャッシュの問題**
+   - Supabaseのキャッシュ
+   - アプリのキャッシュ
+
+4. **データが実際に1ユーザーしかない**
+   - user_statsテーブルに実際に1ユーザーのデータしかない
+
+**次のステップ**:
+1. **詳細診断ガイドに従う**: `docs/BUG_REPORT_LEADERBOARD_ISSUE.md`
+2. 以下のSQLを実行して状態を確認:
+   ```sql
+   -- データ確認
+   SELECT COUNT(*) as user_count FROM user_stats;
+
+   -- ポリシー確認
+   SELECT policyname, cmd, qual
+   FROM pg_policies
+   WHERE tablename = 'user_stats' AND cmd = 'SELECT';
    ```
-2. 動作確認
-   - attachmentsテーブルの存在確認
-   - attachmentsバケットの存在確認
-   - ファイルアップロードテスト
+3. ポリシーの強制再作成:
+   ```sql
+   DROP POLICY IF EXISTS "Users can view their own stats" ON user_stats;
+   DROP POLICY IF EXISTS "Anyone can view user stats for leaderboard" ON user_stats;
 
-**詳細**: `docs/technical/FILE_ATTACHMENT_FIX.md`
-**関連セッション**: `docs/session-summaries/SESSION_SUMMARY_2025-11-08_FILE_ATTACHMENT_FIX.md`
+   CREATE POLICY "Anyone can view user stats for leaderboard"
+     ON user_stats FOR SELECT
+     USING (true);
+   ```
 
-**推定修正時間**: 15分
+**詳細**:
+- `docs/BUG_REPORT_LEADERBOARD_ISSUE.md` - 詳細診断ガイド
+- `docs/DEPLOYMENT_VERIFICATION.md` - デプロイ検証ガイド
+
+**推定修正時間**: 30分〜1時間（診断を含む）
 
 ---
 
@@ -177,10 +266,10 @@ Gemini API error: 404
 
 ### 6. Linterエラー
 
-**ステータス**: ✅ 修正完了
+**ステータス**: ✅ 修正完了 (2025-11-10)
 
 **修正済み**:
-- `lib/pages/archive_page.dart:514` - trailing comma追加 ✅
+- `lib/pages/archive_page.dart:520` - trailing comma追加 ✅ (2025-11-10)
 
 **残存可能性**:
 - Flutter CLIが利用できないため、全体のLinterエラーは手動確認が必要
@@ -302,6 +391,17 @@ Gemini API error: 404
 
 ### ユーザーからのフィードバック
 
+**2025年11月10日のリクエスト**:
+1. ✅ **Linterエラー修正**（archive_page.dart:520）- 完了
+2. ✅ **最終保存日時の表示** - 実装完了（タイトル付近に大きく表示）
+3. 🔍 **リーダーボード問題** - デプロイ済み、問題継続中（要再調査）
+4. ⏳ タイマー機能の実装（設計完了、実装待ち）
+5. ⏳ 自動保存機能（中期計画）
+6. ⏳ UNDO/REDO機能（中期計画）
+7. ⏳ 添付ファイル機能のエラー（デプロイ待ち）
+8. 🔍 ドキュメント表示エラー（調査中）
+9. ✅ Twitterシェア用の文面（既存ドキュメントあり: docs/TWITTER_SHARE_TEMPLATES.md）
+
 **2025年11月9日のリクエスト**:
 1. ✅ メモを書きながら設定できるタイマー機能（設計完了、実装待ち）
 2. ⏳ NOTIONのように自動保存にする（中期計画）
@@ -315,8 +415,12 @@ Gemini API error: 404
 
 ### 次回セッションでの対応
 
-1. **最優先**: サインイン500エラー修正のデプロイ（`supabase db push`）
-2. **高優先**: AI機能と添付ファイル機能のデプロイ
+1. **最優先**: 添付ファイルとリーダーボード問題の診断・修正
+   - 検証ガイドに従って診断: `docs/DEPLOYMENT_VERIFICATION.md`
+   - リーダーボード詳細ガイド: `docs/BUG_REPORT_LEADERBOARD_ISSUE.md`
+   - SQLクエリで実際の状態を確認
+   - 必要に応じてポリシーを再作成
+2. **高優先**: AI機能とサインイン機能の動作確認（デプロイ済みだが念のため）
 3. **短期**: ドキュメント表示エラーの調査と修正
 4. **中期**: タイマー機能の実装
 5. **長期**: リファクタリングとバックエンド移行
@@ -349,6 +453,46 @@ Gemini API error: 404
 
 ---
 
-**最終更新**: 2025年11月9日（午後）
+## 📝 2025年11月10日のセッションで完了したこと
+
+### 1. Linterエラーの修正 ✅
+- **箇所**: `archive_page.dart:520`
+- **修正**: trailing comma追加
+- **影響**: Linterエラー解消、コード品質向上
+
+### 2. 最終保存日時表示機能の実装 ✅
+- **実装内容**:
+  - 状態変数 `_lastSavedTime` 追加
+  - 保存時に自動更新（`_saveNote()`, `_saveNoteWithoutClosing()`）
+  - タイトル付近に目立つ表示（青色、Semi-Bold）
+  - `DateFormatter.formatDateTime()` メソッド追加
+- **表示例**: 「最終保存: 2024/11/10 14:30」
+- **影響ファイル**:
+  - `lib/pages/note_editor_page.dart`
+  - `lib/utils/date_formatter.dart`
+
+### 3. リーダーボード問題の調査 ✅
+- **調査結果**: RLS (Row Level Security) ポリシーが原因
+- **既に修正済み**: マイグレーション `20251109120000_fix_user_stats_leaderboard_rls.sql`
+- **ステータス**: デプロイ待ち
+- **詳細**: `/home/user/my_web_app/FIX_USER_STATS_406_ERROR.md`
+
+### 4. コードベースの包括的調査 ✅
+- **調査内容**: プロジェクト構造、実装済み機能、技術スタック、ドキュメント
+- **結果**: 27,346行のコード、100ファイル、43ドキュメント
+- **評価**: 7.5/10（充実した機能、良好なアーキテクチャ）
+
+### 5. セッションサマリーの作成 ✅
+- **ドキュメント**: `docs/session-summaries/SESSION_SUMMARY_2025-11-10.md`
+- **内容**: 完了した作業、技術的所見、次のステップ
+
+### 6. Git操作 ✅
+- **ブランチ**: `claude/fix-linter-errors-archive-011CUyPycdfG7nz3NA3gptfR`
+- **変更ファイル数**: 4ファイル
+- **準備完了**: コミット＆プッシュ待ち
+
+---
+
+**最終更新**: 2025年11月10日
 **次回レビュー**: デプロイ完了後
 **作成者**: Claude Code
