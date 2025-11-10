@@ -176,6 +176,9 @@ class _AuthPageState extends State<AuthPage> {
         if (mounted && userId != null) {
           final shouldShowOnboarding = await _shouldShowOnboarding(userId);
 
+          // Re-check mounted after async operation
+          if (!mounted) return;
+
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => shouldShowOnboarding
