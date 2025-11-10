@@ -20,6 +20,7 @@ class AttachmentService {
   // ファイルを選択
   static Future<PlatformFile?> pickFile() async {
     try {
+      print('pickFile start');
       // Web版向けの修正：allowMultipleを明示的にfalseに設定
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -28,15 +29,15 @@ class AttachmentService {
         allowMultiple: false, // Web版で重要
         allowCompression: false, // 圧縮を無効化
       );
-
+      print('pickFile 1 result: $result');
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-
+        print('pickFile 2 file: $file');
         // ファイルサイズチェック
         if (file.size > maxFileSize) {
           throw Exception('ファイルサイズは5MB以下にしてください');
         }
-
+        print('pickFile 3 file: $file');
         // MIMEタイプチェック
         final mimeType =
             lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -44,9 +45,10 @@ class AttachmentService {
             !allowedPdfTypes.contains(mimeType)) {
           throw Exception('サポートされていないファイル形式です');
         }
-
+        print('pickFile 4 return file');
         return file;
       }
+      print('pickFile 5 return null');
       return null;
     } catch (e) {
       // デバッグ用：エラーの詳細をログ出力
