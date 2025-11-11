@@ -83,7 +83,6 @@ class PersonalityTestService {
       for (var answer in answers) {
         final question = answer['personality_questions'];
         final axis = question['axis'] as String;
-        final direction = question['direction'] as String;
         final userAnswer = answer['answer'] as String;
 
         // スコア加算（Aなら+1、Bなら-1）
