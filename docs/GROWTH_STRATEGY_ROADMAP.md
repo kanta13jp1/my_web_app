@@ -837,7 +837,7 @@
 ## 🎯 次のアクション（今週）
 
 ### ✅ 完了したタスク（2025年11月11日更新）
-1. ✅ **Linterエラー修正** - 完了（categories_page.dart:302、330、393、personality_test_service.dart:86、personality_test_landing_page.dart:3）
+1. ✅ **Linterエラー修正** - 完了（categories_page.dart:302、330、393、personality_test_service.dart:86、personality_test_landing_page.dart:4）
 2. ✅ **添付ファイル機能修正** - 日本語ファイル名問題解決、修正済み
 3. ✅ **リーダーボード修正** - RLSポリシー修正完了（デプロイ待ち）
 4. ✅ **包括的バグ分析** - 完了（`docs/COMPREHENSIVE_BUG_ANALYSIS.md`作成）
@@ -859,6 +859,12 @@
     - ホームページへのオーバーレイ追加
     - Providerでグローバル状態管理
     - 機能：カスタム時間、クイックプリセット、一時停止/再開/停止/リセット、進捗表示、通知（プレースホルダー）
+14. ✅ **タイマー機能のUI/UX改善** - 完了（2025年11月11日）
+    - タイマーボタンを目立つデザインに変更（緑色の枠付き、サイズ拡大）
+    - ツールチップを詳細に改善（「⏱️ タイマーで集中モード（ポモドーロテクニック）」）
+    - TimerSetupDialogに説明文追加（「メモを書きながら集中時間を計測できます」）
+    - ユーザー向け使い方ガイド追加（`docs/TIMER_FEATURE_DESIGN.md`）
+    - ポモドーロテクニックの説明を含む詳細ガイド作成
 
 ### 🔧 今週の最優先タスク
 1. **デプロイと検証**

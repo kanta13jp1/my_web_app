@@ -971,16 +971,34 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             onPressed: _showMarkdownHelp,
             tooltip: 'マークダウン記法ヘルプ',
           ),
-          // タイマーボタン
-          IconButton(
-            icon: Icon(
-              Icons.timer,
-              color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
-                  ? Colors.blue
-                  : null,
+          // タイマーボタン（目立つデザイン）
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                    ? Colors.blue.withValues(alpha: 0.2)
+                    : Colors.green.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                      ? Colors.blue
+                      : Colors.green,
+                  width: 2,
+                ),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.timer,
+                  color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                      ? Colors.blue
+                      : Colors.green,
+                  size: 28,
+                ),
+                onPressed: _showTimerDialog,
+                tooltip: '⏱️ タイマーで集中モード\n（ポモドーロテクニック）',
+              ),
             ),
-            onPressed: _showTimerDialog,
-            tooltip: 'タイマーを設定',
           ),
           // リマインダーボタン
           IconButton(
