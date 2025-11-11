@@ -74,7 +74,7 @@ ${_personalityType!.description}
 
     final url = 'https://mymemo.app/personality-test';
 
-    await AppShareService.shareToTwitter(text, url);
+    await AppShareService.shareToTwitter(customMessage: '$text\n$url');
   }
 
   Future<void> _copyToClipboard() async {
