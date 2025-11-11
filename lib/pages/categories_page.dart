@@ -390,7 +390,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            category == null ? 'カテゴリを作成しました' : 'カテゴリを更新しました'),
+                          category == null ? 'カテゴリを作成しました' : 'カテゴリを更新しました',
+                        ),
                       ),
                     );
                   } catch (error) {
