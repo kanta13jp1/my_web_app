@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ショートカットキー用
 import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
@@ -15,6 +16,9 @@ import '../utils/date_formatter.dart';
 import '../widgets/timer_setup_dialog.dart'; // タイマー機能追加
 import 'package:provider/provider.dart';
 import '../services/timer_service.dart'; // タイマーサービス追加
+import '../services/auto_save_service.dart'; // 自動保存サービス追加
+import '../services/undo_redo_service.dart'; // UNDO/REDOサービス追加
+import '../models/note_snapshot.dart'; // スナップショットモデル追加
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -54,11 +58,19 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   late final AIService _aiService;
   bool _isAIProcessing = false;
 
+  // 自動保存・UNDO/REDO用
+  late final AutoSaveService _autoSaveService;
+  late final UndoRedoService _undoRedoService;
+  bool _isUndoRedoOperation = false; // UNDO/REDO操作中フラグ
+
   @override
   void initState() {
     super.initState();
     _gamificationService = GamificationService();
     _aiService = AIService();
+    _autoSaveService = AutoSaveService();
+    _undoRedoService = UndoRedoService();
+
     _titleController = TextEditingController(text: widget.note?.title ?? widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.note?.content ?? widget.initialContent ?? '');
@@ -73,6 +85,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     // タブコントローラーを初期化
     _tabController = TabController(length: 2, vsync: this);
 
+    // 初期スナップショットを追加
+    _undoRedoService.addSnapshot(NoteSnapshot(
+      title: _titleController.text,
+      content: _contentController.text,
+      categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
+      timestamp: DateTime.now(),
+    ));
+
+    // テキストコントローラーにリスナーを追加
+    _titleController.addListener(_onTextChanged);
+    _contentController.addListener(_onTextChanged);
+
     // 添付ファイルを読み込み（追加）
     if (widget.note != null) {
       _loadAttachments();
@@ -81,10 +105,31 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   @override
   void dispose() {
+    _titleController.removeListener(_onTextChanged);
+    _contentController.removeListener(_onTextChanged);
     _titleController.dispose();
     _contentController.dispose();
     _tabController.dispose();
+    _autoSaveService.dispose();
+    _undoRedoService.dispose();
     super.dispose();
+  }
+
+  /// テキスト変更時の処理（スナップショット追加 & 自動保存トリガー）
+  void _onTextChanged() {
+    // UNDO/REDO操作中は履歴を追加しない
+    if (_isUndoRedoOperation) return;
+
+    // スナップショット追加（UNDO/REDO用）
+    _undoRedoService.addSnapshot(NoteSnapshot(
+      title: _titleController.text,
+      content: _contentController.text,
+      categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
+      timestamp: DateTime.now(),
+    ));
+
+    // 自動保存トリガー
+    _autoSaveService.triggerAutoSave(() => _saveNoteWithoutClosing());
   }
 
 // 添付ファイルを読み込み
@@ -214,6 +259,34 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
+  /// UNDO（元に戻す）
+  void _undo() {
+    final snapshot = _undoRedoService.undo();
+    if (snapshot != null) {
+      _isUndoRedoOperation = true;
+      setState(() {
+        _titleController.text = snapshot.title;
+        _contentController.text = snapshot.content;
+        _selectedCategoryId = snapshot.categoryId?.toString();
+      });
+      _isUndoRedoOperation = false;
+    }
+  }
+
+  /// REDO（やり直し）
+  void _redo() {
+    final snapshot = _undoRedoService.redo();
+    if (snapshot != null) {
+      _isUndoRedoOperation = true;
+      setState(() {
+        _titleController.text = snapshot.title;
+        _contentController.text = snapshot.content;
+        _selectedCategoryId = snapshot.categoryId?.toString();
+      });
+      _isUndoRedoOperation = false;
+    }
+  }
+
   // 保存（画面を閉じない）
   Future<void> _saveNoteWithoutClosing() async {
     try {
@@ -295,6 +368,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       setState(() {
         _lastSavedTime = DateTime.now();
       });
+
+      // 自動保存サービスに保存完了を通知
+      _autoSaveService.markAsSaved();
 
       // 保存完了メッセージを表示（画面は閉じない）
       ScaffoldMessenger.of(context).showSnackBar(
@@ -889,12 +965,122 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
+  /// 保存状態インジケーターを構築
+  Widget _buildSaveStateIndicator() {
+    return ListenableBuilder(
+      listenable: _autoSaveService,
+      builder: (context, child) {
+        switch (_autoSaveService.saveState) {
+          case SaveState.saved:
+            return const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '保存済み',
+                  style: TextStyle(fontSize: 12, color: Colors.green),
+                ),
+              ],
+            );
+          case SaveState.saving:
+            return const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  '保存中...',
+                  style: TextStyle(fontSize: 12, color: Colors.blue),
+                ),
+              ],
+            );
+          case SaveState.modified:
+            return const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.edit, color: Colors.orange, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  '未保存',
+                  style: TextStyle(fontSize: 12, color: Colors.orange),
+                ),
+              ],
+            );
+          case SaveState.error:
+            return const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  'エラー',
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ],
+            );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
-        actions: [
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: (event) {
+        if (event is KeyDownEvent) {
+          // Ctrl+Z or Cmd+Z: Undo
+          if ((event.logicalKey == LogicalKeyboardKey.keyZ) &&
+              (HardwareKeyboard.instance.isControlPressed ||
+                  HardwareKeyboard.instance.isMetaPressed) &&
+              !HardwareKeyboard.instance.isShiftPressed) {
+            _undo();
+          }
+          // Ctrl+Y or Ctrl+Shift+Z or Cmd+Shift+Z: Redo
+          else if (((event.logicalKey == LogicalKeyboardKey.keyY) &&
+                  (HardwareKeyboard.instance.isControlPressed ||
+                      HardwareKeyboard.instance.isMetaPressed)) ||
+              ((event.logicalKey == LogicalKeyboardKey.keyZ) &&
+                  (HardwareKeyboard.instance.isControlPressed ||
+                      HardwareKeyboard.instance.isMetaPressed) &&
+                  HardwareKeyboard.instance.isShiftPressed)) {
+            _redo();
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(widget.note == null ? '新規メモ' : 'メモを編集'),
+              _buildSaveStateIndicator(),
+            ],
+          ),
+          actions: [
+            // UNDO/REDOボタン
+            ListenableBuilder(
+              listenable: _undoRedoService,
+              builder: (context, child) => IconButton(
+                icon: const Icon(Icons.undo),
+                onPressed: _undoRedoService.canUndo ? _undo : null,
+                tooltip: 'Undo (Ctrl+Z)',
+              ),
+            ),
+            ListenableBuilder(
+              listenable: _undoRedoService,
+              builder: (context, child) => IconButton(
+                icon: const Icon(Icons.redo),
+                onPressed: _undoRedoService.canRedo ? _redo : null,
+                tooltip: 'Redo (Ctrl+Y)',
+              ),
+            ),
           // AI機能ボタン
           if (_isAIProcessing)
             const Padding(
@@ -1222,6 +1408,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ),
           ),
         ],
+      ),
       ),
     );
   }
