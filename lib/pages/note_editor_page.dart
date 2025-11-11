@@ -12,6 +12,9 @@ import '../widgets/achievement_notification.dart'; // 実績通知追加
 import '../widgets/note_editor/editor_dialogs.dart' as editor_dialogs;
 import '../widgets/note_editor/category_chip.dart';
 import '../utils/date_formatter.dart';
+import '../widgets/timer_setup_dialog.dart'; // タイマー機能追加
+import 'package:provider/provider.dart';
+import '../services/timer_service.dart'; // タイマーサービス追加
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -444,6 +447,80 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   void _showMarkdownHelp() {
     editor_dialogs.showMarkdownHelp(context);
+  }
+
+  // タイマーダイアログを表示
+  Future<void> _showTimerDialog() async {
+    final timerService = Provider.of<TimerService>(context, listen: false);
+
+    // 既にタイマーが実行中の場合は確認
+    if (timerService.hasActiveTimer) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('タイマー実行中'),
+          content: const Text('既に実行中のタイマーがあります。新しいタイマーを開始しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('開始'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+    }
+
+    // タイマー設定ダイアログを表示
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => TimerSetupDialog(
+        noteId: _currentNoteId,
+      ),
+    );
+
+    if (result == null) return;
+
+    // タイマーを開始
+    try {
+      await timerService.startTimer(
+        name: result['name'] as String,
+        durationSeconds: result['durationSeconds'] as int,
+        noteId: _currentNoteId,
+        soundNotification: result['soundNotification'] as bool,
+        browserNotification: result['browserNotification'] as bool,
+        autoSave: result['autoSave'] as bool,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('タイマーを開始しました: ${result['name']}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('タイマーの開始に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // リマインダーダイアログを表示
+  Future<void> _showReminderDialog() async {
+    // 既存のリマインダー機能の実装...
+    // TODO: 実装が必要な場合は追加
   }
 
   // AI機能メニューを表示
@@ -899,6 +976,17 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             icon: const Icon(Icons.help_outline),
             onPressed: _showMarkdownHelp,
             tooltip: 'マークダウン記法ヘルプ',
+          ),
+          // タイマーボタン
+          IconButton(
+            icon: Icon(
+              Icons.timer,
+              color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                  ? Colors.blue
+                  : null,
+            ),
+            onPressed: _showTimerDialog,
+            tooltip: 'タイマーを設定',
           ),
           // リマインダーボタン
           IconButton(

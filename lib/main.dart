@@ -14,6 +14,7 @@ import 'pages/memo_gallery_page.dart';
 import 'pages/documents_page.dart';
 import 'pages/personality_test_landing_page.dart';
 import 'services/theme_service.dart';
+import 'services/timer_service.dart';
 
 // Supabaseクライアントのゲッター（late初期化を避ける）
 SupabaseClient get supabase => Supabase.instance.client;
@@ -27,8 +28,11 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeService(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => TimerService()),
+      ],
       child: const MyApp(),
     ),
   );
