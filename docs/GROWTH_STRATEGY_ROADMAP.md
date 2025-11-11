@@ -837,7 +837,7 @@
 ## 🎯 次のアクション（今週）
 
 ### ✅ 完了したタスク（2025年11月11日更新）
-1. ✅ **Linterエラー修正** - 完了（categories_page.dart:302、330、393、personality_test_service.dart:86）
+1. ✅ **Linterエラー修正** - 完了（categories_page.dart:302、330、393、personality_test_service.dart:86、personality_test_landing_page.dart:3）
 2. ✅ **添付ファイル機能修正** - 日本語ファイル名問題解決、修正済み
 3. ✅ **リーダーボード修正** - RLSポリシー修正完了（デプロイ待ち）
 4. ✅ **包括的バグ分析** - 完了（`docs/COMPREHENSIVE_BUG_ANALYSIS.md`作成）
@@ -849,6 +849,16 @@
 10. ✅ **成長戦略ロードマップ更新** - 性格診断機能を短中期計画に追加
 11. ✅ **リーダーボード問題の詳細診断ガイド** - 完了（`docs/BUG_REPORT_LEADERBOARD_ISSUE.md`作成）
 12. ✅ **デプロイ診断ガイド** - 完了（`docs/DEPLOYMENT_DIAGNOSTIC_GUIDE.md`作成）
+13. ✅ **タイマー機能の実装** - 完了（最優先タスク）
+    - データベーステーブル作成（`supabase/migrations/20251111120000_create_timers_table.sql`）
+    - AppTimerモデル作成
+    - TimerServiceクラス作成（状態管理、カウントダウン、一時停止/再開）
+    - FloatingTimerWidget作成（ドラッグ可能、展開/縮小可能）
+    - TimerSetupDialog作成（時間設定、クイックプリセット）
+    - メモ編集ページへの統合
+    - ホームページへのオーバーレイ追加
+    - Providerでグローバル状態管理
+    - 機能：カスタム時間、クイックプリセット、一時停止/再開/停止/リセット、進捗表示、通知（プレースホルダー）
 
 ### 🔧 今週の最優先タスク
 1. **デプロイと検証**

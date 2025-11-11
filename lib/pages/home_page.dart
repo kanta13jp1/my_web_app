@@ -30,6 +30,7 @@ import '../services/presence_service.dart';
 import '../services/daily_login_service.dart';
 import '../widgets/growth_metrics_banner.dart';
 import '../widgets/campaigns_banner.dart';
+import '../widgets/floating_timer_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -633,10 +634,12 @@ class _HomePageState extends State<HomePage> {
         hasDateFilter: hasDateFilter,
         userStats: _userStats,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
                 // キャンペーンバナー
                 const CampaignsBanner(),
                 // 成長メトリクスバナー（登録者数・閲覧者数）
@@ -781,6 +784,10 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+          // タイマーウィジェット
+          const FloatingTimerWidget(),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
