@@ -12,6 +12,7 @@ import 'pages/referral_page.dart';
 import 'pages/daily_challenges_page.dart';
 import 'pages/memo_gallery_page.dart';
 import 'pages/documents_page.dart';
+import 'pages/personality_test_landing_page.dart';
 import 'services/theme_service.dart';
 
 // Supabaseクライアントのゲッター（late初期化を避ける）
@@ -174,6 +175,11 @@ class MyApp extends StatelessWidget {
             // ドキュメントページ（認証不要）
             return MaterialPageRoute(
               builder: (_) => const DocumentsPage(),
+            );
+          case '/personality-test':
+            // 性格診断ページ（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const PersonalityTestLandingPage(),
             );
           default:
             // デフォルトはランディングページ
