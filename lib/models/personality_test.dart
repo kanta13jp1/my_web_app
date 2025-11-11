@@ -1,7 +1,5 @@
 // 性格診断機能のモデルクラス
 
-import 'package:flutter/foundation.dart';
-
 /// 性格診断のステータス
 enum PersonalityTestStatus {
   running, // 実行中
