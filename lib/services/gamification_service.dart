@@ -519,8 +519,9 @@ class GamificationService {
       print('🏆 [GamificationService] Order by: $orderBy, limit: $limit');
       print('🏆 [GamificationService] Current user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
 
+      // Use the view that includes user profile information
       final response = await _supabase
-          .from('user_stats')
+          .from('user_stats_with_profiles')
           .select()
           .order(orderBy, ascending: false)
           .limit(limit);
@@ -538,7 +539,7 @@ class GamificationService {
         print('🏆 [GamificationService] Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
       } else {
         print('⚠️ [GamificationService] Empty leaderboard - check RLS policies');
-        print('⚠️ [GamificationService] Required RLS policy: SELECT on user_stats for anon/authenticated users');
+        print('⚠️ [GamificationService] Required RLS policy: SELECT on user_stats_with_profiles view');
       }
 
       return entries;
@@ -548,8 +549,8 @@ class GamificationService {
       print('❌ [GamificationService] Stack trace: $stackTrace');
 
       if (e.toString().contains('row level security')) {
-        print('🔒 [GamificationService] RLS policy error - users cannot read from user_stats table');
-        print('🔒 [GamificationService] Fix: Run migration 20251109120000_fix_user_stats_leaderboard_rls.sql');
+        print('🔒 [GamificationService] RLS policy error - users cannot read from user_stats_with_profiles view');
+        print('🔒 [GamificationService] Fix: Ensure migration 20251111140000 is applied');
       }
 
       AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
