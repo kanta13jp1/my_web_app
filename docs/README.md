@@ -69,5 +69,25 @@ Claude Codeセッションのサマリーやプロジェクト分析を格納し
 
 ---
 
-**最終更新**: 2025年11月8日
-**次回レビュー**: 2週間後（2025年11月22日）
+## 📊 最新の重要ドキュメント
+
+### 成長戦略・マーケティング
+- **[成長戦略ロードマップ](./GROWTH_STRATEGY_ROADMAP.md)** - 短中長期の開発計画、ユーザー獲得戦略
+- **[Twitterシェアテンプレート](./TWITTER_SHARE_TEMPLATES.md)** - リリース時のSNS投稿文面集
+
+### 機能設計
+- **[性格診断機能設計](./PERSONALITY_TEST_DESIGN.md)** - 16personalities風の性格診断機能（ユーザー獲得の鍵）
+- **[タイマー機能設計](./TIMER_FEATURE_DESIGN.md)** - メモ編集中に使えるタイマー機能
+- **[自動保存・UNDO/REDO設計](./AUTO_SAVE_UNDO_REDO_DESIGN.md)** - Notion風の自動保存機能
+
+### バグ管理
+- **[バグレポート](./BUG_REPORT.md)** - 既知のバグと修正状況
+- **[包括的バグ分析](./COMPREHENSIVE_BUG_ANALYSIS.md)** - 全機能の動作状況分析
+
+### インフラ・プラットフォーム
+- **[プラットフォーム推奨](./PLATFORM_RECOMMENDATION.md)** - Firebase/Vercel/AWS/GCPの選定ガイド
+
+---
+
+**最終更新**: 2025年11月11日
+**次回レビュー**: 2週間後（2025年11月25日）
