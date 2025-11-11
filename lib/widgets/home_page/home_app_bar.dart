@@ -4,6 +4,7 @@ import '../../pages/categories_page.dart';
 import '../../pages/stats_page.dart';
 import '../../pages/leaderboard_page.dart';
 import '../../pages/settings_page.dart';
+import '../../pages/profile_settings_page.dart';
 import '../../pages/share_philosopher_quote_dialog.dart';
 import '../../pages/enhanced_statistics_page.dart';
 import '../../pages/referral_page.dart';
@@ -263,6 +264,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ).then((_) {
             onLoadUserStats();
           });
+        } else if (value == 'profile_settings') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
+          ).then((updated) {
+            if (updated == true) {
+              onLoadUserStats();
+              onRefresh();
+            }
+          });
         } else if (value == 'site_stats') {
           Navigator.push(
             context,
@@ -438,6 +449,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               Icon(Icons.emoji_events),
               SizedBox(width: 8),
               Text('リーダーボード'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'profile_settings',
+          child: Row(
+            children: [
+              Icon(Icons.person, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('プロフィール設定'),
             ],
           ),
         ),
