@@ -14,6 +14,7 @@ import '../../pages/template_marketplace_page.dart';
 import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../pages/ai_secretary_page.dart';
+import '../../pages/personality_test_landing_page.dart';
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -281,6 +282,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ).then((_) {
             onLoadUserStats();
           });
+        } else if (value == 'personality_test') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PersonalityTestLandingPage()),
+          ).then((_) {
+            onLoadUserStats();
+          });
         } else if (value == 'ai_secretary') {
           Navigator.push(
             context,
@@ -461,6 +469,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               Icon(Icons.task_alt, color: Colors.orange),
               SizedBox(width: 8),
               Text('デイリーチャレンジ'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'personality_test',
+          child: Row(
+            children: [
+              Icon(Icons.psychology, color: Colors.deepPurple),
+              SizedBox(width: 8),
+              Text('🧠 性格診断'),
             ],
           ),
         ),
