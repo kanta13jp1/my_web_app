@@ -92,11 +92,14 @@ class PersonalityTestService {
 
       // スコアを保存
       for (var entry in scores.entries) {
-        await _supabase.from('personality_scores').upsert({
-          'test_id': testId,
-          'axis': entry.key,
-          'score': entry.value,
-        });
+        await _supabase.from('personality_scores').upsert(
+          {
+            'test_id': testId,
+            'axis': entry.key,
+            'score': entry.value,
+          },
+          onConflict: 'test_id,axis',
+        );
       }
 
       return scores;
