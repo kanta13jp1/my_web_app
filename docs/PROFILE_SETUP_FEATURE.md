@@ -268,7 +268,35 @@ firebase deploy --only hosting
 
 ---
 
-## 🐛 既知の問題
+## 🐛 既知の問題と修正履歴
+
+### 修正済み: マイグレーションエラー（2025年11月11日）
+**問題**: マイグレーション実行時に `column us.notes_edited does not exist` エラーが発生。
+**原因**: user_stats_with_profilesビューで存在しないカラムを参照していた。
+- `notes_edited` (存在しない)
+- `notes_deleted` (存在しない)
+- `tags_created` (存在しない)
+- `achievements_unlocked` (存在しない)
+
+**修正内容**: UserStatsモデルの実際のカラムに合わせて修正。
+**修正後のカラム**:
+- user_id
+- total_points
+- current_level
+- notes_created
+- current_streak
+- longest_streak
+- categories_created
+- notes_shared
+- last_activity_date
+- created_at
+- updated_at
+- user_name (computed)
+- avatar_url (from user_profiles)
+
+**ステータス**: ✅ 修正完了、再デプロイ可能
+
+---
 
 ### 1. 画像アップロード未実装
 **問題**: アバター画像のアップロード機能がまだ実装されていません。
