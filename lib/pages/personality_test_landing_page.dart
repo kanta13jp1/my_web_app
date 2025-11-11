@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/personality_test_service.dart';
 import 'personality_test_questions_page.dart';
-import '../main.dart';
 
 /// 性格診断の開始ページ
 class PersonalityTestLandingPage extends StatelessWidget {

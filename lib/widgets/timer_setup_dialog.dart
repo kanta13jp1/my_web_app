@@ -64,11 +64,25 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'タイマー設定',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'タイマー設定',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'メモを書きながら集中時間を計測できます',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
