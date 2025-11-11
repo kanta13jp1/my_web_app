@@ -517,12 +517,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // リマインダーダイアログを表示
-  Future<void> _showReminderDialog() async {
-    // 既存のリマインダー機能の実装...
-    // TODO: 実装が必要な場合は追加
-  }
-
   // AI機能メニューを表示
   void _showAIMenu() {
     showModalBottomSheet(
