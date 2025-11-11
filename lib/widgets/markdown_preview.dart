@@ -19,6 +19,8 @@ class MarkdownPreview extends StatelessWidget {
     return Markdown(
       data: data,
       selectable: selectable,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       styleSheet: MarkdownStyleSheet(
         // 見出しスタイル
         h1: const TextStyle(
