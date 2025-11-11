@@ -100,19 +100,19 @@ class ViralGrowthService {
       // 既存の紹介コードを取得
       final response = await _supabase
           .from('referral_codes')
-          .select('code')
+          .select('referral_code')
           .eq('user_id', userId)
           .maybeSingle();
 
       String referralCode;
       if (response != null) {
-        referralCode = response['code'] as String;
+        referralCode = response['referral_code'] as String;
       } else {
         // 新規作成（通常は既に存在するはず）
         referralCode = _generateRandomCode();
         await _supabase.from('referral_codes').insert({
           'user_id': userId,
-          'code': referralCode,
+          'referral_code': referralCode,
         });
       }
 
