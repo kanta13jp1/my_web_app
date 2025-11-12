@@ -13,6 +13,7 @@ import 'pages/daily_challenges_page.dart';
 import 'pages/memo_gallery_page.dart';
 import 'pages/documents_page.dart';
 import 'pages/personality_test_landing_page.dart';
+import 'pages/compatibility_landing_page.dart';
 import 'services/theme_service.dart';
 import 'services/timer_service.dart';
 
@@ -184,6 +185,11 @@ class MyApp extends StatelessWidget {
             // 性格診断ページ（認証不要）
             return MaterialPageRoute(
               builder: (_) => const PersonalityTestLandingPage(),
+            );
+          case '/compatibility':
+            // 恋愛相性診断ページ（認証不要）
+            return MaterialPageRoute(
+              builder: (_) => const CompatibilityLandingPage(),
             );
           default:
             // デフォルトはランディングページ
