@@ -46,7 +46,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   // 添付ファイル関連（追加）
   List<Attachment> _attachments = [];
   bool _isLoadingAttachments = false;
-  bool _isUploadingFile = false;
 
   // マークダウン関連
   late TabController _tabController;
@@ -174,10 +173,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       final file = await AttachmentService.pickFile();
       if (file == null) return;
 
-      setState(() {
-        _isUploadingFile = true;
-      });
-
       final attachment = await AttachmentService.uploadFile(
         noteId: widget.note!.id,
         file: file,
@@ -186,7 +181,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (mounted && attachment != null) {
         setState(() {
           _attachments.add(attachment);
-          _isUploadingFile = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -203,10 +197,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       }
     } catch (error) {
       if (mounted) {
-        setState(() {
-          _isUploadingFile = false;
-        });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エラー: $error')),
         );
