@@ -90,7 +90,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       content: _contentController.text,
       categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
       timestamp: DateTime.now(),
-    ));
+    ),);
 
     // テキストコントローラーにリスナーを追加
     _titleController.addListener(_onTextChanged);
