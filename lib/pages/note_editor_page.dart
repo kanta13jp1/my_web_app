@@ -1028,6 +1028,113 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     );
   }
 
+  /// メニューを表示
+  void _showMoreMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ピン留め
+            if (widget.note != null)
+              ListTile(
+                leading: Icon(
+                  _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  color: _isPinned ? Colors.amber : null,
+                ),
+                title: Text(_isPinned ? 'ピン留めを解除' : 'ピン留め'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _isPinned = !_isPinned;
+                  });
+                },
+              ),
+            // リマインダー
+            ListTile(
+              leading: Icon(
+                _reminderDate != null ? Icons.alarm : Icons.alarm_add,
+                color: _reminderDate != null ? Colors.orange : null,
+              ),
+              title: const Text('リマインダー'),
+              subtitle: _reminderDate != null
+                  ? Text('設定済み: ${DateFormatter.formatReminder(_reminderDate!)}')
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _showReminderDialog();
+              },
+            ),
+            // タイマー
+            ListTile(
+              leading: Icon(
+                Icons.timer,
+                color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                    ? Colors.blue
+                    : Colors.green,
+              ),
+              title: const Text('タイマー（ポモドーロ）'),
+              subtitle: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                  ? const Text('実行中')
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _showTimerDialog();
+              },
+            ),
+            // 添付ファイル
+            ListTile(
+              leading: Stack(
+                children: [
+                  const Icon(Icons.attach_file),
+                  if (_attachments.isNotEmpty)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${_attachments.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              title: const Text('添付ファイル'),
+              subtitle: _attachments.isNotEmpty
+                  ? Text('${_attachments.length}件')
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _attachFile();
+              },
+            ),
+            // マークダウンヘルプ
+            ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: const Text('マークダウン記法ヘルプ'),
+              onTap: () {
+                Navigator.pop(context);
+                _showMarkdownHelp();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
@@ -1064,171 +1171,27 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ],
           ),
           actions: [
-            // UNDO/REDOボタン
-            ListenableBuilder(
-              listenable: _undoRedoService,
-              builder: (context, child) => IconButton(
-                icon: const Icon(Icons.undo),
-                onPressed: _undoRedoService.canUndo ? _undo : null,
-                tooltip: 'Undo (Ctrl+Z)',
-              ),
-            ),
-            ListenableBuilder(
-              listenable: _undoRedoService,
-              builder: (context, child) => IconButton(
-                icon: const Icon(Icons.redo),
-                onPressed: _undoRedoService.canRedo ? _redo : null,
-                tooltip: 'Redo (Ctrl+Y)',
-              ),
-            ),
-          // AI機能ボタン
-          if (_isAIProcessing)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
+            // メニューボタン（その他の機能）
             IconButton(
-              icon: const Icon(Icons.auto_awesome, color: Colors.purple),
-              onPressed: _showAIMenu,
-              tooltip: 'AI アシスタント',
+              icon: const Icon(Icons.more_vert),
+              onPressed: _showMoreMenu,
+              tooltip: 'その他のオプション',
             ),
-          // ピン留めトグルボタン
-          if (widget.note != null)
+            // 保存して閉じるボタン
             IconButton(
-              icon: Icon(
-                _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                color: _isPinned ? Colors.amber : null,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPinned = !_isPinned;
-                });
-              },
-              tooltip: _isPinned ? 'ピン留めを解除' : 'ピン留め',
+              icon: const Icon(Icons.check),
+              onPressed: _saveNote,
+              tooltip: '保存して閉じる',
             ),
-          // 添付ファイルボタン（追加）
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.attach_file),
-                onPressed: _isUploadingFile ? null : _attachFile,
-                tooltip: '添付ファイル',
-              ),
-              if (_attachments.isNotEmpty)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '${_attachments.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              if (_isUploadingFile)
-                const Positioned.fill(
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(icon: Icon(Icons.edit), text: '編集'),
+              Tab(icon: Icon(Icons.visibility), text: 'プレビュー'),
             ],
           ),
-          // マークダウンヘルプ
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: _showMarkdownHelp,
-            tooltip: 'マークダウン記法ヘルプ',
-          ),
-          // タイマーボタン（目立つデザイン）
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
-                    ? Colors.blue.withValues(alpha: 0.2)
-                    : Colors.green.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
-                      ? Colors.blue
-                      : Colors.green,
-                  width: 2,
-                ),
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.timer,
-                  color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
-                      ? Colors.blue
-                      : Colors.green,
-                  size: 28,
-                ),
-                onPressed: _showTimerDialog,
-                tooltip: '⏱️ タイマーで集中モード\n（ポモドーロテクニック）',
-              ),
-            ),
-          ),
-          // リマインダーボタン
-          IconButton(
-            icon: Icon(
-              _reminderDate != null ? Icons.alarm : Icons.alarm_add,
-              color: _reminderDate != null ? Colors.orange : null,
-            ),
-            onPressed: _showReminderDialog,
-            tooltip: _reminderDate != null ? 'リマインダー設定済み' : 'リマインダーを設定',
-          ),
-          // お気に入りボタン
-          IconButton(
-            icon: Icon(
-              _isFavorite ? Icons.star : Icons.star_border,
-              color: _isFavorite ? Colors.amber : null,
-            ),
-            onPressed: () {
-              setState(() {
-                _isFavorite = !_isFavorite;
-              });
-            },
-            tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
-          ),
-          // 保存ボタン（画面を閉じない）
-          IconButton(
-            icon: const Icon(Icons.save_outlined),
-            onPressed: _saveNoteWithoutClosing,
-            tooltip: '保存',
-          ),
-          // 保存して閉じるボタン
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _saveNote,
-            tooltip: '保存して閉じる',
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.edit), text: '編集'),
-            Tab(icon: Icon(Icons.visibility), text: 'プレビュー'),
-          ],
         ),
-      ),
       body: Column(
         children: [
           // カテゴリとリマインダー情報エリア
@@ -1408,6 +1371,66 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            // UNDOボタン
+            ListenableBuilder(
+              listenable: _undoRedoService,
+              builder: (context, child) => IconButton(
+                icon: const Icon(Icons.undo),
+                onPressed: _undoRedoService.canUndo ? _undo : null,
+                tooltip: 'Undo (Ctrl+Z)',
+              ),
+            ),
+            // REDOボタン
+            ListenableBuilder(
+              listenable: _undoRedoService,
+              builder: (context, child) => IconButton(
+                icon: const Icon(Icons.redo),
+                onPressed: _undoRedoService.canRedo ? _redo : null,
+                tooltip: 'Redo (Ctrl+Y)',
+              ),
+            ),
+            // お気に入りボタン
+            IconButton(
+              icon: Icon(
+                _isFavorite ? Icons.star : Icons.star_border,
+                color: _isFavorite ? Colors.amber : null,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isFavorite = !_isFavorite;
+                });
+              },
+              tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
+            ),
+            // AI機能ボタン
+            if (_isAIProcessing)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+                onPressed: _showAIMenu,
+                tooltip: 'AI アシスタント',
+              ),
+            // 保存ボタン
+            IconButton(
+              icon: const Icon(Icons.save_outlined),
+              onPressed: _saveNoteWithoutClosing,
+              tooltip: '保存',
+            ),
+          ],
+        ),
       ),
       ),
     );
