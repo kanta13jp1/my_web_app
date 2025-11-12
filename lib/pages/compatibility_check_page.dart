@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/personality_test_service.dart';
 import '../services/compatibility_service.dart';
-import '../models/personality_test.dart';
 import 'compatibility_result_page.dart';
 
 /// 相手のタイプを選択して相性をチェックするページ
