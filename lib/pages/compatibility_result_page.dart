@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/personality_test_service.dart';
 import '../services/compatibility_service.dart';
 import '../models/compatibility_match.dart';
-import '../models/personality_test.dart';
 
 /// 恋愛相性診断の結果表示ページ
 class CompatibilityResultPage extends StatefulWidget {
