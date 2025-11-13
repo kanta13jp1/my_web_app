@@ -6,6 +6,9 @@ import '../models/personality_test.dart';
 class PersonalityTestService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// 16タイプの詳細データを取得（静的ゲッター）
+  static List<PersonalityType> get personalityTypes => _getPersonalityTypesStatic();
+
   /// 診断を開始
   Future<PersonalityTest> startTest() async {
     try {
@@ -183,15 +186,15 @@ class PersonalityTestService {
   /// 性格タイプの詳細情報を取得
   PersonalityType getPersonalityTypeDetails(String code) {
     // 16タイプの詳細データ（ハードコード）
-    final types = _getPersonalityTypes();
+    final types = personalityTypes;
     return types.firstWhere(
       (type) => type.code == code,
       orElse: () => types.first,
     );
   }
 
-  /// 16タイプの詳細データ
-  List<PersonalityType> _getPersonalityTypes() {
+  /// 16タイプの詳細データ（静的メソッド）
+  static List<PersonalityType> _getPersonalityTypesStatic() {
     return [
       PersonalityType(
         code: 'INTJ',
