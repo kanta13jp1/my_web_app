@@ -918,7 +918,7 @@
 21. ✅ **CI/CD環境セットアップ** - 完了（2025年11月14日）
     - develop/stagingブランチ作成
     - CI/CDセットアップガイド作成（`docs/CICD_SETUP_GUIDE.md`）
-    - GitHub Secretsリスト作成（全17個）
+    - GitHub Secretsリスト作成（全18個）
     - ブランチ保護設定手順確認
     - 次のステップ: GitHub Secretsの設定、ブランチのプッシュ、保護ルール設定
 
