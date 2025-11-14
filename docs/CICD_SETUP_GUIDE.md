@@ -88,7 +88,7 @@ firebase service-account:create --json
 
 | Secret名 | 説明 | 取得方法 |
 |---------|------|---------|
-| `SLACK_WEBHOOK_URL` | Slack通知用WebhookURL | Slack → Apps → Incoming Webhooks → Add to Slack |
+| `SLACK_WEBHOOK_URL` | Slack通知用Webhook URL | Slack → Apps → Incoming Webhooks → Add to Slack |
 
 **Slack Webhook URLの取得方法**:
 1. Slackワークスペースにアクセス
