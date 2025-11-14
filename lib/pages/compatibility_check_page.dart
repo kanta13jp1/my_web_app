@@ -8,9 +8,9 @@ class CompatibilityCheckPage extends StatefulWidget {
   final String myType;
 
   const CompatibilityCheckPage({
-    Key? key,
+    super.key,
     required this.myType,
-  }) : super(key: key);
+  });
 
   @override
   State<CompatibilityCheckPage> createState() => _CompatibilityCheckPageState();
