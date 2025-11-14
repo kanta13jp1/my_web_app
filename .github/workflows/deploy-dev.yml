@@ -1,0 +1,144 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: development
+  FLUTTER_VERSION: '3.24.x'
+
+jobs:
+  ci:
+    name: Run CI Checks
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to Development Environment
+    runs-on: ubuntu-latest
+    needs: ci
+    environment:
+      name: development
+      url: https://dev.your-app.web.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Supabase Migration (Development)
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run Supabase migrations
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        run: |
+          echo "Running Supabase migrations for development..."
+          # Link to development project
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_DEV }}
+          # Run migrations
+          supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_DEV }}
+        continue-on-error: true
+
+      # Build Flutter Web
+      - name: Build Flutter Web (Development)
+        run: flutter build web --release --dart-define=ENVIRONMENT=development
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_DEV }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "build/web" ]; then
+            echo "Build failed: build/web directory not found"
+            exit 1
+          fi
+          echo "Build successful!"
+          ls -la build/web
+
+      # Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting (Development)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}'
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: dev
+          expires: 30d
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+
+    steps:
+      - name: Notify Slack on success
+        if: needs.deploy.result == 'success' && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ Development deployment successful!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Development Deployment Successful* ✅\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://dev.your-app.web.app"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on failure
+        if: needs.deploy.result == 'failure' && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ Development deployment failed!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Development Deployment Failed* ❌\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n\nPlease check the workflow logs for details."
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Comment on commit
+        if: needs.deploy.result == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: '🚀 Successfully deployed to **Development** environment!\n\n📍 URL: https://dev.your-app.web.app'
+            })
