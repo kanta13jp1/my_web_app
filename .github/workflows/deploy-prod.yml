@@ -66,7 +66,6 @@ jobs:
           version: latest
 
       - name: Run Supabase migrations
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           echo "Running Supabase migrations for production..."
           # Link to production project
@@ -157,7 +156,7 @@ jobs:
 
     steps:
       - name: Notify Slack on success
-        if: needs.deploy.result == 'success' && secrets.SLACK_WEBHOOK_URL != ''
+        if: needs.deploy.result == 'success'
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
@@ -196,7 +195,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack on failure
-        if: needs.deploy.result == 'failure' && secrets.SLACK_WEBHOOK_URL != ''
+        if: needs.deploy.result == 'failure'
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
