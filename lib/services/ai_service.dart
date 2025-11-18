@@ -81,10 +81,11 @@ class AIService {
       );
 
       // エラーレスポンスのチェック
-      if (response.data['success'] != true) {
-        final errorMessage = response.data['error'] ?? 'AI処理に失敗しました';
-        final errorType = response.data['errorType'] as String?;
-        final retryAfter = response.data['retryAfter']?.toString();
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] != true) {
+        final errorMessage = (data['error'] as String?) ?? 'AI処理に失敗しました';
+        final errorType = data['errorType'] as String?;
+        final retryAfter = data['retryAfter']?.toString();
 
         throw AIServiceException(
           errorMessage,
@@ -93,7 +94,7 @@ class AIService {
         );
       }
 
-      return response.data as Map<String, dynamic>;
+      return data;
     } on FunctionException catch (e) {
       // FunctionExceptionの場合、詳細を解析
       final details = e.details;
@@ -258,15 +259,16 @@ class AIService {
         },
       );
 
-      if (response.data['success'] == true) {
-        final suggestions = response.data['suggestions'];
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] == true) {
+        final suggestions = data['suggestions'] as Map<String, dynamic>;
         return TagSuggestion(
-          tags: List<String>.from(suggestions['tags'] ?? []),
+          tags: List<String>.from(suggestions['tags'] as List<dynamic>? ?? []),
           category: suggestions['category'] as String? ?? '',
           reason: suggestions['reason'] as String? ?? '',
         );
       } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
+        throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error suggesting tags', error: e, stackTrace: stackTrace);
@@ -289,14 +291,15 @@ class AIService {
         },
       );
 
-      if (response.data['success'] == true) {
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] == true) {
         return AISearchResult(
-          results: List<Map<String, dynamic>>.from(response.data['results'] ?? []),
-          totalResults: response.data['totalResults'] as int? ?? 0,
-          explanation: response.data['explanation'] as String? ?? '',
+          results: List<Map<String, dynamic>>.from(data['results'] as List<dynamic>? ?? []),
+          totalResults: data['totalResults'] as int? ?? 0,
+          explanation: data['explanation'] as String? ?? '',
         );
       } else {
-        throw Exception(response.data['error'] ?? 'AI処理に失敗しました');
+        throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error in AI search', error: e, stackTrace: stackTrace);
@@ -316,7 +319,7 @@ class AIService {
 
       int totalUsage = 0;
       double totalCost = 0.0;
-      Map<String, int> usageByAction = {};
+      final Map<String, int> usageByAction = {};
 
       for (var record in response) {
         totalUsage += (record['total_tokens'] as int?) ?? 0;

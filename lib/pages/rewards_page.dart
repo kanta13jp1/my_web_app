@@ -100,13 +100,13 @@ class _RewardsPageState extends State<RewardsPage> {
               gradient: LinearGradient(
                 colors: [
                   Colors.deepPurple,
-                  Colors.deepPurple.withOpacity(0.7),
+                  Colors.deepPurple.withValues(alpha : 0.7),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha : 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -125,7 +125,7 @@ class _RewardsPageState extends State<RewardsPage> {
                     Container(
                       width: 1,
                       height: 40,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha : 0.3),
                     ),
                     _buildStatItem(
                       '🎁',
@@ -135,7 +135,7 @@ class _RewardsPageState extends State<RewardsPage> {
                     Container(
                       width: 1,
                       height: 40,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha : 0.3),
                     ),
                     _buildStatItem(
                       '⭐',
@@ -158,13 +158,13 @@ class _RewardsPageState extends State<RewardsPage> {
                   _buildFilterChip(null, 'すべて', Icons.grid_view),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.theme, 'テーマ', Icons.palette),
+                      RewardType.theme, 'テーマ', Icons.palette,),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.badge, 'バッジ', Icons.military_tech),
+                      RewardType.badge, 'バッジ', Icons.military_tech,),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.feature, '機能', Icons.star),
+                      RewardType.feature, '機能', Icons.star,),
                 ],
               ),
             ),
@@ -262,8 +262,8 @@ class _RewardsPageState extends State<RewardsPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    _getRewardColor(reward.type).withOpacity(0.3),
-                    _getRewardColor(reward.type).withOpacity(0.1),
+                    _getRewardColor(reward.type).withValues(alpha : 0.3),
+                    _getRewardColor(reward.type).withValues(alpha : 0.1),
                   ],
                 )
               : null,
@@ -282,8 +282,8 @@ class _RewardsPageState extends State<RewardsPage> {
                     height: 80,
                     decoration: BoxDecoration(
                       color: reward.isUnlocked
-                          ? _getRewardColor(reward.type).withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.1),
+                          ? _getRewardColor(reward.type).withValues(alpha : 0.2)
+                          : Colors.grey.withValues(alpha : 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: reward.isUnlocked
@@ -307,7 +307,7 @@ class _RewardsPageState extends State<RewardsPage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha : 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Center(

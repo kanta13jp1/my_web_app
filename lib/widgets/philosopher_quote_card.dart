@@ -51,11 +51,11 @@ class PhilosopherQuoteCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha : 0.95),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha : 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -136,7 +136,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                       vertical: 20,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha : 0.9),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Row(

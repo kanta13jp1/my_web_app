@@ -303,10 +303,10 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                       TextButton.icon(
                         icon: Icon(_expiresAt != null
                             ? Icons.event
-                            : Icons.event_available),
+                            : Icons.event_available,),
                         label: Text(_expiresAt != null
                             ? '${_expiresAt!.year}/${_expiresAt!.month}/${_expiresAt!.day}'
-                            : '無期限'),
+                            : '無期限',),
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: context,
@@ -528,7 +528,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                               ),
                             IconButton(
                               icon: const Icon(Icons.delete,
-                                  color: Colors.red, size: 20),
+                                  color: Colors.red, size: 20,),
                               onPressed: () => _deleteShare(share.id),
                               tooltip: '削除',
                             ),

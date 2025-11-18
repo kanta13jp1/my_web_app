@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_stats.dart';
 import '../models/achievement.dart';
@@ -182,7 +183,7 @@ class GamificationService {
 
       final allAchievements = AchievementDefinitions.getDefaultAchievements();
       final userAchievementMap = {
-        for (var ua in userAchievements) ua['achievement_id']: ua
+        for (var ua in userAchievements) ua['achievement_id']: ua,
       };
 
       return allAchievements.map((achievement) {
@@ -241,7 +242,7 @@ class GamificationService {
         });
       } else {
         // Update existing record
-        final wasUnlocked = existing['is_unlocked'] ?? false;
+        final wasUnlocked = (existing['is_unlocked'] as bool?) ?? false;
         await _supabase
             .from('user_achievements')
             .update({
@@ -249,7 +250,7 @@ class GamificationService {
               'is_unlocked': isUnlocked,
               'unlocked_at': isUnlocked && !wasUnlocked
                   ? now.toIso8601String()
-                  : existing['unlocked_at'],
+                  : (existing['unlocked_at'] as String?),
               'updated_at': now.toIso8601String(),
             })
             .eq('user_id', userId)
@@ -257,7 +258,7 @@ class GamificationService {
       }
 
       // If newly unlocked, award points
-      if (isUnlocked && (existing == null || !(existing['is_unlocked'] ?? false))) {
+      if (isUnlocked && (existing == null || !((existing['is_unlocked'] as bool?) ?? false))) {
         await addPoints(userId, achievement.pointsReward);
         return achievement.copyWith(
           isUnlocked: true,
@@ -515,9 +516,7 @@ class GamificationService {
     String orderBy = 'total_points',
   }) async {
     try {
-      print('🏆 [GamificationService] Fetching leaderboard...');
-      print('🏆 [GamificationService] Order by: $orderBy, limit: $limit');
-      print('🏆 [GamificationService] Current user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
+      AppLogger.debug('Fetching leaderboard - orderBy: $orderBy, limit: $limit, user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
 
       // Use the view that includes user profile information
       final response = await _supabase
@@ -526,31 +525,24 @@ class GamificationService {
           .order(orderBy, ascending: false)
           .limit(limit);
 
-      print('✅ [GamificationService] Query successful, processing response...');
-      print('🏆 [GamificationService] Response length: ${(response as List).length}');
+      AppLogger.debug('Query successful - response length: ${(response as List).length}');
 
       final entries = <LeaderboardEntry>[];
       for (int i = 0; i < (response as List).length; i++) {
         entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
       }
 
-      print('✅ [GamificationService] Leaderboard entries created: ${entries.length}');
+      AppLogger.debug('Leaderboard entries created: ${entries.length}');
       if (entries.isNotEmpty) {
-        print('🏆 [GamificationService] Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
+        AppLogger.debug('Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
       } else {
-        print('⚠️ [GamificationService] Empty leaderboard - check RLS policies');
-        print('⚠️ [GamificationService] Required RLS policy: SELECT on user_stats_with_profiles view');
+        AppLogger.warning('Empty leaderboard - check RLS policies. Required: SELECT on user_stats_with_profiles view');
       }
 
       return entries;
     } catch (e, stackTrace) {
-      print('❌ [GamificationService] Error getting leaderboard: $e');
-      print('❌ [GamificationService] Error type: ${e.runtimeType}');
-      print('❌ [GamificationService] Stack trace: $stackTrace');
-
       if (e.toString().contains('row level security')) {
-        print('🔒 [GamificationService] RLS policy error - users cannot read from user_stats_with_profiles view');
-        print('🔒 [GamificationService] Fix: Ensure migration 20251111140000 is applied');
+        AppLogger.error('RLS policy error - users cannot read from user_stats_with_profiles view. Fix: Ensure migration 20251111140000 is applied', error: e);
       }
 
       AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
@@ -563,32 +555,26 @@ class GamificationService {
   // to compare user's stats against all other users
   Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
     try {
-      print('🏆 [GamificationService] Getting user rank for: $userId');
-      print('🏆 [GamificationService] Order by: $orderBy');
+      AppLogger.debug('Getting user rank for: $userId, orderBy: $orderBy');
 
       final allUsers = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
           .order(orderBy, ascending: false) as List;
 
-      final userList = allUsers;
-      print('✅ [GamificationService] Total users in ranking: ${userList.length}');
+      final userList = allUsers as List;
+      AppLogger.debug('Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
         if (userList[i]['user_id'] == userId) {
-          print('✅ [GamificationService] User found at rank: ${i + 1}');
+          AppLogger.debug('User found at rank: ${i + 1}');
           return i + 1;
         }
       }
 
-      print('⚠️ [GamificationService] User not found in ranking');
-      print('⚠️ [GamificationService] This could mean user_stats record does not exist for this user');
+      AppLogger.warning('User not found in ranking. This could mean user_stats record does not exist for this user');
       return null;
     } catch (e, stackTrace) {
-      print('❌ [GamificationService] Error getting user rank: $e');
-      print('❌ [GamificationService] Error type: ${e.runtimeType}');
-      print('❌ [GamificationService] Stack trace: $stackTrace');
-
       AppLogger.error('Error getting user rank', error: e, stackTrace: stackTrace);
       return null;
     }
