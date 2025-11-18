@@ -103,7 +103,7 @@ class LevelDisplayWidget extends StatelessWidget {
                     value: stats.levelProgress,
                     minHeight: 12,
                     backgroundColor:
-                        theme.colorScheme.onSurface.withOpacity(0.1),
+                        theme.colorScheme.onSurface.withValues(alpha : 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       theme.colorScheme.primary,
                     ),
@@ -113,7 +113,7 @@ class LevelDisplayWidget extends StatelessWidget {
                 Text(
                   '${(stats.levelProgress * 100).toInt()}% 完了',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha : 0.7),
                   ),
                 ),
               ],

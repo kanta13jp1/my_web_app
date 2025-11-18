@@ -213,7 +213,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha : 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -286,7 +286,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.5),
+                    color: Colors.green.withValues(alpha : 0.5),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -369,7 +369,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: gradient[0].withOpacity(0.3),
+                color: gradient[0].withValues(alpha : 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

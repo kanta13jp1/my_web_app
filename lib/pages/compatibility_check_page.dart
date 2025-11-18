@@ -335,7 +335,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: rankColor.withOpacity(0.1),
+                  color: rankColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Column(

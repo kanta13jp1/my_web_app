@@ -35,17 +35,17 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
 
     try {
       if (kDebugMode) {
-        print('📄 [DocumentViewerPage] Starting document load');
-        print('📄 [DocumentViewerPage] Document ID: ${widget.document.id}');
-        print('📄 [DocumentViewerPage] Document title: ${widget.document.title}');
-        print('📄 [DocumentViewerPage] Document path: ${widget.document.path}');
-        print('📄 [DocumentViewerPage] Document category: ${widget.document.category}');
+        debugPrint('📄 [DocumentViewerPage] Starting document load');
+        debugPrint('📄 [DocumentViewerPage] Document ID: ${widget.document.id}');
+        debugPrint('📄 [DocumentViewerPage] Document title: ${widget.document.title}');
+        debugPrint('📄 [DocumentViewerPage] Document path: ${widget.document.path}');
+        debugPrint('📄 [DocumentViewerPage] Document category: ${widget.document.category}');
       }
 
       final content = await DocumentService.loadDocument(widget.document.path);
 
       if (kDebugMode) {
-        print('✅ [DocumentViewerPage] Document content loaded successfully');
+        debugPrint('✅ [DocumentViewerPage] Document content loaded successfully');
       }
       setState(() {
         _content = content;
@@ -53,10 +53,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
       });
     } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('❌ [DocumentViewerPage] Failed to load document');
-        print('❌ [DocumentViewerPage] Error: $e');
-        print('❌ [DocumentViewerPage] Error type: ${e.runtimeType}');
-        print('❌ [DocumentViewerPage] Stack trace: $stackTrace');
+        debugPrint('❌ [DocumentViewerPage] Failed to load document');
+        debugPrint('❌ [DocumentViewerPage] Error: $e');
+        debugPrint('❌ [DocumentViewerPage] Error type: ${e.runtimeType}');
+        debugPrint('❌ [DocumentViewerPage] Stack trace: $stackTrace');
       }
 
       setState(() {

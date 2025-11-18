@@ -188,7 +188,7 @@ class _AchievementNotificationWidgetState
                           widget.achievement.description,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onPrimaryContainer
-                                .withOpacity(0.8),
+                                .withValues(alpha : 0.8),
                           ),
                         ),
                       ],

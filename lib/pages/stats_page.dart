@@ -303,7 +303,7 @@ class _StatsPageState extends State<StatsPage> {
                 value: percentage,
                 minHeight: 12,
                 backgroundColor:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha : 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).colorScheme.primary,
                 ),

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/compatibility_match.dart';
 
@@ -284,7 +285,7 @@ class CompatibilityService {
 
       return CompatibilityMatch.fromJson(response);
     } catch (e) {
-      print('Error fetching compatibility from database: $e');
+      debugPrint('Error fetching compatibility from database: $e');
       return null;
     }
   }
@@ -294,7 +295,7 @@ class CompatibilityService {
     try {
       await _supabase.from('personality_compatibility').upsert(match.toJson());
     } catch (e) {
-      print('Error saving compatibility to database: $e');
+      debugPrint('Error saving compatibility to database: $e');
     }
   }
 

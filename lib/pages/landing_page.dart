@@ -23,7 +23,7 @@ class LandingPage extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     theme.primaryColor,
-                    theme.primaryColor.withOpacity(0.7),
+                    theme.primaryColor.withValues(alpha : 0.7),
                   ],
                 ),
               ),
@@ -39,7 +39,7 @@ class LandingPage extends StatelessWidget {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha : 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -239,8 +239,8 @@ class LandingPage extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          theme.primaryColor.withOpacity(0.1),
-                          theme.primaryColor.withOpacity(0.05),
+                          theme.primaryColor.withValues(alpha : 0.1),
+                          theme.primaryColor.withValues(alpha : 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -329,7 +329,7 @@ class _FeatureCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.2),
+                color: iconColor.withValues(alpha : 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(

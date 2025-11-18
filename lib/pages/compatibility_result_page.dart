@@ -345,7 +345,7 @@ ${_compatibilityMatch.description}''';
               decoration: BoxDecoration(
                 color: Color(int.parse(
                     _compatibilityMatch.getCompatibilityColor().substring(1),
-                    radix: 16,) + 0xFF000000,).withOpacity(0.1),
+                    radix: 16,) + 0xFF000000,).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: Color(int.parse(
