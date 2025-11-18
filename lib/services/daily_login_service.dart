@@ -81,7 +81,7 @@ class DailyLoginService {
           .eq('user_id', userId);
 
       AppLogger.info(
-          'Daily login bonus awarded: $bonusPoints points (Day $consecutiveDays)');
+          'Daily login bonus awarded: $bonusPoints points (Day $consecutiveDays)',);
 
       return {
         'already_claimed': false,

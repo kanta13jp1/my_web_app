@@ -1,5 +1,6 @@
 // 性格診断機能のサービスクラス
 
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/personality_test.dart';
 
@@ -22,7 +23,7 @@ class PersonalityTestService {
 
       return PersonalityTest.fromJson(response);
     } catch (e) {
-      print('Error starting personality test: $e');
+      debugPrint('Error starting personality test: $e');
       rethrow;
     }
   }
@@ -39,7 +40,7 @@ class PersonalityTestService {
           .map((e) => PersonalityQuestion.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error fetching personality questions: $e');
+      debugPrint('Error fetching personality questions: $e');
       rethrow;
     }
   }
@@ -58,7 +59,7 @@ class PersonalityTestService {
         'answered_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print('Error saving personality answer: $e');
+      debugPrint('Error saving personality answer: $e');
       rethrow;
     }
   }
@@ -107,7 +108,7 @@ class PersonalityTestService {
 
       return scores;
     } catch (e) {
-      print('Error calculating personality scores: $e');
+      debugPrint('Error calculating personality scores: $e');
       rethrow;
     }
   }
@@ -140,7 +141,7 @@ class PersonalityTestService {
         'is_completed': true,
       }).eq('id', testId);
     } catch (e) {
-      print('Error completing personality test: $e');
+      debugPrint('Error completing personality test: $e');
       rethrow;
     }
   }
@@ -156,7 +157,7 @@ class PersonalityTestService {
 
       return PersonalityTest.fromJson(response);
     } catch (e) {
-      print('Error fetching test result: $e');
+      debugPrint('Error fetching test result: $e');
       rethrow;
     }
   }
@@ -178,7 +179,7 @@ class PersonalityTestService {
 
       return PersonalityTest.fromJson(response.first);
     } catch (e) {
-      print('Error fetching latest test result: $e');
+      debugPrint('Error fetching latest test result: $e');
       rethrow;
     }
   }
