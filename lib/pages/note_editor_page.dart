@@ -542,6 +542,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (confirm != true) return;
     }
 
+    // Widgetがまだマウントされているか確認
+    if (!mounted) return;
+
     // タイマー設定ダイアログを表示
     final result = await showDialog<Map<String, dynamic>>(
       context: context,

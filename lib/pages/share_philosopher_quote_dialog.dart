@@ -8,7 +8,8 @@ import '../services/note_card_service.dart';
 import '../services/app_share_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用
+// Web用（Web プラットフォームでのダウンロード機能に必要）
+// ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
 /// 哲学者の名言をシェアするダイアログ

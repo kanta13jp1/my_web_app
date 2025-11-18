@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+// Web用（Web プラットフォームでの機能に必要）
+// ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import '../models/philosopher_quote.dart';
 

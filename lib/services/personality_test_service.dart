@@ -84,9 +84,10 @@ class PersonalityTestService {
       };
 
       for (var answer in answers) {
-        final question = answer['personality_questions'];
+        final answerMap = answer as Map<String, dynamic>;
+        final question = answerMap['personality_questions'] as Map<String, dynamic>;
         final axis = question['axis'] as String;
-        final userAnswer = answer['answer'] as String;
+        final userAnswer = answerMap['answer'] as String;
 
         // スコア加算（Aなら+1、Bなら-1）
         final score = (userAnswer == 'A') ? 1 : -1;
