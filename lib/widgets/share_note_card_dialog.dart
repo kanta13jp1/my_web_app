@@ -39,7 +39,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
   template.AspectRatio _selectedAspectRatio = template.AspectRatio.square;
   template.ContentMode _selectedContentMode = template.ContentMode.smart;
   template.FontSizeOption _selectedFontSize = template.FontSizeOption.medium;
-  bool _autoHashtags = true;
+  final bool _autoHashtags = true;
 
   // プレビュー用のGlobalKey（複数ページ対応）
   final List<GlobalKey> _repaintKeys = [];
@@ -351,7 +351,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                 : const Icon(Icons.download),
                             label: Text(_isGenerating
                                 ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
-                                : 'ダウンロード'),
+                                : 'ダウンロード',),
                             onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
                                 ? null
                                 : _generateAndDownload,
@@ -373,7 +373,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                 : const Icon(Icons.share),
                             label: Text(_isGenerating
                                 ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
-                                : '共有する'),
+                                : '共有する',),
                             onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
                                 ? null
                                 : _generateAndShare,
@@ -485,7 +485,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: Icon(icon, color: cardTemplate == template.CardTemplate.darkMode
-          ? Colors.white : Colors.black54),
+          ? Colors.white : Colors.black54,),
     );
   }
 
@@ -672,7 +672,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       Navigator.pop(context);
 
       final message = successCount > 1
-          ? 'メモカード${successCount}枚をダウンロードしました！'
+          ? 'メモカード$successCount枚をダウンロードしました！'
           : 'メモカードをダウンロードしました！';
 
       ScaffoldMessenger.of(context).showSnackBar(

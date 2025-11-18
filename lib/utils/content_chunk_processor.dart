@@ -17,7 +17,7 @@ class ContentChunkProcessor {
     int startIndex = 0;
 
     while (startIndex < content.length) {
-      int endIndex = startIndex + maxChars;
+      final int endIndex = startIndex + maxChars;
 
       // 最後のチャンクの場合
       if (endIndex >= content.length) {
