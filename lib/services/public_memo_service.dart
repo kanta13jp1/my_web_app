@@ -70,11 +70,9 @@ class PublicMemoService {
         query = query.eq('category', category);
       }
 
-      query = query
+      final response = await query
           .order(sortBy, ascending: false)
           .range(offset, offset + limit - 1);
-
-      final response = await query;
 
       return (response as List)
           .map((json) => PublicMemo.fromJson(json as Map<String, dynamic>))
