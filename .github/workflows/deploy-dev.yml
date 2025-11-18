@@ -14,6 +14,8 @@ jobs:
   ci:
     name: Run CI Checks
     uses: ./.github/workflows/ci.yml
+    permissions:
+      pull-requests: write
 
   deploy:
     name: Deploy to Development Environment
