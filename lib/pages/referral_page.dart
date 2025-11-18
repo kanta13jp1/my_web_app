@@ -389,14 +389,14 @@ class _ReferralPageState extends State<ReferralPage> {
               ),
             ),
             title: Text(
-              isCurrentUser ? 'あなた' : 'ユーザー ${item['user_id'].substring(0, 8)}',
+              isCurrentUser ? 'あなた' : 'ユーザー ${(item['user_id'] as String).substring(0, 8)}',
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : null,
               ),
             ),
-            subtitle: Text('${item['successful_referrals']}人紹介'),
+            subtitle: Text('${item['successful_referrals'] as int}人紹介'),
             trailing: Text(
-              '${item['bonus_points_earned']}P',
+              '${item['bonus_points_earned'] as int}P',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

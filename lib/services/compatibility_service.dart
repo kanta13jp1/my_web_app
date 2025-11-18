@@ -324,7 +324,7 @@ class CompatibilityService {
     }
 
     // スコアでソート
-    allTypes.sort((a, b) => b['score'].compareTo(a['score']));
+    allTypes.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
     // トップ5を返す
     return allTypes.take(5).toList();
@@ -353,7 +353,7 @@ class CompatibilityService {
     }
 
     // スコアで昇順ソート
-    allTypes.sort((a, b) => a['score'].compareTo(b['score']));
+    allTypes.sort((a, b) => (a['score'] as int).compareTo(b['score'] as int));
 
     // ワースト3を返す
     return allTypes.take(3).toList();

@@ -242,7 +242,7 @@ class GamificationService {
         });
       } else {
         // Update existing record
-        final wasUnlocked = existing['is_unlocked'] ?? false;
+        final wasUnlocked = (existing['is_unlocked'] as bool?) ?? false;
         await _supabase
             .from('user_achievements')
             .update({
@@ -250,7 +250,7 @@ class GamificationService {
               'is_unlocked': isUnlocked,
               'unlocked_at': isUnlocked && !wasUnlocked
                   ? now.toIso8601String()
-                  : existing['unlocked_at'],
+                  : (existing['unlocked_at'] as String?),
               'updated_at': now.toIso8601String(),
             })
             .eq('user_id', userId)
@@ -258,7 +258,7 @@ class GamificationService {
       }
 
       // If newly unlocked, award points
-      if (isUnlocked && (existing == null || !(existing['is_unlocked'] ?? false))) {
+      if (isUnlocked && (existing == null || !((existing['is_unlocked'] as bool?) ?? false))) {
         await addPoints(userId, achievement.pointsReward);
         return achievement.copyWith(
           isUnlocked: true,
@@ -576,8 +576,8 @@ class GamificationService {
       debugPrint('✅ [GamificationService] Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
-        if (userList[i]['user_id'] == userId) {
-          debugPrint('✅ [GamificationService] User found at rank: ${i + 1}');
+        if ((userList[i] as Map<String, dynamic>)['user_id'] == userId) {
+          print('✅ [GamificationService] User found at rank: ${i + 1}');
           return i + 1;
         }
       }
