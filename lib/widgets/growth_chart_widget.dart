@@ -20,9 +20,9 @@ class GrowthChartWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (metrics.isEmpty) {
-      return Card(
+      return const Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Center(
             child: Text('データがありません'),
           ),
@@ -70,7 +70,7 @@ class GrowthChartWidget extends StatelessWidget {
                     horizontalInterval: maxY > 10 ? null : 1,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Colors.grey[300]!,
+                        color: Colors.grey[300],
                         strokeWidth: 1,
                       );
                     },
@@ -157,7 +157,7 @@ class GrowthChartWidget extends StatelessWidget {
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: lineColor.withOpacity(0.1),
+                        color: lineColor.withValues(alpha : 0.1),
                       ),
                     ),
                   ],

@@ -319,7 +319,7 @@ class AIService {
 
       int totalUsage = 0;
       double totalCost = 0.0;
-      Map<String, int> usageByAction = {};
+      final Map<String, int> usageByAction = {};
 
       for (var record in response) {
         totalUsage += (record['total_tokens'] as int?) ?? 0;

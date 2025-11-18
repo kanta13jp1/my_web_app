@@ -211,7 +211,7 @@ class FilterChipsArea extends StatelessWidget {
                   ),
                 ),
                 Icon(Icons.push_pin,
-                    color: Colors.amber, size: isMobile ? 14 : 16),
+                    color: Colors.amber, size: isMobile ? 14 : 16,),
                 Text(
                   ' ${notes.where((n) => n.isPinned).length}',
                   style: TextStyle(
@@ -245,7 +245,7 @@ class FilterChipsArea extends StatelessWidget {
                     ),
                   ),
                   Icon(Icons.alarm,
-                      color: Colors.orange, size: isMobile ? 14 : 16),
+                      color: Colors.orange, size: isMobile ? 14 : 16,),
                   Text(
                     ' ${notes.where((n) => n.reminderDate != null).length}',
                     style: TextStyle(
