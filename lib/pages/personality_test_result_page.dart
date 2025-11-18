@@ -72,7 +72,7 @@ ${_personalityType!.description}
 #マイメモ #性格診断 #MBTI
 ''';
 
-    final url = 'https://mymemo.app/personality-test';
+    const url = 'https://mymemo.app/personality-test';
 
     await AppShareService.shareToTwitter(customMessage: '$text\n$url');
   }
@@ -231,7 +231,7 @@ ${_personalityType!.description}
                   const SizedBox(height: 24),
 
                   // 強み
-                  _SectionTitle(
+                  const _SectionTitle(
                     icon: Icons.star,
                     title: '強み',
                     color: Colors.amber,
@@ -242,7 +242,7 @@ ${_personalityType!.description}
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.check_circle,
                             color: Colors.green,
                             size: 20,
@@ -261,7 +261,7 @@ ${_personalityType!.description}
                   const SizedBox(height: 24),
 
                   // 弱み
-                  _SectionTitle(
+                  const _SectionTitle(
                     icon: Icons.warning,
                     title: '注意すべき点',
                     color: Colors.orange,
@@ -272,7 +272,7 @@ ${_personalityType!.description}
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info,
                             color: Colors.orange,
                             size: 20,

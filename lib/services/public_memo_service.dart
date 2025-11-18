@@ -77,7 +77,7 @@ class PublicMemoService {
       final response = await query;
 
       return (response as List)
-          .map((json) => PublicMemo.fromJson(json))
+          .map((json) => PublicMemo.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get public memos', error: e, stackTrace: stackTrace);
@@ -101,7 +101,7 @@ class PublicMemoService {
           .limit(limit);
 
       return (response as List)
-          .map((json) => PublicMemo.fromJson(json))
+          .map((json) => PublicMemo.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get trending memos', error: e, stackTrace: stackTrace);
@@ -234,7 +234,7 @@ class PublicMemoService {
           .order('published_at', ascending: false);
 
       return (response as List)
-          .map((json) => PublicMemo.fromJson(json))
+          .map((json) => PublicMemo.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get user public memos', error: e, stackTrace: stackTrace);

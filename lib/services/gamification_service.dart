@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_stats.dart';
 import '../models/achievement.dart';
@@ -182,7 +183,7 @@ class GamificationService {
 
       final allAchievements = AchievementDefinitions.getDefaultAchievements();
       final userAchievementMap = {
-        for (var ua in userAchievements) ua['achievement_id']: ua
+        for (var ua in userAchievements) ua['achievement_id']: ua,
       };
 
       return allAchievements.map((achievement) {
@@ -241,7 +242,7 @@ class GamificationService {
         });
       } else {
         // Update existing record
-        final wasUnlocked = existing['is_unlocked'] ?? false;
+        final wasUnlocked = (existing['is_unlocked'] as bool?) ?? false;
         await _supabase
             .from('user_achievements')
             .update({
@@ -249,7 +250,7 @@ class GamificationService {
               'is_unlocked': isUnlocked,
               'unlocked_at': isUnlocked && !wasUnlocked
                   ? now.toIso8601String()
-                  : existing['unlocked_at'],
+                  : (existing['unlocked_at'] as String?),
               'updated_at': now.toIso8601String(),
             })
             .eq('user_id', userId)
@@ -257,7 +258,7 @@ class GamificationService {
       }
 
       // If newly unlocked, award points
-      if (isUnlocked && (existing == null || !(existing['is_unlocked'] ?? false))) {
+      if (isUnlocked && (existing == null || !((existing['is_unlocked'] as bool?) ?? false))) {
         await addPoints(userId, achievement.pointsReward);
         return achievement.copyWith(
           isUnlocked: true,
