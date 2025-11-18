@@ -122,7 +122,7 @@ class _HomePageState extends State<HomePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'デイリーログインボーナス！+${bonusPoints}ポイント (${consecutiveDays}日連続)',
+                'デイリーログインボーナス！+$bonusPointsポイント ($consecutiveDays日連続)',
               ),
               backgroundColor: Colors.amber,
               duration: const Duration(seconds: 4),
@@ -144,9 +144,7 @@ class _HomePageState extends State<HomePage> {
       if (userId == null) return;
 
       var stats = await _gamificationService.getUserStats(userId);
-      if (stats == null) {
-        stats = await _gamificationService.initializeUserStats(userId);
-      }
+      stats ??= await _gamificationService.initializeUserStats(userId);
 
       if (mounted) {
         setState(() {
