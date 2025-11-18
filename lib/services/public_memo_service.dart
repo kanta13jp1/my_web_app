@@ -61,7 +61,7 @@ class PublicMemoService {
     String sortBy = 'published_at', // published_at, like_count, view_count
   }) async {
     try {
-      dynamic query = _supabase
+      var query = _supabase
           .from('public_memos')
           .select()
           .eq('is_public', true);
@@ -70,11 +70,9 @@ class PublicMemoService {
         query = query.eq('category', category);
       }
 
-      query = query
+      final response = await query
           .order(sortBy, ascending: false)
           .range(offset, offset + limit - 1);
-
-      final response = await query;
 
       return (response as List)
           .map((json) => PublicMemo.fromJson(json))

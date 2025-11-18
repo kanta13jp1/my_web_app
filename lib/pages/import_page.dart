@@ -303,7 +303,7 @@ class _ImportPageState extends State<ImportPage> {
                               const SizedBox(height: 16),
 
                               // カテゴリ選択
-                              DropdownButtonFormField<String>(
+                              DropdownButtonFormField<String?>(
                                 decoration: const InputDecoration(
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),

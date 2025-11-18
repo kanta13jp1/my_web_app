@@ -569,9 +569,9 @@ class GamificationService {
       final allUsers = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
-          .order(orderBy, ascending: false);
+          .order(orderBy, ascending: false) as List;
 
-      final userList = allUsers as List;
+      final userList = allUsers;
       print('✅ [GamificationService] Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
