@@ -112,10 +112,10 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.05),
+                            color: Colors.blue.withValues(alpha : 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blue.withOpacity(0.2),
+                              color: Colors.blue.withValues(alpha : 0.2),
                             ),
                           ),
                           child: Column(
@@ -214,11 +214,11 @@ class _SharePhilosopherQuoteDialogState
                             icon: const Icon(Icons.visibility),
                             label: Text(_showPreview
                                 ? 'プレビュー準備完了 ✓'
-                                : 'プレビューを表示'),
+                                : 'プレビューを表示',),
                             style: _showPreview
                                 ? OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                        color: Colors.green, width: 2),
+                                        color: Colors.green, width: 2,),
                                     foregroundColor: Colors.green,
                                   )
                                 : null,
@@ -335,9 +335,9 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha : 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha : 0.3)),
                           ),
                           child: Text(
                             _getShareMessage(),

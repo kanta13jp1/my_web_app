@@ -172,7 +172,7 @@ class PresenceService {
           .eq('is_online', true)
           .gte('last_seen',
                DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String());
+                   .toIso8601String(),);
 
       return (response as List).length;
     } catch (e, stackTrace) {
@@ -193,7 +193,7 @@ class PresenceService {
           .select('id')
           .gte('last_seen',
                DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String());
+                   .toIso8601String(),);
 
       return (response as List).length;
     } catch (e, stackTrace) {

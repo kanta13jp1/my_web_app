@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
 import '../main.dart';
 import '../models/attachment.dart';
@@ -20,7 +21,7 @@ class AttachmentService {
   // ファイルを選択
   static Future<PlatformFile?> pickFile() async {
     try {
-      print('pickFile start');
+      debugPrint('pickFile start');
       // Web版向けの修正：allowMultipleを明示的にfalseに設定
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -29,15 +30,15 @@ class AttachmentService {
         allowMultiple: false, // Web版で重要
         allowCompression: false, // 圧縮を無効化
       );
-      print('pickFile 1 result: $result');
+      debugPrint('pickFile 1 result: $result');
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        print('pickFile 2 file: $file');
+        debugPrint('pickFile 2 file: $file');
         // ファイルサイズチェック
         if (file.size > maxFileSize) {
           throw Exception('ファイルサイズは5MB以下にしてください');
         }
-        print('pickFile 3 file: $file');
+        debugPrint('pickFile 3 file: $file');
         // MIMEタイプチェック
         final mimeType =
             lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -45,14 +46,14 @@ class AttachmentService {
             !allowedPdfTypes.contains(mimeType)) {
           throw Exception('サポートされていないファイル形式です');
         }
-        print('pickFile 4 return file');
+        debugPrint('pickFile 4 return file');
         return file;
       }
-      print('pickFile 5 return null');
+      debugPrint('pickFile 5 return null');
       return null;
     } catch (e) {
       // デバッグ用：エラーの詳細をログ出力
-      print('❌ File picker error: $e');
+      debugPrint('❌ File picker error: $e');
       rethrow;
     }
   }
@@ -64,19 +65,19 @@ class AttachmentService {
     required PlatformFile file,
   }) async {
     try {
-      print('📎 [AttachmentService] Starting file upload for noteId: $noteId');
-      print('📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
+      debugPrint('📎 [AttachmentService] Starting file upload for noteId: $noteId');
+      debugPrint('📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
 
       final userId = supabase.auth.currentUser!.id;
-      print('📎 [AttachmentService] User ID: $userId');
+      debugPrint('📎 [AttachmentService] User ID: $userId');
 
       final bytes = file.bytes;
       if (bytes == null) {
-        print('❌ [AttachmentService] File bytes is null - this should not happen on Web');
-        print('📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
+        debugPrint('❌ [AttachmentService] File bytes is null - this should not happen on Web');
+        debugPrint('📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
         throw Exception('ファイルデータが取得できません');
       }
-      print('✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
+      debugPrint('✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
 
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -88,19 +89,19 @@ class AttachmentService {
       final fileName = '${timestamp}_$safeFileName';
       final filePath = '$userId/$noteId/$fileName';
 
-      print('📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
-      print('📎 [AttachmentService] Upload path: $filePath');
+      debugPrint('📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
+      debugPrint('📎 [AttachmentService] Upload path: $filePath');
 
       // Supabase Storageにアップロード
-      print('📤 [AttachmentService] Uploading to Supabase Storage...');
+      debugPrint('📤 [AttachmentService] Uploading to Supabase Storage...');
       await supabase.storage.from('attachments').uploadBinary(
             filePath,
             bytes,
           );
-      print('✅ [AttachmentService] File uploaded to storage successfully');
+      debugPrint('✅ [AttachmentService] File uploaded to storage successfully');
 
       // データベースに記録
-      print('💾 [AttachmentService] Inserting attachment record to database...');
+      debugPrint('💾 [AttachmentService] Inserting attachment record to database...');
       final response = await supabase
           .from('attachments')
           .insert({
@@ -115,20 +116,20 @@ class AttachmentService {
           .select()
           .single();
 
-      print('✅ [AttachmentService] Attachment record inserted successfully');
-      print('📎 [AttachmentService] Attachment ID: ${response['id']}');
+      debugPrint('✅ [AttachmentService] Attachment record inserted successfully');
+      debugPrint('📎 [AttachmentService] Attachment ID: ${response['id']}');
 
       return Attachment.fromJson(response);
     } catch (e, stackTrace) {
-      print('❌ [AttachmentService] Upload failed with error: $e');
-      print('❌ [AttachmentService] Stack trace: $stackTrace');
-      print('📎 [AttachmentService] Error type: ${e.runtimeType}');
+      debugPrint('❌ [AttachmentService] Upload failed with error: $e');
+      debugPrint('❌ [AttachmentService] Stack trace: $stackTrace');
+      debugPrint('📎 [AttachmentService] Error type: ${e.runtimeType}');
       if (e.toString().contains('row level security')) {
-        print('🔒 [AttachmentService] RLS policy error detected');
+        debugPrint('🔒 [AttachmentService] RLS policy error detected');
       } else if (e.toString().contains('cors')) {
-        print('🌐 [AttachmentService] CORS error detected');
+        debugPrint('🌐 [AttachmentService] CORS error detected');
       } else if (e.toString().contains('network')) {
-        print('📡 [AttachmentService] Network error detected');
+        debugPrint('📡 [AttachmentService] Network error detected');
       }
       rethrow;
     }

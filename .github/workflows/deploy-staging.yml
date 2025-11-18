@@ -8,7 +8,7 @@ on:
 
 env:
   ENVIRONMENT: staging
-  FLUTTER_VERSION: '3.24.x'
+  FLUTTER_VERSION: '3.27.x'
 
 jobs:
   ci:
@@ -44,7 +44,7 @@ jobs:
           version: latest
 
       - name: Run Supabase migrations
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        if: secrets.SUPABASE_ACCESS_TOKEN != ''
         run: |
           echo "Running Supabase migrations for staging..."
           # Link to staging project

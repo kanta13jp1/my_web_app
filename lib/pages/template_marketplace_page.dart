@@ -183,7 +183,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                             .map((tag) => Chip(
                                   label: Text(tag),
                                   labelStyle: const TextStyle(fontSize: 12),
-                                ))
+                                ),)
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -310,7 +310,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.search_off,
-                            size: 64, color: Colors.grey[400]),
+                            size: 64, color: Colors.grey[400],),
                         const SizedBox(height: 16),
                         Text(
                           'テンプレートが見つかりません',
