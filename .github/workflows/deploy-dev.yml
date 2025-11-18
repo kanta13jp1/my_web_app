@@ -44,7 +44,7 @@ jobs:
           version: latest
 
       - name: Run Supabase migrations
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+        if: secrets.SUPABASE_ACCESS_TOKEN != ''
         run: |
           echo "Running Supabase migrations for development..."
           # Link to development project
