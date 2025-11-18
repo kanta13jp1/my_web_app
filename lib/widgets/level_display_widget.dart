@@ -6,10 +6,10 @@ class LevelDisplayWidget extends StatelessWidget {
   final bool compact;
 
   const LevelDisplayWidget({
-    Key? key,
+    super.key,
     required this.stats,
     this.compact = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -312,7 +312,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           ),
                         ),
                         Text(
-                          '${_userRank}位',
+                          '$_userRank位',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,

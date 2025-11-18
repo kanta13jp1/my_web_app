@@ -227,9 +227,9 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
             color: Colors.white,
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             '総登録ユーザー数',
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white70,
               fontSize: 16,
             ),

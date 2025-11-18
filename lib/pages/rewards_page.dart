@@ -158,13 +158,13 @@ class _RewardsPageState extends State<RewardsPage> {
                   _buildFilterChip(null, 'すべて', Icons.grid_view),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.theme, 'テーマ', Icons.palette),
+                      RewardType.theme, 'テーマ', Icons.palette,),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.badge, 'バッジ', Icons.military_tech),
+                      RewardType.badge, 'バッジ', Icons.military_tech,),
                   const SizedBox(width: 8),
                   _buildFilterChip(
-                      RewardType.feature, '機能', Icons.star),
+                      RewardType.feature, '機能', Icons.star,),
                 ],
               ),
             ),

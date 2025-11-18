@@ -458,7 +458,7 @@ class NoteCardWidget extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '${characterCount}文字',
+                '$characterCount文字',
                 style: TextStyle(
                   fontSize: 28 * fontScale,
                   color: textColor.withOpacity(0.7),

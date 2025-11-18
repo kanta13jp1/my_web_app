@@ -182,7 +182,7 @@ class GamificationService {
 
       final allAchievements = AchievementDefinitions.getDefaultAchievements();
       final userAchievementMap = {
-        for (var ua in userAchievements) ua['achievement_id']: ua
+        for (var ua in userAchievements) ua['achievement_id']: ua,
       };
 
       return allAchievements.map((achievement) {

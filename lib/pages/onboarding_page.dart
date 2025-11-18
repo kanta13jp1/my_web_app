@@ -199,7 +199,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             'metadata': {
               'onboarding_completed': true,
               'onboarding_completed_at': DateTime.now().toIso8601String(),
-            }
+            },
           })
           .eq('user_id', userId);
 

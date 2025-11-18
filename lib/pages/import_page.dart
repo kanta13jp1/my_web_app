@@ -211,10 +211,10 @@ class _ImportPageState extends State<ImportPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             children: [
                               Icon(Icons.info_outline, color: Colors.blue),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Notion/Evernoteから簡単移行',
                                 style: TextStyle(
@@ -287,12 +287,12 @@ class _ImportPageState extends State<ImportPage> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.file_present, color: Colors.blue),
+                                const Icon(Icons.file_present, color: Colors.blue),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -308,7 +308,7 @@ class _ImportPageState extends State<ImportPage> {
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),
                                 ),
-                                value: _selectedCategoryId,
+                                initialValue: _selectedCategoryId,
                                 items: [
                                   const DropdownMenuItem(
                                     value: null,
@@ -411,7 +411,7 @@ class _ImportPageState extends State<ImportPage> {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),

@@ -11,10 +11,10 @@ class CompatibilityResultPage extends StatefulWidget {
   final String partnerType;
 
   const CompatibilityResultPage({
-    Key? key,
+    super.key,
     required this.myType,
     required this.partnerType,
-  }) : super(key: key);
+  });
 
   @override
   State<CompatibilityResultPage> createState() =>
@@ -48,7 +48,7 @@ class _CompatibilityResultPageState extends State<CompatibilityResultPage>
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOutCubic,
-    ));
+    ),);
 
     _animationController.forward();
   }
@@ -70,7 +70,7 @@ ${_compatibilityMatch.compatibilityLevel == 'excellent' ? '💖 最高の相性�
 #MBTI #恋愛相性診断 #性格診断''';
 
     final url = Uri.encodeFull(
-        'https://twitter.com/intent/tweet?text=$text&url=https://your-app-url.com');
+        'https://twitter.com/intent/tweet?text=$text&url=https://your-app-url.com',);
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url));
@@ -345,12 +345,12 @@ ${_compatibilityMatch.description}''';
               decoration: BoxDecoration(
                 color: Color(int.parse(
                     _compatibilityMatch.getCompatibilityColor().substring(1),
-                    radix: 16) + 0xFF000000).withOpacity(0.1),
+                    radix: 16,) + 0xFF000000,).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: Color(int.parse(
                       _compatibilityMatch.getCompatibilityColor().substring(1),
-                      radix: 16) + 0xFF000000),
+                      radix: 16,) + 0xFF000000,),
                   width: 2,
                 ),
               ),
@@ -369,7 +369,7 @@ ${_compatibilityMatch.description}''';
                           color: Color(int.parse(_compatibilityMatch
                                   .getCompatibilityColor()
                                   .substring(1),
-                              radix: 16) + 0xFF000000),
+                              radix: 16,) + 0xFF000000,),
                         ),
                   ),
                 ],
@@ -488,7 +488,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -550,7 +550,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -612,7 +612,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

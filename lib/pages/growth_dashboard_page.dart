@@ -53,7 +53,7 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         Campaign.createWelcomeCampaign(),
         Campaign.createShareCampaign(),
         Campaign.createReferralCampaign(),
-      ].where((c) => c.isCurrentlyActive));
+      ].where((c) => c.isCurrentlyActive),);
 
       if (mounted) {
         setState(() {
@@ -208,9 +208,9 @@ $_inviteLink
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               '📊 サイト統計',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -462,7 +462,7 @@ $_inviteLink
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),
@@ -478,11 +478,11 @@ $_inviteLink
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Icon(Icons.card_giftcard, color: Colors.amber),
-                const SizedBox(width: 8),
-                const Expanded(
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     '友達を招待して両方に500ptプレゼント！',
                     style: TextStyle(

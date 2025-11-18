@@ -42,7 +42,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserStats? userStats;
 
   const HomeAppBar({
-    Key? key,
+    super.key,
     required this.isSearching,
     required this.searchController,
     required this.onToggleSearch,
@@ -62,7 +62,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.hasCategoryFilter,
     required this.hasDateFilter,
     this.userStats,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);

@@ -48,17 +48,17 @@ class DocumentService {
       title: 'ドキュメント構成',
       category: 'root',
       path: 'docs/README.md',
-    ));
+    ),);
 
     // 各カテゴリのドキュメントを追加
     _documentFiles.forEach((category, files) {
       for (final file in files) {
         documents.add(DocumentItem(
-          id: '${category}_${file}',
+          id: '${category}_$file',
           title: _formatTitle(file),
           category: category,
           path: 'docs/$category/$file',
-        ));
+        ),);
       }
     });
 

@@ -255,8 +255,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         ),
         const SizedBox(height: 16),
         ..._topMatches!.asMap().entries.map((entry) {
-          int index = entry.key;
-          Map<String, dynamic> match = entry.value;
+          final int index = entry.key;
+          final Map<String, dynamic> match = entry.value;
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _buildTopMatchCard(
@@ -267,7 +267,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               title: match['title'],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

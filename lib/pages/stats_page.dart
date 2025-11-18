@@ -9,7 +9,7 @@ import '../widgets/achievement_card_widget.dart';
 import 'rewards_page.dart';
 
 class StatsPage extends StatefulWidget {
-  const StatsPage({Key? key}) : super(key: key);
+  const StatsPage({super.key});
 
   @override
   State<StatsPage> createState() => _StatsPageState();
@@ -44,10 +44,7 @@ class _StatsPageState extends State<StatsPage> {
 
       // Load stats
       var stats = await _gamificationService.getUserStats(userId);
-      if (stats == null) {
-        // Initialize stats if not found
-        stats = await _gamificationService.initializeUserStats(userId);
-      }
+      stats ??= await _gamificationService.initializeUserStats(userId);
 
       // Load achievements
       final achievements = await _gamificationService.getUserAchievements(userId);
@@ -106,7 +103,7 @@ class _StatsPageState extends State<StatsPage> {
                     children: [
                       const Icon(Icons.error_outline, size: 64, color: Colors.red),
                       const SizedBox(height: 16),
-                      Text('エラーが発生しました'),
+                      const Text('エラーが発生しました'),
                       const SizedBox(height: 8),
                       Text(
                         _error!,

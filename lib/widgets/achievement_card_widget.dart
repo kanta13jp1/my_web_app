@@ -5,9 +5,9 @@ class AchievementCardWidget extends StatelessWidget {
   final Achievement achievement;
 
   const AchievementCardWidget({
-    Key? key,
+    super.key,
     required this.achievement,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class AchievementCardWidget extends StatelessWidget {
       elevation: isUnlocked ? 4 : 1,
       color: isUnlocked
           ? theme.colorScheme.primaryContainer
-          : theme.colorScheme.surfaceVariant.withOpacity(0.5),
+          : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

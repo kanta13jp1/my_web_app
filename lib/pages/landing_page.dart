@@ -187,42 +187,42 @@ class LandingPage extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Feature Cards
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.emoji_events,
                     iconColor: Colors.amber,
                     title: 'レベルアップシステム',
                     description: 'メモを書くほどレベルアップ！\n経験値とポイントを獲得して成長しよう',
                   ),
                   const SizedBox(height: 16),
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.military_tech,
                     iconColor: Colors.purple,
                     title: '28種類以上の達成項目',
                     description: '様々なチャレンジをクリアして\n実績を解除しよう',
                   ),
                   const SizedBox(height: 16),
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.leaderboard,
                     iconColor: Colors.blue,
                     title: 'リーダーボード',
                     description: '他のユーザーと競い合って\nトップを目指そう',
                   ),
                   const SizedBox(height: 16),
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.local_fire_department,
                     iconColor: Colors.orange,
                     title: '連続記録',
                     description: '毎日メモを書いて\nストリークを維持しよう',
                   ),
                   const SizedBox(height: 16),
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.folder_special,
                     iconColor: Colors.teal,
                     title: 'カテゴリ管理',
                     description: 'メモをカテゴリで整理して\n効率的に管理',
                   ),
                   const SizedBox(height: 16),
-                  _FeatureCard(
+                  const _FeatureCard(
                     icon: Icons.share,
                     iconColor: Colors.green,
                     title: 'メモ共有',
