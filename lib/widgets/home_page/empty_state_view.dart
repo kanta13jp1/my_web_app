@@ -12,14 +12,14 @@ class EmptyStateView extends StatelessWidget {
   final VoidCallback onClearFavoritesFilter;
 
   const EmptyStateView({
-    Key? key,
+    super.key,
     required this.hasAnyFilter,
     required this.showFavoritesOnly,
     required this.reminderFilter,
     required this.allNotes,
     required this.onClearReminderFilter,
     required this.onClearFavoritesFilter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

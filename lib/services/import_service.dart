@@ -20,9 +20,9 @@ class ImportService {
       final headers = _parseCsvLine(lines[0]);
       final titleIndex = headers.indexWhere((h) =>
           h.toLowerCase().contains('title') ||
-          h.toLowerCase().contains('name'));
+          h.toLowerCase().contains('name'),);
       final contentIndex = headers.indexWhere(
-          (h) => h.toLowerCase().contains('content') || h.toLowerCase().contains('body'));
+          (h) => h.toLowerCase().contains('content') || h.toLowerCase().contains('body'),);
       final createdIndex = headers
           .indexWhere((h) => h.toLowerCase().contains('created'));
       final updatedIndex = headers
