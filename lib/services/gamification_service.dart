@@ -516,9 +516,7 @@ class GamificationService {
     String orderBy = 'total_points',
   }) async {
     try {
-      debugPrint('🏆 [GamificationService] Fetching leaderboard...');
-      debugPrint('🏆 [GamificationService] Order by: $orderBy, limit: $limit');
-      debugPrint('🏆 [GamificationService] Current user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
+      AppLogger.debug('Fetching leaderboard - orderBy: $orderBy, limit: $limit, user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
 
       // Use the view that includes user profile information
       final response = await _supabase
@@ -527,31 +525,24 @@ class GamificationService {
           .order(orderBy, ascending: false)
           .limit(limit);
 
-      debugPrint('✅ [GamificationService] Query successful, processing response...');
-      debugPrint('🏆 [GamificationService] Response length: ${(response as List).length}');
+      AppLogger.debug('Query successful - response length: ${(response as List).length}');
 
       final entries = <LeaderboardEntry>[];
       for (int i = 0; i < (response as List).length; i++) {
         entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
       }
 
-      debugPrint('✅ [GamificationService] Leaderboard entries created: ${entries.length}');
+      AppLogger.debug('Leaderboard entries created: ${entries.length}');
       if (entries.isNotEmpty) {
-        debugPrint('🏆 [GamificationService] Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
+        AppLogger.debug('Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
       } else {
-        debugPrint('⚠️ [GamificationService] Empty leaderboard - check RLS policies');
-        debugPrint('⚠️ [GamificationService] Required RLS policy: SELECT on user_stats_with_profiles view');
+        AppLogger.warning('Empty leaderboard - check RLS policies. Required: SELECT on user_stats_with_profiles view');
       }
 
       return entries;
     } catch (e, stackTrace) {
-      debugPrint('❌ [GamificationService] Error getting leaderboard: $e');
-      debugPrint('❌ [GamificationService] Error type: ${e.runtimeType}');
-      debugPrint('❌ [GamificationService] Stack trace: $stackTrace');
-
       if (e.toString().contains('row level security')) {
-        debugPrint('🔒 [GamificationService] RLS policy error - users cannot read from user_stats_with_profiles view');
-        debugPrint('🔒 [GamificationService] Fix: Ensure migration 20251111140000 is applied');
+        AppLogger.error('RLS policy error - users cannot read from user_stats_with_profiles view. Fix: Ensure migration 20251111140000 is applied', error: e);
       }
 
       AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
@@ -564,8 +555,7 @@ class GamificationService {
   // to compare user's stats against all other users
   Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
     try {
-      debugPrint('🏆 [GamificationService] Getting user rank for: $userId');
-      debugPrint('🏆 [GamificationService] Order by: $orderBy');
+      AppLogger.debug('Getting user rank for: $userId, orderBy: $orderBy');
 
       final allUsers = await _supabase
           .from('user_stats')
@@ -573,23 +563,18 @@ class GamificationService {
           .order(orderBy, ascending: false);
 
       final userList = allUsers as List;
-      debugPrint('✅ [GamificationService] Total users in ranking: ${userList.length}');
+      AppLogger.debug('Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
-        if ((userList[i] as Map<String, dynamic>)['user_id'] == userId) {
-          print('✅ [GamificationService] User found at rank: ${i + 1}');
+        if (userList[i]['user_id'] == userId) {
+          AppLogger.debug('User found at rank: ${i + 1}');
           return i + 1;
         }
       }
 
-      debugPrint('⚠️ [GamificationService] User not found in ranking');
-      debugPrint('⚠️ [GamificationService] This could mean user_stats record does not exist for this user');
+      AppLogger.warning('User not found in ranking. This could mean user_stats record does not exist for this user');
       return null;
     } catch (e, stackTrace) {
-      debugPrint('❌ [GamificationService] Error getting user rank: $e');
-      debugPrint('❌ [GamificationService] Error type: ${e.runtimeType}');
-      debugPrint('❌ [GamificationService] Stack trace: $stackTrace');
-
       AppLogger.error('Error getting user rank', error: e, stackTrace: stackTrace);
       return null;
     }
