@@ -303,19 +303,19 @@ class _ImportPageState extends State<ImportPage> {
                               const SizedBox(height: 16),
 
                               // カテゴリ選択
-                              DropdownButtonFormField<String>(
+                              DropdownButtonFormField<String?>(
                                 decoration: const InputDecoration(
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),
                                 ),
                                 initialValue: _selectedCategoryId,
                                 items: [
-                                  const DropdownMenuItem(
+                                  const DropdownMenuItem<String?>(
                                     value: null,
                                     child: Text('カテゴリなし'),
                                   ),
                                   ..._categories.map((category) {
-                                    return DropdownMenuItem(
+                                    return DropdownMenuItem<String>(
                                       value: category.id,
                                       child: Text(category.name),
                                     );
