@@ -559,7 +559,7 @@ class GamificationService {
       final userList = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
-          .order(orderBy, ascending: false) as List<Map<String, dynamic>>;
+          .order(orderBy, ascending: false);
 
       AppLogger.debug('Total users in ranking: ${userList.length}');
 
