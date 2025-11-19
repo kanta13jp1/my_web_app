@@ -143,7 +143,7 @@ class CommunityService {
           .limit(limit);
 
       final followerIds = (response as List)
-          .map((row) => row['follower_id'] as String)
+          .map((row) => (row as Map<String, dynamic>)['follower_id'] as String)
           .toList();
 
       if (followerIds.isEmpty) return [];
@@ -172,7 +172,7 @@ class CommunityService {
           .limit(limit);
 
       final followingIds = (response as List)
-          .map((row) => row['following_id'] as String)
+          .map((row) => (row as Map<String, dynamic>)['following_id'] as String)
           .toList();
 
       if (followingIds.isEmpty) return [];
@@ -259,11 +259,12 @@ class CommunityService {
           .order('created_at', ascending: true);
 
       return (response as List).map((comment) {
-        final userProfile = comment['user_profiles'];
+        final commentMap = comment as Map<String, dynamic>;
+        final userProfile = commentMap['user_profiles'] as Map<String, dynamic>?;
         return NoteComment.fromJson({
-          ...comment,
-          'user_display_name': userProfile?['display_name'],
-          'user_avatar_url': userProfile?['avatar_url'],
+          ...commentMap,
+          'user_display_name': userProfile?['display_name'] as String?,
+          'user_avatar_url': userProfile?['avatar_url'] as String?,
         });
       }).toList();
     } catch (e, stackTrace) {

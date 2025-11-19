@@ -9,7 +9,8 @@ import '../services/app_share_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web用
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 
 /// 哲学者の名言をシェアするダイアログ
 class SharePhilosopherQuoteDialog extends StatefulWidget {
@@ -112,10 +113,10 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.05),
+                            color: Colors.blue.withValues(alpha : 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blue.withOpacity(0.2),
+                              color: Colors.blue.withValues(alpha : 0.2),
                             ),
                           ),
                           child: Column(
@@ -214,11 +215,11 @@ class _SharePhilosopherQuoteDialogState
                             icon: const Icon(Icons.visibility),
                             label: Text(_showPreview
                                 ? 'プレビュー準備完了 ✓'
-                                : 'プレビューを表示'),
+                                : 'プレビューを表示',),
                             style: _showPreview
                                 ? OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                        color: Colors.green, width: 2),
+                                        color: Colors.green, width: 2,),
                                     foregroundColor: Colors.green,
                                   )
                                 : null,
@@ -335,9 +336,9 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha : 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha : 0.3)),
                           ),
                           child: Text(
                             _getShareMessage(),
@@ -484,16 +485,17 @@ class _SharePhilosopherQuoteDialogState
       }
 
       // Web版: ダウンロード
-      final blob = html.Blob([imageBytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
+      final blob = web.Blob([imageBytes.toJS].toJS);
+      final url = web.URL.createObjectURL(blob);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'philosopher_quote_$timestamp.png';
 
-      html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
+      web.HTMLAnchorElement()
+        ..href = url
+        ..download = filename
         ..click();
 
-      html.Url.revokeObjectUrl(url);
+      web.URL.revokeObjectURL(url);
 
       if (!mounted) {
         return;

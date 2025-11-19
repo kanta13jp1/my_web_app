@@ -43,7 +43,7 @@ class AutoSaveService extends ChangeNotifier {
       } catch (e) {
         _saveState = SaveState.error;
         if (kDebugMode) {
-          print('💾 [AutoSaveService] Auto-save error: $e');
+          debugPrint('💾 [AutoSaveService] Auto-save error: $e');
         }
       }
 
@@ -65,7 +65,7 @@ class AutoSaveService extends ChangeNotifier {
     } catch (e) {
       _saveState = SaveState.error;
       if (kDebugMode) {
-        print('💾 [AutoSaveService] Save error: $e');
+        debugPrint('💾 [AutoSaveService] Save error: $e');
       }
       rethrow;
     }

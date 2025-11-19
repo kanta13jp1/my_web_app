@@ -28,7 +28,7 @@ class DailyChallengeService {
 
   // Get user's challenge progress
   Future<List<UserChallengeProgress>> getUserChallengeProgress(
-      String userId) async {
+      String userId,) async {
     try {
       final response = await _supabase
           .from('user_challenge_progress')
@@ -46,14 +46,14 @@ class DailyChallengeService {
 
   // Get combined challenges with progress
   Future<List<Map<String, dynamic>>> getTodaysChallengesWithProgress(
-      String userId) async {
+      String userId,) async {
     try {
       final challenges = await getTodaysChallenges();
       final progressList = await getUserChallengeProgress(userId);
 
       // Create a map of challenge_id -> progress
       final progressMap = {
-        for (var p in progressList) p.challengeId: p
+        for (var p in progressList) p.challengeId: p,
       };
 
       return challenges.map((challenge) {
@@ -68,7 +68,7 @@ class DailyChallengeService {
       }).toList();
     } catch (e, stackTrace) {
       AppLogger.error(
-          'Failed to get challenges with progress', error: e, stackTrace: stackTrace);
+          'Failed to get challenges with progress', error: e, stackTrace: stackTrace,);
       return [];
     }
   }

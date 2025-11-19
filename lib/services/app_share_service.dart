@@ -1,7 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
@@ -241,7 +242,7 @@ $achievement
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 
 ━━━━━━━━━━━━━━
 
@@ -251,7 +252,7 @@ $appNameで、哲学者たちの知恵とともに
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #${currentStreak}日連続''';
+#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #$currentStreak日連続''';
   }
 
   /// カスタムメッセージでシェア
@@ -287,9 +288,9 @@ $appUrl
     // ストリークに応じた追加メッセージ
     String streakMessage = '';
     if (currentStreak >= 100) {
-      streakMessage = '\n🔥 驚異の${currentStreak}日連続達成！';
+      streakMessage = '\n🔥 驚異の$currentStreak日連続達成！';
     } else if (currentStreak >= 50) {
-      streakMessage = '\n🔥 ${currentStreak}日連続記録更新中！';
+      streakMessage = '\n🔥 $currentStreak日連続記録更新中！';
     } else if (currentStreak >= 30) {
       streakMessage = '\n🔥 1ヶ月以上の連続記録を達成！';
     } else if (currentStreak >= 7) {
@@ -306,7 +307,7 @@ $encouragement$streakMessage
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 📈 全国ランキング参加中
 
 ━━━━━━━━━━━━━━
@@ -325,7 +326,7 @@ $appNameは、ゲーム感覚で
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #${currentStreak}日連続''';
+#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #$currentStreak日連続''';
   }
 
   /// レベルから称号を取得
@@ -346,11 +347,12 @@ $appUrl
       // Web版: Web Share API または Twitter インテントを使用
       try {
         // Web Share APIを試みる（モバイルブラウザなどで利用可能）
-        await html.window.navigator.share({
-          'title': appName,
-          'text': message,
-          'url': appUrl,
-        });
+        final shareData = web.ShareData(
+          title: appName,
+          text: message,
+          url: appUrl,
+        );
+        await web.window.navigator.share(shareData).toDart;
       } catch (e) {
         // Web Share APIが利用できない場合（デスクトップブラウザなど）
         // フォールバック: クリップボードにコピー & Twitter インテント
@@ -360,7 +362,7 @@ $appUrl
           final twitterUrl = Uri.encodeFull(
             'https://twitter.com/intent/tweet?text=$message',
           );
-          html.window.open(twitterUrl, '_blank');
+          web.window.open(twitterUrl, '_blank');
         } catch (clipboardError) {
           // クリップボードアクセスも失敗した場合はエラーを再スロー
           rethrow;
@@ -423,7 +425,7 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(twitterUrl, '_blank');
+      web.window.open(twitterUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -432,10 +434,10 @@ $appUrl
 
   /// Facebook向けに最適化したシェア
   static Future<void> shareToFacebook() async {
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
+    const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
 
     if (kIsWeb) {
-      html.window.open(facebookUrl, '_blank');
+      web.window.open(facebookUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile();
@@ -450,7 +452,7 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(lineUrl, '_blank');
+      web.window.open(lineUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -508,7 +510,7 @@ $shareLink
 ✨ 私の実績 ✨
 📊 レベル: Lv.$level
 ⭐ ポイント: $totalPoints pt
-🔥 連続: ${currentStreak}日
+🔥 連続: $currentStreak日
 
 マイメモで、あなたも習慣化！
 $shareLink
@@ -521,7 +523,7 @@ $shareLink
     );
 
     if (kIsWeb) {
-      html.window.open(twitterUrl, '_blank');
+      web.window.open(twitterUrl, '_blank');
     } else {
       await shareAppMobile(customMessage: message);
     }
@@ -533,7 +535,7 @@ $shareLink
     final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
 
     if (kIsWeb) {
-      html.window.open(facebookUrl, '_blank');
+      web.window.open(facebookUrl, '_blank');
     } else {
       await shareAppMobile(customMessage: shareLink);
     }
@@ -568,7 +570,7 @@ $shareLink''';
 
 「${quote.quote}」
 
-私の実績: Lv.$level / $totalPoints pt / ${currentStreak}日連続
+私の実績: Lv.$level / $totalPoints pt / $currentStreak日連続
 
 $shareLink''';
     }
@@ -578,7 +580,7 @@ $shareLink''';
     );
 
     if (kIsWeb) {
-      html.window.open(lineUrl, '_blank');
+      web.window.open(lineUrl, '_blank');
     } else {
       await shareAppMobile(customMessage: message);
     }

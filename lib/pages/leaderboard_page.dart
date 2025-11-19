@@ -45,32 +45,32 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     });
 
     try {
-      print('🏆 [LeaderboardPage] Loading leaderboard...');
-      print('🏆 [LeaderboardPage] Order by: $_orderBy');
-      print('🏆 [LeaderboardPage] Is authenticated: $_isAuthenticated');
+      debugPrint('🏆 [LeaderboardPage] Loading leaderboard...');
+      debugPrint('🏆 [LeaderboardPage] Order by: $_orderBy');
+      debugPrint('🏆 [LeaderboardPage] Is authenticated: $_isAuthenticated');
 
       final entries = await _gamificationService.getLeaderboard(
         limit: 100,
         orderBy: _orderBy,
       );
 
-      print('✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
+      debugPrint('✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
       if (entries.isEmpty) {
-        print('⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
+        debugPrint('⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
       }
 
       // 認証済みユーザーの場合のみランクを取得
       int? rank;
       if (_isAuthenticated) {
-        print('🏆 [LeaderboardPage] Getting user rank...');
+        debugPrint('🏆 [LeaderboardPage] Getting user rank...');
         final userId = supabase.auth.currentUser!.id;
-        print('🏆 [LeaderboardPage] User ID: $userId');
+        debugPrint('🏆 [LeaderboardPage] User ID: $userId');
 
         rank = await _gamificationService.getUserRank(
           userId,
           orderBy: _orderBy,
         );
-        print('✅ [LeaderboardPage] User rank: $rank');
+        debugPrint('✅ [LeaderboardPage] User rank: $rank');
       }
 
       if (mounted) {
@@ -81,14 +81,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         });
       }
     } catch (error, stackTrace) {
-      print('❌ [LeaderboardPage] Failed to load leaderboard');
-      print('❌ [LeaderboardPage] Error: $error');
-      print('❌ [LeaderboardPage] Error type: ${error.runtimeType}');
-      print('❌ [LeaderboardPage] Stack trace: $stackTrace');
+      debugPrint('❌ [LeaderboardPage] Failed to load leaderboard');
+      debugPrint('❌ [LeaderboardPage] Error: $error');
+      debugPrint('❌ [LeaderboardPage] Error type: ${error.runtimeType}');
+      debugPrint('❌ [LeaderboardPage] Stack trace: $stackTrace');
 
       if (error.toString().contains('row level security')) {
-        print('🔒 [LeaderboardPage] RLS policy error detected');
-        print('🔒 [LeaderboardPage] Check user_stats table RLS policies');
+        debugPrint('🔒 [LeaderboardPage] RLS policy error detected');
+        debugPrint('🔒 [LeaderboardPage] Check user_stats table RLS policies');
       }
 
       if (mounted) {
@@ -171,13 +171,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.8),
+                    Theme.of(context).primaryColor.withValues(alpha : 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha : 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -267,13 +267,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.7),
+                    Theme.of(context).primaryColor.withValues(alpha : 0.7),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha : 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -285,7 +285,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha : 0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -312,7 +312,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           ),
                         ),
                         Text(
-                          '${_userRank}位',
+                          '$_userRank位',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -409,7 +409,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                             color: isCurrentUser
                                 ? Theme.of(context)
                                     .primaryColor
-                                    .withOpacity(0.1)
+                                    .withValues(alpha : 0.1)
                                 : null,
                             child: ListTile(
                               leading: Container(
@@ -417,7 +417,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                 height: 50,
                                 decoration: BoxDecoration(
                                   color: _getRankColor(entry.rank)
-                                      .withOpacity(0.2),
+                                      .withValues(alpha : 0.2),
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: _getRankColor(entry.rank),

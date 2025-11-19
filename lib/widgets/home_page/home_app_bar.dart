@@ -42,7 +42,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserStats? userStats;
 
   const HomeAppBar({
-    Key? key,
+    super.key,
     required this.isSearching,
     required this.searchController,
     required this.onToggleSearch,
@@ -62,7 +62,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.hasCategoryFilter,
     required this.hasDateFilter,
     this.userStats,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -637,7 +637,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha : 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.share, color: Colors.white, size: 28),
@@ -670,7 +670,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha : 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -690,20 +690,20 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.white.withOpacity(0.25),
-                              Colors.white.withOpacity(0.15),
+                              Colors.white.withValues(alpha : 0.25),
+                              Colors.white.withValues(alpha : 0.15),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.4),
+                            color: Colors.white.withValues(alpha : 0.4),
                             width: 2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha : 0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -714,7 +714,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha : 0.3),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -747,7 +747,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 Container(
                                   height: 40,
                                   width: 1,
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white.withValues(alpha : 0.3),
                                 ),
                                 _buildStatItem(
                                   '⭐',
@@ -756,7 +756,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 Container(
                                   height: 40,
                                   width: 1,
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white.withValues(alpha : 0.3),
                                 ),
                                 _buildStatItem(
                                   '🔥',
@@ -1117,7 +1117,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha : 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1156,8 +1156,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          color: color.withValues(alpha : 0.05),
+          border: Border.all(color: color.withValues(alpha : 0.3), width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1165,7 +1165,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha : 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 22),
@@ -1215,14 +1215,14 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: color.withOpacity(0.7),
+                        color: color.withValues(alpha : 0.7),
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: color.withOpacity(0.5)),
+            Icon(Icons.arrow_forward_ios, size: 16, color: color.withValues(alpha : 0.5)),
           ],
         ),
       ),
