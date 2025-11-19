@@ -8,9 +8,8 @@ import '../services/note_card_service.dart';
 import '../services/app_share_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用（Web プラットフォームでのダウンロード機能に必要）
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// Web用
+import 'package:web/web.dart' as web;
 
 /// 哲学者の名言をシェアするダイアログ
 class SharePhilosopherQuoteDialog extends StatefulWidget {
@@ -485,16 +484,17 @@ class _SharePhilosopherQuoteDialogState
       }
 
       // Web版: ダウンロード
-      final blob = html.Blob([imageBytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
+      final blob = web.Blob([imageBytes].toJS);
+      final url = web.URL.createObjectURL(blob);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'philosopher_quote_$timestamp.png';
 
-      html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
-        ..click();
+      final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
 
-      html.Url.revokeObjectUrl(url);
+      web.URL.revokeObjectURL(url);
 
       if (!mounted) {
         return;

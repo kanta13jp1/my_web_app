@@ -645,17 +645,18 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         }
 
         // Web版: ダウンロード
-        final blob = html.Blob([imageBytes]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
+        final blob = web.Blob([imageBytes].toJS);
+        final url = web.URL.createObjectURL(blob);
         final filename = _repaintKeys.length > 1
             ? 'note_card_${timestamp}_${i + 1}of${_repaintKeys.length}.png'
             : 'note_card_$timestamp.png';
 
-        html.AnchorElement(href: url)
-          ..setAttribute('download', filename)
-          ..click();
+        final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
 
-        html.Url.revokeObjectUrl(url);
+        web.URL.revokeObjectURL(url);
 
         successCount++;
 

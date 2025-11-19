@@ -527,7 +527,7 @@ class GamificationService {
       AppLogger.debug('Query successful - response length: ${(response as List).length}');
 
       final entries = <LeaderboardEntry>[];
-      for (int i = 0; i < (response as List).length; i++) {
+      for (int i = 0; i < response.length; i++) {
         entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
       }
 
