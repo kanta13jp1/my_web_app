@@ -527,10 +527,10 @@ class GamificationService {
           .limit(limit);
 
       print('✅ [GamificationService] Query successful, processing response...');
-      print('🏆 [GamificationService] Response length: ${(response as List).length}');
+      print('🏆 [GamificationService] Response length: ${response.length}');
 
       final entries = <LeaderboardEntry>[];
-      for (int i = 0; i < (response as List).length; i++) {
+      for (int i = 0; i < response.length; i++) {
         entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
       }
 
@@ -566,12 +566,11 @@ class GamificationService {
       print('🏆 [GamificationService] Getting user rank for: $userId');
       print('🏆 [GamificationService] Order by: $orderBy');
 
-      final allUsers = await _supabase
+      final userList = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
           .order(orderBy, ascending: false);
 
-      final userList = allUsers as List;
       print('✅ [GamificationService] Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {

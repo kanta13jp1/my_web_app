@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
@@ -346,11 +346,12 @@ $appUrl
       // Web版: Web Share API または Twitter インテントを使用
       try {
         // Web Share APIを試みる（モバイルブラウザなどで利用可能）
-        await html.window.navigator.share({
-          'title': appName,
-          'text': message,
-          'url': appUrl,
-        });
+        final shareData = web.ShareData(
+          title: appName,
+          text: message,
+          url: appUrl,
+        );
+        await web.window.navigator.share(shareData).toDart;
       } catch (e) {
         // Web Share APIが利用できない場合（デスクトップブラウザなど）
         // フォールバック: クリップボードにコピー & Twitter インテント
@@ -360,7 +361,7 @@ $appUrl
           final twitterUrl = Uri.encodeFull(
             'https://twitter.com/intent/tweet?text=$message',
           );
-          html.window.open(twitterUrl, '_blank');
+          web.window.open(twitterUrl, '_blank');
         } catch (clipboardError) {
           // クリップボードアクセスも失敗した場合はエラーを再スロー
           rethrow;
@@ -423,7 +424,7 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(twitterUrl, '_blank');
+      web.window.open(twitterUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -435,7 +436,7 @@ $appUrl
     final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
 
     if (kIsWeb) {
-      html.window.open(facebookUrl, '_blank');
+      web.window.open(facebookUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile();
@@ -450,7 +451,7 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(lineUrl, '_blank');
+      web.window.open(lineUrl, '_blank');
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
