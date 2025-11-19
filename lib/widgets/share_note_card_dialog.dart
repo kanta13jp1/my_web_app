@@ -11,9 +11,9 @@ import '../services/note_card_service.dart';
 import '../utils/content_chunk_processor.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用（Web プラットフォームでのダウンロード機能に必要）
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// Web用
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 
 class ShareNoteCardDialog extends StatefulWidget {
   final Note note;
@@ -645,16 +645,16 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         }
 
         // Web版: ダウンロード
-        final blob = web.Blob([imageBytes].toJS);
+        final blob = web.Blob([imageBytes.toJS].toJS);
         final url = web.URL.createObjectURL(blob);
         final filename = _repaintKeys.length > 1
             ? 'note_card_${timestamp}_${i + 1}of${_repaintKeys.length}.png'
             : 'note_card_$timestamp.png';
 
-        final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
-        anchor.href = url;
-        anchor.download = filename;
-        anchor.click();
+        final anchor = web.HTMLAnchorElement()
+          ..href = url
+          ..download = filename
+          ..click();
 
         web.URL.revokeObjectURL(url);
 
