@@ -125,7 +125,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       content: _contentController.text,
       categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
       timestamp: DateTime.now(),
-    ));
+    ),);
 
     // 自動保存トリガー
     _autoSaveService.triggerAutoSave(() => _saveNoteWithoutClosing());
@@ -542,6 +542,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (confirm != true) return;
     }
 
+    // Widgetがまだマウントされているか確認
+    if (!mounted) return;
+
     // タイマー設定ダイアログを表示
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -933,7 +936,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                   Navigator.pop(context);
                   // カテゴリを適用（既存のカテゴリから検索または新規作成を促す）
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('提案を参考にカテゴリとタグを設定してください')),
+                    const SnackBar(content: Text('提案を参考にカテゴリとタグを設定してください')),
                   );
                 },
                 child: const Text('適用'),

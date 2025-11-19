@@ -235,7 +235,7 @@ class SettingsPage extends StatelessWidget {
                               color: color.withValues(alpha: 0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
-                            )
+                            ),
                           ]
                         : null,
                   ),

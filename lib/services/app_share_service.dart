@@ -241,7 +241,7 @@ $achievement
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 
 ━━━━━━━━━━━━━━
 
@@ -251,7 +251,7 @@ $appNameで、哲学者たちの知恵とともに
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #${currentStreak}日連続''';
+#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #$currentStreak日連続''';
   }
 
   /// カスタムメッセージでシェア
@@ -287,9 +287,9 @@ $appUrl
     // ストリークに応じた追加メッセージ
     String streakMessage = '';
     if (currentStreak >= 100) {
-      streakMessage = '\n🔥 驚異の${currentStreak}日連続達成！';
+      streakMessage = '\n🔥 驚異の$currentStreak日連続達成！';
     } else if (currentStreak >= 50) {
-      streakMessage = '\n🔥 ${currentStreak}日連続記録更新中！';
+      streakMessage = '\n🔥 $currentStreak日連続記録更新中！';
     } else if (currentStreak >= 30) {
       streakMessage = '\n🔥 1ヶ月以上の連続記録を達成！';
     } else if (currentStreak >= 7) {
@@ -306,7 +306,7 @@ $encouragement$streakMessage
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 📈 全国ランキング参加中
 
 ━━━━━━━━━━━━━━
@@ -325,7 +325,7 @@ $appNameは、ゲーム感覚で
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #${currentStreak}日連続''';
+#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #$currentStreak日連続''';
   }
 
   /// レベルから称号を取得
@@ -433,7 +433,7 @@ $appUrl
 
   /// Facebook向けに最適化したシェア
   static Future<void> shareToFacebook() async {
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
+    const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
 
     if (kIsWeb) {
       web.window.open(facebookUrl, '_blank');
@@ -509,7 +509,7 @@ $shareLink
 ✨ 私の実績 ✨
 📊 レベル: Lv.$level
 ⭐ ポイント: $totalPoints pt
-🔥 連続: ${currentStreak}日
+🔥 連続: $currentStreak日
 
 マイメモで、あなたも習慣化！
 $shareLink
@@ -569,7 +569,7 @@ $shareLink''';
 
 「${quote.quote}」
 
-私の実績: Lv.$level / $totalPoints pt / ${currentStreak}日連続
+私の実績: Lv.$level / $totalPoints pt / $currentStreak日連続
 
 $shareLink''';
     }

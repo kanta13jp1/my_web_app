@@ -34,7 +34,7 @@ class AchievementNotification {
   }
 
   static void showMultiple(
-      BuildContext context, List<Achievement> achievements) {
+      BuildContext context, List<Achievement> achievements,) {
     for (var i = 0; i < achievements.length; i++) {
       Future.delayed(Duration(milliseconds: i * 300), () {
         if (context.mounted) {
@@ -80,7 +80,7 @@ class _AchievementNotificationWidgetState
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.elasticOut,
-    ));
+    ),);
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -88,7 +88,7 @@ class _AchievementNotificationWidgetState
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.easeIn,
-    ));
+    ),);
 
     _controller.forward();
   }
@@ -188,7 +188,7 @@ class _AchievementNotificationWidgetState
                           widget.achievement.description,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onPrimaryContainer
-                                .withOpacity(0.8),
+                                .withValues(alpha : 0.8),
                           ),
                         ),
                       ],
