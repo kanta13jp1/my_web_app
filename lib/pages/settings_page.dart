@@ -244,7 +244,7 @@ class SettingsPage extends StatelessWidget {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: color.withValues(alpha: 0.5),
+                              color: color.withOpacity(0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
                             )
