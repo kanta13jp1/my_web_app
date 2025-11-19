@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_stats.dart';
 import '../models/achievement.dart';
@@ -557,12 +556,11 @@ class GamificationService {
     try {
       AppLogger.debug('Getting user rank for: $userId, orderBy: $orderBy');
 
-      final allUsers = await _supabase
+      final userList = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy')
-          .order(orderBy, ascending: false) as List;
+          .order(orderBy, ascending: false) as List<Map<String, dynamic>>;
 
-      final userList = allUsers as List;
       AppLogger.debug('Total users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
