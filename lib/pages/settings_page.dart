@@ -137,7 +137,15 @@ class SettingsPage extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioGroup<AppThemeMode>(
+            RadioListTile<AppThemeMode>(
+              title: const Row(
+                children: [
+                  Icon(Icons.light_mode),
+                  SizedBox(width: 12),
+                  Text('ライトモード'),
+                ],
+              ),
+              value: AppThemeMode.light,
               groupValue: themeService.themeMode,
               onChanged: (value) {
                 if (value != null) {
@@ -145,40 +153,40 @@ class SettingsPage extends StatelessWidget {
                   Navigator.pop(context);
                 }
               },
-              child: Column(
+            ),
+            RadioListTile<AppThemeMode>(
+              title: const Row(
                 children: [
-                  RadioListTile<AppThemeMode>(
-                    title: const Row(
-                      children: [
-                        Icon(Icons.light_mode),
-                        SizedBox(width: 12),
-                        Text('ライトモード'),
-                      ],
-                    ),
-                    value: AppThemeMode.light,
-                  ),
-                  RadioListTile<AppThemeMode>(
-                    title: const Row(
-                      children: [
-                        Icon(Icons.dark_mode),
-                        SizedBox(width: 12),
-                        Text('ダークモード'),
-                      ],
-                    ),
-                    value: AppThemeMode.dark,
-                  ),
-                  RadioListTile<AppThemeMode>(
-                    title: const Row(
-                      children: [
-                        Icon(Icons.brightness_auto),
-                        SizedBox(width: 12),
-                        Text('システム設定に従う'),
-                      ],
-                    ),
-                    value: AppThemeMode.system,
-                  ),
+                  Icon(Icons.dark_mode),
+                  SizedBox(width: 12),
+                  Text('ダークモード'),
                 ],
               ),
+              value: AppThemeMode.dark,
+              groupValue: themeService.themeMode,
+              onChanged: (value) {
+                if (value != null) {
+                  themeService.setThemeMode(value);
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            RadioListTile<AppThemeMode>(
+              title: const Row(
+                children: [
+                  Icon(Icons.brightness_auto),
+                  SizedBox(width: 12),
+                  Text('システム設定に従う'),
+                ],
+              ),
+              value: AppThemeMode.system,
+              groupValue: themeService.themeMode,
+              onChanged: (value) {
+                if (value != null) {
+                  themeService.setThemeMode(value);
+                  Navigator.pop(context);
+                }
+              },
             ),
           ],
         ),
