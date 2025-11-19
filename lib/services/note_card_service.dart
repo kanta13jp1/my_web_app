@@ -25,9 +25,7 @@ class NoteCardService {
           ),
           child: Directionality(
             textDirection: TextDirection.ltr,
-            child: Material(
-              child: widget,
-            ),
+            child: Material(child: widget),
           ),
         ),
       );
@@ -35,9 +33,9 @@ class NoteCardService {
       // RenderRepaintBoundaryを取得
       final pipelineOwner = PipelineOwner();
       final buildOwner = BuildOwner(focusManager: FocusManager());
-      
+
       final renderRepaintBoundary = RenderRepaintBoundary();
-      
+
       final renderView = RenderView(
         view: WidgetsBinding.instance.platformDispatcher.views.first,
         child: RenderPositionedBox(
@@ -63,20 +61,26 @@ class NoteCardService {
       pipelineOwner.flushPaint();
 
       // 画像として変換
-      final ui.Image image = await renderRepaintBoundary.toImage(pixelRatio: 2.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final ui.Image image = await renderRepaintBoundary.toImage(
+        pixelRatio: 2.0,
+      );
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
 
       return byteData?.buffer.asUint8List();
     } catch (e, stackTrace) {
-      AppLogger.error('Error capturing widget', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error capturing widget',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
 
   // GlobalKeyを使ってWidgetをキャプチャする簡易版（Web版対応）
-  static Future<Uint8List?> captureWidgetSimple(
-    GlobalKey key,
-  ) async {
+  static Future<Uint8List?> captureWidgetSimple(GlobalKey key) async {
     try {
       AppLogger.debug('Starting capture process...');
 
@@ -140,10 +144,14 @@ class NoteCardService {
           }
 
           final image = await renderObject.toImage(pixelRatio: 2.0);
-          final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+          final byteData = await image.toByteData(
+            format: ui.ImageByteFormat.png,
+          );
 
           if (byteData != null) {
-            AppLogger.info('Image captured successfully on attempt ${attempt + 1}');
+            AppLogger.info(
+              'Image captured successfully on attempt ${attempt + 1}',
+            );
             final result = byteData.buffer.asUint8List();
 
             // 画像オブジェクトを破棄してWebGLリソースを解放
@@ -156,7 +164,10 @@ class NoteCardService {
             image.dispose();
           }
         } catch (e) {
-          AppLogger.warning('Error during toImage attempt ${attempt + 1}', error: e);
+          AppLogger.warning(
+            'Error during toImage attempt ${attempt + 1}',
+            error: e,
+          );
           if (attempt < 2) {
             AppLogger.debug('Waiting before retry...');
             // WebGLコンテキストのリカバリーのため、より長い待機時間
@@ -168,7 +179,11 @@ class NoteCardService {
       AppLogger.error('All capture attempts exhausted');
       return null;
     } catch (e, stackTrace) {
-      AppLogger.error('Fatal error capturing widget', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Fatal error capturing widget',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -207,12 +222,15 @@ class NoteCardService {
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '📝 $noteTitle\n\n#マイメモ #メモ習慣',
-      );
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: '📝 $noteTitle\n\n#マイメモ #メモ習慣');
     } catch (e, stackTrace) {
-      AppLogger.error('Error sharing note card', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error sharing note card',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -232,7 +250,11 @@ class NoteCardService {
 
       return file.path;
     } catch (e, stackTrace) {
-      AppLogger.error('Error saving note card', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error saving note card',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -251,10 +273,7 @@ class NoteCardService {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF667eea),
-            Color(0xFF764ba2),
-          ],
+          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
         ),
       ),
       padding: const EdgeInsets.all(80),
@@ -270,34 +289,22 @@ class NoteCardService {
               color: Colors.white,
             ),
           ),
-          
+
           const SizedBox(height: 80),
-          
+
           // 統計情報
-          _buildStatItem(
-            Icons.note_alt,
-            '$totalNotes',
-            '総メモ数',
-          ),
-          
+          _buildStatItem(Icons.note_alt, '$totalNotes', '総メモ数'),
+
           const SizedBox(height: 60),
-          
-          _buildStatItem(
-            Icons.local_fire_department,
-            '$streakDays日',
-            '連続記録',
-          ),
-          
+
+          _buildStatItem(Icons.local_fire_department, '$streakDays日', '連続記録'),
+
           const SizedBox(height: 60),
-          
-          _buildStatItem(
-            Icons.text_fields,
-            '$totalWords',
-            '総文字数',
-          ),
-          
+
+          _buildStatItem(Icons.text_fields, '$totalWords', '総文字数'),
+
           const Spacer(),
-          
+
           // フッター
           Container(
             padding: const EdgeInsets.all(24),
@@ -353,10 +360,7 @@ class NoteCardService {
               ),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 32,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 32, color: Colors.white70),
               ),
             ],
           ),

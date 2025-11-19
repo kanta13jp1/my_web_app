@@ -54,9 +54,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         orderBy: _orderBy,
       );
 
-      debugPrint('✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
+      debugPrint(
+        '✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries',
+      );
       if (entries.isEmpty) {
-        debugPrint('⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
+        debugPrint(
+          '⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue',
+        );
       }
 
       // 認証済みユーザーの場合のみランクを取得
@@ -95,9 +99,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $error')));
       }
     }
   }
@@ -147,7 +151,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = _isAuthenticated ? supabase.auth.currentUser!.id : null;
+    final currentUserId = _isAuthenticated
+        ? supabase.auth.currentUser!.id
+        : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -171,13 +177,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withValues(alpha : 0.8),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha : 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -185,11 +191,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               ),
               child: Column(
                 children: [
-                  const Icon(
-                    Icons.emoji_events,
-                    size: 48,
-                    color: Colors.white,
-                  ),
+                  const Icon(Icons.emoji_events, size: 48, color: Colors.white),
                   const SizedBox(height: 12),
                   const Text(
                     'ランキングに参加しよう！',
@@ -218,14 +220,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AuthPage(initialMode: AuthMode.signUp),
+                              builder: (_) =>
+                                  const AuthPage(initialMode: AuthMode.signUp),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         child: const Text(
                           '無料で始める',
@@ -238,14 +244,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AuthPage(initialMode: AuthMode.signIn),
+                              builder: (_) =>
+                                  const AuthPage(initialMode: AuthMode.signIn),
                             ),
                           );
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         child: const Text(
                           'ログイン',
@@ -267,13 +277,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withValues(alpha : 0.7),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.7),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha : 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -285,7 +295,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha : 0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -306,10 +316,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       children: [
                         const Text(
                           'あなたの順位',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                         Text(
                           '$_userRank位',
@@ -387,121 +394,123 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _entries.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'まだランキングがありません',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: _entries.length,
-                        itemBuilder: (context, index) {
-                          final entry = _entries[index];
-                          final isCurrentUser = _isAuthenticated && entry.userId == currentUserId;
-                          final rankEmoji = _getRankEmoji(entry.rank);
+                ? const Center(
+                    child: Text(
+                      'まだランキングがありません',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: _entries.length,
+                    itemBuilder: (context, index) {
+                      final entry = _entries[index];
+                      final isCurrentUser =
+                          _isAuthenticated && entry.userId == currentUserId;
+                      final rankEmoji = _getRankEmoji(entry.rank);
 
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 4,
-                              horizontal: 8,
-                            ),
-                            color: isCurrentUser
-                                ? Theme.of(context)
-                                    .primaryColor
-                                    .withValues(alpha : 0.1)
-                                : null,
-                            child: ListTile(
-                              leading: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: _getRankColor(entry.rank)
-                                      .withValues(alpha : 0.2),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _getRankColor(entry.rank),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    rankEmoji.isNotEmpty
-                                        ? rankEmoji
-                                        : '${entry.rank}',
-                                    style: TextStyle(
-                                      fontSize: rankEmoji.isNotEmpty ? 24 : 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: rankEmoji.isEmpty
-                                          ? _getRankColor(entry.rank)
-                                          : null,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              title: Row(
-                                children: [
-                                  Text(
-                                    entry.userName ?? 'ユーザー',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isCurrentUser
-                                          ? Theme.of(context).primaryColor
-                                          : null,
-                                    ),
-                                  ),
-                                  if (isCurrentUser) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).primaryColor,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        'あなた',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              subtitle: Text(
-                                'Lv.${entry.currentLevel} • ${entry.notesCreated}メモ • ${entry.currentStreak}日連続',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    _getDisplayValue(entry),
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: _getRankColor(entry.rank),
-                                    ),
-                                  ),
-                                  Text(
-                                    _getDisplayLabel(),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        color: isCurrentUser
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.1)
+                            : null,
+                        child: ListTile(
+                          leading: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _getRankColor(
+                                entry.rank,
+                              ).withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _getRankColor(entry.rank),
+                                width: 2,
                               ),
                             ),
-                          );
-                        },
-                      ),
+                            child: Center(
+                              child: Text(
+                                rankEmoji.isNotEmpty
+                                    ? rankEmoji
+                                    : '${entry.rank}',
+                                style: TextStyle(
+                                  fontSize: rankEmoji.isNotEmpty ? 24 : 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: rankEmoji.isEmpty
+                                      ? _getRankColor(entry.rank)
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              Text(
+                                entry.userName ?? 'ユーザー',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isCurrentUser
+                                      ? Theme.of(context).primaryColor
+                                      : null,
+                                ),
+                              ),
+                              if (isCurrentUser) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'あなた',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          subtitle: Text(
+                            'Lv.${entry.currentLevel} • ${entry.notesCreated}メモ • ${entry.currentStreak}日連続',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                _getDisplayValue(entry),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getRankColor(entry.rank),
+                                ),
+                              ),
+                              Text(
+                                _getDisplayLabel(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

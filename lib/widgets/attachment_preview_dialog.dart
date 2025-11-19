@@ -6,10 +6,7 @@ import '../services/attachment_service.dart';
 class AttachmentPreviewDialog extends StatefulWidget {
   final Attachment attachment;
 
-  const AttachmentPreviewDialog({
-    super.key,
-    required this.attachment,
-  });
+  const AttachmentPreviewDialog({super.key, required this.attachment});
 
   @override
   State<AttachmentPreviewDialog> createState() =>
@@ -29,7 +26,9 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
 
   Future<void> _loadSignedUrl() async {
     try {
-      final url = await AttachmentService.getSignedUrl(widget.attachment.filePath);
+      final url = await AttachmentService.getSignedUrl(
+        widget.attachment.filePath,
+      );
       if (mounted) {
         setState(() {
           _signedUrl = url;
@@ -78,10 +77,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                       ),
                       Text(
                         widget.attachment.formattedSize,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -94,9 +90,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
             ),
             const Divider(),
             // プレビュー
-            Expanded(
-              child: _buildPreview(),
-            ),
+            Expanded(child: _buildPreview()),
             const SizedBox(height: 16),
             // ダウンロードボタン
             if (_signedUrl != null)
@@ -113,9 +107,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
 
   Widget _buildPreview() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -132,9 +124,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
     }
 
     if (_signedUrl == null) {
-      return const Center(
-        child: Text('プレビューを読み込めません'),
-      );
+      return const Center(child: Text('プレビューを読み込めません'));
     }
 
     // 画像の場合
@@ -152,7 +142,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                 child: CircularProgressIndicator(
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
+                            loadingProgress.expectedTotalBytes!
                       : null,
                 ),
               );
@@ -184,10 +174,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
             const SizedBox(height: 24),
             Text(
               widget.attachment.fileName,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -203,19 +190,14 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
             const SizedBox(height: 16),
             Text(
               'ブラウザでPDFを表示します',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
       );
     }
 
-    return const Center(
-      child: Text('プレビューできないファイル形式です'),
-    );
+    return const Center(child: Text('プレビューできないファイル形式です'));
   }
 
   Future<void> _openInNewTab() async {

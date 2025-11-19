@@ -10,7 +10,7 @@ class Note {
   final DateTime? reminderDate;
   final bool isArchived;
   final DateTime? archivedAt;
-  final bool isPinned;  // 追加
+  final bool isPinned; // 追加
 
   Note({
     required this.id,
@@ -24,7 +24,7 @@ class Note {
     this.reminderDate,
     this.isArchived = false,
     this.archivedAt,
-    this.isPinned = false,  // 追加
+    this.isPinned = false, // 追加
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -44,7 +44,7 @@ class Note {
       archivedAt: json['archived_at'] != null
           ? DateTime.parse(json['archived_at'] as String)
           : null,
-      isPinned: json['is_pinned'] as bool? ?? false,  // 追加
+      isPinned: json['is_pinned'] as bool? ?? false, // 追加
     );
   }
 
@@ -61,7 +61,7 @@ class Note {
       'reminder_date': reminderDate?.toIso8601String(),
       'is_archived': isArchived,
       'archived_at': archivedAt?.toIso8601String(),
-      'is_pinned': isPinned,  // 追加
+      'is_pinned': isPinned, // 追加
     };
   }
 

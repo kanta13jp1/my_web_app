@@ -84,10 +84,7 @@ class LevelDisplayWidget extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '次のレベルまで',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Text('次のレベルまで', style: theme.textTheme.bodyMedium),
                     Text(
                       '${stats.pointsForNextLevel - stats.totalPoints} pt',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -102,8 +99,9 @@ class LevelDisplayWidget extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: stats.levelProgress,
                     minHeight: 12,
-                    backgroundColor:
-                        theme.colorScheme.onSurface.withValues(alpha : 0.1),
+                    backgroundColor: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.1,
+                    ),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       theme.colorScheme.primary,
                     ),
@@ -113,7 +111,7 @@ class LevelDisplayWidget extends StatelessWidget {
                 Text(
                   '${(stats.levelProgress * 100).toInt()}% 完了',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha : 0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -142,11 +140,7 @@ class LevelDisplayWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
-            Icons.stars,
-            color: theme.colorScheme.primary,
-            size: 16,
-          ),
+          Icon(Icons.stars, color: theme.colorScheme.primary, size: 16),
           const SizedBox(width: 4),
           Text(
             '${stats.totalPoints}',

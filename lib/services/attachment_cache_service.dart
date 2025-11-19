@@ -22,8 +22,10 @@ class AttachmentCacheService {
     }
 
     try {
-      final response =
-          await supabase.from('attachments').select('id').eq('note_id', noteId);
+      final response = await supabase
+          .from('attachments')
+          .select('id')
+          .eq('note_id', noteId);
       final count = (response as List).length;
 
       // キャッシュに保存

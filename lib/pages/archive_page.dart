@@ -88,8 +88,9 @@ class _ArchivePageState extends State<ArchivePage> {
       if (!mounted) return;
 
       setState(() {
-        _archivedNotes =
-            (response as List).map((note) => Note.fromJson(note)).toList();
+        _archivedNotes = (response as List)
+            .map((note) => Note.fromJson(note))
+            .toList();
         _applyFilters();
         _isLoading = false;
       });
@@ -102,19 +103,22 @@ class _ArchivePageState extends State<ArchivePage> {
 
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
   Future<void> _restoreNote(Note note) async {
     try {
-      await supabase.from('notes').update({
-        'is_archived': false,
-        'archived_at': null,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', note.id);
+      await supabase
+          .from('notes')
+          .update({
+            'is_archived': false,
+            'archived_at': null,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', note.id);
 
       if (!mounted) return;
 
@@ -131,9 +135,9 @@ class _ArchivePageState extends State<ArchivePage> {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -156,9 +160,9 @@ class _ArchivePageState extends State<ArchivePage> {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -167,8 +171,9 @@ class _ArchivePageState extends State<ArchivePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('メモを復元'),
-        content:
-            Text('「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を復元しますか？'),
+        content: Text(
+          '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を復元しますか？',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -196,7 +201,7 @@ class _ArchivePageState extends State<ArchivePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？',
+              '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？',
             ),
             const SizedBox(height: 16),
             Container(
@@ -309,9 +314,7 @@ class _ArchivePageState extends State<ArchivePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.grey[100],
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[300]!),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
             child: Row(
               children: [
@@ -333,211 +336,208 @@ class _ArchivePageState extends State<ArchivePage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredNotes.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.archive_outlined,
-                              size: 80,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _searchController.text.isNotEmpty
-                                  ? '該当するアーカイブが見つかりません'
-                                  : 'アーカイブされたメモはありません',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'メモを長押ししてアーカイブできます',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.archive_outlined,
+                          size: 80,
+                          color: Colors.grey[400],
                         ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadArchivedNotes,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: _filteredNotes.length,
-                          itemBuilder: (context, index) {
-                            final note = _filteredNotes[index];
-                            final category = _getCategoryById(note.categoryId);
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchController.text.isNotEmpty
+                              ? '該当するアーカイブが見つかりません'
+                              : 'アーカイブされたメモはありません',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'メモを長押ししてアーカイブできます',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadArchivedNotes,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: _filteredNotes.length,
+                      itemBuilder: (context, index) {
+                        final note = _filteredNotes[index];
+                        final category = _getCategoryById(note.categoryId);
 
-                            Color? categoryColor;
-                            if (category != null) {
-                              categoryColor = Color(
-                                int.parse(
-                                  category.color.substring(1),
-                                  radix: 16,
-                                ) +
-                                    0xFF000000,
-                              );
-                            }
+                        Color? categoryColor;
+                        if (category != null) {
+                          categoryColor = Color(
+                            int.parse(category.color.substring(1), radix: 16) +
+                                0xFF000000,
+                          );
+                        }
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 4,
-                                horizontal: 8,
-                              ),
-                              color: Colors.grey[50],
-                              child: ListTile(
-                                leading: category != null
-                                    ? Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: categoryColor!
-                                              .withValues(alpha: 0.2),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: categoryColor,
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            category.icon,
-                                            style:
-                                                const TextStyle(fontSize: 20),
-                                          ),
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.archive,
-                                        color: Colors.grey,
-                                        size: 32,
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 8,
+                          ),
+                          color: Colors.grey[50],
+                          child: ListTile(
+                            leading: category != null
+                                ? Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: categoryColor!.withValues(
+                                        alpha: 0.2,
                                       ),
-                                title: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.archive,
-                                      color: Colors.grey,
-                                      size: 16,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: categoryColor,
+                                        width: 2,
+                                      ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
+                                    child: Center(
                                       child: Text(
-                                        note.title.isEmpty
-                                            ? '(タイトルなし)'
-                                            : note.title,
-                                        style: TextStyle(
-                                          color: Colors.grey[700],
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        category.icon,
+                                        style: const TextStyle(fontSize: 20),
                                       ),
                                     ),
-                                  ],
+                                  )
+                                : const Icon(
+                                    Icons.archive,
+                                    color: Colors.grey,
+                                    size: 32,
+                                  ),
+                            title: Row(
+                              children: [
+                                const Icon(
+                                  Icons.archive,
+                                  color: Colors.grey,
+                                  size: 16,
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    note.title.isEmpty
+                                        ? '(タイトルなし)'
+                                        : note.title,
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (note.content.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    note.content,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  ),
+                                ],
+                                const SizedBox(height: 4),
+                                Row(
                                   children: [
-                                    if (note.content.isNotEmpty) ...[
-                                      const SizedBox(height: 4),
+                                    if (category != null) ...[
                                       Text(
-                                        note.content,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
+                                        category.icon,
+                                        style: const TextStyle(fontSize: 12),
                                       ),
-                                    ],
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        if (category != null) ...[
-                                          Text(
-                                            category.icon,
-                                            style:
-                                                const TextStyle(fontSize: 12),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        // ← 追加
+                                        child: Text(
+                                          category.name,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: categoryColor,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          const SizedBox(width: 4),
-                                          Flexible(
-                                            // ← 追加
-                                            child: Text(
-                                              category.name,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: categoryColor,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              overflow:
-                                                  TextOverflow.ellipsis, // ← 追加
-                                              maxLines: 1, // ← 追加
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            '•',
-                                            style: TextStyle(
-                                                color: Colors.grey[600],
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                        Icon(
-                                          Icons.archive,
-                                          size: 12,
+                                          overflow:
+                                              TextOverflow.ellipsis, // ← 追加
+                                          maxLines: 1, // ← 追加
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '•',
+                                        style: TextStyle(
                                           color: Colors.grey[600],
                                         ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          // ← 追加
-                                          child: Text(
-                                            'アーカイブ: ${note.archivedAt != null ? _formatDate(note.archivedAt!) : '不明'}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                            overflow:
-                                                TextOverflow.ellipsis, // ← 追加
-                                            maxLines: 1, // ← 追加
-                                          ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Icon(
+                                      Icons.archive,
+                                      size: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      // ← 追加
+                                      child: Text(
+                                        'アーカイブ: ${note.archivedAt != null ? _formatDate(note.archivedAt!) : '不明'}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
                                         ),
-                                      ],
+                                        overflow: TextOverflow.ellipsis, // ← 追加
+                                        maxLines: 1, // ← 追加
+                                      ),
                                     ),
                                   ],
                                 ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.unarchive,
-                                          color: Colors.blue,),
-                                      onPressed: () => _showRestoreDialog(note),
-                                      tooltip: '復元',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_forever,
-                                          color: Colors.red,),
-                                      onPressed: () => _showDeleteDialog(note),
-                                      tooltip: '完全に削除',
-                                    ),
-                                  ],
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.unarchive,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: () => _showRestoreDialog(note),
+                                  tooltip: '復元',
                                 ),
-                                onTap: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          NoteEditorPage(note: note),
-                                    ),
-                                  );
-                                  _loadArchivedNotes();
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _showDeleteDialog(note),
+                                  tooltip: '完全に削除',
+                                ),
+                              ],
+                            ),
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => NoteEditorPage(note: note),
+                                ),
+                              );
+                              _loadArchivedNotes();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

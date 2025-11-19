@@ -49,10 +49,7 @@ class ReminderFilterDialog extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text(
                   'リマインダーで絞り込み',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 TextButton(
@@ -72,8 +69,10 @@ class ReminderFilterDialog extends StatelessWidget {
                 children: [
                   // 全て表示
                   ListTile(
-                    leading:
-                        const Icon(Icons.all_inclusive, color: Colors.blue),
+                    leading: const Icon(
+                      Icons.all_inclusive,
+                      color: Colors.blue,
+                    ),
                     title: const Text('すべて表示'),
                     trailing: currentFilter == null
                         ? const Icon(Icons.check, color: Colors.blue)
@@ -140,8 +139,10 @@ class ReminderFilterDialog extends StatelessWidget {
                         color: Colors.amber.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.access_alarm,
-                          color: Colors.amber,),
+                      child: const Icon(
+                        Icons.access_alarm,
+                        color: Colors.amber,
+                      ),
                     ),
                     title: const Text('24時間以内'),
                     subtitle: Text(

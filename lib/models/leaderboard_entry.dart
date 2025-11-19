@@ -30,12 +30,12 @@ class LeaderboardEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'user_name': userName,
-        'total_points': totalPoints,
-        'current_level': currentLevel,
-        'notes_created': notesCreated,
-        'current_streak': currentStreak,
-        'rank': rank,
-      };
+    'user_id': userId,
+    'user_name': userName,
+    'total_points': totalPoints,
+    'current_level': currentLevel,
+    'notes_created': notesCreated,
+    'current_streak': currentStreak,
+    'rank': rank,
+  };
 }

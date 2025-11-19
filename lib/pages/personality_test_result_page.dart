@@ -8,10 +8,7 @@ import '../services/app_share_service.dart';
 class PersonalityTestResultPage extends StatefulWidget {
   final int testId;
 
-  const PersonalityTestResultPage({
-    super.key,
-    required this.testId,
-  });
+  const PersonalityTestResultPage({super.key, required this.testId});
 
   @override
   State<PersonalityTestResultPage> createState() =>
@@ -35,8 +32,9 @@ class _PersonalityTestResultPageState extends State<PersonalityTestResultPage> {
     try {
       final test = await _service.getTestResult(widget.testId);
       final scores = await _service.calculateScores(widget.testId);
-      final personalityType =
-          _service.getPersonalityTypeDetails(test.personalityType!);
+      final personalityType = _service.getPersonalityTypeDetails(
+        test.personalityType!,
+      );
 
       setState(() {
         _test = test;
@@ -62,7 +60,8 @@ class _PersonalityTestResultPageState extends State<PersonalityTestResultPage> {
   Future<void> _shareToTwitter() async {
     if (_personalityType == null || _test == null) return;
 
-    final text = '''
+    final text =
+        '''
 性格診断の結果: ${_personalityType!.code}（${_personalityType!.nameJa}）🧠
 
 「${_personalityType!.nameEn}」タイプ
@@ -80,7 +79,8 @@ ${_personalityType!.description}
   Future<void> _copyToClipboard() async {
     if (_personalityType == null) return;
 
-    final text = '''
+    final text =
+        '''
 性格診断の結果: ${_personalityType!.code}（${_personalityType!.nameJa}）
 
 「${_personalityType!.nameEn}」タイプ
@@ -91,11 +91,9 @@ ${_personalityType!.description}
     await Clipboard.setData(ClipboardData(text: text));
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('クリップボードにコピーしました'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('クリップボードにコピーしました')));
     }
   }
 
@@ -105,21 +103,13 @@ ${_personalityType!.description}
     final textTheme = Theme.of(context).textTheme;
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_test == null || _personalityType == null || _scores == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('性格診断結果'),
-        ),
-        body: const Center(
-          child: Text('結果が見つかりませんでした'),
-        ),
+        appBar: AppBar(title: const Text('性格診断結果')),
+        body: const Center(child: Text('結果が見つかりませんでした')),
       );
     }
 
@@ -149,20 +139,13 @@ ${_personalityType!.description}
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    colorScheme.primary,
-                    colorScheme.secondary,
-                  ],
+                  colors: [colorScheme.primary, colorScheme.secondary],
                 ),
               ),
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  const Icon(
-                    Icons.celebration,
-                    size: 64,
-                    color: Colors.white,
-                  ),
+                  const Icon(Icons.celebration, size: 64, color: Colors.white),
                   const SizedBox(height: 16),
                   Text(
                     'あなたの性格タイプは...',
@@ -249,10 +232,7 @@ ${_personalityType!.description}
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              strength,
-                              style: textTheme.bodyMedium,
-                            ),
+                            child: Text(strength, style: textTheme.bodyMedium),
                           ),
                         ],
                       ),
@@ -279,10 +259,7 @@ ${_personalityType!.description}
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              weakness,
-                              style: textTheme.bodyMedium,
-                            ),
+                            child: Text(weakness, style: textTheme.bodyMedium),
                           ),
                         ],
                       ),
@@ -310,10 +287,7 @@ ${_personalityType!.description}
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              advice,
-                              style: textTheme.bodyMedium,
-                            ),
+                            child: Text(advice, style: textTheme.bodyMedium),
                           ),
                         ],
                       ),
@@ -330,7 +304,9 @@ ${_personalityType!.description}
                       icon: const Icon(Icons.share),
                       label: const Text('Twitterでシェア'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DA1F2), // Twitter blue
+                        backgroundColor: const Color(
+                          0xFF1DA1F2,
+                        ), // Twitter blue
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -395,9 +371,7 @@ ${_personalityType!.description}
 
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -472,17 +446,13 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: color,
-          size: 24,
-        ),
+        Icon(icon, color: color, size: 24),
         const SizedBox(width: 8),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );

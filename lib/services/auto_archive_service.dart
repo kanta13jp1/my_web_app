@@ -10,7 +10,7 @@ class AutoArchiveService {
 
       // 期限切れから30日経過したメモを取得
       final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-      
+
       final response = await supabase
           .from('notes')
           .select()
@@ -19,17 +19,22 @@ class AutoArchiveService {
           .not('reminder_date', 'is', null)
           .lt('reminder_date', thirtyDaysAgo.toIso8601String());
 
-      final notes = (response as List).map((note) => Note.fromJson(note)).toList();
+      final notes = (response as List)
+          .map((note) => Note.fromJson(note))
+          .toList();
 
       if (notes.isEmpty) return 0;
 
       // 一括アーカイブ
       final noteIds = notes.map((note) => note.id).toList();
-      await supabase.from('notes').update({
-        'is_archived': true,
-        'archived_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).inFilter('id', noteIds);  // ← 修正
+      await supabase
+          .from('notes')
+          .update({
+            'is_archived': true,
+            'archived_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .inFilter('id', noteIds); // ← 修正
 
       return notes.length;
     } catch (error) {
@@ -54,13 +59,15 @@ class AutoArchiveService {
           .not('archived_at', 'is', null)
           .lt('archived_at', ninetyDaysAgo.toIso8601String());
 
-      final notes = (response as List).map((note) => Note.fromJson(note)).toList();
+      final notes = (response as List)
+          .map((note) => Note.fromJson(note))
+          .toList();
 
       if (notes.isEmpty) return 0;
 
       // 一括削除
       final noteIds = notes.map((note) => note.id).toList();
-      await supabase.from('notes').delete().inFilter('id', noteIds);  // ← 修正
+      await supabase.from('notes').delete().inFilter('id', noteIds); // ← 修正
 
       return notes.length;
     } catch (error) {

@@ -7,10 +7,7 @@ import 'compatibility_result_page.dart';
 class CompatibilityCheckPage extends StatefulWidget {
   final String myType;
 
-  const CompatibilityCheckPage({
-    super.key,
-    required this.myType,
-  });
+  const CompatibilityCheckPage({super.key, required this.myType});
 
   @override
   State<CompatibilityCheckPage> createState() => _CompatibilityCheckPageState();
@@ -37,9 +34,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
   void _checkCompatibility() {
     if (_selectedPartnerType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('相手のタイプを選択してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('相手のタイプを選択してください')));
       return;
     }
 
@@ -102,9 +99,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -119,9 +114,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           children: [
             Text(
               'あなたのタイプ',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 8),
             Row(
@@ -130,15 +125,17 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 Text(
                   widget.myType,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade900,
-                        letterSpacing: 3,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade900,
+                    letterSpacing: 3,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -146,8 +143,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                   child: Text(
                     personalityType.nameJa,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.blue.shade900,
-                        ),
+                      color: Colors.blue.shade900,
+                    ),
                   ),
                 ),
               ],
@@ -247,9 +244,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
             const SizedBox(width: 8),
             Text(
               'あなたと相性の良いタイプ TOP5',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -364,19 +361,17 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                       children: [
                         Text(
                           type,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           personalityType.nameJa,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey.shade600,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -384,8 +379,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
@@ -393,7 +388,10 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
               // スコア表示
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.pink.shade50,
                   borderRadius: BorderRadius.circular(20),
@@ -422,10 +420,22 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
   Widget _buildTypeSelector() {
     const types = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP',
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP',
+      'INTJ',
+      'INTP',
+      'ENTJ',
+      'ENTP',
+      'INFJ',
+      'INFP',
+      'ENFJ',
+      'ENFP',
+      'ISTJ',
+      'ISFJ',
+      'ESTJ',
+      'ESFJ',
+      'ISTP',
+      'ISFP',
+      'ESTP',
+      'ESFP',
     ];
 
     return Column(
@@ -433,9 +443,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       children: [
         Text(
           '相手のタイプを選択',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         GridView.builder(
@@ -474,8 +484,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           color: isSelected
               ? Colors.pink.shade400
               : isMyType
-                  ? Colors.blue.shade300
-                  : Colors.grey.shade300,
+              ? Colors.blue.shade300
+              : Colors.grey.shade300,
           width: isSelected || isMyType ? 2 : 1,
         ),
       ),
@@ -493,8 +503,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
             color: isSelected
                 ? Colors.pink.shade50
                 : isMyType
-                    ? Colors.blue.shade50
-                    : Colors.white,
+                ? Colors.blue.shade50
+                : Colors.white,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -503,22 +513,22 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               Text(
                 type,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? Colors.pink.shade900
-                          : isMyType
-                              ? Colors.blue.shade900
-                              : Colors.grey.shade800,
-                      letterSpacing: 1.2,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? Colors.pink.shade900
+                      : isMyType
+                      ? Colors.blue.shade900
+                      : Colors.grey.shade800,
+                  letterSpacing: 1.2,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 personalityType.nameJa,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontSize: 10,
-                    ),
+                  color: Colors.grey.shade600,
+                  fontSize: 10,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -526,8 +536,10 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               if (isMyType) ...[
                 const SizedBox(height: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade100,
                     borderRadius: BorderRadius.circular(10),
@@ -570,9 +582,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
             Text(
               '相性を診断する',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

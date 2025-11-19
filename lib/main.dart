@@ -25,7 +25,8 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
 
   runApp(
@@ -77,9 +78,7 @@ class _AuthenticatedHomePage extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -102,7 +101,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
-      themeMode: themeService.getFlutterThemeMode(),  // 更新
+      themeMode: themeService.getFlutterThemeMode(), // 更新
       initialRoute: '/',
       onGenerateRoute: (settings) {
         // 共有リンク用のルーティング（認証不要）
@@ -128,25 +127,17 @@ class MyApp extends StatelessWidget {
             );
           case '/landing':
             // ランディングページ（認証不要）
-            return MaterialPageRoute(
-              builder: (_) => const LandingPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const LandingPage());
           case '/leaderboard':
             // リーダーボード（認証不要）
-            return MaterialPageRoute(
-              builder: (_) => const LeaderboardPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const LeaderboardPage());
           case '/home':
             // ホームページ（認証必要）
-            return MaterialPageRoute(
-              builder: (_) => const HomePage(),
-            );
+            return MaterialPageRoute(builder: (_) => const HomePage());
           case '/auth':
             // 認証ページ（紹介コードサポート）
             return MaterialPageRoute(
-              builder: (_) => AuthPage(
-                referralCode: queryParams['ref'],
-              ),
+              builder: (_) => AuthPage(referralCode: queryParams['ref']),
             );
           case '/signup':
             // サインアップページ（紹介コードサポート）
@@ -163,9 +154,7 @@ class MyApp extends StatelessWidget {
             );
           case '/referral':
             // 紹介プログラムページ（認証必要）
-            return MaterialPageRoute(
-              builder: (_) => const ReferralPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const ReferralPage());
           case '/challenges':
             // デイリーチャレンジページ（認証必要）
             return MaterialPageRoute(
@@ -173,14 +162,10 @@ class MyApp extends StatelessWidget {
             );
           case '/gallery':
             // メモギャラリーページ（認証不要）
-            return MaterialPageRoute(
-              builder: (_) => const MemoGalleryPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const MemoGalleryPage());
           case '/documents':
             // ドキュメントページ（認証不要）
-            return MaterialPageRoute(
-              builder: (_) => const DocumentsPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const DocumentsPage());
           case '/personality-test':
             // 性格診断ページ（認証不要）
             return MaterialPageRoute(
@@ -193,9 +178,7 @@ class MyApp extends StatelessWidget {
             );
           default:
             // デフォルトはランディングページ
-            return MaterialPageRoute(
-              builder: (_) => const LandingPage(),
-            );
+            return MaterialPageRoute(builder: (_) => const LandingPage());
         }
       },
     );

@@ -24,7 +24,7 @@ class AIService {
   static const int _initialRetryDelayMs = 1000;
 
   AIService([SupabaseClient? supabaseClient])
-      : _supabase = supabaseClient ?? supabase;
+    : _supabase = supabaseClient ?? supabase;
 
   /// 指数バックオフでリトライを実行するヘルパーメソッド
   Future<T> _retryWithBackoff<T>(
@@ -118,19 +118,13 @@ class AIService {
   /// ユーザーの文章をより明確で読みやすく改善
   Future<String> improveText(String content) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'improve',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'improveText',
-      );
+      return await _retryWithBackoff(() async {
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'improve',
+          'content': content,
+        });
+        return data['result'] as String;
+      }, operationName: 'improveText');
     } catch (e, stackTrace) {
       AppLogger.error('Error improving text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -141,21 +135,19 @@ class AIService {
   /// 長い文章を簡潔に要約
   Future<String> summarizeText(String content) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'summarize',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'summarizeText',
-      );
+      return await _retryWithBackoff(() async {
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'summarize',
+          'content': content,
+        });
+        return data['result'] as String;
+      }, operationName: 'summarizeText');
     } catch (e, stackTrace) {
-      AppLogger.error('Error summarizing text', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error summarizing text',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -164,19 +156,13 @@ class AIService {
   /// 短い文章やアイデアを詳細に展開
   Future<String> expandText(String content) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'expand',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'expandText',
-      );
+      return await _retryWithBackoff(() async {
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'expand',
+          'content': content,
+        });
+        return data['result'] as String;
+      }, operationName: 'expandText');
     } catch (e, stackTrace) {
       AppLogger.error('Error expanding text', error: e, stackTrace: stackTrace);
       rethrow;
@@ -190,22 +176,20 @@ class AIService {
     String targetLanguage = 'en',
   }) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'translate',
-              'content': content,
-              'targetLanguage': targetLanguage,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'translateText',
-      );
+      return await _retryWithBackoff(() async {
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'translate',
+          'content': content,
+          'targetLanguage': targetLanguage,
+        });
+        return data['result'] as String;
+      }, operationName: 'translateText');
     } catch (e, stackTrace) {
-      AppLogger.error('Error translating text', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error translating text',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -214,30 +198,28 @@ class AIService {
   /// 文章内容から魅力的なタイトルを提案
   Future<List<String>> suggestTitles(String content) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'suggest_title',
-              'content': content,
-            },
-          );
-          final result = data['result'] as String;
-          // Parse the result to extract title suggestions
-          // Assuming the result contains titles separated by newlines or numbers
-          final titles = result
-              .split('\n')
-              .where((line) => line.trim().isNotEmpty)
-              .map((line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim())
-              .where((line) => line.isNotEmpty)
-              .toList();
-          return titles;
-        },
-        operationName: 'suggestTitles',
-      );
+      return await _retryWithBackoff(() async {
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'suggest_title',
+          'content': content,
+        });
+        final result = data['result'] as String;
+        // Parse the result to extract title suggestions
+        // Assuming the result contains titles separated by newlines or numbers
+        final titles = result
+            .split('\n')
+            .where((line) => line.trim().isNotEmpty)
+            .map((line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim())
+            .where((line) => line.isNotEmpty)
+            .toList();
+        return titles;
+      }, operationName: 'suggestTitles');
     } catch (e, stackTrace) {
-      AppLogger.error('Error suggesting titles', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error suggesting titles',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -271,7 +253,11 @@ class AIService {
         throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error suggesting tags', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error suggesting tags',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -285,16 +271,15 @@ class AIService {
     try {
       final response = await _supabase.functions.invoke(
         'ai-search',
-        body: {
-          'query': query,
-          'limit': limit,
-        },
+        body: {'query': query, 'limit': limit},
       );
 
       final data = response.data as Map<String, dynamic>;
       if (data['success'] == true) {
         return AISearchResult(
-          results: List<Map<String, dynamic>>.from(data['results'] as List<dynamic>? ?? []),
+          results: List<Map<String, dynamic>>.from(
+            data['results'] as List<dynamic>? ?? [],
+          ),
           totalResults: data['totalResults'] as int? ?? 0,
           explanation: data['explanation'] as String? ?? '',
         );
@@ -336,7 +321,11 @@ class AIService {
         recentUsageCount: response.length,
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting AI usage stats', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error getting AI usage stats',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return AIUsageStats(
         totalUsage: 0,
         totalCost: 0.0,
@@ -353,54 +342,54 @@ class AIService {
     List<Map<String, dynamic>>? recentNotes,
   }) async {
     try {
-      return await _retryWithBackoff(
-        () async {
-          // ユーザーの最近のメモを取得（パラメータで渡されていない場合）
-          List<Map<String, dynamic>> notes = recentNotes ?? [];
+      return await _retryWithBackoff(() async {
+        // ユーザーの最近のメモを取得（パラメータで渡されていない場合）
+        List<Map<String, dynamic>> notes = recentNotes ?? [];
 
-          if (notes.isEmpty) {
-            final notesResponse = await _supabase
-                .from('notes')
-                .select('id, title, content, created_at, updated_at')
-                .eq('user_id', userId)
-                .eq('is_archived', false)
-                .order('updated_at', ascending: false)
-                .limit(20);
-
-            notes = List<Map<String, dynamic>>.from(notesResponse);
-          }
-
-          // ユーザーの統計情報を取得
-          final statsResponse = await _supabase
-              .from('user_stats')
-              .select('current_level, total_points, current_streak, longest_streak, notes_created')
+        if (notes.isEmpty) {
+          final notesResponse = await _supabase
+              .from('notes')
+              .select('id, title, content, created_at, updated_at')
               .eq('user_id', userId)
-              .single();
+              .eq('is_archived', false)
+              .order('updated_at', ascending: false)
+              .limit(20);
 
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'task_recommendations',
-              'userId': userId,
-              'recentNotes': notes,
-              'userStats': statsResponse,
-            },
-          );
+          notes = List<Map<String, dynamic>>.from(notesResponse);
+        }
 
-          final result = data['result'] as Map<String, dynamic>;
+        // ユーザーの統計情報を取得
+        final statsResponse = await _supabase
+            .from('user_stats')
+            .select(
+              'current_level, total_points, current_streak, longest_streak, notes_created',
+            )
+            .eq('user_id', userId)
+            .single();
 
-          return TaskRecommendations(
-            daily: List<String>.from(result['daily'] ?? []),
-            weekly: List<String>.from(result['weekly'] ?? []),
-            monthly: List<String>.from(result['monthly'] ?? []),
-            yearly: List<String>.from(result['yearly'] ?? []),
-            insights: result['insights'] as String? ?? '',
-          );
-        },
-        operationName: 'getTaskRecommendations',
-      );
+        final data = await _invokeFunction('ai-assistant', {
+          'action': 'task_recommendations',
+          'userId': userId,
+          'recentNotes': notes,
+          'userStats': statsResponse,
+        });
+
+        final result = data['result'] as Map<String, dynamic>;
+
+        return TaskRecommendations(
+          daily: List<String>.from(result['daily'] ?? []),
+          weekly: List<String>.from(result['weekly'] ?? []),
+          monthly: List<String>.from(result['monthly'] ?? []),
+          yearly: List<String>.from(result['yearly'] ?? []),
+          insights: result['insights'] as String? ?? '',
+        );
+      }, operationName: 'getTaskRecommendations');
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting task recommendations', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error getting task recommendations',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -449,11 +438,11 @@ class AIUsageStats {
 
 /// AI秘書のタスク推奨
 class TaskRecommendations {
-  final List<String> daily;    // 今日やるべきこと
-  final List<String> weekly;   // 今週やるべきこと
-  final List<String> monthly;  // 今月やるべきこと
-  final List<String> yearly;   // 今年やるべきこと
-  final String insights;       // AIからのインサイト
+  final List<String> daily; // 今日やるべきこと
+  final List<String> weekly; // 今週やるべきこと
+  final List<String> monthly; // 今月やるべきこと
+  final List<String> yearly; // 今年やるべきこと
+  final String insights; // AIからのインサイト
 
   TaskRecommendations({
     required this.daily,

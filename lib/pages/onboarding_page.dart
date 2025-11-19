@@ -56,10 +56,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
       // Mark that user has started onboarding
       await supabase
           .from('user_stats')
-          .update({'metadata': {'onboarding_started': true}})
+          .update({
+            'metadata': {'onboarding_started': true},
+          })
           .eq('user_id', userId);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to mark onboarding started', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to mark onboarding started',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -174,11 +180,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to create sample notes', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to create sample notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     } finally {
       setState(() {
@@ -205,12 +215,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
       // Navigate to home page
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to complete onboarding', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to complete onboarding',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -304,7 +318,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: currentStepData.color.withValues(alpha : 0.1),
+                        color: currentStepData.color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -350,7 +364,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_circle, color: Colors.green[700]),
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.green[700],
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'サンプルメモ作成完了！',
@@ -391,8 +408,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       onPressed: _isLoading
                           ? null
                           : (_sampleNotesCreated
-                              ? _completeOnboarding
-                              : _nextStep),
+                                ? _completeOnboarding
+                                : _nextStep),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: currentStepData.color,
                         foregroundColor: Colors.white,
@@ -405,8 +422,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         _sampleNotesCreated
                             ? '完了'
                             : (_currentStep == _steps.length - 1
-                                ? 'サンプルメモを作成'
-                                : '次へ'),
+                                  ? 'サンプルメモを作成'
+                                  : '次へ'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

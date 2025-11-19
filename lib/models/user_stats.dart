@@ -25,8 +25,8 @@ class UserStats {
     this.lastActivityDate,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   // Calculate level based on points
   static int calculateLevel(int points) {
@@ -55,7 +55,9 @@ class UserStats {
   double get levelProgress {
     final pointsInLevel = totalPoints - pointsForCurrentLevel;
     final pointsNeeded = pointsForNextLevel - pointsForCurrentLevel;
-    return pointsNeeded > 0 ? (pointsInLevel / pointsNeeded).clamp(0.0, 1.0) : 0.0;
+    return pointsNeeded > 0
+        ? (pointsInLevel / pointsNeeded).clamp(0.0, 1.0)
+        : 0.0;
   }
 
   // Get level title
@@ -69,38 +71,38 @@ class UserStats {
   }
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'total_points': totalPoints,
-        'current_level': currentLevel,
-        'notes_created': notesCreated,
-        'categories_created': categoriesCreated,
-        'notes_shared': notesShared,
-        'current_streak': currentStreak,
-        'longest_streak': longestStreak,
-        'last_activity_date': lastActivityDate?.toIso8601String(),
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    'user_id': userId,
+    'total_points': totalPoints,
+    'current_level': currentLevel,
+    'notes_created': notesCreated,
+    'categories_created': categoriesCreated,
+    'notes_shared': notesShared,
+    'current_streak': currentStreak,
+    'longest_streak': longestStreak,
+    'last_activity_date': lastActivityDate?.toIso8601String(),
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 
   factory UserStats.fromJson(Map<String, dynamic> json) => UserStats(
-        userId: json['user_id'],
-        totalPoints: json['total_points'] ?? 0,
-        currentLevel: json['current_level'] ?? 1,
-        notesCreated: json['notes_created'] ?? 0,
-        categoriesCreated: json['categories_created'] ?? 0,
-        notesShared: json['notes_shared'] ?? 0,
-        currentStreak: json['current_streak'] ?? 0,
-        longestStreak: json['longest_streak'] ?? 0,
-        lastActivityDate: json['last_activity_date'] != null
-            ? DateTime.parse(json['last_activity_date'])
-            : null,
-        createdAt: json['created_at'] != null
-            ? DateTime.parse(json['created_at'])
-            : DateTime.now(),
-        updatedAt: json['updated_at'] != null
-            ? DateTime.parse(json['updated_at'])
-            : DateTime.now(),
-      );
+    userId: json['user_id'],
+    totalPoints: json['total_points'] ?? 0,
+    currentLevel: json['current_level'] ?? 1,
+    notesCreated: json['notes_created'] ?? 0,
+    categoriesCreated: json['categories_created'] ?? 0,
+    notesShared: json['notes_shared'] ?? 0,
+    currentStreak: json['current_streak'] ?? 0,
+    longestStreak: json['longest_streak'] ?? 0,
+    lastActivityDate: json['last_activity_date'] != null
+        ? DateTime.parse(json['last_activity_date'])
+        : null,
+    createdAt: json['created_at'] != null
+        ? DateTime.parse(json['created_at'])
+        : DateTime.now(),
+    updatedAt: json['updated_at'] != null
+        ? DateTime.parse(json['updated_at'])
+        : DateTime.now(),
+  );
 
   UserStats copyWith({
     String? userId,
@@ -150,21 +152,22 @@ class UserAchievement {
     this.unlockedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-        if (id != null) 'id': id,
-        'user_id': userId,
-        'achievement_id': achievementId,
-        'current_progress': currentProgress,
-        'is_unlocked': isUnlocked,
-        'unlocked_at': unlockedAt?.toIso8601String(),
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    if (id != null) 'id': id,
+    'user_id': userId,
+    'achievement_id': achievementId,
+    'current_progress': currentProgress,
+    'is_unlocked': isUnlocked,
+    'unlocked_at': unlockedAt?.toIso8601String(),
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 
-  factory UserAchievement.fromJson(Map<String, dynamic> json) => UserAchievement(
+  factory UserAchievement.fromJson(Map<String, dynamic> json) =>
+      UserAchievement(
         id: json['id'],
         userId: json['user_id'],
         achievementId: json['achievement_id'],

@@ -27,10 +27,7 @@ class SortDialog extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text(
                   '並び替え',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 TextButton(
@@ -52,8 +49,7 @@ class SortDialog extends StatelessWidget {
                 sortType.label,
                 style: TextStyle(
                   color: isSelected ? Colors.blue : Colors.black,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               trailing: isSelected

@@ -10,10 +10,7 @@ class DocumentService {
       'BUSINESS_OPERATIONS_PLAN.md',
       'COMPETITOR_ANALYSIS_2025.md',
     ],
-    'user-docs': [
-      'GAMIFICATION_README.md',
-      'GROWTH_FEATURES.md',
-    ],
+    'user-docs': ['GAMIFICATION_README.md', 'GROWTH_FEATURES.md'],
     'session-summaries': [
       'SESSION_SUMMARY_2025-11-10_GROWTH_STRATEGY.md',
       'SESSION_SUMMARY_2025-11-10.md',
@@ -44,22 +41,26 @@ class DocumentService {
     final List<DocumentItem> documents = [];
 
     // README.mdを最初に追加
-    documents.add(DocumentItem(
-      id: 'readme',
-      title: 'ドキュメント構成',
-      category: 'root',
-      path: 'docs/README.md',
-    ),);
+    documents.add(
+      DocumentItem(
+        id: 'readme',
+        title: 'ドキュメント構成',
+        category: 'root',
+        path: 'docs/README.md',
+      ),
+    );
 
     // 各カテゴリのドキュメントを追加
     _documentFiles.forEach((category, files) {
       for (final file in files) {
-        documents.add(DocumentItem(
-          id: '${category}_$file',
-          title: _formatTitle(file),
-          category: category,
-          path: 'docs/$category/$file',
-        ),);
+        documents.add(
+          DocumentItem(
+            id: '${category}_$file',
+            title: _formatTitle(file),
+            category: category,
+            path: 'docs/$category/$file',
+          ),
+        );
       }
     });
 
@@ -89,17 +90,23 @@ class DocumentService {
     try {
       debugPrint('📄 [DocumentService] Loading document from path: $path');
       final content = await rootBundle.loadString(path);
-      debugPrint('✅ [DocumentService] Document loaded successfully: ${content.length} characters');
+      debugPrint(
+        '✅ [DocumentService] Document loaded successfully: ${content.length} characters',
+      );
       return content;
     } catch (e, stackTrace) {
-      debugPrint('❌ [DocumentService] Failed to load document from path: $path');
+      debugPrint(
+        '❌ [DocumentService] Failed to load document from path: $path',
+      );
       debugPrint('❌ [DocumentService] Error: $e');
       debugPrint('❌ [DocumentService] Error type: ${e.runtimeType}');
       debugPrint('❌ [DocumentService] Stack trace: $stackTrace');
 
       // 特定のエラーを検出
       if (e.toString().contains('Unable to load asset')) {
-        debugPrint('⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration');
+        debugPrint(
+          '⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration',
+        );
         debugPrint('⚠️ [DocumentService] Expected path: $path');
       }
 

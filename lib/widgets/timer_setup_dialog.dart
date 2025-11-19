@@ -5,10 +5,7 @@ import 'package:flutter/services.dart';
 class TimerSetupDialog extends StatefulWidget {
   final int? noteId;
 
-  const TimerSetupDialog({
-    super.key,
-    this.noteId,
-  });
+  const TimerSetupDialog({super.key, this.noteId});
 
   @override
   State<TimerSetupDialog> createState() => _TimerSetupDialogState();
@@ -44,9 +41,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500),
         padding: const EdgeInsets.all(24),
@@ -58,11 +53,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
               // ヘッダー
               Row(
                 children: [
-                  Icon(
-                    Icons.timer,
-                    color: colorScheme.primary,
-                    size: 28,
-                  ),
+                  Icon(Icons.timer, color: colorScheme.primary, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -92,10 +83,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
               // タイマー名
               const Text(
                 'タイマー名（任意）',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -112,10 +100,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
               // 時間設定
               const Text(
                 '時間を設定',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
               Row(
@@ -151,10 +136,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
               // クイック設定
               const Text(
                 'クイック設定',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -175,10 +157,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
               // 通知設定
               const Text(
                 '終了時の動作',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               CheckboxListTile(
@@ -267,9 +246,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
           child: TextField(
             controller: TextEditingController(text: value.toString()),
             keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
             decoration: InputDecoration(
               border: OutlineInputBorder(
@@ -291,18 +268,14 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
       ],
     );
   }
 
   Widget _buildQuickButton(String label, int minutes) {
-    final isSelected =
-        _hours == 0 && _minutes == minutes && _seconds == 0;
+    final isSelected = _hours == 0 && _minutes == minutes && _seconds == 0;
 
     return ElevatedButton(
       onPressed: () => _setQuickTime(minutes),
@@ -313,10 +286,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
         foregroundColor: isSelected
             ? Theme.of(context).colorScheme.onPrimary
             : Theme.of(context).colorScheme.onSurface,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
       child: Text(label),
     );

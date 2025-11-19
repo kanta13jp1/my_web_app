@@ -54,15 +54,9 @@ class MarkdownPreview extends StatelessWidget {
           height: 1.2,
         ),
         // 段落スタイル
-        p: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-        ),
+        p: const TextStyle(fontSize: 16, height: 1.6),
         // リストスタイル
-        listBullet: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-        ),
+        listBullet: const TextStyle(fontSize: 16, height: 1.6),
         // コードブロックスタイル
         code: TextStyle(
           backgroundColor: Colors.grey[100],
@@ -82,36 +76,21 @@ class MarkdownPreview extends StatelessWidget {
         ),
         blockquoteDecoration: BoxDecoration(
           color: Colors.blue[50],
-          border: Border(
-            left: BorderSide(
-              color: Colors.blue[300]!,
-              width: 4,
-            ),
-          ),
+          border: Border(left: BorderSide(color: Colors.blue[300]!, width: 4)),
           borderRadius: BorderRadius.circular(4),
         ),
         blockquotePadding: const EdgeInsets.all(12),
         // 水平線
         horizontalRuleDecoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Colors.grey[300]!,
-              width: 2,
-            ),
-          ),
+          border: Border(top: BorderSide(color: Colors.grey[300]!, width: 2)),
         ),
         // テーブルスタイル
-        tableBorder: TableBorder.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        tableBorder: TableBorder.all(color: Colors.grey[300]!, width: 1),
         tableHead: TextStyle(
           fontWeight: FontWeight.bold,
           backgroundColor: Colors.grey[200],
         ),
-        tableBody: const TextStyle(
-          fontSize: 14,
-        ),
+        tableBody: const TextStyle(fontSize: 14),
         tableColumnWidth: const FlexColumnWidth(),
         // リンクスタイル
         a: const TextStyle(
@@ -126,15 +105,10 @@ class MarkdownPreview extends StatelessWidget {
           launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication);
         }
       },
-      builders: {
-        'code': CodeElementBuilder(),
-      },
+      builders: {'code': CodeElementBuilder()},
       extensionSet: md.ExtensionSet(
         md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-        [
-          md.EmojiSyntax(),
-          ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-        ],
+        [md.EmojiSyntax(), ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes],
       ),
     );
   }
@@ -145,13 +119,16 @@ class CodeElementBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
     final String code = element.textContent;
-    final String? language = element.attributes['class']?.replaceFirst('language-', '');
+    final String? language = element.attributes['class']?.replaceFirst(
+      'language-',
+      '',
+    );
 
     if (language != null && language.isNotEmpty) {
       // シンタックスハイライトを適用
       try {
         final result = highlight.highlight.parse(code, language: language);
-        
+
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
@@ -163,7 +140,10 @@ class CodeElementBuilder extends MarkdownElementBuilder {
             children: [
               // 言語ラベル
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: const BorderRadius.only(
@@ -291,17 +271,15 @@ class CodeElementBuilder extends MarkdownElementBuilder {
 
   List<TextSpan> _buildHighlightedCode(List<highlight.Node>? nodes) {
     if (nodes == null) return [];
-    
+
     final List<TextSpan> spans = [];
-    
+
     for (final node in nodes) {
       if (node.value != null) {
         spans.add(
           TextSpan(
             text: node.value,
-            style: TextStyle(
-              color: _getColorForClassName(node.className),
-            ),
+            style: TextStyle(color: _getColorForClassName(node.className)),
           ),
         );
       }
@@ -309,7 +287,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         spans.addAll(_buildHighlightedCode(node.children));
       }
     }
-    
+
     return spans;
   }
 

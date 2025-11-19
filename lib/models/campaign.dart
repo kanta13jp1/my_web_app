@@ -82,10 +82,7 @@ class Campaign {
       startDate: now,
       endDate: endDate,
       isActive: true,
-      rewards: {
-        'points_multiplier': 5,
-        'base_points': 500,
-      },
+      rewards: {'points_multiplier': 5, 'base_points': 500},
     );
   }
 
@@ -101,10 +98,7 @@ class Campaign {
       startDate: now,
       endDate: endDate,
       isActive: true,
-      rewards: {
-        'points_multiplier': 5,
-        'base_points': 10,
-      },
+      rewards: {'points_multiplier': 5, 'base_points': 10},
     );
   }
 
@@ -120,10 +114,7 @@ class Campaign {
       startDate: now,
       endDate: endDate,
       isActive: true,
-      rewards: {
-        'points_multiplier': 5,
-        'base_points': 100,
-      },
+      rewards: {'points_multiplier': 5, 'base_points': 100},
     );
   }
 }

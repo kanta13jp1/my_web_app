@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart'; // ← 追加
 
-enum AppThemeMode {
-  light,
-  dark,
-  system,
-}
+enum AppThemeMode { light, dark, system }
 
 class ThemeService extends ChangeNotifier {
   static const String _themeModeKey = 'theme_mode';
@@ -50,7 +46,8 @@ class ThemeService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
 
     // 色のコンポーネントから32ビット整数値を構築
-    final colorValue = ((color.a * 255).toInt() << 24) |
+    final colorValue =
+        ((color.a * 255).toInt() << 24) |
         ((color.r * 255).toInt() << 16) |
         ((color.g * 255).toInt() << 8) |
         ((color.b * 255).toInt() << 0);
@@ -79,14 +76,10 @@ class ThemeService extends ChangeNotifier {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
       ),
     );
@@ -101,11 +94,10 @@ class ThemeService extends ChangeNotifier {
         seedColor: _primaryColor,
         brightness: Brightness.dark,
       ),
-      textTheme: GoogleFonts.notoSansJpTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(
-        fontFamilyFallback: ['Noto Sans', 'Noto Color Emoji', 'sans-serif'],
-      ),
+      textTheme: GoogleFonts.notoSansJpTextTheme(ThemeData.dark().textTheme)
+          .apply(
+            fontFamilyFallback: ['Noto Sans', 'Noto Color Emoji', 'sans-serif'],
+          ),
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
@@ -114,14 +106,10 @@ class ThemeService extends ChangeNotifier {
       cardTheme: CardThemeData(
         elevation: 2,
         color: Colors.grey[850],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
       ),
     );

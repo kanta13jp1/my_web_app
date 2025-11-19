@@ -7,10 +7,7 @@ import 'personality_test_result_page.dart';
 class PersonalityTestQuestionsPage extends StatefulWidget {
   final int testId;
 
-  const PersonalityTestQuestionsPage({
-    super.key,
-    required this.testId,
-  });
+  const PersonalityTestQuestionsPage({super.key, required this.testId});
 
   @override
   State<PersonalityTestQuestionsPage> createState() =>
@@ -114,9 +111,8 @@ class _PersonalityTestQuestionsPageState
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => PersonalityTestResultPage(
-              testId: widget.testId,
-            ),
+            builder: (context) =>
+                PersonalityTestResultPage(testId: widget.testId),
           ),
         );
       }
@@ -149,21 +145,13 @@ class _PersonalityTestQuestionsPageState
     final textTheme = Theme.of(context).textTheme;
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('性格診断'),
-        ),
-        body: const Center(
-          child: Text('質問が見つかりませんでした'),
-        ),
+        appBar: AppBar(title: const Text('性格診断')),
+        body: const Center(child: Text('質問が見つかりませんでした')),
       );
     }
 

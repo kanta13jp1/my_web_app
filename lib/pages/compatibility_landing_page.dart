@@ -35,9 +35,9 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('性格タイプの取得に失敗しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('性格タイプの取得に失敗しました')));
       }
     }
   }
@@ -49,8 +49,7 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('性格診断が必要です'),
-          content: const Text(
-              'まず、あなたの性格タイプを診断してください。性格診断は約5分で完了します。',),
+          content: const Text('まず、あなたの性格タイプを診断してください。性格診断は約5分で完了します。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -73,9 +72,8 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CompatibilityCheckPage(
-          myType: _userTest!.personalityType!,
-        ),
+        builder: (context) =>
+            CompatibilityCheckPage(myType: _userTest!.personalityType!),
       ),
     );
   }
@@ -129,35 +127,28 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.pink.shade100,
-            Colors.purple.shade100,
-          ],
+          colors: [Colors.pink.shade100, Colors.purple.shade100],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.favorite,
-            size: 64,
-            color: Colors.pink.shade700,
-          ),
+          Icon(Icons.favorite, size: 64, color: Colors.pink.shade700),
           const SizedBox(height: 16),
           Text(
             '💘 恋愛相性診断',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pink.shade900,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Colors.pink.shade900,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'MBTIの性格タイプから\n2人の恋愛相性を診断します',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.pink.shade800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: Colors.pink.shade800),
             textAlign: TextAlign.center,
           ),
         ],
@@ -168,9 +159,7 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
   Widget _buildYourTypeCard() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -183,8 +172,8 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
                 Text(
                   'あなたの性格タイプ',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -201,17 +190,17 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
                   Text(
                     _userTest?.personalityType ?? '',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade900,
-                          letterSpacing: 2,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade900,
+                      letterSpacing: 2,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '（${_getPersonalityTypeName(_userTest?.personalityType ?? '')}）',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.blue.shade700,
-                        ),
+                      color: Colors.blue.shade700,
+                    ),
                   ),
                 ],
               ),
@@ -234,9 +223,7 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
   Widget _buildFeaturesList() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -244,9 +231,9 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
           children: [
             Text(
               'この診断でわかること',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildFeatureItem(
@@ -306,16 +293,16 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 2),
               Text(
                 description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -345,9 +332,9 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
             Text(
               '相性診断を始める',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -372,9 +359,9 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
               Text(
                 'ご注意',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
               ),
             ],
           ),
@@ -384,9 +371,9 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
             '実際の人間関係は個人の経験や価値観など、多くの要素によって形成されます。'
             '診断結果は参考程度にとどめ、相手との関係を大切に育んでください。',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade700,
-                  height: 1.5,
-                ),
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
           ),
         ],
       ),

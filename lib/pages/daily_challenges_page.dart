@@ -32,15 +32,19 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final challenges =
-          await _challengeService.getTodaysChallengesWithProgress(userId);
+      final challenges = await _challengeService
+          .getTodaysChallengesWithProgress(userId);
 
       setState(() {
         _challenges = challenges;
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load challenges', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to load challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -49,13 +53,15 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
 
-    final success =
-        await _challengeService.claimChallengeReward(userId, challengeId);
+    final success = await _challengeService.claimChallengeReward(
+      userId,
+      challengeId,
+    );
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('報酬を受け取りました！')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('報酬を受け取りました！')));
       _loadChallenges(); // Reload to update UI
     }
   }
@@ -80,9 +86,7 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
           : RefreshIndicator(
               onRefresh: _loadChallenges,
               child: _challenges.isEmpty
-                  ? const Center(
-                      child: Text('今日のチャレンジはありません'),
-                    )
+                  ? const Center(child: Text('今日のチャレンジはありません'))
                   : ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
@@ -168,10 +172,7 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
                       const SizedBox(height: 4),
                       Text(
                         challenge.challengeDescription,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
                   ),
@@ -246,8 +247,9 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
                 ),
                 if (isCompleted)
                   ElevatedButton.icon(
-                    onPressed:
-                        rewardClaimed ? null : () => _claimReward(challenge.id),
+                    onPressed: rewardClaimed
+                        ? null
+                        : () => _claimReward(challenge.id),
                     icon: Icon(
                       rewardClaimed ? Icons.check : Icons.card_giftcard,
                       size: 18,
@@ -257,8 +259,9 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
                       style: const TextStyle(fontSize: 14),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          rewardClaimed ? Colors.grey : Colors.green,
+                      backgroundColor: rewardClaimed
+                          ? Colors.grey
+                          : Colors.green,
                       foregroundColor: Colors.white,
                     ),
                   ),

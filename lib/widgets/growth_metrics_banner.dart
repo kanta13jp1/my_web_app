@@ -67,10 +67,7 @@ class _GrowthMetricsBannerState extends State<GrowthMetricsBanner> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade50,
-            Colors.purple.shade50,
-          ],
+          colors: [Colors.blue.shade50, Colors.purple.shade50],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blue.shade200),
@@ -84,22 +81,14 @@ class _GrowthMetricsBannerState extends State<GrowthMetricsBanner> {
             value: _totalUsers.toString(),
             color: Colors.blue,
           ),
-          Container(
-            height: 30,
-            width: 1,
-            color: Colors.grey.shade300,
-          ),
+          Container(height: 30, width: 1, color: Colors.grey.shade300),
           _buildMetric(
             icon: Icons.circle,
             label: 'オンライン',
             value: totalOnline.toString(),
             color: Colors.green,
           ),
-          Container(
-            height: 30,
-            width: 1,
-            color: Colors.grey.shade300,
-          ),
+          Container(height: 30, width: 1, color: Colors.grey.shade300),
           _buildMetric(
             icon: Icons.fiber_new,
             label: '本日の新規',
@@ -128,10 +117,7 @@ class _GrowthMetricsBannerState extends State<GrowthMetricsBanner> {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
               ),
             ],
           ),

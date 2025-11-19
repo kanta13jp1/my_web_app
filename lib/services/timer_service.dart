@@ -44,17 +44,21 @@ class TimerService extends ChangeNotifier {
       }
 
       // Supabaseに保存
-      final response = await _supabase.from('timers').insert({
-        'user_id': userId,
-        'note_id': noteId,
-        'name': name,
-        'duration_seconds': durationSeconds,
-        'started_at': DateTime.now().toIso8601String(),
-        'status': 'running',
-        'sound_notification': soundNotification,
-        'browser_notification': browserNotification,
-        'auto_save': autoSave,
-      }).select().single();
+      final response = await _supabase
+          .from('timers')
+          .insert({
+            'user_id': userId,
+            'note_id': noteId,
+            'name': name,
+            'duration_seconds': durationSeconds,
+            'started_at': DateTime.now().toIso8601String(),
+            'status': 'running',
+            'sound_notification': soundNotification,
+            'browser_notification': browserNotification,
+            'auto_save': autoSave,
+          })
+          .select()
+          .single();
 
       // タイマー作成
       _activeTimer = AppTimer.fromJson(response);
@@ -74,24 +78,21 @@ class TimerService extends ChangeNotifier {
   void _startCountdown() {
     _countdownTimer?.cancel();
 
-    _countdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (_activeTimer?.status != TimerStatus.running) {
-          timer.cancel();
-          return;
-        }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_activeTimer?.status != TimerStatus.running) {
+        timer.cancel();
+        return;
+      }
 
-        _remainingSeconds--;
-        notifyListeners();
+      _remainingSeconds--;
+      notifyListeners();
 
-        // 完了
-        if (_remainingSeconds <= 0) {
-          timer.cancel();
-          _onTimerComplete();
-        }
-      },
-    );
+      // 完了
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
+        _onTimerComplete();
+      }
+    });
   }
 
   /// タイマー完了時の処理
@@ -100,10 +101,13 @@ class TimerService extends ChangeNotifier {
 
     try {
       // ステータス更新
-      await _supabase.from('timers').update({
-        'status': 'completed',
-        'completed_at': DateTime.now().toIso8601String(),
-      }).eq('id', _activeTimer!.id);
+      await _supabase
+          .from('timers')
+          .update({
+            'status': 'completed',
+            'completed_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', _activeTimer!.id);
 
       _activeTimer = _activeTimer!.copyWith(
         status: TimerStatus.completed,
@@ -131,9 +135,10 @@ class TimerService extends ChangeNotifier {
     }
 
     try {
-      await _supabase.from('timers').update({
-        'status': 'paused',
-      }).eq('id', _activeTimer!.id);
+      await _supabase
+          .from('timers')
+          .update({'status': 'paused'})
+          .eq('id', _activeTimer!.id);
 
       _activeTimer = _activeTimer!.copyWith(status: TimerStatus.paused);
       _countdownTimer?.cancel();
@@ -150,9 +155,10 @@ class TimerService extends ChangeNotifier {
     }
 
     try {
-      await _supabase.from('timers').update({
-        'status': 'running',
-      }).eq('id', _activeTimer!.id);
+      await _supabase
+          .from('timers')
+          .update({'status': 'running'})
+          .eq('id', _activeTimer!.id);
 
       _activeTimer = _activeTimer!.copyWith(status: TimerStatus.running);
       _startCountdown();
@@ -167,9 +173,10 @@ class TimerService extends ChangeNotifier {
     if (_activeTimer == null) return;
 
     try {
-      await _supabase.from('timers').update({
-        'status': 'stopped',
-      }).eq('id', _activeTimer!.id);
+      await _supabase
+          .from('timers')
+          .update({'status': 'stopped'})
+          .eq('id', _activeTimer!.id);
 
       _countdownTimer?.cancel();
       _activeTimer = null;

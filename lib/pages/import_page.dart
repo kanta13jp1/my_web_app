@@ -49,7 +49,11 @@ class _ImportPageState extends State<ImportPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading categories', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading categories',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -94,9 +98,9 @@ class _ImportPageState extends State<ImportPage> {
     } catch (e, stackTrace) {
       AppLogger.error('Error picking file', error: e, stackTrace: stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ファイル選択エラー: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ファイル選択エラー: $e')));
       }
     }
   }
@@ -127,27 +131,27 @@ class _ImportPageState extends State<ImportPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${notes.length}件のメモを検出しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${notes.length}件のメモを検出しました')));
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error parsing file', error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ファイル解析エラー: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ファイル解析エラー: $e')));
       }
     }
   }
 
   Future<void> _importNotes() async {
     if (_parsedNotes == null || _parsedNotes!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('インポートするメモがありません')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('インポートするメモがありません')));
       return;
     }
 
@@ -180,13 +184,17 @@ class _ImportPageState extends State<ImportPage> {
         Navigator.pop(context);
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error importing notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isImporting = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('インポートエラー: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('インポートエラー: $e')));
       }
     }
   }
@@ -194,9 +202,7 @@ class _ImportPageState extends State<ImportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('メモのインポート'),
-      ),
+      appBar: AppBar(title: const Text('メモのインポート')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -287,12 +293,17 @@ class _ImportPageState extends State<ImportPage> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.file_present, color: Colors.blue),
+                                const Icon(
+                                  Icons.file_present,
+                                  color: Colors.blue,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -344,9 +355,7 @@ class _ImportPageState extends State<ImportPage> {
                                         )
                                       : const Icon(Icons.upload),
                                   label: Text(
-                                    _isImporting
-                                        ? 'インポート中...'
-                                        : 'インポート開始',
+                                    _isImporting ? 'インポート中...' : 'インポート開始',
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.all(16),
@@ -383,7 +392,7 @@ class _ImportPageState extends State<ImportPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha : 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 32),
@@ -403,10 +412,7 @@ class _ImportPageState extends State<ImportPage> {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
                 ),

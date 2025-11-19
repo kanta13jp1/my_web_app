@@ -23,9 +23,7 @@ class GrowthChartWidget extends StatelessWidget {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: Text('データがありません'),
-          ),
+          child: Center(child: Text('データがありません')),
         ),
       );
     }
@@ -54,10 +52,7 @@ class GrowthChartWidget extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -69,10 +64,7 @@ class GrowthChartWidget extends StatelessWidget {
                     drawVerticalLine: false,
                     horizontalInterval: maxY > 10 ? null : 1,
                     getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey[300],
-                        strokeWidth: 1,
-                      );
+                      return FlLine(color: Colors.grey[300], strokeWidth: 1);
                     },
                   ),
                   titlesData: FlTitlesData(
@@ -157,7 +149,7 @@ class GrowthChartWidget extends StatelessWidget {
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: lineColor.withValues(alpha : 0.1),
+                        color: lineColor.withValues(alpha: 0.1),
                       ),
                     ),
                   ],

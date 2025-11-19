@@ -8,7 +8,7 @@ class ImportService {
   final GamificationService _gamificationService;
 
   ImportService(this._supabase)
-      : _gamificationService = GamificationService(_supabase);
+    : _gamificationService = GamificationService(_supabase);
 
   /// Notion CSVファイルをパース（タイトル、内容、作成日、更新日）
   Future<List<Map<String, dynamic>>> parseNotionCsv(String csvContent) async {
@@ -18,15 +18,24 @@ class ImportService {
 
       // ヘッダー行を解析
       final headers = _parseCsvLine(lines[0]);
-      final titleIndex = headers.indexWhere((h) =>
-          h.toLowerCase().contains('title') ||
-          h.toLowerCase().contains('name'),);
+      final titleIndex = headers.indexWhere(
+        (h) =>
+            h.toLowerCase().contains('title') ||
+            h.toLowerCase().contains('name'),
+      );
       final contentIndex = headers.indexWhere(
-          (h) => h.toLowerCase().contains('content') || h.toLowerCase().contains('body'),);
-      final createdIndex = headers
-          .indexWhere((h) => h.toLowerCase().contains('created'));
-      final updatedIndex = headers
-          .indexWhere((h) => h.toLowerCase().contains('updated') || h.toLowerCase().contains('modified'));
+        (h) =>
+            h.toLowerCase().contains('content') ||
+            h.toLowerCase().contains('body'),
+      );
+      final createdIndex = headers.indexWhere(
+        (h) => h.toLowerCase().contains('created'),
+      );
+      final updatedIndex = headers.indexWhere(
+        (h) =>
+            h.toLowerCase().contains('updated') ||
+            h.toLowerCase().contains('modified'),
+      );
 
       final List<Map<String, dynamic>> parsedNotes = [];
 
@@ -59,32 +68,51 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Notion CSV', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error parsing Notion CSV',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
 
   /// Evernote ENEX (XML) ファイルをパース
-  Future<List<Map<String, dynamic>>> parseEvernoteEnex(String enexContent) async {
+  Future<List<Map<String, dynamic>>> parseEvernoteEnex(
+    String enexContent,
+  ) async {
     try {
       final List<Map<String, dynamic>> parsedNotes = [];
 
       // シンプルなXMLパーサー（<note>タグを検索）
-      final noteMatches = RegExp(r'<note>(.*?)</note>', dotAll: true).allMatches(enexContent);
+      final noteMatches = RegExp(
+        r'<note>(.*?)</note>',
+        dotAll: true,
+      ).allMatches(enexContent);
 
       for (final match in noteMatches) {
         final noteXml = match.group(1) ?? '';
 
         final titleMatch = RegExp(r'<title>(.*?)</title>').firstMatch(noteXml);
-        final contentMatch = RegExp(r'<content>(.*?)</content>', dotAll: true).firstMatch(noteXml);
-        final createdMatch = RegExp(r'<created>(.*?)</created>').firstMatch(noteXml);
-        final updatedMatch = RegExp(r'<updated>(.*?)</updated>').firstMatch(noteXml);
+        final contentMatch = RegExp(
+          r'<content>(.*?)</content>',
+          dotAll: true,
+        ).firstMatch(noteXml);
+        final createdMatch = RegExp(
+          r'<created>(.*?)</created>',
+        ).firstMatch(noteXml);
+        final updatedMatch = RegExp(
+          r'<updated>(.*?)</updated>',
+        ).firstMatch(noteXml);
 
         final title = titleMatch?.group(1) ?? 'Untitled';
         var content = contentMatch?.group(1) ?? '';
 
         // CDATA セクションを削除
-        content = content.replaceAll(RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true), r'$1');
+        content = content.replaceAll(
+          RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true),
+          r'$1',
+        );
         // HTMLタグを削除（簡易的）
         content = content.replaceAll(RegExp(r'<[^>]*>'), '');
         // エンティティをデコード
@@ -107,18 +135,26 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Evernote ENEX', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error parsing Evernote ENEX',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
 
   /// Markdown形式のファイルをパース（汎用インポート）
-  Future<List<Map<String, dynamic>>> parseMarkdown(String markdownContent) async {
+  Future<List<Map<String, dynamic>>> parseMarkdown(
+    String markdownContent,
+  ) async {
     try {
       final List<Map<String, dynamic>> parsedNotes = [];
 
       // # や ## で始まる行をタイトルとして認識
-      final sections = markdownContent.split(RegExp(r'^#{1,2}\s+', multiLine: true));
+      final sections = markdownContent.split(
+        RegExp(r'^#{1,2}\s+', multiLine: true),
+      );
 
       for (var i = 1; i < sections.length; i++) {
         final section = sections[i].trim();
@@ -148,7 +184,11 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Markdown', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error parsing Markdown',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -178,7 +218,10 @@ class ImportService {
 
           importedCount++;
         } catch (e) {
-          AppLogger.warning('Failed to import individual note: ${noteData['title']}', error: e);
+          AppLogger.warning(
+            'Failed to import individual note: ${noteData['title']}',
+            error: e,
+          );
         }
       }
 
@@ -189,7 +232,11 @@ class ImportService {
 
       return importedCount;
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error importing notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -206,9 +253,15 @@ class ImportService {
         reason: 'Notion/Evernoteからのインポート',
       );
 
-      AppLogger.info('Import bonus awarded: $bonusPoints points for $importedCount notes');
+      AppLogger.info(
+        'Import bonus awarded: $bonusPoints points for $importedCount notes',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding import bonus', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error awarding import bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

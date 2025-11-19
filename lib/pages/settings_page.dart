@@ -10,22 +10,24 @@ class SettingsPage extends StatelessWidget {
     final themeService = Provider.of<ThemeService>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('設定'),
-      ),
+      appBar: AppBar(title: const Text('設定')),
       body: ListView(
         children: [
           // 外観セクション
           _buildSectionHeader('外観', Icons.palette),
-          
+
           // テーマモード設定
           ListTile(
             leading: Icon(
-              themeService.themeMode == AppThemeMode.light  // 更新
+              themeService.themeMode ==
+                      AppThemeMode
+                          .light // 更新
                   ? Icons.light_mode
-                  : themeService.themeMode == AppThemeMode.dark  // 更新
-                      ? Icons.dark_mode
-                      : Icons.brightness_auto,
+                  : themeService.themeMode ==
+                        AppThemeMode
+                            .dark // 更新
+                  ? Icons.dark_mode
+                  : Icons.brightness_auto,
             ),
             title: const Text('テーマ'),
             subtitle: Text(_getThemeModeLabel(themeService.themeMode)),
@@ -44,7 +46,7 @@ class SettingsPage extends StatelessWidget {
 
           // プレビュー
           _buildSectionHeader('プレビュー', Icons.visibility),
-          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -118,7 +120,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  String _getThemeModeLabel(AppThemeMode mode) {  // 更新
+  String _getThemeModeLabel(AppThemeMode mode) {
+    // 更新
     switch (mode) {
       case AppThemeMode.light:
         return 'ライトモード';
@@ -227,7 +230,7 @@ class SettingsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final color = colors[index];
               final isSelected = color == themeService.primaryColor;
-              
+
               return InkWell(
                 onTap: () {
                   themeService.setPrimaryColor(color);

@@ -134,7 +134,11 @@ class _HomePageState extends State<HomePage> {
         _loadUserStats();
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check daily login bonus', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to check daily login bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -152,7 +156,11 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading user stats', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading user stats',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -205,18 +213,16 @@ class _HomePageState extends State<HomePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            note.isPinned ? 'ピン留めを解除しました' : 'ピン留めしました',
-          ),
+          content: Text(note.isPinned ? 'ピン留めを解除しました' : 'ピン留めしました'),
           duration: const Duration(seconds: 1),
         ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -281,9 +287,9 @@ class _HomePageState extends State<HomePage> {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -306,9 +312,9 @@ class _HomePageState extends State<HomePage> {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -356,9 +362,9 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -389,18 +395,16 @@ class _HomePageState extends State<HomePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            note.isFavorite ? 'お気に入りから削除しました' : 'お気に入りに追加しました',
-          ),
+          content: Text(note.isFavorite ? 'お気に入りから削除しました' : 'お気に入りに追加しました'),
           duration: const Duration(seconds: 1),
         ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -462,9 +466,9 @@ class _HomePageState extends State<HomePage> {
       });
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $error')));
       }
       setState(() {
         _isLoading = false;
@@ -477,15 +481,15 @@ class _HomePageState extends State<HomePage> {
       await NoteOperationsService.deleteNote(noteId);
       _loadNotes();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メモを削除しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('メモを削除しました')));
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $error')));
       }
     }
   }
@@ -495,9 +499,9 @@ class _HomePageState extends State<HomePage> {
     AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AuthPage()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const AuthPage()));
     }
   }
 
@@ -590,7 +594,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final hasDateFilter = _startDate != null || _endDate != null;
     final hasCategoryFilter = _selectedCategoryId != null;
-    final hasAnyFilter = _searchController.text.isNotEmpty ||
+    final hasAnyFilter =
+        _searchController.text.isNotEmpty ||
         hasDateFilter ||
         hasCategoryFilter ||
         _showFavoritesOnly ||
@@ -638,150 +643,153 @@ class _HomePageState extends State<HomePage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                   children: [
-                // キャンペーンバナー
-                const CampaignsBanner(),
-                // 成長メトリクスバナー（登録者数・閲覧者数）
-                const GrowthMetricsBanner(),
-                // レベル表示（ゲーミフィケーション）
-                if (_userStats != null)
-                  UserStatsHeader(
-                    userStats: _userStats!,
-                    onStatsUpdated: _loadUserStats,
-                  ),
-                // リマインダー統計バナー
-                ReminderStatsBanner(
-                  notes: _notes,
-                  overdueCount: overdueCount,
-                  dueSoonCount: dueSoonCount,
-                  todayCount: todayCount,
-                  isMobile: _isMobile,
-                  onFilterChanged: (filter) {
-                    setState(() {
-                      _reminderFilter = filter;
-                      _applyFilters();
-                    });
-                  },
-                ),
-                // フィルター情報表示
-                FilterChipsArea(
-                  hasAnyFilter: hasAnyFilter,
-                  sortType: _sortType,
-                  showFavoritesOnly: _showFavoritesOnly,
-                  reminderFilter: _reminderFilter,
-                  searchText: _searchController.text,
-                  searchCategoryId: _searchCategoryId,
-                  searchStartDate: _searchStartDate,
-                  searchEndDate: _searchEndDate,
-                  selectedCategoryId: _selectedCategoryId,
-                  startDate: _startDate,
-                  endDate: _endDate,
-                  selectedDateFilter: _selectedDateFilter,
-                  filteredNotes: _filteredNotes,
-                  notes: _notes,
-                  categories: _categories,
-                  isMobile: _isMobile,
-                  onClearSearch: (_) => _searchController.clear(),
-                  onClearSearchCategory: (_) {
-                    setState(() {
-                      _searchCategoryId = null;
-                      _applyFilters();
-                    });
-                  },
-                  onClearSearchDates: (_, __) {
-                    setState(() {
-                      _searchStartDate = null;
-                      _searchEndDate = null;
-                      _applyFilters();
-                    });
-                  },
-                  onClearReminderFilter: (_) {
-                    setState(() {
-                      _reminderFilter = null;
-                      _applyFilters();
-                    });
-                  },
-                  onClearFavoriteFilter: (value) {
-                    setState(() {
-                      _showFavoritesOnly = value;
-                      _applyFilters();
-                    });
-                  },
-                  onClearCategoryFilter: (_) {
-                    setState(() {
-                      _selectedCategoryId = null;
-                      _applyFilters();
-                    });
-                  },
-                  onClearDateFilter: (_, __, filter) {
-                    setState(() {
-                      _startDate = null;
-                      _endDate = null;
-                      _selectedDateFilter = filter;
-                      _applyFilters();
-                    });
-                  },
-                  getSortIcon: _getSortIcon,
-                ),
-                // メモ一覧
-                Expanded(
-                  child: _filteredNotes.isEmpty
-                      ? EmptyStateView(
-                          hasAnyFilter: hasAnyFilter,
-                          showFavoritesOnly: _showFavoritesOnly,
-                          reminderFilter: _reminderFilter,
-                          allNotes: _notes,
-                          onClearReminderFilter: () {
-                            setState(() {
-                              _reminderFilter = null;
-                              _applyFilters();
-                            });
-                          },
-                          onClearFavoritesFilter: () {
-                            setState(() {
-                              _showFavoritesOnly = false;
-                              _applyFilters();
-                            });
-                          },
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () async {
-                            await _loadCategories();
-                            await _loadNotes();
-                          },
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(8),
-                            itemCount: _filteredNotes.length,
-                            itemBuilder: (context, index) {
-                              final note = _filteredNotes[index];
-                              final category = _getCategoryById(note.categoryId);
-
-                              return NoteCardItem(
-                                note: note,
-                                category: category,
-                                searchQuery: _searchController.text,
-                                isMobile: _isMobile,
-                                onTap: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => NoteEditorPage(note: note),
-                                    ),
+                    // キャンペーンバナー
+                    const CampaignsBanner(),
+                    // 成長メトリクスバナー（登録者数・閲覧者数）
+                    const GrowthMetricsBanner(),
+                    // レベル表示（ゲーミフィケーション）
+                    if (_userStats != null)
+                      UserStatsHeader(
+                        userStats: _userStats!,
+                        onStatsUpdated: _loadUserStats,
+                      ),
+                    // リマインダー統計バナー
+                    ReminderStatsBanner(
+                      notes: _notes,
+                      overdueCount: overdueCount,
+                      dueSoonCount: dueSoonCount,
+                      todayCount: todayCount,
+                      isMobile: _isMobile,
+                      onFilterChanged: (filter) {
+                        setState(() {
+                          _reminderFilter = filter;
+                          _applyFilters();
+                        });
+                      },
+                    ),
+                    // フィルター情報表示
+                    FilterChipsArea(
+                      hasAnyFilter: hasAnyFilter,
+                      sortType: _sortType,
+                      showFavoritesOnly: _showFavoritesOnly,
+                      reminderFilter: _reminderFilter,
+                      searchText: _searchController.text,
+                      searchCategoryId: _searchCategoryId,
+                      searchStartDate: _searchStartDate,
+                      searchEndDate: _searchEndDate,
+                      selectedCategoryId: _selectedCategoryId,
+                      startDate: _startDate,
+                      endDate: _endDate,
+                      selectedDateFilter: _selectedDateFilter,
+                      filteredNotes: _filteredNotes,
+                      notes: _notes,
+                      categories: _categories,
+                      isMobile: _isMobile,
+                      onClearSearch: (_) => _searchController.clear(),
+                      onClearSearchCategory: (_) {
+                        setState(() {
+                          _searchCategoryId = null;
+                          _applyFilters();
+                        });
+                      },
+                      onClearSearchDates: (_, __) {
+                        setState(() {
+                          _searchStartDate = null;
+                          _searchEndDate = null;
+                          _applyFilters();
+                        });
+                      },
+                      onClearReminderFilter: (_) {
+                        setState(() {
+                          _reminderFilter = null;
+                          _applyFilters();
+                        });
+                      },
+                      onClearFavoriteFilter: (value) {
+                        setState(() {
+                          _showFavoritesOnly = value;
+                          _applyFilters();
+                        });
+                      },
+                      onClearCategoryFilter: (_) {
+                        setState(() {
+                          _selectedCategoryId = null;
+                          _applyFilters();
+                        });
+                      },
+                      onClearDateFilter: (_, __, filter) {
+                        setState(() {
+                          _startDate = null;
+                          _endDate = null;
+                          _selectedDateFilter = filter;
+                          _applyFilters();
+                        });
+                      },
+                      getSortIcon: _getSortIcon,
+                    ),
+                    // メモ一覧
+                    Expanded(
+                      child: _filteredNotes.isEmpty
+                          ? EmptyStateView(
+                              hasAnyFilter: hasAnyFilter,
+                              showFavoritesOnly: _showFavoritesOnly,
+                              reminderFilter: _reminderFilter,
+                              allNotes: _notes,
+                              onClearReminderFilter: () {
+                                setState(() {
+                                  _reminderFilter = null;
+                                  _applyFilters();
+                                });
+                              },
+                              onClearFavoritesFilter: () {
+                                setState(() {
+                                  _showFavoritesOnly = false;
+                                  _applyFilters();
+                                });
+                              },
+                            )
+                          : RefreshIndicator(
+                              onRefresh: () async {
+                                await _loadCategories();
+                                await _loadNotes();
+                              },
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: _filteredNotes.length,
+                                itemBuilder: (context, index) {
+                                  final note = _filteredNotes[index];
+                                  final category = _getCategoryById(
+                                    note.categoryId,
                                   );
-                                  _loadNotes();
+
+                                  return NoteCardItem(
+                                    note: note,
+                                    category: category,
+                                    searchQuery: _searchController.text,
+                                    isMobile: _isMobile,
+                                    onTap: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              NoteEditorPage(note: note),
+                                        ),
+                                      );
+                                      _loadNotes();
+                                    },
+                                    onTogglePin: _togglePin,
+                                    onArchive: _showArchiveDialog,
+                                    onShare: _showShareOptionsDialog,
+                                    onSetReminder: _quickSetReminder,
+                                    onToggleFavorite: _toggleFavorite,
+                                    onDelete: _showDeleteDialog,
+                                  );
                                 },
-                                onTogglePin: _togglePin,
-                                onArchive: _showArchiveDialog,
-                                onShare: _showShareOptionsDialog,
-                                onSetReminder: _quickSetReminder,
-                                onToggleFavorite: _toggleFavorite,
-                                onDelete: _showDeleteDialog,
-                              );
-                            },
-                          ),
-                        ),
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           // タイマーウィジェット
           const FloatingTimerWidget(),
         ],
@@ -799,8 +807,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-
 
   void _showDeleteDialog(Note note) {
     dialogs.showDeleteDialog(
@@ -824,7 +830,7 @@ class _HomePageState extends State<HomePage> {
         _searchEndDate != null;
   }
 
-// 詳細検索ダイアログを表示
+  // 詳細検索ダイアログを表示
   Future<void> _showAdvancedSearch() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,

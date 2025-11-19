@@ -34,10 +34,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ドキュメント'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('ドキュメント'), elevation: 0),
       body: Row(
         children: [
           // サイドバー（カテゴリフィルター）
@@ -45,10 +42,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
             width: 250,
             decoration: BoxDecoration(
               border: Border(
-                right: BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
+                right: BorderSide(color: Colors.grey[300]!, width: 1),
               ),
             ),
             child: ListView(
@@ -58,8 +52,8 @@ class _DocumentsPageState extends State<DocumentsPage> {
                   child: Text(
                     'カテゴリ',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 ListTile(
@@ -75,14 +69,17 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 const Divider(),
                 ..._categories.map((category) {
                   final count = _documentsByCategory[category]?.length ?? 0;
-                  if (count == 0 && category != 'root') return const SizedBox.shrink();
+                  if (count == 0 && category != 'root')
+                    return const SizedBox.shrink();
 
                   return ListTile(
                     leading: Text(
                       DocumentService.getCategoryIcon(category),
                       style: const TextStyle(fontSize: 20),
                     ),
-                    title: Text(DocumentService.getCategoryDisplayName(category)),
+                    title: Text(
+                      DocumentService.getCategoryDisplayName(category),
+                    ),
                     trailing: count > 0
                         ? Container(
                             padding: const EdgeInsets.symmetric(
@@ -90,7 +87,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withValues(alpha : 0.1),
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -150,9 +149,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
                             vertical: 8,
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: Theme.of(context)
-                                .primaryColor
-                                .withValues(alpha : 0.1),
+                            backgroundColor: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
                             child: Text(
                               doc.categoryIcon,
                               style: const TextStyle(fontSize: 20),
@@ -175,14 +174,16 @@ class _DocumentsPageState extends State<DocumentsPage> {
                               ),
                             ),
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DocumentViewerPage(
-                                  document: doc,
-                                ),
+                                builder: (context) =>
+                                    DocumentViewerPage(document: doc),
                               ),
                             );
                           },

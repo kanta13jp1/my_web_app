@@ -77,10 +77,7 @@ class AttachmentListWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // アイコン
-            Text(
-              attachment.icon,
-              style: const TextStyle(fontSize: 20),
-            ),
+            Text(attachment.icon, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 8),
             // ファイル名とサイズ
             Column(
@@ -101,10 +98,7 @@ class AttachmentListWidget extends StatelessWidget {
                 ),
                 Text(
                   attachment.formattedSize,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -113,11 +107,7 @@ class AttachmentListWidget extends StatelessWidget {
               const SizedBox(width: 8),
               InkWell(
                 onTap: () => _confirmDelete(context, attachment),
-                child: Icon(
-                  Icons.close,
-                  size: 18,
-                  color: Colors.grey[600],
-                ),
+                child: Icon(Icons.close, size: 18, color: Colors.grey[600]),
               ),
             ],
           ],

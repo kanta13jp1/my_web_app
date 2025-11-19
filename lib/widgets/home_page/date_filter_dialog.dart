@@ -113,10 +113,7 @@ class _DateFilterDialogState extends State<DateFilterDialog> {
           children: [
             const Text(
               'プリセット',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -137,10 +134,7 @@ class _DateFilterDialogState extends State<DateFilterDialog> {
             const SizedBox(height: 16),
             const Text(
               'カスタム範囲',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
             ListTile(

@@ -22,15 +22,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
   String _selectedCategory = '全て';
   final TextEditingController _searchController = TextEditingController();
 
-  final List<String> _categories = [
-    '全て',
-    '仕事',
-    '学習',
-    '個人',
-    'アイデア',
-    '健康',
-    '旅行',
-  ];
+  final List<String> _categories = ['全て', '仕事', '学習', '個人', 'アイデア', '健康', '旅行'];
 
   @override
   void initState() {
@@ -58,9 +50,10 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
 
     setState(() {
       _filteredTemplates = _templates.where((template) {
-        final matchesCategory = _selectedCategory == '全て' ||
-            template.category == _selectedCategory;
-        final matchesSearch = query.isEmpty ||
+        final matchesCategory =
+            _selectedCategory == '全て' || template.category == _selectedCategory;
+        final matchesSearch =
+            query.isEmpty ||
             template.title.toLowerCase().contains(query) ||
             template.description.toLowerCase().contains(query) ||
             template.tags.any((tag) => tag.toLowerCase().contains(query));
@@ -75,11 +68,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
       // テンプレート使用ボーナス
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
-        await _gamificationService.awardPoints(
-          userId,
-          5,
-          reason: 'テンプレート使用',
-        );
+        await _gamificationService.awardPoints(userId, 5, reason: 'テンプレート使用');
       }
 
       if (mounted) {
@@ -103,9 +92,9 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
       AppLogger.error('Error using template', error: e, stackTrace: stackTrace);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     }
   }
@@ -180,10 +169,12 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                       Wrap(
                         spacing: 8,
                         children: template.tags
-                            .map((tag) => Chip(
-                                  label: Text(tag),
-                                  labelStyle: const TextStyle(fontSize: 12),
-                                ),)
+                            .map(
+                              (tag) => Chip(
+                                label: Text(tag),
+                                labelStyle: const TextStyle(fontSize: 12),
+                              ),
+                            )
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -213,9 +204,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: Colors.grey.shade300),
-                  ),
+                  border: Border(top: BorderSide(color: Colors.grey.shade300)),
                 ),
                 child: Row(
                   children: [
@@ -309,8 +298,11 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off,
-                            size: 64, color: Colors.grey[400],),
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'テンプレートが見つかりません',
@@ -325,8 +317,9 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                 : GridView.builder(
                     padding: const EdgeInsets.all(16),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount:
-                          MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                      crossAxisCount: MediaQuery.of(context).size.width > 600
+                          ? 3
+                          : 2,
                       childAspectRatio: 0.85,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
@@ -358,10 +351,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.shade100,
-                    Colors.purple.shade100,
-                  ],
+                  colors: [Colors.blue.shade100, Colors.purple.shade100],
                 ),
               ),
               child: Center(
@@ -394,10 +384,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                     // 説明
                     Text(
                       template.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -47,7 +47,11 @@ class _ReferralPageState extends State<ReferralPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load referral data', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to load referral data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -55,9 +59,9 @@ class _ReferralPageState extends State<ReferralPage> {
   void _copyReferralCode() {
     if (_myReferralCode != null) {
       Clipboard.setData(ClipboardData(text: _myReferralCode!.referralCode));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('紹介コードをコピーしました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('紹介コードをコピーしました')));
     }
   }
 
@@ -67,7 +71,8 @@ class _ReferralPageState extends State<ReferralPage> {
         _myReferralCode!.referralCode,
         'https://my-web-app-b67f4.web.app',
       );
-      final message = '「マイメモ」に招待します！\n'
+      final message =
+          '「マイメモ」に招待します！\n'
           '紹介コード: ${_myReferralCode!.referralCode}\n'
           'または以下のリンクから登録してください:\n$link';
 
@@ -80,9 +85,7 @@ class _ReferralPageState extends State<ReferralPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('紹介プログラム'),
-      ),
+      appBar: AppBar(title: const Text('紹介プログラム')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -111,10 +114,7 @@ class _ReferralPageState extends State<ReferralPage> {
                     const SizedBox(height: 24),
 
                     // Leaderboard section
-                    Text(
-                      '紹介ランキング',
-                      style: theme.textTheme.titleLarge,
-                    ),
+                    Text('紹介ランキング', style: theme.textTheme.titleLarge),
                     const SizedBox(height: 12),
                     _buildLeaderboard(),
                   ],
@@ -136,7 +136,7 @@ class _ReferralPageState extends State<ReferralPage> {
 
     return Card(
       elevation: 4,
-      color: theme.primaryColor.withValues(alpha : 0.1),
+      color: theme.primaryColor.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -193,10 +193,7 @@ class _ReferralPageState extends State<ReferralPage> {
             const SizedBox(height: 12),
             Text(
               '友達を招待して、1人につき100ポイント獲得！',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[700], fontSize: 14),
             ),
           ],
         ),
@@ -254,16 +251,10 @@ class _ReferralPageState extends State<ReferralPage> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(title, style: const TextStyle(fontSize: 12)),
           ],
         ),
       ),
@@ -275,9 +266,7 @@ class _ReferralPageState extends State<ReferralPage> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: Text('まだ誰も紹介していません'),
-          ),
+          child: Center(child: Text('まだ誰も紹介していません')),
         ),
       );
     }
@@ -338,9 +327,7 @@ class _ReferralPageState extends State<ReferralPage> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: Text('ランキングデータがありません'),
-          ),
+          child: Center(child: Text('ランキングデータがありません')),
         ),
       );
     }
@@ -389,7 +376,9 @@ class _ReferralPageState extends State<ReferralPage> {
               ),
             ),
             title: Text(
-              isCurrentUser ? 'あなた' : 'ユーザー ${(item['user_id'] as String).substring(0, 8)}',
+              isCurrentUser
+                  ? 'あなた'
+                  : 'ユーザー ${(item['user_id'] as String).substring(0, 8)}',
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : null,
               ),

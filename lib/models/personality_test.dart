@@ -187,12 +187,7 @@ class PersonalityScore {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'test_id': testId,
-      'axis': axis,
-      'score': score,
-    };
+    return {'id': id, 'test_id': testId, 'axis': axis, 'score': score};
   }
 }
 

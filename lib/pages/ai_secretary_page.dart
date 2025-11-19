@@ -103,10 +103,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text(
-                'エラーが発生しました',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('エラーが発生しました', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
@@ -126,9 +123,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     }
 
     if (_recommendations == null) {
-      return const Center(
-        child: Text('推奨事項が見つかりませんでした'),
-      );
+      return const Center(child: Text('推奨事項が見つかりませんでした'));
     }
 
     return RefreshIndicator(
@@ -140,8 +135,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // AIインサイト
-            if (_recommendations!.insights.isNotEmpty)
-              _buildInsightsCard(),
+            if (_recommendations!.insights.isNotEmpty) _buildInsightsCard(),
 
             const SizedBox(height: 16),
 
@@ -189,9 +183,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             Center(
               child: Text(
                 'AI秘書はあなたのメモとタスクを分析して推奨事項を提案します',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -212,10 +206,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           gradient: LinearGradient(
-            colors: [
-              Colors.blue.shade50,
-              Colors.purple.shade50,
-            ],
+            colors: [Colors.blue.shade50, Colors.purple.shade50],
           ),
         ),
         child: Column(
@@ -310,9 +301,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
               final index = entry.key;
               final task = entry.value;
               return Padding(
-                padding: EdgeInsets.only(
-                  top: index > 0 ? 8.0 : 0,
-                ),
+                padding: EdgeInsets.only(top: index > 0 ? 8.0 : 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

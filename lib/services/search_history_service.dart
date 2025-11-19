@@ -17,13 +17,7 @@ class SearchHistoryService {
     history.removeWhere((item) => item.query == query);
 
     // 新しい検索を先頭に追加
-    history.insert(
-      0,
-      SearchHistory(
-        query: query,
-        timestamp: DateTime.now(),
-      ),
-    );
+    history.insert(0, SearchHistory(query: query, timestamp: DateTime.now()));
 
     // 最大件数を超えたら古いものを削除
     if (history.length > _maxHistoryCount) {
@@ -43,9 +37,7 @@ class SearchHistoryService {
     if (jsonString == null) return [];
 
     final jsonList = jsonDecode(jsonString) as List;
-    return jsonList
-        .map((json) => SearchHistory.fromJson(json))
-        .toList();
+    return jsonList.map((json) => SearchHistory.fromJson(json)).toList();
   }
 
   // 検索履歴を削除

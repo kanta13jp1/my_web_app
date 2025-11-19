@@ -38,10 +38,7 @@ class CategoryFilterDialog extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text(
                   'カテゴリで絞り込み',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 TextButton(
@@ -61,8 +58,10 @@ class CategoryFilterDialog extends StatelessWidget {
                 children: [
                   // 全て表示
                   ListTile(
-                    leading:
-                        const Icon(Icons.all_inclusive, color: Colors.blue),
+                    leading: const Icon(
+                      Icons.all_inclusive,
+                      color: Colors.blue,
+                    ),
                     title: const Text('すべて表示'),
                     trailing: selectedCategoryId == null
                         ? const Icon(Icons.check, color: Colors.blue)

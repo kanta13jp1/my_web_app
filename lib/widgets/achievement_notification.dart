@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/achievement.dart';
 
 class AchievementNotification {
-  static void show({required BuildContext context, required Achievement achievement}) {
+  static void show({
+    required BuildContext context,
+    required Achievement achievement,
+  }) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
@@ -34,7 +37,9 @@ class AchievementNotification {
   }
 
   static void showMultiple(
-      BuildContext context, List<Achievement> achievements,) {
+    BuildContext context,
+    List<Achievement> achievements,
+  ) {
     for (var i = 0; i < achievements.length; i++) {
       Future.delayed(Duration(milliseconds: i * 300), () {
         if (context.mounted) {
@@ -77,18 +82,12 @@ class _AchievementNotificationWidgetState
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ),);
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    ),);
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
   }
@@ -120,10 +119,7 @@ class _AchievementNotificationWidgetState
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: theme.colorScheme.primary,
-                width: 2,
-              ),
+              side: BorderSide(color: theme.colorScheme.primary, width: 2),
             ),
             child: Container(
               decoration: BoxDecoration(
@@ -188,7 +184,7 @@ class _AchievementNotificationWidgetState
                           widget.achievement.description,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onPrimaryContainer
-                                .withValues(alpha : 0.8),
+                                .withValues(alpha: 0.8),
                           ),
                         ),
                       ],

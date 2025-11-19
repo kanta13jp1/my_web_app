@@ -76,7 +76,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to load statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -110,14 +114,20 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
           .map((json) => GrowthMetrics.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load growth metrics', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to load growth metrics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
 
   void _startRealTimeUpdates() {
     _realTimeUpdateTimer?.cancel();
-    _realTimeUpdateTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+    _realTimeUpdateTimer = Timer.periodic(const Duration(seconds: 5), (
+      _,
+    ) async {
       if (!mounted) return;
 
       try {
@@ -213,7 +223,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withValues(alpha : 0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -221,18 +231,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.analytics,
-            size: 48,
-            color: Colors.white,
-          ),
+          const Icon(Icons.analytics, size: 48, color: Colors.white),
           const SizedBox(height: 16),
           const Text(
             '総登録ユーザー数',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
           TweenAnimationBuilder<int>(
@@ -253,7 +256,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.trending_up, color: Colors.greenAccent, size: 20),
+              const Icon(
+                Icons.trending_up,
+                color: Colors.greenAccent,
+                size: 20,
+              ),
               const SizedBox(width: 4),
               Text(
                 '+${_siteStats!.newUsersToday} 今日',
@@ -286,7 +293,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withValues(alpha : 0.5),
+                    color: Colors.green.withValues(alpha: 0.5),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -369,7 +376,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: gradient[0].withValues(alpha : 0.3),
+                color: gradient[0].withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -391,10 +398,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
               const SizedBox(height: 4),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
           ),
@@ -440,9 +444,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
       selected: isSelected,
       onSelected: (_) => _onPeriodChanged(value),
       selectedColor: Colors.blue,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : null,
-      ),
+      labelStyle: TextStyle(color: isSelected ? Colors.white : null),
     );
   }
 
@@ -451,9 +453,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(32),
-          child: Center(
-            child: Text('成長データがありません'),
-          ),
+          child: Center(child: Text('成長データがありません')),
         ),
       );
     }
@@ -574,10 +574,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
             ),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ],
         ),

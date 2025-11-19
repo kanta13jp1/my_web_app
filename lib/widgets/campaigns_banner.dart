@@ -52,16 +52,11 @@ class CampaignsBanner extends StatelessWidget {
       width: 280,
       margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color,
-            color.withValues(alpha : 0.7),
-          ],
-        ),
+        gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.7)]),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha : 0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -95,7 +90,7 @@ class CampaignsBanner extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha : 0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -114,7 +109,7 @@ class CampaignsBanner extends StatelessWidget {
                   child: Text(
                     campaign.description,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha : 0.95),
+                      color: Colors.white.withValues(alpha: 0.95),
                       fontSize: 13,
                     ),
                     maxLines: 3,
@@ -132,7 +127,7 @@ class CampaignsBanner extends StatelessWidget {
             child: Icon(
               Icons.campaign,
               size: 80,
-              color: Colors.white.withValues(alpha : 0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
         ],

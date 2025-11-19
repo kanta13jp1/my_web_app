@@ -45,29 +45,29 @@ class NoteCardItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       color: note.isPinned
           ? (Theme.of(context).brightness == Brightness.dark
-              ? Colors.amber.withValues(alpha: 0.15)
-              : Colors.amber.withValues(alpha: 0.1))
+                ? Colors.amber.withValues(alpha: 0.15)
+                : Colors.amber.withValues(alpha: 0.1))
           : note.reminderDate != null && note.isOverdue
-              ? (Theme.of(context).brightness == Brightness.dark
-                  ? Colors.red.withValues(alpha: 0.15)
-                  : Colors.red.withValues(alpha: 0.05))
-              : null,
+          ? (Theme.of(context).brightness == Brightness.dark
+                ? Colors.red.withValues(alpha: 0.15)
+                : Colors.red.withValues(alpha: 0.05))
+          : null,
       shape: note.reminderDate != null && note.isOverdue
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
               side: const BorderSide(color: Colors.red, width: 2),
             )
           : note.isPinned
-              ? RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  side: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.amber.shade600
-                        : Colors.amber.shade700,
-                    width: 2,
-                  ),
-                )
-              : null,
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.amber.shade600
+                    : Colors.amber.shade700,
+                width: 2,
+              ),
+            )
+          : null,
       child: ListTile(
         leading: _buildLeading(categoryColor),
         title: _buildTitle(),
@@ -89,10 +89,7 @@ class NoteCardItem extends StatelessWidget {
           border: Border.all(color: categoryColor, width: 2),
         ),
         child: Center(
-          child: Text(
-            category!.icon,
-            style: const TextStyle(fontSize: 20),
-          ),
+          child: Text(category!.icon, style: const TextStyle(fontSize: 20)),
         ),
       );
     } else if (note.isFavorite) {
@@ -113,13 +110,13 @@ class NoteCardItem extends StatelessWidget {
             note.isOverdue
                 ? Icons.alarm_off
                 : note.isDueSoon
-                    ? Icons.alarm_on
-                    : Icons.alarm,
+                ? Icons.alarm_on
+                : Icons.alarm,
             color: note.isOverdue
                 ? Colors.red
                 : note.isDueSoon
-                    ? Colors.orange
-                    : Colors.grey,
+                ? Colors.orange
+                : Colors.grey,
             size: 18,
           ),
           const SizedBox(width: 4),
@@ -160,8 +157,10 @@ class NoteCardItem extends StatelessWidget {
               children: [
                 if (note.isPinned) ...[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade700,
                       borderRadius: BorderRadius.circular(10),
@@ -191,8 +190,8 @@ class NoteCardItem extends StatelessWidget {
                     color: note.isOverdue
                         ? Colors.red
                         : note.isDueSoon
-                            ? Colors.orange
-                            : Colors.grey[600],
+                        ? Colors.orange
+                        : Colors.grey[600],
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -202,8 +201,8 @@ class NoteCardItem extends StatelessWidget {
                       color: note.isOverdue
                           ? Colors.red
                           : note.isDueSoon
-                              ? Colors.orange
-                              : Colors.grey[600],
+                          ? Colors.orange
+                          : Colors.grey[600],
                       fontWeight: note.isOverdue || note.isDueSoon
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -245,7 +244,11 @@ class NoteCardItem extends StatelessWidget {
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.attach_file, size: 12, color: Colors.blue),
+                        const Icon(
+                          Icons.attach_file,
+                          size: 12,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '$count',

@@ -18,9 +18,7 @@ void showArchiveDialog({
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」をアーカイブしますか？',
-          ),
+          Text('「${note.title.isEmpty ? '(タイトルなし)' : note.title}」をアーカイブしますか？'),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -36,10 +34,7 @@ void showArchiveDialog({
                 Expanded(
                   child: Text(
                     'アーカイブから復元できます',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.blue, fontSize: 13),
                   ),
                 ),
               ],
@@ -152,10 +147,7 @@ Future<void> showQuickReminderDialog({
           children: [
             const Text(
               'クイックリマインダー',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -171,7 +163,13 @@ Future<void> showQuickReminderDialog({
               leading: const Icon(Icons.today, color: Colors.orange),
               title: const Text('今日の18:00'),
               onTap: () async {
-                final reminderDate = DateTime(now.year, now.month, now.day, 18, 0);
+                final reminderDate = DateTime(
+                  now.year,
+                  now.month,
+                  now.day,
+                  18,
+                  0,
+                );
                 Navigator.pop(context);
                 await onReminderSet(reminderDate);
               },
@@ -181,7 +179,13 @@ Future<void> showQuickReminderDialog({
               title: const Text('明日の9:00'),
               onTap: () async {
                 final tomorrow = now.add(const Duration(days: 1));
-                final reminderDate = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
+                final reminderDate = DateTime(
+                  tomorrow.year,
+                  tomorrow.month,
+                  tomorrow.day,
+                  9,
+                  0,
+                );
                 Navigator.pop(context);
                 await onReminderSet(reminderDate);
               },
@@ -193,9 +197,7 @@ Future<void> showQuickReminderDialog({
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => NoteEditorPage(note: note),
-                  ),
+                  MaterialPageRoute(builder: (_) => NoteEditorPage(note: note)),
                 ).then((_) => onLoadNotes());
               },
             ),
@@ -223,9 +225,6 @@ void showNoteCardDialog({
 }) {
   showDialog(
     context: context,
-    builder: (context) => ShareNoteCardDialog(
-      note: note,
-      category: category,
-    ),
+    builder: (context) => ShareNoteCardDialog(note: note, category: category),
   );
 }

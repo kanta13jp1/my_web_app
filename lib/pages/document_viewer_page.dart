@@ -7,10 +7,7 @@ import '../widgets/markdown_preview.dart';
 class DocumentViewerPage extends StatefulWidget {
   final DocumentItem document;
 
-  const DocumentViewerPage({
-    super.key,
-    required this.document,
-  });
+  const DocumentViewerPage({super.key, required this.document});
 
   @override
   State<DocumentViewerPage> createState() => _DocumentViewerPageState();
@@ -36,16 +33,26 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
     try {
       if (kDebugMode) {
         debugPrint('📄 [DocumentViewerPage] Starting document load');
-        debugPrint('📄 [DocumentViewerPage] Document ID: ${widget.document.id}');
-        debugPrint('📄 [DocumentViewerPage] Document title: ${widget.document.title}');
-        debugPrint('📄 [DocumentViewerPage] Document path: ${widget.document.path}');
-        debugPrint('📄 [DocumentViewerPage] Document category: ${widget.document.category}');
+        debugPrint(
+          '📄 [DocumentViewerPage] Document ID: ${widget.document.id}',
+        );
+        debugPrint(
+          '📄 [DocumentViewerPage] Document title: ${widget.document.title}',
+        );
+        debugPrint(
+          '📄 [DocumentViewerPage] Document path: ${widget.document.path}',
+        );
+        debugPrint(
+          '📄 [DocumentViewerPage] Document category: ${widget.document.category}',
+        );
       }
 
       final content = await DocumentService.loadDocument(widget.document.path);
 
       if (kDebugMode) {
-        debugPrint('✅ [DocumentViewerPage] Document content loaded successfully');
+        debugPrint(
+          '✅ [DocumentViewerPage] Document content loaded successfully',
+        );
       }
       setState(() {
         _content = content;
@@ -107,124 +114,116 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _error!,
-                        style: const TextStyle(fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _loadDocument,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('再読み込み'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
                   ),
-                )
-              : SingleChildScrollView(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ドキュメントヘッダー
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .primaryColor
-                                .withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _loadDocument,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('再読み込み'),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 900),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ドキュメントヘッダー
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    widget.document.categoryIcon,
-                                    style: const TextStyle(fontSize: 32),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          widget.document.title,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          widget.document.categoryDisplayName,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                widget.document.categoryIcon,
+                                style: const TextStyle(fontSize: 32),
                               ),
-                              const SizedBox(height: 8),
-                              Divider(color: Colors.grey[300]),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.insert_drive_file,
-                                    size: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    widget.document.path,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontFamily: 'monospace',
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.document.title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.document.categoryDisplayName,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        // ドキュメント内容
-                        if (_content != null)
-                          MarkdownPreview(
-                            data: _content!,
-                            selectable: true,
+                          const SizedBox(height: 8),
+                          Divider(color: Colors.grey[300]),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.insert_drive_file,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                widget.document.path,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                            ],
                           ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                    // ドキュメント内容
+                    if (_content != null)
+                      MarkdownPreview(data: _content!, selectable: true),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 }

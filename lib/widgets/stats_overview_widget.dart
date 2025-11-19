@@ -4,10 +4,7 @@ import '../models/user_stats.dart';
 class StatsOverviewWidget extends StatelessWidget {
   final UserStats stats;
 
-  const StatsOverviewWidget({
-    super.key,
-    required this.stats,
-  });
+  const StatsOverviewWidget({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +19,7 @@ class StatsOverviewWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.bar_chart,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.bar_chart, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   '統計',
@@ -129,20 +123,13 @@ class StatsOverviewWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha : 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha : 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
+          Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -153,7 +140,7 @@ class StatsOverviewWidget extends StatelessWidget {
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha : 0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,

@@ -97,8 +97,7 @@ class FilterChipsArea extends StatelessWidget {
             ),
 
           // 高度な検索カテゴリフィルター
-          if (searchCategoryId != null)
-            _buildSearchCategoryChip(context),
+          if (searchCategoryId != null) _buildSearchCategoryChip(context),
 
           // 高度な検索日付フィルター
           if (searchStartDate != null || searchEndDate != null)
@@ -123,8 +122,8 @@ class FilterChipsArea extends StatelessWidget {
                 reminderFilter == 'overdue'
                     ? Icons.alarm_off
                     : reminderFilter == 'today'
-                        ? Icons.today
-                        : Icons.access_alarm,
+                    ? Icons.today
+                    : Icons.access_alarm,
                 size: 16,
                 color: reminderFilter == 'overdue' ? Colors.red : Colors.orange,
               ),
@@ -132,8 +131,8 @@ class FilterChipsArea extends StatelessWidget {
                 reminderFilter == 'overdue'
                     ? '期限切れ'
                     : reminderFilter == 'today'
-                        ? '今日'
-                        : '24時間以内',
+                    ? '今日'
+                    : '24時間以内',
                 style: TextStyle(fontSize: isMobile ? 11 : 13),
               ),
               backgroundColor:
@@ -210,8 +209,11 @@ class FilterChipsArea extends StatelessWidget {
                     fontSize: isMobile ? 11 : 13,
                   ),
                 ),
-                Icon(Icons.push_pin,
-                    color: Colors.amber, size: isMobile ? 14 : 16,),
+                Icon(
+                  Icons.push_pin,
+                  color: Colors.amber,
+                  size: isMobile ? 14 : 16,
+                ),
                 Text(
                   ' ${notes.where((n) => n.isPinned).length}',
                   style: TextStyle(
@@ -244,8 +246,11 @@ class FilterChipsArea extends StatelessWidget {
                       fontSize: isMobile ? 11 : 13,
                     ),
                   ),
-                  Icon(Icons.alarm,
-                      color: Colors.orange, size: isMobile ? 14 : 16,),
+                  Icon(
+                    Icons.alarm,
+                    color: Colors.orange,
+                    size: isMobile ? 14 : 16,
+                  ),
                   Text(
                     ' ${notes.where((n) => n.reminderDate != null).length}',
                     style: TextStyle(
@@ -279,10 +284,7 @@ class FilterChipsArea extends StatelessWidget {
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            category.name,
-            style: TextStyle(fontSize: isMobile ? 11 : 13),
-          ),
+          Text(category.name, style: TextStyle(fontSize: isMobile ? 11 : 13)),
           const SizedBox(width: 4),
           Icon(Icons.tune, size: isMobile ? 12 : 14),
         ],
@@ -300,10 +302,7 @@ class FilterChipsArea extends StatelessWidget {
     if (selectedCategoryId == 'uncategorized') {
       return Chip(
         avatar: const Icon(Icons.inbox, size: 16),
-        label: Text(
-          '未分類',
-          style: TextStyle(fontSize: isMobile ? 11 : 13),
-        ),
+        label: Text('未分類', style: TextStyle(fontSize: isMobile ? 11 : 13)),
         backgroundColor: Colors.grey.withValues(alpha: 0.1),
         deleteIcon: Icon(Icons.close, size: isMobile ? 14 : 16),
         onDeleted: () => onClearCategoryFilter(null),

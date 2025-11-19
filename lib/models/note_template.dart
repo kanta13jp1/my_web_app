@@ -28,7 +28,9 @@ class NoteTemplate {
       description: json['description'] as String,
       content: json['content'] as String,
       category: json['category'] as String,
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          [],
       usageCount: json['usage_count'] as int? ?? 0,
       iconEmoji: json['icon_emoji'] as String?,
       isPremium: json['is_premium'] as bool? ?? false,

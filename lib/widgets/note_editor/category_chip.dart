@@ -17,9 +17,9 @@ class CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final category = categories.cast<Category?>().firstWhere(
-          (c) => c?.id == selectedCategoryId,
-          orElse: () => null,
-        );
+      (c) => c?.id == selectedCategoryId,
+      orElse: () => null,
+    );
 
     if (category == null) {
       return TextButton.icon(
@@ -54,10 +54,7 @@ class CategoryChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               category.name,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
             ),
           ],
         ),

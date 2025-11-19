@@ -13,11 +13,7 @@ class NoteSnapshot {
   });
 
   /// スナップショットのコピーを作成
-  NoteSnapshot copyWith({
-    String? title,
-    String? content,
-    int? categoryId,
-  }) {
+  NoteSnapshot copyWith({String? title, String? content, int? categoryId}) {
     return NoteSnapshot(
       title: title ?? this.title,
       content: content ?? this.content,

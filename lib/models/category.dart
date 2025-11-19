@@ -27,11 +27,6 @@ class Category {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'user_id': userId,
-      'name': name,
-      'color': color,
-      'icon': icon,
-    };
+    return {'user_id': userId, 'name': name, 'color': color, 'icon': icon};
   }
 }

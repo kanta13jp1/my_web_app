@@ -63,9 +63,9 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -131,9 +131,9 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
         );
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('共有リンクを作成しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('共有リンクを作成しました')));
     } catch (error) {
       if (!mounted) {
         return;
@@ -150,9 +150,9 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -170,17 +170,17 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('共有リンクを削除しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('共有リンクを削除しました')));
     } catch (error) {
       if (!context.mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -222,10 +222,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                 const SizedBox(width: 12),
                 const Text(
                   'メモを共有',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 IconButton(
@@ -237,10 +234,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
             const SizedBox(height: 8),
             Text(
               widget.note.title.isEmpty ? '(タイトルなし)' : widget.note.title,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const Divider(height: 32),
 
@@ -257,10 +251,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                 children: [
                   const Text(
                     '新しい共有リンクを作成',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -301,19 +292,22 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                       const Text('有効期限: '),
                       const SizedBox(width: 8),
                       TextButton.icon(
-                        icon: Icon(_expiresAt != null
-                            ? Icons.event
-                            : Icons.event_available,),
-                        label: Text(_expiresAt != null
-                            ? '${_expiresAt!.year}/${_expiresAt!.month}/${_expiresAt!.day}'
-                            : '無期限',),
+                        icon: Icon(
+                          _expiresAt != null
+                              ? Icons.event
+                              : Icons.event_available,
+                        ),
+                        label: Text(
+                          _expiresAt != null
+                              ? '${_expiresAt!.year}/${_expiresAt!.month}/${_expiresAt!.day}'
+                              : '無期限',
+                        ),
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: context,
-                            initialDate: _expiresAt ??
-                                DateTime.now().add(
-                                  const Duration(days: 7),
-                                ),
+                            initialDate:
+                                _expiresAt ??
+                                DateTime.now().add(const Duration(days: 7)),
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(
                               const Duration(days: 365),
@@ -375,10 +369,7 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
               children: [
                 const Text(
                   '共有リンク一覧',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 8),
                 Container(
@@ -437,21 +428,21 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                             color: share.isExpired
                                 ? Colors.grey.withValues(alpha: 0.2)
                                 : (share.canWrite
-                                    ? Colors.orange.withValues(alpha: 0.2)
-                                    : Colors.blue.withValues(alpha: 0.2)),
+                                      ? Colors.orange.withValues(alpha: 0.2)
+                                      : Colors.blue.withValues(alpha: 0.2)),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             share.isExpired
                                 ? Icons.link_off
                                 : (share.canWrite
-                                    ? Icons.edit
-                                    : Icons.visibility),
+                                      ? Icons.edit
+                                      : Icons.visibility),
                             color: share.isExpired
                                 ? Colors.grey
                                 : (share.canWrite
-                                    ? Colors.orange
-                                    : Colors.blue),
+                                      ? Colors.orange
+                                      : Colors.blue),
                           ),
                         ),
                         title: Row(
@@ -459,8 +450,9 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                             Icon(
                               share.canWrite ? Icons.edit : Icons.visibility,
                               size: 16,
-                              color:
-                                  share.canWrite ? Colors.orange : Colors.blue,
+                              color: share.canWrite
+                                  ? Colors.orange
+                                  : Colors.blue,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -527,8 +519,11 @@ class _ShareNoteDialogState extends State<ShareNoteDialog> {
                                 tooltip: 'リンクをコピー',
                               ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
-                                  color: Colors.red, size: 20,),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                                size: 20,
+                              ),
                               onPressed: () => _deleteShare(share.id),
                               tooltip: '削除',
                             ),

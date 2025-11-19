@@ -35,11 +35,11 @@ class ReminderStatsBanner extends StatelessWidget {
         gradient: LinearGradient(
           colors: overdueCount > 0
               ? (Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.red.shade900, Colors.red.shade800]
-                  : [Colors.red.shade50, Colors.red.shade100])
+                    ? [Colors.red.shade900, Colors.red.shade800]
+                    : [Colors.red.shade50, Colors.red.shade100])
               : (Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.orange.shade900, Colors.orange.shade800]
-                  : [Colors.orange.shade50, Colors.orange.shade100]),
+                    ? [Colors.orange.shade900, Colors.orange.shade800]
+                    : [Colors.orange.shade50, Colors.orange.shade100]),
         ),
         border: Border(
           bottom: BorderSide(
@@ -61,9 +61,7 @@ class ReminderStatsBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  overdueCount > 0
-                      ? 'リマインダー通知があります'
-                      : '期限が近いメモがあります',
+                  overdueCount > 0 ? 'リマインダー通知があります' : '期限が近いメモがあります',
                   style: TextStyle(
                     fontSize: isMobile ? 14 : 16,
                     fontWeight: FontWeight.bold,

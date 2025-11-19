@@ -49,11 +49,13 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
 
       // アクティブなキャンペーンを読み込み
       _activeCampaigns.clear();
-      _activeCampaigns.addAll([
-        Campaign.createWelcomeCampaign(),
-        Campaign.createShareCampaign(),
-        Campaign.createReferralCampaign(),
-      ].where((c) => c.isCurrentlyActive),);
+      _activeCampaigns.addAll(
+        [
+          Campaign.createWelcomeCampaign(),
+          Campaign.createShareCampaign(),
+          Campaign.createReferralCampaign(),
+        ].where((c) => c.isCurrentlyActive),
+      );
 
       if (mounted) {
         setState(() {
@@ -64,7 +66,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading growth data', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading growth data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -81,7 +87,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error generating invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -89,7 +99,8 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
     if (_inviteLink == null) return;
 
     try {
-      final message = '''
+      final message =
+          '''
 🎮 マイメモ - ゲーム感覚でメモ習慣！
 
 楽しくメモが続けられるアプリを見つけました！
@@ -106,7 +117,8 @@ $_inviteLink
       // シェアボーナスを付与
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
-        final isCampaignActive = await _viralGrowthService.isShareCampaignActive();
+        final isCampaignActive = await _viralGrowthService
+            .isShareCampaignActive();
         await _viralGrowthService.awardShareBonus(
           userId: userId,
           platform: 'invite_link',
@@ -127,7 +139,11 @@ $_inviteLink
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error sharing invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error sharing invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -163,8 +179,8 @@ $_inviteLink
                       Text(
                         '🎉 開催中のキャンペーン',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       _buildActiveCampaigns(),
@@ -175,8 +191,8 @@ $_inviteLink
                     Text(
                       '🚀 成長施策',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildGrowthActions(),
@@ -186,8 +202,8 @@ $_inviteLink
                     Text(
                       '👥 友達を招待',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildInviteSection(),
@@ -210,10 +226,7 @@ $_inviteLink
           children: [
             const Text(
               '📊 サイト統計',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -274,7 +287,7 @@ $_inviteLink
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha : 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -292,10 +305,7 @@ $_inviteLink
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -326,7 +336,10 @@ $_inviteLink
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withValues(alpha : 0.2), color.withValues(alpha : 0.1)],
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.1),
+              ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color),
@@ -382,7 +395,9 @@ $_inviteLink
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TemplateMarketplacePage()),
+              MaterialPageRoute(
+                builder: (_) => const TemplateMarketplacePage(),
+              ),
             );
           },
         ),
@@ -434,7 +449,7 @@ $_inviteLink
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha : 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 28),
@@ -454,10 +469,7 @@ $_inviteLink
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -485,10 +497,7 @@ $_inviteLink
                 Expanded(
                   child: Text(
                     '友達を招待して両方に500ptプレゼント！',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -520,9 +529,7 @@ $_inviteLink
                       onPressed: () {
                         // クリップボードにコピー機能は省略
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('リンクをコピーしました'),
-                          ),
+                          const SnackBar(content: Text('リンクをコピーしました')),
                         );
                       },
                       tooltip: 'コピー',

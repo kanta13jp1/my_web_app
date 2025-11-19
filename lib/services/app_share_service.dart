@@ -13,7 +13,9 @@ class AppShareService {
   /// Netlify FunctionsのベースURL
   /// 本番環境: https://melodic-cannoli-f33eaf.netlify.app
   /// デプロイ日: 2025-11-09
-  static const String netlifyBaseUrl = 'https://melodic-cannoli-f33eaf.netlify.app';
+  static const String netlifyBaseUrl =
+      'https://melodic-cannoli-f33eaf.netlify.app';
+
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
@@ -376,10 +378,7 @@ $appUrl
     final message = customMessage ?? getRandomShareMessage();
 
     try {
-      await Share.share(
-        message,
-        subject: '$appName - ゲーミフィケーションで楽しくメモ習慣を！',
-      );
+      await Share.share(message, subject: '$appName - ゲーミフィケーションで楽しくメモ習慣を！');
     } catch (e) {
       // エラー時はクリップボードにコピー
       await Clipboard.setData(ClipboardData(text: message));
@@ -447,9 +446,7 @@ $appUrl
   /// LINE向けに最適化したシェア
   static Future<void> shareToLine({String? customMessage}) async {
     final message = customMessage ?? getRandomShareMessage();
-    final lineUrl = Uri.encodeFull(
-      'https://line.me/R/msg/text/?$message',
-    );
+    final lineUrl = Uri.encodeFull('https://line.me/R/msg/text/?$message');
 
     if (kIsWeb) {
       web.window.open(lineUrl, '_blank');
@@ -470,7 +467,9 @@ $appUrl
       return '$netlifyBaseUrl/share?id=$quoteId';
     } else {
       // ランダムな名言ID
-      final randomId = DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length;
+      final randomId =
+          DateTime.now().microsecondsSinceEpoch %
+          PhilosopherQuote.quotes.length;
       return '$netlifyBaseUrl/share?id=$randomId';
     }
   }
@@ -483,17 +482,21 @@ $appUrl
     int? currentStreak,
   }) async {
     // 名言IDを取得
-    final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+    final selectedQuoteId =
+        quoteId ??
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
     // シェアメッセージ
-    String message = '''💭 今日の名言 - ${quote.author}
+    String message =
+        '''💭 今日の名言 - ${quote.author}
 
 「${quote.quote}」
 
@@ -503,7 +506,8 @@ $shareLink
 #マイメモ #${quote.author} #名言 #哲学''';
 
     if (level != null && totalPoints != null && currentStreak != null) {
-      message = '''💭 今日の名言 - ${quote.author}
+      message =
+          '''💭 今日の名言 - ${quote.author}
 
 「${quote.quote}」
 
@@ -532,7 +536,8 @@ $shareLink
   /// Facebook向けシェア（動的OGP対応）
   static Future<void> shareToFacebookWithDynamicOgp({int? quoteId}) async {
     final shareLink = generateDynamicShareLink(quoteId: quoteId);
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
+    final facebookUrl =
+        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
 
     if (kIsWeb) {
       web.window.open(facebookUrl, '_blank');
@@ -549,16 +554,20 @@ $shareLink
     int? currentStreak,
   }) async {
     // 名言IDを取得
-    final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+    final selectedQuoteId =
+        quoteId ??
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
-    String message = '''💭 ${quote.author}の名言
+    String message =
+        '''💭 ${quote.author}の名言
 
 「${quote.quote}」
 
@@ -566,7 +575,8 @@ $shareLink
 $shareLink''';
 
     if (level != null && totalPoints != null && currentStreak != null) {
-      message = '''💭 ${quote.author}の名言
+      message =
+          '''💭 ${quote.author}の名言
 
 「${quote.quote}」
 
@@ -575,9 +585,7 @@ $shareLink''';
 $shareLink''';
     }
 
-    final lineUrl = Uri.encodeFull(
-      'https://line.me/R/msg/text/?$message',
-    );
+    final lineUrl = Uri.encodeFull('https://line.me/R/msg/text/?$message');
 
     if (kIsWeb) {
       web.window.open(lineUrl, '_blank');

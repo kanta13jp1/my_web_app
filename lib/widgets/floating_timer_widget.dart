@@ -41,7 +41,9 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.3),
                 width: 2,
               ),
               boxShadow: [
@@ -67,11 +69,7 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.timer,
-          size: 20,
-          color: colorScheme.primary,
-        ),
+        Icon(Icons.timer, size: 20, color: colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           timerService.formatRemainingTime(),
@@ -174,10 +172,7 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
           // 進捗テキスト
           Text(
             '${((1.0 - timerService.progress) * 100).toInt()}% (残り${timerService.remainingSeconds ~/ 60}分)',
-            style: TextStyle(
-              fontSize: 12,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -221,10 +216,7 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
                     timerService.stopTimer();
                   },
                   icon: const Icon(Icons.stop, size: 18),
-                  label: const Text(
-                    '停止',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                  label: const Text('停止', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -243,10 +235,7 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
               timerService.resetTimer();
             },
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text(
-              'リセット',
-              style: TextStyle(fontSize: 12),
-            ),
+            label: const Text('リセット', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),

@@ -73,10 +73,10 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha : 0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha : 0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -92,7 +92,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.greenAccent.withValues(alpha : 0.5),
+                      color: Colors.greenAccent.withValues(alpha: 0.5),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -114,11 +114,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(
-                Icons.people,
-                _totalUsers.toString(),
-                '総ユーザー',
-              ),
+              _buildStatItem(Icons.people, _totalUsers.toString(), '総ユーザー'),
               _buildDivider(),
               _buildStatItem(
                 Icons.circle,
@@ -127,11 +123,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
                 color: Colors.greenAccent,
               ),
               _buildDivider(),
-              _buildStatItem(
-                Icons.note,
-                _totalNotes.toString(),
-                '総メモ数',
-              ),
+              _buildStatItem(Icons.note, _totalNotes.toString(), '総メモ数'),
             ],
           ),
         ],
@@ -139,14 +131,15 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label, {Color? color}) {
+  Widget _buildStatItem(
+    IconData icon,
+    String value,
+    String label, {
+    Color? color,
+  }) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: color ?? Colors.white,
-          size: 24,
-        ),
+        Icon(icon, color: color ?? Colors.white, size: 24),
         const SizedBox(height: 8),
         TweenAnimationBuilder<int>(
           key: ValueKey('$label-$value'),
@@ -170,7 +163,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha : 0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 11,
           ),
         ),
@@ -182,7 +175,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     return Container(
       width: 1,
       height: 60,
-      color: Colors.white.withValues(alpha : 0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

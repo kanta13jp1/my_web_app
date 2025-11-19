@@ -67,9 +67,10 @@ class _SharedNotePageState extends State<SharedNotePage> {
       final note = Note.fromJson(noteResponse);
 
       // アクセスカウントを更新
-      await supabase.rpc('increment_access_count', params: {
-        'token': widget.shareToken,
-      },);
+      await supabase.rpc(
+        'increment_access_count',
+        params: {'token': widget.shareToken},
+      );
 
       if (!mounted) {
         return;
@@ -104,11 +105,14 @@ class _SharedNotePageState extends State<SharedNotePage> {
     });
 
     try {
-      await supabase.from('notes').update({
-        'title': _titleController.text.trim(),
-        'content': _contentController.text.trim(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', _note!.id);
+      await supabase
+          .from('notes')
+          .update({
+            'title': _titleController.text.trim(),
+            'content': _contentController.text.trim(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', _note!.id);
 
       if (!mounted) {
         return;
@@ -122,9 +126,9 @@ class _SharedNotePageState extends State<SharedNotePage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('保存しました')));
     } catch (error) {
       if (!mounted) {
         return;
@@ -138,9 +142,9 @@ class _SharedNotePageState extends State<SharedNotePage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('エラー: $error')));
     }
   }
 
@@ -194,8 +198,9 @@ class _SharedNotePageState extends State<SharedNotePage> {
                       Icon(
                         _shareInfo!.canWrite ? Icons.edit : Icons.visibility,
                         size: 16,
-                        color:
-                            _shareInfo!.canWrite ? Colors.orange : Colors.blue,
+                        color: _shareInfo!.canWrite
+                            ? Colors.orange
+                            : Colors.blue,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -239,110 +244,103 @@ class _SharedNotePageState extends State<SharedNotePage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 80,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 80, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
-                )
-              : Column(
-                  children: [
-                    // 共有情報バナー
-                    if (_shareInfo != null)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
+                ],
+              ),
+            )
+          : Column(
+              children: [
+                // 共有情報バナー
+                if (_shareInfo != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _shareInfo!.canWrite
+                          ? Colors.orange.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
+                      border: Border(
+                        bottom: BorderSide(
                           color: _shareInfo!.canWrite
-                              ? Colors.orange.withValues(alpha: 0.1)
-                              : Colors.blue.withValues(alpha: 0.1),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _shareInfo!.canWrite
-                                  ? Colors.orange
-                                  : Colors.blue,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: _shareInfo!.canWrite
-                                  ? Colors.orange
-                                  : Colors.blue,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _shareInfo!.canWrite
-                                    ? 'このメモは編集可能です。変更は自動的に保存されます。'
-                                    : 'このメモは閲覧のみです。編集することはできません。',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _shareInfo!.canWrite
-                                      ? Colors.orange.shade900
-                                      : Colors.blue.shade900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    // メモ内容
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _titleController,
-                              decoration: const InputDecoration(
-                                hintText: 'タイトル',
-                                border: InputBorder.none,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              readOnly: !(_shareInfo?.canWrite ?? false),
-                            ),
-                            const Divider(),
-                            Expanded(
-                              child: TextField(
-                                controller: _contentController,
-                                decoration: const InputDecoration(
-                                  hintText: 'メモの内容',
-                                  border: InputBorder.none,
-                                ),
-                                maxLines: null,
-                                expands: true,
-                                textAlignVertical: TextAlignVertical.top,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: TextInputAction.newline,
-                                readOnly: !(_shareInfo?.canWrite ?? false),
-                              ),
-                            ),
-                          ],
+                              ? Colors.orange
+                              : Colors.blue,
                         ),
                       ),
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: _shareInfo!.canWrite
+                              ? Colors.orange
+                              : Colors.blue,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _shareInfo!.canWrite
+                                ? 'このメモは編集可能です。変更は自動的に保存されます。'
+                                : 'このメモは閲覧のみです。編集することはできません。',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _shareInfo!.canWrite
+                                  ? Colors.orange.shade900
+                                  : Colors.blue.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                // メモ内容
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(
+                            hintText: 'タイトル',
+                            border: InputBorder.none,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          readOnly: !(_shareInfo?.canWrite ?? false),
+                        ),
+                        const Divider(),
+                        Expanded(
+                          child: TextField(
+                            controller: _contentController,
+                            decoration: const InputDecoration(
+                              hintText: 'メモの内容',
+                              border: InputBorder.none,
+                            ),
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.newline,
+                            readOnly: !(_shareInfo?.canWrite ?? false),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              ],
+            ),
     );
   }
 }

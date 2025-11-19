@@ -38,23 +38,15 @@ class EmptyStateView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            hasAnyFilter || showFavoritesOnly
-                ? '該当するメモが見つかりません'
-                : 'メモがありません',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
+            hasAnyFilter || showFavoritesOnly ? '該当するメモが見つかりません' : 'メモがありません',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             hasAnyFilter || showFavoritesOnly
                 ? 'フィルター条件を変更してみてください'
                 : '右下の + ボタンから新しいメモを作成\n📌でピン留めして重要なメモを上部に固定',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
           // リマインダーフィルター時の特別メッセージ
@@ -64,12 +56,9 @@ class EmptyStateView extends StatelessWidget {
               reminderFilter == 'overdue'
                   ? '期限切れのメモはありません'
                   : reminderFilter == 'today'
-                      ? '今日のリマインダーはありません'
-                      : '24時間以内のリマインダーはありません',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+                  ? '今日のリマインダーはありません'
+                  : '24時間以内のリマインダーはありません',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
             const SizedBox(height: 8),
             ElevatedButton.icon(
@@ -82,10 +71,7 @@ class EmptyStateView extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'お気に入りメモがまだありません',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
             const SizedBox(height: 8),
             ElevatedButton.icon(

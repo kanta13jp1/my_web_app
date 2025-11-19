@@ -101,9 +101,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
       });
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $error')));
       }
       setState(() {
         _isLoading = false;
@@ -116,15 +116,15 @@ class _CategoriesPageState extends State<CategoriesPage> {
       await supabase.from('categories').delete().eq('id', categoryId);
       _loadCategories();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('カテゴリを削除しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('カテゴリを削除しました')));
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('エラー: $error')));
       }
     }
   }
@@ -166,8 +166,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(8),
@@ -179,8 +181,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       items: _iconOptions.map((icon) {
                         return DropdownMenuItem(
                           value: icon,
-                          child:
-                              Text(icon, style: const TextStyle(fontSize: 28)),
+                          child: Text(
+                            icon,
+                            style: const TextStyle(fontSize: 28),
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -202,8 +206,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(8),
@@ -327,9 +333,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                   ? Colors.grey
                                   : Color(
                                       int.parse(
-                                              selectedColor.substring(1),
-                                              radix: 16,
-                                            ) +
+                                            selectedColor.substring(1),
+                                            radix: 16,
+                                          ) +
                                           0xFF000000,
                                     ),
                             ),
@@ -366,7 +372,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       });
 
                       // ゲーミフィケーション: カテゴリ作成イベント
-                      final achievements = await _gamificationService.onCategoryCreated(userId);
+                      final achievements = await _gamificationService
+                          .onCategoryCreated(userId);
                       if (context.mounted) {
                         for (final achievement in achievements) {
                           AchievementNotification.show(
@@ -376,11 +383,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         }
                       }
                     } else {
-                      await supabase.from('categories').update({
-                        'name': nameController.text.trim(),
-                        'color': selectedColor,
-                        'icon': selectedIcon,
-                      }).eq('id', category.id);
+                      await supabase
+                          .from('categories')
+                          .update({
+                            'name': nameController.text.trim(),
+                            'color': selectedColor,
+                            'icon': selectedIcon,
+                          })
+                          .eq('id', category.id);
                     }
 
                     if (!context.mounted) return; // ← mounted チェックを先に
@@ -397,9 +407,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   } catch (error) {
                     if (!context.mounted) return; // ← mounted チェックを先に
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('エラー: $error')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('エラー: $error')));
                   }
                 },
                 child: Text(category == null ? '作成' : '更新'),
@@ -414,123 +424,115 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('カテゴリ管理'),
-      ),
+      appBar: AppBar(title: const Text('カテゴリ管理')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _categories.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.category_outlined,
-                        size: 80,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'カテゴリがありません',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '右下の + ボタンから作成',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.category_outlined,
+                    size: 80,
+                    color: Colors.grey[400],
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final category = _categories[index];
-                    final color = Color(
-                      int.parse(category.color.substring(1), radix: 16) +
-                          0xFF000000,
-                    );
+                  const SizedBox(height: 16),
+                  Text(
+                    'カテゴリがありません',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '右下の + ボタンから作成',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final color = Color(
+                  int.parse(category.color.substring(1), radix: 16) +
+                      0xFF000000,
+                );
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 8,
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 8,
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color, width: 2),
                       ),
-                      child: ListTile(
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: color, width: 2),
-                          ),
-                          child: Center(
-                            child: Text(
-                              category.icon,
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                          ),
+                      child: Center(
+                        child: Text(
+                          category.icon,
+                          style: const TextStyle(fontSize: 24),
                         ),
-                        title: Text(
-                          category.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
+                      ),
+                    ),
+                    title: Text(
+                      category.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () =>
+                              _showCategoryDialog(category: category),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () =>
-                                  _showCategoryDialog(category: category),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('カテゴリを削除'),
-                                    content: const Text(
-                                      'このカテゴリを削除しますか？\n'
-                                      '※ メモのカテゴリは「未分類」になります',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('キャンセル'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          _deleteCategory(category.id);
-                                        },
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: Colors.red,
-                                        ),
-                                        child: const Text('削除'),
-                                      ),
-                                    ],
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('カテゴリを削除'),
+                                content: const Text(
+                                  'このカテゴリを削除しますか？\n'
+                                  '※ メモのカテゴリは「未分類」になります',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('キャンセル'),
                                   ),
-                                );
-                              },
-                            ),
-                          ],
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _deleteCategory(category.id);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('削除'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCategoryDialog(),
         child: const Icon(Icons.add),

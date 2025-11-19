@@ -27,16 +27,13 @@ class PresenceService {
       AppLogger.info('Starting presence tracking for user: $userId');
 
       // Insert or update presence
-      await _supabase.from('user_presence').upsert(
-        {
-          'user_id': userId,
-          'session_id': _sessionId,
-          'is_online': true,
-          'last_seen': DateTime.now().toIso8601String(),
-          'page_path': pagePath,
-        },
-        onConflict: 'user_id,session_id',
-      );
+      await _supabase.from('user_presence').upsert({
+        'user_id': userId,
+        'session_id': _sessionId,
+        'is_online': true,
+        'last_seen': DateTime.now().toIso8601String(),
+        'page_path': pagePath,
+      }, onConflict: 'user_id,session_id');
 
       // Start heartbeat timer (update every 2 minutes)
       _heartbeatTimer?.cancel();
@@ -62,14 +59,11 @@ class PresenceService {
       AppLogger.info('Starting guest presence tracking');
 
       // Insert or update guest presence
-      await _supabase.from('guest_presence').upsert(
-        {
-          'session_id': _sessionId,
-          'last_seen': DateTime.now().toIso8601String(),
-          'page_path': pagePath,
-        },
-        onConflict: 'session_id',
-      );
+      await _supabase.from('guest_presence').upsert({
+        'session_id': _sessionId,
+        'last_seen': DateTime.now().toIso8601String(),
+        'page_path': pagePath,
+      }, onConflict: 'session_id');
 
       // Start heartbeat timer
       _heartbeatTimer?.cancel();
@@ -92,16 +86,13 @@ class PresenceService {
   // Update presence (heartbeat)
   Future<void> _updatePresence(String userId, {String? pagePath}) async {
     try {
-      await _supabase.from('user_presence').upsert(
-        {
-          'user_id': userId,
-          'session_id': _sessionId,
-          'is_online': true,
-          'last_seen': DateTime.now().toIso8601String(),
-          'page_path': pagePath,
-        },
-        onConflict: 'user_id,session_id',
-      );
+      await _supabase.from('user_presence').upsert({
+        'user_id': userId,
+        'session_id': _sessionId,
+        'is_online': true,
+        'last_seen': DateTime.now().toIso8601String(),
+        'page_path': pagePath,
+      }, onConflict: 'user_id,session_id');
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to update presence heartbeat for user: $userId',
@@ -115,14 +106,11 @@ class PresenceService {
   // Update guest presence (heartbeat)
   Future<void> _updateGuestPresence({String? pagePath}) async {
     try {
-      await _supabase.from('guest_presence').upsert(
-        {
-          'session_id': _sessionId,
-          'last_seen': DateTime.now().toIso8601String(),
-          'page_path': pagePath,
-        },
-        onConflict: 'session_id',
-      );
+      await _supabase.from('guest_presence').upsert({
+        'session_id': _sessionId,
+        'last_seen': DateTime.now().toIso8601String(),
+        'page_path': pagePath,
+      }, onConflict: 'session_id');
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to update guest presence heartbeat for session: $_sessionId',
@@ -159,7 +147,11 @@ class PresenceService {
 
       AppLogger.info('Presence tracking stopped');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to stop presence tracking', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to stop presence tracking',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -170,9 +162,12 @@ class PresenceService {
           .from('user_presence')
           .select('id')
           .eq('is_online', true)
-          .gte('last_seen',
-               DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String(),);
+          .gte(
+            'last_seen',
+            DateTime.now()
+                .subtract(const Duration(minutes: 5))
+                .toIso8601String(),
+          );
 
       return (response as List).length;
     } catch (e, stackTrace) {
@@ -191,9 +186,12 @@ class PresenceService {
       final response = await _supabase
           .from('guest_presence')
           .select('id')
-          .gte('last_seen',
-               DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String(),);
+          .gte(
+            'last_seen',
+            DateTime.now()
+                .subtract(const Duration(minutes: 5))
+                .toIso8601String(),
+          );
 
       return (response as List).length;
     } catch (e, stackTrace) {
@@ -225,7 +223,11 @@ class PresenceService {
 
       return SiteStatistics.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get site statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get site statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -236,7 +238,11 @@ class PresenceService {
       await _supabase.rpc('update_site_statistics');
       AppLogger.info('Site statistics updated successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update site statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to update site statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -246,7 +252,11 @@ class PresenceService {
       await _supabase.rpc('cleanup_old_presence');
       AppLogger.info('Old presence records cleaned up');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to cleanup old presence', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to cleanup old presence',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

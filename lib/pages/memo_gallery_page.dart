@@ -65,9 +65,9 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
   Future<void> _toggleLike(PublicMemo memo) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ログインしてください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ログインしてください')));
       return;
     }
 
@@ -82,7 +82,11 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
 
       _loadMemos(); // Reload to update counts
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to toggle like', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to toggle like',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -169,10 +173,7 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
                   Expanded(
                     child: Text(
                       _formatDate(memo.publishedAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),
                 ],
@@ -191,10 +192,7 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
                 const SizedBox(height: 8),
                 Text(
                   memo.content!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
