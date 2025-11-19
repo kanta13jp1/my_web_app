@@ -17,14 +17,14 @@ class ViralGrowthService {
     bool isCampaignActive = false,
   }) async {
     try {
-      final basePoints = 10;
+      const basePoints = 10;
       final campaignMultiplier = isCampaignActive ? 5 : 1;
       final totalPoints = basePoints * campaignMultiplier;
 
       await _gamificationService.awardPoints(
         userId,
         totalPoints,
-        reason: '${platform}でシェア${isCampaignActive ? '(キャンペーン中×5)' : ''}',
+        reason: '$platformでシェア${isCampaignActive ? '(キャンペーン中×5)' : ''}',
       );
 
       // シェア統計を更新
@@ -87,7 +87,7 @@ class ViralGrowthService {
       await _supabase.rpc('increment_share_count', params: {
         'p_user_id': userId,
         'p_platform': platform,
-      });
+      },);
     } catch (e) {
       // RPC関数が存在しない場合は無視（後で作成予定）
       AppLogger.warning('increment_share_count RPC not available', error: e);
@@ -117,7 +117,7 @@ class ViralGrowthService {
       }
 
       // 招待リンクを生成（実際のドメインに置き換えてください）
-      final baseUrl = 'https://my-web-app-b67f4.web.app';
+      const baseUrl = 'https://my-web-app-b67f4.web.app';
       return '$baseUrl?ref=$referralCode';
     } catch (e, stackTrace) {
       AppLogger.error('Error generating invite link', error: e, stackTrace: stackTrace);
@@ -140,9 +140,9 @@ class ViralGrowthService {
     return '''
 🎮 マイメモで楽しくメモ習慣！
 
-📝 ${totalNotes}個のメモを作成
+📝 $totalNotes個のメモを作成
 🎯 レベル$currentLevel達成
-🔥 ${currentStreak}日連続ログイン中
+🔥 $currentStreak日連続ログイン中
 
 ゲーム感覚でメモが続けられるよ！
 あなたも始めてみませんか？

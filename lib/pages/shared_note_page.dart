@@ -69,7 +69,7 @@ class _SharedNotePageState extends State<SharedNotePage> {
       // アクセスカウントを更新
       await supabase.rpc('increment_access_count', params: {
         'token': widget.shareToken,
-      });
+      },);
 
       if (!mounted) {
         return;

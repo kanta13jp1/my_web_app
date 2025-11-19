@@ -134,61 +134,49 @@ class SettingsPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('テーマを選択'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<AppThemeMode>(  // 更新
-              title: const Row(
-                children: [
-                  Icon(Icons.light_mode),
-                  SizedBox(width: 12),
-                  Text('ライトモード'),
-                ],
+        content: RadioGroup<AppThemeMode>(
+          value: themeService.themeMode,
+          onChanged: (value) {
+            if (value != null) {
+              themeService.setThemeMode(value);
+              Navigator.pop(context);
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<AppThemeMode>(
+                title: const Row(
+                  children: [
+                    Icon(Icons.light_mode),
+                    SizedBox(width: 12),
+                    Text('ライトモード'),
+                  ],
+                ),
+                value: AppThemeMode.light,
               ),
-              value: AppThemeMode.light,  // 更新
-              groupValue: themeService.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            RadioListTile<AppThemeMode>(  // 更新
-              title: const Row(
-                children: [
-                  Icon(Icons.dark_mode),
-                  SizedBox(width: 12),
-                  Text('ダークモード'),
-                ],
+              RadioListTile<AppThemeMode>(
+                title: const Row(
+                  children: [
+                    Icon(Icons.dark_mode),
+                    SizedBox(width: 12),
+                    Text('ダークモード'),
+                  ],
+                ),
+                value: AppThemeMode.dark,
               ),
-              value: AppThemeMode.dark,  // 更新
-              groupValue: themeService.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            RadioListTile<AppThemeMode>(  // 更新
-              title: const Row(
-                children: [
-                  Icon(Icons.brightness_auto),
-                  SizedBox(width: 12),
-                  Text('システム設定に従う'),
-                ],
+              RadioListTile<AppThemeMode>(
+                title: const Row(
+                  children: [
+                    Icon(Icons.brightness_auto),
+                    SizedBox(width: 12),
+                    Text('システム設定に従う'),
+                  ],
+                ),
+                value: AppThemeMode.system,
               ),
-              value: AppThemeMode.system,  // 更新
-              groupValue: themeService.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -247,7 +235,7 @@ class SettingsPage extends StatelessWidget {
                               color: color.withValues(alpha: 0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
-                            )
+                            ),
                           ]
                         : null,
                   ),
