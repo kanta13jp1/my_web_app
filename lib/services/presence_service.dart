@@ -160,7 +160,7 @@ class PresenceService {
       AppLogger.info('Presence tracking stopped');
     } catch (e, stackTrace) {
       AppLogger.error('Failed to stop presence tracking',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -230,7 +230,7 @@ class PresenceService {
       return SiteStatistics.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get site statistics',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return null;
     }
   }
@@ -242,7 +242,7 @@ class PresenceService {
       AppLogger.info('Site statistics updated successfully');
     } catch (e, stackTrace) {
       AppLogger.error('Failed to update site statistics',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -253,7 +253,7 @@ class PresenceService {
       AppLogger.info('Old presence records cleaned up');
     } catch (e, stackTrace) {
       AppLogger.error('Failed to cleanup old presence',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 

@@ -67,7 +67,7 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error loading growth data',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isLoading = false);
     }
   }
@@ -85,7 +85,7 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error generating invite link',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -133,7 +133,7 @@ $_inviteLink
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error sharing invite link',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -334,7 +334,7 @@ $_inviteLink
             gradient: LinearGradient(
               colors: [
                 color.withValues(alpha: 0.2),
-                color.withValues(alpha: 0.1)
+                color.withValues(alpha: 0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
@@ -392,7 +392,7 @@ $_inviteLink
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => const TemplateMarketplacePage()),
+                  builder: (_) => const TemplateMarketplacePage(),),
             );
           },
         ),

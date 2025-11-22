@@ -101,7 +101,7 @@ class _StatsPageState extends State<StatsPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline,
-                          size: 64, color: Colors.red),
+                          size: 64, color: Colors.red,),
                       const SizedBox(height: 16),
                       const Text('エラーが発生しました'),
                       const SizedBox(height: 8),

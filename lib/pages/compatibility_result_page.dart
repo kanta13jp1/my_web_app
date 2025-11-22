@@ -528,7 +528,7 @@ ${_compatibilityMatch.description}''';
             Row(
               children: [
                 Icon(Icons.warning_amber_rounded,
-                    color: Colors.orange.shade700),
+                    color: Colors.orange.shade700,),
                 const SizedBox(width: 8),
                 Text(
                   '乗り越えるべき課題',

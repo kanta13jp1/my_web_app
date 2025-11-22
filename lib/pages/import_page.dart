@@ -50,7 +50,7 @@ class _ImportPageState extends State<ImportPage> {
       });
     } catch (e, stackTrace) {
       AppLogger.error('Error loading categories',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isLoading = false);
     }
   }
@@ -182,7 +182,7 @@ class _ImportPageState extends State<ImportPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error importing notes',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isImporting = false);
 
       if (mounted) {
@@ -290,13 +290,13 @@ class _ImportPageState extends State<ImportPage> {
                             Row(
                               children: [
                                 const Icon(Icons.file_present,
-                                    color: Colors.blue),
+                                    color: Colors.blue,),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
+                                        fontWeight: FontWeight.bold,),
                                   ),
                                 ),
                               ],
@@ -312,7 +312,7 @@ class _ImportPageState extends State<ImportPage> {
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),
                                 ),
-                                value: _selectedCategoryId,
+                                initialValue: _selectedCategoryId,
                                 items: [
                                   const DropdownMenuItem<String?>(
                                     value: null,

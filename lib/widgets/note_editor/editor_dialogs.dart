@@ -169,7 +169,7 @@ Future<void> showCategoryDialog({
                   ),
                   child: Center(
                     child: Text(category.icon,
-                        style: const TextStyle(fontSize: 20)),
+                        style: const TextStyle(fontSize: 20),),
                   ),
                 ),
                 title: Text(category.name),

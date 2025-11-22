@@ -77,7 +77,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
       });
     } catch (e, stackTrace) {
       AppLogger.error('Failed to load statistics',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isLoading = false);
     }
   }
@@ -112,7 +112,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to load growth metrics',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return [];
     }
   }
@@ -257,7 +257,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.trending_up,
-                  color: Colors.greenAccent, size: 20),
+                  color: Colors.greenAccent, size: 20,),
               const SizedBox(width: 4),
               Text(
                 '+${_siteStats!.newUsersToday} 今日',

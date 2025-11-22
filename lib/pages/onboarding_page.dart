@@ -55,11 +55,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
       // Mark that user has started onboarding
       await supabase.from('user_stats').update({
-        'metadata': {'onboarding_started': true}
+        'metadata': {'onboarding_started': true},
       }).eq('user_id', userId);
     } catch (e, stackTrace) {
       AppLogger.error('Failed to mark onboarding started',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -155,7 +155,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (statsResponse != null) {
         final currentPoints = statsResponse['total_points'] as int;
         await supabase.from('user_stats').update(
-            {'total_points': currentPoints + 100}).eq('user_id', userId);
+            {'total_points': currentPoints + 100},).eq('user_id', userId);
       }
 
       setState(() {
@@ -173,7 +173,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Failed to create sample notes',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エラー: $e')),
@@ -207,7 +207,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Failed to complete onboarding',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -348,7 +348,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.check_circle,
-                                  color: Colors.green[700]),
+                                  color: Colors.green[700],),
                               const SizedBox(width: 8),
                               Text(
                                 'サンプルメモ作成完了！',

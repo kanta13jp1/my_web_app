@@ -71,7 +71,7 @@ class NoteCardService {
       return byteData?.buffer.asUint8List();
     } catch (e, stackTrace) {
       AppLogger.error('Error capturing widget',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return null;
     }
   }
@@ -148,7 +148,7 @@ class NoteCardService {
 
           if (byteData != null) {
             AppLogger.info(
-                'Image captured successfully on attempt ${attempt + 1}');
+                'Image captured successfully on attempt ${attempt + 1}',);
             final result = byteData.buffer.asUint8List();
 
             // 画像オブジェクトを破棄してWebGLリソースを解放
@@ -162,7 +162,7 @@ class NoteCardService {
           }
         } catch (e) {
           AppLogger.warning('Error during toImage attempt ${attempt + 1}',
-              error: e);
+              error: e,);
           if (attempt < 2) {
             AppLogger.debug('Waiting before retry...');
             // WebGLコンテキストのリカバリーのため、より長い待機時間
@@ -175,7 +175,7 @@ class NoteCardService {
       return null;
     } catch (e, stackTrace) {
       AppLogger.error('Fatal error capturing widget',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return null;
     }
   }
@@ -220,7 +220,7 @@ class NoteCardService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error sharing note card',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -241,7 +241,7 @@ class NoteCardService {
       return file.path;
     } catch (e, stackTrace) {
       AppLogger.error('Error saving note card',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }

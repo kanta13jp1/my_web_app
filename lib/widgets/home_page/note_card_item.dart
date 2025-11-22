@@ -246,7 +246,7 @@ class NoteCardItem extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.attach_file,
-                            size: 12, color: Colors.blue),
+                            size: 12, color: Colors.blue,),
                         const SizedBox(width: 4),
                         Text(
                           '$count',

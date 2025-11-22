@@ -66,9 +66,9 @@ class AttachmentService {
   }) async {
     try {
       debugPrint(
-          '📎 [AttachmentService] Starting file upload for noteId: $noteId');
+          '📎 [AttachmentService] Starting file upload for noteId: $noteId',);
       debugPrint(
-          '📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
+          '📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes',);
 
       final userId = supabase.auth.currentUser!.id;
       debugPrint('📎 [AttachmentService] User ID: $userId');
@@ -76,13 +76,13 @@ class AttachmentService {
       final bytes = file.bytes;
       if (bytes == null) {
         debugPrint(
-            '❌ [AttachmentService] File bytes is null - this should not happen on Web');
+            '❌ [AttachmentService] File bytes is null - this should not happen on Web',);
         debugPrint(
-            '📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
+            '📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}',);
         throw Exception('ファイルデータが取得できません');
       }
       debugPrint(
-          '✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
+          '✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes',);
 
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -95,7 +95,7 @@ class AttachmentService {
       final filePath = '$userId/$noteId/$fileName';
 
       debugPrint(
-          '📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
+          '📎 [AttachmentService] MIME type: $mimeType, file type: $fileType',);
       debugPrint('📎 [AttachmentService] Upload path: $filePath');
 
       // Supabase Storageにアップロード
@@ -108,7 +108,7 @@ class AttachmentService {
 
       // データベースに記録
       debugPrint(
-          '💾 [AttachmentService] Inserting attachment record to database...');
+          '💾 [AttachmentService] Inserting attachment record to database...',);
       final response = await supabase
           .from('attachments')
           .insert({
@@ -124,7 +124,7 @@ class AttachmentService {
           .single();
 
       debugPrint(
-          '✅ [AttachmentService] Attachment record inserted successfully');
+          '✅ [AttachmentService] Attachment record inserted successfully',);
       debugPrint('📎 [AttachmentService] Attachment ID: ${response['id']}');
 
       return Attachment.fromJson(response);

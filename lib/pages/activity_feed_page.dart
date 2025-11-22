@@ -40,7 +40,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error loading activities',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isLoading = false);
     }
   }
@@ -137,7 +137,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.timeline,
-                              size: 64, color: Colors.grey[400]),
+                              size: 64, color: Colors.grey[400],),
                           const SizedBox(height: 16),
                           Text(
                             'まだアクティビティがありません',

@@ -27,7 +27,7 @@ class ProfileService {
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error('Error getting profile',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return null;
     }
   }
@@ -55,7 +55,7 @@ class ProfileService {
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error('Error updating profile',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -72,7 +72,7 @@ class ProfileService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error updating display name',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -105,7 +105,7 @@ class ProfileService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error updating avatar URL',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -122,7 +122,7 @@ class ProfileService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error updating public status',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -149,7 +149,7 @@ class ProfileService {
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error('Error creating default profile',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -163,7 +163,7 @@ class ProfileService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Error deleting profile',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }

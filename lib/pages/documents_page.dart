@@ -75,8 +75,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 const Divider(),
                 ..._categories.map((category) {
                   final count = _documentsByCategory[category]?.length ?? 0;
-                  if (count == 0 && category != 'root')
+                  if (count == 0 && category != 'root') {
                     return const SizedBox.shrink();
+                  }
 
                   return ListTile(
                     leading: Text(

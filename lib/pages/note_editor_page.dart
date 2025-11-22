@@ -26,7 +26,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialContent;
 
   const NoteEditorPage(
-      {super.key, this.note, this.initialTitle, this.initialContent});
+      {super.key, this.note, this.initialTitle, this.initialContent,});
 
   @override
   State<NoteEditorPage> createState() => _NoteEditorPageState();
@@ -72,9 +72,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _undoRedoService = UndoRedoService();
 
     _titleController = TextEditingController(
-        text: widget.note?.title ?? widget.initialTitle ?? '');
+        text: widget.note?.title ?? widget.initialTitle ?? '',);
     _contentController = TextEditingController(
-        text: widget.note?.content ?? widget.initialContent ?? '');
+        text: widget.note?.content ?? widget.initialContent ?? '',);
     _selectedCategoryId = widget.note?.categoryId;
     _isFavorite = widget.note?.isFavorite ?? false;
     _reminderDate = widget.note?.reminderDate;
@@ -940,7 +940,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 ),
                 const SizedBox(height: 8),
                 const Text('推奨タグ:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontWeight: FontWeight.bold),),
                 ...suggestion.tags.map((tag) => Chip(label: Text(tag))),
               ],
             ),
@@ -1072,7 +1072,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               title: const Text('リマインダー'),
               subtitle: _reminderDate != null
                   ? Text(
-                      '設定済み: ${DateFormatter.formatReminder(_reminderDate!)}')
+                      '設定済み: ${DateFormatter.formatReminder(_reminderDate!)}',)
                   : null,
               onTap: () {
                 Navigator.pop(context);
@@ -1232,7 +1232,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                     Row(
                       children: [
                         const Icon(Icons.schedule,
-                            color: Colors.blue, size: 18),
+                            color: Colors.blue, size: 18,),
                         const SizedBox(width: 8),
                         Text(
                           '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
@@ -1249,7 +1249,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 12, vertical: 8,),
                       decoration: BoxDecoration(
                         color: _reminderDate!.isBefore(DateTime.now())
                             ? Colors.red.withValues(alpha: 0.1)

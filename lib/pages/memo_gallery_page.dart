@@ -83,7 +83,7 @@ class _MemoGalleryPageState extends State<MemoGalleryPage>
       _loadMemos(); // Reload to update counts
     } catch (e, stackTrace) {
       AppLogger.error('Failed to toggle like',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 

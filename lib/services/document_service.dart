@@ -94,11 +94,11 @@ class DocumentService {
       debugPrint('📄 [DocumentService] Loading document from path: $path');
       final content = await rootBundle.loadString(path);
       debugPrint(
-          '✅ [DocumentService] Document loaded successfully: ${content.length} characters');
+          '✅ [DocumentService] Document loaded successfully: ${content.length} characters',);
       return content;
     } catch (e, stackTrace) {
       debugPrint(
-          '❌ [DocumentService] Failed to load document from path: $path');
+          '❌ [DocumentService] Failed to load document from path: $path',);
       debugPrint('❌ [DocumentService] Error: $e');
       debugPrint('❌ [DocumentService] Error type: ${e.runtimeType}');
       debugPrint('❌ [DocumentService] Stack trace: $stackTrace');
@@ -106,7 +106,7 @@ class DocumentService {
       // 特定のエラーを検出
       if (e.toString().contains('Unable to load asset')) {
         debugPrint(
-            '⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration');
+            '⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration',);
         debugPrint('⚠️ [DocumentService] Expected path: $path');
       }
 

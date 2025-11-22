@@ -155,7 +155,7 @@ class AIService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error summarizing text',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -206,7 +206,7 @@ class AIService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error translating text',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -239,7 +239,7 @@ class AIService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error suggesting titles',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -274,7 +274,7 @@ class AIService {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error suggesting tags',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }
@@ -298,7 +298,7 @@ class AIService {
       if (data['success'] == true) {
         return AISearchResult(
           results: List<Map<String, dynamic>>.from(
-              data['results'] as List<dynamic>? ?? []),
+              data['results'] as List<dynamic>? ?? [],),
           totalResults: data['totalResults'] as int? ?? 0,
           explanation: data['explanation'] as String? ?? '',
         );
@@ -341,7 +341,7 @@ class AIService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error getting AI usage stats',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return AIUsageStats(
         totalUsage: 0,
         totalCost: 0.0,
@@ -379,7 +379,7 @@ class AIService {
           final statsResponse = await _supabase
               .from('user_stats')
               .select(
-                  'current_level, total_points, current_streak, longest_streak, notes_created')
+                  'current_level, total_points, current_streak, longest_streak, notes_created',)
               .eq('user_id', userId)
               .single();
 
@@ -407,7 +407,7 @@ class AIService {
       );
     } catch (e, stackTrace) {
       AppLogger.error('Error getting task recommendations',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       rethrow;
     }
   }

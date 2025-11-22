@@ -31,7 +31,7 @@ class AppLogger {
 
   /// 警告レベルのログ
   static void warning(dynamic message,
-      {dynamic error, StackTrace? stackTrace}) {
+      {dynamic error, StackTrace? stackTrace,}) {
     _logger.w(message, error: error, stackTrace: stackTrace);
   }
 

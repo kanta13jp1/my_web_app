@@ -32,7 +32,7 @@ class PublicMemoService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Failed to publish memo',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -50,7 +50,7 @@ class PublicMemoService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Failed to unpublish memo',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -78,7 +78,7 @@ class PublicMemoService {
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get public memos',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return [];
     }
   }
@@ -103,7 +103,7 @@ class PublicMemoService {
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get trending memos',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return [];
     }
   }
@@ -124,7 +124,7 @@ class PublicMemoService {
           .update({'view_count': currentCount + 1}).eq('id', memoId);
     } catch (e, stackTrace) {
       AppLogger.error('Failed to increment view count',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -199,7 +199,7 @@ class PublicMemoService {
       return true;
     } catch (e, stackTrace) {
       AppLogger.error('Failed to unlike memo',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -217,7 +217,7 @@ class PublicMemoService {
       return like != null;
     } catch (e, stackTrace) {
       AppLogger.error('Failed to check if user liked memo',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return false;
     }
   }
@@ -237,14 +237,14 @@ class PublicMemoService {
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get user public memos',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return [];
     }
   }
 
   // Get popular categories
   Future<List<Map<String, dynamic>>> getPopularCategories(
-      {int limit = 10}) async {
+      {int limit = 10,}) async {
     try {
       final response = await _supabase
           .from('public_memos')
@@ -271,7 +271,7 @@ class PublicMemoService {
           .toList();
     } catch (e, stackTrace) {
       AppLogger.error('Failed to get popular categories',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       return [];
     }
   }

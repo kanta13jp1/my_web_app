@@ -41,7 +41,7 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
       });
     } catch (e, stackTrace) {
       AppLogger.error('Failed to load challenges',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
       setState(() => _isLoading = false);
     }
   }

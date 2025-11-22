@@ -55,10 +55,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       );
 
       debugPrint(
-          '✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
+          '✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries',);
       if (entries.isEmpty) {
         debugPrint(
-            '⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
+            '⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue',);
       }
 
       // 認証済みユーザーの場合のみランクを取得
@@ -230,7 +230,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           backgroundColor: Colors.white,
                           foregroundColor: Theme.of(context).primaryColor,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                              horizontal: 24, vertical: 12,),
                         ),
                         child: const Text(
                           '無料で始める',
@@ -252,7 +252,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                              horizontal: 24, vertical: 12,),
                         ),
                         child: const Text(
                           'ログイン',
