@@ -312,7 +312,7 @@ class _ImportPageState extends State<ImportPage> {
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),
                                 ),
-                                initialValue: _selectedCategoryId,
+                                value: _selectedCategoryId,
                                 items: [
                                   const DropdownMenuItem<String?>(
                                     value: null,
