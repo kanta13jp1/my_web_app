@@ -76,8 +76,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load statistics',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to load statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -111,8 +114,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
           .map((json) => GrowthMetrics.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load growth metrics',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to load growth metrics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -256,8 +262,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.trending_up,
-                  color: Colors.greenAccent, size: 20,),
+              const Icon(
+                Icons.trending_up,
+                color: Colors.greenAccent,
+                size: 20,
+              ),
               const SizedBox(width: 4),
               Text(
                 '+${_siteStats!.newUsersToday} 今日',

@@ -69,8 +69,11 @@ class _SharePhilosopherQuoteDialogState
                   padding: const EdgeInsets.all(24),
                   child: Row(
                     children: [
-                      const Icon(Icons.format_quote,
-                          color: Colors.blue, size: 28,),
+                      const Icon(
+                        Icons.format_quote,
+                        color: Colors.blue,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       const Flexible(
                         child: Text(
@@ -343,7 +346,8 @@ class _SharePhilosopherQuoteDialogState
                             color: Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.grey.withValues(alpha: 0.3),),
+                              color: Colors.grey.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             _getShareMessage(),

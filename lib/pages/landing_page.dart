@@ -87,7 +87,8 @@ class LandingPage extends StatelessWidget {
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => const AuthPage(
-                                            initialMode: AuthMode.signUp,),
+                                          initialMode: AuthMode.signUp,
+                                        ),
                                       ),
                                     );
                                   },
@@ -117,14 +118,17 @@ class LandingPage extends StatelessWidget {
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => const AuthPage(
-                                            initialMode: AuthMode.signIn,),
+                                          initialMode: AuthMode.signIn,
+                                        ),
                                       ),
                                     );
                                   },
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.white,
                                     side: const BorderSide(
-                                        color: Colors.white, width: 2,),
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -274,7 +278,8 @@ class LandingPage extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => const AuthPage(
-                                        initialMode: AuthMode.signUp,),
+                                      initialMode: AuthMode.signUp,
+                                    ),
                                   ),
                                 );
                               },

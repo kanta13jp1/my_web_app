@@ -49,8 +49,11 @@ class _ImportPageState extends State<ImportPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading categories',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error loading categories',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -181,8 +184,11 @@ class _ImportPageState extends State<ImportPage> {
         Navigator.pop(context);
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error importing notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isImporting = false);
 
       if (mounted) {
@@ -289,14 +295,17 @@ class _ImportPageState extends State<ImportPage> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.file_present,
-                                    color: Colors.blue,),
+                                const Icon(
+                                  Icons.file_present,
+                                  color: Colors.blue,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],

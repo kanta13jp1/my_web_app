@@ -142,7 +142,9 @@ class NoteCardWidget extends StatelessWidget {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12,),
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: categoryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),

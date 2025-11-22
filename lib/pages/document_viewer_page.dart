@@ -37,20 +37,25 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
       if (kDebugMode) {
         debugPrint('📄 [DocumentViewerPage] Starting document load');
         debugPrint(
-            '📄 [DocumentViewerPage] Document ID: ${widget.document.id}',);
+          '📄 [DocumentViewerPage] Document ID: ${widget.document.id}',
+        );
         debugPrint(
-            '📄 [DocumentViewerPage] Document title: ${widget.document.title}',);
+          '📄 [DocumentViewerPage] Document title: ${widget.document.title}',
+        );
         debugPrint(
-            '📄 [DocumentViewerPage] Document path: ${widget.document.path}',);
+          '📄 [DocumentViewerPage] Document path: ${widget.document.path}',
+        );
         debugPrint(
-            '📄 [DocumentViewerPage] Document category: ${widget.document.category}',);
+          '📄 [DocumentViewerPage] Document category: ${widget.document.category}',
+        );
       }
 
       final content = await DocumentService.loadDocument(widget.document.path);
 
       if (kDebugMode) {
         debugPrint(
-            '✅ [DocumentViewerPage] Document content loaded successfully',);
+          '✅ [DocumentViewerPage] Document content loaded successfully',
+        );
       }
       setState(() {
         _content = content;

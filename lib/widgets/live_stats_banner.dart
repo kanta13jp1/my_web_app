@@ -139,8 +139,12 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label,
-      {Color? color,}) {
+  Widget _buildStatItem(
+    IconData icon,
+    String value,
+    String label, {
+    Color? color,
+  }) {
     return Column(
       children: [
         Icon(

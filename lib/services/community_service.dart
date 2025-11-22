@@ -25,8 +25,11 @@ class CommunityService {
       if (response == null) return null;
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting user profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting user profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -42,8 +45,11 @@ class CommunityService {
 
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating user profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating user profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -69,8 +75,11 @@ class CommunityService {
           .map((profile) => UserProfile.fromJson(profile))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error searching profiles',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error searching profiles',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -109,8 +118,11 @@ class CommunityService {
 
       AppLogger.info('User $userId unfollowed $followingId');
     } catch (e, stackTrace) {
-      AppLogger.error('Error unfollowing user',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error unfollowing user',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -130,15 +142,20 @@ class CommunityService {
 
       return response != null;
     } catch (e, stackTrace) {
-      AppLogger.error('Error checking follow status',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error checking follow status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
 
   /// フォロワー一覧を取得
-  Future<List<UserProfile>> getFollowers(String userId,
-      {int limit = 50,}) async {
+  Future<List<UserProfile>> getFollowers(
+    String userId, {
+    int limit = 50,
+  }) async {
     try {
       final response = await _supabase
           .from('user_follows')
@@ -161,15 +178,20 @@ class CommunityService {
           .map((profile) => UserProfile.fromJson(profile))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting followers',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting followers',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
 
   /// フォロー中のユーザー一覧を取得
-  Future<List<UserProfile>> getFollowing(String userId,
-      {int limit = 50,}) async {
+  Future<List<UserProfile>> getFollowing(
+    String userId, {
+    int limit = 50,
+  }) async {
     try {
       final response = await _supabase
           .from('user_follows')
@@ -192,8 +214,11 @@ class CommunityService {
           .map((profile) => UserProfile.fromJson(profile))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting following',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting following',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -220,8 +245,11 @@ class CommunityService {
         'following': followingResponse.count,
       };
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting follow counts',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting follow counts',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return {'followers': 0, 'following': 0};
     }
   }
@@ -273,8 +301,11 @@ class CommunityService {
         });
       }).toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting comments',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting comments',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -297,8 +328,11 @@ class CommunityService {
 
       return NoteComment.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating comment',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating comment',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -309,8 +343,11 @@ class CommunityService {
       await _supabase.from('note_comments').delete().eq('id', commentId);
       AppLogger.info('Comment $commentId deleted');
     } catch (e, stackTrace) {
-      AppLogger.error('Error deleting comment',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error deleting comment',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -369,8 +406,11 @@ class CommunityService {
 
       return response != null;
     } catch (e, stackTrace) {
-      AppLogger.error('Error checking like status',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error checking like status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -386,8 +426,11 @@ class CommunityService {
 
       return response.count;
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting like count',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting like count',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
@@ -403,8 +446,11 @@ class CommunityService {
 
       return response.count;
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting comment count',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting comment count',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }

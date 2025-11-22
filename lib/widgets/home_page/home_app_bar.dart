@@ -297,7 +297,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => const PersonalityTestLandingPage(),),
+              builder: (_) => const PersonalityTestLandingPage(),
+            ),
           ).then((_) {
             onLoadUserStats();
           });
@@ -641,8 +642,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.share,
-                                color: Colors.white, size: 28,),
+                            child: const Icon(
+                              Icons.share,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Column(
@@ -671,7 +675,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8,),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
@@ -716,7 +722,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6,),
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(20),
@@ -795,8 +803,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.format_quote,
-                                color: Colors.white, size: 18,),
+                            child: const Icon(
+                              Icons.format_quote,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           const Text(
@@ -810,7 +821,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                           const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2,),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -861,8 +874,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          Icon(Icons.more_horiz,
-                              color: Colors.grey.shade600, size: 20,),
+                          Icon(
+                            Icons.more_horiz,
+                            color: Colors.grey.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           const Text(
                             'その他の方法',
@@ -1205,7 +1221,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2,),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -1240,8 +1258,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                size: 16, color: color.withValues(alpha: 0.5),),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: color.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),

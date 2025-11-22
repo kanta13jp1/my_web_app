@@ -76,7 +76,8 @@ class DailyLoginService {
 
       final currentPoints = stats['total_points'] as int;
       await _supabase.from('user_stats').update(
-          {'total_points': currentPoints + bonusPoints},).eq('user_id', userId);
+        {'total_points': currentPoints + bonusPoints},
+      ).eq('user_id', userId);
 
       AppLogger.info(
         'Daily login bonus awarded: $bonusPoints points (Day $consecutiveDays)',
@@ -89,8 +90,11 @@ class DailyLoginService {
         'is_new_bonus': true,
       };
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check daily login bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to check daily login bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -126,8 +130,11 @@ class DailyLoginService {
 
       return yesterdayLogin?['consecutive_days'] as int? ?? 0;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user login streak',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get user login streak',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
@@ -142,8 +149,11 @@ class DailyLoginService {
 
       return (response as List).length;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user total login days',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get user total login days',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
@@ -163,8 +173,11 @@ class DailyLoginService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user login history',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get user login history',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }

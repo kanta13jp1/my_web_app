@@ -394,8 +394,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.lightbulb_outline,
-                                    color: Colors.blue.shade700,),
+                                Icon(
+                                  Icons.lightbulb_outline,
+                                  color: Colors.blue.shade700,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'ヒント',

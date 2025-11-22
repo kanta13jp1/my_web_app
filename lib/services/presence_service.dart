@@ -159,8 +159,11 @@ class PresenceService {
 
       AppLogger.info('Presence tracking stopped');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to stop presence tracking',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to stop presence tracking',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -229,8 +232,11 @@ class PresenceService {
 
       return SiteStatistics.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get site statistics',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get site statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -241,8 +247,11 @@ class PresenceService {
       await _supabase.rpc('update_site_statistics');
       AppLogger.info('Site statistics updated successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update site statistics',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to update site statistics',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -252,8 +261,11 @@ class PresenceService {
       await _supabase.rpc('cleanup_old_presence');
       AppLogger.info('Old presence records cleaned up');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to cleanup old presence',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to cleanup old presence',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

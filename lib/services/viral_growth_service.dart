@@ -31,10 +31,14 @@ class ViralGrowthService {
       await _incrementShareCount(userId, platform);
 
       AppLogger.info(
-          'Share bonus awarded: $totalPoints points (campaign: $isCampaignActive)',);
+        'Share bonus awarded: $totalPoints points (campaign: $isCampaignActive)',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding share bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error awarding share bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -78,8 +82,11 @@ class ViralGrowthService {
 
       AppLogger.info('Viral milestone bonus awarded: $milestone');
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding viral milestone bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error awarding viral milestone bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -126,8 +133,11 @@ class ViralGrowthService {
       const baseUrl = 'https://my-web-app-b67f4.web.app';
       return '$baseUrl?ref=$referralCode';
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error generating invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }

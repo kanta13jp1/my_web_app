@@ -134,8 +134,11 @@ class _HomePageState extends State<HomePage> {
         _loadUserStats();
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check daily login bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to check daily login bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -153,8 +156,11 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading user stats',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error loading user stats',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

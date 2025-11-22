@@ -21,8 +21,11 @@ class DailyChallengeService {
           .map((json) => DailyChallenge.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get today\'s challenges',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get today\'s challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -41,8 +44,11 @@ class DailyChallengeService {
           .map((json) => UserChallengeProgress.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user challenge progress',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to get user challenge progress',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -133,8 +139,11 @@ class DailyChallengeService {
 
       AppLogger.info('Challenge progress updated');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update challenge progress',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to update challenge progress',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -177,7 +186,8 @@ class DailyChallengeService {
 
       final currentPoints = stats['total_points'] as int;
       await _supabase.from('user_stats').update(
-          {'total_points': currentPoints + rewardPoints},).eq('user_id', userId);
+        {'total_points': currentPoints + rewardPoints},
+      ).eq('user_id', userId);
 
       // Mark reward as claimed
       await _supabase
@@ -189,8 +199,11 @@ class DailyChallengeService {
       AppLogger.info('Challenge reward claimed: $rewardPoints points');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to claim challenge reward',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to claim challenge reward',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -220,8 +233,11 @@ class DailyChallengeService {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to track activity for challenges',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to track activity for challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

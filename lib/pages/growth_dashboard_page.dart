@@ -66,8 +66,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading growth data',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error loading growth data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -84,8 +87,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error generating invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -132,8 +138,11 @@ $_inviteLink
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error sharing invite link',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error sharing invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -392,7 +401,8 @@ $_inviteLink
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => const TemplateMarketplacePage(),),
+                builder: (_) => const TemplateMarketplacePage(),
+              ),
             );
           },
         ),

@@ -26,8 +26,11 @@ class ProfileService {
 
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error getting profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -54,8 +57,11 @@ class ProfileService {
       AppLogger.info('Profile updated successfully for user ${profile.userId}');
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -71,8 +77,11 @@ class ProfileService {
       AppLogger.info('Display name updated to "$displayName" for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating display name',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating display name',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -104,8 +113,11 @@ class ProfileService {
       AppLogger.info('Avatar URL updated for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating avatar URL',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating avatar URL',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -121,8 +133,11 @@ class ProfileService {
       AppLogger.info('Public status updated to $isPublic for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating public status',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error updating public status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -148,8 +163,11 @@ class ProfileService {
       AppLogger.info('Default profile created for user $userId');
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error creating default profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error creating default profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -162,8 +180,11 @@ class ProfileService {
       AppLogger.info('Profile deleted for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error deleting profile',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error deleting profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }

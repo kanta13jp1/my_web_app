@@ -168,8 +168,10 @@ Future<void> showCategoryDialog({
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(category.icon,
-                        style: const TextStyle(fontSize: 20),),
+                    child: Text(
+                      category.icon,
+                      style: const TextStyle(fontSize: 20),
+                    ),
                   ),
                 ),
                 title: Text(category.name),

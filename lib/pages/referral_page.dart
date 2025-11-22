@@ -47,8 +47,11 @@ class _ReferralPageState extends State<ReferralPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load referral data',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to load referral data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/achievement.dart';
 
 class AchievementNotification {
-  static void show(
-      {required BuildContext context, required Achievement achievement,}) {
+  static void show({
+    required BuildContext context,
+    required Achievement achievement,
+  }) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 

@@ -30,9 +30,11 @@ class ImportService {
       );
       final createdIndex =
           headers.indexWhere((h) => h.toLowerCase().contains('created'));
-      final updatedIndex = headers.indexWhere((h) =>
-          h.toLowerCase().contains('updated') ||
-          h.toLowerCase().contains('modified'),);
+      final updatedIndex = headers.indexWhere(
+        (h) =>
+            h.toLowerCase().contains('updated') ||
+            h.toLowerCase().contains('modified'),
+      );
 
       final List<Map<String, dynamic>> parsedNotes = [];
 
@@ -65,15 +67,19 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Notion CSV',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error parsing Notion CSV',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
 
   /// Evernote ENEX (XML) ファイルをパース
   Future<List<Map<String, dynamic>>> parseEvernoteEnex(
-      String enexContent,) async {
+    String enexContent,
+  ) async {
     try {
       final List<Map<String, dynamic>> parsedNotes = [];
 
@@ -97,7 +103,9 @@ class ImportService {
 
         // CDATA セクションを削除
         content = content.replaceAll(
-            RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true), r'$1',);
+          RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true),
+          r'$1',
+        );
         // HTMLタグを削除（簡易的）
         content = content.replaceAll(RegExp(r'<[^>]*>'), '');
         // エンティティをデコード
@@ -120,15 +128,19 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Evernote ENEX',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error parsing Evernote ENEX',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
 
   /// Markdown形式のファイルをパース（汎用インポート）
   Future<List<Map<String, dynamic>>> parseMarkdown(
-      String markdownContent,) async {
+    String markdownContent,
+  ) async {
     try {
       final List<Map<String, dynamic>> parsedNotes = [];
 
@@ -164,8 +176,11 @@ class ImportService {
 
       return parsedNotes;
     } catch (e, stackTrace) {
-      AppLogger.error('Error parsing Markdown',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error parsing Markdown',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -196,8 +211,9 @@ class ImportService {
           importedCount++;
         } catch (e) {
           AppLogger.warning(
-              'Failed to import individual note: ${noteData['title']}',
-              error: e,);
+            'Failed to import individual note: ${noteData['title']}',
+            error: e,
+          );
         }
       }
 
@@ -208,8 +224,11 @@ class ImportService {
 
       return importedCount;
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error importing notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -227,10 +246,14 @@ class ImportService {
       );
 
       AppLogger.info(
-          'Import bonus awarded: $bonusPoints points for $importedCount notes',);
+        'Import bonus awarded: $bonusPoints points for $importedCount notes',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding import bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error awarding import bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

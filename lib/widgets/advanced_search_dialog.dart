@@ -149,8 +149,10 @@ class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
                             final isSelected =
                                 _selectedCategoryId == category.id;
                             final color = Color(
-                              int.parse(category.color.substring(1),
-                                      radix: 16,) +
+                              int.parse(
+                                    category.color.substring(1),
+                                    radix: 16,
+                                  ) +
                                   0xFF000000,
                             );
 
