@@ -53,7 +53,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to load statistics',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }

@@ -224,9 +224,8 @@ class _PersonalityTestQuestionsPageState
                   _AnswerButton(
                     label: 'A',
                     text: question.optionA,
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _answerQuestion('A'),
+                    onPressed:
+                        _isSubmitting ? null : () => _answerQuestion('A'),
                     color: colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
@@ -235,9 +234,8 @@ class _PersonalityTestQuestionsPageState
                   _AnswerButton(
                     label: 'B',
                     text: question.optionB,
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _answerQuestion('B'),
+                    onPressed:
+                        _isSubmitting ? null : () => _answerQuestion('B'),
                     color: colorScheme.secondary,
                   ),
                 ],

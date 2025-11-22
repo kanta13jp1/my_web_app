@@ -393,7 +393,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
               // スコア表示
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.pink.shade50,
                   borderRadius: BorderRadius.circular(20),
@@ -422,10 +423,22 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
   Widget _buildTypeSelector() {
     const types = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP',
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP',
+      'INTJ',
+      'INTP',
+      'ENTJ',
+      'ENTP',
+      'INFJ',
+      'INFP',
+      'ENFJ',
+      'ENFP',
+      'ISTJ',
+      'ISFJ',
+      'ESTJ',
+      'ESFJ',
+      'ISTP',
+      'ISFP',
+      'ESTP',
+      'ESFP',
     ];
 
     return Column(

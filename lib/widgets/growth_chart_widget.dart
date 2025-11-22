@@ -157,7 +157,7 @@ class GrowthChartWidget extends StatelessWidget {
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: lineColor.withValues(alpha : 0.1),
+                        color: lineColor.withValues(alpha: 0.1),
                       ),
                     ),
                   ],

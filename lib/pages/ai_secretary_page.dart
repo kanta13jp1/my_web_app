@@ -140,8 +140,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // AIインサイト
-            if (_recommendations!.insights.isNotEmpty)
-              _buildInsightsCard(),
+            if (_recommendations!.insights.isNotEmpty) _buildInsightsCard(),
 
             const SizedBox(height: 16),
 
@@ -190,8 +189,8 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
               child: Text(
                 'AI秘書はあなたのメモとタスクを分析して推奨事項を提案します',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                ),
+                      color: Colors.grey,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -228,8 +227,8 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 Text(
                   'AIからのインサイト',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
@@ -265,9 +264,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
                   ),
                 ],
               ),
@@ -275,9 +274,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
               Text(
                 'まだ推奨事項はありません',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
+                      color: Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
               ),
             ],
           ),
@@ -299,9 +298,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
                 ),
               ],
             ),

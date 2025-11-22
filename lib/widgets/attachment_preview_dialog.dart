@@ -29,7 +29,8 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
 
   Future<void> _loadSignedUrl() async {
     try {
-      final url = await AttachmentService.getSignedUrl(widget.attachment.filePath);
+      final url =
+          await AttachmentService.getSignedUrl(widget.attachment.filePath);
       if (mounted) {
         setState(() {
           _signedUrl = url;

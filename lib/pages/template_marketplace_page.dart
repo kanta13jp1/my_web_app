@@ -58,8 +58,8 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
 
     setState(() {
       _filteredTemplates = _templates.where((template) {
-        final matchesCategory = _selectedCategory == '全て' ||
-            template.category == _selectedCategory;
+        final matchesCategory =
+            _selectedCategory == '全て' || template.category == _selectedCategory;
         final matchesSearch = query.isEmpty ||
             template.title.toLowerCase().contains(query) ||
             template.description.toLowerCase().contains(query) ||
@@ -180,10 +180,12 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                       Wrap(
                         spacing: 8,
                         children: template.tags
-                            .map((tag) => Chip(
-                                  label: Text(tag),
-                                  labelStyle: const TextStyle(fontSize: 12),
-                                ),)
+                            .map(
+                              (tag) => Chip(
+                                label: Text(tag),
+                                labelStyle: const TextStyle(fontSize: 12),
+                              ),
+                            )
                             .toList(),
                       ),
                       const SizedBox(height: 16),
@@ -309,8 +311,11 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off,
-                            size: 64, color: Colors.grey[400],),
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'テンプレートが見つかりません',

@@ -34,7 +34,8 @@ class UndoRedoService extends ChangeNotifier {
     _currentIndex++;
 
     if (kDebugMode) {
-      debugPrint('📝 [UndoRedoService] Snapshot added: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+          '📝 [UndoRedoService] Snapshot added: $_currentIndex/${_history.length - 1}');
     }
 
     // 履歴サイズ制限
@@ -42,7 +43,8 @@ class UndoRedoService extends ChangeNotifier {
       _history.removeAt(0);
       _currentIndex--;
       if (kDebugMode) {
-        debugPrint('🗑️  [UndoRedoService] History trimmed to $_maxHistorySize');
+        debugPrint(
+            '🗑️  [UndoRedoService] History trimmed to $_maxHistorySize');
       }
     }
 
@@ -60,7 +62,8 @@ class UndoRedoService extends ChangeNotifier {
 
     _currentIndex--;
     if (kDebugMode) {
-      debugPrint('⬅️  [UndoRedoService] Undo to: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+          '⬅️  [UndoRedoService] Undo to: $_currentIndex/${_history.length - 1}');
     }
     notifyListeners();
     return _history[_currentIndex];
@@ -77,7 +80,8 @@ class UndoRedoService extends ChangeNotifier {
 
     _currentIndex++;
     if (kDebugMode) {
-      debugPrint('➡️  [UndoRedoService] Redo to: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+          '➡️  [UndoRedoService] Redo to: $_currentIndex/${_history.length - 1}');
     }
     notifyListeners();
     return _history[_currentIndex];

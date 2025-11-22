@@ -54,9 +54,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         orderBy: _orderBy,
       );
 
-      debugPrint('✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
+      debugPrint(
+          '✅ [LeaderboardPage] Leaderboard loaded: ${entries.length} entries');
       if (entries.isEmpty) {
-        debugPrint('⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
+        debugPrint(
+            '⚠️ [LeaderboardPage] No entries found - this could be a RLS policy issue');
       }
 
       // 認証済みユーザーの場合のみランクを取得
@@ -147,7 +149,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = _isAuthenticated ? supabase.auth.currentUser!.id : null;
+    final currentUserId =
+        _isAuthenticated ? supabase.auth.currentUser!.id : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -171,13 +174,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withValues(alpha : 0.8),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha : 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -218,14 +221,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AuthPage(initialMode: AuthMode.signUp),
+                              builder: (_) =>
+                                  const AuthPage(initialMode: AuthMode.signUp),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
                         ),
                         child: const Text(
                           '無料で始める',
@@ -238,14 +243,16 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AuthPage(initialMode: AuthMode.signIn),
+                              builder: (_) =>
+                                  const AuthPage(initialMode: AuthMode.signIn),
                             ),
                           );
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
                         ),
                         child: const Text(
                           'ログイン',
@@ -267,13 +274,13 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withValues(alpha : 0.7),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.7),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha : 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -285,7 +292,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha : 0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -398,7 +405,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         itemCount: _entries.length,
                         itemBuilder: (context, index) {
                           final entry = _entries[index];
-                          final isCurrentUser = _isAuthenticated && entry.userId == currentUserId;
+                          final isCurrentUser =
+                              _isAuthenticated && entry.userId == currentUserId;
                           final rankEmoji = _getRankEmoji(entry.rank);
 
                           return Card(
@@ -409,7 +417,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                             color: isCurrentUser
                                 ? Theme.of(context)
                                     .primaryColor
-                                    .withValues(alpha : 0.1)
+                                    .withValues(alpha: 0.1)
                                 : null,
                             child: ListTile(
                               leading: Container(
@@ -417,7 +425,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                 height: 50,
                                 decoration: BoxDecoration(
                                   color: _getRankColor(entry.rank)
-                                      .withValues(alpha : 0.2),
+                                      .withValues(alpha: 0.2),
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: _getRankColor(entry.rank),

@@ -54,7 +54,7 @@ class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
       child: Container(
         constraints: BoxConstraints(
           maxWidth: isMobile ? double.infinity : 500,
-          maxHeight: MediaQuery.of(context).size.height * 0.85,  // 高さ制限を追加
+          maxHeight: MediaQuery.of(context).size.height * 0.85, // 高さ制限を追加
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -91,8 +91,10 @@ class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
             ),
 
             // スクロール可能なコンテンツ部分（修正）
-            Flexible(  // ← 追加
-              child: SingleChildScrollView(  // ← 追加
+            Flexible(
+              // ← 追加
+              child: SingleChildScrollView(
+                // ← 追加
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -144,9 +146,11 @@ class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
                           ),
                           // カテゴリチップ
                           ...widget.categories.map((category) {
-                            final isSelected = _selectedCategoryId == category.id;
+                            final isSelected =
+                                _selectedCategoryId == category.id;
                             final color = Color(
-                              int.parse(category.color.substring(1), radix: 16) +
+                              int.parse(category.color.substring(1),
+                                      radix: 16) +
                                   0xFF000000,
                             );
 
@@ -257,8 +261,8 @@ class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
                       ),
                   ],
                 ),
-              ),  // ← 追加
-            ),  // ← 追加
+              ), // ← 追加
+            ), // ← 追加
 
             // ボタン（固定）
             const Divider(height: 1),

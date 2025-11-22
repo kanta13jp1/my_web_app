@@ -55,7 +55,9 @@ class UserStats {
   double get levelProgress {
     final pointsInLevel = totalPoints - pointsForCurrentLevel;
     final pointsNeeded = pointsForNextLevel - pointsForCurrentLevel;
-    return pointsNeeded > 0 ? (pointsInLevel / pointsNeeded).clamp(0.0, 1.0) : 0.0;
+    return pointsNeeded > 0
+        ? (pointsInLevel / pointsNeeded).clamp(0.0, 1.0)
+        : 0.0;
   }
 
   // Get level title
@@ -164,7 +166,8 @@ class UserAchievement {
         'updated_at': updatedAt.toIso8601String(),
       };
 
-  factory UserAchievement.fromJson(Map<String, dynamic> json) => UserAchievement(
+  factory UserAchievement.fromJson(Map<String, dynamic> json) =>
+      UserAchievement(
         id: json['id'],
         userId: json['user_id'],
         achievementId: json['achievement_id'],

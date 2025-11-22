@@ -36,7 +36,8 @@ class GamificationService {
 
       return UserStats.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error initializing user stats', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error initializing user stats',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -53,7 +54,8 @@ class GamificationService {
       if (response == null) return null;
       return UserStats.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting user stats', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting user stats',
+          error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -74,7 +76,8 @@ class GamificationService {
 
       return UserStats.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating user stats', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating user stats',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -115,7 +118,8 @@ class GamificationService {
       }
       return await addPoints(userId, points);
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding points', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error awarding points',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -167,7 +171,8 @@ class GamificationService {
 
       return await updateUserStats(updatedStats);
     } catch (e, stackTrace) {
-      AppLogger.error('Error tracking activity', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error tracking activity',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -199,7 +204,8 @@ class GamificationService {
         return achievement;
       }).toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting user achievements', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting user achievements',
+          error: e, stackTrace: stackTrace);
       return AchievementDefinitions.getDefaultAchievements();
     }
   }
@@ -257,7 +263,9 @@ class GamificationService {
       }
 
       // If newly unlocked, award points
-      if (isUnlocked && (existing == null || !((existing['is_unlocked'] as bool?) ?? false))) {
+      if (isUnlocked &&
+          (existing == null ||
+              !((existing['is_unlocked'] as bool?) ?? false))) {
         await addPoints(userId, achievement.pointsReward);
         return achievement.copyWith(
           isUnlocked: true,
@@ -268,7 +276,8 @@ class GamificationService {
 
       return null; // Not newly unlocked
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating achievement progress', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating achievement progress',
+          error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -400,7 +409,8 @@ class GamificationService {
 
       return newlyUnlocked;
     } catch (e, stackTrace) {
-      AppLogger.error('Error checking achievements', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error checking achievements',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -423,7 +433,8 @@ class GamificationService {
       // Check for newly unlocked achievements
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling note creation', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling note creation',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -444,7 +455,8 @@ class GamificationService {
 
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling category creation', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling category creation',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -465,7 +477,8 @@ class GamificationService {
 
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling note share', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling note share',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -474,10 +487,12 @@ class GamificationService {
   Future<List<Achievement>> onNoteFavorited(String userId) async {
     try {
       await addPoints(userId, 5);
-      final achievement = await updateAchievementProgress(userId, 'first_favorite', 1);
+      final achievement =
+          await updateAchievementProgress(userId, 'first_favorite', 1);
       return achievement != null ? [achievement] : [];
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling note favorite', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling note favorite',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -486,10 +501,12 @@ class GamificationService {
   Future<List<Achievement>> onReminderSet(String userId) async {
     try {
       await addPoints(userId, 10);
-      final achievement = await updateAchievementProgress(userId, 'first_reminder', 1);
+      final achievement =
+          await updateAchievementProgress(userId, 'first_reminder', 1);
       return achievement != null ? [achievement] : [];
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling reminder set', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling reminder set',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -498,10 +515,12 @@ class GamificationService {
   Future<List<Achievement>> onAttachmentAdded(String userId) async {
     try {
       await addPoints(userId, 10);
-      final achievement = await updateAchievementProgress(userId, 'first_attachment', 1);
+      final achievement =
+          await updateAchievementProgress(userId, 'first_attachment', 1);
       return achievement != null ? [achievement] : [];
     } catch (e, stackTrace) {
-      AppLogger.error('Error handling attachment added', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error handling attachment added',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -515,7 +534,8 @@ class GamificationService {
     String orderBy = 'total_points',
   }) async {
     try {
-      AppLogger.debug('Fetching leaderboard - orderBy: $orderBy, limit: $limit, user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
+      AppLogger.debug(
+          'Fetching leaderboard - orderBy: $orderBy, limit: $limit, user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}');
 
       // Use the view that includes user profile information
       final response = await _supabase
@@ -524,7 +544,8 @@ class GamificationService {
           .order(orderBy, ascending: false)
           .limit(limit);
 
-      AppLogger.debug('Query successful - response length: ${(response as List).length}');
+      AppLogger.debug(
+          'Query successful - response length: ${(response as List).length}');
 
       final entries = <LeaderboardEntry>[];
       for (int i = 0; i < response.length; i++) {
@@ -533,18 +554,23 @@ class GamificationService {
 
       AppLogger.debug('Leaderboard entries created: ${entries.length}');
       if (entries.isNotEmpty) {
-        AppLogger.debug('Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
+        AppLogger.debug(
+            'Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)');
       } else {
-        AppLogger.warning('Empty leaderboard - check RLS policies. Required: SELECT on user_stats_with_profiles view');
+        AppLogger.warning(
+            'Empty leaderboard - check RLS policies. Required: SELECT on user_stats_with_profiles view');
       }
 
       return entries;
     } catch (e, stackTrace) {
       if (e.toString().contains('row level security')) {
-        AppLogger.error('RLS policy error - users cannot read from user_stats_with_profiles view. Fix: Ensure migration 20251111140000 is applied', error: e);
+        AppLogger.error(
+            'RLS policy error - users cannot read from user_stats_with_profiles view. Fix: Ensure migration 20251111140000 is applied',
+            error: e);
       }
 
-      AppLogger.error('Error getting leaderboard', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting leaderboard',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -552,7 +578,8 @@ class GamificationService {
   // Get user's rank
   // Note: Requires public read access to user_stats table via RLS policy
   // to compare user's stats against all other users
-  Future<int?> getUserRank(String userId, {String orderBy = 'total_points'}) async {
+  Future<int?> getUserRank(String userId,
+      {String orderBy = 'total_points'}) async {
     try {
       AppLogger.debug('Getting user rank for: $userId, orderBy: $orderBy');
 
@@ -570,10 +597,12 @@ class GamificationService {
         }
       }
 
-      AppLogger.warning('User not found in ranking. This could mean user_stats record does not exist for this user');
+      AppLogger.warning(
+          'User not found in ranking. This could mean user_stats record does not exist for this user');
       return null;
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting user rank', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting user rank',
+          error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -595,13 +624,15 @@ class GamificationService {
         bool isUnlocked = false;
 
         // Check level requirement
-        if (reward.requiredLevel > 0 && stats.currentLevel >= reward.requiredLevel) {
+        if (reward.requiredLevel > 0 &&
+            stats.currentLevel >= reward.requiredLevel) {
           isUnlocked = true;
         }
 
         // Check achievement requirement
         if (reward.requiredAchievementId != null) {
-          final requiredAchievement = achievementMap[reward.requiredAchievementId];
+          final requiredAchievement =
+              achievementMap[reward.requiredAchievementId];
           if (requiredAchievement != null && requiredAchievement.isUnlocked) {
             isUnlocked = true;
           } else {
@@ -610,7 +641,8 @@ class GamificationService {
         }
 
         // Check points requirement
-        if (reward.requiredPoints != null && stats.totalPoints < reward.requiredPoints!) {
+        if (reward.requiredPoints != null &&
+            stats.totalPoints < reward.requiredPoints!) {
           isUnlocked = false;
         }
 
@@ -620,7 +652,8 @@ class GamificationService {
         );
       }).toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting user rewards', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting user rewards',
+          error: e, stackTrace: stackTrace);
       return RewardDefinitions.getDefaultRewards();
     }
   }
@@ -633,7 +666,8 @@ class GamificationService {
           .where((r) => r.type == RewardType.theme && r.isUnlocked)
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting unlocked themes', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting unlocked themes',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -646,7 +680,8 @@ class GamificationService {
           .where((r) => r.type == RewardType.badge && r.isUnlocked)
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting unlocked badges', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting unlocked badges',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -667,7 +702,8 @@ class GamificationService {
       );
       return feature.isUnlocked;
     } catch (e, stackTrace) {
-      AppLogger.error('Error checking feature unlock', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error checking feature unlock',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }

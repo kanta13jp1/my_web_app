@@ -13,7 +13,9 @@ class AppShareService {
   /// Netlify FunctionsのベースURL
   /// 本番環境: https://melodic-cannoli-f33eaf.netlify.app
   /// デプロイ日: 2025-11-09
-  static const String netlifyBaseUrl = 'https://melodic-cannoli-f33eaf.netlify.app';
+  static const String netlifyBaseUrl =
+      'https://melodic-cannoli-f33eaf.netlify.app';
+
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
@@ -470,7 +472,8 @@ $appUrl
       return '$netlifyBaseUrl/share?id=$quoteId';
     } else {
       // ランダムな名言ID
-      final randomId = DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length;
+      final randomId = DateTime.now().microsecondsSinceEpoch %
+          PhilosopherQuote.quotes.length;
       return '$netlifyBaseUrl/share?id=$randomId';
     }
   }
@@ -484,13 +487,15 @@ $appUrl
   }) async {
     // 名言IDを取得
     final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
     // シェアメッセージ
     String message = '''💭 今日の名言 - ${quote.author}
@@ -532,7 +537,8 @@ $shareLink
   /// Facebook向けシェア（動的OGP対応）
   static Future<void> shareToFacebookWithDynamicOgp({int? quoteId}) async {
     final shareLink = generateDynamicShareLink(quoteId: quoteId);
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
+    final facebookUrl =
+        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
 
     if (kIsWeb) {
       web.window.open(facebookUrl, '_blank');
@@ -550,13 +556,15 @@ $shareLink
   }) async {
     // 名言IDを取得
     final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
     String message = '''💭 ${quote.author}の名言
 

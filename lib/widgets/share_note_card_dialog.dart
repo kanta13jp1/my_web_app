@@ -86,9 +86,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                     ],
                   ),
                 ),
-                
+
                 const Divider(height: 1),
-                
+
                 // スクロール可能なコンテンツ
                 Expanded(
                   child: SingleChildScrollView(
@@ -104,18 +104,20 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         SizedBox(
                           height: 120,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: template.CardTemplate.values.length,
                             itemBuilder: (context, index) {
-                              final cardTemplate = template.CardTemplate.values[index];
-                              final isSelected = _selectedTemplate == cardTemplate;
-                              
+                              final cardTemplate =
+                                  template.CardTemplate.values[index];
+                              final isSelected =
+                                  _selectedTemplate == cardTemplate;
+
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -129,7 +131,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                   margin: const EdgeInsets.only(right: 12),
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: isSelected ? Colors.blue : Colors.grey[300]!,
+                                      color: isSelected
+                                          ? Colors.blue
+                                          : Colors.grey[300]!,
                                       width: isSelected ? 3 : 1,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
@@ -146,7 +150,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                           fontWeight: isSelected
                                               ? FontWeight.bold
                                               : FontWeight.normal,
-                                          color: isSelected ? Colors.blue : Colors.black87,
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.black87,
                                         ),
                                       ),
                                     ],
@@ -156,7 +162,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                             },
                           ),
                         ),
-                        
+
                         const SizedBox(height: 24),
 
                         // アスペクト比選択
@@ -199,7 +205,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         const SizedBox(height: 4),
                         Text(
                           '${_selectedContentMode.label} - 1ページ最大${_selectedContentMode.maxCharsPerPage}文字',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -233,7 +240,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
-                          children: template.FontSizeOption.values.map((fontSize) {
+                          children:
+                              template.FontSizeOption.values.map((fontSize) {
                             final isSelected = _selectedFontSize == fontSize;
                             return ChoiceChip(
                               label: Text(fontSize.label),
@@ -259,9 +267,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         CheckboxListTile(
                           title: const Text('統計情報を表示'),
                           subtitle: const Text('文字数と作成日を含める'),
@@ -276,7 +284,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           controlAffinity: ListTileControlAffinity.leading,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        
+
                         CheckboxListTile(
                           title: const Text('ロゴを表示'),
                           subtitle: const Text('「マイメモ」のロゴを含める'),
@@ -291,9 +299,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           controlAffinity: ListTileControlAffinity.leading,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // プレビューボタン
                         Center(
                           child: _isLoadingPreview
@@ -306,10 +314,13 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                 )
                               : OutlinedButton.icon(
                                   icon: const Icon(Icons.visibility),
-                                  label: Text(_showPreview ? 'プレビュー準備完了 ✓' : 'プレビューを表示'),
+                                  label: Text(_showPreview
+                                      ? 'プレビュー準備完了 ✓'
+                                      : 'プレビューを表示'),
                                   style: _showPreview
                                       ? OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: Colors.green, width: 2),
+                                          side: const BorderSide(
+                                              color: Colors.green, width: 2),
                                           foregroundColor: Colors.green,
                                         )
                                       : null,
@@ -320,9 +331,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                     ),
                   ),
                 ),
-                
+
                 const Divider(height: 1),
-                
+
                 // ボタンエリア
                 Container(
                   padding: const EdgeInsets.all(24),
@@ -350,10 +361,14 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     ),
                                   )
                                 : const Icon(Icons.download),
-                            label: Text(_isGenerating
-                                ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
-                                : 'ダウンロード',),
-                            onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
+                            label: Text(
+                              _isGenerating
+                                  ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
+                                  : 'ダウンロード',
+                            ),
+                            onPressed: (_isGenerating ||
+                                    !_showPreview ||
+                                    _isLoadingPreview)
                                 ? null
                                 : _generateAndDownload,
                           ),
@@ -372,10 +387,14 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     ),
                                   )
                                 : const Icon(Icons.share),
-                            label: Text(_isGenerating
-                                ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
-                                : '共有する',),
-                            onPressed: (_isGenerating || !_showPreview || _isLoadingPreview)
+                            label: Text(
+                              _isGenerating
+                                  ? '生成中... ($_currentGeneratingIndex/${_repaintKeys.length})'
+                                  : '共有する',
+                            ),
+                            onPressed: (_isGenerating ||
+                                    !_showPreview ||
+                                    _isLoadingPreview)
                                 ? null
                                 : _generateAndShare,
                           ),
@@ -385,7 +404,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                 ),
               ],
             ),
-            
+
             // プレビュー表示エリア（画面外に配置）
             if (_showPreview)
               ...List.generate(
@@ -485,8 +504,12 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Icon(icon, color: cardTemplate == template.CardTemplate.darkMode
-          ? Colors.white : Colors.black54,),
+      child: Icon(
+        icon,
+        color: cardTemplate == template.CardTemplate.darkMode
+            ? Colors.white
+            : Colors.black54,
+      ),
     );
   }
 
@@ -634,7 +657,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         });
 
         // スクリーンショットを撮る
-        final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
+        final imageBytes =
+            await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
 
         if (imageBytes == null) {
           throw Exception('画像 ${i + 1}/${_repaintKeys.length} の生成に失敗しました。');
@@ -725,7 +749,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         });
 
         // スクリーンショットを撮る
-        final imageBytes = await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
+        final imageBytes =
+            await NoteCardService.captureWidgetSimple(_repaintKeys[i]);
 
         if (imageBytes == null) {
           throw Exception('画像 ${i + 1}/${_repaintKeys.length} の生成に失敗しました。');
@@ -803,7 +828,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       // 共有
       await Share.shareXFiles(
         files,
-        text: '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',
+        text:
+            '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',
       );
     } catch (e) {
       debugPrint('Error sharing note cards: $e');

@@ -38,9 +38,7 @@ class EmptyStateView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            hasAnyFilter || showFavoritesOnly
-                ? '該当するメモが見つかりません'
-                : 'メモがありません',
+            hasAnyFilter || showFavoritesOnly ? '該当するメモが見つかりません' : 'メモがありません',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],

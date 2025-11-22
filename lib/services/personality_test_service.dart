@@ -8,18 +8,23 @@ class PersonalityTestService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   /// 16タイプの詳細データを取得（静的ゲッター）
-  static List<PersonalityType> get personalityTypes => _getPersonalityTypesStatic();
+  static List<PersonalityType> get personalityTypes =>
+      _getPersonalityTypesStatic();
 
   /// 診断を開始
   Future<PersonalityTest> startTest() async {
     try {
       final userId = _supabase.auth.currentUser!.id;
 
-      final response = await _supabase.from('personality_tests').insert({
-        'user_id': userId,
-        'started_at': DateTime.now().toIso8601String(),
-        'is_completed': false,
-      }).select().single();
+      final response = await _supabase
+          .from('personality_tests')
+          .insert({
+            'user_id': userId,
+            'started_at': DateTime.now().toIso8601String(),
+            'is_completed': false,
+          })
+          .select()
+          .single();
 
       return PersonalityTest.fromJson(response);
     } catch (e) {
@@ -86,7 +91,8 @@ class PersonalityTestService {
 
       for (var answer in answers) {
         final answerMap = answer as Map<String, dynamic>;
-        final question = answerMap['personality_questions'] as Map<String, dynamic>;
+        final question =
+            answerMap['personality_questions'] as Map<String, dynamic>;
         final axis = question['axis'] as String;
         final userAnswer = answerMap['answer'] as String;
 

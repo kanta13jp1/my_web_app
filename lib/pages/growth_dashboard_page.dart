@@ -49,11 +49,13 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
 
       // アクティブなキャンペーンを読み込み
       _activeCampaigns.clear();
-      _activeCampaigns.addAll([
-        Campaign.createWelcomeCampaign(),
-        Campaign.createShareCampaign(),
-        Campaign.createReferralCampaign(),
-      ].where((c) => c.isCurrentlyActive),);
+      _activeCampaigns.addAll(
+        [
+          Campaign.createWelcomeCampaign(),
+          Campaign.createShareCampaign(),
+          Campaign.createReferralCampaign(),
+        ].where((c) => c.isCurrentlyActive),
+      );
 
       if (mounted) {
         setState(() {
@@ -64,7 +66,8 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading growth data', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error loading growth data',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }
@@ -81,7 +84,8 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error generating invite link',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -106,7 +110,8 @@ $_inviteLink
       // シェアボーナスを付与
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
-        final isCampaignActive = await _viralGrowthService.isShareCampaignActive();
+        final isCampaignActive =
+            await _viralGrowthService.isShareCampaignActive();
         await _viralGrowthService.awardShareBonus(
           userId: userId,
           platform: 'invite_link',
@@ -127,7 +132,8 @@ $_inviteLink
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error sharing invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error sharing invite link',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -274,7 +280,7 @@ $_inviteLink
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha : 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -326,7 +332,10 @@ $_inviteLink
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withValues(alpha : 0.2), color.withValues(alpha : 0.1)],
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.1)
+              ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color),
@@ -382,7 +391,8 @@ $_inviteLink
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TemplateMarketplacePage()),
+              MaterialPageRoute(
+                  builder: (_) => const TemplateMarketplacePage()),
             );
           },
         ),
@@ -434,7 +444,7 @@ $_inviteLink
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha : 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 28),

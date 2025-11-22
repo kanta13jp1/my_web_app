@@ -47,7 +47,8 @@ class _StatsPageState extends State<StatsPage> {
       stats ??= await _gamificationService.initializeUserStats(userId);
 
       // Load achievements
-      final achievements = await _gamificationService.getUserAchievements(userId);
+      final achievements =
+          await _gamificationService.getUserAchievements(userId);
 
       setState(() {
         _stats = stats;
@@ -66,9 +67,7 @@ class _StatsPageState extends State<StatsPage> {
     if (_selectedCategory == AchievementCategory.general) {
       return _achievements;
     }
-    return _achievements
-        .where((a) => a.category == _selectedCategory)
-        .toList();
+    return _achievements.where((a) => a.category == _selectedCategory).toList();
   }
 
   @override
@@ -101,7 +100,8 @@ class _StatsPageState extends State<StatsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 64, color: Colors.red),
                       const SizedBox(height: 16),
                       const Text('エラーが発生しました'),
                       const SizedBox(height: 8),
@@ -266,8 +266,7 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Widget _buildAchievementSummary() {
-    final unlockedCount =
-        _achievements.where((a) => a.isUnlocked).length;
+    final unlockedCount = _achievements.where((a) => a.isUnlocked).length;
     final totalCount = _achievements.length;
     final percentage = totalCount > 0 ? (unlockedCount / totalCount) : 0.0;
 
@@ -302,8 +301,10 @@ class _StatsPageState extends State<StatsPage> {
               child: LinearProgressIndicator(
                 value: percentage,
                 minHeight: 12,
-                backgroundColor:
-                    Theme.of(context).colorScheme.onSurface.withValues(alpha : 0.1),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).colorScheme.primary,
                 ),

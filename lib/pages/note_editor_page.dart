@@ -25,7 +25,8 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialTitle;
   final String? initialContent;
 
-  const NoteEditorPage({super.key, this.note, this.initialTitle, this.initialContent});
+  const NoteEditorPage(
+      {super.key, this.note, this.initialTitle, this.initialContent});
 
   @override
   State<NoteEditorPage> createState() => _NoteEditorPageState();
@@ -40,8 +41,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   bool _isFavorite = false;
   DateTime? _reminderDate;
   bool _isPinned = false;
-  int? _currentNoteId;  // 保存後のnoteIDを保持（int型に修正）
-  DateTime? _lastSavedTime;  // 最終保存日時
+  int? _currentNoteId; // 保存後のnoteIDを保持（int型に修正）
+  DateTime? _lastSavedTime; // 最終保存日時
 
   // 添付ファイル関連（追加）
   List<Attachment> _attachments = [];
@@ -70,27 +71,32 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
 
-    _titleController = TextEditingController(text: widget.note?.title ?? widget.initialTitle ?? '');
-    _contentController =
-        TextEditingController(text: widget.note?.content ?? widget.initialContent ?? '');
+    _titleController = TextEditingController(
+        text: widget.note?.title ?? widget.initialTitle ?? '');
+    _contentController = TextEditingController(
+        text: widget.note?.content ?? widget.initialContent ?? '');
     _selectedCategoryId = widget.note?.categoryId;
     _isFavorite = widget.note?.isFavorite ?? false;
     _reminderDate = widget.note?.reminderDate;
     _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
-    _currentNoteId = widget.note?.id;  // 既存ノートのIDを保持
-    _lastSavedTime = widget.note?.updatedAt;  // 既存ノートの最終保存日時を設定
+    _currentNoteId = widget.note?.id; // 既存ノートのIDを保持
+    _lastSavedTime = widget.note?.updatedAt; // 既存ノートの最終保存日時を設定
     _loadCategories();
 
     // タブコントローラーを初期化
     _tabController = TabController(length: 2, vsync: this);
 
     // 初期スナップショットを追加
-    _undoRedoService.addSnapshot(NoteSnapshot(
-      title: _titleController.text,
-      content: _contentController.text,
-      categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
-      timestamp: DateTime.now(),
-    ),);
+    _undoRedoService.addSnapshot(
+      NoteSnapshot(
+        title: _titleController.text,
+        content: _contentController.text,
+        categoryId: _selectedCategoryId != null
+            ? int.tryParse(_selectedCategoryId!)
+            : null,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     // テキストコントローラーにリスナーを追加
     _titleController.addListener(_onTextChanged);
@@ -120,12 +126,16 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     if (_isUndoRedoOperation) return;
 
     // スナップショット追加（UNDO/REDO用）
-    _undoRedoService.addSnapshot(NoteSnapshot(
-      title: _titleController.text,
-      content: _contentController.text,
-      categoryId: _selectedCategoryId != null ? int.tryParse(_selectedCategoryId!) : null,
-      timestamp: DateTime.now(),
-    ),);
+    _undoRedoService.addSnapshot(
+      NoteSnapshot(
+        title: _titleController.text,
+        content: _contentController.text,
+        categoryId: _selectedCategoryId != null
+            ? int.tryParse(_selectedCategoryId!)
+            : null,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     // 自動保存トリガー
     _autoSaveService.triggerAutoSave(() => _saveNoteWithoutClosing());
@@ -281,7 +291,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   Future<void> _saveNoteWithoutClosing() async {
     try {
       final userId = supabase.auth.currentUser!.id;
-      final isNewNote = _currentNoteId == null;  // 修正: _currentNoteIdで判定
+      final isNewNote = _currentNoteId == null; // 修正: _currentNoteIdで判定
       final wasNotFavorite = widget.note?.isFavorite == false;
       final hadNoReminder = widget.note?.reminderDate == null;
 
@@ -312,13 +322,15 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
         // 初回のお気に入りまたはリマインダー設定
         if (_isFavorite) {
-          final favAchievements = await _gamificationService.onNoteFavorited(userId);
+          final favAchievements =
+              await _gamificationService.onNoteFavorited(userId);
           if (mounted) {
             _showAchievementNotifications(favAchievements);
           }
         }
         if (_reminderDate != null) {
-          final reminderAchievements = await _gamificationService.onReminderSet(userId);
+          final reminderAchievements =
+              await _gamificationService.onReminderSet(userId);
           if (mounted) {
             _showAchievementNotifications(reminderAchievements);
           }
@@ -333,11 +345,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'reminder_date': _reminderDate?.toIso8601String(),
           'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', _currentNoteId!);  // 修正: _currentNoteIdを使用
+        }).eq('id', _currentNoteId!); // 修正: _currentNoteIdを使用
 
         // お気に入りが新たに設定された場合
         if (_isFavorite && wasNotFavorite) {
-          final achievements = await _gamificationService.onNoteFavorited(userId);
+          final achievements =
+              await _gamificationService.onNoteFavorited(userId);
           if (mounted) {
             _showAchievementNotifications(achievements);
           }
@@ -382,7 +395,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   Future<void> _saveNote() async {
     try {
       final userId = supabase.auth.currentUser!.id;
-      final isNewNote = _currentNoteId == null;  // 修正: _currentNoteIdで判定
+      final isNewNote = _currentNoteId == null; // 修正: _currentNoteIdで判定
       final wasNotFavorite = widget.note?.isFavorite == false;
       final hadNoReminder = widget.note?.reminderDate == null;
 
@@ -413,13 +426,15 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
         // 初回のお気に入りまたはリマインダー設定
         if (_isFavorite) {
-          final favAchievements = await _gamificationService.onNoteFavorited(userId);
+          final favAchievements =
+              await _gamificationService.onNoteFavorited(userId);
           if (mounted) {
             _showAchievementNotifications(favAchievements);
           }
         }
         if (_reminderDate != null) {
-          final reminderAchievements = await _gamificationService.onReminderSet(userId);
+          final reminderAchievements =
+              await _gamificationService.onReminderSet(userId);
           if (mounted) {
             _showAchievementNotifications(reminderAchievements);
           }
@@ -434,11 +449,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'reminder_date': _reminderDate?.toIso8601String(),
           'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', _currentNoteId!);  // 修正: _currentNoteIdを使用
+        }).eq('id', _currentNoteId!); // 修正: _currentNoteIdを使用
 
         // お気に入りが新たに設定された場合
         if (_isFavorite && wasNotFavorite) {
-          final achievements = await _gamificationService.onNoteFavorited(userId);
+          final achievements =
+              await _gamificationService.onNoteFavorited(userId);
           if (mounted) {
             _showAchievementNotifications(achievements);
           }
@@ -686,7 +702,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
     setState(() => _isAIProcessing = true);
     try {
-      final improvedText = await _aiService.improveText(_contentController.text);
+      final improvedText =
+          await _aiService.improveText(_contentController.text);
       if (mounted) {
         setState(() {
           _contentController.text = improvedText;
@@ -922,7 +939,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text('推奨タグ:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('推奨タグ:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 ...suggestion.tags.map((tag) => Chip(label: Text(tag))),
               ],
             ),
@@ -1053,7 +1071,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               ),
               title: const Text('リマインダー'),
               subtitle: _reminderDate != null
-                  ? Text('設定済み: ${DateFormatter.formatReminder(_reminderDate!)}')
+                  ? Text(
+                      '設定済み: ${DateFormatter.formatReminder(_reminderDate!)}')
                   : null,
               onTap: () {
                 Navigator.pop(context);
@@ -1064,12 +1083,14 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: Icon(
                 Icons.timer,
-                color: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+                color: Provider.of<TimerService>(context, listen: true)
+                        .hasActiveTimer
                     ? Colors.blue
                     : Colors.green,
               ),
               title: const Text('タイマー（ポモドーロ）'),
-              subtitle: Provider.of<TimerService>(context, listen: true).hasActiveTimer
+              subtitle: Provider.of<TimerService>(context, listen: true)
+                      .hasActiveTimer
                   ? const Text('実行中')
                   : null,
               onTap: () {
@@ -1185,246 +1206,247 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ],
           ),
         ),
-      body: Column(
-        children: [
-          // カテゴリとリマインダー情報エリア
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[300]!),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.label_outline, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    _buildCategoryChip(),
-                  ],
+        body: Column(
+          children: [
+            // カテゴリとリマインダー情報エリア
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[300]!),
                 ),
-                // 最終保存日時の表示
-                if (_lastSavedTime != null) ...[
-                  const SizedBox(height: 8),
+              ),
+              child: Column(
+                children: [
                   Row(
                     children: [
-                      const Icon(Icons.schedule, color: Colors.blue, size: 18),
+                      const Icon(Icons.label_outline, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(
-                        '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      _buildCategoryChip(),
                     ],
                   ),
-                ],
-                if (_reminderDate != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _reminderDate!.isBefore(DateTime.now())
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
+                  // 最終保存日時の表示
+                  if (_lastSavedTime != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        Icon(
-                          Icons.alarm,
-                          color: _reminderDate!.isBefore(DateTime.now())
-                              ? Colors.red
-                              : Colors.orange,
-                          size: 20,
-                        ),
+                        const Icon(Icons.schedule,
+                            color: Colors.blue, size: 18),
                         const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'リマインダー: ${DateFormatter.formatReminder(_reminderDate!)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _reminderDate!.isBefore(DateTime.now())
-                                  ? Colors.red
-                                  : Colors.orange.shade800,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        Text(
+                          '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () {
-                            setState(() {
-                              _reminderDate = null;
-                            });
-                          },
-                          tooltip: 'リマインダーを削除',
                         ),
                       ],
                     ),
-                  ),
-                ],
-                // 添付ファイル一覧（追加）
-                if (_attachments.isNotEmpty || _isLoadingAttachments) ...[
-                  const SizedBox(height: 12),
-                  _isLoadingAttachments
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : AttachmentListWidget(
-                          attachments: _attachments,
-                          onDelete: _deleteAttachment,
-                          isEditing: true,
-                        ),
-                ],
-              ],
-            ),
-          ),
-          // タブビュー
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // 編集モード
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          hintText: 'タイトル',
-                          border: InputBorder.none,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ],
+                  if (_reminderDate != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _reminderDate!.isBefore(DateTime.now())
+                            ? Colors.red.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const Divider(),
-                      Expanded(
-                        child: TextField(
-                          controller: _contentController,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.alarm,
+                            color: _reminderDate!.isBefore(DateTime.now())
+                                ? Colors.red
+                                : Colors.orange,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'リマインダー: ${DateFormatter.formatReminder(_reminderDate!)}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: _reminderDate!.isBefore(DateTime.now())
+                                    ? Colors.red
+                                    : Colors.orange.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                _reminderDate = null;
+                              });
+                            },
+                            tooltip: 'リマインダーを削除',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  // 添付ファイル一覧（追加）
+                  if (_attachments.isNotEmpty || _isLoadingAttachments) ...[
+                    const SizedBox(height: 12),
+                    _isLoadingAttachments
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : AttachmentListWidget(
+                            attachments: _attachments,
+                            onDelete: _deleteAttachment,
+                            isEditing: true,
+                          ),
+                  ],
+                ],
+              ),
+            ),
+            // タブビュー
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // 編集モード
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _titleController,
                           decoration: const InputDecoration(
-                            hintText: 'メモを入力（マークダウン記法が使えます）',
+                            hintText: 'タイトル',
                             border: InputBorder.none,
                           ),
-                          maxLines: null,
-                          expands: true,
-                          textAlignVertical: TextAlignVertical.top,
-                          keyboardType: TextInputType.multiline,
-                          textInputAction: TextInputAction.newline,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // プレビューモード
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_titleController.text.isNotEmpty) ...[
-                        Text(
-                          _titleController.text,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const Divider(),
+                        Expanded(
+                          child: TextField(
+                            controller: _contentController,
+                            decoration: const InputDecoration(
+                              hintText: 'メモを入力（マークダウン記法が使えます）',
+                              border: InputBorder.none,
+                            ),
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.newline,
+                          ),
+                        ),
                       ],
-                      Expanded(
-                        child: _contentController.text.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'プレビューする内容がありません',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                            : MarkdownPreview(
-                                // ← カスタムウィジェットを使用
-                                data: _contentController.text,
-                                selectable: true,
-                              ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            // UNDOボタン
-            ListenableBuilder(
-              listenable: _undoRedoService,
-              builder: (context, child) => IconButton(
-                icon: const Icon(Icons.undo),
-                onPressed: _undoRedoService.canUndo ? _undo : null,
-                tooltip: 'Undo (Ctrl+Z)',
+                  // プレビューモード
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_titleController.text.isNotEmpty) ...[
+                          Text(
+                            _titleController.text,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Divider(),
+                        ],
+                        Expanded(
+                          child: _contentController.text.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'プレビューする内容がありません',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                )
+                              : MarkdownPreview(
+                                  // ← カスタムウィジェットを使用
+                                  data: _contentController.text,
+                                  selectable: true,
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            // REDOボタン
-            ListenableBuilder(
-              listenable: _undoRedoService,
-              builder: (context, child) => IconButton(
-                icon: const Icon(Icons.redo),
-                onPressed: _undoRedoService.canRedo ? _redo : null,
-                tooltip: 'Redo (Ctrl+Y)',
-              ),
-            ),
-            // お気に入りボタン
-            IconButton(
-              icon: Icon(
-                _isFavorite ? Icons.star : Icons.star_border,
-                color: _isFavorite ? Colors.amber : null,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isFavorite = !_isFavorite;
-                });
-              },
-              tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
-            ),
-            // AI機能ボタン
-            if (_isAIProcessing)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.auto_awesome, color: Colors.purple),
-                onPressed: _showAIMenu,
-                tooltip: 'AI アシスタント',
-              ),
-            // 保存ボタン
-            IconButton(
-              icon: const Icon(Icons.save_outlined),
-              onPressed: _saveNoteWithoutClosing,
-              tooltip: '保存',
             ),
           ],
         ),
-      ),
+        bottomNavigationBar: BottomAppBar(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // UNDOボタン
+              ListenableBuilder(
+                listenable: _undoRedoService,
+                builder: (context, child) => IconButton(
+                  icon: const Icon(Icons.undo),
+                  onPressed: _undoRedoService.canUndo ? _undo : null,
+                  tooltip: 'Undo (Ctrl+Z)',
+                ),
+              ),
+              // REDOボタン
+              ListenableBuilder(
+                listenable: _undoRedoService,
+                builder: (context, child) => IconButton(
+                  icon: const Icon(Icons.redo),
+                  onPressed: _undoRedoService.canRedo ? _redo : null,
+                  tooltip: 'Redo (Ctrl+Y)',
+                ),
+              ),
+              // お気に入りボタン
+              IconButton(
+                icon: Icon(
+                  _isFavorite ? Icons.star : Icons.star_border,
+                  color: _isFavorite ? Colors.amber : null,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isFavorite = !_isFavorite;
+                  });
+                },
+                tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
+              ),
+              // AI機能ボタン
+              if (_isAIProcessing)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+                  onPressed: _showAIMenu,
+                  tooltip: 'AI アシスタント',
+                ),
+              // 保存ボタン
+              IconButton(
+                icon: const Icon(Icons.save_outlined),
+                onPressed: _saveNoteWithoutClosing,
+                tooltip: '保存',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

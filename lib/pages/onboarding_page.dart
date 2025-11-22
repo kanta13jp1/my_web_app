@@ -54,12 +54,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (userId == null) return;
 
       // Mark that user has started onboarding
-      await supabase
-          .from('user_stats')
-          .update({'metadata': {'onboarding_started': true}})
-          .eq('user_id', userId);
+      await supabase.from('user_stats').update({
+        'metadata': {'onboarding_started': true}
+      }).eq('user_id', userId);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to mark onboarding started', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to mark onboarding started',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -154,10 +154,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
       if (statsResponse != null) {
         final currentPoints = statsResponse['total_points'] as int;
-        await supabase
-            .from('user_stats')
-            .update({'total_points': currentPoints + 100})
-            .eq('user_id', userId);
+        await supabase.from('user_stats').update(
+            {'total_points': currentPoints + 100}).eq('user_id', userId);
       }
 
       setState(() {
@@ -174,7 +172,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to create sample notes', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to create sample notes',
+          error: e, stackTrace: stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エラー: $e')),
@@ -193,15 +192,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (userId == null) return;
 
       // Mark onboarding as completed
-      await supabase
-          .from('user_stats')
-          .update({
-            'metadata': {
-              'onboarding_completed': true,
-              'onboarding_completed_at': DateTime.now().toIso8601String(),
-            },
-          })
-          .eq('user_id', userId);
+      await supabase.from('user_stats').update({
+        'metadata': {
+          'onboarding_completed': true,
+          'onboarding_completed_at': DateTime.now().toIso8601String(),
+        },
+      }).eq('user_id', userId);
 
       // Navigate to home page
       if (mounted) {
@@ -210,7 +206,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to complete onboarding', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to complete onboarding',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -304,7 +301,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: currentStepData.color.withValues(alpha : 0.1),
+                        color: currentStepData.color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -350,7 +347,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_circle, color: Colors.green[700]),
+                              Icon(Icons.check_circle,
+                                  color: Colors.green[700]),
                               const SizedBox(width: 8),
                               Text(
                                 'サンプルメモ作成完了！',

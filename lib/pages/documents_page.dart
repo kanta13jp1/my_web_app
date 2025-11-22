@@ -16,13 +16,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
       DocumentService.getDocumentsByCategory();
 
   List<String> get _categories => [
-    'root',
-    'roadmaps',
-    'user-docs',
-    'session-summaries',
-    'technical',
-    'release-notes',
-  ];
+        'root',
+        'roadmaps',
+        'user-docs',
+        'session-summaries',
+        'technical',
+        'release-notes',
+      ];
 
   List<DocumentItem> get _displayedDocuments {
     if (_selectedCategory == null) {
@@ -75,14 +75,16 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 const Divider(),
                 ..._categories.map((category) {
                   final count = _documentsByCategory[category]?.length ?? 0;
-                  if (count == 0 && category != 'root') return const SizedBox.shrink();
+                  if (count == 0 && category != 'root')
+                    return const SizedBox.shrink();
 
                   return ListTile(
                     leading: Text(
                       DocumentService.getCategoryIcon(category),
                       style: const TextStyle(fontSize: 20),
                     ),
-                    title: Text(DocumentService.getCategoryDisplayName(category)),
+                    title:
+                        Text(DocumentService.getCategoryDisplayName(category)),
                     trailing: count > 0
                         ? Container(
                             padding: const EdgeInsets.symmetric(
@@ -90,7 +92,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withValues(alpha : 0.1),
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -152,7 +156,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                           leading: CircleAvatar(
                             backgroundColor: Theme.of(context)
                                 .primaryColor
-                                .withValues(alpha : 0.1),
+                                .withValues(alpha: 0.1),
                             child: Text(
                               doc.categoryIcon,
                               style: const TextStyle(fontSize: 20),
@@ -175,7 +179,8 @@ class _DocumentsPageState extends State<DocumentsPage> {
                               ),
                             ),
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          trailing:
+                              const Icon(Icons.arrow_forward_ios, size: 16),
                           onTap: () {
                             Navigator.push(
                               context,

@@ -50,7 +50,8 @@ class _CompatibilityLandingPageState extends State<CompatibilityLandingPage> {
         builder: (context) => AlertDialog(
           title: const Text('性格診断が必要です'),
           content: const Text(
-              'まず、あなたの性格タイプを診断してください。性格診断は約5分で完了します。',),
+            'まず、あなたの性格タイプを診断してください。性格診断は約5分で完了します。',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

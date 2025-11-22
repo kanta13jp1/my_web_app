@@ -49,9 +49,8 @@ class AIService {
           }
 
           // retryAfterがあればそれを使用、なければ指数バックオフ
-          final waitTimeMs = e.retryAfter != null
-              ? int.parse(e.retryAfter!) * 1000
-              : delayMs;
+          final waitTimeMs =
+              e.retryAfter != null ? int.parse(e.retryAfter!) * 1000 : delayMs;
 
           AppLogger.info(
             'Rate limit hit for $operationName. Retrying in ${waitTimeMs}ms (attempt ${retryCount + 1}/$_maxRetries)',
@@ -155,7 +154,8 @@ class AIService {
         operationName: 'summarizeText',
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error summarizing text', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error summarizing text',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -205,7 +205,8 @@ class AIService {
         operationName: 'translateText',
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error translating text', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error translating text',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -237,7 +238,8 @@ class AIService {
         operationName: 'suggestTitles',
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error suggesting titles', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error suggesting titles',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -271,7 +273,8 @@ class AIService {
         throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error suggesting tags', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error suggesting tags',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -294,7 +297,8 @@ class AIService {
       final data = response.data as Map<String, dynamic>;
       if (data['success'] == true) {
         return AISearchResult(
-          results: List<Map<String, dynamic>>.from(data['results'] as List<dynamic>? ?? []),
+          results: List<Map<String, dynamic>>.from(
+              data['results'] as List<dynamic>? ?? []),
           totalResults: data['totalResults'] as int? ?? 0,
           explanation: data['explanation'] as String? ?? '',
         );
@@ -336,7 +340,8 @@ class AIService {
         recentUsageCount: response.length,
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting AI usage stats', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting AI usage stats',
+          error: e, stackTrace: stackTrace);
       return AIUsageStats(
         totalUsage: 0,
         totalCost: 0.0,
@@ -373,7 +378,8 @@ class AIService {
           // ユーザーの統計情報を取得
           final statsResponse = await _supabase
               .from('user_stats')
-              .select('current_level, total_points, current_streak, longest_streak, notes_created')
+              .select(
+                  'current_level, total_points, current_streak, longest_streak, notes_created')
               .eq('user_id', userId)
               .single();
 
@@ -400,7 +406,8 @@ class AIService {
         operationName: 'getTaskRecommendations',
       );
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting task recommendations', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting task recommendations',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -449,11 +456,11 @@ class AIUsageStats {
 
 /// AI秘書のタスク推奨
 class TaskRecommendations {
-  final List<String> daily;    // 今日やるべきこと
-  final List<String> weekly;   // 今週やるべきこと
-  final List<String> monthly;  // 今月やるべきこと
-  final List<String> yearly;   // 今年やるべきこと
-  final String insights;       // AIからのインサイト
+  final List<String> daily; // 今日やるべきこと
+  final List<String> weekly; // 今週やるべきこと
+  final List<String> monthly; // 今月やるべきこと
+  final List<String> yearly; // 今年やるべきこと
+  final String insights; // AIからのインサイト
 
   TaskRecommendations({
     required this.daily,

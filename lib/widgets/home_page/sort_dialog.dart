@@ -52,8 +52,7 @@ class SortDialog extends StatelessWidget {
                 sortType.label,
                 style: TextStyle(
                   color: isSelected ? Colors.blue : Colors.black,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               trailing: isSelected

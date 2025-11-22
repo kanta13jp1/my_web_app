@@ -73,10 +73,10 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha : 0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha : 0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -92,7 +92,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.greenAccent.withValues(alpha : 0.5),
+                      color: Colors.greenAccent.withValues(alpha: 0.5),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -139,7 +139,8 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label, {Color? color}) {
+  Widget _buildStatItem(IconData icon, String value, String label,
+      {Color? color}) {
     return Column(
       children: [
         Icon(
@@ -170,7 +171,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha : 0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 11,
           ),
         ),
@@ -182,7 +183,7 @@ class _LiveStatsBannerState extends State<LiveStatsBanner> {
     return Container(
       width: 1,
       height: 60,
-      color: Colors.white.withValues(alpha : 0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

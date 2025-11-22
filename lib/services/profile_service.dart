@@ -26,7 +26,8 @@ class ProfileService {
 
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error getting profile', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error getting profile',
+          error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -53,7 +54,8 @@ class ProfileService {
       AppLogger.info('Profile updated successfully for user ${profile.userId}');
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating profile', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating profile',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -61,18 +63,16 @@ class ProfileService {
   /// 表示名を更新
   Future<bool> updateDisplayName(String userId, String displayName) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .update({
-            'display_name': displayName,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await _supabase.from('user_profiles').update({
+        'display_name': displayName,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
 
       AppLogger.info('Display name updated to "$displayName" for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating display name', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating display name',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -80,13 +80,10 @@ class ProfileService {
   /// 自己紹介を更新
   Future<bool> updateBio(String userId, String bio) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .update({
-            'bio': bio,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await _supabase.from('user_profiles').update({
+        'bio': bio,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
 
       AppLogger.info('Bio updated for user $userId');
       return true;
@@ -99,18 +96,16 @@ class ProfileService {
   /// アバターURLを更新
   Future<bool> updateAvatarUrl(String userId, String avatarUrl) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .update({
-            'avatar_url': avatarUrl,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await _supabase.from('user_profiles').update({
+        'avatar_url': avatarUrl,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
 
       AppLogger.info('Avatar URL updated for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating avatar URL', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating avatar URL',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -118,18 +113,16 @@ class ProfileService {
   /// プロフィールの公開設定を更新
   Future<bool> updatePublicStatus(String userId, bool isPublic) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .update({
-            'is_public': isPublic,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await _supabase.from('user_profiles').update({
+        'is_public': isPublic,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
 
       AppLogger.info('Public status updated to $isPublic for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error updating public status', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error updating public status',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }
@@ -155,7 +148,8 @@ class ProfileService {
       AppLogger.info('Default profile created for user $userId');
       return UserProfile.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Error creating default profile', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error creating default profile',
+          error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -163,15 +157,13 @@ class ProfileService {
   /// プロフィールを削除
   Future<bool> deleteProfile(String userId) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .delete()
-          .eq('user_id', userId);
+      await _supabase.from('user_profiles').delete().eq('user_id', userId);
 
       AppLogger.info('Profile deleted for user $userId');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Error deleting profile', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error deleting profile',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }

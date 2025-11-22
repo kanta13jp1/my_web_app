@@ -40,7 +40,8 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load challenges', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to load challenges',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }

@@ -140,8 +140,10 @@ class ReminderFilterDialog extends StatelessWidget {
                         color: Colors.amber.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.access_alarm,
-                          color: Colors.amber,),
+                      child: const Icon(
+                        Icons.access_alarm,
+                        color: Colors.amber,
+                      ),
                     ),
                     title: const Text('24時間以内'),
                     subtitle: Text(

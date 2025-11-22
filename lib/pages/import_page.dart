@@ -49,7 +49,8 @@ class _ImportPageState extends State<ImportPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading categories', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error loading categories',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }
@@ -180,7 +181,8 @@ class _ImportPageState extends State<ImportPage> {
         Navigator.pop(context);
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error importing notes',
+          error: e, stackTrace: stackTrace);
       setState(() => _isImporting = false);
 
       if (mounted) {
@@ -287,12 +289,14 @@ class _ImportPageState extends State<ImportPage> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.file_present, color: Colors.blue),
+                                const Icon(Icons.file_present,
+                                    color: Colors.blue),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -344,9 +348,7 @@ class _ImportPageState extends State<ImportPage> {
                                         )
                                       : const Icon(Icons.upload),
                                   label: Text(
-                                    _isImporting
-                                        ? 'インポート中...'
-                                        : 'インポート開始',
+                                    _isImporting ? 'インポート中...' : 'インポート開始',
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.all(16),
@@ -383,7 +385,7 @@ class _ImportPageState extends State<ImportPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha : 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 32),

@@ -39,7 +39,8 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading activities', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error loading activities',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }
@@ -54,7 +55,8 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       {
         'id': '1',
         'type': 'new_user',
-        'user_name': 'ユーザー${_supabase.auth.currentUser?.id.substring(0, 4) ?? 'XXXX'}',
+        'user_name':
+            'ユーザー${_supabase.auth.currentUser?.id.substring(0, 4) ?? 'XXXX'}',
         'action': '新しいメンバーが参加しました',
         'timestamp': now.subtract(const Duration(minutes: 5)),
         'icon': Icons.person_add,
@@ -134,7 +136,8 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.timeline, size: 64, color: Colors.grey[400]),
+                          Icon(Icons.timeline,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
                             'まだアクティビティがありません',
@@ -149,7 +152,8 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: _activities.length,
-                      separatorBuilder: (context, index) => const Divider(height: 24),
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 24),
                       itemBuilder: (context, index) {
                         final activity = _activities[index];
                         return _buildActivityItem(activity);

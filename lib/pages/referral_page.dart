@@ -47,7 +47,8 @@ class _ReferralPageState extends State<ReferralPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load referral data', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to load referral data',
+          error: e, stackTrace: stackTrace);
       setState(() => _isLoading = false);
     }
   }
@@ -136,7 +137,7 @@ class _ReferralPageState extends State<ReferralPage> {
 
     return Card(
       elevation: 4,
-      color: theme.primaryColor.withValues(alpha : 0.1),
+      color: theme.primaryColor.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -389,7 +390,9 @@ class _ReferralPageState extends State<ReferralPage> {
               ),
             ),
             title: Text(
-              isCurrentUser ? 'あなた' : 'ユーザー ${(item['user_id'] as String).substring(0, 8)}',
+              isCurrentUser
+                  ? 'あなた'
+                  : 'ユーザー ${(item['user_id'] as String).substring(0, 8)}',
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : null,
               ),

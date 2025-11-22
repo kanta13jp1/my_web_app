@@ -65,19 +65,24 @@ class AttachmentService {
     required PlatformFile file,
   }) async {
     try {
-      debugPrint('📎 [AttachmentService] Starting file upload for noteId: $noteId');
-      debugPrint('📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
+      debugPrint(
+          '📎 [AttachmentService] Starting file upload for noteId: $noteId');
+      debugPrint(
+          '📎 [AttachmentService] File name: ${file.name}, size: ${file.size} bytes');
 
       final userId = supabase.auth.currentUser!.id;
       debugPrint('📎 [AttachmentService] User ID: $userId');
 
       final bytes = file.bytes;
       if (bytes == null) {
-        debugPrint('❌ [AttachmentService] File bytes is null - this should not happen on Web');
-        debugPrint('📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
+        debugPrint(
+            '❌ [AttachmentService] File bytes is null - this should not happen on Web');
+        debugPrint(
+            '📎 [AttachmentService] File details: name=${file.name}, size=${file.size}, path=${file.path}');
         throw Exception('ファイルデータが取得できません');
       }
-      debugPrint('✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
+      debugPrint(
+          '✅ [AttachmentService] File bytes loaded successfully: ${bytes.length} bytes');
 
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
@@ -89,7 +94,8 @@ class AttachmentService {
       final fileName = '${timestamp}_$safeFileName';
       final filePath = '$userId/$noteId/$fileName';
 
-      debugPrint('📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
+      debugPrint(
+          '📎 [AttachmentService] MIME type: $mimeType, file type: $fileType');
       debugPrint('📎 [AttachmentService] Upload path: $filePath');
 
       // Supabase Storageにアップロード
@@ -101,7 +107,8 @@ class AttachmentService {
       debugPrint('✅ [AttachmentService] File uploaded to storage successfully');
 
       // データベースに記録
-      debugPrint('💾 [AttachmentService] Inserting attachment record to database...');
+      debugPrint(
+          '💾 [AttachmentService] Inserting attachment record to database...');
       final response = await supabase
           .from('attachments')
           .insert({
@@ -116,7 +123,8 @@ class AttachmentService {
           .select()
           .single();
 
-      debugPrint('✅ [AttachmentService] Attachment record inserted successfully');
+      debugPrint(
+          '✅ [AttachmentService] Attachment record inserted successfully');
       debugPrint('📎 [AttachmentService] Attachment ID: ${response['id']}');
 
       return Attachment.fromJson(response);
@@ -150,7 +158,8 @@ class AttachmentService {
   static String _sanitizeFileName(String fileName) {
     // ファイル名から拡張子を分離
     final lastDot = fileName.lastIndexOf('.');
-    final nameWithoutExt = lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
+    final nameWithoutExt =
+        lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
     final extension = lastDot > 0 ? fileName.substring(lastDot) : '';
 
     // 非ASCII文字と特殊文字をアンダースコアに置換

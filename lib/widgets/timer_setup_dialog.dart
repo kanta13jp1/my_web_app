@@ -301,8 +301,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
   }
 
   Widget _buildQuickButton(String label, int minutes) {
-    final isSelected =
-        _hours == 0 && _minutes == minutes && _seconds == 0;
+    final isSelected = _hours == 0 && _minutes == minutes && _seconds == 0;
 
     return ElevatedButton(
       onPressed: () => _setQuickTime(minutes),

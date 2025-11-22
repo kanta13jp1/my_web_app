@@ -23,7 +23,7 @@ class LandingPage extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     theme.primaryColor,
-                    theme.primaryColor.withValues(alpha : 0.7),
+                    theme.primaryColor.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -34,136 +34,139 @@ class LandingPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                      // App Icon
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha : 0.2),
-                          shape: BoxShape.circle,
+                        // App Icon
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.note_alt_outlined,
+                            size: 60,
+                            color: Colors.white,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.note_alt_outlined,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Title
-                      const Text(
-                        'マイメモ',
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                        // Title
+                        const Text(
+                          'マイメモ',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Subtitle
-                      const Text(
-                        'ゲーミフィケーションで楽しく続けられる\nメモアプリ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          height: 1.5,
+                        // Subtitle
+                        const Text(
+                          'ゲーミフィケーションで楽しく続けられる\nメモアプリ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            height: 1.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
-                      // CTA Buttons
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
+                        // CTA Buttons
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const AuthPage(
+                                            initialMode: AuthMode.signUp),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: theme.primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    '無料で始める',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const AuthPage(
+                                            initialMode: AuthMode.signIn),
+                                      ),
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(
+                                        color: Colors.white, width: 2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'ログイン',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton(
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const AuthPage(initialMode: AuthMode.signUp),
+                                      builder: (_) => const LeaderboardPage(),
                                     ),
                                   );
                                 },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: theme.primaryColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
                                 child: const Text(
-                                  '無料で始める',
+                                  'ゲストとして続ける →',
                                   style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const AuthPage(initialMode: AuthMode.signIn),
-                                    ),
-                                  );
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  side: const BorderSide(color: Colors.white, width: 2),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'ログイン',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const LeaderboardPage(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'ゲストとして続ける →',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
-                      // Live Stats Banner
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 600),
-                        child: const LiveStatsBanner(),
-                      ),
-                    ],
+                        // Live Stats Banner
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: const LiveStatsBanner(),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -239,8 +242,8 @@ class LandingPage extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          theme.primaryColor.withValues(alpha : 0.1),
-                          theme.primaryColor.withValues(alpha : 0.05),
+                          theme.primaryColor.withValues(alpha: 0.1),
+                          theme.primaryColor.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -270,7 +273,8 @@ class LandingPage extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const AuthPage(initialMode: AuthMode.signUp),
+                                    builder: (_) => const AuthPage(
+                                        initialMode: AuthMode.signUp),
                                   ),
                                 );
                               },
@@ -329,7 +333,7 @@ class _FeatureCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha : 0.2),
+                color: iconColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(

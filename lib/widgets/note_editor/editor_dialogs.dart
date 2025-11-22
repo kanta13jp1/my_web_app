@@ -157,7 +157,8 @@ Future<void> showCategoryDialog({
             const Divider(),
             ...categories.map((category) {
               final color = Color(
-                  int.parse(category.color.substring(1), radix: 16) + 0xFF000000,);
+                int.parse(category.color.substring(1), radix: 16) + 0xFF000000,
+              );
               return ListTile(
                 leading: Container(
                   width: 40,
@@ -167,7 +168,8 @@ Future<void> showCategoryDialog({
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(category.icon, style: const TextStyle(fontSize: 20)),
+                    child: Text(category.icon,
+                        style: const TextStyle(fontSize: 20)),
                   ),
                 ),
                 title: Text(category.name),

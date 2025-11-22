@@ -73,7 +73,8 @@ class Reward {
       icon: icon ?? this.icon,
       type: type ?? this.type,
       requiredLevel: requiredLevel ?? this.requiredLevel,
-      requiredAchievementId: requiredAchievementId ?? this.requiredAchievementId,
+      requiredAchievementId:
+          requiredAchievementId ?? this.requiredAchievementId,
       requiredPoints: requiredPoints ?? this.requiredPoints,
       isUnlocked: isUnlocked ?? this.isUnlocked,
       unlockedAt: unlockedAt ?? this.unlockedAt,

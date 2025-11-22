@@ -327,9 +327,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                   ? Colors.grey
                                   : Color(
                                       int.parse(
-                                              selectedColor.substring(1),
-                                              radix: 16,
-                                            ) +
+                                            selectedColor.substring(1),
+                                            radix: 16,
+                                          ) +
                                           0xFF000000,
                                     ),
                             ),
@@ -366,7 +366,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       });
 
                       // ゲーミフィケーション: カテゴリ作成イベント
-                      final achievements = await _gamificationService.onCategoryCreated(userId);
+                      final achievements =
+                          await _gamificationService.onCategoryCreated(userId);
                       if (context.mounted) {
                         for (final achievement in achievements) {
                           AchievementNotification.show(

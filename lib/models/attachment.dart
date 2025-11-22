@@ -1,6 +1,6 @@
 class Attachment {
-  final int id;  // String → int に変更
-  final int noteId;  // String → int に変更
+  final int id; // String → int に変更
+  final int noteId; // String → int に変更
   final String userId;
   final String fileName;
   final String filePath;
@@ -23,8 +23,8 @@ class Attachment {
 
   factory Attachment.fromJson(Map<String, dynamic> json) {
     return Attachment(
-      id: json['id'] as int,  // 修正
-      noteId: json['note_id'] as int,  // 修正
+      id: json['id'] as int, // 修正
+      noteId: json['note_id'] as int, // 修正
       userId: json['user_id'] as String,
       fileName: json['file_name'] as String,
       filePath: json['file_path'] as String,

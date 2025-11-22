@@ -159,7 +159,8 @@ class PresenceService {
 
       AppLogger.info('Presence tracking stopped');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to stop presence tracking', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to stop presence tracking',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -170,9 +171,12 @@ class PresenceService {
           .from('user_presence')
           .select('id')
           .eq('is_online', true)
-          .gte('last_seen',
-               DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String(),);
+          .gte(
+            'last_seen',
+            DateTime.now()
+                .subtract(const Duration(minutes: 5))
+                .toIso8601String(),
+          );
 
       return (response as List).length;
     } catch (e, stackTrace) {
@@ -188,12 +192,12 @@ class PresenceService {
   // Get online guests count
   Future<int> getOnlineGuestsCount() async {
     try {
-      final response = await _supabase
-          .from('guest_presence')
-          .select('id')
-          .gte('last_seen',
-               DateTime.now().subtract(const Duration(minutes: 5))
-                   .toIso8601String(),);
+      final response = await _supabase.from('guest_presence').select('id').gte(
+            'last_seen',
+            DateTime.now()
+                .subtract(const Duration(minutes: 5))
+                .toIso8601String(),
+          );
 
       return (response as List).length;
     } catch (e, stackTrace) {
@@ -225,7 +229,8 @@ class PresenceService {
 
       return SiteStatistics.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get site statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to get site statistics',
+          error: e, stackTrace: stackTrace);
       return null;
     }
   }
@@ -236,7 +241,8 @@ class PresenceService {
       await _supabase.rpc('update_site_statistics');
       AppLogger.info('Site statistics updated successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update site statistics', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to update site statistics',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -246,7 +252,8 @@ class PresenceService {
       await _supabase.rpc('cleanup_old_presence');
       AppLogger.info('Old presence records cleaned up');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to cleanup old presence', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to cleanup old presence',
+          error: e, stackTrace: stackTrace);
     }
   }
 

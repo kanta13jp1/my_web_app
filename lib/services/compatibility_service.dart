@@ -19,7 +19,8 @@ class CompatibilityService {
     final String level = _getCompatibilityLevel(score);
 
     // 相性の詳細情報を生成
-    final Map<String, dynamic> details = _getCompatibilityDetails(type1, type2, score);
+    final Map<String, dynamic> details =
+        _getCompatibilityDetails(type1, type2, score);
 
     return CompatibilityMatch(
       type1: type1,
@@ -70,14 +71,22 @@ class CompatibilityService {
 
     // 特別な高相性ペア（ゴールデンペア）
     final List<List<String>> goldenPairs = [
-      ['INTJ', 'ENFP'], ['ENFP', 'INTJ'],
-      ['INFJ', 'ENTP'], ['ENTP', 'INFJ'],
-      ['INTP', 'ENTJ'], ['ENTJ', 'INTP'],
-      ['INFP', 'ENFJ'], ['ENFJ', 'INFP'],
-      ['ISTJ', 'ESTP'], ['ESTP', 'ISTJ'],
-      ['ISFJ', 'ESFP'], ['ESFP', 'ISFJ'],
-      ['ESTJ', 'ISTP'], ['ISTP', 'ESTJ'],
-      ['ESFJ', 'ISFP'], ['ISFP', 'ESFJ'],
+      ['INTJ', 'ENFP'],
+      ['ENFP', 'INTJ'],
+      ['INFJ', 'ENTP'],
+      ['ENTP', 'INFJ'],
+      ['INTP', 'ENTJ'],
+      ['ENTJ', 'INTP'],
+      ['INFP', 'ENFJ'],
+      ['ENFJ', 'INFP'],
+      ['ISTJ', 'ESTP'],
+      ['ESTP', 'ISTJ'],
+      ['ISFJ', 'ESFP'],
+      ['ESFP', 'ISFJ'],
+      ['ESTJ', 'ISTP'],
+      ['ISTP', 'ESTJ'],
+      ['ESFJ', 'ISFP'],
+      ['ISFP', 'ESFJ'],
     ];
 
     if (goldenPairs.any((pair) => pair[0] == type1 && pair[1] == type2)) {
@@ -103,7 +112,10 @@ class CompatibilityService {
 
   /// 相性の詳細情報を生成
   Map<String, dynamic> _getCompatibilityDetails(
-      String type1, String type2, int score,) {
+    String type1,
+    String type2,
+    int score,
+  ) {
     // タイプの組み合わせに基づいた詳細を生成
     final bool sameEI = type1[0] == type2[0];
     final bool sameNS = type1[1] == type2[1];
@@ -111,13 +123,32 @@ class CompatibilityService {
     final bool sameJP = type1[3] == type2[3];
 
     final String title = _getCompatibilityTitle(type1, type2);
-    final String description = _getCompatibilityDescription(type1, type2, score);
+    final String description =
+        _getCompatibilityDescription(type1, type2, score);
     final List<String> strengths = _getCompatibilityStrengths(
-        type1, type2, sameEI, sameNS, sameTF, sameJP,);
+      type1,
+      type2,
+      sameEI,
+      sameNS,
+      sameTF,
+      sameJP,
+    );
     final List<String> challenges = _getCompatibilityChallenges(
-        type1, type2, sameEI, sameNS, sameTF, sameJP,);
+      type1,
+      type2,
+      sameEI,
+      sameNS,
+      sameTF,
+      sameJP,
+    );
     final List<String> tips = _getCompatibilityTips(
-        type1, type2, sameEI, sameNS, sameTF, sameJP,);
+      type1,
+      type2,
+      sameEI,
+      sameNS,
+      sameTF,
+      sameJP,
+    );
 
     return {
       'title': title,
@@ -169,8 +200,14 @@ class CompatibilityService {
   }
 
   /// 相性の強みを生成
-  List<String> _getCompatibilityStrengths(String type1, String type2,
-      bool sameEI, bool sameNS, bool sameTF, bool sameJP,) {
+  List<String> _getCompatibilityStrengths(
+    String type1,
+    String type2,
+    bool sameEI,
+    bool sameNS,
+    bool sameTF,
+    bool sameJP,
+  ) {
     final List<String> strengths = [];
 
     if (!sameEI) {
@@ -203,8 +240,14 @@ class CompatibilityService {
   }
 
   /// 相性の課題を生成
-  List<String> _getCompatibilityChallenges(String type1, String type2,
-      bool sameEI, bool sameNS, bool sameTF, bool sameJP,) {
+  List<String> _getCompatibilityChallenges(
+    String type1,
+    String type2,
+    bool sameEI,
+    bool sameNS,
+    bool sameTF,
+    bool sameJP,
+  ) {
     final List<String> challenges = [];
 
     if (!sameNS) {
@@ -235,8 +278,14 @@ class CompatibilityService {
   }
 
   /// 相性を良くするためのアドバイスを生成
-  List<String> _getCompatibilityTips(String type1, String type2, bool sameEI,
-      bool sameNS, bool sameTF, bool sameJP,) {
+  List<String> _getCompatibilityTips(
+    String type1,
+    String type2,
+    bool sameEI,
+    bool sameNS,
+    bool sameTF,
+    bool sameJP,
+  ) {
     final List<String> tips = [];
 
     if (!sameEI) {
@@ -270,7 +319,9 @@ class CompatibilityService {
 
   /// データベースから相性データを取得（将来的な拡張用）
   Future<CompatibilityMatch?> getCompatibilityFromDatabase(
-      String type1, String type2,) async {
+    String type1,
+    String type2,
+  ) async {
     try {
       final response = await _supabase
           .from('personality_compatibility')
@@ -305,10 +356,22 @@ class CompatibilityService {
 
     // 全16タイプとの相性を計算
     const types = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP',
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP',
+      'INTJ',
+      'INTP',
+      'ENTJ',
+      'ENTP',
+      'INFJ',
+      'INFP',
+      'ENFJ',
+      'ENFP',
+      'ISTJ',
+      'ISFJ',
+      'ESTJ',
+      'ESFJ',
+      'ISTP',
+      'ISFP',
+      'ESTP',
+      'ESFP',
     ];
 
     for (String type in types) {
@@ -335,10 +398,22 @@ class CompatibilityService {
     final List<Map<String, dynamic>> allTypes = [];
 
     const types = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP',
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP',
+      'INTJ',
+      'INTP',
+      'ENTJ',
+      'ENTP',
+      'INFJ',
+      'INFP',
+      'ENFJ',
+      'ENFP',
+      'ISTJ',
+      'ISFJ',
+      'ESTJ',
+      'ESFJ',
+      'ISTP',
+      'ISFP',
+      'ESTP',
+      'ESFP',
     ];
 
     for (String type in types) {

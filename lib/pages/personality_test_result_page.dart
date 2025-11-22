@@ -330,7 +330,8 @@ ${_personalityType!.description}
                       icon: const Icon(Icons.share),
                       label: const Text('Twitterでシェア'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DA1F2), // Twitter blue
+                        backgroundColor:
+                            const Color(0xFF1DA1F2), // Twitter blue
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

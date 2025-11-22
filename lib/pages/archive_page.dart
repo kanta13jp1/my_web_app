@@ -196,7 +196,7 @@ class _ArchivePageState extends State<ArchivePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？',
+              '「${note.title.isEmpty ? '(タイトルなし)' : note.title}」を完全に削除しますか？',
             ),
             const SizedBox(height: 16),
             Container(
@@ -376,9 +376,9 @@ class _ArchivePageState extends State<ArchivePage> {
                             if (category != null) {
                               categoryColor = Color(
                                 int.parse(
-                                  category.color.substring(1),
-                                  radix: 16,
-                                ) +
+                                      category.color.substring(1),
+                                      radix: 16,
+                                    ) +
                                     0xFF000000,
                               );
                             }
@@ -478,7 +478,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                           Text(
                                             '•',
                                             style: TextStyle(
-                                                color: Colors.grey[600],
+                                              color: Colors.grey[600],
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -510,14 +510,18 @@ class _ArchivePageState extends State<ArchivePage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.unarchive,
-                                          color: Colors.blue,),
+                                      icon: const Icon(
+                                        Icons.unarchive,
+                                        color: Colors.blue,
+                                      ),
                                       onPressed: () => _showRestoreDialog(note),
                                       tooltip: '復元',
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_forever,
-                                          color: Colors.red,),
+                                      icon: const Icon(
+                                        Icons.delete_forever,
+                                        color: Colors.red,
+                                      ),
                                       onPressed: () => _showDeleteDialog(note),
                                       tooltip: '完全に削除',
                                     ),

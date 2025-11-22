@@ -18,7 +18,7 @@ class AchievementCardWidget extends StatelessWidget {
       elevation: isUnlocked ? 4 : 1,
       color: isUnlocked
           ? theme.colorScheme.primaryContainer
-          : theme.colorScheme.surfaceContainerHighest.withValues(alpha : 0.5),
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -33,7 +33,7 @@ class AchievementCardWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isUnlocked
                         ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withValues(alpha : 0.2),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -54,7 +54,8 @@ class AchievementCardWidget extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: isUnlocked
                               ? theme.colorScheme.onPrimaryContainer
-                              : theme.colorScheme.onSurface.withValues(alpha : 0.6),
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -63,7 +64,8 @@ class AchievementCardWidget extends StatelessWidget {
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: isUnlocked
                               ? theme.colorScheme.onPrimaryContainer
-                              : theme.colorScheme.onSurface.withValues(alpha : 0.5),
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -100,13 +102,15 @@ class AchievementCardWidget extends StatelessWidget {
                       Text(
                         '${achievement.currentProgress} / ${achievement.targetValue}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha : 0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                       Text(
                         '${(achievement.progressPercentage * 100).toInt()}%',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha : 0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -119,9 +123,9 @@ class AchievementCardWidget extends StatelessWidget {
                       value: achievement.progressPercentage,
                       minHeight: 8,
                       backgroundColor:
-                          theme.colorScheme.onSurface.withValues(alpha : 0.1),
+                          theme.colorScheme.onSurface.withValues(alpha: 0.1),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary.withValues(alpha : 0.6),
+                        theme.colorScheme.primary.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -149,8 +153,8 @@ class AchievementCardWidget extends StatelessWidget {
                     Text(
                       '${achievement.unlockedAt!.month}/${achievement.unlockedAt!.day}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onPrimaryContainer.withValues(alpha : 0.7),
+                        color: theme.colorScheme.onPrimaryContainer
+                            .withValues(alpha: 0.7),
                       ),
                     ),
                   ],
