@@ -11,9 +11,7 @@ import '../services/note_card_service.dart';
 import '../utils/content_chunk_processor.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用
-import 'package:web/web.dart' as web;
-import 'dart:js_interop';
+import '../utils/web_image_downloader.dart';
 
 class ShareNoteCardDialog extends StatefulWidget {
   final Note note;

@@ -8,9 +8,7 @@ import '../services/note_card_service.dart';
 import '../services/app_share_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用
-import 'package:web/web.dart' as web;
-import 'dart:js_interop';
+import '../utils/web_image_downloader.dart';
 
 /// 哲学者の名言をシェアするダイアログ
 class SharePhilosopherQuoteDialog extends StatefulWidget {

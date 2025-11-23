@@ -1,8 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:web/web.dart' as web;
-import 'dart:js_interop';
+import '../utils/web_image_downloader.dart';
 import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
