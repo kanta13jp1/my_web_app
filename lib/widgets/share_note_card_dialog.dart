@@ -313,9 +313,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                               : OutlinedButton.icon(
                                   icon: const Icon(Icons.visibility),
                                   label: Text(
-                                    _showPreview
-                                        ? 'プレビュー準備完了 ✓'
-                                        : 'プレビューを表示',
+                                    _showPreview ? 'プレビュー準備完了 ✓' : 'プレビューを表示',
                                   ),
                                   style: _showPreview
                                       ? OutlinedButton.styleFrom(
