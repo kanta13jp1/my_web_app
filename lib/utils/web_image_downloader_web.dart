@@ -1,16 +1,29 @@
-// ここにWeb専用のインポートを書く
 import 'dart:js_interop';
 import 'package:web/web.dart' as web;
-import 'dart:convert';
+import 'dart:typed_data';
 
-void downloadImage(List<int> bytes, String fileName) {
-  // ここに元の share_note_card_dialog.dart にあったWeb用のダウンロード処理を移動
-  // 例: アンカータグを作ってクリックするなど
-  final base64 = base64Encode(bytes);
-  final href = 'data:image/png;base64,$base64';
-  
-  final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
-  anchor.href = href;
-  anchor.download = fileName;
-  anchor.click();
+void downloadImageFile(List<int> bytes, String fileName) {
+  final imageBytes = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+  final blob = web.Blob([imageBytes.toJS].toJS);
+  final url = web.URL.createObjectURL(blob);
+  web.HTMLAnchorElement()
+    ..href = url
+    ..download = fileName
+    ..click();
+  web.URL.revokeObjectURL(url);
+}
+
+// ✅ 追加: URLを開く機能
+void openWebUrl(String url) {
+  web.window.open(url, '_blank');
+}
+
+// ✅ 追加: シェア機能
+Future<void> shareWebContent(String title, String text, String url) async {
+  final shareData = web.ShareData(
+    title: title,
+    text: text,
+    url: url,
+  );
+  await web.window.navigator.share(shareData).toDart;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+// ✅ 修正: このインポートした機能を、以下のコード内で実際に使用するように書き換えました
 import '../utils/web_image_downloader.dart';
 import '../models/philosopher_quote.dart';
 
@@ -10,8 +11,6 @@ class AppShareService {
   static const String appName = 'マイメモ';
 
   /// Netlify FunctionsのベースURL
-  /// 本番環境: https://melodic-cannoli-f33eaf.netlify.app
-  /// デプロイ日: 2025-11-09
   static const String netlifyBaseUrl =
       'https://melodic-cannoli-f33eaf.netlify.app';
 
@@ -347,13 +346,8 @@ $appUrl
     if (kIsWeb) {
       // Web版: Web Share API または Twitter インテントを使用
       try {
-        // Web Share APIを試みる（モバイルブラウザなどで利用可能）
-        final shareData = web.ShareData(
-          title: appName,
-          text: message,
-          url: appUrl,
-        );
-        await web.window.navigator.share(shareData).toDart;
+        // ✅ 修正: Web Share APIを共通ユーティリティ経由で呼び出し
+        await shareWebContent(appName, message, appUrl);
       } catch (e) {
         // Web Share APIが利用できない場合（デスクトップブラウザなど）
         // フォールバック: クリップボードにコピー & Twitter インテント
@@ -363,7 +357,8 @@ $appUrl
           final twitterUrl = Uri.encodeFull(
             'https://twitter.com/intent/tweet?text=$message',
           );
-          web.window.open(twitterUrl, '_blank');
+          // ✅ 修正: 共通ユーティリティ経由でURLを開く
+          openWebUrl(twitterUrl);
         } catch (clipboardError) {
           // クリップボードアクセスも失敗した場合はエラーを再スロー
           rethrow;
@@ -426,7 +421,8 @@ $appUrl
     );
 
     if (kIsWeb) {
-      web.window.open(twitterUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(twitterUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -438,7 +434,8 @@ $appUrl
     const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
 
     if (kIsWeb) {
-      web.window.open(facebookUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(facebookUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile();
@@ -453,7 +450,8 @@ $appUrl
     );
 
     if (kIsWeb) {
-      web.window.open(lineUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(lineUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -527,7 +525,8 @@ $shareLink
     );
 
     if (kIsWeb) {
-      web.window.open(twitterUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(twitterUrl);
     } else {
       await shareAppMobile(customMessage: message);
     }
@@ -540,7 +539,8 @@ $shareLink
         'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
 
     if (kIsWeb) {
-      web.window.open(facebookUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(facebookUrl);
     } else {
       await shareAppMobile(customMessage: shareLink);
     }
@@ -587,7 +587,8 @@ $shareLink''';
     );
 
     if (kIsWeb) {
-      web.window.open(lineUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(lineUrl);
     } else {
       await shareAppMobile(customMessage: message);
     }
