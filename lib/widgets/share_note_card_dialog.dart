@@ -313,7 +313,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                               : OutlinedButton.icon(
                                   icon: const Icon(Icons.visibility),
                                   label: Text(
-                                    _showPreview ? 'プレビュー準備完了 ✓' : 'プレビューを表示',
+                                    _showPreview
+                                        ? 'プレビュー準備完了 ✓'
+                                        : 'プレビューを表示',
                                   ),
                                   style: _showPreview
                                       ? OutlinedButton.styleFrom(
@@ -668,25 +670,17 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
           return;
         }
 
-        // Web版: ダウンロード
-        final blob = web.Blob([imageBytes.toJS].toJS);
-        final url = web.URL.createObjectURL(blob);
+        // 🔄 修正箇所: Web固有の処理を削除し、共通ユーティリティを使用
         final filename = _repaintKeys.length > 1
             ? 'note_card_${timestamp}_${i + 1}of${_repaintKeys.length}.png'
             : 'note_card_$timestamp.png';
 
-        web.HTMLAnchorElement()
-          ..href = url
-          ..download = filename
-          ..click();
-
-        web.URL.revokeObjectURL(url);
+        downloadImageFile(imageBytes, filename);
 
         successCount++;
 
-        // 次の画像キャプチャまで少し待つ（WebGLリソースの解放を待つ）
+        // 次の画像キャプチャまで少し待つ
         if (i < _repaintKeys.length - 1) {
-          // Web環境ではより長い待機時間が必要
           await Future.delayed(const Duration(milliseconds: 2000));
         }
       }

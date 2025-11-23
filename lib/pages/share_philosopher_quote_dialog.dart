@@ -492,18 +492,11 @@ class _SharePhilosopherQuoteDialogState
         return;
       }
 
-      // Web版: ダウンロード
-      final blob = web.Blob([imageBytes.toJS].toJS);
-      final url = web.URL.createObjectURL(blob);
+      // 🔄 修正箇所: Web固有のコードを削除し、共通ユーティリティを使用
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'philosopher_quote_$timestamp.png';
 
-      web.HTMLAnchorElement()
-        ..href = url
-        ..download = filename
-        ..click();
-
-      web.URL.revokeObjectURL(url);
+      downloadImageFile(imageBytes, filename);
 
       if (!mounted) {
         return;
