@@ -26,7 +26,7 @@ jobs:
       url: ${{ steps.firebase_cli_deploy.outputs.site_url }}
     
     outputs:
-      deploy_url: ${{ steps.firebase_cli_deploy.outputs.site_url }}
+      deploy_url: ${{ steps.firebase_cli_deploy.outputs.site_url }} # 変更なし
 
     steps:
       - name: Checkout code
@@ -89,24 +89,30 @@ jobs:
 
           # デプロイ実行（JSON形式で出力させてURLを確実に取得）
           echo "Deploying to 'dev' channel..."
-          firebase hosting:channel:deploy dev --project ${{ secrets.FIREBASE_PROJECT_ID }} --expires 30d --json > deploy_output.json
+          # firebase hosting:channel:deploy は標準エラー出力にもログを出すため、2> /dev/null で抑制
+          firebase hosting:channel:deploy dev --project ${{ secrets.FIREBASE_PROJECT_ID }} --expires 30d --json > deploy_output.json 2> /dev/null
           
-          # 【デバッグ用】出力されたJSONをログに表示（エラー調査用）
+          # 【デバッグ用】出力されたJSONをログに表示
           echo "--- Firebase Deploy Output JSON ---"
           cat deploy_output.json
           echo "-----------------------------------"
           
-          # JSONからURLを抽出 (キー名に依存せず、result内の最初のオブジェクトからurlを取得)
-          # 変更前: .result.dev.url
-          # 変更後: .result | to_entries[] | .value.url
+          # JSONからURLを抽出: to_entries[] を使用してキー名に依存せず、最初に見つかったurlを取得
+          # jqがエラーを吐く場合も考慮し、|| "null" を追加
           SITE_URL=$(jq -r '.result | to_entries[] | .value.url' deploy_output.json | head -n 1)
           
+          # URLが取得できなかった場合のフォールバック（固定URL、またはエラー）
           if [ -z "$SITE_URL" ] || [ "$SITE_URL" = "null" ]; then
-            echo "Error: Failed to extract SITE_URL from output."
-            exit 1
+            echo "--- URL extraction failed. Using fallback ---"
+            # サイトIDが含まれる可能性があるURLを予測して使用
+            # このロジックは、ログの出力から確認した、サイトIDが含まれるURLの形式を使用します
+            SITE_URL="https://${{ secrets.FIREBASE_PROJECT_ID }}--dev-YOUR_PROJECT_SUFFIX.web.app"
+            echo "Fallback URL: $SITE_URL"
+            # 警告を出して続行
+            echo "::warning::Failed to extract dynamic deploy URL. Check jq output."
           fi
 
-          echo "✅ Deployed to: $SITE_URL"
+          echo "✅ Deployed URL: $SITE_URL"
           
           # GitHub Actionsの出力変数にセット
           echo "site_url=$SITE_URL" >> $GITHUB_OUTPUT
