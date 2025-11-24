@@ -23,10 +23,8 @@ jobs:
     needs: ci
     environment:
       name: development
-      # 👇 CLIの出力からURLを取得するように変更
       url: ${{ steps.firebase_cli_deploy.outputs.site_url }}
     
-    # 👇 次のジョブへURLを渡すための定義
     outputs:
       deploy_url: ${{ steps.firebase_cli_deploy.outputs.site_url }}
 
@@ -78,7 +76,7 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
-      # 👇 変更: アクションではなくFirebase CLIを直接使用してデプロイ
+      # Deploy to Firebase Hosting (CLI)
       - name: Deploy to Firebase Hosting (CLI)
         id: firebase_cli_deploy
         run: |
@@ -93,10 +91,21 @@ jobs:
           echo "Deploying to 'dev' channel..."
           firebase hosting:channel:deploy dev --project ${{ secrets.FIREBASE_PROJECT_ID }} --expires 30d --json > deploy_output.json
           
-          # JSONからURLを抽出 (jqを使用)
-          # 出力例: { "status": "success", "result": { "dev": { "url": "https://..." } } }
-          SITE_URL=$(jq -r '.result.dev.url' deploy_output.json)
+          # 【デバッグ用】出力されたJSONをログに表示（エラー調査用）
+          echo "--- Firebase Deploy Output JSON ---"
+          cat deploy_output.json
+          echo "-----------------------------------"
           
+          # JSONからURLを抽出 (キー名に依存せず、result内の最初のオブジェクトからurlを取得)
+          # 変更前: .result.dev.url
+          # 変更後: .result | to_entries[] | .value.url
+          SITE_URL=$(jq -r '.result | to_entries[] | .value.url' deploy_output.json | head -n 1)
+          
+          if [ -z "$SITE_URL" ] || [ "$SITE_URL" = "null" ]; then
+            echo "Error: Failed to extract SITE_URL from output."
+            exit 1
+          fi
+
           echo "✅ Deployed to: $SITE_URL"
           
           # GitHub Actionsの出力変数にセット
