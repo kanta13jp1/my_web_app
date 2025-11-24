@@ -23,12 +23,12 @@ jobs:
     needs: ci
     environment:
       name: development
-      # 修正: エンコードされたURLを出力として設定
-      url: ${{ steps.firebase_cli_deploy.outputs.encoded_url }} 
+      # 修正: environment.urlも後続ステップのsuffixで構築するため、一時的に固定値を設定
+      url: https://dev.your-app.web.app
     
     outputs:
-      # 修正: エンコードされたURLを出力として設定
-      encoded_url: ${{ steps.firebase_cli_deploy.outputs.encoded_url }}
+      # 🚨 修正: URL全体ではなく、サフィックス（ランダムな部分）のみを出力する
+      deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
 
     permissions:
       contents: read 
@@ -79,7 +79,7 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
-      # Deploy to Firebase Hosting (CLI) - URLをエンコード
+      # Deploy to Firebase Hosting (CLI) - サフィックスを抽出
       - name: Deploy to Firebase Hosting (CLI)
         id: firebase_cli_deploy
         run: |
@@ -100,13 +100,26 @@ jobs:
 
           echo "✅ Extracted URL: $SITE_URL"
           
-          # 🚨 修正: URLをBase64でエンコードし、シークレット検知を回避
-          ENCODED_URL=$(echo -n "$SITE_URL" | base64 -w 0)
-
-          echo "Final ENCODED URL: $ENCODED_URL"
+          # 🚨 修正: URLからランダムなサフィックス部分（例: ydnyem6n）を抽出する
+          # URL形式: https://{PROJECT_ID}--{CHANNEL_ID}-{SUFFIX}.web.app
+          # SUFFIXを取得するためのsed/awk/grep処理を記述
+          # 例: https://my-web-app-b67f4--dev-ydnyem6n.web.app
+          #    |_______| |______| |_______|
+          #     ID       Channel   Suffix
           
-          # GitHub Actionsの出力変数にセット (エンコードされたURLを使用)
-          echo "encoded_url=$ENCODED_URL" >> $GITHUB_OUTPUT
+          # sedを使ってURLからサフィックス部分だけを抽出
+          # $PROJECT_ID--dev-の後の文字列(.web.appの前の文字列)を取得
+          SUFFIX=$(echo "$SITE_URL" | sed -E 's/.*-([a-zA-Z0-9]+)\.web\.app/\1/')
+          
+          if [ "$SUFFIX" == "$SITE_URL" ] || [ -z "$SUFFIX" ]; then
+              echo "::warning::Suffix extraction failed. Using 'unknown' as fallback."
+              SUFFIX="unknown"
+          fi
+          
+          echo "Final SUFFIX: $SUFFIX"
+          
+          # GitHub Actionsの出力変数にセット (サフィックスを使用)
+          echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
           
           rm sa_key.json deploy_output.json
         env:
@@ -123,17 +136,19 @@ jobs:
 
     steps:
       - name: Prepare URL
-        id: decode_url
+        id: prepare_url
         if: needs.deploy.result == 'success'
         run: |
-          # 🚨 修正: エンコードされたURLを受け取り、デコードして環境変数にセット
-          ENCODED_URL="${{ needs.deploy.outputs.encoded_url }}"
-          DECODED_URL=$(echo "$ENCODED_URL" | base64 -d)
+          # 🚨 修正: サフィックスとシークレットを使って完全なURLを再構築
+          PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
+          DEPLOY_SUFFIX="${{ needs.deploy.outputs.deploy_suffix }}"
           
-          # 以降のステップで使えるように環境変数にセット
-          echo "DECODED_URL=$DECODED_URL" >> $GITHUB_ENV
-          echo "Decoded URL is set for notification."
-          # 最終的にSlackやCommit Commentに渡される値は、DECODED_URLを使う
+          # 完全なURLを再構築: https://{project-id}--{channel-id}-{suffix}.web.app
+          RECONSTRUCTED_URL="https://$PROJECT_ID--dev-$DEPLOY_SUFFIX.web.app"
+          
+          # 最終環境変数にセット
+          echo "DECODED_URL=$RECONSTRUCTED_URL" >> $GITHUB_ENV
+          echo "Reconstructed URL is set for notification."
 
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
@@ -182,7 +197,6 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // 🚨 修正: 環境変数からデコードされたURLを取得
             const deployUrl = process.env.DECODED_URL;
             
             github.rest.repos.createCommitComment({
