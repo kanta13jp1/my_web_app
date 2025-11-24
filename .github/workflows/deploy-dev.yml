@@ -23,17 +23,14 @@ jobs:
     needs: ci
     environment:
       name: development
-      # 変更なし: 環境変数ではなく出力変数を参照
       url: ${{ steps.firebase_cli_deploy.outputs.site_url }} 
     
-    # 変更なし
     outputs:
       deploy_url: ${{ steps.firebase_cli_deploy.outputs.site_url }}
 
-    # 🚨 修正: id-token のパーミッションを削除またはcontents: readに戻す
-    # deploy_urlのシークレット検知回避のため、id-tokenは不要
+    # 修正: permissionsはcontents: readに戻す
     permissions:
-      contents: read # これで十分
+      contents: read 
 
     steps:
       - name: Checkout code
@@ -104,27 +101,15 @@ jobs:
           # URLが取得できなかった場合の処理はそのまま
           if [ -z "$SITE_URL" ] || [ "$SITE_URL" = "null" ]; then
             echo "--- URL extraction failed. Using fallback ---"
-            SITE_URL="https://fallback-url-not-found.web.app" # URLを取得できなかった場合の安全なフォールバック
+            SITE_URL="https://fallback-url-not-found.web.app"
             echo "::warning::Failed to extract dynamic deploy URL. Check jq output."
           fi
 
-          echo "✅ Extracted URL: $SITE_URL"
+          # 🚨 修正: URL置換ロジックを削除し、jqで取得した元のSITE_URLをそのまま出力に設定
+          echo "Final URL for Output: $SITE_URL"
           
-          # 🚨 修正: URLからシークレット情報（プロジェクトID）を削除してURLをクリーンにする
-          # FirebaseのプロジェクトIDはURLの `***` 部分に入るため、これを削除してシークレット検知を回避します
-          CLEAN_URL=$(echo "$SITE_URL" | sed 's/https:\/\/\(.*\)\.web\.app/https:\/\/dev-app\.web\.app/') # 固定のダミーホスト名に置き換え
-          
-          if [ "$CLEAN_URL" != "$SITE_URL" ]; then
-              echo "::notice::URL modified to evade secret filtering."
-          else
-              # jqが失敗した場合や、URLがカスタムドメインの場合に備えて、そのままのURLを使う
-              CLEAN_URL="$SITE_URL"
-          fi
-
-          echo "Final URL for Output: $CLEAN_URL"
-          
-          # GitHub Actionsの出力変数にセット (クリーンなURLを使用)
-          echo "site_url=$CLEAN_URL" >> $GITHUB_OUTPUT
+          # GitHub Actionsの出力変数にセット (元のURLを使用)
+          echo "site_url=$SITE_URL" >> $GITHUB_OUTPUT
           
           # 後始末
           rm sa_key.json deploy_output.json
@@ -137,7 +122,6 @@ jobs:
     needs: deploy
     if: always()
     
-    # 👇 修正: contents: write のみで十分
     permissions:
       contents: write 
 
@@ -189,7 +173,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // シークレットフィルタリングを回避したクリーンなURLを受け取る
+            // シークレットフィルタリング回避の置換ロジックを削除したため、元のURLがそのまま渡ることを期待
             const deployUrl = '${{ needs.deploy.outputs.deploy_url }}';
             
             github.rest.repos.createCommitComment({
