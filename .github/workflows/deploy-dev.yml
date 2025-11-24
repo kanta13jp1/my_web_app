@@ -23,7 +23,11 @@ jobs:
     needs: ci
     environment:
       name: development
-      url: https://dev.your-app.web.app
+      url: ${{ steps.firebase_deploy.outputs.details_url }}
+    
+    # 👇 1. デプロイURLを次のジョブに渡すための出力定義
+    outputs:
+      deploy_url: ${{ steps.firebase_deploy.outputs.details_url }}
 
     steps:
       - name: Checkout code
@@ -76,6 +80,7 @@ jobs:
       # Deploy to Firebase Hosting
       - name: Deploy to Firebase Hosting (Development)
         uses: FirebaseExtended/action-hosting-deploy@v0
+        id: firebase_deploy  # 👈 2. IDを追加して出力を参照可能にする
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}'
@@ -91,7 +96,7 @@ jobs:
     needs: deploy
     if: always()
     permissions:
-      contents: write  # ✅ Added permission to allow commenting on commits
+      contents: write
 
     steps:
       - name: Notify Slack on success
@@ -107,7 +112,8 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Development Deployment Successful* ✅\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://dev.your-app.web.app"
+                    # 👇 3. 固定URLを動的な変数に置き換え
+                    "text": "*Development Deployment Successful* ✅\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* ${{ needs.deploy.outputs.deploy_url }}"
                   }
                 }
               ]
@@ -141,10 +147,13 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // 👇 4. ここでも動的なURLを受け取る
+            const deployUrl = '${{ needs.deploy.outputs.deploy_url }}';
+            
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: '🚀 Successfully deployed to **Development** environment!\n\n📍 URL: https://dev.your-app.web.app'
+              body: `🚀 Successfully deployed to **Development** environment!\n\n📍 URL: ${deployUrl}`
             })
               
