@@ -90,6 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
+    permissions:
+      contents: write  # ✅ Added permission to allow commenting on commits
 
     steps:
       - name: Notify Slack on success
@@ -145,3 +147,4 @@ jobs:
               commit_sha: context.sha,
               body: '🚀 Successfully deployed to **Development** environment!\n\n📍 URL: https://dev.your-app.web.app'
             })
+              
