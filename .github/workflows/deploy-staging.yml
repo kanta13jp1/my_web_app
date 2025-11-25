@@ -7,6 +7,11 @@ on:
       - staging
   workflow_dispatch:
 
+# 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
+permissions:
+  contents: read # コードチェックアウト、CI実行のために必要
+  pull-requests: write # CIジョブの 'pr-comment' ステップに対応するため
+  
 env:
   ENVIRONMENT: staging
   FLUTTER_VERSION: '3.27.x'
@@ -14,9 +19,9 @@ env:
 jobs:
   ci:
     name: Run CI Checks
+    runs-on: ubuntu-latest # uses: を使っているが、ランナーが必要なので追加
     uses: ./.github/workflows/ci.yml
-    permissions:
-      contents: read # CIがコードを読み込むために必要
+    # permissions ブロックはトップレベルに移動したため削除
 
   deploy:
     name: Deploy to Staging Environment
@@ -24,15 +29,14 @@ jobs:
     needs: ci
     environment:
       name: staging
-      # 🚨 修正: secrets.FIREBASE_PROJECT_ID_STAGING は存在しないため、トップレベルの secrets.FIREBASE_PROJECT_ID を使用
+      # 修正: secrets.FIREBASE_PROJECT_ID_STAGING は存在しないため、トップレベルの secrets.FIREBASE_PROJECT_ID を使用
       url: https://staging.your-app-domain.web.app
     
     outputs:
       deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
 
-    permissions:
-      contents: read # コードチェックアウトのために必要
-
+    # permissions: contents: read はトップレベルに移動したため削除
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -129,8 +133,9 @@ jobs:
     needs: deploy
     if: always()
     
+    # 修正: contents: write はコメント投稿のために必要
     permissions:
-      contents: write # コミットコメントのために必要
+      contents: write 
 
     steps:
       - name: Prepare URL
@@ -203,4 +208,3 @@ jobs:
               commit_sha: context.sha,
               body: `🚀 Successfully deployed to **Staging** environment!\n\n📍 URL: ${deployUrl}\n\n⚠️ Please conduct thorough testing before promoting to production.`
             })
-              
