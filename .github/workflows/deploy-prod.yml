@@ -6,6 +6,11 @@ on:
       - main
   workflow_dispatch:
 
+# 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
+permissions:
+  contents: read # 全体で必要 (子ワークフローを含む)
+  pull-requests: write # 🚨 追加：CIの子ジョブの権限要求を全体で許可するため
+
 env:
   ENVIRONMENT: production
   FLUTTER_VERSION: '3.27.x'
@@ -14,6 +19,11 @@ jobs:
   ci:
     name: Run CI Checks
     uses: ./.github/workflows/ci.yml
+    
+    # 🚨 修正: 子ワークフローの権限要求を明示的に付与
+    permissions:
+      contents: read
+      pull-requests: write 
 
   deploy:
     name: Deploy to Production Environment
@@ -27,7 +37,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for versioning
+          fetch-depth: 0  # Fetch all history for versioning
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -145,14 +155,17 @@ jobs:
 
             ---
             *This release was automatically created by GitHub Actions*
-          draft: false
-          prerelease: false
+            draft: false
+            prerelease: false
 
   notify:
     name: Notify Deployment Status
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
+
+    permissions:
+      contents: write
 
     steps:
       - name: Notify Slack on success
