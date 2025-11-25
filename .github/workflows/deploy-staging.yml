@@ -9,9 +9,9 @@ on:
 
 # 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
 permissions:
-  contents: read # コードチェックアウト、CI実行のために必要
-  pull-requests: write # CIジョブの 'pr-comment' ステップに対応するため
-  
+  contents: read # 全体で必要 (子ワークフローを含む)
+  pull-requests: write # 🚨 追加：CIの子ジョブの権限要求を全体で許可するため
+
 env:
   ENVIRONMENT: staging
   FLUTTER_VERSION: '3.27.x'
@@ -19,9 +19,12 @@ env:
 jobs:
   ci:
     name: Run CI Checks
-    runs-on: ubuntu-latest # uses: を使っているが、ランナーが必要なので追加
     uses: ./.github/workflows/ci.yml
-    # permissions ブロックはトップレベルに移動したため削除
+    
+    # 🚨 修正: 子ワークフローの権限要求を明示的に付与
+    permissions:
+      contents: read
+      pull-requests: write 
 
   deploy:
     name: Deploy to Staging Environment
@@ -29,14 +32,15 @@ jobs:
     needs: ci
     environment:
       name: staging
-      # 修正: secrets.FIREBASE_PROJECT_ID_STAGING は存在しないため、トップレベルの secrets.FIREBASE_PROJECT_ID を使用
+      # 修正: environment.url は固定URLで問題ありません
       url: https://staging.your-app-domain.web.app
     
     outputs:
       deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
 
-    # permissions: contents: read はトップレベルに移動したため削除
-    
+    permissions:
+      contents: read # コードチェックアウトのために必要
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -133,7 +137,6 @@ jobs:
     needs: deploy
     if: always()
     
-    # 修正: contents: write はコメント投稿のために必要
     permissions:
       contents: write 
 
