@@ -24,8 +24,8 @@ jobs:
     needs: ci
     environment:
       name: staging
-      # 修正: シークレット名を _STAGING に変更
-      url: https://${{ secrets.FIREBASE_PROJECT_ID_STAGING }}--staging-${{ needs.deploy.outputs.deploy_suffix }}.web.app
+      # 🚨 修正: secrets.FIREBASE_PROJECT_ID_STAGING は存在しないため、トップレベルの secrets.FIREBASE_PROJECT_ID を使用
+      url: https://staging.your-app-domain.web.app
     
     outputs:
       deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
@@ -87,13 +87,13 @@ jobs:
         id: firebase_cli_deploy
         run: |
           npm install -g firebase-tools
-          # 修正: シークレット名を _STAGING に変更
+          # 修正: FIREBASE_SERVICE_ACCOUNT_STAGING に変更
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING }}' > sa_key.json
           export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/sa_key.json"
 
           echo "Deploying to 'staging' channel..."
-          # 修正: シークレット名を _STAGING に変更
-          firebase hosting:channel:deploy staging --project ${{ secrets.FIREBASE_PROJECT_ID_STAGING }} --expires 30d --json > deploy_output.json 2> /dev/null
+          # 🚨 修正: secrets.FIREBASE_PROJECT_ID に変更
+          firebase hosting:channel:deploy staging --project ${{ secrets.FIREBASE_PROJECT_ID }} --expires 30d --json > deploy_output.json 2> /dev/null
           
           # JSONからURLを抽出
           SITE_URL=$(jq -r '.result | to_entries[] | .value.url' deploy_output.json | head -n 1)
@@ -137,8 +137,8 @@ jobs:
         id: prepare_url
         if: needs.deploy.result == 'success'
         run: |
-          # 修正: シークレット名を _STAGING に変更
-          PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID_STAGING }}"
+          # 🚨 修正: secrets.FIREBASE_PROJECT_ID に変更
+          PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
           DEPLOY_SUFFIX="${{ needs.deploy.outputs.deploy_suffix }}"
           
           # 完全なURLを再構築: https://{project-id}--staging-{suffix}.web.app
