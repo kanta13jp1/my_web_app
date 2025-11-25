@@ -171,7 +171,8 @@ Future<void> showQuickReminderDialog({
               leading: const Icon(Icons.today, color: Colors.orange),
               title: const Text('今日の18:00'),
               onTap: () async {
-                final reminderDate = DateTime(now.year, now.month, now.day, 18, 0);
+                final reminderDate =
+                    DateTime(now.year, now.month, now.day, 18, 0);
                 Navigator.pop(context);
                 await onReminderSet(reminderDate);
               },
@@ -181,7 +182,8 @@ Future<void> showQuickReminderDialog({
               title: const Text('明日の9:00'),
               onTap: () async {
                 final tomorrow = now.add(const Duration(days: 1));
-                final reminderDate = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
+                final reminderDate =
+                    DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0);
                 Navigator.pop(context);
                 await onReminderSet(reminderDate);
               },

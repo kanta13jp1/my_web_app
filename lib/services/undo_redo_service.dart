@@ -24,7 +24,7 @@ class UndoRedoService extends ChangeNotifier {
     // 前回と同じ内容なら追加しない
     if (_history.isNotEmpty && _history.last.isIdenticalTo(snapshot)) {
       if (kDebugMode) {
-        print('↩️  [UndoRedoService] Skipping identical snapshot');
+        debugPrint('↩️  [UndoRedoService] Skipping identical snapshot');
       }
       return;
     }
@@ -34,7 +34,9 @@ class UndoRedoService extends ChangeNotifier {
     _currentIndex++;
 
     if (kDebugMode) {
-      print('📝 [UndoRedoService] Snapshot added: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+        '📝 [UndoRedoService] Snapshot added: $_currentIndex/${_history.length - 1}',
+      );
     }
 
     // 履歴サイズ制限
@@ -42,7 +44,9 @@ class UndoRedoService extends ChangeNotifier {
       _history.removeAt(0);
       _currentIndex--;
       if (kDebugMode) {
-        print('🗑️  [UndoRedoService] History trimmed to $_maxHistorySize');
+        debugPrint(
+          '🗑️  [UndoRedoService] History trimmed to $_maxHistorySize',
+        );
       }
     }
 
@@ -53,14 +57,16 @@ class UndoRedoService extends ChangeNotifier {
   NoteSnapshot? undo() {
     if (!canUndo) {
       if (kDebugMode) {
-        print('❌ [UndoRedoService] Cannot undo: at the beginning');
+        debugPrint('❌ [UndoRedoService] Cannot undo: at the beginning');
       }
       return null;
     }
 
     _currentIndex--;
     if (kDebugMode) {
-      print('⬅️  [UndoRedoService] Undo to: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+        '⬅️  [UndoRedoService] Undo to: $_currentIndex/${_history.length - 1}',
+      );
     }
     notifyListeners();
     return _history[_currentIndex];
@@ -70,14 +76,16 @@ class UndoRedoService extends ChangeNotifier {
   NoteSnapshot? redo() {
     if (!canRedo) {
       if (kDebugMode) {
-        print('❌ [UndoRedoService] Cannot redo: at the end');
+        debugPrint('❌ [UndoRedoService] Cannot redo: at the end');
       }
       return null;
     }
 
     _currentIndex++;
     if (kDebugMode) {
-      print('➡️  [UndoRedoService] Redo to: $_currentIndex/${_history.length - 1}');
+      debugPrint(
+        '➡️  [UndoRedoService] Redo to: $_currentIndex/${_history.length - 1}',
+      );
     }
     notifyListeners();
     return _history[_currentIndex];
@@ -96,7 +104,7 @@ class UndoRedoService extends ChangeNotifier {
     _history.clear();
     _currentIndex = -1;
     if (kDebugMode) {
-      print('🗑️  [UndoRedoService] History cleared');
+      debugPrint('🗑️  [UndoRedoService] History cleared');
     }
     notifyListeners();
   }

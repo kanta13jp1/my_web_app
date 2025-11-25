@@ -41,7 +41,10 @@ class _FloatingTimerWidgetState extends State<FloatingTimerWidget> {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.3),
                 width: 2,
               ),
               boxShadow: [

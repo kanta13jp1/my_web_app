@@ -1,7 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
+// ✅ 修正: このインポートした機能を、以下のコード内で実際に使用するように書き換えました
+import '../utils/web_image_downloader.dart';
 import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
@@ -10,9 +11,9 @@ class AppShareService {
   static const String appName = 'マイメモ';
 
   /// Netlify FunctionsのベースURL
-  /// 本番環境: https://melodic-cannoli-f33eaf.netlify.app
-  /// デプロイ日: 2025-11-09
-  static const String netlifyBaseUrl = 'https://melodic-cannoli-f33eaf.netlify.app';
+  static const String netlifyBaseUrl =
+      'https://melodic-cannoli-f33eaf.netlify.app';
+
   /// 魅力的なシェアメッセージのバリエーション
   static final List<String> shareMessages = [
     '''🎮 メモが楽しいゲームに変わる！$appName
@@ -241,7 +242,7 @@ $achievement
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 
 ━━━━━━━━━━━━━━
 
@@ -251,7 +252,7 @@ $appNameで、哲学者たちの知恵とともに
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #${currentStreak}日連続''';
+#マイメモ #${quote.author} #レベル$level #$title #名言 #哲学 #習慣化 #$currentStreak日連続''';
   }
 
   /// カスタムメッセージでシェア
@@ -287,9 +288,9 @@ $appUrl
     // ストリークに応じた追加メッセージ
     String streakMessage = '';
     if (currentStreak >= 100) {
-      streakMessage = '\n🔥 驚異の${currentStreak}日連続達成！';
+      streakMessage = '\n🔥 驚異の$currentStreak日連続達成！';
     } else if (currentStreak >= 50) {
-      streakMessage = '\n🔥 ${currentStreak}日連続記録更新中！';
+      streakMessage = '\n🔥 $currentStreak日連続記録更新中！';
     } else if (currentStreak >= 30) {
       streakMessage = '\n🔥 1ヶ月以上の連続記録を達成！';
     } else if (currentStreak >= 7) {
@@ -306,7 +307,7 @@ $encouragement$streakMessage
 🏆 称号: $title
 📊 レベル: Lv.$level
 ⭐ 総ポイント: ${totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} pt
-🔥 連続記録: ${currentStreak}日継続中
+🔥 連続記録: $currentStreak日継続中
 📈 全国ランキング参加中
 
 ━━━━━━━━━━━━━━
@@ -325,7 +326,7 @@ $appNameは、ゲーム感覚で
 完全無料で今すぐ体験👇
 $appUrl
 
-#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #${currentStreak}日連続''';
+#マイメモ #メモアプリ #レベル$level #$title #生産性向上 #習慣化 #ゲーミフィケーション #継続は力なり #$currentStreak日連続''';
   }
 
   /// レベルから称号を取得
@@ -345,12 +346,8 @@ $appUrl
     if (kIsWeb) {
       // Web版: Web Share API または Twitter インテントを使用
       try {
-        // Web Share APIを試みる（モバイルブラウザなどで利用可能）
-        await html.window.navigator.share({
-          'title': appName,
-          'text': message,
-          'url': appUrl,
-        });
+        // ✅ 修正: Web Share APIを共通ユーティリティ経由で呼び出し
+        await shareWebContent(appName, message, appUrl);
       } catch (e) {
         // Web Share APIが利用できない場合（デスクトップブラウザなど）
         // フォールバック: クリップボードにコピー & Twitter インテント
@@ -360,7 +357,8 @@ $appUrl
           final twitterUrl = Uri.encodeFull(
             'https://twitter.com/intent/tweet?text=$message',
           );
-          html.window.open(twitterUrl, '_blank');
+          // ✅ 修正: 共通ユーティリティ経由でURLを開く
+          openWebUrl(twitterUrl);
         } catch (clipboardError) {
           // クリップボードアクセスも失敗した場合はエラーを再スロー
           rethrow;
@@ -423,7 +421,8 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(twitterUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(twitterUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -432,10 +431,11 @@ $appUrl
 
   /// Facebook向けに最適化したシェア
   static Future<void> shareToFacebook() async {
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
+    const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
 
     if (kIsWeb) {
-      html.window.open(facebookUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(facebookUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile();
@@ -450,7 +450,8 @@ $appUrl
     );
 
     if (kIsWeb) {
-      html.window.open(lineUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(lineUrl);
     } else {
       // モバイルの場合は通常のシェア
       await shareAppMobile(customMessage: message);
@@ -468,7 +469,8 @@ $appUrl
       return '$netlifyBaseUrl/share?id=$quoteId';
     } else {
       // ランダムな名言ID
-      final randomId = DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length;
+      final randomId = DateTime.now().microsecondsSinceEpoch %
+          PhilosopherQuote.quotes.length;
       return '$netlifyBaseUrl/share?id=$randomId';
     }
   }
@@ -482,13 +484,15 @@ $appUrl
   }) async {
     // 名言IDを取得
     final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
     // シェアメッセージ
     String message = '''💭 今日の名言 - ${quote.author}
@@ -508,7 +512,7 @@ $shareLink
 ✨ 私の実績 ✨
 📊 レベル: Lv.$level
 ⭐ ポイント: $totalPoints pt
-🔥 連続: ${currentStreak}日
+🔥 連続: $currentStreak日
 
 マイメモで、あなたも習慣化！
 $shareLink
@@ -521,7 +525,8 @@ $shareLink
     );
 
     if (kIsWeb) {
-      html.window.open(twitterUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(twitterUrl);
     } else {
       await shareAppMobile(customMessage: message);
     }
@@ -530,10 +535,12 @@ $shareLink
   /// Facebook向けシェア（動的OGP対応）
   static Future<void> shareToFacebookWithDynamicOgp({int? quoteId}) async {
     final shareLink = generateDynamicShareLink(quoteId: quoteId);
-    final facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
+    final facebookUrl =
+        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareLink)}';
 
     if (kIsWeb) {
-      html.window.open(facebookUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(facebookUrl);
     } else {
       await shareAppMobile(customMessage: shareLink);
     }
@@ -548,13 +555,15 @@ $shareLink
   }) async {
     // 名言IDを取得
     final selectedQuoteId = quoteId ??
-      (DateTime.now().microsecondsSinceEpoch % PhilosopherQuote.quotes.length);
+        (DateTime.now().microsecondsSinceEpoch %
+            PhilosopherQuote.quotes.length);
 
     // 動的OGPリンクを生成
     final shareLink = generateDynamicShareLink(quoteId: selectedQuoteId);
 
     // 名言を取得
-    final quote = PhilosopherQuote.quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
+    final quote = PhilosopherQuote
+        .quotes[selectedQuoteId % PhilosopherQuote.quotes.length];
 
     String message = '''💭 ${quote.author}の名言
 
@@ -568,7 +577,7 @@ $shareLink''';
 
 「${quote.quote}」
 
-私の実績: Lv.$level / $totalPoints pt / ${currentStreak}日連続
+私の実績: Lv.$level / $totalPoints pt / $currentStreak日連続
 
 $shareLink''';
     }
@@ -578,7 +587,8 @@ $shareLink''';
     );
 
     if (kIsWeb) {
-      html.window.open(lineUrl, '_blank');
+      // ✅ 修正: 共通ユーティリティ経由でURLを開く
+      openWebUrl(lineUrl);
     } else {
       await shareAppMobile(customMessage: message);
     }

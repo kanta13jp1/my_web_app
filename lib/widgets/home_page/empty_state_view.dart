@@ -12,14 +12,14 @@ class EmptyStateView extends StatelessWidget {
   final VoidCallback onClearFavoritesFilter;
 
   const EmptyStateView({
-    Key? key,
+    super.key,
     required this.hasAnyFilter,
     required this.showFavoritesOnly,
     required this.reminderFilter,
     required this.allNotes,
     required this.onClearReminderFilter,
     required this.onClearFavoritesFilter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +38,7 @@ class EmptyStateView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            hasAnyFilter || showFavoritesOnly
-                ? '該当するメモが見つかりません'
-                : 'メモがありません',
+            hasAnyFilter || showFavoritesOnly ? '該当するメモが見つかりません' : 'メモがありません',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],

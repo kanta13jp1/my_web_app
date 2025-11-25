@@ -17,22 +17,28 @@ class ViralGrowthService {
     bool isCampaignActive = false,
   }) async {
     try {
-      final basePoints = 10;
+      const basePoints = 10;
       final campaignMultiplier = isCampaignActive ? 5 : 1;
       final totalPoints = basePoints * campaignMultiplier;
 
       await _gamificationService.awardPoints(
         userId,
         totalPoints,
-        reason: '${platform}でシェア${isCampaignActive ? '(キャンペーン中×5)' : ''}',
+        reason: '$platformでシェア${isCampaignActive ? '(キャンペーン中×5)' : ''}',
       );
 
       // シェア統計を更新
       await _incrementShareCount(userId, platform);
 
-      AppLogger.info('Share bonus awarded: $totalPoints points (campaign: $isCampaignActive)');
+      AppLogger.info(
+        'Share bonus awarded: $totalPoints points (campaign: $isCampaignActive)',
+      );
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding share bonus', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error awarding share bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -76,7 +82,11 @@ class ViralGrowthService {
 
       AppLogger.info('Viral milestone bonus awarded: $milestone');
     } catch (e, stackTrace) {
-      AppLogger.error('Error awarding viral milestone bonus', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error awarding viral milestone bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -84,10 +94,13 @@ class ViralGrowthService {
   /// ソーシャルシェアカウントを追加
   Future<void> _incrementShareCount(String userId, String platform) async {
     try {
-      await _supabase.rpc('increment_share_count', params: {
-        'p_user_id': userId,
-        'p_platform': platform,
-      });
+      await _supabase.rpc(
+        'increment_share_count',
+        params: {
+          'p_user_id': userId,
+          'p_platform': platform,
+        },
+      );
     } catch (e) {
       // RPC関数が存在しない場合は無視（後で作成予定）
       AppLogger.warning('increment_share_count RPC not available', error: e);
@@ -117,10 +130,14 @@ class ViralGrowthService {
       }
 
       // 招待リンクを生成（実際のドメインに置き換えてください）
-      final baseUrl = 'https://my-web-app-b67f4.web.app';
+      const baseUrl = 'https://my-web-app-b67f4.web.app';
       return '$baseUrl?ref=$referralCode';
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error generating invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }
@@ -128,7 +145,8 @@ class ViralGrowthService {
   String _generateRandomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(8, (index) => chars[(random + index) % chars.length]).join();
+    return List.generate(8, (index) => chars[(random + index) % chars.length])
+        .join();
   }
 
   /// シェア可能なメッセージを生成
@@ -140,9 +158,9 @@ class ViralGrowthService {
     return '''
 🎮 マイメモで楽しくメモ習慣！
 
-📝 ${totalNotes}個のメモを作成
+📝 $totalNotes個のメモを作成
 🎯 レベル$currentLevel達成
-🔥 ${currentStreak}日連続ログイン中
+🔥 $currentStreak日連続ログイン中
 
 ゲーム感覚でメモが続けられるよ！
 あなたも始めてみませんか？
@@ -174,7 +192,8 @@ class ViralGrowthService {
   Future<void> checkDailyShareChallenge(String userId) async {
     try {
       final today = DateTime.now();
-      final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final todayStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       // 今日既にシェアチャレンジをクリアしているかチェック
       final existing = await _supabase

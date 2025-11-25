@@ -42,7 +42,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserStats? userStats;
 
   const HomeAppBar({
-    Key? key,
+    super.key,
     required this.isSearching,
     required this.searchController,
     required this.onToggleSearch,
@@ -62,7 +62,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.hasCategoryFilter,
     required this.hasDateFilter,
     this.userStats,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -296,7 +296,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         } else if (value == 'personality_test') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const PersonalityTestLandingPage()),
+            MaterialPageRoute(
+              builder: (_) => const PersonalityTestLandingPage(),
+            ),
           ).then((_) {
             onLoadUserStats();
           });
@@ -615,273 +617,333 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              // ヘッダー部分
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade400, Colors.purple.shade400],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                // ヘッダー部分
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade400, Colors.purple.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
                   ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.share,
+                              color: Colors.white,
+                              size: 28,
+                            ),
                           ),
-                          child: const Icon(Icons.share, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(width: 12),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'マイメモをシェア',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                          const SizedBox(width: 12),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'マイメモをシェア',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
-                            Text(
-                              'みんなに広めよう！',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                              Text(
+                                'みんなに広めよう！',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
+                            ],
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        '🎮 友達と一緒にメモ習慣を楽しもう！',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    if (userStats != null) ...[
                       const SizedBox(height: 16),
                       Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0.25),
-                              Colors.white.withOpacity(0.15),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.4),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          '🎮 友達と一緒にメモ習慣を楽しもう！',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      if (userStats != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.25),
+                                Colors.white.withValues(alpha: 0.15),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    '👑 ',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                  Text(
-                                    userStats!.levelTitle,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      '👑 ',
+                                      style: TextStyle(fontSize: 20),
                                     ),
+                                    Text(
+                                      userStats!.levelTitle,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  _buildStatItem(
+                                    '📊',
+                                    'Lv.${userStats!.currentLevel}',
+                                  ),
+                                  Container(
+                                    height: 40,
+                                    width: 1,
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                  ),
+                                  _buildStatItem(
+                                    '⭐',
+                                    '${userStats!.totalPoints}pt',
+                                  ),
+                                  Container(
+                                    height: 40,
+                                    width: 1,
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                  ),
+                                  _buildStatItem(
+                                    '🔥',
+                                    '${userStats!.currentStreak}日',
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildStatItem(
-                                  '📊',
-                                  'Lv.${userStats!.currentLevel}',
-                                ),
-                                Container(
-                                  height: 40,
-                                  width: 1,
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                                _buildStatItem(
-                                  '⭐',
-                                  '${userStats!.totalPoints}pt',
-                                ),
-                                Container(
-                                  height: 40,
-                                  width: 1,
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                                _buildStatItem(
-                                  '🔥',
-                                  '${userStats!.currentStreak}日',
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              // コンテンツ部分
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.purple.shade400, Colors.pink.shade400],
+                // コンテンツ部分
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.purple.shade400,
+                                  Colors.pink.shade400,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.format_quote, color: Colors.white, size: 18),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '哲学者の名言をシェア',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.purple.shade400, Colors.pink.shade400],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'おすすめ',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                            child: const Icon(
+                              Icons.format_quote,
                               color: Colors.white,
+                              size: 18,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // SNS別シェアボタン（哲学者の名言版）
-                    _buildSnsShareButtons(context),
-                    const SizedBox(height: 12),
-                    // 画像カードを作成
-                    _buildShareButton(
-                      context,
-                      icon: Icons.image,
-                      label: '名言カードを作成してシェア',
-                      color: Colors.purple.shade700,
-                      subtitle: '美しいOGPカード画像を生成',
-                      badge: 'NEW',
-                      onTap: () {
-                        Navigator.pop(context);
-                        showDialog(
-                          context: context,
-                          builder: (_) => SharePhilosopherQuoteDialog(
-                            userLevel: userStats?.currentLevel,
-                            totalPoints: userStats?.totalPoints,
-                            currentStreak: userStats?.currentStreak,
-                            levelTitle: userStats?.levelTitle,
+                          const SizedBox(width: 8),
+                          const Text(
+                            '哲学者の名言をシェア',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Divider(color: Colors.grey.shade300, thickness: 1),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(Icons.more_horiz, color: Colors.grey.shade600, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'その他の方法',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.purple.shade400,
+                                  Colors.pink.shade400,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'おすすめ',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const SizedBox(height: 8),
-                    if (userStats != null) ...[
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // SNS別シェアボタン（哲学者の名言版）
+                      _buildSnsShareButtons(context),
+                      const SizedBox(height: 12),
+                      // 画像カードを作成
                       _buildShareButton(
                         context,
-                        icon: Icons.emoji_events,
-                        label: '実績付きでシェア',
-                        color: Colors.amber.shade700,
-                        subtitle: 'あなたの実績を含めてシェア',
+                        icon: Icons.image,
+                        label: '名言カードを作成してシェア',
+                        color: Colors.purple.shade700,
+                        subtitle: '美しいOGPカード画像を生成',
+                        badge: 'NEW',
+                        onTap: () {
+                          Navigator.pop(context);
+                          showDialog(
+                            context: context,
+                            builder: (_) => SharePhilosopherQuoteDialog(
+                              userLevel: userStats?.currentLevel,
+                              totalPoints: userStats?.totalPoints,
+                              currentStreak: userStats?.currentStreak,
+                              levelTitle: userStats?.levelTitle,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(color: Colors.grey.shade300, thickness: 1),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.more_horiz,
+                            color: Colors.grey.shade600,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'その他の方法',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      if (userStats != null) ...[
+                        _buildShareButton(
+                          context,
+                          icon: Icons.emoji_events,
+                          label: '実績付きでシェア',
+                          color: Colors.amber.shade700,
+                          subtitle: 'あなたの実績を含めてシェア',
+                          onTap: () async {
+                            Navigator.pop(context);
+                            try {
+                              await AppShareService.shareWithUserStats(
+                                level: userStats!.currentLevel,
+                                totalPoints: userStats!.totalPoints,
+                                currentStreak: userStats!.currentStreak,
+                                levelTitle: userStats!.levelTitle,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('実績付きでシェアしました！'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('クリップボードにコピーしました'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      _buildShareButton(
+                        context,
+                        icon: Icons.share,
+                        label: '通常シェア',
+                        color: Colors.blue.shade700,
+                        subtitle: 'アプリの情報をシェア',
                         onTap: () async {
                           Navigator.pop(context);
                           try {
-                            await AppShareService.shareWithUserStats(
-                              level: userStats!.currentLevel,
-                              totalPoints: userStats!.totalPoints,
-                              currentStreak: userStats!.currentStreak,
-                              levelTitle: userStats!.levelTitle,
-                            );
+                            await AppShareService.shareApp();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('実績付きでシェアしました！'),
+                                  content: Text('シェアしました！'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -899,60 +961,28 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         },
                       ),
                       const SizedBox(height: 8),
+                      _buildShareButton(
+                        context,
+                        icon: Icons.link,
+                        label: 'URLをコピー',
+                        color: Colors.grey.shade700,
+                        subtitle: 'リンクをクリップボードにコピー',
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await AppShareService.copyAppUrlToClipboard();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('URLをクリップボードにコピーしました'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ],
-                    _buildShareButton(
-                      context,
-                      icon: Icons.share,
-                      label: '通常シェア',
-                      color: Colors.blue.shade700,
-                      subtitle: 'アプリの情報をシェア',
-                      onTap: () async {
-                        Navigator.pop(context);
-                        try {
-                          await AppShareService.shareApp();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('シェアしました！'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('クリップボードにコピーしました'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    _buildShareButton(
-                      context,
-                      icon: Icons.link,
-                      label: 'URLをコピー',
-                      color: Colors.grey.shade700,
-                      subtitle: 'リンクをクリップボードにコピー',
-                      onTap: () async {
-                        Navigator.pop(context);
-                        await AppShareService.copyAppUrlToClipboard();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('URLをクリップボードにコピーしました'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
+                  ),
                 ),
-              ),
               ],
             ),
           ),
@@ -1117,7 +1147,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1156,8 +1186,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          color: color.withValues(alpha: 0.05),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1165,7 +1195,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 22),
@@ -1190,10 +1220,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       if (badge != null) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.pink.shade400, Colors.orange.shade400],
+                              colors: [
+                                Colors.pink.shade400,
+                                Colors.orange.shade400,
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1215,14 +1251,18 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: color.withOpacity(0.7),
+                        color: color.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: color.withOpacity(0.5)),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: color.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),

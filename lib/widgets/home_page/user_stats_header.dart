@@ -9,10 +9,10 @@ class UserStatsHeader extends StatelessWidget {
   final VoidCallback onStatsUpdated;
 
   const UserStatsHeader({
-    Key? key,
+    super.key,
     required this.userStats,
     required this.onStatsUpdated,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,13 +55,11 @@ class UserStatsHeader extends StatelessWidget {
                     children: [
                       Text(
                         'レベル ${userStats.currentLevel}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -89,7 +87,7 @@ class UserStatsHeader extends StatelessWidget {
                       ),
                       if (userStats.currentStreak > 0) ...[
                         const SizedBox(width: 12),
-                        Icon(
+                        const Icon(
                           Icons.local_fire_department,
                           size: 16,
                           color: Colors.orange,

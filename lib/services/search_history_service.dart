@@ -43,9 +43,7 @@ class SearchHistoryService {
     if (jsonString == null) return [];
 
     final jsonList = jsonDecode(jsonString) as List;
-    return jsonList
-        .map((json) => SearchHistory.fromJson(json))
-        .toList();
+    return jsonList.map((json) => SearchHistory.fromJson(json)).toList();
   }
 
   // 検索履歴を削除

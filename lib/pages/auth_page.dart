@@ -71,7 +71,11 @@ class _AuthPageState extends State<AuthPage> {
       // Show onboarding if not completed
       return onboardingCompleted != true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check onboarding status', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to check onboarding status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // Default to not showing onboarding on error
       return false;
     }
@@ -104,7 +108,11 @@ class _AuthPageState extends State<AuthPage> {
               AppLogger.info('Referral code applied successfully');
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to apply referral code', error: e, stackTrace: stackTrace);
+            AppLogger.error(
+              'Failed to apply referral code',
+              error: e,
+              stackTrace: stackTrace,
+            );
           }
         }
 
@@ -119,15 +127,18 @@ class _AuthPageState extends State<AuthPage> {
 
             if (stats != null) {
               final currentPoints = stats['total_points'] as int;
-              await supabase
-                  .from('user_stats')
-                  .update({'total_points': currentPoints + 500})
-                  .eq('user_id', userId);
+              await supabase.from('user_stats').update(
+                {'total_points': currentPoints + 500},
+              ).eq('user_id', userId);
 
               AppLogger.info('Welcome bonus awarded: 500 points');
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to award welcome bonus', error: e, stackTrace: stackTrace);
+            AppLogger.error(
+              'Failed to award welcome bonus',
+              error: e,
+              stackTrace: stackTrace,
+            );
           }
         }
 
@@ -168,7 +179,11 @@ class _AuthPageState extends State<AuthPage> {
               }
             }
           } catch (e, stackTrace) {
-            AppLogger.error('Failed to check daily login bonus', error: e, stackTrace: stackTrace);
+            AppLogger.error(
+              'Failed to check daily login bonus',
+              error: e,
+              stackTrace: stackTrace,
+            );
           }
         }
 
@@ -251,9 +266,7 @@ class _AuthPageState extends State<AuthPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _isSignUp
-                      ? 'アカウントを作成してゲーミフィケーションの世界へ'
-                      : 'メモを書いてレベルアップしよう',
+                  _isSignUp ? 'アカウントを作成してゲーミフィケーションの世界へ' : 'メモを書いてレベルアップしよう',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
                   ),
@@ -271,17 +284,37 @@ class _AuthPageState extends State<AuthPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildBenefit(Icons.emoji_events, 'レベルアップシステム', theme),
+                          _buildBenefit(
+                            Icons.emoji_events,
+                            'レベルアップシステム',
+                            theme,
+                          ),
                           const SizedBox(height: 8),
-                          _buildBenefit(Icons.military_tech, '28種類以上の達成項目', theme),
+                          _buildBenefit(
+                            Icons.military_tech,
+                            '28種類以上の達成項目',
+                            theme,
+                          ),
                           const SizedBox(height: 8),
                           _buildBenefit(Icons.leaderboard, 'リーダーボードで競争', theme),
                           const SizedBox(height: 8),
-                          _buildBenefit(Icons.local_fire_department, '連続記録でストリーク', theme),
+                          _buildBenefit(
+                            Icons.local_fire_department,
+                            '連続記録でストリーク',
+                            theme,
+                          ),
                           const SizedBox(height: 8),
-                          _buildBenefit(Icons.card_giftcard, '新規登録で500ポイント', theme),
+                          _buildBenefit(
+                            Icons.card_giftcard,
+                            '新規登録で500ポイント',
+                            theme,
+                          ),
                           const SizedBox(height: 8),
-                          _buildBenefit(Icons.celebration, 'デイリーログインボーナス', theme),
+                          _buildBenefit(
+                            Icons.celebration,
+                            'デイリーログインボーナス',
+                            theme,
+                          ),
                         ],
                       ),
                     ),
@@ -357,7 +390,11 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.emoji_events, color: Colors.green[700], size: 20),
+                        Icon(
+                          Icons.emoji_events,
+                          color: Colors.green[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -413,9 +450,7 @@ class _AuthPageState extends State<AuthPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _isSignUp
-                          ? 'すでにアカウントをお持ちですか？'
-                          : 'アカウントをお持ちでないですか？',
+                      _isSignUp ? 'すでにアカウントをお持ちですか？' : 'アカウントをお持ちでないですか？',
                       style: theme.textTheme.bodyMedium,
                     ),
                     TextButton(

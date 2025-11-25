@@ -21,14 +21,19 @@ class DailyChallengeService {
           .map((json) => DailyChallenge.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get today\'s challenges', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get today\'s challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
 
   // Get user's challenge progress
   Future<List<UserChallengeProgress>> getUserChallengeProgress(
-      String userId) async {
+    String userId,
+  ) async {
     try {
       final response = await _supabase
           .from('user_challenge_progress')
@@ -39,21 +44,26 @@ class DailyChallengeService {
           .map((json) => UserChallengeProgress.fromJson(json))
           .toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user challenge progress', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get user challenge progress',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
 
   // Get combined challenges with progress
   Future<List<Map<String, dynamic>>> getTodaysChallengesWithProgress(
-      String userId) async {
+    String userId,
+  ) async {
     try {
       final challenges = await getTodaysChallenges();
       final progressList = await getUserChallengeProgress(userId);
 
       // Create a map of challenge_id -> progress
       final progressMap = {
-        for (var p in progressList) p.challengeId: p
+        for (var p in progressList) p.challengeId: p,
       };
 
       return challenges.map((challenge) {
@@ -68,7 +78,10 @@ class DailyChallengeService {
       }).toList();
     } catch (e, stackTrace) {
       AppLogger.error(
-          'Failed to get challenges with progress', error: e, stackTrace: stackTrace);
+        'Failed to get challenges with progress',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -126,7 +139,11 @@ class DailyChallengeService {
 
       AppLogger.info('Challenge progress updated');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to update challenge progress', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to update challenge progress',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -168,10 +185,9 @@ class DailyChallengeService {
           .single();
 
       final currentPoints = stats['total_points'] as int;
-      await _supabase
-          .from('user_stats')
-          .update({'total_points': currentPoints + rewardPoints})
-          .eq('user_id', userId);
+      await _supabase.from('user_stats').update(
+        {'total_points': currentPoints + rewardPoints},
+      ).eq('user_id', userId);
 
       // Mark reward as claimed
       await _supabase
@@ -183,7 +199,11 @@ class DailyChallengeService {
       AppLogger.info('Challenge reward claimed: $rewardPoints points');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to claim challenge reward', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to claim challenge reward',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -213,7 +233,11 @@ class DailyChallengeService {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to track activity for challenges', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to track activity for challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

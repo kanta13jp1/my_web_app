@@ -2,18 +2,29 @@ name: Deploy to Staging
 
 on:
   push:
+    # stagingブランチへのプッシュで実行
     branches:
       - staging
   workflow_dispatch:
 
+# 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
+permissions:
+  contents: read # 全体で必要 (子ワークフローを含む)
+  pull-requests: write # 🚨 追加：CIの子ジョブの権限要求を全体で許可するため
+
 env:
   ENVIRONMENT: staging
-  FLUTTER_VERSION: '3.24.x'
+  FLUTTER_VERSION: '3.27.x'
 
 jobs:
   ci:
     name: Run CI Checks
     uses: ./.github/workflows/ci.yml
+    
+    # 🚨 修正: 子ワークフローの権限要求を明示的に付与
+    permissions:
+      contents: read
+      pull-requests: write 
 
   deploy:
     name: Deploy to Staging Environment
@@ -21,7 +32,14 @@ jobs:
     needs: ci
     environment:
       name: staging
-      url: https://staging.your-app.web.app
+      # 修正: environment.url は固定URLで問題ありません
+      url: https://staging.your-app-domain.web.app
+    
+    outputs:
+      deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
+
+    permissions:
+      contents: read # コードチェックアウトのために必要
 
     steps:
       - name: Checkout code
@@ -44,15 +62,14 @@ jobs:
           version: latest
 
       - name: Run Supabase migrations
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           echo "Running Supabase migrations for staging..."
-          # Link to staging project
+          # 修正: シークレット名を _STAGING に変更
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
-          # Run migrations
           supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # 修正: シークレット名を _STAGING に変更
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGING }}
         continue-on-error: true
 
@@ -60,6 +77,7 @@ jobs:
       - name: Build Flutter Web (Staging)
         run: flutter build web --release --dart-define=ENVIRONMENT=staging
         env:
+          # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_STAGING }}
 
@@ -72,15 +90,44 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
-      # Deploy to Firebase Hosting
-      - name: Deploy to Firebase Hosting (Staging)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING }}'
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: staging
-          expires: 30d
+      # Deploy to Firebase Hosting (CLI) - サフィックスを抽出するロジックに統一
+      - name: Deploy to Firebase Hosting (CLI)
+        id: firebase_cli_deploy
+        run: |
+          npm install -g firebase-tools
+          # 修正: FIREBASE_SERVICE_ACCOUNT_STAGING に変更
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING }}' > sa_key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/sa_key.json"
+
+          echo "Deploying to 'staging' channel..."
+          # 🚨 修正: secrets.FIREBASE_PROJECT_ID に変更
+          firebase hosting:channel:deploy staging --project ${{ secrets.FIREBASE_PROJECT_ID }} --expires 30d --json > deploy_output.json 2> /dev/null
+          
+          # JSONからURLを抽出
+          SITE_URL=$(jq -r '.result | to_entries[] | .value.url' deploy_output.json | head -n 1)
+          
+          if [ -z "$SITE_URL" ] || [ "$SITE_URL" = "null" ]; then
+            echo "--- URL extraction failed. Fatal error. ---"
+            exit 1
+          fi
+
+          echo "✅ Extracted URL: $SITE_URL"
+          
+          # URLからランダムなサフィックス部分を抽出
+          # URL形式: https://{PROJECT_ID}--staging-{SUFFIX}.web.app
+          SUFFIX=$(echo "$SITE_URL" | sed -E 's/.*-([a-zA-Z0-9]+)\.web\.app/\1/')
+          
+          if [ "$SUFFIX" == "$SITE_URL" ] || [ -z "$SUFFIX" ]; then
+              echo "::warning::Suffix extraction failed. Using 'unknown' as fallback."
+              SUFFIX="unknown"
+          fi
+          
+          echo "Final SUFFIX: $SUFFIX"
+          
+          # GitHub Actionsの出力変数にセット
+          echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
+          
+          rm sa_key.json deploy_output.json
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
@@ -89,10 +136,29 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
+    
+    permissions:
+      contents: write 
 
     steps:
+      - name: Prepare URL
+        id: prepare_url
+        if: needs.deploy.result == 'success'
+        run: |
+          # 🚨 修正: secrets.FIREBASE_PROJECT_ID に変更
+          PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
+          DEPLOY_SUFFIX="${{ needs.deploy.outputs.deploy_suffix }}"
+          
+          # 完全なURLを再構築: https://{project-id}--staging-{suffix}.web.app
+          RECONSTRUCTED_URL="https://$PROJECT_ID--staging-$DEPLOY_SUFFIX.web.app"
+          
+          # 最終環境変数にセット
+          echo "DECODED_URL=$RECONSTRUCTED_URL" >> $GITHUB_ENV
+          echo "Reconstructed URL is set for notification."
+
       - name: Notify Slack on success
-        if: needs.deploy.result == 'success' && secrets.SLACK_WEBHOOK_URL != ''
+        if: needs.deploy.result == 'success'
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
@@ -103,7 +169,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Staging Deployment Successful* ✅\n\n*Environment:* Staging\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://staging.your-app.web.app\n\n⚠️ Please conduct thorough testing before promoting to production."
+                    "text": "*Staging Deployment Successful* ✅\n\n*Environment:* Staging\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* ${{ env.DECODED_URL }}\n\n⚠️ Please conduct thorough testing before promoting to production."
                   }
                 }
               ]
@@ -112,7 +178,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack on failure
-        if: needs.deploy.result == 'failure' && secrets.SLACK_WEBHOOK_URL != ''
+        if: needs.deploy.result == 'failure'
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
@@ -136,9 +203,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const deployUrl = process.env.DECODED_URL;
+            
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: '🚀 Successfully deployed to **Staging** environment!\n\n📍 URL: https://staging.your-app.web.app\n\n⚠️ Please conduct thorough testing before promoting to production.'
+              body: `🚀 Successfully deployed to **Staging** environment!\n\n📍 URL: ${deployUrl}\n\n⚠️ Please conduct thorough testing before promoting to production.`
             })
