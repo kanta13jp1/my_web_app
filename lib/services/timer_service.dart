@@ -44,17 +44,21 @@ class TimerService extends ChangeNotifier {
       }
 
       // Supabaseに保存
-      final response = await _supabase.from('timers').insert({
-        'user_id': userId,
-        'note_id': noteId,
-        'name': name,
-        'duration_seconds': durationSeconds,
-        'started_at': DateTime.now().toIso8601String(),
-        'status': 'running',
-        'sound_notification': soundNotification,
-        'browser_notification': browserNotification,
-        'auto_save': autoSave,
-      }).select().single();
+      final response = await _supabase
+          .from('timers')
+          .insert({
+            'user_id': userId,
+            'note_id': noteId,
+            'name': name,
+            'duration_seconds': durationSeconds,
+            'started_at': DateTime.now().toIso8601String(),
+            'status': 'running',
+            'sound_notification': soundNotification,
+            'browser_notification': browserNotification,
+            'auto_save': autoSave,
+          })
+          .select()
+          .single();
 
       // タイマー作成
       _activeTimer = AppTimer.fromJson(response);

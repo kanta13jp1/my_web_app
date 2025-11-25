@@ -11,10 +11,10 @@ class CompatibilityResultPage extends StatefulWidget {
   final String partnerType;
 
   const CompatibilityResultPage({
-    Key? key,
+    super.key,
     required this.myType,
     required this.partnerType,
-  }) : super(key: key);
+  });
 
   @override
   State<CompatibilityResultPage> createState() =>
@@ -45,10 +45,12 @@ class _CompatibilityResultPageState extends State<CompatibilityResultPage>
     _scoreAnimation = Tween<double>(
       begin: 0,
       end: _compatibilityMatch.compatibilityScore.toDouble(),
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
     _animationController.forward();
   }
@@ -70,7 +72,8 @@ ${_compatibilityMatch.compatibilityLevel == 'excellent' ? '💖 最高の相性�
 #MBTI #恋愛相性診断 #性格診断''';
 
     final url = Uri.encodeFull(
-        'https://twitter.com/intent/tweet?text=$text&url=https://your-app-url.com');
+      'https://twitter.com/intent/tweet?text=$text&url=https://your-app-url.com',
+    );
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url));
@@ -319,12 +322,11 @@ ${_compatibilityMatch.description}''';
                   children: [
                     Text(
                       '${_scoreAnimation.value.round()}',
-                      style:
-                          Theme.of(context).textTheme.displayLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.pink.shade700,
-                                fontSize: 72,
-                              ),
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.pink.shade700,
+                            fontSize: 72,
+                          ),
                     ),
                     Text(
                       '/ 100',
@@ -343,14 +345,26 @@ ${_compatibilityMatch.description}''';
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: Color(int.parse(
-                    _compatibilityMatch.getCompatibilityColor().substring(1),
-                    radix: 16) + 0xFF000000).withOpacity(0.1),
+                color: Color(
+                  int.parse(
+                        _compatibilityMatch
+                            .getCompatibilityColor()
+                            .substring(1),
+                        radix: 16,
+                      ) +
+                      0xFF000000,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Color(int.parse(
-                      _compatibilityMatch.getCompatibilityColor().substring(1),
-                      radix: 16) + 0xFF000000),
+                  color: Color(
+                    int.parse(
+                          _compatibilityMatch
+                              .getCompatibilityColor()
+                              .substring(1),
+                          radix: 16,
+                        ) +
+                        0xFF000000,
+                  ),
                   width: 2,
                 ),
               ),
@@ -366,10 +380,15 @@ ${_compatibilityMatch.description}''';
                     _compatibilityMatch.getCompatibilityLevelJa(),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Color(int.parse(_compatibilityMatch
-                                  .getCompatibilityColor()
-                                  .substring(1),
-                              radix: 16) + 0xFF000000),
+                          color: Color(
+                            int.parse(
+                                  _compatibilityMatch
+                                      .getCompatibilityColor()
+                                      .substring(1),
+                                  radix: 16,
+                                ) +
+                                0xFF000000,
+                          ),
                         ),
                   ),
                 ],
@@ -488,7 +507,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -508,7 +527,10 @@ ${_compatibilityMatch.description}''';
           children: [
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange.shade700,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   '乗り越えるべき課題',
@@ -550,7 +572,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -612,7 +634,7 @@ ${_compatibilityMatch.description}''';
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

@@ -1,24 +1,24 @@
 /// タイマーのステータス
 enum TimerStatus {
-  running,   // 実行中
-  paused,    // 一時停止
+  running, // 実行中
+  paused, // 一時停止
   completed, // 完了
-  stopped,   // 停止
+  stopped, // 停止
 }
 
 /// タイマーモデル
 class AppTimer {
   final int id;
   final String userId;
-  final int? noteId;          // 関連するメモID（nullの場合は汎用タイマー）
-  final String name;          // タイマー名（例: "ポモドーロ"）
-  final int durationSeconds;  // 設定時間（秒）
-  final DateTime startedAt;   // 開始時刻
+  final int? noteId; // 関連するメモID（nullの場合は汎用タイマー）
+  final String name; // タイマー名（例: "ポモドーロ"）
+  final int durationSeconds; // 設定時間（秒）
+  final DateTime startedAt; // 開始時刻
   final DateTime? completedAt; // 完了時刻
-  final TimerStatus status;   // 実行中、一時停止、完了、停止
-  final bool soundNotification;   // サウンド通知ON/OFF
+  final TimerStatus status; // 実行中、一時停止、完了、停止
+  final bool soundNotification; // サウンド通知ON/OFF
   final bool browserNotification; // ブラウザ通知ON/OFF
-  final bool autoSave;            // 終了時に自動保存
+  final bool autoSave; // 終了時に自動保存
   final DateTime createdAt;
   final DateTime updatedAt;
 

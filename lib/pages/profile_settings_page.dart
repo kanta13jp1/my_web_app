@@ -180,7 +180,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         children: [
                           CircleAvatar(
                             radius: 60,
-                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            backgroundColor: Theme.of(context)
+                                .primaryColor
+                                .withValues(alpha: 0.1),
                             child: Icon(
                               Icons.person,
                               size: 60,
@@ -268,7 +270,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       keyboardType: TextInputType.url,
                       validator: (value) {
                         if (value != null && value.trim().isNotEmpty) {
-                          if (!value.startsWith('http://') && !value.startsWith('https://')) {
+                          if (!value.startsWith('http://') &&
+                              !value.startsWith('https://')) {
                             return 'URLはhttp://またはhttps://で始まる必要があります';
                           }
                         }
@@ -391,7 +394,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.lightbulb_outline, color: Colors.blue.shade700),
+                                Icon(
+                                  Icons.lightbulb_outline,
+                                  color: Colors.blue.shade700,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'ヒント',

@@ -255,8 +255,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         ),
         const SizedBox(height: 16),
         ..._topMatches!.asMap().entries.map((entry) {
-          int index = entry.key;
-          Map<String, dynamic> match = entry.value;
+          final int index = entry.key;
+          final Map<String, dynamic> match = entry.value;
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _buildTopMatchCard(
@@ -267,7 +267,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               title: match['title'],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -335,7 +335,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: rankColor.withOpacity(0.1),
+                  color: rankColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Column(
@@ -393,7 +393,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
               // スコア表示
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.pink.shade50,
                   borderRadius: BorderRadius.circular(20),
@@ -422,10 +423,22 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
 
   Widget _buildTypeSelector() {
     const types = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP',
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP',
+      'INTJ',
+      'INTP',
+      'ENTJ',
+      'ENTP',
+      'INFJ',
+      'INFP',
+      'ENFJ',
+      'ENFP',
+      'ISTJ',
+      'ISFJ',
+      'ESTJ',
+      'ESFJ',
+      'ISTP',
+      'ISFP',
+      'ESTP',
+      'ESFP',
     ];
 
     return Column(

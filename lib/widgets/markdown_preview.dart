@@ -145,13 +145,14 @@ class CodeElementBuilder extends MarkdownElementBuilder {
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
     final String code = element.textContent;
-    final String? language = element.attributes['class']?.replaceFirst('language-', '');
+    final String? language =
+        element.attributes['class']?.replaceFirst('language-', '');
 
     if (language != null && language.isNotEmpty) {
       // シンタックスハイライトを適用
       try {
         final result = highlight.highlight.parse(code, language: language);
-        
+
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
@@ -163,7 +164,8 @@ class CodeElementBuilder extends MarkdownElementBuilder {
             children: [
               // 言語ラベル
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: const BorderRadius.only(
@@ -291,9 +293,9 @@ class CodeElementBuilder extends MarkdownElementBuilder {
 
   List<TextSpan> _buildHighlightedCode(List<highlight.Node>? nodes) {
     if (nodes == null) return [];
-    
+
     final List<TextSpan> spans = [];
-    
+
     for (final node in nodes) {
       if (node.value != null) {
         spans.add(
@@ -309,7 +311,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         spans.addAll(_buildHighlightedCode(node.children));
       }
     }
-    
+
     return spans;
   }
 

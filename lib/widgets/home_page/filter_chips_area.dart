@@ -97,8 +97,7 @@ class FilterChipsArea extends StatelessWidget {
             ),
 
           // 高度な検索カテゴリフィルター
-          if (searchCategoryId != null)
-            _buildSearchCategoryChip(context),
+          if (searchCategoryId != null) _buildSearchCategoryChip(context),
 
           // 高度な検索日付フィルター
           if (searchStartDate != null || searchEndDate != null)
@@ -210,8 +209,11 @@ class FilterChipsArea extends StatelessWidget {
                     fontSize: isMobile ? 11 : 13,
                   ),
                 ),
-                Icon(Icons.push_pin,
-                    color: Colors.amber, size: isMobile ? 14 : 16),
+                Icon(
+                  Icons.push_pin,
+                  color: Colors.amber,
+                  size: isMobile ? 14 : 16,
+                ),
                 Text(
                   ' ${notes.where((n) => n.isPinned).length}',
                   style: TextStyle(
@@ -244,8 +246,11 @@ class FilterChipsArea extends StatelessWidget {
                       fontSize: isMobile ? 11 : 13,
                     ),
                   ),
-                  Icon(Icons.alarm,
-                      color: Colors.orange, size: isMobile ? 14 : 16),
+                  Icon(
+                    Icons.alarm,
+                    color: Colors.orange,
+                    size: isMobile ? 14 : 16,
+                  ),
                   Text(
                     ' ${notes.where((n) => n.reminderDate != null).length}',
                     style: TextStyle(

@@ -8,8 +8,7 @@ import '../services/note_card_service.dart';
 import '../services/app_share_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// Web用
-import 'dart:html' as html;
+import '../utils/web_image_downloader.dart';
 
 /// 哲学者の名言をシェアするダイアログ
 class SharePhilosopherQuoteDialog extends StatefulWidget {
@@ -68,7 +67,11 @@ class _SharePhilosopherQuoteDialogState
                   padding: const EdgeInsets.all(24),
                   child: Row(
                     children: [
-                      const Icon(Icons.format_quote, color: Colors.blue, size: 28),
+                      const Icon(
+                        Icons.format_quote,
+                        color: Colors.blue,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       const Flexible(
                         child: Text(
@@ -112,10 +115,10 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.05),
+                            color: Colors.blue.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blue.withOpacity(0.2),
+                              color: Colors.blue.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Column(
@@ -171,7 +174,8 @@ class _SharePhilosopherQuoteDialogState
                             label: const Text('別の名言に変更'),
                             onPressed: () {
                               setState(() {
-                                _selectedQuote = PhilosopherQuote.getRandomAlways();
+                                _selectedQuote =
+                                    PhilosopherQuote.getRandomAlways();
                                 _updateSelectedQuoteId();
                                 _showPreview = false;
                               });
@@ -212,13 +216,15 @@ class _SharePhilosopherQuoteDialogState
                         Center(
                           child: OutlinedButton.icon(
                             icon: const Icon(Icons.visibility),
-                            label: Text(_showPreview
-                                ? 'プレビュー準備完了 ✓'
-                                : 'プレビューを表示'),
+                            label: Text(
+                              _showPreview ? 'プレビュー準備完了 ✓' : 'プレビューを表示',
+                            ),
                             style: _showPreview
                                 ? OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                        color: Colors.green, width: 2),
+                                      color: Colors.green,
+                                      width: 2,
+                                    ),
                                     foregroundColor: Colors.green,
                                   )
                                 : null,
@@ -335,9 +341,11 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(
+                              color: Colors.grey.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             _getShareMessage(),
@@ -399,8 +407,9 @@ class _SharePhilosopherQuoteDialogState
                                 )
                               : const Icon(Icons.share),
                           label: Text(_isGenerating ? '生成中...' : '共有する'),
-                          onPressed:
-                              (_isGenerating || !_showPreview) ? null : _generateAndShare,
+                          onPressed: (_isGenerating || !_showPreview)
+                              ? null
+                              : _generateAndShare,
                         ),
                     ],
                   ),
@@ -483,17 +492,11 @@ class _SharePhilosopherQuoteDialogState
         return;
       }
 
-      // Web版: ダウンロード
-      final blob = html.Blob([imageBytes]);
-      final url = html.Url.createObjectUrlFromBlob(blob);
+      // 🔄 修正箇所: Web固有のコードを削除し、共通ユーティリティを使用
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'philosopher_quote_$timestamp.png';
 
-      html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
-        ..click();
-
-      html.Url.revokeObjectUrl(url);
+      downloadImageFile(imageBytes, filename);
 
       if (!mounted) {
         return;

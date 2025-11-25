@@ -74,7 +74,8 @@ class NoteCardWidget extends StatelessWidget {
               ),
               if (pageNumber != null && totalPages != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(20),
@@ -140,9 +141,12 @@ class NoteCardWidget extends StatelessWidget {
               if (category != null)
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.1),
+                      color: categoryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -159,9 +163,10 @@ class NoteCardWidget extends StatelessWidget {
                 const Spacer(),
               if (pageNumber != null && totalPages != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.1),
+                    color: categoryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -252,9 +257,10 @@ class NoteCardWidget extends StatelessWidget {
               ),
               if (pageNumber != null && totalPages != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -322,9 +328,10 @@ class NoteCardWidget extends StatelessWidget {
               ),
               if (pageNumber != null && totalPages != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -395,9 +402,10 @@ class NoteCardWidget extends StatelessWidget {
               ),
               if (pageNumber != null && totalPages != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.2),
+                    color: Colors.orange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -454,28 +462,28 @@ class NoteCardWidget extends StatelessWidget {
               Icon(
                 Icons.text_fields,
                 size: 32 * fontScale,
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 12),
               Text(
-                '${characterCount}文字',
+                '$characterCount文字',
                 style: TextStyle(
                   fontSize: 28 * fontScale,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(width: 40),
               Icon(
                 Icons.calendar_today,
                 size: 32 * fontScale,
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 12),
               Text(
                 DateFormat('yyyy/MM/dd').format(note.createdAt),
                 style: TextStyle(
                   fontSize: 28 * fontScale,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -491,7 +499,7 @@ class NoteCardWidget extends StatelessWidget {
               Icon(
                 Icons.edit_note,
                 size: 40 * fontScale,
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 12),
               Text(
@@ -499,7 +507,7 @@ class NoteCardWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 32 * fontScale,
                   fontWeight: FontWeight.bold,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
               ),
             ],

@@ -17,13 +17,13 @@ class SettingsPage extends StatelessWidget {
         children: [
           // 外観セクション
           _buildSectionHeader('外観', Icons.palette),
-          
+
           // テーマモード設定
           ListTile(
             leading: Icon(
-              themeService.themeMode == AppThemeMode.light  // 更新
+              themeService.themeMode == AppThemeMode.light // 更新
                   ? Icons.light_mode
-                  : themeService.themeMode == AppThemeMode.dark  // 更新
+                  : themeService.themeMode == AppThemeMode.dark // 更新
                       ? Icons.dark_mode
                       : Icons.brightness_auto,
             ),
@@ -44,7 +44,7 @@ class SettingsPage extends StatelessWidget {
 
           // プレビュー
           _buildSectionHeader('プレビュー', Icons.visibility),
-          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -118,7 +118,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  String _getThemeModeLabel(AppThemeMode mode) {  // 更新
+  String _getThemeModeLabel(AppThemeMode mode) {
+    // 更新
     switch (mode) {
       case AppThemeMode.light:
         return 'ライトモード';
@@ -137,7 +138,7 @@ class SettingsPage extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile<AppThemeMode>(  // 更新
+            RadioListTile<AppThemeMode>(
               title: const Row(
                 children: [
                   Icon(Icons.light_mode),
@@ -145,7 +146,7 @@ class SettingsPage extends StatelessWidget {
                   Text('ライトモード'),
                 ],
               ),
-              value: AppThemeMode.light,  // 更新
+              value: AppThemeMode.light,
               groupValue: themeService.themeMode,
               onChanged: (value) {
                 if (value != null) {
@@ -154,7 +155,7 @@ class SettingsPage extends StatelessWidget {
                 }
               },
             ),
-            RadioListTile<AppThemeMode>(  // 更新
+            RadioListTile<AppThemeMode>(
               title: const Row(
                 children: [
                   Icon(Icons.dark_mode),
@@ -162,7 +163,7 @@ class SettingsPage extends StatelessWidget {
                   Text('ダークモード'),
                 ],
               ),
-              value: AppThemeMode.dark,  // 更新
+              value: AppThemeMode.dark,
               groupValue: themeService.themeMode,
               onChanged: (value) {
                 if (value != null) {
@@ -171,7 +172,7 @@ class SettingsPage extends StatelessWidget {
                 }
               },
             ),
-            RadioListTile<AppThemeMode>(  // 更新
+            RadioListTile<AppThemeMode>(
               title: const Row(
                 children: [
                   Icon(Icons.brightness_auto),
@@ -179,7 +180,7 @@ class SettingsPage extends StatelessWidget {
                   Text('システム設定に従う'),
                 ],
               ),
-              value: AppThemeMode.system,  // 更新
+              value: AppThemeMode.system,
               groupValue: themeService.themeMode,
               onChanged: (value) {
                 if (value != null) {
@@ -227,7 +228,7 @@ class SettingsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final color = colors[index];
               final isSelected = color == themeService.primaryColor;
-              
+
               return InkWell(
                 onTap: () {
                   themeService.setPrimaryColor(color);
@@ -247,7 +248,7 @@ class SettingsPage extends StatelessWidget {
                               color: color.withValues(alpha: 0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
-                            )
+                            ),
                           ]
                         : null,
                   ),

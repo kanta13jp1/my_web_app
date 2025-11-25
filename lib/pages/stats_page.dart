@@ -9,7 +9,7 @@ import '../widgets/achievement_card_widget.dart';
 import 'rewards_page.dart';
 
 class StatsPage extends StatefulWidget {
-  const StatsPage({Key? key}) : super(key: key);
+  const StatsPage({super.key});
 
   @override
   State<StatsPage> createState() => _StatsPageState();
@@ -44,13 +44,11 @@ class _StatsPageState extends State<StatsPage> {
 
       // Load stats
       var stats = await _gamificationService.getUserStats(userId);
-      if (stats == null) {
-        // Initialize stats if not found
-        stats = await _gamificationService.initializeUserStats(userId);
-      }
+      stats ??= await _gamificationService.initializeUserStats(userId);
 
       // Load achievements
-      final achievements = await _gamificationService.getUserAchievements(userId);
+      final achievements =
+          await _gamificationService.getUserAchievements(userId);
 
       setState(() {
         _stats = stats;
@@ -69,9 +67,7 @@ class _StatsPageState extends State<StatsPage> {
     if (_selectedCategory == AchievementCategory.general) {
       return _achievements;
     }
-    return _achievements
-        .where((a) => a.category == _selectedCategory)
-        .toList();
+    return _achievements.where((a) => a.category == _selectedCategory).toList();
   }
 
   @override
@@ -104,9 +100,13 @@ class _StatsPageState extends State<StatsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text('エラーが発生しました'),
+                      const Text('エラーが発生しました'),
                       const SizedBox(height: 8),
                       Text(
                         _error!,
@@ -269,8 +269,7 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Widget _buildAchievementSummary() {
-    final unlockedCount =
-        _achievements.where((a) => a.isUnlocked).length;
+    final unlockedCount = _achievements.where((a) => a.isUnlocked).length;
     final totalCount = _achievements.length;
     final percentage = totalCount > 0 ? (unlockedCount / totalCount) : 0.0;
 
@@ -305,8 +304,10 @@ class _StatsPageState extends State<StatsPage> {
               child: LinearProgressIndicator(
                 value: percentage,
                 minHeight: 12,
-                backgroundColor:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).colorScheme.primary,
                 ),

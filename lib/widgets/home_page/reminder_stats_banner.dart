@@ -61,15 +61,12 @@ class ReminderStatsBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  overdueCount > 0
-                      ? 'リマインダー通知があります'
-                      : '期限が近いメモがあります',
+                  overdueCount > 0 ? 'リマインダー通知があります' : '期限が近いメモがあります',
                   style: TextStyle(
                     fontSize: isMobile ? 14 : 16,
                     fontWeight: FontWeight.bold,
-                    color: overdueCount > 0
-                        ? Colors.red
-                        : Colors.orange.shade900,
+                    color:
+                        overdueCount > 0 ? Colors.red : Colors.orange.shade900,
                   ),
                 ),
               ),

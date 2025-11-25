@@ -1,5 +1,6 @@
 // 性格診断機能のサービスクラス
 
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/personality_test.dart';
 
@@ -7,22 +8,27 @@ class PersonalityTestService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   /// 16タイプの詳細データを取得（静的ゲッター）
-  static List<PersonalityType> get personalityTypes => _getPersonalityTypesStatic();
+  static List<PersonalityType> get personalityTypes =>
+      _getPersonalityTypesStatic();
 
   /// 診断を開始
   Future<PersonalityTest> startTest() async {
     try {
       final userId = _supabase.auth.currentUser!.id;
 
-      final response = await _supabase.from('personality_tests').insert({
-        'user_id': userId,
-        'started_at': DateTime.now().toIso8601String(),
-        'is_completed': false,
-      }).select().single();
+      final response = await _supabase
+          .from('personality_tests')
+          .insert({
+            'user_id': userId,
+            'started_at': DateTime.now().toIso8601String(),
+            'is_completed': false,
+          })
+          .select()
+          .single();
 
       return PersonalityTest.fromJson(response);
     } catch (e) {
-      print('Error starting personality test: $e');
+      debugPrint('Error starting personality test: $e');
       rethrow;
     }
   }
@@ -39,7 +45,7 @@ class PersonalityTestService {
           .map((e) => PersonalityQuestion.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error fetching personality questions: $e');
+      debugPrint('Error fetching personality questions: $e');
       rethrow;
     }
   }
@@ -58,7 +64,7 @@ class PersonalityTestService {
         'answered_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print('Error saving personality answer: $e');
+      debugPrint('Error saving personality answer: $e');
       rethrow;
     }
   }
@@ -84,9 +90,11 @@ class PersonalityTestService {
       };
 
       for (var answer in answers) {
-        final question = answer['personality_questions'];
+        final answerMap = answer as Map<String, dynamic>;
+        final question =
+            answerMap['personality_questions'] as Map<String, dynamic>;
         final axis = question['axis'] as String;
-        final userAnswer = answer['answer'] as String;
+        final userAnswer = answerMap['answer'] as String;
 
         // スコア加算（Aなら+1、Bなら-1）
         final score = (userAnswer == 'A') ? 1 : -1;
@@ -107,7 +115,7 @@ class PersonalityTestService {
 
       return scores;
     } catch (e) {
-      print('Error calculating personality scores: $e');
+      debugPrint('Error calculating personality scores: $e');
       rethrow;
     }
   }
@@ -140,7 +148,7 @@ class PersonalityTestService {
         'is_completed': true,
       }).eq('id', testId);
     } catch (e) {
-      print('Error completing personality test: $e');
+      debugPrint('Error completing personality test: $e');
       rethrow;
     }
   }
@@ -156,7 +164,7 @@ class PersonalityTestService {
 
       return PersonalityTest.fromJson(response);
     } catch (e) {
-      print('Error fetching test result: $e');
+      debugPrint('Error fetching test result: $e');
       rethrow;
     }
   }
@@ -178,7 +186,7 @@ class PersonalityTestService {
 
       return PersonalityTest.fromJson(response.first);
     } catch (e) {
-      print('Error fetching latest test result: $e');
+      debugPrint('Error fetching latest test result: $e');
       rethrow;
     }
   }

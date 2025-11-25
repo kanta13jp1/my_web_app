@@ -18,7 +18,11 @@ class ReferralService {
 
       return ReferralCode.fromJson(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user referral code', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get user referral code',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -34,7 +38,11 @@ class ReferralService {
 
       return response != null;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to validate referral code', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to validate referral code',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -88,13 +96,19 @@ class ReferralService {
       // Update referral code stats
       await _supabase
           .from('referral_codes')
-          .update({'total_referrals': referrerResponse['id']})
-          .eq('user_id', referrerUserId);
+          .update({'total_referrals': referrerResponse['id']}).eq(
+        'user_id',
+        referrerUserId,
+      );
 
       AppLogger.info('Referral code applied successfully');
       return true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to apply referral code', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to apply referral code',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -118,13 +132,10 @@ class ReferralService {
       final bonusPoints = referralResponse['bonus_points'] as int;
 
       // Mark referral as completed
-      await _supabase
-          .from('referrals')
-          .update({
-            'status': 'completed',
-            'completed_at': DateTime.now().toIso8601String(),
-          })
-          .eq('referred_user_id', referredUserId);
+      await _supabase.from('referrals').update({
+        'status': 'completed',
+        'completed_at': DateTime.now().toIso8601String(),
+      }).eq('referred_user_id', referredUserId);
 
       // Award bonus points to referrer
       final statsResponse = await _supabase
@@ -138,8 +149,7 @@ class ReferralService {
 
       await _supabase
           .from('user_stats')
-          .update({'total_points': newPoints})
-          .eq('user_id', referrerUserId);
+          .update({'total_points': newPoints}).eq('user_id', referrerUserId);
 
       // Update referral code stats
       final codeResponse = await _supabase
@@ -148,35 +158,44 @@ class ReferralService {
           .eq('user_id', referrerUserId)
           .single();
 
-      await _supabase
-          .from('referral_codes')
-          .update({
-            'successful_referrals':
-                (codeResponse['successful_referrals'] as int) + 1,
-            'bonus_points_earned':
-                (codeResponse['bonus_points_earned'] as int) + bonusPoints,
-          })
-          .eq('user_id', referrerUserId);
+      await _supabase.from('referral_codes').update({
+        'successful_referrals':
+            (codeResponse['successful_referrals'] as int) + 1,
+        'bonus_points_earned':
+            (codeResponse['bonus_points_earned'] as int) + bonusPoints,
+      }).eq('user_id', referrerUserId);
 
       AppLogger.info('Referral completed successfully');
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to complete referral', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to complete referral',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   // Get referral leaderboard
-  Future<List<Map<String, dynamic>>> getReferralLeaderboard({int limit = 10}) async {
+  Future<List<Map<String, dynamic>>> getReferralLeaderboard({
+    int limit = 10,
+  }) async {
     try {
       final response = await _supabase
           .from('referral_codes')
-          .select('user_id, referral_code, successful_referrals, bonus_points_earned')
+          .select(
+            'user_id, referral_code, successful_referrals, bonus_points_earned',
+          )
           .order('successful_referrals', ascending: false)
           .order('bonus_points_earned', ascending: false)
           .limit(limit);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get referral leaderboard', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get referral leaderboard',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -186,13 +205,19 @@ class ReferralService {
     try {
       final response = await _supabase
           .from('referrals')
-          .select('referred_user_id, status, bonus_points, created_at, completed_at')
+          .select(
+            'referred_user_id, status, bonus_points, created_at, completed_at',
+          )
           .eq('referrer_user_id', userId)
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to get user referrals', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to get user referrals',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }

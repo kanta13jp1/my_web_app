@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/document.dart';
 
@@ -43,22 +44,26 @@ class DocumentService {
     final List<DocumentItem> documents = [];
 
     // README.mdを最初に追加
-    documents.add(DocumentItem(
-      id: 'readme',
-      title: 'ドキュメント構成',
-      category: 'root',
-      path: 'docs/README.md',
-    ));
+    documents.add(
+      DocumentItem(
+        id: 'readme',
+        title: 'ドキュメント構成',
+        category: 'root',
+        path: 'docs/README.md',
+      ),
+    );
 
     // 各カテゴリのドキュメントを追加
     _documentFiles.forEach((category, files) {
       for (final file in files) {
-        documents.add(DocumentItem(
-          id: '${category}_${file}',
-          title: _formatTitle(file),
-          category: category,
-          path: 'docs/$category/$file',
-        ));
+        documents.add(
+          DocumentItem(
+            id: '${category}_$file',
+            title: _formatTitle(file),
+            category: category,
+            path: 'docs/$category/$file',
+          ),
+        );
       }
     });
 
@@ -86,20 +91,26 @@ class DocumentService {
   /// ドキュメントの内容を読み込む
   static Future<String> loadDocument(String path) async {
     try {
-      print('📄 [DocumentService] Loading document from path: $path');
+      debugPrint('📄 [DocumentService] Loading document from path: $path');
       final content = await rootBundle.loadString(path);
-      print('✅ [DocumentService] Document loaded successfully: ${content.length} characters');
+      debugPrint(
+        '✅ [DocumentService] Document loaded successfully: ${content.length} characters',
+      );
       return content;
     } catch (e, stackTrace) {
-      print('❌ [DocumentService] Failed to load document from path: $path');
-      print('❌ [DocumentService] Error: $e');
-      print('❌ [DocumentService] Error type: ${e.runtimeType}');
-      print('❌ [DocumentService] Stack trace: $stackTrace');
+      debugPrint(
+        '❌ [DocumentService] Failed to load document from path: $path',
+      );
+      debugPrint('❌ [DocumentService] Error: $e');
+      debugPrint('❌ [DocumentService] Error type: ${e.runtimeType}');
+      debugPrint('❌ [DocumentService] Stack trace: $stackTrace');
 
       // 特定のエラーを検出
       if (e.toString().contains('Unable to load asset')) {
-        print('⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration');
-        print('⚠️ [DocumentService] Expected path: $path');
+        debugPrint(
+          '⚠️ [DocumentService] Asset not found - check pubspec.yaml assets configuration',
+        );
+        debugPrint('⚠️ [DocumentService] Expected path: $path');
       }
 
       return '# エラー\n\nドキュメントの読み込みに失敗しました。\n\nパス: $path\nエラー: $e';

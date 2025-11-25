@@ -49,11 +49,13 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
 
       // アクティブなキャンペーンを読み込み
       _activeCampaigns.clear();
-      _activeCampaigns.addAll([
-        Campaign.createWelcomeCampaign(),
-        Campaign.createShareCampaign(),
-        Campaign.createReferralCampaign(),
-      ].where((c) => c.isCurrentlyActive));
+      _activeCampaigns.addAll(
+        [
+          Campaign.createWelcomeCampaign(),
+          Campaign.createShareCampaign(),
+          Campaign.createReferralCampaign(),
+        ].where((c) => c.isCurrentlyActive),
+      );
 
       if (mounted) {
         setState(() {
@@ -64,7 +66,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading growth data', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading growth data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -81,7 +87,11 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error generating invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error generating invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -106,7 +116,8 @@ $_inviteLink
       // シェアボーナスを付与
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
-        final isCampaignActive = await _viralGrowthService.isShareCampaignActive();
+        final isCampaignActive =
+            await _viralGrowthService.isShareCampaignActive();
         await _viralGrowthService.awardShareBonus(
           userId: userId,
           platform: 'invite_link',
@@ -127,7 +138,11 @@ $_inviteLink
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error sharing invite link', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error sharing invite link',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -208,9 +223,9 @@ $_inviteLink
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               '📊 サイト統計',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -274,7 +289,7 @@ $_inviteLink
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -326,7 +341,10 @@ $_inviteLink
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.1),
+              ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: color),
@@ -382,7 +400,9 @@ $_inviteLink
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TemplateMarketplacePage()),
+              MaterialPageRoute(
+                builder: (_) => const TemplateMarketplacePage(),
+              ),
             );
           },
         ),
@@ -434,7 +454,7 @@ $_inviteLink
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 28),
@@ -462,7 +482,7 @@ $_inviteLink
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),
@@ -478,11 +498,11 @@ $_inviteLink
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
                 Icon(Icons.card_giftcard, color: Colors.amber),
-                const SizedBox(width: 8),
-                const Expanded(
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     '友達を招待して両方に500ptプレゼント！',
                     style: TextStyle(

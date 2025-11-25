@@ -49,7 +49,11 @@ class _ImportPageState extends State<ImportPage> {
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading categories', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading categories',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isLoading = false);
     }
   }
@@ -180,7 +184,11 @@ class _ImportPageState extends State<ImportPage> {
         Navigator.pop(context);
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error importing notes', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error importing notes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() => _isImporting = false);
 
       if (mounted) {
@@ -211,10 +219,10 @@ class _ImportPageState extends State<ImportPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             children: [
                               Icon(Icons.info_outline, color: Colors.blue),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Notion/Evernoteから簡単移行',
                                 style: TextStyle(
@@ -287,12 +295,17 @@ class _ImportPageState extends State<ImportPage> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.file_present, color: Colors.blue),
+                                const Icon(
+                                  Icons.file_present,
+                                  color: Colors.blue,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     _fileName!,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -303,19 +316,19 @@ class _ImportPageState extends State<ImportPage> {
                               const SizedBox(height: 16),
 
                               // カテゴリ選択
-                              DropdownButtonFormField<String>(
+                              DropdownButtonFormField<String?>(
                                 decoration: const InputDecoration(
                                   labelText: 'インポート先カテゴリ（任意）',
                                   border: OutlineInputBorder(),
                                 ),
                                 value: _selectedCategoryId,
                                 items: [
-                                  const DropdownMenuItem(
+                                  const DropdownMenuItem<String?>(
                                     value: null,
                                     child: Text('カテゴリなし'),
                                   ),
                                   ..._categories.map((category) {
-                                    return DropdownMenuItem(
+                                    return DropdownMenuItem<String>(
                                       value: category.id,
                                       child: Text(category.name),
                                     );
@@ -344,9 +357,7 @@ class _ImportPageState extends State<ImportPage> {
                                         )
                                       : const Icon(Icons.upload),
                                   label: Text(
-                                    _isImporting
-                                        ? 'インポート中...'
-                                        : 'インポート開始',
+                                    _isImporting ? 'インポート中...' : 'インポート開始',
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.all(16),
@@ -383,7 +394,7 @@ class _ImportPageState extends State<ImportPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 32),
@@ -411,7 +422,7 @@ class _ImportPageState extends State<ImportPage> {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),
