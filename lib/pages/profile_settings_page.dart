@@ -115,6 +115,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           setState(() {
             _avatarUrl = newUrl; // 新しいURLを保持
             _isSaving = false;
+            _pickedAvatarBytes = null; // 成功したのでプレビューをクリア
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('プロフィール画像を更新しました')),
