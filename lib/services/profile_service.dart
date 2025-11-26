@@ -1,4 +1,6 @@
+// lib/services/profile_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart'; // 👈 追加: Uint8Listのために必要
 import '../models/user_profile.dart';
 import '../main.dart';
 import '../utils/app_logger.dart';
@@ -6,9 +8,60 @@ import '../utils/app_logger.dart';
 /// ユーザープロフィール管理サービス
 class ProfileService {
   final SupabaseClient _supabase;
+  // Supabase Storageのバケット名
+  static const String _avatarBucket = 'avatars'; 
 
   ProfileService([SupabaseClient? supabaseClient])
       : _supabase = supabaseClient ?? supabase;
+
+  // 🚨 新規: プロフィール画像 (アバター) をSupabase Storageにアップロードする
+  ///
+  /// [userId] ユーザーID (ファイル名として使用)
+  /// [fileBytes] アップロードする画像のバイトデータ (Uint8List)
+  ///
+  /// 成功した場合、新しいアバター画像の公開URLを返す。
+  Future<String> uploadAvatar({
+    required String userId,
+    required Uint8List fileBytes,
+  }) async {
+    // ユーザーIDをファイル名として使用し、ファイルパスを決定
+    final filePath = '$userId.png';
+
+    try {
+      // 既存のファイルを上書きするようにアップロード
+      await _supabase.storage.from(_avatarBucket).uploadBinary(
+            filePath,
+            fileBytes,
+            fileOptions: const FileOptions(
+              upsert: true, // 既存のファイルがあれば上書き
+              contentType: 'image/png',
+            ),
+          );
+
+      // アップロード後、アバターの公開URLを取得して返す
+      final publicUrl =
+          _supabase.storage.from(_avatarBucket).getPublicUrl(filePath);
+
+      // DBの avatar_url も更新する必要があるため、ここで更新メソッドも呼び出します
+      await updateAvatarUrl(userId, publicUrl);
+
+      AppLogger.info('Avatar uploaded and URL updated for user $userId: $publicUrl');
+      return publicUrl;
+    } on StorageException catch (e, stackTrace) {
+      AppLogger.error(
+        'Storage upload error',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // Storage固有のエラーメッセージを分かりやすくして再スロー
+      throw Exception('画像アップロードに失敗しました: ${e.message}');
+    } catch (e, stackTrace) {
+      AppLogger.error('General upload error', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+  
+  // --- 以下、既存のメソッド ---
 
   /// プロフィールを取得
   Future<UserProfile?> getProfile(String userId) async {
