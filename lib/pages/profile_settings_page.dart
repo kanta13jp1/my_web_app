@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Uint8Listのために必要
+import 'dart:typed_data'; // Uint8Listのために必要
 import 'package:file_picker/file_picker.dart'; // ファイル選択のために必要
 import '../main.dart';
 import '../models/user_profile.dart';
