@@ -1,6 +1,6 @@
 // lib/services/profile_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart'; // 👈 追加: Uint8Listのために必要
+import 'dart:typed_data'; // 👈 Uint8Listのために必要
 import '../models/user_profile.dart';
 import '../main.dart';
 import '../utils/app_logger.dart';
