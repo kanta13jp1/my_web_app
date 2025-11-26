@@ -8,8 +8,8 @@ on:
 
 # 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
 permissions:
-  contents: read # 全体で必要 (子ワークフローを含む)
-  pull-requests: write # 🚨 追加：CIの子ジョブの権限要求を全体で許可するため
+  contents: write # 🚨 修正: タグ付け、リリース作成、プッシュのために必要
+  pull-requests: write # CIの子ジョブの権限要求を許可するため
 
 env:
   ENVIRONMENT: production
@@ -32,6 +32,10 @@ jobs:
     environment:
       name: production
       url: https://your-app.web.app
+
+    # 🚨 修正: タグの作成とプッシュのために contents: write を追加
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -125,10 +129,15 @@ jobs:
       - name: Create Release Tag
         id: create_tag
         run: |
+          # Git設定はそのまま
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # タグの作成
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin ${{ steps.version.outputs.tag }}
+          
+          # 🚨 修正: https認証情報をプッシュコマンドに直接埋め込む
+          GIT_PUSH_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push $GIT_PUSH_URL ${{ steps.version.outputs.tag }}
 
       # Create GitHub Release
       - name: Create GitHub Release
