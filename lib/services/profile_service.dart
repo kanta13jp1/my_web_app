@@ -23,18 +23,20 @@ class ProfileService {
   Future<String> uploadAvatar({
     required String userId,
     required Uint8List fileBytes,
+    required String fileExtension, // 例: 'png', 'jpg', 'webp'
+    required String contentType,   // 例: 'image/png', 'image/jpeg', 'image/webp'
   }) async {
     // ユーザーIDをファイル名として使用し、ファイルパスを決定
-    final filePath = '$userId.png';
+    final filePath = '$userId.$fileExtension';
 
     try {
       // 既存のファイルを上書きするようにアップロード
       await _supabase.storage.from(_avatarBucket).uploadBinary(
             filePath,
             fileBytes,
-            fileOptions: const FileOptions(
+            fileOptions: FileOptions(
               upsert: true, // 既存のファイルがあれば上書き
-              contentType: 'image/png',
+              contentType: contentType,
             ),
           );
 
