@@ -134,8 +134,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # タグの作成
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
-          # タグをリモートにプッシュ (contents: write 権限で実行)
-          git push origin ${{ steps.version.outputs.tag }}
+          
+          # 🚨 修正: https認証情報をプッシュコマンドに直接埋め込む
+          GIT_PUSH_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git push $GIT_PUSH_URL ${{ steps.version.outputs.tag }}
 
       # Create GitHub Release
       - name: Create GitHub Release
