@@ -71,7 +71,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           _githubHandleController.text = profile.githubHandle ?? '';
           _isPublic = profile.isPublic;
           // 🚨 修正: 既存のプロフィール画像URLを設定
-          _avatarUrl = profile.avatarUrl; 
+          _avatarUrl = profile.avatarUrl;
           _isLoading = false;
         });
       }
@@ -92,12 +92,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
-      withData: true,
     );
 
     if (result != null && result.files.single.bytes != null) {
-      final fileBytes = result.files.single.bytes!;
+      final file = result.files.single;
+      final fileBytes = file.bytes!;
       final userId = supabase.auth.currentUser!.id;
+
+      // 🚨 修正: Null許容型 (String?) を Null非許容型 (String) に変換
+      // 拡張子がない場合は 'png' をデフォルトとして使用
+      final fileExt = file.extension ?? 'png';
+
+      // MIMEタイプを拡張子に基づいて設定
+      final contentType = 'image/$fileExt';
 
       setState(() {
         _isSaving = true;
@@ -109,6 +116,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         final newUrl = await _profileService.uploadAvatar(
           userId: userId,
           fileBytes: fileBytes,
+          // 👈 必須引数を追加: 109行目付近
+          fileExtension: fileExt,
+          contentType: contentType,
         );
 
         if (mounted) {
@@ -243,10 +253,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             // 🚨 修正: 画像表示ロジック
                             backgroundImage: _pickedAvatarBytes != null
                                 ? MemoryImage(_pickedAvatarBytes!)
-                                : (_avatarUrl != null 
+                                : (_avatarUrl != null
                                     ? NetworkImage(_avatarUrl!)
                                     : null) as ImageProvider<Object>?,
-                            child: (_pickedAvatarBytes == null && _avatarUrl == null)
+                            child: (_pickedAvatarBytes == null &&
+                                    _avatarUrl == null)
                                 ? Icon(
                                     Icons.person,
                                     size: 60,
@@ -264,7 +275,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 icon: const Icon(Icons.camera_alt, size: 20),
                                 color: Colors.white,
                                 // 🚨 修正: 画像アップロード機能を実装
-                                onPressed: _isSaving ? null : _pickAndUploadAvatar, 
+                                onPressed:
+                                    _isSaving ? null : _pickAndUploadAvatar,
                               ),
                             ),
                           ),

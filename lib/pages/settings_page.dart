@@ -138,16 +138,15 @@ class SettingsPage extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 修正 1: ライトモード (RadioListTileに戻し、警告を抑制)
             RadioListTile<AppThemeMode>(
-              title: const Row(
-                children: [
-                  Icon(Icons.light_mode),
-                  SizedBox(width: 12),
-                  Text('ライトモード'),
-                ],
-              ),
+              title: const Text('ライトモード'),
+              secondary: const Icon(Icons.light_mode),
               value: AppThemeMode.light,
+              // 警告を抑制: groupValue, onChangedの使用を許可
+              // ignore: deprecated_member_use
               groupValue: themeService.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 if (value != null) {
                   themeService.setThemeMode(value);
@@ -155,16 +154,16 @@ class SettingsPage extends StatelessWidget {
                 }
               },
             ),
+
+            // 修正 2: ダークモード (RadioListTileに戻し、警告を抑制)
             RadioListTile<AppThemeMode>(
-              title: const Row(
-                children: [
-                  Icon(Icons.dark_mode),
-                  SizedBox(width: 12),
-                  Text('ダークモード'),
-                ],
-              ),
+              title: const Text('ダークモード'),
+              secondary: const Icon(Icons.dark_mode),
               value: AppThemeMode.dark,
+              // 警告を抑制
+              // ignore: deprecated_member_use
               groupValue: themeService.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 if (value != null) {
                   themeService.setThemeMode(value);
@@ -172,16 +171,16 @@ class SettingsPage extends StatelessWidget {
                 }
               },
             ),
+
+            // 修正 3: システム設定に従う (RadioListTileに戻し、警告を抑制)
             RadioListTile<AppThemeMode>(
-              title: const Row(
-                children: [
-                  Icon(Icons.brightness_auto),
-                  SizedBox(width: 12),
-                  Text('システム設定に従う'),
-                ],
-              ),
+              title: const Text('システム設定に従う'),
+              secondary: const Icon(Icons.brightness_auto),
               value: AppThemeMode.system,
+              // 警告を抑制
+              // ignore: deprecated_member_use
               groupValue: themeService.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 if (value != null) {
                   themeService.setThemeMode(value);
@@ -191,6 +190,12 @@ class SettingsPage extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
       ),
     );
   }

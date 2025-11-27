@@ -13,7 +13,7 @@ permissions:
 
 env:
   ENVIRONMENT: production
-  FLUTTER_VERSION: '3.27.x'
+  FLUTTER_VERSION: '3.38.x'
 
 jobs:
   ci:
