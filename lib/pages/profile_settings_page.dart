@@ -99,11 +99,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       final fileBytes = file.bytes!;
       final userId = supabase.auth.currentUser!.id;
 
-      // 🚨 修正: file.extension (String?) が Null の場合に備えて 'png' をデフォルト値として設定し、
-      //      Null非許容の String 型 (fileExt) に変換する。
+      // 🚨 修正: Null許容型 (String?) を Null非許容型 (String) に変換
+      // 拡張子がない場合は 'png' をデフォルトとして使用
       final fileExt = file.extension ?? 'png';
 
-      // contentType も fileExt を使って Null 非許容型で定義
+      // MIMEタイプを拡張子に基づいて設定
       final contentType = 'image/$fileExt';
 
       setState(() {
@@ -116,7 +116,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         final newUrl = await _profileService.uploadAvatar(
           userId: userId,
           fileBytes: fileBytes,
-          fileExtension: fileExt, // 👈 Null非許容の String 型を渡す (119行目付近)
+          // 👈 必須引数を追加: 109行目付近
+          fileExtension: fileExt,
           contentType: contentType,
         );
 
