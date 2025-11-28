@@ -50,7 +50,8 @@ class ProfileService {
       await updateAvatarUrl(userId, publicUrl);
 
       AppLogger.info(
-          'Avatar uploaded and URL updated for user $userId: $publicUrl',);
+        'Avatar uploaded and URL updated for user $userId: $publicUrl',
+      );
       return publicUrl;
     } on StorageException catch (e, stackTrace) {
       AppLogger.error(

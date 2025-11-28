@@ -135,7 +135,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます'),),
+              content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます'),
+            ),
           );
         }
         return;
