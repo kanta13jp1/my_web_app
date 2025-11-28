@@ -97,7 +97,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (result != null && result.files.single.bytes != null) {
       final file = result.files.single;
       final fileBytes = file.bytes!;
-      final userId = supabase.auth.currentUser!.id;
+      final currentUser = supabase.auth.currentUser;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ユーザーが認証されていません')),
+          );
+        }
+        return;
+      }
+      final userId = currentUser.id;
 
       // 🚨 修正: Null許容型 (String?) を Null非許容型 (String) に変換
       // 拡張子がない場合は 'png' をデフォルトとして使用
