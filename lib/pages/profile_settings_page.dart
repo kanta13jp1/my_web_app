@@ -103,7 +103,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       final contentType =
           lookupMimeType(fileName) ?? 'application/octet-stream';
 
-            final currentUser = supabase.auth.currentUser;
+      final currentUser = supabase.auth.currentUser;
       if (currentUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
