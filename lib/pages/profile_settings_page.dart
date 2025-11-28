@@ -120,6 +120,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       }
       final fileName = file.name;
       final fileExtension = fileName.split('.').last;
+      // 画像ファイル拡張子のバリデーション
+      const allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+      if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます')),
+          );
+        }
+        return;
+      }
       final contentType =
           lookupMimeType(fileName) ?? 'application/octet-stream';
 
