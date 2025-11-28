@@ -18,6 +18,8 @@ class ProfileService {
   ///
   /// [userId] ユーザーID (ファイル名として使用)
   /// [fileBytes] アップロードする画像のバイトデータ (Uint8List)
+  /// [fileExtension] ファイルの拡張子 (例: 'png', 'jpg', 'webp')
+  /// [contentType] ファイルのMIMEタイプ (例: 'image/png', 'image/jpeg', 'image/webp')
   ///
   /// 成功した場合、新しいアバター画像の公開URLを返す。
   Future<String> uploadAvatar({
