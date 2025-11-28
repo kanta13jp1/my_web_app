@@ -119,9 +119,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         return;
       }
       final fileName = file.name;
-      final fileExtension = fileName.contains('.') 
-          ? fileName.split('.').last.toLowerCase() 
-          : '';
+      final fileExtension =
+          fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
       if (fileExtension.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +134,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます')),
+            const SnackBar(
+                content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます')),
           );
         }
         return;

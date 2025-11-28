@@ -9,7 +9,7 @@ import '../utils/app_logger.dart';
 class ProfileService {
   final SupabaseClient _supabase;
   // Supabase Storageのバケット名
-  static const String _avatarBucket = 'avatars'; 
+  static const String _avatarBucket = 'avatars';
 
   ProfileService([SupabaseClient? supabaseClient])
       : _supabase = supabaseClient ?? supabase;
@@ -26,7 +26,7 @@ class ProfileService {
     required String userId,
     required Uint8List fileBytes,
     required String fileExtension, // 例: 'png', 'jpg', 'webp'
-    required String contentType,   // 例: 'image/png', 'image/jpeg', 'image/webp'
+    required String contentType, // 例: 'image/png', 'image/jpeg', 'image/webp'
   }) async {
     // ユーザーIDをファイル名として使用し、ファイルパスを決定
     final filePath = '$userId.$fileExtension';
@@ -49,7 +49,8 @@ class ProfileService {
       // DBの avatar_url も更新する必要があるため、ここで更新メソッドも呼び出します
       await updateAvatarUrl(userId, publicUrl);
 
-      AppLogger.info('Avatar uploaded and URL updated for user $userId: $publicUrl');
+      AppLogger.info(
+          'Avatar uploaded and URL updated for user $userId: $publicUrl');
       return publicUrl;
     } on StorageException catch (e, stackTrace) {
       AppLogger.error(
@@ -64,7 +65,7 @@ class ProfileService {
       rethrow;
     }
   }
-  
+
   // --- 以下、既存のメソッド ---
 
   /// プロフィールを取得
