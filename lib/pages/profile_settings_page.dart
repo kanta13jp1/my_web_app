@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data'; // Uint8Listのために必要
 import 'package:file_picker/file_picker.dart'; // ファイル選択のために必要
+import 'package:mime/mime.dart';
 import '../main.dart';
 import '../models/user_profile.dart';
 import '../services/profile_service.dart';
@@ -97,7 +98,12 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (result != null && result.files.single.bytes != null) {
       final file = result.files.single;
       final fileBytes = file.bytes!;
-      final currentUser = supabase.auth.currentUser;
+      final fileName = file.name;
+      final fileExtension = fileName.split('.').last;
+      final contentType =
+          lookupMimeType(fileName) ?? 'application/octet-stream';
+
+            final currentUser = supabase.auth.currentUser;
       if (currentUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -107,13 +113,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         return;
       }
       final userId = currentUser.id;
-
-      // 🚨 修正: Null許容型 (String?) を Null非許容型 (String) に変換
-      // 拡張子がない場合は 'png' をデフォルトとして使用
-      final fileExt = file.extension ?? 'png';
-
-      // MIMEタイプを拡張子に基づいて設定
-      final contentType = 'image/$fileExt';
 
       setState(() {
         _isSaving = true;
@@ -125,8 +124,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         final newUrl = await _profileService.uploadAvatar(
           userId: userId,
           fileBytes: fileBytes,
-          // 👈 必須引数を追加: 109行目付近
-          fileExtension: fileExt,
+          fileExtension: fileExtension,
           contentType: contentType,
         );
 
@@ -264,7 +262,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 ? MemoryImage(_pickedAvatarBytes!)
                                 : (_avatarUrl != null
                                     ? NetworkImage(_avatarUrl!)
-                                    : null,
+                                    : null) as ImageProvider<Object>?,
                             child: (_pickedAvatarBytes == null &&
                                     _avatarUrl == null)
                                 ? Icon(
