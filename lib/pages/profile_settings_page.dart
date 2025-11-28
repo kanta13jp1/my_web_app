@@ -264,7 +264,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 ? MemoryImage(_pickedAvatarBytes!)
                                 : (_avatarUrl != null
                                     ? NetworkImage(_avatarUrl!)
-                                    : null) as ImageProvider<Object>?,
+                                    : null,
                             child: (_pickedAvatarBytes == null &&
                                     _avatarUrl == null)
                                 ? Icon(
