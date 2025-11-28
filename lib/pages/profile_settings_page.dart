@@ -96,13 +96,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     );
 
     if (result != null && result.files.single.bytes != null) {
-      final file = result.files.single;
-      final fileBytes = file.bytes!;
-      final fileName = file.name;
-      final fileExtension = fileName.split('.').last;
-      final contentType =
-          lookupMimeType(fileName) ?? 'application/octet-stream';
-
       final currentUser = supabase.auth.currentUser;
       if (currentUser == null) {
         if (mounted) {
@@ -113,6 +106,22 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         return;
       }
       final userId = currentUser.id;
+
+      final file = result.files.single;
+      final fileBytes = file.bytes!;
+      // 5MB limit
+      if (fileBytes.length > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ファイルサイズは5MB以下にしてください')),
+          );
+        }
+        return;
+      }
+      final fileName = file.name;
+      final fileExtension = fileName.split('.').last;
+      final contentType =
+          lookupMimeType(fileName) ?? 'application/octet-stream';
 
       setState(() {
         _isSaving = true;
