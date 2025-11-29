@@ -95,7 +95,6 @@ jobs:
         run: |
           flutter build web \
             --release \
-            --web-renderer canvaskit \
             --dart-define=ENVIRONMENT=production \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }}
         env:
