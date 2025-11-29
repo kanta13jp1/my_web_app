@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart'; // 📦 追加
 import '../../pages/archive_page.dart';
 import '../../pages/categories_page.dart';
 import '../../pages/stats_page.dart';
@@ -20,7 +21,7 @@ import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
 
-class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isSearching;
   final TextEditingController searchController;
   final VoidCallback onToggleSearch;
@@ -65,14 +66,36 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
+  State<HomeAppBar> createState() => _HomeAppBarState();
+
+  @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _HomeAppBarState extends State<HomeAppBar> {
+  String? _appVersion;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = packageInfo.version;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: isSearching
+      title: widget.isSearching
           ? TextField(
-              controller: searchController,
+              controller: widget.searchController,
               autofocus: true,
               decoration: const InputDecoration(
                 hintText: 'メモを検索...',
@@ -86,41 +109,65 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 }
               },
             )
-          : const Text('マイメモ'),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('マイメモ'),
+                if (_appVersion != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'v$_appVersion',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
       actions: [
-        if (isSearching)
+        if (widget.isSearching)
           IconButton(
             icon: const Icon(Icons.clear),
             onPressed: () {
-              searchController.clear();
+              widget.searchController.clear();
             },
             tooltip: 'クリア',
           ),
         IconButton(
-          icon: Icon(isSearching ? Icons.close : Icons.search),
-          onPressed: onToggleSearch,
-          tooltip: isSearching ? '検索を閉じる' : '検索',
+          icon: Icon(widget.isSearching ? Icons.close : Icons.search),
+          onPressed: widget.onToggleSearch,
+          tooltip: widget.isSearching ? '検索を閉じる' : '検索',
         ),
-        if (!isMobile) ...[
+        if (!widget.isMobile) ...[
           IconButton(
             icon: Icon(
               Icons.tune,
-              color: hasActiveAdvancedFilters ? Colors.purple : null,
+              color: widget.hasActiveAdvancedFilters ? Colors.purple : null,
             ),
             tooltip: '詳細検索',
-            onPressed: onShowAdvancedSearch,
+            onPressed: widget.onShowAdvancedSearch,
           ),
           Stack(
             children: [
               IconButton(
                 icon: Icon(
-                  reminderFilter != null ? Icons.alarm_on : Icons.alarm,
-                  color: reminderFilter != null ? Colors.orange : null,
+                  widget.reminderFilter != null ? Icons.alarm_on : Icons.alarm,
+                  color: widget.reminderFilter != null ? Colors.orange : null,
                 ),
-                onPressed: onShowReminderFilter,
+                onPressed: widget.onShowReminderFilter,
                 tooltip: 'リマインダーで絞り込み',
               ),
-              if (reminderFilter != null)
+              if (widget.reminderFilter != null)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -139,13 +186,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               IconButton(
                 icon: Icon(
-                  showFavoritesOnly ? Icons.star : Icons.star_border,
-                  color: showFavoritesOnly ? Colors.amber : null,
+                  widget.showFavoritesOnly ? Icons.star : Icons.star_border,
+                  color: widget.showFavoritesOnly ? Colors.amber : null,
                 ),
-                onPressed: onToggleFavorites,
-                tooltip: showFavoritesOnly ? 'すべて表示' : 'お気に入りのみ表示',
+                onPressed: widget.onToggleFavorites,
+                tooltip: widget.showFavoritesOnly ? 'すべて表示' : 'お気に入りのみ表示',
               ),
-              if (showFavoritesOnly)
+              if (widget.showFavoritesOnly)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -164,10 +211,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.category),
-                onPressed: onShowCategoryFilter,
+                onPressed: widget.onShowCategoryFilter,
                 tooltip: 'カテゴリで絞り込み',
               ),
-              if (hasCategoryFilter)
+              if (widget.hasCategoryFilter)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -184,17 +231,17 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           IconButton(
             icon: const Icon(Icons.sort),
-            onPressed: onShowSortDialog,
+            onPressed: widget.onShowSortDialog,
             tooltip: '並び替え',
           ),
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                onPressed: onShowDateFilter,
+                onPressed: widget.onShowDateFilter,
                 tooltip: '日付で絞り込み',
               ),
-              if (hasDateFilter)
+              if (widget.hasDateFilter)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -212,7 +259,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
         IconButton(
           icon: const Icon(Icons.refresh),
-          onPressed: onRefresh,
+          onPressed: widget.onRefresh,
           tooltip: '更新',
         ),
         _buildPopupMenu(context),
@@ -225,44 +272,44 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       icon: const Icon(Icons.more_vert),
       onSelected: (value) {
         if (value == 'advanced_search') {
-          onShowAdvancedSearch();
+          widget.onShowAdvancedSearch();
         } else if (value == 'reminder_filter') {
-          onShowReminderFilter();
+          widget.onShowReminderFilter();
         } else if (value == 'favorite_filter') {
-          onToggleFavorites();
+          widget.onToggleFavorites();
         } else if (value == 'category_filter') {
-          onShowCategoryFilter();
+          widget.onShowCategoryFilter();
         } else if (value == 'sort') {
-          onShowSortDialog();
+          widget.onShowSortDialog();
         } else if (value == 'date_filter') {
-          onShowDateFilter();
+          widget.onShowDateFilter();
         } else if (value == 'categories') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CategoriesPage()),
           ).then((_) {
-            onRefresh();
+            widget.onRefresh();
           });
         } else if (value == 'archive') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ArchivePage()),
           ).then((_) {
-            onRefresh();
+            widget.onRefresh();
           });
         } else if (value == 'stats') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const StatsPage()),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'leaderboard') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const LeaderboardPage()),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'profile_settings') {
           Navigator.push(
@@ -270,8 +317,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
           ).then((updated) {
             if (updated == true) {
-              onLoadUserStats();
-              onRefresh();
+              widget.onLoadUserStats();
+              widget.onRefresh();
             }
           });
         } else if (value == 'site_stats') {
@@ -284,14 +331,14 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             context,
             MaterialPageRoute(builder: (_) => const ReferralPage()),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'daily_challenges') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const DailyChallengesPage()),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'personality_test') {
           Navigator.push(
@@ -300,14 +347,14 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               builder: (_) => const PersonalityTestLandingPage(),
             ),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'ai_secretary') {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AISecretaryPage()),
           ).then((_) {
-            onLoadUserStats();
+            widget.onLoadUserStats();
           });
         } else if (value == 'memo_gallery') {
           Navigator.push(
@@ -329,7 +376,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             context,
             MaterialPageRoute(builder: (_) => const ImportPage()),
           ).then((_) {
-            onRefresh();
+            widget.onRefresh();
           });
         } else if (value == 'activity_feed') {
           Navigator.push(
@@ -344,11 +391,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             MaterialPageRoute(builder: (_) => const SettingsPage()),
           );
         } else if (value == 'logout') {
-          onSignOut();
+          widget.onSignOut();
         }
       },
       itemBuilder: (context) => [
-        if (isMobile) ...[
+        if (widget.isMobile) ...[
           const PopupMenuItem(
             value: 'advanced_search',
             child: Row(
@@ -374,11 +421,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 Icon(
-                  showFavoritesOnly ? Icons.star : Icons.star_border,
+                  widget.showFavoritesOnly ? Icons.star : Icons.star_border,
                   color: Colors.amber,
                 ),
                 const SizedBox(width: 8),
-                Text(showFavoritesOnly ? 'すべて表示' : 'お気に入り'),
+                Text(widget.showFavoritesOnly ? 'すべて表示' : 'お気に入り'),
               ],
             ),
           ),
@@ -622,7 +669,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.blue.shade400, Colors.purple.shade400],
+                      colors: [
+                        Colors.blue.shade400,
+                        Colors.purple.shade400,
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -692,7 +742,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      if (userStats != null) ...[
+                      if (widget.userStats != null) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -737,7 +787,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                       style: TextStyle(fontSize: 20),
                                     ),
                                     Text(
-                                      userStats!.levelTitle,
+                                      widget.userStats!.levelTitle,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
@@ -755,7 +805,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 children: [
                                   _buildStatItem(
                                     '📊',
-                                    'Lv.${userStats!.currentLevel}',
+                                    'Lv.${widget.userStats!.currentLevel}',
                                   ),
                                   Container(
                                     height: 40,
@@ -764,7 +814,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   ),
                                   _buildStatItem(
                                     '⭐',
-                                    '${userStats!.totalPoints}pt',
+                                    '${widget.userStats!.totalPoints}pt',
                                   ),
                                   Container(
                                     height: 40,
@@ -773,7 +823,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   ),
                                   _buildStatItem(
                                     '🔥',
-                                    '${userStats!.currentStreak}日',
+                                    '${widget.userStats!.currentStreak}日',
                                   ),
                                 ],
                               ),
@@ -861,10 +911,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                           showDialog(
                             context: context,
                             builder: (_) => SharePhilosopherQuoteDialog(
-                              userLevel: userStats?.currentLevel,
-                              totalPoints: userStats?.totalPoints,
-                              currentStreak: userStats?.currentStreak,
-                              levelTitle: userStats?.levelTitle,
+                              userLevel: widget.userStats?.currentLevel,
+                              totalPoints: widget.userStats?.totalPoints,
+                              currentStreak: widget.userStats?.currentStreak,
+                              levelTitle: widget.userStats?.levelTitle,
                             ),
                           );
                         },
@@ -892,7 +942,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       const SizedBox(height: 12),
                       const SizedBox(height: 8),
-                      if (userStats != null) ...[
+                      if (widget.userStats != null) ...[
                         _buildShareButton(
                           context,
                           icon: Icons.emoji_events,
@@ -903,10 +953,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                             Navigator.pop(context);
                             try {
                               await AppShareService.shareWithUserStats(
-                                level: userStats!.currentLevel,
-                                totalPoints: userStats!.totalPoints,
-                                currentStreak: userStats!.currentStreak,
-                                levelTitle: userStats!.levelTitle,
+                                level: widget.userStats!.currentLevel,
+                                totalPoints: widget.userStats!.totalPoints,
+                                currentStreak: widget.userStats!.currentStreak,
+                                levelTitle: widget.userStats!.levelTitle,
                               );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1031,9 +1081,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               try {
                 // 動的OGP対応: 哲学者の名言シェア
                 await AppShareService.shareToTwitterWithDynamicOgp(
-                  level: userStats?.currentLevel,
-                  totalPoints: userStats?.totalPoints,
-                  currentStreak: userStats?.currentStreak,
+                  level: widget.userStats?.currentLevel,
+                  totalPoints: widget.userStats?.totalPoints,
+                  currentStreak: widget.userStats?.currentStreak,
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1101,9 +1151,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               try {
                 // 動的OGP対応: LINEシェア
                 await AppShareService.shareToLineWithDynamicOgp(
-                  level: userStats?.currentLevel,
-                  totalPoints: userStats?.totalPoints,
-                  currentStreak: userStats?.currentStreak,
+                  level: widget.userStats?.currentLevel,
+                  totalPoints: widget.userStats?.totalPoints,
+                  currentStreak: widget.userStats?.currentStreak,
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
