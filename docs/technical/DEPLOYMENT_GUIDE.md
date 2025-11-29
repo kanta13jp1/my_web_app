@@ -18,9 +18,9 @@
 
 | 環境 | ブランチ | URL | デプロイ方法 | 用途 |
 |------|---------|-----|------------|------|
-| **Development** | `develop` | https://dev.your-app.web.app | 自動 | 開発中の機能テスト |
-| **Staging** | `staging` | https://staging.your-app.web.app | 自動 | 本番前の最終確認 |
-| **Production** | `main` | https://your-app.web.app | 自動 | 本番環境 |
+| **Development** | `develop` | https://dev.my-web-app-b67f4.web.app | 自動 | 開発中の機能テスト |
+| **Staging** | `staging` | https://staging.my-web-app-b67f4.web.app | 自動 | 本番前の最終確認 |
+| **Production** | `main` | my-web-app-b67f4.web.app | 自動 | 本番環境 |
 
 ### インフラ構成
 
@@ -59,7 +59,7 @@ git push origin develop
 4. Firebase Hosting デプロイ（devチャネル）
 5. Slack通知
 
-**確認URL**: https://dev.your-app.web.app
+**確認URL**: https://dev.my-web-app-b67f4.web.app
 
 ### Staging環境への自動デプロイ
 
@@ -80,7 +80,7 @@ git push origin staging
 4. Firebase Hosting デプロイ（stagingチャネル）
 5. Slack通知
 
-**確認URL**: https://staging.your-app.web.app
+**確認URL**: https://staging.my-web-app-b67f4.web.app
 
 ### Production環境への自動デプロイ
 
@@ -104,7 +104,7 @@ git push origin main
 7. GitHub Release作成
 8. Slack通知
 
-**確認URL**: https://your-app.web.app
+**確認URL**: https://my-web-app-b67f4.web.app
 
 ## 手動デプロイ
 
