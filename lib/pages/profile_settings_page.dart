@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data'; // Uint8Listのために必要
+import 'package:file_picker/file_picker.dart'; // ファイル選択のために必要
+import 'package:mime/mime.dart';
 import '../main.dart';
 import '../models/user_profile.dart';
 import '../services/profile_service.dart';
@@ -27,6 +30,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   bool _isSaving = false;
   bool _isPublic = true;
   UserProfile? _currentProfile;
+
+  // 🚨 追加: 画像アップロード関連の状態
+  Uint8List? _pickedAvatarBytes;
+  String? _avatarUrl; // 現在表示するアバター画像のURL
 
   @override
   void initState() {
@@ -64,6 +71,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           _twitterHandleController.text = profile.twitterHandle ?? '';
           _githubHandleController.text = profile.githubHandle ?? '';
           _isPublic = profile.isPublic;
+          // 🚨 修正: 既存のプロフィール画像URLを設定
+          _avatarUrl = profile.avatarUrl;
           _isLoading = false;
         });
       }
@@ -75,6 +84,100 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('プロフィールの読み込みに失敗しました: $e')),
         );
+      }
+    }
+  }
+
+  // 🚨 新規: 画像選択・アップロード処理
+  Future<void> _pickAndUploadAvatar() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.single.bytes != null) {
+      final currentUser = supabase.auth.currentUser;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ユーザーが認証されていません')),
+          );
+        }
+        return;
+      }
+      final userId = currentUser.id;
+
+      final file = result.files.single;
+      final fileBytes = file.bytes!;
+      // 5MB limit
+      if (fileBytes.length > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ファイルサイズは5MB以下にしてください')),
+          );
+        }
+        return;
+      }
+      final fileName = file.name;
+      final fileExtension =
+          fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
+      if (fileExtension.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ファイルに拡張子がありません。画像ファイルを選択してください。')),
+          );
+        }
+        return;
+      }
+      // 画像ファイル拡張子のバリデーション
+      const allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+      if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('画像ファイル（png, jpg, jpeg, webp, gif）のみアップロードできます'),
+            ),
+          );
+        }
+        return;
+      }
+      final contentType =
+          lookupMimeType(fileName) ?? 'application/octet-stream';
+
+      setState(() {
+        _isSaving = true;
+        _pickedAvatarBytes = fileBytes; // プレビュー用にローカルに保存
+      });
+
+      try {
+        // Supabase Storage にアップロードし、公開URLを取得
+        final newUrl = await _profileService.uploadAvatar(
+          userId: userId,
+          fileBytes: fileBytes,
+          fileExtension: fileExtension,
+          contentType: contentType,
+        );
+
+        if (mounted) {
+          setState(() {
+            _avatarUrl = newUrl; // 新しいURLを保持
+            _isSaving = false;
+            _pickedAvatarBytes = null; // 成功したのでプレビューをクリア
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('プロフィール画像を更新しました')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+            _pickedAvatarBytes = null; // 失敗したのでプレビューをクリア
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('画像アップロードに失敗しました: $e')),
+          );
+        }
       }
     }
   }
@@ -111,6 +214,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             ? null
             : _githubHandleController.text.trim(),
         isPublic: _isPublic,
+        avatarUrl: _avatarUrl, // 🚨 修正: 新しいURLを含める
         createdAt: _currentProfile?.createdAt,
         updatedAt: DateTime.now(),
       );
@@ -183,11 +287,20 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             backgroundColor: Theme.of(context)
                                 .primaryColor
                                 .withValues(alpha: 0.1),
-                            child: Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                            // 🚨 修正: 画像表示ロジック
+                            backgroundImage: _pickedAvatarBytes != null
+                                ? MemoryImage(_pickedAvatarBytes!)
+                                : (_avatarUrl != null
+                                    ? NetworkImage(_avatarUrl!)
+                                    : null) as ImageProvider<Object>?,
+                            child: (_pickedAvatarBytes == null &&
+                                    _avatarUrl == null)
+                                ? Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Theme.of(context).primaryColor,
+                                  )
+                                : null,
                           ),
                           Positioned(
                             bottom: 0,
@@ -198,14 +311,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               child: IconButton(
                                 icon: const Icon(Icons.camera_alt, size: 20),
                                 color: Colors.white,
-                                onPressed: () {
-                                  // TODO: 画像アップロード機能を実装
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('画像アップロード機能は近日実装予定です'),
-                                    ),
-                                  );
-                                },
+                                // 🚨 修正: 画像アップロード機能を実装
+                                onPressed:
+                                    _isSaving ? null : _pickAndUploadAvatar,
                               ),
                             ),
                           ),
