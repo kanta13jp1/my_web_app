@@ -247,7 +247,7 @@ git push -u origin feature/test-ci
 # - 完了後、コミットにコメントが追加される
 
 # 4. デプロイされたアプリを確認
-# https://dev.your-app.web.app
+# https://dev.my-web-app-b67f4.web.app
 ```
 
 ---
