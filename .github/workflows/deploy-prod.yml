@@ -31,7 +31,8 @@ jobs:
     needs: ci
     environment:
       name: production
-      url: my-web-app-b67f4.web.app
+      # 注意: environment.url には secrets が使えないため、固定値を維持するか削除します
+      url: https://my-web-app-b67f4.web.app
 
     # 🚨 修正: タグの作成とプッシュのために contents: write を追加
     permissions:
@@ -41,7 +42,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for versioning
+          fetch-depth: 0  # Fetch all history for versioning
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -159,7 +160,7 @@ jobs:
             ${{ github.event.head_commit.message }}
 
             ### URLs
-            - **Production**: my-web-app-b67f4.web.app
+            - **Production**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
 
             ---
             *This release was automatically created by GitHub Actions*
@@ -195,7 +196,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* my-web-app-b67f4.web.app"
+                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
                   }
                 },
                 {
@@ -258,5 +259,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: '🎉 Successfully deployed to **Production** environment!\n\n📍 URL: my-web-app-b67f4.web.app\n\n🏷️ Release tag created'
+              body: '🎉 Successfully deployed to **Production** environment!\n\n📍 URL: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app\n\n🏷️ Release tag created'
             })
