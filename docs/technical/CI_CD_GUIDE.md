@@ -279,7 +279,7 @@ git push -u origin hotfix/security-patch
 |------|---------|-----|------|
 | Development | `develop` | https://dev.your-app.web.app | 開発中の機能テスト |
 | Staging | `staging` | https://staging.your-app.web.app | 本番前の最終確認 |
-| Production | `main` | https://your-app.web.app | 本番環境 |
+| Production | `main` | my-web-app-b67f4.web.app | 本番環境 |
 
 ### デプロイプロセス
 

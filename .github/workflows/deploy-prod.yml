@@ -31,7 +31,7 @@ jobs:
     needs: ci
     environment:
       name: production
-      url: https://your-app.web.app
+      url: my-web-app-b67f4.web.app
 
     # 🚨 修正: タグの作成とプッシュのために contents: write を追加
     permissions:
@@ -159,7 +159,7 @@ jobs:
             ${{ github.event.head_commit.message }}
 
             ### URLs
-            - **Production**: https://your-app.web.app
+            - **Production**: my-web-app-b67f4.web.app
 
             ---
             *This release was automatically created by GitHub Actions*
@@ -195,7 +195,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://your-app.web.app"
+                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* my-web-app-b67f4.web.app"
                   }
                 },
                 {
@@ -258,5 +258,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: '🎉 Successfully deployed to **Production** environment!\n\n📍 URL: https://your-app.web.app\n\n🏷️ Release tag created'
+              body: '🎉 Successfully deployed to **Production** environment!\n\n📍 URL: my-web-app-b67f4.web.app\n\n🏷️ Release tag created'
             })
