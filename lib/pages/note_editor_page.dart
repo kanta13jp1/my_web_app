@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ショートカットキー用
+import 'package:flutter/services.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../widgets/markdown_preview.dart';
-import '../models/attachment.dart'; // 追加
-import '../services/attachment_service.dart'; // 追加
-import '../widgets/attachment_list_widget.dart'; // 追加
-import '../services/gamification_service.dart'; // ゲーミフィケーション追加
-import '../services/ai_service.dart'; // AI機能追加
-import '../widgets/achievement_notification.dart'; // 実績通知追加
+import '../models/attachment.dart';
+import '../services/attachment_service.dart';
+import '../widgets/attachment_list_widget.dart';
+import '../services/gamification_service.dart';
+import '../services/ai_service.dart';
+import '../widgets/achievement_notification.dart';
 import '../widgets/note_editor/editor_dialogs.dart' as editor_dialogs;
 import '../widgets/note_editor/category_chip.dart';
 import '../utils/date_formatter.dart';
-import '../widgets/timer_setup_dialog.dart'; // タイマー機能追加
+import '../widgets/timer_setup_dialog.dart';
 import 'package:provider/provider.dart';
-import '../services/timer_service.dart'; // タイマーサービス追加
-import '../services/auto_save_service.dart'; // 自動保存サービス追加
-import '../services/undo_redo_service.dart'; // UNDO/REDOサービス追加
-import '../models/note_snapshot.dart'; // スナップショットモデル追加
+import '../services/timer_service.dart';
+import '../services/auto_save_service.dart';
+import '../services/undo_redo_service.dart';
+import '../models/note_snapshot.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -36,8 +36,7 @@ class NoteEditorPage extends StatefulWidget {
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
-class _NoteEditorPageState extends State<NoteEditorPage>
-    with SingleTickerProviderStateMixin {
+class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   List<Category> _categories = [];
@@ -45,15 +44,15 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   bool _isFavorite = false;
   DateTime? _reminderDate;
   bool _isPinned = false;
-  int? _currentNoteId; // 保存後のnoteIDを保持（int型に修正）
-  DateTime? _lastSavedTime; // 最終保存日時
+  int? _currentNoteId;
+  DateTime? _lastSavedTime;
 
-  // 添付ファイル関連（追加）
+  // 添付ファイル関連
   List<Attachment> _attachments = [];
   bool _isLoadingAttachments = false;
 
-  // マークダウン関連
-  late TabController _tabController;
+  // 表示モード管理（タブの代わり）
+  bool _isPreviewMode = false;
 
   // ゲーミフィケーション用
   late final GamificationService _gamificationService;
@@ -65,7 +64,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   // 自動保存・UNDO/REDO用
   late final AutoSaveService _autoSaveService;
   late final UndoRedoService _undoRedoService;
-  bool _isUndoRedoOperation = false; // UNDO/REDO操作中フラグ
+  bool _isUndoRedoOperation = false;
 
   @override
   void initState() {
@@ -84,13 +83,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _selectedCategoryId = widget.note?.categoryId;
     _isFavorite = widget.note?.isFavorite ?? false;
     _reminderDate = widget.note?.reminderDate;
-    _isPinned = widget.note?.isPinned ?? false; // ← ?を追加してnull安全に
-    _currentNoteId = widget.note?.id; // 既存ノートのIDを保持
-    _lastSavedTime = widget.note?.updatedAt; // 既存ノートの最終保存日時を設定
+    _isPinned = widget.note?.isPinned ?? false;
+    _currentNoteId = widget.note?.id;
+    _lastSavedTime = widget.note?.updatedAt;
     _loadCategories();
-
-    // タブコントローラーを初期化
-    _tabController = TabController(length: 2, vsync: this);
 
     // 初期スナップショットを追加
     _undoRedoService.addSnapshot(
@@ -108,7 +104,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
 
-    // 添付ファイルを読み込み（追加）
+    // 添付ファイルを読み込み
     if (widget.note != null) {
       _loadAttachments();
     }
@@ -120,18 +116,14 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     _contentController.removeListener(_onTextChanged);
     _titleController.dispose();
     _contentController.dispose();
-    _tabController.dispose();
     _autoSaveService.dispose();
     _undoRedoService.dispose();
     super.dispose();
   }
 
-  /// テキスト変更時の処理（スナップショット追加 & 自動保存トリガー）
   void _onTextChanged() {
-    // UNDO/REDO操作中は履歴を追加しない
     if (_isUndoRedoOperation) return;
 
-    // スナップショット追加（UNDO/REDO用）
     _undoRedoService.addSnapshot(
       NoteSnapshot(
         title: _titleController.text,
@@ -143,11 +135,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       ),
     );
 
-    // 自動保存トリガー
     _autoSaveService.triggerAutoSave(() => _saveNoteWithoutClosing());
   }
 
-// 添付ファイルを読み込み
   Future<void> _loadAttachments() async {
     if (widget.note == null) return;
 
@@ -176,7 +166,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-// ファイルを添付
   Future<void> _attachFile() async {
     if (widget.note == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,7 +192,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           const SnackBar(content: Text('ファイルを添付しました')),
         );
 
-        // ゲーミフィケーション: 添付ファイル追加イベント
         final achievements = await _gamificationService.onAttachmentAdded(
           supabase.auth.currentUser!.id,
         );
@@ -220,7 +208,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-// 添付ファイルを削除
   Future<void> _deleteAttachment(Attachment attachment) async {
     try {
       await AttachmentService.deleteAttachment(attachment);
@@ -251,9 +238,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           .eq('user_id', supabase.auth.currentUser!.id)
           .order('name', ascending: true);
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _categories = (response as List)
@@ -265,7 +250,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  /// UNDO（元に戻す）
   void _undo() {
     final snapshot = _undoRedoService.undo();
     if (snapshot != null) {
@@ -279,7 +263,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  /// REDO（やり直し）
   void _redo() {
     final snapshot = _undoRedoService.redo();
     if (snapshot != null) {
@@ -293,16 +276,14 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // 保存（画面を閉じない）
   Future<void> _saveNoteWithoutClosing() async {
     try {
       final userId = supabase.auth.currentUser!.id;
-      final isNewNote = _currentNoteId == null; // 修正: _currentNoteIdで判定
+      final isNewNote = _currentNoteId == null;
       final wasNotFavorite = widget.note?.isFavorite == false;
       final hadNoReminder = widget.note?.reminderDate == null;
 
       if (isNewNote) {
-        // 新規作成
         final insertedData = await supabase.from('notes').insert({
           'user_id': userId,
           'title': _titleController.text,
@@ -315,18 +296,15 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'updated_at': DateTime.now().toIso8601String(),
         }).select();
 
-        // 挿入されたノートのIDを保存
         if (insertedData.isNotEmpty) {
           _currentNoteId = insertedData[0]['id'];
         }
 
-        // ゲーミフィケーション: メモ作成イベント
         final achievements = await _gamificationService.onNoteCreated(userId);
         if (mounted) {
           _showAchievementNotifications(achievements);
         }
 
-        // 初回のお気に入りまたはリマインダー設定
         if (_isFavorite) {
           final favAchievements =
               await _gamificationService.onNoteFavorited(userId);
@@ -342,7 +320,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           }
         }
       } else {
-        // 更新
         await supabase.from('notes').update({
           'title': _titleController.text,
           'content': _contentController.text,
@@ -351,9 +328,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           'reminder_date': _reminderDate?.toIso8601String(),
           'is_pinned': _isPinned,
           'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', _currentNoteId!); // 修正: _currentNoteIdを使用
+        }).eq('id', _currentNoteId!);
 
-        // お気に入りが新たに設定された場合
         if (_isFavorite && wasNotFavorite) {
           final achievements =
               await _gamificationService.onNoteFavorited(userId);
@@ -362,7 +338,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           }
         }
 
-        // リマインダーが新たに設定された場合
         if (_reminderDate != null && hadNoReminder) {
           final achievements = await _gamificationService.onReminderSet(userId);
           if (mounted) {
@@ -373,15 +348,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
       if (!mounted) return;
 
-      // 最終保存日時を更新
       setState(() {
         _lastSavedTime = DateTime.now();
       });
 
-      // 自動保存サービスに保存完了を通知
       _autoSaveService.markAsSaved();
 
-      // 保存完了メッセージを表示（画面は閉じない）
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ 保存しました'),
@@ -397,100 +369,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // 保存して閉じる
   Future<void> _saveNote() async {
-    try {
-      final userId = supabase.auth.currentUser!.id;
-      final isNewNote = _currentNoteId == null; // 修正: _currentNoteIdで判定
-      final wasNotFavorite = widget.note?.isFavorite == false;
-      final hadNoReminder = widget.note?.reminderDate == null;
-
-      if (isNewNote) {
-        // 新規作成
-        final insertedData = await supabase.from('notes').insert({
-          'user_id': userId,
-          'title': _titleController.text,
-          'content': _contentController.text,
-          'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
-          'reminder_date': _reminderDate?.toIso8601String(),
-          'is_pinned': _isPinned,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        }).select();
-
-        // 挿入されたノートのIDを保存（将来的な利用のため）
-        if (insertedData.isNotEmpty) {
-          _currentNoteId = insertedData[0]['id'];
-        }
-
-        // ゲーミフィケーション: メモ作成イベント
-        final achievements = await _gamificationService.onNoteCreated(userId);
-        if (mounted) {
-          _showAchievementNotifications(achievements);
-        }
-
-        // 初回のお気に入りまたはリマインダー設定
-        if (_isFavorite) {
-          final favAchievements =
-              await _gamificationService.onNoteFavorited(userId);
-          if (mounted) {
-            _showAchievementNotifications(favAchievements);
-          }
-        }
-        if (_reminderDate != null) {
-          final reminderAchievements =
-              await _gamificationService.onReminderSet(userId);
-          if (mounted) {
-            _showAchievementNotifications(reminderAchievements);
-          }
-        }
-      } else {
-        // 更新
-        await supabase.from('notes').update({
-          'title': _titleController.text,
-          'content': _contentController.text,
-          'category_id': _selectedCategoryId,
-          'is_favorite': _isFavorite,
-          'reminder_date': _reminderDate?.toIso8601String(),
-          'is_pinned': _isPinned,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', _currentNoteId!); // 修正: _currentNoteIdを使用
-
-        // お気に入りが新たに設定された場合
-        if (_isFavorite && wasNotFavorite) {
-          final achievements =
-              await _gamificationService.onNoteFavorited(userId);
-          if (mounted) {
-            _showAchievementNotifications(achievements);
-          }
-        }
-
-        // リマインダーが新たに設定された場合
-        if (_reminderDate != null && hadNoReminder) {
-          final achievements = await _gamificationService.onReminderSet(userId);
-          if (mounted) {
-            _showAchievementNotifications(achievements);
-          }
-        }
-      }
-
-      if (!mounted) return;
-
-      // 最終保存日時を更新
-      _lastSavedTime = DateTime.now();
-
-      Navigator.pop(context);
-    } catch (error) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
+    // 閉じる前の保存処理
+    await _saveNoteWithoutClosing();
+    if (mounted) Navigator.pop(context);
   }
 
-  // 実績通知を表示
   void _showAchievementNotifications(List<dynamic> achievements) {
     for (final achievement in achievements) {
       AchievementNotification.show(
@@ -537,11 +421,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     editor_dialogs.showMarkdownHelp(context);
   }
 
-  // タイマーダイアログを表示
   Future<void> _showTimerDialog() async {
     final timerService = Provider.of<TimerService>(context, listen: false);
 
-    // 既にタイマーが実行中の場合は確認
     if (timerService.hasActiveTimer) {
       final confirm = await showDialog<bool>(
         context: context,
@@ -564,10 +446,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       if (confirm != true) return;
     }
 
-    // Widgetがまだマウントされているか確認
     if (!mounted) return;
 
-    // タイマー設定ダイアログを表示
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => TimerSetupDialog(
@@ -577,7 +457,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
     if (result == null) return;
 
-    // タイマーを開始
     try {
       await timerService.startTimer(
         name: result['name'] as String,
@@ -608,7 +487,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AI機能メニューを表示
   void _showAIMenu() {
     showModalBottomSheet(
       context: context,
@@ -628,7 +506,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.auto_fix_high, color: Colors.purple),
               title: const Text('文章を改善'),
-              subtitle: const Text('より明確で読みやすい文章に改善します'),
               onTap: () {
                 Navigator.pop(context);
                 _improveText();
@@ -637,7 +514,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.summarize, color: Colors.blue),
               title: const Text('要約を生成'),
-              subtitle: const Text('長い文章を簡潔に要約します'),
               onTap: () {
                 Navigator.pop(context);
                 _summarizeText();
@@ -646,7 +522,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.expand, color: Colors.green),
               title: const Text('文章を展開'),
-              subtitle: const Text('短い文章を詳しく展開します'),
               onTap: () {
                 Navigator.pop(context);
                 _expandText();
@@ -655,7 +530,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.translate, color: Colors.orange),
               title: const Text('英語に翻訳'),
-              subtitle: const Text('文章を英語に翻訳します'),
               onTap: () {
                 Navigator.pop(context);
                 _translateText();
@@ -664,7 +538,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.title, color: Colors.red),
               title: const Text('タイトルを提案'),
-              subtitle: const Text('内容から適切なタイトルを提案します'),
               onTap: () {
                 Navigator.pop(context);
                 _suggestTitle();
@@ -673,7 +546,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             ListTile(
               leading: const Icon(Icons.label, color: Colors.teal),
               title: const Text('タグ・カテゴリを提案'),
-              subtitle: const Text('自動的にタグとカテゴリを提案します'),
               onTap: () {
                 Navigator.pop(context);
                 _suggestTags();
@@ -685,27 +557,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     );
   }
 
-  // AIエラーメッセージのフォーマット
   String _formatAIError(dynamic error) {
     if (error is AIServiceException) {
       if (error.isRateLimitError) {
-        return 'AI機能の使用制限に達しました。しばらく待ってから再度お試しください。';
+        return 'AI機能の使用制限に達しました。';
       }
       return error.message;
     }
-    // その他のエラーは一般的なメッセージ
-    return 'AI処理に失敗しました。しばらく待ってから再度お試しください。';
+    return 'AI処理に失敗しました。';
   }
 
-  // AI文章改善
   Future<void> _improveText() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('改善する文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final improvedText =
@@ -735,15 +598,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AI要約生成
   Future<void> _summarizeText() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('要約する文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final summary = await _aiService.summarizeText(_contentController.text);
@@ -772,15 +628,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AI文章展開
   Future<void> _expandText() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('展開する文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final expandedText = await _aiService.expandText(_contentController.text);
@@ -809,15 +658,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AI翻訳
   Future<void> _translateText() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('翻訳する文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final translatedText = await _aiService.translateText(
@@ -849,21 +691,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AIタイトル提案
   Future<void> _suggestTitle() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タイトルを提案するための文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final titles = await _aiService.suggestTitles(_contentController.text);
       if (mounted) {
         setState(() => _isAIProcessing = false);
-        // タイトル選択ダイアログを表示
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -882,12 +716,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 );
               }).toList(),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル'),
-              ),
-            ],
           ),
         );
       }
@@ -904,15 +732,8 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  // AIタグ・カテゴリ提案
   Future<void> _suggestTags() async {
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タグ・カテゴリを提案するための文章を入力してください')),
-      );
-      return;
-    }
-
+    if (_contentController.text.isEmpty) return;
     setState(() => _isAIProcessing = true);
     try {
       final suggestion = await _aiService.suggestTags(
@@ -920,55 +741,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         title: _titleController.text,
         existingCategories: _categories.map((c) => c.name).toList(),
       );
-
       if (mounted) {
         setState(() => _isAIProcessing = false);
-        // 提案結果を表示
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('🏷️ タグ・カテゴリ提案'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '提案理由: ${suggestion.reason}',
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '推奨カテゴリ: ${suggestion.category}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '推奨タグ:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                ...suggestion.tags.map((tag) => Chip(label: Text(tag))),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // カテゴリを適用（既存のカテゴリから検索または新規作成を促す）
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('提案を参考にカテゴリとタグを設定してください')),
-                  );
-                },
-                child: const Text('適用'),
-              ),
-            ],
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('推奨カテゴリ: ${suggestion.category}')),
         );
       }
     } catch (e) {
@@ -984,70 +760,151 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
-  /// 保存状態インジケーターを構築
+  void _showNoteInfo() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollController) => ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(16),
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Text(
+              'メモ情報',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text('カテゴリ', style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _buildCategoryChip(),
+                const Spacer(),
+                TextButton.icon(
+                  icon: const Icon(Icons.edit),
+                  label: const Text('変更'),
+                  onPressed: _showCategoryDialog,
+                ),
+              ],
+            ),
+            const Divider(),
+            if (_lastSavedTime != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.schedule, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            const Text('リマインダー', style: TextStyle(color: Colors.grey)),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                _reminderDate != null ? Icons.alarm : Icons.alarm_add,
+                color: _reminderDate != null ? Colors.orange : null,
+              ),
+              title: Text(
+                _reminderDate != null
+                    ? DateFormatter.formatReminder(_reminderDate!)
+                    : '未設定',
+              ),
+              trailing: _reminderDate != null
+                  ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        setState(() {
+                          _reminderDate = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                    )
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                _showReminderDialog();
+              },
+            ),
+            const Divider(),
+            const Text('添付ファイル', style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            if (_isLoadingAttachments)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_attachments.isEmpty)
+              const Text('なし', style: TextStyle(color: Colors.grey))
+            else
+              AttachmentListWidget(
+                attachments: _attachments,
+                onDelete: _deleteAttachment,
+                isEditing: true,
+              ),
+            TextButton.icon(
+              icon: const Icon(Icons.attach_file),
+              label: const Text('ファイルを追加'),
+              onPressed: () {
+                Navigator.pop(context);
+                _attachFile();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSaveStateIndicator() {
     return ListenableBuilder(
       listenable: _autoSaveService,
       builder: (context, child) {
         switch (_autoSaveService.saveState) {
           case SaveState.saved:
-            return const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  '保存済み',
-                  style: TextStyle(fontSize: 12, color: Colors.green),
-                ),
-              ],
+            return const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 16,
             );
           case SaveState.saving:
-            return const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  '保存中...',
-                  style: TextStyle(fontSize: 12, color: Colors.blue),
-                ),
-              ],
+            return const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 2),
             );
           case SaveState.modified:
-            return const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.edit, color: Colors.orange, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  '未保存',
-                  style: TextStyle(fontSize: 12, color: Colors.orange),
-                ),
-              ],
-            );
+            return const Icon(Icons.edit, color: Colors.orange, size: 16);
           case SaveState.error:
-            return const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error, color: Colors.red, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  'エラー',
-                  style: TextStyle(fontSize: 12, color: Colors.red),
-                ),
-              ],
-            );
+            return const Icon(Icons.error, color: Colors.red, size: 16);
         }
       },
     );
   }
 
-  /// メニューを表示
   void _showMoreMenu() {
     showModalBottomSheet(
       context: context,
@@ -1056,39 +913,19 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ピン留め
-            if (widget.note != null)
-              ListTile(
-                leading: Icon(
-                  _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  color: _isPinned ? Colors.amber : null,
-                ),
-                title: Text(_isPinned ? 'ピン留めを解除' : 'ピン留め'),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _isPinned = !_isPinned;
-                  });
-                },
-              ),
-            // リマインダー
             ListTile(
               leading: Icon(
-                _reminderDate != null ? Icons.alarm : Icons.alarm_add,
-                color: _reminderDate != null ? Colors.orange : null,
+                _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                color: _isPinned ? Colors.amber : null,
               ),
-              title: const Text('リマインダー'),
-              subtitle: _reminderDate != null
-                  ? Text(
-                      '設定済み: ${DateFormatter.formatReminder(_reminderDate!)}',
-                    )
-                  : null,
+              title: Text(_isPinned ? 'ピン留めを解除' : 'ピン留め'),
               onTap: () {
                 Navigator.pop(context);
-                _showReminderDialog();
+                setState(() {
+                  _isPinned = !_isPinned;
+                });
               },
             ),
-            // タイマー
             ListTile(
               leading: Icon(
                 Icons.timer,
@@ -1107,49 +944,20 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 _showTimerDialog();
               },
             ),
-            // 添付ファイル
-            ListTile(
-              leading: Stack(
-                children: [
-                  const Icon(Icons.attach_file),
-                  if (_attachments.isNotEmpty)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${_attachments.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              title: const Text('添付ファイル'),
-              subtitle: _attachments.isNotEmpty
-                  ? Text('${_attachments.length}件')
-                  : null,
-              onTap: () {
-                Navigator.pop(context);
-                _attachFile();
-              },
-            ),
-            // マークダウンヘルプ
             ListTile(
               leading: const Icon(Icons.help_outline),
               title: const Text('マークダウン記法ヘルプ'),
               onTap: () {
                 Navigator.pop(context);
                 _showMarkdownHelp();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('メモの詳細情報'),
+              onTap: () {
+                Navigator.pop(context);
+                _showNoteInfo();
               },
             ),
           ],
@@ -1164,15 +972,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       focusNode: FocusNode(),
       onKeyEvent: (event) {
         if (event is KeyDownEvent) {
-          // Ctrl+Z or Cmd+Z: Undo
           if ((event.logicalKey == LogicalKeyboardKey.keyZ) &&
               (HardwareKeyboard.instance.isControlPressed ||
                   HardwareKeyboard.instance.isMetaPressed) &&
               !HardwareKeyboard.instance.isShiftPressed) {
             _undo();
-          }
-          // Ctrl+Y or Ctrl+Shift+Z or Cmd+Shift+Z: Redo
-          else if (((event.logicalKey == LogicalKeyboardKey.keyY) &&
+          } else if (((event.logicalKey == LogicalKeyboardKey.keyY) &&
                   (HardwareKeyboard.instance.isControlPressed ||
                       HardwareKeyboard.instance.isMetaPressed)) ||
               ((event.logicalKey == LogicalKeyboardKey.keyZ) &&
@@ -1185,245 +990,123 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          titleSpacing: 0,
+          title: Row(
             children: [
-              Text(widget.note == null ? '新規メモ' : 'メモを編集'),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.note == null ? '新規メモ' : '編集',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    if (_lastSavedTime != null)
+                      Text(
+                        DateFormatter.formatDateTime(_lastSavedTime!),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               _buildSaveStateIndicator(),
+              const SizedBox(width: 8),
             ],
           ),
           actions: [
-            // メニューボタン（その他の機能）
+            IconButton(
+              icon: Icon(
+                _isPreviewMode
+                    ? Icons.edit_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPreviewMode = !_isPreviewMode;
+                });
+              },
+              tooltip: _isPreviewMode ? '編集モード' : 'プレビュー',
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: _showNoteInfo,
+              tooltip: 'メモ情報',
+            ),
             IconButton(
               icon: const Icon(Icons.more_vert),
               onPressed: _showMoreMenu,
-              tooltip: 'その他のオプション',
             ),
-            // 保存して閉じるボタン
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: _saveNote,
               tooltip: '保存して閉じる',
             ),
           ],
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(icon: Icon(Icons.edit), text: '編集'),
-              Tab(icon: Icon(Icons.visibility), text: 'プレビュー'),
-            ],
-          ),
         ),
-        body: Column(
-          children: [
-            // カテゴリとリマインダー情報エリア
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey[300]!),
+        body: _isPreviewMode
+            ? MarkdownPreview(
+                data: '${_titleController.text}\n\n${_contentController.text}',
+                selectable: true,
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        hintText: 'タイトル',
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: TextField(
+                        controller: _contentController,
+                        decoration: const InputDecoration(
+                          hintText: 'メモを入力...',
+                          border: InputBorder.none,
+                        ),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.newline,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.label_outline, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      _buildCategoryChip(),
-                    ],
-                  ),
-                  // 最終保存日時の表示
-                  if (_lastSavedTime != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.schedule,
-                          color: Colors.blue,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '最終保存: ${DateFormatter.formatDateTime(_lastSavedTime!)}',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (_reminderDate != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _reminderDate!.isBefore(DateTime.now())
-                            ? Colors.red.withValues(alpha: 0.1)
-                            : Colors.orange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.alarm,
-                            color: _reminderDate!.isBefore(DateTime.now())
-                                ? Colors.red
-                                : Colors.orange,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'リマインダー: ${DateFormatter.formatReminder(_reminderDate!)}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: _reminderDate!.isBefore(DateTime.now())
-                                    ? Colors.red
-                                    : Colors.orange.shade800,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () {
-                              setState(() {
-                                _reminderDate = null;
-                              });
-                            },
-                            tooltip: 'リマインダーを削除',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  // 添付ファイル一覧（追加）
-                  if (_attachments.isNotEmpty || _isLoadingAttachments) ...[
-                    const SizedBox(height: 12),
-                    _isLoadingAttachments
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : AttachmentListWidget(
-                            attachments: _attachments,
-                            onDelete: _deleteAttachment,
-                            isEditing: true,
-                          ),
-                  ],
-                ],
-              ),
-            ),
-            // タブビュー
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // 編集モード
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _titleController,
-                          decoration: const InputDecoration(
-                            hintText: 'タイトル',
-                            border: InputBorder.none,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        Expanded(
-                          child: TextField(
-                            controller: _contentController,
-                            decoration: const InputDecoration(
-                              hintText: 'メモを入力（マークダウン記法が使えます）',
-                              border: InputBorder.none,
-                            ),
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            keyboardType: TextInputType.multiline,
-                            textInputAction: TextInputAction.newline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // プレビューモード
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_titleController.text.isNotEmpty) ...[
-                          Text(
-                            _titleController.text,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Divider(),
-                        ],
-                        Expanded(
-                          child: _contentController.text.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'プレビューする内容がありません',
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                )
-                              : MarkdownPreview(
-                                  // ← カスタムウィジェットを使用
-                                  data: _contentController.text,
-                                  selectable: true,
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
         bottomNavigationBar: BottomAppBar(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // UNDOボタン
               ListenableBuilder(
                 listenable: _undoRedoService,
                 builder: (context, child) => IconButton(
                   icon: const Icon(Icons.undo),
                   onPressed: _undoRedoService.canUndo ? _undo : null,
-                  tooltip: 'Undo (Ctrl+Z)',
+                  tooltip: 'Undo',
                 ),
               ),
-              // REDOボタン
               ListenableBuilder(
                 listenable: _undoRedoService,
                 builder: (context, child) => IconButton(
                   icon: const Icon(Icons.redo),
                   onPressed: _undoRedoService.canRedo ? _redo : null,
-                  tooltip: 'Redo (Ctrl+Y)',
+                  tooltip: 'Redo',
                 ),
               ),
-              // お気に入りボタン
               IconButton(
                 icon: Icon(
                   _isFavorite ? Icons.star : Icons.star_border,
@@ -1434,30 +1117,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                     _isFavorite = !_isFavorite;
                   });
                 },
-                tooltip: _isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
               ),
-              // AI機能ボタン
               if (_isAIProcessing)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
                 IconButton(
                   icon: const Icon(Icons.auto_awesome, color: Colors.purple),
                   onPressed: _showAIMenu,
-                  tooltip: 'AI アシスタント',
                 ),
-              // 保存ボタン
-              IconButton(
-                icon: const Icon(Icons.save_outlined),
-                onPressed: _saveNoteWithoutClosing,
-                tooltip: '保存',
-              ),
             ],
           ),
         ),
