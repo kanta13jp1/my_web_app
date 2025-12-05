@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth_page.dart';
 import 'leaderboard_page.dart';
 import '../widgets/live_stats_banner.dart';
+import '../widgets/page_view_stats.dart'; // 👈 【重要】この行を追加してください！
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -16,7 +17,10 @@ class LandingPage extends StatelessWidget {
           // Hero Section
           SliverToBoxAdapter(
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.7,
+              // 中身が増えるので固定の高さを制約に変更
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.7,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -34,6 +38,7 @@ class LandingPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        const SizedBox(height: 40),
                         // App Icon
                         Container(
                           width: 120,
@@ -170,6 +175,13 @@ class LandingPage extends StatelessWidget {
                           constraints: const BoxConstraints(maxWidth: 600),
                           child: const LiveStatsBanner(),
                         ),
+
+                        // 👇 ここに追加: 閲覧数カウンター
+                        const SizedBox(height: 24),
+                        const PageViewStats(),
+                        // 👆 ここまで
+
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -178,7 +190,7 @@ class LandingPage extends StatelessWidget {
             ),
           ),
 
-          // Features Section
+          // Features Section (ここは変更なし)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
