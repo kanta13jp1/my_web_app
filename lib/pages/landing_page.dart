@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'auth_page.dart';
 import 'leaderboard_page.dart';
 import '../widgets/live_stats_banner.dart';
-import '../widgets/page_view_stats.dart'; // 👈 【重要】この行を追加してください！
+import '../widgets/page_view_stats.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
+
+  // ビルド時に注入されたバージョンを取得 (デフォルトは空文字)
+  static const String appVersion =
+      String.fromEnvironment('APP_VERSION', defaultValue: '');
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +21,6 @@ class LandingPage extends StatelessWidget {
           // Hero Section
           SliverToBoxAdapter(
             child: Container(
-              // 中身が増えるので固定の高さを制約に変更
               constraints: BoxConstraints(
                 minHeight: MediaQuery.of(context).size.height * 0.7,
               ),
@@ -176,11 +179,16 @@ class LandingPage extends StatelessWidget {
                           child: const LiveStatsBanner(),
                         ),
 
-                        // 👇 ここに追加: 閲覧数カウンター
+                        // Page View Stats
                         const SizedBox(height: 24),
-                        const PageViewStats(),
-                        // 👆 ここまで
-
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const PageViewStats(),
+                        ),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -190,7 +198,7 @@ class LandingPage extends StatelessWidget {
             ),
           ),
 
-          // Features Section (ここは変更なし)
+          // Features Section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -313,6 +321,18 @@ class LandingPage extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  // 👇 バージョン情報をここに追加
+                  if (appVersion.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Text(
+                      'v$appVersion',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 40),
                 ],
               ),

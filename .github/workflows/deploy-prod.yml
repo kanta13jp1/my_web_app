@@ -98,14 +98,15 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
       # Build Flutter Web (Production)
-      # 🚨 修正: --build-name と --build-number を追加
+      # 🚨 修正: APP_VERSION を dart-define で渡す設定を追加
       - name: Build Flutter Web (Production)
         run: |
           flutter build web \
             --release \
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
-            --dart-define=ENVIRONMENT=production
+            --dart-define=ENVIRONMENT=production \
+            --dart-define=APP_VERSION=${{ steps.version.outputs.version }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
