@@ -6,10 +6,10 @@ on:
       - main
   workflow_dispatch:
 
-# 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
+# ワークフロー全体に必要な権限
 permissions:
-  contents: write # 🚨 修正: タグ付け、リリース作成、プッシュのために必要
-  pull-requests: write # CIの子ジョブの権限要求を許可するため
+  contents: write
+  pull-requests: write
 
 env:
   ENVIRONMENT: production
@@ -19,11 +19,9 @@ jobs:
   ci:
     name: Run CI Checks
     uses: ./.github/workflows/ci.yml
-    
-    # 🚨 修正: 子ワークフローの権限要求を明示的に付与
     permissions:
       contents: read
-      pull-requests: write 
+      pull-requests: write
 
   deploy:
     name: Deploy to Production Environment
@@ -31,10 +29,8 @@ jobs:
     needs: ci
     environment:
       name: production
-      # 注意: environment.url には secrets が使えないため、固定値を維持するか削除します
       url: https://my-web-app-b67f4.web.app
 
-    # 🚨 修正: タグの作成とプッシュのために contents: write を追加
     permissions:
       contents: write
 
@@ -69,10 +65,22 @@ jobs:
           PATCH=${VERSION_PARTS[2]}
           NEW_PATCH=$((PATCH + 1))
           NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          
           echo "Previous version: $VERSION"
           echo "New version: $NEW_VERSION"
+
+      # 🚨 追加: pubspec.yaml のバージョンを更新
+      # これにより、package_info_plus が正しいバージョンを取得できるようになります
+      - name: Update pubspec.yaml version
+        run: |
+          echo "Updating pubspec.yaml to version ${{ steps.version.outputs.version }}+${{ github.run_number }}"
+          # sedコマンドで version: x.x.x+x の行を置換
+          sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
+          # 確認用に出力
+          cat pubspec.yaml | grep "version:"
 
       # Supabase Migration (Production)
       - name: Setup Supabase CLI
@@ -83,21 +91,21 @@ jobs:
       - name: Run Supabase migrations
         run: |
           echo "Running Supabase migrations for production..."
-          # Link to production project
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }}
-          # Run migrations
           supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
-      # Build Flutter Web (Production with optimizations)
+      # Build Flutter Web (Production)
+      # 🚨 修正: --build-name と --build-number を追加
       - name: Build Flutter Web (Production)
         run: |
           flutter build web \
             --release \
-            --dart-define=ENVIRONMENT=production \
-            --dart-define=APP_VERSION=${{ steps.version.outputs.version }}
+            --build-name=${{ steps.version.outputs.version }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=ENVIRONMENT=production
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
@@ -110,7 +118,6 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
-          # Check build size
           BUILD_SIZE=$(du -sh build/web | cut -f1)
           echo "Build size: $BUILD_SIZE"
 
@@ -129,13 +136,12 @@ jobs:
       - name: Create Release Tag
         id: create_tag
         run: |
-          # Git設定はそのまま
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # タグの作成
+          
+          # タグの作成 (pubspec変更はコミットせず、タグだけ打つ運用とします)
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           
-          # 🚨 修正: https認証情報をプッシュコマンドに直接埋め込む
           GIT_PUSH_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push $GIT_PUSH_URL ${{ steps.version.outputs.tag }}
 
