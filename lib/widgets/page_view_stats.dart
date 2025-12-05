@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart'; // 👈 追加
+import 'package:url_launcher/url_launcher.dart';
 
 class PageViewStats extends StatefulWidget {
   final String pagePath;
@@ -47,19 +47,95 @@ class _PageViewStatsState extends State<PageViewStats> {
           'user_browser': browser,
         },
       );
-      return response as Map<String, dynamic>;
+
+      final data = response as Map<String, dynamic>;
+
+      // キリ番チェック（ビルド完了後にダイアログを表示）
+      final total = data['total'] as int? ?? 0;
+      if (mounted && _isMilestone(total)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showMilestoneDialog(total);
+        });
+      }
+
+      return data;
     } catch (e) {
       debugPrint('Error tracking views: $e');
       return {'total': 0, 'today': 0, 'browsers': {}};
     }
   }
 
-  // 🐦 X (Twitter) にシェアする機能
-  Future<void> _shareToX(int total, int today) async {
-    final text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
-        '個人開発アプリ「マイメモ」公開中 🚀\n'
-        '#個人開発 #Flutter #Supabase';
-    final url = 'https://my-web-app-b67f4.web.app/landing'; // 本番URL
+  // キリ番判定ロジック（20, 30, 40... 100, 200... などの節目）
+  bool _isMilestone(int count) {
+    if (count <= 0) return false;
+    if (count == 20) return true; // 次の目標
+    if (count % 50 == 0) return true; // 50, 100, 150...
+    // テスト用に小さい数字でも反応するように調整（本番では消してもOK）
+    if (count % 10 == 0 && count < 100) return true;
+    return false;
+  }
+
+  // キリ番祝いのダイアログ
+  void _showMilestoneDialog(int count) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('🎉 おめでとうございます！'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.celebration, size: 64, color: Colors.amber),
+            const SizedBox(height: 16),
+            Text(
+              'あなたが記念すべき\n$count人目の訪問者です！',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'この奇跡をシェアしてみんなに自慢しませんか？',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.share),
+            label: const Text('キリ番をシェア'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black, // Xカラー
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _shareToX(count, 0, isMilestone: true);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _shareToX(int total, int today,
+      {bool isMilestone = false}) async {
+    final String text;
+    if (isMilestone) {
+      text = '🎉 記念すべき $total 人目の訪問者になりました！\n'
+          '個人開発アプリ「マイメモ」でキリ番ゲット 🚀\n'
+          '#個人開発 #Flutter #キリ番';
+    } else {
+      text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
+          '個人開発アプリ「マイメモ」公開中 🚀\n'
+          '#個人開発 #Flutter #Supabase';
+    }
+
+    // 現在のページのURLを取得（Webの場合）または固定URL
+    final url = 'https://my-web-app-b67f4.web.app/landing';
 
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
@@ -99,7 +175,6 @@ class _PageViewStatsState extends State<PageViewStats> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 統計情報の表示部分（タップで詳細）
               InkWell(
                 onTap: () => _showBrowserStats(context, browsers),
                 borderRadius:
@@ -122,15 +197,11 @@ class _PageViewStatsState extends State<PageViewStats> {
                   ),
                 ),
               ),
-
-              // 区切り線
               Container(
                 height: 24,
                 width: 1,
                 color: Colors.grey.withValues(alpha: 0.2),
               ),
-
-              // シェアボタン（右側に追加）
               IconButton(
                 icon: const Icon(Icons.share, size: 18, color: Colors.blue),
                 tooltip: '閲覧数をシェア',
