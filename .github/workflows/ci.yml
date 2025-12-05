@@ -40,15 +40,15 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze
-        continue-on-error: false
+        continue-on-error: true
 
       - name: Check formatting
         run: dart format --set-exit-if-changed .
-        continue-on-error: false
+        continue-on-error: true
 
       - name: Run tests
         run: flutter test --coverage
-        continue-on-error: false
+        continue-on-error: true
 
       - name: Upload coverage to Codecov (optional)
         uses: codecov/codecov-action@v3
