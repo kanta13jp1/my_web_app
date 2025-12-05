@@ -33,6 +33,7 @@ dependencies:
   timeago: ^3.7.0             # 相対時間表示
   fl_chart: ^0.69.0           # チャート表示
   package_info_plus: ^8.0.0   # 🚨 追加: バージョン情報取得
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:
