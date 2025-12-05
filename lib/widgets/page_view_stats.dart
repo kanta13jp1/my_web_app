@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart'; // kIsWeb用
+import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart'; // 👈 追加
 
 class PageViewStats extends StatefulWidget {
   final String pagePath;
@@ -24,16 +25,11 @@ class _PageViewStatsState extends State<PageViewStats> {
     _statsFuture = _trackAndFetchStats();
   }
 
-  // ブラウザ名を取得する
   Future<String> _getBrowserName() async {
-    if (!kIsWeb) return 'App'; // Web以外からのアクセス
-
+    if (!kIsWeb) return 'App';
     try {
       final deviceInfo = DeviceInfoPlugin();
       final webBrowserInfo = await deviceInfo.webBrowserInfo;
-
-      // browserNameはenumなので文字列に変換して整形
-      // 例: BrowserName.chrome -> Chrome
       final name = webBrowserInfo.browserName.name;
       return name[0].toUpperCase() + name.substring(1);
     } catch (e) {
@@ -43,10 +39,7 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   Future<Map<String, dynamic>> _trackAndFetchStats() async {
     try {
-      // ブラウザ情報を取得
       final browser = await _getBrowserName();
-
-      // RPCを呼び出し (browser情報を追加)
       final response = await Supabase.instance.client.rpc(
         'track_and_get_page_stats',
         params: {
@@ -58,6 +51,22 @@ class _PageViewStatsState extends State<PageViewStats> {
     } catch (e) {
       debugPrint('Error tracking views: $e');
       return {'total': 0, 'today': 0, 'browsers': {}};
+    }
+  }
+
+  // 🐦 X (Twitter) にシェアする機能
+  Future<void> _shareToX(int total, int today) async {
+    final text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
+        '個人開発アプリ「マイメモ」公開中 🚀\n'
+        '#個人開発 #Flutter #Supabase';
+    final url = 'https://my-web-app-b67f4.web.app/landing'; // 本番URL
+
+    final tweetUrl = Uri.parse(
+      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
+    );
+
+    if (await canLaunchUrl(tweetUrl)) {
+      await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -75,36 +84,58 @@ class _PageViewStatsState extends State<PageViewStats> {
         final today = data['today'] ?? 0;
         final browsers = data['browsers'] as Map<String, dynamic>? ?? {};
 
-        return GestureDetector(
-          onTap: () => _showBrowserStats(context, browsers),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 統計情報の表示部分（タップで詳細）
+              InkWell(
+                onTap: () => _showBrowserStats(context, browsers),
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildStatItem(Icons.visibility, '総閲覧', '$total'),
+                      Container(
+                        height: 16,
+                        width: 1,
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      _buildStatItem(Icons.today, '本日', '$today'),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildStatItem(Icons.visibility, '総閲覧', '$total'),
-                Container(
-                  height: 16,
-                  width: 1,
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                _buildStatItem(Icons.today, '本日', '$today'),
-                const SizedBox(width: 8),
-                Icon(Icons.info_outline, size: 14, color: Colors.grey[400]),
-              ],
-            ),
+              ),
+              
+              // 区切り線
+              Container(
+                height: 24,
+                width: 1,
+                color: Colors.grey.withValues(alpha: 0.2),
+              ),
+
+              // シェアボタン（右側に追加）
+              IconButton(
+                icon: const Icon(Icons.share, size: 18, color: Colors.blue),
+                tooltip: '閲覧数をシェア',
+                onPressed: () => _shareToX(total, today),
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
         );
       },
@@ -142,9 +173,7 @@ class _PageViewStatsState extends State<PageViewStats> {
     );
   }
 
-  // ブラウザ内訳をダイアログで表示
   void _showBrowserStats(BuildContext context, Map<String, dynamic> browsers) {
-    // 値の大きい順にソート
     final sortedEntries = browsers.entries.toList()
       ..sort((a, b) => (b.value as int).compareTo(a.value as int));
 
@@ -192,7 +221,7 @@ class _PageViewStatsState extends State<PageViewStats> {
   Icon _getBrowserIcon(String browserName) {
     switch (browserName.toLowerCase()) {
       case 'chrome':
-        return const Icon(Icons.language, color: Colors.blue); // Chrome Icon代用
+        return const Icon(Icons.language, color: Colors.blue);
       case 'safari':
         return const Icon(Icons.explore, color: Colors.lightBlue);
       case 'firefox':
