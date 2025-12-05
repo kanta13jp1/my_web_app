@@ -102,9 +102,11 @@ class _PageViewStatsState extends State<PageViewStats> {
               // 統計情報の表示部分（タップで詳細）
               InkWell(
                 onTap: () => _showBrowserStats(context, browsers),
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
+                borderRadius:
+                    const BorderRadius.horizontal(left: Radius.circular(30)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -120,7 +122,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                   ),
                 ),
               ),
-              
+
               // 区切り線
               Container(
                 height: 24,

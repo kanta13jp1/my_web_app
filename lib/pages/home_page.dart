@@ -31,6 +31,7 @@ import '../services/daily_login_service.dart';
 import '../widgets/growth_metrics_banner.dart';
 import '../widgets/campaigns_banner.dart';
 import '../widgets/floating_timer_widget.dart';
+import '../widgets/page_view_stats.dart'; // 👈 追加
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,7 +52,7 @@ class _HomePageState extends State<HomePage> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedDateFilter = '全期間';
-  bool _showFavoritesOnly = false; // 追加：お気に入りフィルター
+  bool _showFavoritesOnly = false;
 
   // 並び替え用
   SortType _sortType = SortType.updatedDesc;
@@ -59,15 +60,15 @@ class _HomePageState extends State<HomePage> {
   // カテゴリフィルター用
   String? _selectedCategoryId;
 
-  // リマインダーフィルター（追加）
-  String? _reminderFilter; // null, 'overdue', 'upcoming', 'today'
+  // リマインダーフィルター
+  String? _reminderFilter;
 
   // 高度な検索用の追加変数
   String? _searchCategoryId;
   DateTime? _searchStartDate;
   DateTime? _searchEndDate;
 
-  // モバイル判定用（追加）
+  // モバイル判定用
   bool get _isMobile => MediaQuery.of(context).size.width < 600;
 
   // ゲーミフィケーション用
@@ -90,7 +91,7 @@ class _HomePageState extends State<HomePage> {
     _loadUserStats();
     _searchController.addListener(_onSearchChanged);
 
-    // 自動アーカイブを実行（追加）
+    // 自動アーカイブを実行
     _runAutoArchive();
 
     // プレゼンストラッキングを開始
@@ -453,7 +454,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadNotes() async {
     setState(() {
       _isLoading = true;
-      // キャッシュクリアは必要な時のみ実行（パフォーマンス改善）
     });
 
     try {
@@ -461,7 +461,7 @@ class _HomePageState extends State<HomePage> {
           .from('notes')
           .select()
           .eq('user_id', supabase.auth.currentUser!.id)
-          .eq('is_archived', false); // ← アーカイブされていないメモのみ取得
+          .eq('is_archived', false);
 
       setState(() {
         _notes = (response as List).map((note) => Note.fromJson(note)).toList();
@@ -499,7 +499,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _signOut() async {
-    // ログアウト時にキャッシュをクリア
     AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
     if (mounted) {
@@ -602,9 +601,8 @@ class _HomePageState extends State<HomePage> {
         hasDateFilter ||
         hasCategoryFilter ||
         _showFavoritesOnly ||
-        _reminderFilter != null; // 追加
+        _reminderFilter != null;
 
-    // リマインダー統計を計算
     final reminderStats = NoteFilterService.calculateReminderStats(_notes);
     final overdueCount = reminderStats['overdue'] ?? 0;
     final dueSoonCount = reminderStats['dueSoon'] ?? 0;
@@ -648,9 +646,16 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     // キャンペーンバナー
                     const CampaignsBanner(),
-                    // 成長メトリクスバナー（登録者数・閲覧者数）
+                    // 成長メトリクスバナー
                     const GrowthMetricsBanner(),
-                    // レベル表示（ゲーミフィケーション）
+
+                    // 👇 ここに追加: ページビュー統計 (HomePage用としてパスを指定)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: PageViewStats(pagePath: '/home'),
+                    ),
+
+                    // レベル表示
                     if (_userStats != null)
                       UserStatsHeader(
                         userStats: _userStats!,
@@ -804,7 +809,7 @@ class _HomePageState extends State<HomePage> {
           );
           _loadNotes();
         },
-        mini: _isMobile, // モバイルでは小さいサイズ
+        mini: _isMobile,
         child: const Icon(Icons.add),
       ),
     );
@@ -825,14 +830,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 高度な検索フィルターがアクティブか確認
   bool _hasActiveAdvancedFilters() {
     return _searchCategoryId != null ||
         _searchStartDate != null ||
         _searchEndDate != null;
   }
 
-// 詳細検索ダイアログを表示
   Future<void> _showAdvancedSearch() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -856,6 +859,4 @@ class _HomePageState extends State<HomePage> {
       _applyFilters();
     }
   }
-
-  // 高度な検索の日付範囲ラベル
 }
