@@ -1,15 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👈 追加
 import 'auth_page.dart';
-import 'leaderboard_page.dart';
+import 'home_page.dart'; // 👈 LeaderboardPageの代わりにHomePageへ遷移するため
 import '../widgets/live_stats_banner.dart';
 import '../widgets/page_view_stats.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
-  // ビルド時に注入されたバージョンを取得 (デフォルトは空文字)
+  // ビルド時に注入されたバージョンを取得
   static const String appVersion =
       String.fromEnvironment('APP_VERSION', defaultValue: '');
+
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  bool _isLoading = false; // ローディング状態管理
+
+  Future<void> _signInAnonymously() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 匿名ログイン実行
+      await Supabase.instance.client.auth.signInAnonymously();
+
+      if (mounted) {
+        // ホーム画面へ遷移（戻れないようにpushReplacement）
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ゲストログインに失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,23 +192,23 @@ class LandingPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const LeaderboardPage(),
+
+                              // 👇 ここを修正: ゲストログインボタン
+                              if (_isLoading)
+                                const CircularProgressIndicator(
+                                    color: Colors.white)
+                              else
+                                TextButton(
+                                  onPressed: _signInAnonymously,
+                                  child: const Text(
+                                    'ゲストとしてメモを書く →',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                  );
-                                },
-                                child: const Text(
-                                  'ゲストとして続ける →',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -322,11 +363,11 @@ class LandingPage extends StatelessWidget {
                     ),
                   ),
 
-                  // 👇 バージョン情報をここに追加
-                  if (appVersion.isNotEmpty) ...[
+                  // バージョン情報
+                  if (LandingPage.appVersion.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Text(
-                      'v$appVersion',
+                      'v${LandingPage.appVersion}',
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: 12,
