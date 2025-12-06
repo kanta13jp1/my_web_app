@@ -431,6 +431,40 @@ class AIService {
       rethrow;
     }
   }
+
+  /// デイリーチャレンジの生成（AIおまかせ）
+  /// 通常はサーバー側のCronで実行されますが、管理者機能やテスト用にアプリからも呼べるようにします。
+  Future<void> generateDailyChallenges({DateTime? targetDate}) async {
+    try {
+      final date = targetDate ?? DateTime.now();
+      // 日本時間の日付文字列 (YYYY-MM-DD)
+      final dateStr =
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      await _retryWithBackoff(
+        () async {
+          await _invokeFunction(
+            'generate-daily-challenges', // 新しく作成するEdge Function名
+            {
+              'date': dateStr,
+            },
+          );
+          // 戻り値はvoid (DBに直接書き込まれるため)
+          return;
+        },
+        operationName: 'generateDailyChallenges',
+      );
+
+      AppLogger.info('Daily challenges generated successfully for $dateStr');
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error generating daily challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
 }
 
 /// タグ提案の結果
