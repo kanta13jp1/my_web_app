@@ -95,13 +95,20 @@ class _LandingPageState extends State<LandingPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 40),
-                        // App Icon
+                        // App Icon (影を追加してリッチに)
                         Container(
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.note_alt_outlined,
@@ -168,7 +175,45 @@ class _LandingPageState extends State<LandingPage> {
                                     ),
                                   ),
                                 ),
-                              const SizedBox(height: 16),
+
+                              // ✨ 追加施策: マイクロコピーで安心感を訴求
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
+                                      size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'メアド登録なし',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Icon(Icons.check_circle_outline,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
+                                      size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '完全無料',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 24), // 間隔調整
 
                               // アカウント作成（長期利用向け）は2番手に
                               SizedBox(
