@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/daily_challenge_service.dart';
 import '../models/daily_challenge.dart';
 import '../utils/app_logger.dart';
+// ✅ 追加: AIサービスをインポート
+import '../services/ai_service.dart';
 
 class DailyChallengesPage extends StatefulWidget {
   const DailyChallengesPage({super.key});
@@ -14,6 +16,8 @@ class DailyChallengesPage extends StatefulWidget {
 class _DailyChallengesPageState extends State<DailyChallengesPage> {
   final _supabase = Supabase.instance.client;
   late DailyChallengeService _challengeService;
+  // ✅ 追加: AIサービス
+  late AIService _aiService;
 
   List<Map<String, dynamic>> _challenges = [];
   bool _isLoading = true;
@@ -22,7 +26,45 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
   void initState() {
     super.initState();
     _challengeService = DailyChallengeService(_supabase);
+    // ✅ 追加: AIサービスの初期化
+    _aiService = AIService(_supabase);
     _loadChallenges();
+  }
+
+  // 🔥 管理者判定ロジック
+  bool get _isAdmin {
+    final user = _supabase.auth.currentUser;
+    return user?.email == 'kanta13jp@gmail.com';
+  }
+
+  // 🔥 管理者用: 手動でチャレンジを生成する
+  Future<void> _generateTodaysChallenges() async {
+    setState(() => _isLoading = true);
+    try {
+      // 今日の日付で生成を実行
+      await _aiService.generateDailyChallenges();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('AIが今日のチャレンジを生成しました！🤖✨'),
+            backgroundColor: Colors.purple,
+          ),
+        );
+        // 生成後にリストを再読み込み
+        await _loadChallenges();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('生成エラー: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _loadChallenges() async {
@@ -58,7 +100,11 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('報酬を受け取りました！')),
+        const SnackBar(
+          content: Text('報酬を受け取りました！🎉'),
+          backgroundColor: Colors.amber,
+          duration: Duration(seconds: 2),
+        ),
       );
       _loadChallenges(); // Reload to update UI
     }
@@ -72,6 +118,14 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
       appBar: AppBar(
         title: const Text('デイリーチャレンジ'),
         actions: [
+          // 🔥 管理者のみ表示される生成ボタン
+          if (_isAdmin)
+            IconButton(
+              icon: const Icon(Icons.auto_awesome),
+              color: Colors.purpleAccent,
+              tooltip: 'AIでチャレンジ生成 (管理者)',
+              onPressed: _isLoading ? null : _generateTodaysChallenges,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadChallenges,
@@ -84,8 +138,25 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
           : RefreshIndicator(
               onRefresh: _loadChallenges,
               child: _challenges.isEmpty
-                  ? const Center(
-                      child: Text('今日のチャレンジはありません'),
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('今日のチャレンジはありません'),
+                          if (_isAdmin) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: _generateTodaysChallenges,
+                              icon: const Icon(Icons.auto_awesome),
+                              label: const Text('AIで生成する'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ]
+                        ],
+                      ),
                     )
                   : ListView(
                       padding: const EdgeInsets.all(16),
