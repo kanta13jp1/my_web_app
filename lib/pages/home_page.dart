@@ -31,7 +31,9 @@ import '../services/daily_login_service.dart';
 import '../widgets/growth_metrics_banner.dart';
 import '../widgets/campaigns_banner.dart';
 import '../widgets/floating_timer_widget.dart';
-import '../widgets/page_view_stats.dart'; // 👈 追加
+import '../widgets/page_view_stats.dart';
+// ✅ 追加: デイリーチャレンジサマリーカード
+import '../widgets/daily_challenge_summary_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -41,6 +43,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // ... (変数はそのまま) ...
   List<Note> _notes = [];
   List<Note> _filteredNotes = [];
   List<Category> _categories = [];
@@ -48,34 +51,21 @@ class _HomePageState extends State<HomePage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
-  // 日付フィルター用
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedDateFilter = '全期間';
   bool _showFavoritesOnly = false;
-
-  // 並び替え用
   SortType _sortType = SortType.updatedDesc;
-
-  // カテゴリフィルター用
   String? _selectedCategoryId;
-
-  // リマインダーフィルター
   String? _reminderFilter;
-
-  // 高度な検索用の追加変数
   String? _searchCategoryId;
   DateTime? _searchStartDate;
   DateTime? _searchEndDate;
 
-  // モバイル判定用
   bool get _isMobile => MediaQuery.of(context).size.width < 600;
 
-  // ゲーミフィケーション用
   late final GamificationService _gamificationService;
   UserStats? _userStats;
-
-  // プレゼンストラッキング用
   late final PresenceService _presenceService;
   late final DailyLoginService _dailyLoginService;
 
@@ -90,17 +80,12 @@ class _HomePageState extends State<HomePage> {
     _loadNotes();
     _loadUserStats();
     _searchController.addListener(_onSearchChanged);
-
-    // 自動アーカイブを実行
     _runAutoArchive();
-
-    // プレゼンストラッキングを開始
     _startPresenceTracking();
-
-    // デイリーログインボーナスをチェック
     _checkDailyLoginBonus();
   }
 
+  // ... (メソッド群はそのまま) ...
   void _startPresenceTracking() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId != null) {
@@ -109,6 +94,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _checkDailyLoginBonus() async {
+    // ...
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
@@ -130,20 +116,16 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-
-        // Reload user stats to show updated points
         _loadUserStats();
       }
     } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to check daily login bonus',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.error('Failed to check daily login bonus',
+          error: e, stackTrace: stackTrace);
     }
   }
 
   Future<void> _loadUserStats() async {
+    // ...
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -157,11 +139,8 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error loading user stats',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.error('Error loading user stats',
+          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -169,12 +148,9 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
-
-    // プレゼンストラッキングを停止
     final userId = supabase.auth.currentUser?.id;
     _presenceService.stopPresenceTracking(userId);
     _presenceService.dispose();
-
     super.dispose();
   }
 
@@ -205,13 +181,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _togglePin(Note note) async {
     try {
       await NoteOperationsService.togglePin(note);
-
       if (!mounted) return;
-
       _loadNotes();
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -222,7 +194,6 @@ class _HomePageState extends State<HomePage> {
       );
     } catch (error) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
@@ -231,7 +202,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _runAutoArchive() async {
     final archivedCount = await AutoArchiveService.autoArchiveOverdueNotes();
-
     if (archivedCount > 0 && mounted && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -270,13 +240,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _archiveNote(Note note) async {
     try {
       await NoteOperationsService.archiveNote(note);
-
       if (!mounted) return;
-
       _loadNotes();
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('メモをアーカイブしました'),
@@ -289,7 +255,6 @@ class _HomePageState extends State<HomePage> {
       );
     } catch (error) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
@@ -299,13 +264,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _restoreNote(int noteId) async {
     try {
       await NoteOperationsService.restoreNote(noteId);
-
       if (!mounted) return;
-
       _loadNotes();
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('メモを復元しました'),
@@ -314,7 +275,6 @@ class _HomePageState extends State<HomePage> {
       );
     } catch (error) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
@@ -341,17 +301,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _updateReminder(Note note, DateTime? reminderDate) async {
     try {
       await NoteOperationsService.updateReminder(note, reminderDate);
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       _loadNotes();
-
-      if (!context.mounted) {
-        return;
-      }
-
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -361,10 +313,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
@@ -374,9 +323,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _toggleFavorite(Note note) async {
     try {
       await NoteOperationsService.toggleFavorite(note);
-
       if (!mounted) return;
-
       setState(() {
         final index = _notes.indexWhere((n) => n.id == note.id);
         if (index != -1) {
@@ -393,9 +340,7 @@ class _HomePageState extends State<HomePage> {
         }
         _applyFilters();
       });
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -406,7 +351,6 @@ class _HomePageState extends State<HomePage> {
       );
     } catch (error) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $error')),
       );
@@ -649,10 +593,17 @@ class _HomePageState extends State<HomePage> {
                     // 成長メトリクスバナー
                     const GrowthMetricsBanner(),
 
-                    // 👇 ここに追加: ページビュー統計 (HomePage用としてパスを指定)
+                    // ページビュー統計
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
                       child: PageViewStats(pagePath: '/home'),
+                    ),
+
+                    // ✅ 追加: デイリーチャレンジサマリー
+                    const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: DailyChallengeSummaryCard(),
                     ),
 
                     // レベル表示
@@ -661,6 +612,7 @@ class _HomePageState extends State<HomePage> {
                         userStats: _userStats!,
                         onStatsUpdated: _loadUserStats,
                       ),
+
                     // リマインダー統計バナー
                     ReminderStatsBanner(
                       notes: _notes,
@@ -675,6 +627,7 @@ class _HomePageState extends State<HomePage> {
                         });
                       },
                     ),
+
                     // フィルター情報表示
                     FilterChipsArea(
                       hasAnyFilter: hasAnyFilter,
@@ -735,6 +688,7 @@ class _HomePageState extends State<HomePage> {
                       },
                       getSortIcon: _getSortIcon,
                     ),
+
                     // メモ一覧
                     Expanded(
                       child: _filteredNotes.isEmpty
