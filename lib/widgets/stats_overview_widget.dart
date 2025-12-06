@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_stats.dart';
+// ✅ 追加: PageViewStats をインポート（同じディレクトリにあると仮定）
+import 'page_view_stats.dart';
 
 class StatsOverviewWidget extends StatelessWidget {
   final UserStats stats;
@@ -20,6 +22,7 @@ class StatsOverviewWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- 既存の統計ヘッダー ---
             Row(
               children: [
                 Icon(
@@ -36,6 +39,8 @@ class StatsOverviewWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+
+            // --- 既存のグリッド表示 ---
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -74,6 +79,8 @@ class StatsOverviewWidget extends StatelessWidget {
                 ),
               ],
             ),
+
+            // --- 既存の最長ストリーク表示 ---
             if (stats.longestStreak > 0) ...[
               const SizedBox(height: 16),
               Container(
@@ -111,6 +118,32 @@ class StatsOverviewWidget extends StatelessWidget {
                 ),
               ),
             ],
+
+            // 🔥 追加機能: アプリ全体の目標進捗（連動部分）
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // セクションタイトル
+            Row(
+              children: [
+                Icon(Icons.rocket, color: Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'コミュニティ目標',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // PageViewStatsウィジェットの埋め込み
+            // PageViewStats自体がカードデザインを持っているので、Centerで配置します
+            const Center(
+              child: PageViewStats(pagePath: '/landing'),
+            ),
           ],
         ),
       ),
