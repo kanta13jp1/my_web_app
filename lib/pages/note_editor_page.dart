@@ -19,6 +19,8 @@ import '../services/timer_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/undo_redo_service.dart';
 import '../models/note_snapshot.dart';
+// ✅ 追加: デイリーチャレンジサービス
+import '../services/daily_challenge_service.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -56,6 +58,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   // ゲーミフィケーション用
   late final GamificationService _gamificationService;
+  // ✅ 追加: デイリーチャレンジ用
+  late final DailyChallengeService _dailyChallengeService;
 
   // AI機能用
   late final AIService _aiService;
@@ -70,6 +74,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void initState() {
     super.initState();
     _gamificationService = GamificationService();
+    // ✅ 追加: 初期化 (supabaseはmain.dartのgetter経由)
+    _dailyChallengeService = DailyChallengeService(supabase);
+
     _aiService = AIService();
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
@@ -303,6 +310,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         final achievements = await _gamificationService.onNoteCreated(userId);
         if (mounted) {
           _showAchievementNotifications(achievements);
+        }
+
+        // 🔥 ✅ 追加: デイリーチャレンジ「メモ作成」の進捗を進める
+        try {
+          // 'create_notes' はDBの daily_challenges テーブルの challenge_type と一致させる
+          await _dailyChallengeService.updateProgress(userId, 'create_notes');
+        } catch (e) {
+          debugPrint('Error updating daily challenge: $e');
         }
 
         if (_isFavorite) {

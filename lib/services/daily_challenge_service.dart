@@ -8,11 +8,13 @@ class DailyChallengeService {
   DailyChallengeService(this._supabase);
 
   /// 今日のチャレンジと進捗状況を取得
-  Future<List<Map<String, dynamic>>> getTodaysChallengesWithProgress(String userId) async {
+  Future<List<Map<String, dynamic>>> getTodaysChallengesWithProgress(
+      String userId) async {
     try {
       final now = DateTime.now();
       // YYYY-MM-DD 形式 (サーバー側の日付判定用)
-      final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final todayStr =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
       // 作成したRPCを呼び出す
       final response = await _supabase.rpc(
@@ -32,7 +34,8 @@ class DailyChallengeService {
         };
       }).toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load challenges', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to load challenges',
+          error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -47,13 +50,15 @@ class DailyChallengeService {
       );
       return success as bool;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to claim reward', error: e, stackTrace: stackTrace);
+      AppLogger.error('Failed to claim reward',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }
 
   /// 進捗を更新する（メモ作成、シェア等のアクション時に呼ぶ）
-  Future<void> updateProgress(String userId, String type, {int amount = 1}) async {
+  Future<void> updateProgress(String userId, String type,
+      {int amount = 1}) async {
     try {
       // RPC呼び出し
       await _supabase.rpc(
@@ -69,9 +74,10 @@ class DailyChallengeService {
       AppLogger.warning('Failed to update challenge progress: $type', error: e);
     }
   }
-  
+
   // 互換性のためのエイリアス（以前のコードで呼ばれている場合）
-  Future<void> trackActivityForChallenges(String userId, String type, int amount) async {
+  Future<void> trackActivityForChallenges(
+      String userId, String type, int amount) async {
     await updateProgress(userId, type, amount: amount);
   }
 }
