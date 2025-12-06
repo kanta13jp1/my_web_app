@@ -20,9 +20,6 @@ class PageViewStats extends StatefulWidget {
 class _PageViewStatsState extends State<PageViewStats> {
   Future<Map<String, dynamic>>? _statsFuture;
 
-  // 🔥 本日の目標数値を設定
-  static const int dailyGoal = 40;
-
   @override
   void initState() {
     super.initState();
@@ -54,7 +51,7 @@ class _PageViewStatsState extends State<PageViewStats> {
 
       final data = response as Map<String, dynamic>;
 
-      // ✅ キリ番チェック (ここでも確実にintに変換)
+      // ✅ キリ番チェック
       final int total = (data['total'] as num?)?.toInt() ?? 0;
 
       if (mounted && _isMilestone(total)) {
@@ -76,6 +73,23 @@ class _PageViewStatsState extends State<PageViewStats> {
     if (count % 50 == 0) return true;
     if (count % 10 == 0 && count < 100) return true;
     return false;
+  }
+
+  // 🔥 総訪問者数(Total)に基づいて、本日の目標を動的に決定する関数
+  // ロジック:
+  // - Totalが60人までは目標40人 (初期ステージ)
+  // - Totalが60人を超えたら目標80人 (今日の達成で超えるはず！)
+  // - Totalが200人を超えたら目標160人 (次のステージ)
+  int _calculateDynamicGoal(int total) {
+    if (total < 60) {
+      return 40;
+    } else if (total < 200) {
+      return 80;
+    } else if (total < 500) {
+      return 120;
+    } else {
+      return 160;
+    }
   }
 
   void _showMilestoneDialog(int count) {
@@ -147,19 +161,19 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
-  // ここは int 型を受け取るように定義されている
-  Future<void> _shareGoalProgress(int today) async {
-    final remaining = dailyGoal - today;
+  // シェア機能も目標(goal)を引数で受け取るように変更
+  Future<void> _shareGoalProgress(int today, int goal) async {
+    final remaining = goal - today;
     final isAchieved = remaining <= 0;
 
     final String text;
     if (isAchieved) {
-      text = '🎉【目標達成】今日の訪問者数が目標の$dailyGoal人を突破しました！\n'
+      text = '🎉【目標達成】今日の訪問者数が目標の$goal人を突破しました！\n'
           '現在 $today 人の方が訪問中。ありがとうございます！🚀\n'
           '#個人開発 #Flutter #目標達成';
     } else {
-      text = '🔥【緊急ミッション】今日の目標閲覧数 $dailyGoal まで、あと $remaining 人です！\n'
-          '現在 $today/$dailyGoal 人。\n'
+      text = '🔥【緊急ミッション】今日の目標閲覧数 $goal まで、あと $remaining 人です！\n'
+          '現在 $today/$goal 人。\n'
           '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！\n'
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
@@ -186,16 +200,18 @@ class _PageViewStatsState extends State<PageViewStats> {
 
         final data = snapshot.data!;
 
-        // 🛠️ 【最重要】ここで確実に int型 に変換します
-        // これにより、後続の計算や関数呼び出しでのエラーが全て解消されます
+        // データの取得と変換
         final int total = (data['total'] as num?)?.toInt() ?? 0;
         final int today = (data['today'] as num?)?.toInt() ?? 0;
-
         final browsers = data['browsers'] as Map<String, dynamic>? ?? {};
 
-        // 進捗率の計算 (int同士の割り算なので安全)
-        final double progress = (today / dailyGoal).clamp(0.0, 1.0);
-        final int remaining = dailyGoal - today;
+        // 🔥 ここで目標を動的に計算！
+        // 今日の達成(40人)でTotalが積み上がり、明日には自動的に80になります
+        final int currentDailyGoal = _calculateDynamicGoal(total);
+
+        // 進捗率の計算
+        final double progress = (today / currentDailyGoal).clamp(0.0, 1.0);
+        final int remaining = currentDailyGoal - today;
 
         return Container(
           width: 300,
@@ -245,7 +261,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '/ $dailyGoal',
+                                '/ $currentDailyGoal', // 変数に変更
                                 style: TextStyle(
                                     fontSize: 16, color: Colors.grey[500]),
                               ),
@@ -287,13 +303,23 @@ class _PageViewStatsState extends State<PageViewStats> {
                   ),
                 )
               else
-                const Text(
-                  '🎉 本日の目標達成！',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                Column(
+                  children: [
+                    const Text(
+                      '🎉 本日の目標達成！',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    // 目標が低い段階なら「次は80人！」のようなメッセージを出しても良いですね
+                    if (currentDailyGoal < 80)
+                      Text(
+                        '明日から目標がアップします🔥',
+                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                      ),
+                  ],
                 ),
 
               const SizedBox(height: 12),
@@ -303,7 +329,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () =>
-                      _shareGoalProgress(today), // todayはintなのでエラーなし
+                      _shareGoalProgress(today, currentDailyGoal), // ゴールも渡す
                   icon: const Icon(Icons.rocket_launch, size: 18),
                   label: const Text('進捗をシェアして応援を呼ぶ'),
                   style: ElevatedButton.styleFrom(
