@@ -3,7 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:async'; // Timerのために追加
+import 'dart:async';
+import 'dart:ui'; // FontFeatureのために必要
 import '../services/app_share_service.dart';
 import '../services/viral_growth_service.dart';
 
@@ -23,7 +24,6 @@ class _PageViewStatsState extends State<PageViewStats> {
   Future<Map<String, dynamic>>? _statsFuture;
   late final ViralGrowthService _viralGrowthService;
 
-  // ⏱️ タイマー関連の変数を追加
   Timer? _timer;
   Duration _timeUntilReset = Duration.zero;
 
@@ -33,7 +33,6 @@ class _PageViewStatsState extends State<PageViewStats> {
     _viralGrowthService = ViralGrowthService(Supabase.instance.client);
     _statsFuture = _trackAndFetchStats();
 
-    // タイマー開始
     _updateTimeUntilReset();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _updateTimeUntilReset();
@@ -42,23 +41,23 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // メモリリーク防止のため必ず破棄
+    _timer?.cancel();
     super.dispose();
   }
 
-  // 🕒 日本時間の深夜0時までの残り時間を計算
+  // 🕒 修正版: UTCの15:00 (日本時間の0:00) までの時間を正確に計算
   void _updateTimeUntilReset() {
-    final nowUtc = DateTime.now().toUtc();
-    final nowJst = nowUtc.add(const Duration(hours: 9)); // UTC+9 (JST)
+    final now = DateTime.now().toUtc();
 
-    // 次の深夜0時 (JST) を作成
-    final nextMidnightJst = DateTime(
-      nowJst.year,
-      nowJst.month,
-      nowJst.day + 1, // 翌日の0時
-    );
+    // 今日の15:00 UTC (= JST 0:00) をターゲット設定
+    var target = DateTime.utc(now.year, now.month, now.day, 15, 0, 0);
 
-    final difference = nextMidnightJst.difference(nowJst);
+    // もし現在時刻が15:00 UTCを過ぎていたら、ターゲットは「明日の15:00」
+    if (target.isBefore(now)) {
+      target = target.add(const Duration(days: 1));
+    }
+
+    final difference = target.difference(now);
 
     if (mounted) {
       setState(() {
@@ -67,7 +66,6 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
-  // 📝 時間をフォーマットするヘルパー (例: 21時間11分10秒)
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(duration.inHours);
@@ -198,7 +196,6 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   Future<void> _shareToX(int total, int today,
       {bool isMilestone = false}) async {
-    // シェア文言にも残り時間を含める
     final timeStr = _formatDuration(_timeUntilReset);
 
     final String text;
@@ -227,8 +224,6 @@ class _PageViewStatsState extends State<PageViewStats> {
   Future<void> _shareGoalProgress(int today, int goal) async {
     final remaining = goal - today;
     final isAchieved = remaining <= 0;
-
-    // 🔥 シェア文言に残り時間を追加
     final timeStr = _formatDuration(_timeUntilReset);
 
     final String text;
@@ -352,7 +347,7 @@ class _PageViewStatsState extends State<PageViewStats> {
 
               const SizedBox(height: 8),
 
-              // 3. メッセージ & カウントダウン表示
+              // 3. メッセージ & カウントダウン
               if (remaining > 0)
                 Column(
                   children: [
@@ -365,7 +360,6 @@ class _PageViewStatsState extends State<PageViewStats> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // ⏱️ カウントダウン表示
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
@@ -385,9 +379,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                               fontSize: 11,
                               color: Colors.orange,
                               fontWeight: FontWeight.w600,
-                              fontFeatures: [
-                                FontFeature.tabularFigures()
-                              ], // 数字の幅を固定
+                              fontFeatures: [FontFeature.tabularFigures()],
                             ),
                           ),
                         ],
@@ -440,7 +432,6 @@ class _PageViewStatsState extends State<PageViewStats> {
     );
   }
 
-  // (以下、_buildTotalCounter, _showBrowserStats, _getBrowserIcon は変更なし)
   Widget _buildTotalCounter(int total) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
