@@ -1,26 +1,32 @@
-// 1行目の serve インポートは削除します
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// OpenAI APIキーの設定が必要です
+// CORSヘッダーの定義 (これがないとブラウザから拒否されます)
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 
-// serve(...) ではなく Deno.serve(...) を使用します
 Deno.serve(async (req) => {
-  try {
-    // 1. Supabaseクライアントの作成
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // 1. プレフライトリクエスト(OPTIONS)の処理
+    // ブラウザは本番リクエストの前に「送ってもいい？」と確認に来ます。それに「OK」と返します。
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders })
+    }
 
-    // 2. リクエストから日付を取得
-    const { date } = await req.json()
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    try {
+        const supabaseClient = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
 
-    console.log(`Generating challenges for: ${targetDate}`)
+        const { date } = await req.json()
+        const targetDate = date || new Date().toISOString().split('T')[0]
 
-    // 3. AIへのプロンプト作成
-    const prompt = `
+        console.log(`Generating challenges for: ${targetDate}`)
+
+        const prompt = `
     あなたはゲーミフィケーションメモアプリのAIゲームマスターです。
     日付「${targetDate}」のためのデイリーチャレンジを3つ生成してください。
     
@@ -41,59 +47,61 @@ Deno.serve(async (req) => {
     3. JSON以外の文字列は含めないでください。
     `
 
-    // 4. OpenAI API呼び出し
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', 
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-      }),
-    })
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+            }),
+        })
 
-    const aiData = await aiResponse.json()
-    
-    if (!aiData.choices) {
-      throw new Error('Failed to generate challenges from OpenAI')
+        const aiData = await aiResponse.json()
+
+        if (!aiData.choices) {
+            throw new Error('Failed to generate challenges from OpenAI')
+        }
+
+        const content = aiData.choices[0].message.content
+        const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim()
+        const challenges = JSON.parse(cleanJson)
+
+        const insertData = challenges.map((item: any) => ({
+            challenge_date: targetDate,
+            challenge_type: item.challenge_type,
+            challenge_title: item.challenge_title,
+            challenge_description: item.challenge_description,
+            target_value: item.target_value,
+            reward_points: item.reward_points,
+            is_active: true
+        }))
+
+        const { error } = await supabaseClient
+            .from('daily_challenges')
+            .upsert(insertData, { onConflict: 'challenge_date, challenge_type, target_value' })
+
+        if (error) throw error
+
+        // 成功レスポンスにもCORSヘッダーを含める
+        return new Response(
+            JSON.stringify({ success: true, message: `Created ${insertData.length} challenges for ${targetDate}` }),
+            {
+                headers: { ...corsHeaders, "Content-Type": "application/json" }
+            },
+        )
+
+    } catch (error) {
+        // エラーレスポンスにもCORSヘッダーを含める
+        return new Response(
+            JSON.stringify({ success: false, error: error.message }),
+            {
+                status: 500,
+                headers: { ...corsHeaders, "Content-Type": "application/json" }
+            },
+        )
     }
-
-    const content = aiData.choices[0].message.content
-    
-    // JSONのパース
-    const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim()
-    const challenges = JSON.parse(cleanJson)
-
-    // 5. DBへの保存データの整形
-    const insertData = challenges.map((item: any) => ({
-      challenge_date: targetDate,
-      challenge_type: item.challenge_type,
-      challenge_title: item.challenge_title,
-      challenge_description: item.challenge_description,
-      target_value: item.target_value,
-      reward_points: item.reward_points,
-      is_active: true
-    }))
-
-    // 6. DBへ保存
-    const { error } = await supabaseClient
-      .from('daily_challenges')
-      .upsert(insertData, { onConflict: 'challenge_date, challenge_type, target_value' })
-
-    if (error) throw error
-
-    return new Response(
-      JSON.stringify({ success: true, message: `Created ${insertData.length} challenges for ${targetDate}` }),
-      { headers: { "Content-Type": "application/json" } },
-    )
-
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    )
-  }
 })
