@@ -4,6 +4,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/app_share_service.dart';
+// ✅ 追加: バイラル成長サービスをインポート
+import '../services/viral_growth_service.dart';
 
 class PageViewStats extends StatefulWidget {
   final String pagePath;
@@ -20,10 +22,15 @@ class PageViewStats extends StatefulWidget {
 class _PageViewStatsState extends State<PageViewStats> {
   Future<Map<String, dynamic>>? _statsFuture;
 
+  // ✅ 追加: サービスのインスタンス
+  late final ViralGrowthService _viralGrowthService;
+
   @override
   void initState() {
     super.initState();
     _statsFuture = _trackAndFetchStats();
+    // ✅ 追加: サービスの初期化
+    _viralGrowthService = ViralGrowthService(Supabase.instance.client);
   }
 
   Future<String> _getBrowserName() async {
@@ -75,11 +82,6 @@ class _PageViewStatsState extends State<PageViewStats> {
     return false;
   }
 
-  // 🔥 総訪問者数(Total)に基づいて、本日の目標を動的に決定する関数
-  // ロジック:
-  // - Totalが60人までは目標40人 (初期ステージ)
-  // - Totalが60人を超えたら目標80人 (今日の達成で超えるはず！)
-  // - Totalが200人を超えたら目標160人 (次のステージ)
   int _calculateDynamicGoal(int total) {
     if (total < 60) {
       return 40;
@@ -137,6 +139,40 @@ class _PageViewStatsState extends State<PageViewStats> {
     );
   }
 
+  // 🔥 追加: 実績加算ロジック (ViralGrowthServiceを使用)
+  Future<void> _recordShareAchievement() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return; // 未ログインなら何もしない
+
+    try {
+      // キャンペーン中かどうかを確認
+      final isActive = await _viralGrowthService.isShareCampaignActive();
+
+      // ボーナス付与 & 実績カウントアップ (既存の increment_share_count RPC が呼ばれます)
+      await _viralGrowthService.awardShareBonus(
+        userId: user.id,
+        platform: 'goal_progress', // どの機能からのシェアか識別
+        isCampaignActive: isActive,
+      );
+
+      if (mounted) {
+        // ポイント獲得のフィードバック
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isActive
+                ? 'シェアありがとうございます！キャンペーンボーナス50pt獲得🎉'
+                : 'シェアありがとうございます！実績加算＆10pt獲得✨'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error recording share: $e');
+    }
+  }
+
   Future<void> _shareToX(int total, int today,
       {bool isMilestone = false}) async {
     final String text;
@@ -158,10 +194,11 @@ class _PageViewStatsState extends State<PageViewStats> {
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
+      // ✅ 追加: 実績加算
+      await _recordShareAchievement();
     }
   }
 
-  // シェア機能も目標(goal)を引数で受け取るように変更
   Future<void> _shareGoalProgress(int today, int goal) async {
     final remaining = goal - today;
     final isAchieved = remaining <= 0;
@@ -186,6 +223,8 @@ class _PageViewStatsState extends State<PageViewStats> {
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
+      // ✅ 追加: 実績加算
+      await _recordShareAchievement();
     }
   }
 
@@ -205,8 +244,7 @@ class _PageViewStatsState extends State<PageViewStats> {
         final int today = (data['today'] as num?)?.toInt() ?? 0;
         final browsers = data['browsers'] as Map<String, dynamic>? ?? {};
 
-        // 🔥 ここで目標を動的に計算！
-        // 今日の達成(40人)でTotalが積み上がり、明日には自動的に80になります
+        // 目標を動的に計算
         final int currentDailyGoal = _calculateDynamicGoal(total);
 
         // 進捗率の計算
@@ -261,7 +299,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '/ $currentDailyGoal', // 変数に変更
+                                '/ $currentDailyGoal',
                                 style: TextStyle(
                                     fontSize: 16, color: Colors.grey[500]),
                               ),
@@ -313,8 +351,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                         color: Colors.green,
                       ),
                     ),
-                    // 目標が低い段階なら「次は80人！」のようなメッセージを出しても良いですね
-                    if (currentDailyGoal < 80)
+                    if (currentDailyGoal < 160)
                       Text(
                         '明日から目標がアップします🔥',
                         style: TextStyle(fontSize: 10, color: Colors.grey[600]),
@@ -328,8 +365,7 @@ class _PageViewStatsState extends State<PageViewStats> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      _shareGoalProgress(today, currentDailyGoal), // ゴールも渡す
+                  onPressed: () => _shareGoalProgress(today, currentDailyGoal),
                   icon: const Icon(Icons.rocket_launch, size: 18),
                   label: const Text('進捗をシェアして応援を呼ぶ'),
                   style: ElevatedButton.styleFrom(
