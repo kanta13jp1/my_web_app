@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👈 追加
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_page.dart';
-import 'home_page.dart'; // 👈 LeaderboardPageの代わりにHomePageへ遷移するため
+import 'home_page.dart';
 import '../widgets/live_stats_banner.dart';
 import '../widgets/page_view_stats.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
-  // ビルド時に注入されたバージョンを取得
   static const String appVersion =
       String.fromEnvironment('APP_VERSION', defaultValue: '');
 
@@ -17,7 +16,7 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  bool _isLoading = false; // ローディング状態管理
+  bool _isLoading = false;
 
   Future<void> _signInAnonymously() async {
     setState(() {
@@ -25,11 +24,9 @@ class _LandingPageState extends State<LandingPage> {
     });
 
     try {
-      // 匿名ログイン実行
       await Supabase.instance.client.auth.signInAnonymously();
 
       if (mounted) {
-        // ホーム画面へ遷移（戻れないようにpushReplacement）
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
@@ -57,6 +54,21 @@ class _LandingPageState extends State<LandingPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      // 🚀 施策2: スクロールしても常に表示される「追従型CTAボタン」を追加
+      floatingActionButton: _isLoading
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _signInAnonymously,
+              backgroundColor: Colors.amber.shade700,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.rocket_launch),
+              label: const Text(
+                '登録不要で試す',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+
       body: CustomScrollView(
         slivers: [
           // Hero Section
@@ -127,6 +139,38 @@ class _LandingPageState extends State<LandingPage> {
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: Column(
                             children: [
+                              // 🚀 施策1: 「ゲスト利用」を最上位に配置し、色を変えて目立たせる
+                              if (_isLoading)
+                                const CircularProgressIndicator(
+                                    color: Colors.white)
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _signInAnonymously,
+                                    style: ElevatedButton.styleFrom(
+                                      // アクセントカラー（オレンジ）を使用して注目を集める
+                                      backgroundColor: Colors.orange.shade400,
+                                      foregroundColor: Colors.white,
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.flash_on),
+                                    label: const Text(
+                                      '登録不要で今すぐ使う',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 16),
+
+                              // アカウント作成（長期利用向け）は2番手に
                               SizedBox(
                                 width: double.infinity,
                                 height: 56,
@@ -144,48 +188,15 @@ class _LandingPageState extends State<LandingPage> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: theme.primaryColor,
+                                    elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
                                   child: const Text(
-                                    '無料で始める',
+                                    'アカウントを作成して保存',
                                     style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const AuthPage(
-                                          initialMode: AuthMode.signIn,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: const BorderSide(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'ログイン',
-                                    style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -193,22 +204,26 @@ class _LandingPageState extends State<LandingPage> {
                               ),
                               const SizedBox(height: 12),
 
-                              // 👇 ここを修正: ゲストログインボタン
-                              if (_isLoading)
-                                const CircularProgressIndicator(
-                                    color: Colors.white)
-                              else
-                                TextButton(
-                                  onPressed: _signInAnonymously,
-                                  child: const Text(
-                                    'ゲストとしてメモを書く →',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                              // ログインはテキストリンクへ（既存ユーザー向けなので控えめに）
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const AuthPage(
+                                        initialMode: AuthMode.signIn,
+                                      ),
                                     ),
+                                  );
+                                },
+                                child: const Text(
+                                  'すでにアカウントをお持ちの方はこちら',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -333,24 +348,18 @@ class _LandingPageState extends State<LandingPage> {
                           child: SizedBox(
                             width: double.infinity,
                             height: 56,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const AuthPage(
-                                      initialMode: AuthMode.signUp,
-                                    ),
-                                  ),
-                                );
-                              },
+                            child: ElevatedButton.icon(
+                              onPressed: _signInAnonymously,
                               style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.shade400,
+                                foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                '無料で始める',
+                              icon: const Icon(Icons.flash_on),
+                              label: const Text(
+                                '登録不要で今すぐ使う',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
