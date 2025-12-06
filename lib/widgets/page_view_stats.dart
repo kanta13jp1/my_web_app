@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:async'; // Timerのために追加
 import '../services/app_share_service.dart';
-// ✅ 追加: バイラル成長サービスをインポート
 import '../services/viral_growth_service.dart';
 
 class PageViewStats extends StatefulWidget {
@@ -21,16 +21,59 @@ class PageViewStats extends StatefulWidget {
 
 class _PageViewStatsState extends State<PageViewStats> {
   Future<Map<String, dynamic>>? _statsFuture;
-
-  // ✅ 追加: サービスのインスタンス
   late final ViralGrowthService _viralGrowthService;
+
+  // ⏱️ タイマー関連の変数を追加
+  Timer? _timer;
+  Duration _timeUntilReset = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _statsFuture = _trackAndFetchStats();
-    // ✅ 追加: サービスの初期化
     _viralGrowthService = ViralGrowthService(Supabase.instance.client);
+    _statsFuture = _trackAndFetchStats();
+
+    // タイマー開始
+    _updateTimeUntilReset();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateTimeUntilReset();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // メモリリーク防止のため必ず破棄
+    super.dispose();
+  }
+
+  // 🕒 日本時間の深夜0時までの残り時間を計算
+  void _updateTimeUntilReset() {
+    final nowUtc = DateTime.now().toUtc();
+    final nowJst = nowUtc.add(const Duration(hours: 9)); // UTC+9 (JST)
+
+    // 次の深夜0時 (JST) を作成
+    final nextMidnightJst = DateTime(
+      nowJst.year,
+      nowJst.month,
+      nowJst.day + 1, // 翌日の0時
+    );
+
+    final difference = nextMidnightJst.difference(nowJst);
+
+    if (mounted) {
+      setState(() {
+        _timeUntilReset = difference;
+      });
+    }
+  }
+
+  // 📝 時間をフォーマットするヘルパー (例: 21時間11分10秒)
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$hours時間$minutes分$seconds秒';
   }
 
   Future<String> _getBrowserName() async {
@@ -57,8 +100,6 @@ class _PageViewStatsState extends State<PageViewStats> {
       );
 
       final data = response as Map<String, dynamic>;
-
-      // ✅ キリ番チェック
       final int total = (data['total'] as num?)?.toInt() ?? 0;
 
       if (mounted && _isMilestone(total)) {
@@ -83,15 +124,10 @@ class _PageViewStatsState extends State<PageViewStats> {
   }
 
   int _calculateDynamicGoal(int total) {
-    if (total < 60) {
-      return 40;
-    } else if (total < 200) {
-      return 80;
-    } else if (total < 500) {
-      return 120;
-    } else {
-      return 160;
-    }
+    if (total < 60) return 40;
+    if (total < 200) return 80;
+    if (total < 500) return 120;
+    return 160;
   }
 
   void _showMilestoneDialog(int count) {
@@ -110,12 +146,6 @@ class _PageViewStatsState extends State<PageViewStats> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'この奇跡をシェアしてみんなに自慢しませんか？',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
           ],
         ),
         actions: [
@@ -126,9 +156,7 @@ class _PageViewStatsState extends State<PageViewStats> {
           FilledButton.icon(
             icon: const Icon(Icons.share),
             label: const Text('キリ番をシェア'),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.black, // Xカラー
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.black),
             onPressed: () {
               Navigator.pop(context);
               _shareToX(count, 0, isMilestone: true);
@@ -139,24 +167,19 @@ class _PageViewStatsState extends State<PageViewStats> {
     );
   }
 
-  // 🔥 追加: 実績加算ロジック (ViralGrowthServiceを使用)
   Future<void> _recordShareAchievement() async {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return; // 未ログインなら何もしない
+    if (user == null) return;
 
     try {
-      // キャンペーン中かどうかを確認
       final isActive = await _viralGrowthService.isShareCampaignActive();
-
-      // ボーナス付与 & 実績カウントアップ (既存の increment_share_count RPC が呼ばれます)
       await _viralGrowthService.awardShareBonus(
         userId: user.id,
-        platform: 'goal_progress', // どの機能からのシェアか識別
+        platform: 'goal_progress',
         isCampaignActive: isActive,
       );
 
       if (mounted) {
-        // ポイント獲得のフィードバック
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isActive
@@ -175,6 +198,9 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   Future<void> _shareToX(int total, int today,
       {bool isMilestone = false}) async {
+    // シェア文言にも残り時間を含める
+    final timeStr = _formatDuration(_timeUntilReset);
+
     final String text;
     if (isMilestone) {
       text = '🎉 記念すべき $total 人目の訪問者になりました！\n'
@@ -182,19 +208,18 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #キリ番';
     } else {
       text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
+          'リセットまで残り $timeStr ⏳\n'
           '個人開発アプリ「マイメモ」公開中 🚀\n'
           '#個人開発 #Flutter #Supabase';
     }
 
     final url = AppShareService.appUrl;
-
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
     );
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
-      // ✅ 追加: 実績加算
       await _recordShareAchievement();
     }
   }
@@ -203,27 +228,29 @@ class _PageViewStatsState extends State<PageViewStats> {
     final remaining = goal - today;
     final isAchieved = remaining <= 0;
 
+    // 🔥 シェア文言に残り時間を追加
+    final timeStr = _formatDuration(_timeUntilReset);
+
     final String text;
     if (isAchieved) {
       text = '🎉【目標達成】今日の訪問者数が目標の$goal人を突破しました！\n'
-          '現在 $today 人の方が訪問中。ありがとうございます！🚀\n'
+          '残り時間 $timeStr で達成！🚀\n'
+          '現在 $today 人の方が訪問中。ありがとうございます！\n'
           '#個人開発 #Flutter #目標達成';
     } else {
-      text = '🔥【緊急ミッション】今日の目標閲覧数 $goal まで、あと $remaining 人です！\n'
-          '現在 $today/$goal 人。\n'
+      text = '🔥【緊急ミッション】残り $timeStr ⏳\n'
+          '今日の目標閲覧数 $goal まで、あと $remaining 人です！\n'
           '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！\n'
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
 
     final url = AppShareService.appUrl;
-
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
     );
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
-      // ✅ 追加: 実績加算
       await _recordShareAchievement();
     }
   }
@@ -238,16 +265,11 @@ class _PageViewStatsState extends State<PageViewStats> {
         }
 
         final data = snapshot.data!;
-
-        // データの取得と変換
         final int total = (data['total'] as num?)?.toInt() ?? 0;
         final int today = (data['today'] as num?)?.toInt() ?? 0;
         final browsers = data['browsers'] as Map<String, dynamic>? ?? {};
 
-        // 目標を動的に計算
         final int currentDailyGoal = _calculateDynamicGoal(total);
-
-        // 進捗率の計算
         final double progress = (today / currentDailyGoal).clamp(0.0, 1.0);
         final int remaining = currentDailyGoal - today;
 
@@ -268,7 +290,7 @@ class _PageViewStatsState extends State<PageViewStats> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 1. カウンター表示
+              // 1. カウンター
               InkWell(
                 onTap: () => _showBrowserStats(context, browsers),
                 borderRadius: BorderRadius.circular(10),
@@ -330,15 +352,48 @@ class _PageViewStatsState extends State<PageViewStats> {
 
               const SizedBox(height: 8),
 
-              // 3. メッセージ
+              // 3. メッセージ & カウントダウン表示
               if (remaining > 0)
-                Text(
-                  '目標まであと $remaining 人！',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
+                Column(
+                  children: [
+                    Text(
+                      '目標まであと $remaining 人！',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // ⏱️ カウントダウン表示
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.timer_outlined,
+                              size: 14, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            'リセットまで残り ${_formatDuration(_timeUntilReset)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w600,
+                              fontFeatures: [
+                                FontFeature.tabularFigures()
+                              ], // 数字の幅を固定
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 )
               else
                 Column(
@@ -351,11 +406,11 @@ class _PageViewStatsState extends State<PageViewStats> {
                         color: Colors.green,
                       ),
                     ),
-                    if (currentDailyGoal < 160)
-                      Text(
-                        '明日から目標がアップします🔥',
-                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'リセットまで ${_formatDuration(_timeUntilReset)}',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    ),
                   ],
                 ),
 
@@ -369,7 +424,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                   icon: const Icon(Icons.rocket_launch, size: 18),
                   label: const Text('進捗をシェアして応援を呼ぶ'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black, // Xカラー
+                    backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -385,6 +440,7 @@ class _PageViewStatsState extends State<PageViewStats> {
     );
   }
 
+  // (以下、_buildTotalCounter, _showBrowserStats, _getBrowserIcon は変更なし)
   Widget _buildTotalCounter(int total) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
