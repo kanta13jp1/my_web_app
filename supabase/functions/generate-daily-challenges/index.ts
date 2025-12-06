@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// CORSヘッダー
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -8,7 +7,9 @@ const corsHeaders = {
 
 // Gemini API設定
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY')
-const GEMINI_MODEL = 'gemini-1.5-flash' // 高速でコスト効率の良いモデル
+
+const GEMINI_MODEL = 'gemini-flash-latest'
+
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 Deno.serve(async (req) => {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
         const { date } = await req.json()
         const targetDate = date || new Date().toISOString().split('T')[0]
 
-        console.log(`Generating challenges for: ${targetDate} using Gemini`)
+        console.log(`Generating challenges for: ${targetDate} using Gemini (${GEMINI_MODEL})`)
 
         if (!GEMINI_API_KEY) {
             throw new Error('GOOGLE_AI_API_KEY is not set')
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
     あなたはゲーミフィケーションメモアプリのAIゲームマスターです。
     日付「${targetDate}」のためのデイリーチャレンジを3つ生成してください。
     
-    以下のJSONフォーマットの配列のみを出力してください（Markdownのコードブロックは不要です）:
+    出力は以下のJSONフォーマットの配列のみにしてください（Markdownのコードブロックは不要です）:
     [
       {
         "challenge_title": "タイトル (20文字以内)",
@@ -53,41 +54,51 @@ Deno.serve(async (req) => {
     3. JSON以外の文字列は含めないでください。
     `
 
-        // 4. Gemini API呼び出し
-        const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    // JSONモードを強制（Gemini 1.5以降で有効）
-                    responseMimeType: "application/json"
-                }
-            }),
-        })
+        // 4. Call Gemini API
+        const geminiResponse = await fetch(
+            `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        responseMimeType: "application/json"
+                    }
+                }),
+            }
+        )
 
         if (!geminiResponse.ok) {
-            const errorText = await geminiResponse.text()
-            throw new Error(`Gemini API Error: ${geminiResponse.status} ${errorText}`)
+            const errorData = await geminiResponse.text()
+            console.error('Gemini API error:', errorData)
+            throw new Error(`Gemini API error: ${geminiResponse.status} ${errorData}`)
         }
 
         const geminiData = await geminiResponse.json()
 
-        // レスポンスの抽出
-        const contentText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
+        // Extract Result
+        let resultText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
-        if (!contentText) {
-            throw new Error('Failed to generate challenges from Gemini')
+        if (!resultText) {
+            throw new Error('No response from Gemini API')
         }
 
-        // JSONパース (Markdown記法が含まれている場合に備えてクリーニング)
-        const cleanJson = contentText.replace(/```json/g, '').replace(/```/g, '').trim()
-        const challenges = JSON.parse(cleanJson)
+        // Clean JSON (Markdown記法の除去)
+        resultText = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+
+        let challenges;
+        try {
+            challenges = JSON.parse(resultText)
+        } catch (e) {
+            console.error("JSON Parse Error:", resultText)
+            throw new Error("Failed to parse AI response")
+        }
 
         // 5. DBへの保存データの整形
         const insertData = challenges.map((item: any) => ({
@@ -108,7 +119,10 @@ Deno.serve(async (req) => {
         if (error) throw error
 
         return new Response(
-            JSON.stringify({ success: true, message: `Created ${insertData.length} challenges for ${targetDate} via Gemini` }),
+            JSON.stringify({
+                success: true,
+                message: `Created ${insertData.length} challenges for ${targetDate} via Gemini (${GEMINI_MODEL})`
+            }),
             {
                 headers: { ...corsHeaders, "Content-Type": "application/json" }
             },

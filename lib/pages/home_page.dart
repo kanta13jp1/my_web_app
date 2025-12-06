@@ -593,18 +593,46 @@ class _HomePageState extends State<HomePage> {
                     // 成長メトリクスバナー
                     const GrowthMetricsBanner(),
 
-                    // ページビュー統計
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: PageViewStats(pagePath: '/home'),
-                    ),
+                    // ▼▼▼ 修正箇所ここから ▼▼▼
+                    // 訪問者数とチャレンジを「ダッシュボード」としてグループ化し、開閉可能にする
+                    Theme(
+                      // ExpansionTileの上下の線を消すためのテーマ設定
+                      data: Theme.of(context)
+                          .copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        initiallyExpanded: true, // 最初は開いた状態にする
+                        tilePadding:
+                            const EdgeInsets.symmetric(horizontal: 16.0),
+                        title: Row(
+                          children: const [
+                            Icon(Icons.dashboard_outlined, color: Colors.grey),
+                            SizedBox(width: 8),
+                            Text(
+                              '本日のダッシュボード',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          // ページビュー統計
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: PageViewStats(pagePath: '/home'),
+                          ),
 
-                    // ✅ 追加: デイリーチャレンジサマリー
-                    const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: DailyChallengeSummaryCard(),
+                          // デイリーチャレンジサマリー
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 8.0),
+                            child: DailyChallengeSummaryCard(),
+                          ),
+                        ],
+                      ),
                     ),
+                    // ▲▲▲ 修正箇所ここまで ▲▲▲
 
                     // レベル表示
                     if (_userStats != null)
