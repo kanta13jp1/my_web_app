@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+// ✅ 追加: AppShareService をインポート
+import '../services/app_share_service.dart';
 
 class PageViewStats extends StatefulWidget {
   final String pagePath;
@@ -134,8 +136,9 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #Supabase';
     }
 
-    // 現在のページのURLを取得（Webの場合）または固定URL
-    final url = 'https://my-web-app-b67f4.web.app/landing';
+// ✅ 修正: 直書きをやめて、AppShareServiceのURLを参照するように変更
+    // これでパラメータ付きのURL(?v=test2025)が自動的に使われます
+    final url = AppShareService.appUrl;
 
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',

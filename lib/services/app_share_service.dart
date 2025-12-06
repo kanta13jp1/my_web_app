@@ -7,7 +7,7 @@ import '../models/philosopher_quote.dart';
 
 /// アプリ自体をSNSでシェアするためのサービス
 class AppShareService {
-  static const String appUrl = 'https://my-web-app-b67f4.web.app/';
+  static const String appUrl = 'https://my-web-app-b67f4.web.app/?v=test2025';
   static const String appName = 'マイメモ';
 
   /// Netlify FunctionsのベースURL
