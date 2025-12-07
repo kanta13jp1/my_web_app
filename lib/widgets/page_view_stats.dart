@@ -4,7 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
-import 'dart:ui'; // FontFeatureのために必要
+import 'dart:ui';
 import '../services/app_share_service.dart';
 import '../services/viral_growth_service.dart';
 
@@ -45,19 +45,17 @@ class _PageViewStatsState extends State<PageViewStats> {
     super.dispose();
   }
 
-  // 🕒 修正版: UTCの15:00 (日本時間の0:00) までの時間を正確に計算
+  // 🕒 修正: 日本時間 (JST) の深夜0時までのカウントダウンを厳密に計算
   void _updateTimeUntilReset() {
-    final now = DateTime.now().toUtc();
+    final nowUtc = DateTime.now().toUtc();
+    // UTC時間をJST (+9時間) に変換して計算
+    final nowJst = nowUtc.add(const Duration(hours: 9));
 
-    // 今日の15:00 UTC (= JST 0:00) をターゲット設定
-    var target = DateTime.utc(now.year, now.month, now.day, 15, 0, 0);
+    // 今日の深夜0時（＝明日の始まり）を作成
+    // 例: 今が 12/7 18:25 なら、ターゲットは 12/8 00:00:00
+    final nextMidnightJst = DateTime(nowJst.year, nowJst.month, nowJst.day + 1);
 
-    // もし現在時刻が15:00 UTCを過ぎていたら、ターゲットは「明日の15:00」
-    if (target.isBefore(now)) {
-      target = target.add(const Duration(days: 1));
-    }
-
-    final difference = target.difference(now);
+    final difference = nextMidnightJst.difference(nowJst);
 
     if (mounted) {
       setState(() {
@@ -196,21 +194,19 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   Future<void> _shareToX(int total, int today,
       {bool isMilestone = false}) async {
-    // ✅ 追加: バージョン情報を取得
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
-
     final timeStr = _formatDuration(_timeUntilReset);
 
     final String text;
     if (isMilestone) {
       text = '🎉 記念すべき $total 人目の訪問者になりました！\n'
-          '個人開発アプリ「マイメモ」でキリ番ゲット 🚀$versionText\n' // バージョン追加
+          '個人開発アプリ「マイメモ」でキリ番ゲット 🚀$versionText\n'
           '#個人開発 #Flutter #キリ番';
     } else {
       text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
           'リセットまで残り $timeStr ⏳\n'
-          '個人開発アプリ「マイメモ」公開中 🚀$versionText\n' // バージョン追加
+          '個人開発アプリ「マイメモ」公開中 🚀$versionText\n'
           '#個人開発 #Flutter #Supabase';
     }
 
@@ -226,10 +222,8 @@ class _PageViewStatsState extends State<PageViewStats> {
   }
 
   Future<void> _shareGoalProgress(int today, int goal) async {
-    // ✅ 追加: バージョン情報を取得
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
-
     final remaining = goal - today;
     final isAchieved = remaining <= 0;
     final timeStr = _formatDuration(_timeUntilReset);
@@ -237,13 +231,13 @@ class _PageViewStatsState extends State<PageViewStats> {
     final String text;
     if (isAchieved) {
       text = '🎉【目標達成】今日の訪問者数が目標の$goal人を突破しました！\n'
-          '残り時間 $timeStr で達成！🚀$versionText\n' // バージョン追加
+          '残り時間 $timeStr で達成！🚀$versionText\n'
           '現在 $today 人の方が訪問中。ありがとうございます！\n'
           '#個人開発 #Flutter #目標達成';
     } else {
       text = '🔥【緊急ミッション】残り $timeStr ⏳\n'
           '今日の目標閲覧数 $goal まで、あと $remaining 人です！\n'
-          '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！$versionText\n' // バージョン追加
+          '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！$versionText\n'
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
 
