@@ -3,8 +3,7 @@ import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../models/sort_type.dart';
-// ❌ 削除: import 'auth_page.dart';
-import 'landing_page.dart'; // ✅ 追加: LandingPageをインポート
+import 'landing_page.dart'; // AuthPageの代わりにLandingPageへ遷移
 import '../utils/app_logger.dart';
 import 'note_editor_page.dart';
 import 'share_note_dialog.dart';
@@ -34,6 +33,8 @@ import '../widgets/campaigns_banner.dart';
 import '../widgets/floating_timer_widget.dart';
 import '../widgets/page_view_stats.dart';
 import '../widgets/daily_challenge_summary_card.dart';
+// ✅ 追加: 統計ページへの遷移用
+import 'enhanced_statistics_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -43,7 +44,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // ... (変数はそのまま) ...
   List<Note> _notes = [];
   List<Note> _filteredNotes = [];
   List<Category> _categories = [];
@@ -85,7 +85,6 @@ class _HomePageState extends State<HomePage> {
     _checkDailyLoginBonus();
   }
 
-  // ... (メソッド群はそのまま) ...
   void _startPresenceTracking() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId != null) {
@@ -94,7 +93,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _checkDailyLoginBonus() async {
-    // ...
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
@@ -119,13 +117,15 @@ class _HomePageState extends State<HomePage> {
         _loadUserStats();
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check daily login bonus',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Failed to check daily login bonus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   Future<void> _loadUserStats() async {
-    // ...
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -139,8 +139,11 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading user stats',
-          error: e, stackTrace: stackTrace,);
+      AppLogger.error(
+        'Error loading user stats',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -442,7 +445,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ 修正: ログアウト時の遷移先をLandingPageに変更
   Future<void> _signOut() async {
     AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
@@ -599,12 +601,12 @@ class _HomePageState extends State<HomePage> {
                       // ExpansionTileの上下の線を消すためのテーマ設定
                       data: Theme.of(context)
                           .copyWith(dividerColor: Colors.transparent),
-                      child: const ExpansionTile(
+                      child: ExpansionTile(
                         initiallyExpanded: true, // 最初は開いた状態にする
                         tilePadding:
-                            EdgeInsets.symmetric(horizontal: 16.0),
+                            const EdgeInsets.symmetric(horizontal: 16.0),
                         title: Row(
-                          children: [
+                          children: const [
                             Icon(Icons.dashboard_outlined, color: Colors.grey),
                             SizedBox(width: 8),
                             Text(
@@ -618,17 +620,66 @@ class _HomePageState extends State<HomePage> {
                         ),
                         children: [
                           // ページビュー統計
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.0),
                             child: PageViewStats(pagePath: '/home'),
                           ),
 
                           // デイリーチャレンジサマリー
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0,),
+                                horizontal: 16.0, vertical: 8.0),
                             child: DailyChallengeSummaryCard(),
                           ),
+
+                          // ▼▼▼ 追加: 統計ページへの強力な誘導ボタン ▼▼▼
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const EnhancedStatisticsPage(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  // 赤色＋影付きで緊急感を出す
+                                  backgroundColor: Colors.redAccent,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 8,
+                                  shadowColor:
+                                      Colors.redAccent.withValues(alpha: 0.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.new_releases, size: 28),
+                                label: const Column(
+                                  children: [
+                                    Text(
+                                      '⚠️ 隠しページを見る',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      'タップして限定ボーナスを確認',
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.white70),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // ▲▲▲ 追加ここまで ▲▲▲
                         ],
                       ),
                     ),

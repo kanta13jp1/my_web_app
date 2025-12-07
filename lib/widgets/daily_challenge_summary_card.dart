@@ -61,9 +61,11 @@ class _DailyChallengeSummaryCardState extends State<DailyChallengeSummaryCard> {
 
     if (_isLoading) {
       return const Card(
-          child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),),);
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
     }
 
     if (_challenges.isEmpty) return const SizedBox.shrink();

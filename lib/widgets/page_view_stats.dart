@@ -195,9 +195,11 @@ class _PageViewStatsState extends State<PageViewStats> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isActive
-                ? 'シェアありがとうございます！キャンペーンボーナス50pt獲得🎉'
-                : 'シェアありがとうございます！実績加算＆10pt獲得✨',),
+            content: Text(
+              isActive
+                  ? 'シェアありがとうございます！キャンペーンボーナス50pt獲得🎉'
+                  : 'シェアありがとうございます！実績加算＆10pt獲得✨',
+            ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
@@ -209,8 +211,11 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
-  Future<void> _shareToX(int total, int today,
-      {bool isMilestone = false,}) async {
+  Future<void> _shareToX(
+    int total,
+    int today, {
+    bool isMilestone = false,
+  }) async {
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
     final timeStr = _formatDuration(_timeUntilReset);
@@ -319,7 +324,9 @@ class _PageViewStatsState extends State<PageViewStats> {
                           Text(
                             '今日の訪問者',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600],),
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -337,7 +344,9 @@ class _PageViewStatsState extends State<PageViewStats> {
                               Text(
                                 '/ $currentDailyGoal',
                                 style: TextStyle(
-                                    fontSize: 16, color: Colors.grey[500],),
+                                  fontSize: 16,
+                                  color: Colors.grey[500],
+                                ),
                               ),
                             ],
                           ),
@@ -381,7 +390,9 @@ class _PageViewStatsState extends State<PageViewStats> {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2,),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -389,8 +400,11 @@ class _PageViewStatsState extends State<PageViewStats> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.timer_outlined,
-                              size: 14, color: Colors.orange,),
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'リセットまで残り ${_formatDuration(_timeUntilReset)}',

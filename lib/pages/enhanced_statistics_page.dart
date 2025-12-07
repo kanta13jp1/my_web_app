@@ -20,9 +20,48 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
   @override
   void initState() {
     super.initState();
-    // 個人の成長データを扱うGamificationServiceを使用
     _gamificationService = GamificationService(supabase);
     _loadUserStats();
+    // 隠しページボーナス演出（1回のみ実行される想定だが、今回は演出として毎回表示）
+    _giveVisitBonus();
+  }
+
+  // ボーナス付与メソッド（演出）
+  Future<void> _giveVisitBonus() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      if (mounted) {
+        // 少し遅延させて表示し、ユーザーに気づかせる
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.celebration, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(child: Text('隠しページ発見ボーナス！ 経験値を獲得しました✨')),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: SnackBarAction(
+              label: '確認',
+              textColor: Colors.white,
+              onPressed: _loadUserStats, // ステータス更新（再読み込み）
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      // エラーは無視
+    }
   }
 
   Future<void> _loadUserStats() async {
@@ -73,6 +112,55 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ▼▼▼ 追加: 来訪感謝メッセージ ▼▼▼
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber[200]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lightbulb,
+                            color: Colors.amber[800], size: 28),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ここを見つけたあなたはレアユーザー！',
+                                style: TextStyle(
+                                  color: Colors.brown[800],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'このページの訪問者数もカウントされています✨',
+                                style: TextStyle(
+                                  color: Colors.brown[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // ▲▲▲ 追加ここまで ▲▲▲
+
                   // 1. レベル・経験値カード
                   if (_userStats != null) _buildLevelHeader(theme, _userStats!),
 
@@ -96,7 +184,6 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 400),
-                      // 統計ページ専用のパスを指定
                       child: const PageViewStats(pagePath: '/statistics'),
                     ),
                   ),
@@ -194,7 +281,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.emoji_events,
-                    color: Colors.white, size: 32,),
+                    color: Colors.white, size: 32),
               ),
             ],
           ),
@@ -209,12 +296,12 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                     '次のレベルまで',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,),
+                        fontSize: 12),
                   ),
                   Text(
                     'あと ${pointsPerLevel - progressPoints} pt',
                     style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold,),
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
