@@ -45,17 +45,19 @@ class _PageViewStatsState extends State<PageViewStats> {
     super.dispose();
   }
 
-  // 🕒 修正: 日本時間 (JST) の深夜0時までのカウントダウンを厳密に計算
+// ✅ 修正版: タイムゾーンに依存せず、確実に日本時間0時（UTC 15:00）をターゲットにする
   void _updateTimeUntilReset() {
-    final nowUtc = DateTime.now().toUtc();
-    // UTC時間をJST (+9時間) に変換して計算
-    final nowJst = nowUtc.add(const Duration(hours: 9));
+    final now = DateTime.now().toUtc();
+    
+    // 今日の UTC 15:00（＝日本時間の深夜0:00）を設定
+    DateTime target = DateTime.utc(now.year, now.month, now.day, 15, 0, 0);
 
-    // 今日の深夜0時（＝明日の始まり）を作成
-    // 例: 今が 12/7 18:25 なら、ターゲットは 12/8 00:00:00
-    final nextMidnightJst = DateTime(nowJst.year, nowJst.month, nowJst.day + 1);
+    // もし現在時刻がすでに UTC 15:00 を過ぎていれば、ターゲットは「明日の UTC 15:00」
+    if (now.isAfter(target)) {
+      target = target.add(const Duration(days: 1));
+    }
 
-    final difference = nextMidnightJst.difference(nowJst);
+    final difference = target.difference(now);
 
     if (mounted) {
       setState(() {
