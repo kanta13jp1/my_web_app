@@ -196,17 +196,21 @@ class _PageViewStatsState extends State<PageViewStats> {
 
   Future<void> _shareToX(int total, int today,
       {bool isMilestone = false}) async {
+    // ✅ 追加: バージョン情報を取得
+    const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
+    final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
+
     final timeStr = _formatDuration(_timeUntilReset);
 
     final String text;
     if (isMilestone) {
       text = '🎉 記念すべき $total 人目の訪問者になりました！\n'
-          '個人開発アプリ「マイメモ」でキリ番ゲット 🚀\n'
+          '個人開発アプリ「マイメモ」でキリ番ゲット 🚀$versionText\n' // バージョン追加
           '#個人開発 #Flutter #キリ番';
     } else {
       text = '現在のLP閲覧数は $total 回（本日 $today 回）です！\n'
           'リセットまで残り $timeStr ⏳\n'
-          '個人開発アプリ「マイメモ」公開中 🚀\n'
+          '個人開発アプリ「マイメモ」公開中 🚀$versionText\n' // バージョン追加
           '#個人開発 #Flutter #Supabase';
     }
 
@@ -222,6 +226,10 @@ class _PageViewStatsState extends State<PageViewStats> {
   }
 
   Future<void> _shareGoalProgress(int today, int goal) async {
+    // ✅ 追加: バージョン情報を取得
+    const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
+    final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
+
     final remaining = goal - today;
     final isAchieved = remaining <= 0;
     final timeStr = _formatDuration(_timeUntilReset);
@@ -229,13 +237,13 @@ class _PageViewStatsState extends State<PageViewStats> {
     final String text;
     if (isAchieved) {
       text = '🎉【目標達成】今日の訪問者数が目標の$goal人を突破しました！\n'
-          '残り時間 $timeStr で達成！🚀\n'
+          '残り時間 $timeStr で達成！🚀$versionText\n' // バージョン追加
           '現在 $today 人の方が訪問中。ありがとうございます！\n'
           '#個人開発 #Flutter #目標達成';
     } else {
       text = '🔥【緊急ミッション】残り $timeStr ⏳\n'
           '今日の目標閲覧数 $goal まで、あと $remaining 人です！\n'
-          '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！\n'
+          '👇 1クリックで応援してください！あなたのアクセスでグラフが進みます！$versionText\n' // バージョン追加
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
 
