@@ -211,11 +211,8 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
-  Future<void> _shareToX(
-    int total,
-    int today, {
-    bool isMilestone = false,
-  }) async {
+  Future<void> _shareToX(int total, int today,
+      {bool isMilestone = false}) async {
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
     final timeStr = _formatDuration(_timeUntilReset);
@@ -232,10 +229,15 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #Supabase';
     }
 
-    const url = AppShareService.appUrl;
+    // ▼▼▼ 修正箇所: AppShareService.appUrl を直リンクURLに置き換え ▼▼▼
+    // 例: Base URL + #/page_path (例: https://my-web-app.com/#/statistics)
+    final baseUrl = AppShareService.appUrl.split('/#/').first;
+    final shareUrl = '$baseUrl/#${widget.pagePath}';
+
     final tweetUrl = Uri.parse(
-      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
+      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(shareUrl)}',
     );
+    // ▲▲▲ 修正箇所ここまで ▲▲▲
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
@@ -263,10 +265,14 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
 
-    const url = AppShareService.appUrl;
+    // ▼▼▼ 修正箇所: AppShareService.appUrl を直リンクURLに置き換え ▼▼▼
+    final baseUrl = AppShareService.appUrl.split('/#/').first;
+    final shareUrl = '$baseUrl/#${widget.pagePath}';
+
     final tweetUrl = Uri.parse(
-      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
+      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(shareUrl)}',
     );
+    // ▲▲▲ 修正箇所ここまで ▲▲▲
 
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
