@@ -29,7 +29,7 @@ $body = @{
 } | ConvertTo-Json -Depth 10
 
 Invoke-WebRequest `
-  -Uri "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey" `
+  -Uri "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey" `
   -Method POST `
   -ContentType "application/json" `
   -Body $body
@@ -152,7 +152,7 @@ supabase secrets list
 **確認**:
 現在のエンドポイント（index.tsから）:
 ```
-https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent
 ```
 
 **最新のドキュメント**:
@@ -187,7 +187,7 @@ https://ai.google.dev/api/rest/v1beta/models/generateContent
 ```bash
 # Linux/Mac/Windows (Git Bash)
 curl -X POST \
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY" \
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"contents":[{"parts":[{"text":"Hello"}]}]}'
 ```
@@ -214,7 +214,7 @@ curl -X POST \
 {
   "error": {
     "code": 404,
-    "message": "models/gemini-1.5-flash is not found",
+    "message": "models/gemini-flash-latest is not found",
     "status": "NOT_FOUND"
   }
 }

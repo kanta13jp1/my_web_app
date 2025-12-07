@@ -90,7 +90,7 @@ Text(
 - AIからのインサイト（Activity insights）
 
 **技術スタック**:
-- Google Gemini API (gemini-1.5-flash)
+- Google Gemini API (gemini-flash-latest)
 - Supabase Edge Function
 - Flutter Web/Mobile UI
 

@@ -78,7 +78,7 @@ const corsHeaders = {
 
 // Gemini API設定
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY')
-const GEMINI_MODEL = 'gemini-1.5-flash' // 高速・無料モデル
+const GEMINI_MODEL = 'gemini-flash-latest' // 高速・無料モデル
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {

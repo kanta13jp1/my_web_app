@@ -136,7 +136,7 @@ supabase functions deploy ai-assistant
 **テストリクエスト**:
 ```powershell
 # APIキーが有効か確認
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY" `
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=YOUR_API_KEY" `
   -H "Content-Type: application/json" `
   -d '{\"contents\":[{\"parts\":[{\"text\":\"Hello\"}]}]}'
 ```

@@ -89,7 +89,7 @@ $body = @{
 
 try {
     $response = Invoke-WebRequest `
-      -Uri "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey" `
+      -Uri "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey" `
       -Method POST `
       -ContentType "application/json" `
       -Body $body

@@ -177,7 +177,7 @@ export default {
 ### 技術スタック
 
 **バックエンド**:
-- ✅ Google Gemini API (gemini-1.5-flash)
+- ✅ Google Gemini API (gemini-flash-latest)
 - ✅ Supabase Edge Function
 - ✅ 指数バックオフリトライロジック
 

@@ -216,7 +216,7 @@ AppLogger.error(
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const GEMINI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY')
-const GEMINI_MODEL = 'gemini-1.5-flash' // 高速・無料
+const GEMINI_MODEL = 'gemini-flash-latest' // 高速・無料
 
 serve(async (req) => {
   // ... 認証処理 ...
