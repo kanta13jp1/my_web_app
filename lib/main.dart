@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
-import 'pages/auth_page.dart';
+// ❌ 削除: import 'pages/auth_page.dart';
 import 'pages/home_page.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/landing_page.dart';
@@ -17,7 +17,7 @@ import 'pages/compatibility_landing_page.dart';
 import 'services/theme_service.dart';
 import 'services/timer_service.dart';
 
-// Supabaseクライアントのゲッター（late初期化を避ける）
+// Supabaseクライアントのゲッター
 SupabaseClient get supabase => Supabase.instance.client;
 
 Future<void> main() async {
@@ -56,17 +56,14 @@ class _AuthenticatedHomePage extends StatelessWidget {
           .maybeSingle();
 
       if (response == null) {
-        // New user, show onboarding
         return true;
       }
 
       final metadata = response['metadata'] as Map<String, dynamic>?;
       final onboardingCompleted = metadata?['onboarding_completed'] as bool?;
 
-      // Show onboarding if not completed
       return onboardingCompleted != true;
     } catch (e) {
-      // Default to not showing onboarding on error
       return false;
     }
   }
@@ -103,7 +100,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
-      themeMode: themeService.getFlutterThemeMode(), // 更新
+      themeMode: themeService.getFlutterThemeMode(),
       initialRoute: '/',
       onGenerateRoute: (settings) {
         // 共有リンク用のルーティング（認証不要）
@@ -114,9 +111,8 @@ class MyApp extends StatelessWidget {
           );
         }
 
-        // Parse query parameters for referral code
         final uri = Uri.parse(settings.name ?? '/');
-        final queryParams = uri.queryParameters;
+        // final queryParams = uri.queryParameters; // ※必要に応じてLandingPageに渡す
 
         // 通常のルーティング
         switch (uri.path) {
@@ -128,12 +124,12 @@ class MyApp extends StatelessWidget {
                   : const LandingPage(),
             );
           case '/landing':
-            // ランディングページ（認証不要）
+            // ランディングページ
             return MaterialPageRoute(
               builder: (_) => const LandingPage(),
             );
           case '/leaderboard':
-            // リーダーボード（認証不要）
+            // リーダーボード
             return MaterialPageRoute(
               builder: (_) => const LeaderboardPage(),
             );
@@ -142,58 +138,50 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const HomePage(),
             );
+
+          // ✅ 変更: 認証系ルートはすべてLandingPageへ統合
           case '/auth':
-            // 認証ページ（紹介コードサポート）
-            return MaterialPageRoute(
-              builder: (_) => AuthPage(
-                referralCode: queryParams['ref'],
-              ),
-            );
           case '/signup':
-            // サインアップページ（紹介コードサポート）
             return MaterialPageRoute(
-              builder: (_) => AuthPage(
-                initialMode: AuthMode.signUp,
-                referralCode: queryParams['ref'],
-              ),
+              builder: (_) => const LandingPage(),
             );
+
           case '/statistics':
-            // サイト統計ページ（認証必要）
+            // サイト統計ページ
             return MaterialPageRoute(
               builder: (_) => const EnhancedStatisticsPage(),
             );
           case '/referral':
-            // 紹介プログラムページ（認証必要）
+            // 紹介プログラムページ
             return MaterialPageRoute(
               builder: (_) => const ReferralPage(),
             );
           case '/challenges':
-            // デイリーチャレンジページ（認証必要）
+            // デイリーチャレンジページ
             return MaterialPageRoute(
               builder: (_) => const DailyChallengesPage(),
             );
           case '/gallery':
-            // メモギャラリーページ（認証不要）
+            // メモギャラリーページ
             return MaterialPageRoute(
               builder: (_) => const MemoGalleryPage(),
             );
           case '/documents':
-            // ドキュメントページ（認証不要）
+            // ドキュメントページ
             return MaterialPageRoute(
               builder: (_) => const DocumentsPage(),
             );
           case '/personality-test':
-            // 性格診断ページ（認証不要）
+            // 性格診断ページ
             return MaterialPageRoute(
               builder: (_) => const PersonalityTestLandingPage(),
             );
           case '/compatibility':
-            // 恋愛相性診断ページ（認証不要）
+            // 恋愛相性診断ページ
             return MaterialPageRoute(
               builder: (_) => const CompatibilityLandingPage(),
             );
           default:
-            // デフォルトはランディングページ
             return MaterialPageRoute(
               builder: (_) => const LandingPage(),
             );

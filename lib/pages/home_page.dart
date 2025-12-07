@@ -3,7 +3,8 @@ import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
 import '../models/sort_type.dart';
-import 'auth_page.dart';
+// ❌ 削除: import 'auth_page.dart';
+import 'landing_page.dart'; // ✅ 追加: LandingPageをインポート
 import '../utils/app_logger.dart';
 import 'note_editor_page.dart';
 import 'share_note_dialog.dart';
@@ -32,7 +33,6 @@ import '../widgets/growth_metrics_banner.dart';
 import '../widgets/campaigns_banner.dart';
 import '../widgets/floating_timer_widget.dart';
 import '../widgets/page_view_stats.dart';
-// ✅ 追加: デイリーチャレンジサマリーカード
 import '../widgets/daily_challenge_summary_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -442,12 +442,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ✅ 修正: ログアウト時の遷移先をLandingPageに変更
   Future<void> _signOut() async {
     AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AuthPage()),
+        MaterialPageRoute(builder: (_) => const LandingPage()),
       );
     }
   }
@@ -593,7 +594,6 @@ class _HomePageState extends State<HomePage> {
                     // 成長メトリクスバナー
                     const GrowthMetricsBanner(),
 
-                    // ▼▼▼ 修正箇所ここから ▼▼▼
                     // 訪問者数とチャレンジを「ダッシュボード」としてグループ化し、開閉可能にする
                     Theme(
                       // ExpansionTileの上下の線を消すためのテーマ設定
@@ -632,7 +632,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    // ▲▲▲ 修正箇所ここまで ▲▲▲
 
                     // レベル表示
                     if (_userStats != null)

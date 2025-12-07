@@ -3,7 +3,8 @@ import '../main.dart';
 import '../services/gamification_service.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/user_stats.dart';
-import 'auth_page.dart';
+// ❌ 削除: import 'auth_page.dart';
+import 'landing_page.dart'; // ✅ 追加: LandingPageをインポート
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -220,11 +221,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
+                          // ✅ 修正: LandingPageへ遷移
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  const AuthPage(initialMode: AuthMode.signUp),
+                              builder: (_) => const LandingPage(),
                             ),
                           );
                         },
@@ -244,11 +245,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       const SizedBox(width: 12),
                       OutlinedButton(
                         onPressed: () {
+                          // ✅ 修正: LandingPageへ遷移
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  const AuthPage(initialMode: AuthMode.signIn),
+                              builder: (_) => const LandingPage(),
                             ),
                           );
                         },
