@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:async';
-import '../services/presence_service.dart';
-import '../models/site_statistics.dart';
-import '../models/growth_metrics.dart';
-import '../widgets/growth_chart_widget.dart';
+import '../main.dart';
+import '../models/user_stats.dart';
+import '../services/gamification_service.dart';
+import '../widgets/page_view_stats.dart';
 import '../utils/app_logger.dart';
 
 class EnhancedStatisticsPage extends StatefulWidget {
@@ -14,143 +12,37 @@ class EnhancedStatisticsPage extends StatefulWidget {
   State<EnhancedStatisticsPage> createState() => _EnhancedStatisticsPageState();
 }
 
-class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
-    with SingleTickerProviderStateMixin {
-  final _supabase = Supabase.instance.client;
-  late PresenceService _presenceService;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
-  SiteStatistics? _siteStats;
-  int _onlineUsers = 0;
-  int _onlineGuests = 0;
-  List<GrowthMetrics> _growthMetrics = [];
+class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
+  late final GamificationService _gamificationService;
+  UserStats? _userStats;
   bool _isLoading = true;
-  Timer? _realTimeUpdateTimer;
-  String _selectedPeriod = '7days'; // 7days, 30days, 90days, all
 
   @override
   void initState() {
     super.initState();
-    _presenceService = PresenceService(_supabase);
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-    );
-    _loadStatistics();
-    _startRealTimeUpdates();
-    _animationController.forward();
+    // 既存のPresenceServiceではなく、個人の成長を扱うGamificationServiceを使用
+    _gamificationService = GamificationService(supabase);
+    _loadUserStats();
   }
 
-  @override
-  void dispose() {
-    _realTimeUpdateTimer?.cancel();
-    _animationController.dispose();
-    _presenceService.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadStatistics() async {
+  Future<void> _loadUserStats() async {
     try {
-      setState(() => _isLoading = true);
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-      // Update statistics first
-      await _presenceService.updateSiteStatistics();
+      // ユーザー自身の統計データを取得
+      var stats = await _gamificationService.getUserStats(userId);
+      stats ??= await _gamificationService.initializeUserStats(userId);
 
-      // Load statistics
-      final stats = await _presenceService.getSiteStatistics();
-      final onlineUsers = await _presenceService.getOnlineUsersCount();
-      final onlineGuests = await _presenceService.getOnlineGuestsCount();
-
-      // Load growth metrics
-      final metrics = await _loadGrowthMetrics(_selectedPeriod);
-
-      setState(() {
-        _siteStats = stats;
-        _onlineUsers = onlineUsers;
-        _onlineGuests = onlineGuests;
-        _growthMetrics = metrics;
-        _isLoading = false;
-      });
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to load statistics',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<List<GrowthMetrics>> _loadGrowthMetrics(String period) async {
-    try {
-      DateTime startDate;
-      switch (period) {
-        case '7days':
-          startDate = DateTime.now().subtract(const Duration(days: 7));
-          break;
-        case '30days':
-          startDate = DateTime.now().subtract(const Duration(days: 30));
-          break;
-        case '90days':
-          startDate = DateTime.now().subtract(const Duration(days: 90));
-          break;
-        case 'all':
-        default:
-          startDate = DateTime(2020, 1, 1); // Far in the past
-          break;
+      if (mounted) {
+        setState(() {
+          _userStats = stats;
+          _isLoading = false;
+        });
       }
-
-      final response = await _supabase
-          .from('growth_metrics')
-          .select()
-          .gte('metric_date', startDate.toIso8601String())
-          .order('metric_date', ascending: true);
-
-      return (response as List)
-          .map((json) => GrowthMetrics.fromJson(json))
-          .toList();
     } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to load growth metrics',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      return [];
-    }
-  }
-
-  void _startRealTimeUpdates() {
-    _realTimeUpdateTimer?.cancel();
-    _realTimeUpdateTimer =
-        Timer.periodic(const Duration(seconds: 5), (_) async {
-      if (!mounted) return;
-
-      try {
-        final onlineUsers = await _presenceService.getOnlineUsersCount();
-        final onlineGuests = await _presenceService.getOnlineGuestsCount();
-
-        if (mounted) {
-          setState(() {
-            _onlineUsers = onlineUsers;
-            _onlineGuests = onlineGuests;
-          });
-        }
-      } catch (e) {
-        AppLogger.error('Failed to update real-time counts', error: e);
-      }
-    });
-  }
-
-  void _onPeriodChanged(String? period) {
-    if (period != null && period != _selectedPeriod) {
-      setState(() {
-        _selectedPeriod = period;
-      });
-      _loadStatistics();
+      AppLogger.error('Error loading stats', error: e, stackTrace: stackTrace);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -159,121 +51,189 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('リアルタイム統計'),
+        title:
+            const Text('統計・実績', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadStatistics,
-            tooltip: '更新',
+            onPressed: _loadUserStats,
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : FadeTransition(
-              opacity: _fadeAnimation,
-              child: RefreshIndicator(
-                onRefresh: _loadStatistics,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hero section with real-time metrics
-                      _buildHeroSection(theme),
-                      const SizedBox(height: 32),
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. レベル・経験値カード (一番目立つヘッダー)
+                  if (_userStats != null) _buildLevelHeader(theme, _userStats!),
 
-                      // Real-time online section
-                      _buildRealTimeSection(theme),
-                      const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                      // Period selector
-                      _buildPeriodSelector(theme),
-                      const SizedBox(height: 16),
-
-                      // Growth charts
-                      _buildGrowthCharts(),
-                      const SizedBox(height: 32),
-
-                      // Overall statistics
-                      _buildOverallSection(theme),
-                    ],
+                  // 2. 今日のミッション (訪問者数カウンター)
+                  // ここを「ミッション」として見せることで、毎日見に来る理由を作る
+                  const Text(
+                    '🔥 今日のミッション',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'このページへの訪問者数に応じてボーナス獲得！',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      // pagePathを '/statistics' に設定し、このページ専用のカウントを行う
+                      child: const PageViewStats(pagePath: '/statistics'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 3. 詳細統計グリッド (個人の成果)
+                  const Text(
+                    '📊 活動データ',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_userStats != null) _buildStatsGrid(_userStats!),
+
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
     );
   }
 
-  Widget _buildHeroSection(ThemeData theme) {
-    if (_siteStats == null) return const SizedBox();
+  // レベル表示ヘッダー
+  Widget _buildLevelHeader(ThemeData theme, UserStats stats) {
+    // 次のレベルまでの進捗計算 (仮: 1レベル = 1000pt)
+    const int pointsPerLevel = 1000;
+    final int nextLevelPoints = (stats.currentLevel + 1) * pointsPerLevel;
+    final int currentLevelBasePoints = stats.currentLevel * pointsPerLevel;
+    // 現在のレベル内での進捗ポイント
+    final int progressPoints = stats.totalPoints - currentLevelBasePoints;
+    // 進捗率 (0.0 - 1.0)
+    final double progress = (progressPoints / pointsPerLevel).clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue[600]!, Colors.blue[800]!],
+          colors: [
+            theme.primaryColor,
+            theme.primaryColor.withValues(alpha: 0.8),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: theme.primaryColor.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.analytics,
-            size: 48,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '総登録ユーザー数',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TweenAnimationBuilder<int>(
-            tween: IntTween(begin: 0, end: _siteStats!.totalUsers),
-            duration: const Duration(milliseconds: 1500),
-            builder: (context, value, child) {
-              return Text(
-                value.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 56,
-                  fontWeight: FontWeight.bold,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(
-                Icons.trending_up,
-                color: Colors.greenAccent,
-                size: 20,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '現在のレベル',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '${stats.currentLevel}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'LEVEL',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                '+${_siteStats!.newUsersToday} 今日',
-                style: const TextStyle(
-                  color: Colors.greenAccent,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.emoji_events,
+                    color: Colors.white, size: 32),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '次のレベルまで',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12),
+                  ),
+                  Text(
+                    'あと ${pointsPerLevel - progressPoints} pt',
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // 進捗バー
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: Colors.white.withValues(alpha: 0.3),
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
                 ),
               ),
             ],
@@ -283,317 +243,97 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage>
     );
   }
 
-  Widget _buildRealTimeSection(ThemeData theme) {
-    final totalOnline = _onlineUsers + _onlineGuests;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // 統計グリッド
+  Widget _buildStatsGrid(UserStats stats) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.5,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'リアルタイム（5秒ごとに更新）',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        _buildStatCard(
+          icon: Icons.note_alt,
+          color: Colors.blue,
+          label: '作成したメモ',
+          value: '${stats.notesCreated}',
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildAnimatedStatCard(
-                title: 'オンライン合計',
-                value: totalOnline,
-                icon: Icons.circle,
-                iconColor: Colors.green,
-                gradient: [Colors.green[400]!, Colors.green[600]!],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildAnimatedStatCard(
-                title: '登録ユーザー',
-                value: _onlineUsers,
-                icon: Icons.person,
-                iconColor: Colors.blue,
-                gradient: [Colors.blue[400]!, Colors.blue[600]!],
-              ),
-            ),
-          ],
+        _buildStatCard(
+          icon: Icons.local_fire_department,
+          color: Colors.orange,
+          label: '連続記録',
+          value: '${stats.currentStreak}日',
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildAnimatedStatCard(
-                title: 'ゲスト',
-                value: _onlineGuests,
-                icon: Icons.visibility,
-                iconColor: Colors.orange,
-                gradient: [Colors.orange[400]!, Colors.orange[600]!],
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Expanded(child: SizedBox()),
-          ],
+        _buildStatCard(
+          icon: Icons.folder,
+          color: Colors.amber,
+          label: '総ポイント',
+          value: '${stats.totalPoints}',
         ),
-      ],
-    );
-  }
-
-  Widget _buildAnimatedStatCard({
-    required String title,
-    required int value,
-    required IconData icon,
-    required Color iconColor,
-    required List<Color> gradient,
-  }) {
-    return TweenAnimationBuilder<int>(
-      key: ValueKey('$title-$value'),
-      tween: IntTween(begin: value > 10 ? value - 5 : 0, end: value),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, animatedValue, child) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: gradient,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: gradient[0].withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: Colors.white, size: 24),
-              const SizedBox(height: 12),
-              Text(
-                animatedValue.toString(),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPeriodSelector(ThemeData theme) {
-    return Row(
-      children: [
-        Text(
-          '期間: ',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildPeriodChip('7日間', '7days'),
-                const SizedBox(width: 8),
-                _buildPeriodChip('30日間', '30days'),
-                const SizedBox(width: 8),
-                _buildPeriodChip('90日間', '90days'),
-                const SizedBox(width: 8),
-                _buildPeriodChip('全期間', 'all'),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPeriodChip(String label, String value) {
-    final isSelected = _selectedPeriod == value;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => _onPeriodChanged(value),
-      selectedColor: Colors.blue,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : null,
-      ),
-    );
-  }
-
-  Widget _buildGrowthCharts() {
-    if (_growthMetrics.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(
-            child: Text('成長データがありません'),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        GrowthChartWidget(
-          metrics: _growthMetrics,
-          title: 'ユーザー数の推移',
-          valueExtractor: (m) => m.totalUsers.toString(),
-          lineColor: Colors.blue,
-        ),
-        const SizedBox(height: 16),
-        GrowthChartWidget(
-          metrics: _growthMetrics,
-          title: '新規ユーザー数（日次）',
-          valueExtractor: (m) => m.newUsers.toString(),
-          lineColor: Colors.green,
-        ),
-        const SizedBox(height: 16),
-        GrowthChartWidget(
-          metrics: _growthMetrics,
-          title: 'メモ数の推移',
-          valueExtractor: (m) => m.totalNotes.toString(),
-          lineColor: Colors.orange,
-        ),
-        const SizedBox(height: 16),
-        GrowthChartWidget(
-          metrics: _growthMetrics,
-          title: 'アクティブユーザー数（日次）',
-          valueExtractor: (m) => m.activeUsers.toString(),
-          lineColor: Colors.purple,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOverallSection(ThemeData theme) {
-    if (_siteStats == null) return const SizedBox();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '全体統計',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.5,
-          children: [
-            _buildStatCard(
-              title: '総メモ数',
-              value: _siteStats!.totalNotesCreated.toString(),
-              icon: Icons.note,
-              iconColor: Colors.amber,
-            ),
-            _buildStatCard(
-              title: '総共有数',
-              value: _siteStats!.totalShares.toString(),
-              icon: Icons.share,
-              iconColor: Colors.green,
-            ),
-            _buildStatCard(
-              title: '解除実績',
-              value: _siteStats!.totalAchievementsUnlocked.toString(),
-              icon: Icons.emoji_events,
-              iconColor: Colors.orange,
-            ),
-            _buildStatCard(
-              title: 'アクティブ（今日）',
-              value: _siteStats!.activeUsersToday.toString(),
-              icon: Icons.trending_up,
-              iconColor: Colors.teal,
-            ),
-          ],
+        // 将来的にシェア数などをUserStatsに追加した際にここを更新
+        _buildStatCard(
+          icon: Icons.share,
+          color: Colors.green,
+          label: 'シェア回数',
+          value: 'Check!',
         ),
       ],
     );
   }
 
   Widget _buildStatCard({
-    required String title,
-    required String value,
     required IconData icon,
-    required Color iconColor,
+    required Color color,
+    required String label,
+    required String value,
   }) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: iconColor, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-              ],
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-          ],
-        ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
