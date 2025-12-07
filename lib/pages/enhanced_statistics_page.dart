@@ -20,7 +20,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
   @override
   void initState() {
     super.initState();
-    // 既存のPresenceServiceではなく、個人の成長を扱うGamificationServiceを使用
+    // 個人の成長データを扱うGamificationServiceを使用
     _gamificationService = GamificationService(supabase);
     _loadUserStats();
   }
@@ -30,7 +30,6 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // ユーザー自身の統計データを取得
       var stats = await _gamificationService.getUserStats(userId);
       stats ??= await _gamificationService.initializeUserStats(userId);
 
@@ -74,13 +73,12 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. レベル・経験値カード (一番目立つヘッダー)
+                  // 1. レベル・経験値カード
                   if (_userStats != null) _buildLevelHeader(theme, _userStats!),
 
                   const SizedBox(height: 24),
 
                   // 2. 今日のミッション (訪問者数カウンター)
-                  // ここを「ミッション」として見せることで、毎日見に来る理由を作る
                   const Text(
                     '🔥 今日のミッション',
                     style: TextStyle(
@@ -98,14 +96,14 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 400),
-                      // pagePathを '/statistics' に設定し、このページ専用のカウントを行う
+                      // 統計ページ専用のパスを指定
                       child: const PageViewStats(pagePath: '/statistics'),
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // 3. 詳細統計グリッド (個人の成果)
+                  // 3. 詳細統計グリッド
                   const Text(
                     '📊 活動データ',
                     style: TextStyle(
@@ -124,15 +122,10 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
     );
   }
 
-  // レベル表示ヘッダー
   Widget _buildLevelHeader(ThemeData theme, UserStats stats) {
-    // 次のレベルまでの進捗計算 (仮: 1レベル = 1000pt)
     const int pointsPerLevel = 1000;
-    final int nextLevelPoints = (stats.currentLevel + 1) * pointsPerLevel;
     final int currentLevelBasePoints = stats.currentLevel * pointsPerLevel;
-    // 現在のレベル内での進捗ポイント
     final int progressPoints = stats.totalPoints - currentLevelBasePoints;
-    // 進捗率 (0.0 - 1.0)
     final double progress = (progressPoints / pointsPerLevel).clamp(0.0, 1.0);
 
     return Container(
@@ -226,7 +219,6 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              // 進捗バー
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
@@ -243,7 +235,6 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
     );
   }
 
-  // 統計グリッド
   Widget _buildStatsGrid(UserStats stats) {
     return GridView.count(
       crossAxisCount: 2,
@@ -271,7 +262,6 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
           label: '総ポイント',
           value: '${stats.totalPoints}',
         ),
-        // 将来的にシェア数などをUserStatsに追加した際にここを更新
         _buildStatCard(
           icon: Icons.share,
           color: Colors.green,
