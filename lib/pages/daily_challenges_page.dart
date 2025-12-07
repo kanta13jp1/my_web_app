@@ -154,7 +154,7 @@ class _DailyChallengesPageState extends State<DailyChallengesPage> {
                                 foregroundColor: Colors.white,
                               ),
                             ),
-                          ]
+                          ],
                         ],
                       ),
                     )
