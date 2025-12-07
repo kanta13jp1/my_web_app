@@ -127,7 +127,7 @@ class StatsOverviewWidget extends StatelessWidget {
             // セクションタイトル
             Row(
               children: [
-                Icon(Icons.rocket, color: Colors.orange, size: 20),
+                const Icon(Icons.rocket, color: Colors.orange, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'コミュニティ目標',

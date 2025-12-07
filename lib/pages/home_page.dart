@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Failed to check daily login bonus',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error('Error loading user stats',
-          error: e, stackTrace: stackTrace);
+          error: e, stackTrace: stackTrace,);
     }
   }
 
@@ -599,12 +599,12 @@ class _HomePageState extends State<HomePage> {
                       // ExpansionTileの上下の線を消すためのテーマ設定
                       data: Theme.of(context)
                           .copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
+                      child: const ExpansionTile(
                         initiallyExpanded: true, // 最初は開いた状態にする
                         tilePadding:
-                            const EdgeInsets.symmetric(horizontal: 16.0),
+                            EdgeInsets.symmetric(horizontal: 16.0),
                         title: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.dashboard_outlined, color: Colors.grey),
                             SizedBox(width: 8),
                             Text(
@@ -618,15 +618,15 @@ class _HomePageState extends State<HomePage> {
                         ),
                         children: [
                           // ページビュー統計
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.0),
                             child: PageViewStats(pagePath: '/home'),
                           ),
 
                           // デイリーチャレンジサマリー
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
+                                horizontal: 16.0, vertical: 8.0,),
                             child: DailyChallengeSummaryCard(),
                           ),
                         ],

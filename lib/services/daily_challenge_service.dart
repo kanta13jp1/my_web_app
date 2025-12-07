@@ -9,7 +9,8 @@ class DailyChallengeService {
 
   /// 今日のチャレンジと進捗状況を取得
   Future<List<Map<String, dynamic>>> getTodaysChallengesWithProgress(
-      String userId) async {
+    String userId,
+  ) async {
     try {
       final now = DateTime.now();
       // YYYY-MM-DD 形式 (サーバー側の日付判定用)
@@ -34,8 +35,11 @@ class DailyChallengeService {
         };
       }).toList();
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to load challenges',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to load challenges',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -50,15 +54,21 @@ class DailyChallengeService {
       );
       return success as bool;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to claim reward',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to claim reward',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
 
   /// 進捗を更新する（メモ作成、シェア等のアクション時に呼ぶ）
-  Future<void> updateProgress(String userId, String type,
-      {int amount = 1}) async {
+  Future<void> updateProgress(
+    String userId,
+    String type, {
+    int amount = 1,
+  }) async {
     try {
       // RPC呼び出し
       await _supabase.rpc(
@@ -77,7 +87,10 @@ class DailyChallengeService {
 
   // 互換性のためのエイリアス（以前のコードで呼ばれている場合）
   Future<void> trackActivityForChallenges(
-      String userId, String type, int amount) async {
+    String userId,
+    String type,
+    int amount,
+  ) async {
     await updateProgress(userId, type, amount: amount);
   }
 }

@@ -65,8 +65,11 @@ class _LandingPageState extends State<LandingPage> {
       final onboardingCompleted = metadata?['onboarding_completed'] as bool?;
       return onboardingCompleted != true;
     } catch (e, stackTrace) {
-      AppLogger.error('Failed to check onboarding status',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Failed to check onboarding status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -85,7 +88,9 @@ class _LandingPageState extends State<LandingPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('ゲストログインに失敗しました: $e'), backgroundColor: Colors.red),
+            content: Text('ゲストログインに失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -95,7 +100,9 @@ class _LandingPageState extends State<LandingPage> {
 
   // メールアドレス認証処理 (Login / SignUp)
   Future<void> _handleEmailAuth(
-      AuthMode mode, StateSetter modalSetState) async {
+    AuthMode mode,
+    StateSetter modalSetState,
+  ) async {
     // モーダル内のローディング表示のために modalSetState を使用する可能性あり
     // 今回は全体の _isLoading を使用し、親Widgetを再描画させる
     setState(() => _isLoading = true);
@@ -136,7 +143,8 @@ class _LandingPageState extends State<LandingPage> {
             if (stats != null) {
               final currentPoints = stats['total_points'] as int;
               await supabase.from('user_stats').update(
-                  {'total_points': currentPoints + 500}).eq('user_id', userId);
+                {'total_points': currentPoints + 500},
+              ).eq('user_id', userId);
             }
           } catch (e) {
             AppLogger.error('Welcome bonus error', error: e);
@@ -146,7 +154,9 @@ class _LandingPageState extends State<LandingPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('確認メールを送信しました。'), backgroundColor: Colors.green),
+              content: Text('確認メールを送信しました。'),
+              backgroundColor: Colors.green,
+            ),
           );
           Navigator.pop(context); // モーダルを閉じる
         }
@@ -220,7 +230,7 @@ class _LandingPageState extends State<LandingPage> {
         // シート内でState管理（ログイン/サインアップの切り替え）をするためにStatefulBuilderを使用
         return StatefulBuilder(
           builder: (context, setModalState) {
-            var currentMode = initialMode;
+            final currentMode = initialMode;
             final isSignUp = currentMode == AuthMode.signUp;
             final theme = Theme.of(context);
             // キーボード分padding確保
@@ -263,8 +273,8 @@ class _LandingPageState extends State<LandingPage> {
                         labelText: 'メールアドレス',
                         prefixIcon: Icon(Icons.email),
                         border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(12))),
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       enabled: !_isLoading,
@@ -278,8 +288,8 @@ class _LandingPageState extends State<LandingPage> {
                         labelText: 'パスワード',
                         prefixIcon: Icon(Icons.lock),
                         border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(12))),
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
                       ),
                       obscureText: true,
                       enabled: !_isLoading,
@@ -294,8 +304,8 @@ class _LandingPageState extends State<LandingPage> {
                           labelText: '紹介コード (任意)',
                           prefixIcon: Icon(Icons.card_giftcard),
                           border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(12))),
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
                           filled: true,
                           fillColor: Color(0xFFFFF8E1), // 薄いアンバー
                         ),
@@ -312,15 +322,19 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.check_circle,
-                                size: 16, color: Colors.green[700]),
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: Colors.green[700],
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'コード入力でボーナスポイント獲得！',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.green[700],
-                                  fontWeight: FontWeight.bold),
+                                fontSize: 12,
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -343,17 +357,25 @@ class _LandingPageState extends State<LandingPage> {
                           backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: _isLoading
                             ? const SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
-                            : Text(isSignUp ? '登録して始める' : 'ログイン',
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                isSignUp ? '登録して始める' : 'ログイン',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -440,29 +462,37 @@ class _LandingPageState extends State<LandingPage> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 20,
-                                  spreadRadius: 5),
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
                             ],
                           ),
-                          child: const Icon(Icons.note_alt_outlined,
-                              size: 60, color: Colors.white),
+                          child: const Icon(
+                            Icons.note_alt_outlined,
+                            size: 60,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         // タイトル
                         const Text(
                           'マイメモ',
                           style: TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         const Text(
                           'ゲーミフィケーションで楽しく続けられる\nメモアプリ',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontSize: 18, color: Colors.white, height: 1.5),
+                            fontSize: 18,
+                            color: Colors.white,
+                            height: 1.5,
+                          ),
                         ),
                         const SizedBox(height: 40),
 
@@ -477,20 +507,25 @@ class _LandingPageState extends State<LandingPage> {
                                 height: 56,
                                 child: ElevatedButton.icon(
                                   onPressed: () => _showAuthBottomSheet(
-                                      context, AuthMode.signUp),
+                                    context,
+                                    AuthMode.signUp,
+                                  ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: theme.primaryColor,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                   icon: const Icon(Icons.mail_outline),
-                                  label: const Text('メールアドレスで登録・ログイン',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
+                                  label: const Text(
+                                    'メールアドレスで登録・ログイン',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -529,27 +564,32 @@ class _LandingPageState extends State<LandingPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  Text('特徴',
-                      style: theme.textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    '特徴',
+                    style: theme.textTheme.headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 32),
                   const _FeatureCard(
-                      icon: Icons.emoji_events,
-                      iconColor: Colors.amber,
-                      title: 'レベルアップシステム',
-                      description: 'メモを書くほどレベルアップ！\n経験値とポイントを獲得して成長しよう'),
+                    icon: Icons.emoji_events,
+                    iconColor: Colors.amber,
+                    title: 'レベルアップシステム',
+                    description: 'メモを書くほどレベルアップ！\n経験値とポイントを獲得して成長しよう',
+                  ),
                   const SizedBox(height: 16),
                   const _FeatureCard(
-                      icon: Icons.military_tech,
-                      iconColor: Colors.purple,
-                      title: '28種類以上の達成項目',
-                      description: '様々なチャレンジをクリアして\n実績を解除しよう'),
+                    icon: Icons.military_tech,
+                    iconColor: Colors.purple,
+                    title: '28種類以上の達成項目',
+                    description: '様々なチャレンジをクリアして\n実績を解除しよう',
+                  ),
                   const SizedBox(height: 16),
                   const _FeatureCard(
-                      icon: Icons.leaderboard,
-                      iconColor: Colors.blue,
-                      title: 'リーダーボード',
-                      description: '他のユーザーと競い合って\nトップを目指そう'),
+                    icon: Icons.leaderboard,
+                    iconColor: Colors.blue,
+                    title: 'リーダーボード',
+                    description: '他のユーザーと競い合って\nトップを目指そう',
+                  ),
                   const SizedBox(height: 60),
                 ],
               ),
@@ -567,11 +607,12 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String description;
 
-  const _FeatureCard(
-      {required this.icon,
-      required this.iconColor,
-      required this.title,
-      required this.description});
+  const _FeatureCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -586,8 +627,9 @@ class _FeatureCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12)),
+                color: iconColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, size: 32, color: iconColor),
             ),
             const SizedBox(width: 16),
@@ -595,13 +637,22 @@ class _FeatureCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text(description,
-                      style: TextStyle(
-                          fontSize: 14, color: Colors.grey[600], height: 1.5)),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
                 ],
               ),
             ),

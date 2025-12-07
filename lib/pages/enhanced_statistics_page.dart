@@ -194,7 +194,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.emoji_events,
-                    color: Colors.white, size: 32),
+                    color: Colors.white, size: 32,),
               ),
             ],
           ),
@@ -209,12 +209,12 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                     '次のレベルまで',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12),
+                        fontSize: 12,),
                   ),
                   Text(
                     'あと ${pointsPerLevel - progressPoints} pt',
                     style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                        color: Colors.white, fontWeight: FontWeight.bold,),
                   ),
                 ],
               ),

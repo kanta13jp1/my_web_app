@@ -4,7 +4,9 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
-import 'dart:ui';
+// ✅ 追加: パッケージインポート
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../services/app_share_service.dart';
 import '../services/viral_growth_service.dart';
 
@@ -39,26 +41,20 @@ class _PageViewStatsState extends State<PageViewStats> {
     });
   }
 
+  // ... (dispose, _updateTimeUntilReset, _formatDuration は変更なし) ...
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
-// ✅ 修正版: タイムゾーンに依存せず、確実に日本時間0時（UTC 15:00）をターゲットにする
   void _updateTimeUntilReset() {
     final now = DateTime.now().toUtc();
-    
-    // 今日の UTC 15:00（＝日本時間の深夜0:00）を設定
     DateTime target = DateTime.utc(now.year, now.month, now.day, 15, 0, 0);
-
-    // もし現在時刻がすでに UTC 15:00 を過ぎていれば、ターゲットは「明日の UTC 15:00」
     if (now.isAfter(target)) {
       target = target.add(const Duration(days: 1));
     }
-
     final difference = target.difference(now);
-
     if (mounted) {
       setState(() {
         _timeUntilReset = difference;
@@ -75,6 +71,7 @@ class _PageViewStatsState extends State<PageViewStats> {
   }
 
   Future<String> _getBrowserName() async {
+    // ... (変更なし) ...
     if (!kIsWeb) return 'App';
     try {
       final deviceInfo = DeviceInfoPlugin();
@@ -86,14 +83,31 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
+  // ✅ 追加: ユニークIDを取得または生成するメソッド
+  Future<String> _getOrCreateVisitorId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? visitorId = prefs.getString('app_visitor_id');
+
+    if (visitorId == null) {
+      // IDがない場合は新規生成して保存
+      visitorId = const Uuid().v4();
+      await prefs.setString('app_visitor_id', visitorId);
+    }
+    return visitorId;
+  }
+
   Future<Map<String, dynamic>> _trackAndFetchStats() async {
     try {
       final browser = await _getBrowserName();
+      // ✅ 修正: Visitor IDを取得
+      final visitorId = await _getOrCreateVisitorId();
+
       final response = await Supabase.instance.client.rpc(
         'track_and_get_page_stats',
         params: {
           'target_path': widget.pagePath,
           'user_browser': browser,
+          'request_visitor_id': visitorId, // ✅ 追加: IDを送信
         },
       );
 
@@ -113,6 +127,7 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
+  // ... (以下のメソッドは変更なし: _isMilestone, _calculateDynamicGoal, _showMilestoneDialog, _recordShareAchievement, _shareToX, _shareGoalProgress, build) ...
   bool _isMilestone(int count) {
     if (count <= 0) return false;
     if (count == 20) return true;
@@ -182,7 +197,7 @@ class _PageViewStatsState extends State<PageViewStats> {
           SnackBar(
             content: Text(isActive
                 ? 'シェアありがとうございます！キャンペーンボーナス50pt獲得🎉'
-                : 'シェアありがとうございます！実績加算＆10pt獲得✨'),
+                : 'シェアありがとうございます！実績加算＆10pt獲得✨',),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
@@ -195,7 +210,7 @@ class _PageViewStatsState extends State<PageViewStats> {
   }
 
   Future<void> _shareToX(int total, int today,
-      {bool isMilestone = false}) async {
+      {bool isMilestone = false,}) async {
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
     final timeStr = _formatDuration(_timeUntilReset);
@@ -212,7 +227,7 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #Supabase';
     }
 
-    final url = AppShareService.appUrl;
+    const url = AppShareService.appUrl;
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
     );
@@ -243,7 +258,7 @@ class _PageViewStatsState extends State<PageViewStats> {
           '#個人開発 #Flutter #駆け出しエンジニアと繋がりたい';
     }
 
-    final url = AppShareService.appUrl;
+    const url = AppShareService.appUrl;
     final tweetUrl = Uri.parse(
       'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}',
     );
@@ -304,7 +319,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                           Text(
                             '今日の訪問者',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600]),
+                                fontSize: 12, color: Colors.grey[600],),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -322,7 +337,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                               Text(
                                 '/ $currentDailyGoal',
                                 style: TextStyle(
-                                    fontSize: 16, color: Colors.grey[500]),
+                                    fontSize: 16, color: Colors.grey[500],),
                               ),
                             ],
                           ),
@@ -366,7 +381,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                          horizontal: 8, vertical: 2,),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -375,7 +390,7 @@ class _PageViewStatsState extends State<PageViewStats> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.timer_outlined,
-                              size: 14, color: Colors.orange),
+                              size: 14, color: Colors.orange,),
                           const SizedBox(width: 4),
                           Text(
                             'リセットまで残り ${_formatDuration(_timeUntilReset)}',
