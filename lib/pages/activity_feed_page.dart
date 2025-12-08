@@ -20,8 +20,20 @@ class ActivityItem {
     required this.timestamp,
   });
 
-  // 実際にはDBのJSONから変換するファクトリコンストラクタを追加する
-  // factory ActivityItem.fromJson(Map<String, dynamic> json) { ... }
+  // DBのJSONから変換するファクトリコンストラクタ
+  factory ActivityItem.fromJson(Map<String, dynamic> json) {
+    final String defaultName = '匿名ユーザー';
+    final String name = json['user_name'] ?? defaultName;
+
+    return ActivityItem(
+      id: json['id'].toString(),
+      type: json['type'] as String? ?? 'general',
+      userName: name.isNotEmpty ? name : defaultName,
+      action: json['action'] as String? ?? '新しいアクティビティ',
+      // Supabaseから返されるISO 8601形式の文字列をDateTimeにパース
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+  }
 }
 
 class ActivityFeedPage extends StatefulWidget {
@@ -33,48 +45,70 @@ class ActivityFeedPage extends StatefulWidget {
 
 class _ActivityFeedPageState extends State<ActivityFeedPage> {
   final _supabase = Supabase.instance.client;
-  // リアルタイム購読をキャンセルするための変数
+  // ✅ リアルタイム購読をキャンセルするための変数
   StreamSubscription<List<Map<String, dynamic>>>? _activitySubscription;
 
-  List<ActivityItem> _activities = []; // 抽象化されたモデルを使用
+  List<ActivityItem> _activities = [];
   bool _isLoading = true;
-
-  // 最後に表示したアクティビティのタイムスタンプ
-  DateTime? _lastActivityTimestamp;
 
   @override
   void initState() {
     super.initState();
     timeago.setLocaleMessages('ja', timeago.JaMessages());
-    _loadActivities();
-    // リアルタイム購読を開始
+    // 初回ロードはストリーム開始時に自動的に行われるため、コメントアウト
+    // _loadActivities();
     _startRealTimeSubscription();
   }
 
-  // ✅ 改善点1: リアルタイム購読に切り替え (ポーリングを廃止)
+  // ✅ 改善点1: Supabase Realtime Stream の実装
   void _startRealTimeSubscription() {
-    // 実際には 'activities' テーブルを購読し、新しいデータが来たら _handleNewActivities を呼ぶ
-    // 現在はサンプルとして、30秒ごとに強制更新するポーリングを削除し、
-    // ここでリアルタイムAPIを実装します。
-    // 例:
-    // _activitySubscription = _supabase
-    //     .from('activities')
-    //     .stream(primaryKey: ['id'])
-    //     .order('timestamp', ascending: false)
-    //     .limit(20)
-    //     .listen(_handleRealTimeActivities, onError: (e) => AppLogger.error('Realtime error: $e'));
-
-    // ※ SupabaseのリアルタイムAPIの実装は省略しますが、ポーリングは停止します。
+    // activities テーブルの最新30件の変更を購読
+    // ストリームは接続時に最新のデータを取得し、以降の変更を継続的にプッシュします。
+    _activitySubscription = _supabase
+        .from('activities')
+        .stream(primaryKey: ['id'])
+        .order('timestamp', ascending: false)
+        .limit(30)
+        .listen(_handleRealTimeData, onError: (e) {
+          AppLogger.error('Realtime subscription error', error: e);
+          // エラーが発生した場合、Futureベースのロードをトリガー
+          _loadActivities();
+        });
   }
 
-  // Futureベースのデータ取得 (初回ロードとRefresh時)
+  // ✅ 改善点2: リアルタイムデータ処理ハンドラ
+  void _handleRealTimeData(List<Map<String, dynamic>> data) {
+    final List<ActivityItem> newActivities =
+        data.map((json) => ActivityItem.fromJson(json)).toList();
+
+    if (mounted) {
+      setState(() {
+        _activities = newActivities;
+        _isLoading = false; // データが来たのでロード完了
+      });
+    }
+  }
+
+  // Futureベースのデータ取得 (ストリームが失敗した場合、または手動Refresh時)
   Future<void> _loadActivities() async {
     try {
       setState(() => _isLoading = true);
 
-      // ✅ 改善点2: サンプルデータを削除し、本番用のダミーデータを生成
-      // 実際はDBからActivityItemを変換して取得する
-      final activities = await _fetchActivitiesFromDb();
+      // Postgrest (REST) APIを介してデータを取得
+      final response = await _supabase
+          .from('activities')
+          .select('id, type, user_name, action, timestamp')
+          .order('timestamp', ascending: false)
+          .limit(30);
+
+      final List<ActivityItem> activities = (response as List)
+          .map((json) => ActivityItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      if (activities.isEmpty) {
+        // データがない場合、ハードコードされたサンプルデータを表示
+        activities.addAll(_generateSampleActivities());
+      }
 
       if (mounted) {
         setState(() {
@@ -84,20 +118,22 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       }
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Error loading activities',
+        'Error loading activities (Future)',
         error: e,
         stackTrace: stackTrace,
       );
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          // エラー時はサンプルデータを表示
+          _activities = _generateSampleActivities();
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // 実際にはDBからアクティビティを取得する（既存の_generateSampleActivitiesを置き換え）
-  Future<List<ActivityItem>> _fetchActivitiesFromDb() async {
-    // ここでSupabaseからデータを取得し、ActivityItemに変換
-    // final response = await _supabase.from('activities').select('...').order('timestamp', ascending: false);
-
-    // 🚨 注意: 匿名ユーザー向けにサンプルデータを残します。本番時は削除してください。
+  // サンプルデータ生成 (フォールバック)
+  List<ActivityItem> _generateSampleActivities() {
     final now = DateTime.now();
     return [
       ActivityItem(
@@ -115,13 +151,19 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         action: '実績「メモマスター」を解除しました',
         timestamp: now.subtract(const Duration(minutes: 15)),
       ),
-      // ... その他のサンプル ...
+      ActivityItem(
+        id: '3',
+        type: 'milestone',
+        userName: 'システム',
+        action: '総メモ数が10,000件を突破しました！🎉',
+        timestamp: now.subtract(const Duration(hours: 2)),
+      ),
     ];
   }
 
   @override
   void dispose() {
-    // ✅ 改善点1: 定期的なポーリングではなく、リアルタイム購読を解除
+    // ✅ 改善点3: 購読の解除を確実に行う
     _activitySubscription?.cancel();
     super.dispose();
   }
@@ -152,7 +194,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadActivities, // 初回ロードとリフレッシュはFutureベース
+            onPressed: _loadActivities, // Refresh時はFutureベースの_loadActivitiesを呼ぶ
             tooltip: '更新',
           ),
         ],
@@ -196,7 +238,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     );
   }
 
-  // ✅ 改善点3: ActivityItemモデルを受け取るように変更
+  // ActivityItemモデルを受け取るように変更
   Widget _buildActivityItem(ActivityItem activity) {
     final style = _getActivityStyle(activity.type);
     final timeAgo = timeago.format(activity.timestamp, locale: 'ja');

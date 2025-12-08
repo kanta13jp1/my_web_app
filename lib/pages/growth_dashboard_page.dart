@@ -10,8 +10,6 @@ import 'import_page.dart';
 import 'template_marketplace_page.dart';
 import 'activity_feed_page.dart'; // コミュニティ活動ページ
 
-// ... (GrowthDashboardPage クラス定義はそのまま) ...
-
 class GrowthDashboardPage extends StatefulWidget {
   const GrowthDashboardPage({super.key});
 
@@ -40,9 +38,6 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
     _loadData();
     _generateInviteLink();
   }
-
-  // ... (dispose, _loadData, _generateInviteLink, _shareInviteLink メソッドはそのまま) ...
-  // [長いため省略]
 
   Future<void> _loadData() async {
     try {
@@ -105,16 +100,13 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
 
     try {
       final message = '''
- 🎮 マイメモ - ゲーム感覚でメモ習慣！
- 
- 楽しくメモが続けられるアプリを見つけました！
- レベルアップ、実績解除、ストリークなどゲーム要素満載！
- 
- 一緒に始めませんか？
- $_inviteLink
- 
- ※新規登録で今なら500ptプレゼント🎁
- ''';
+🎮 マイメモ - ゲーム感覚でメモ習慣！
+楽しくメモが続けられるアプリを見つけました！
+レベルアップ、実績解除、ストリークなどゲーム要素満載！
+一緒に始めませんか？
+$_inviteLink
+※新規登録で今なら500ptプレゼント🎁
+''';
 
       await Share.share(message);
 
