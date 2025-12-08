@@ -567,6 +567,32 @@ class GamificationService {
     }
   }
 
+  // ✅ 追加: アクティビティログをデータベースに記録する汎用メソッド
+  Future<void> recordActivity({
+    required String userId,
+    required String type,
+    required String description, // ユーザー名を含む整形済みの行動説明 (例: "Aliceがメモを作成しました")
+    required DateTime timestamp,
+  }) async {
+    try {
+      // Activities テーブルにアクティビティを挿入
+      await _supabase.from('activities').insert({
+        'user_id': userId,
+        'type': type,
+        'action': description,
+        'timestamp': timestamp.toIso8601String(),
+      });
+      AppLogger.info('Activity recorded: $type for user $userId');
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error recording activity $type',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // アクティビティ記録の失敗は主要なアプリ機能の停止を引き起こすべきではないため、rethrowしません。
+    }
+  }
+
   // Get leaderboard
   // Note: Requires public read access to user_stats table via RLS policy:
   // "Anyone can view user stats for leaderboard"

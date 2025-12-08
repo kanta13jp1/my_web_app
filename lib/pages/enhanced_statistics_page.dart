@@ -26,12 +26,27 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
     _giveVisitBonus();
   }
 
-  // ボーナス付与メソッド（演出）
+  // ボーナス付与メソッド（演出と記録）
   Future<void> _giveVisitBonus() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
+    // ユーザー名を取得（匿名ユーザーの場合は '匿名ユーザー' を使用）
+    final userName =
+        supabase.auth.currentUser?.email?.split('@').first ?? '匿名ユーザー';
+
     try {
+      // ✅ 修正: アクティビティをデータベースに記録
+      // ユーザー名を含む整形済みの説明文を生成
+      final description = '$userName が統計・実績ページを訪問しました';
+
+      await _gamificationService.recordActivity(
+        userId: userId,
+        type: 'stats_page_visit',
+        description: description,
+        timestamp: DateTime.now().toUtc(),
+      );
+
       if (mounted) {
         // 少し遅延させて表示し、ユーザーに気づかせる
         await Future.delayed(const Duration(seconds: 1));
@@ -60,7 +75,7 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
         );
       }
     } catch (e) {
-      // エラーは無視
+      AppLogger.error('Error recording activity or giving bonus', error: e);
     }
   }
 
