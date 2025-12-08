@@ -8,7 +8,9 @@ import '../utils/app_logger.dart';
 import 'package:share_plus/share_plus.dart';
 import 'import_page.dart';
 import 'template_marketplace_page.dart';
-import 'activity_feed_page.dart';
+import 'activity_feed_page.dart'; // コミュニティ活動ページ
+
+// ... (GrowthDashboardPage クラス定義はそのまま) ...
 
 class GrowthDashboardPage extends StatefulWidget {
   const GrowthDashboardPage({super.key});
@@ -38,6 +40,9 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
     _loadData();
     _generateInviteLink();
   }
+
+  // ... (dispose, _loadData, _generateInviteLink, _shareInviteLink メソッドはそのまま) ...
+  // [長いため省略]
 
   Future<void> _loadData() async {
     try {
@@ -100,16 +105,16 @@ class _GrowthDashboardPageState extends State<GrowthDashboardPage> {
 
     try {
       final message = '''
-🎮 マイメモ - ゲーム感覚でメモ習慣！
-
-楽しくメモが続けられるアプリを見つけました！
-レベルアップ、実績解除、ストリークなどゲーム要素満載！
-
-一緒に始めませんか？
-$_inviteLink
-
-※新規登録で今なら500ptプレゼント🎁
-''';
+ 🎮 マイメモ - ゲーム感覚でメモ習慣！
+ 
+ 楽しくメモが続けられるアプリを見つけました！
+ レベルアップ、実績解除、ストリークなどゲーム要素満載！
+ 
+ 一緒に始めませんか？
+ $_inviteLink
+ 
+ ※新規登録で今なら500ptプレゼント🎁
+ ''';
 
       await Share.share(message);
 
@@ -213,6 +218,7 @@ $_inviteLink
     );
   }
 
+  // サイト統計のサマリー（リアルタイム情報を含む）
   Widget _buildStatsOverview() {
     final totalOnline = _onlineUsers + _onlineGuests;
 
@@ -280,6 +286,7 @@ $_inviteLink
     );
   }
 
+  // 統計アイテムの共通ウィジェット
   Widget _buildStatItem({
     required String label,
     required String value,
@@ -318,6 +325,7 @@ $_inviteLink
     );
   }
 
+  // アクティブキャンペーン表示
   Widget _buildActiveCampaigns() {
     return Column(
       children: _activeCampaigns.map((campaign) {
@@ -389,9 +397,11 @@ $_inviteLink
     );
   }
 
+  // 成長施策アクションリスト
   Widget _buildGrowthActions() {
     return Column(
       children: [
+        // 施策1: テンプレートマーケット
         _buildActionCard(
           title: 'テンプレートマーケット',
           description: 'すぐに使えるメモテンプレートで新規ユーザーの定着率UP',
@@ -407,6 +417,7 @@ $_inviteLink
           },
         ),
         const SizedBox(height: 12),
+        // 施策2: インポート機能
         _buildActionCard(
           title: 'Notion/Evernoteインポート',
           description: '競合アプリからの乗り換えを簡単に',
@@ -420,6 +431,7 @@ $_inviteLink
           },
         ),
         const SizedBox(height: 12),
+        // 施策3: コミュニティ活動（ソーシャルプルーフ）
         _buildActionCard(
           title: 'コミュニティ活動',
           description: 'ユーザーのアクティビティをリアルタイムで表示',
@@ -436,6 +448,7 @@ $_inviteLink
     );
   }
 
+  // 成長アクションカードの共通ウィジェット
   Widget _buildActionCard({
     required String title,
     required String description,
@@ -490,6 +503,7 @@ $_inviteLink
     );
   }
 
+  // 招待リンクセクション
   Widget _buildInviteSection() {
     return Card(
       elevation: 2,

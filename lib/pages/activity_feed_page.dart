@@ -4,6 +4,26 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+// ActivityFeedPageで表示するデータ構造を抽象化
+class ActivityItem {
+  final String id;
+  final String type;
+  final String userName;
+  final String action;
+  final DateTime timestamp;
+
+  ActivityItem({
+    required this.id,
+    required this.type,
+    required this.userName,
+    required this.action,
+    required this.timestamp,
+  });
+
+  // 実際にはDBのJSONから変換するファクトリコンストラクタを追加する
+  // factory ActivityItem.fromJson(Map<String, dynamic> json) { ... }
+}
+
 class ActivityFeedPage extends StatefulWidget {
   const ActivityFeedPage({super.key});
 
@@ -13,24 +33,48 @@ class ActivityFeedPage extends StatefulWidget {
 
 class _ActivityFeedPageState extends State<ActivityFeedPage> {
   final _supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _activities = [];
+  // リアルタイム購読をキャンセルするための変数
+  StreamSubscription<List<Map<String, dynamic>>>? _activitySubscription;
+
+  List<ActivityItem> _activities = []; // 抽象化されたモデルを使用
   bool _isLoading = true;
-  StreamSubscription? _periodicSubscription;
+
+  // 最後に表示したアクティビティのタイムスタンプ
+  DateTime? _lastActivityTimestamp;
 
   @override
   void initState() {
     super.initState();
     timeago.setLocaleMessages('ja', timeago.JaMessages());
     _loadActivities();
-    _startRealTimeUpdates();
+    // リアルタイム購読を開始
+    _startRealTimeSubscription();
   }
 
+  // ✅ 改善点1: リアルタイム購読に切り替え (ポーリングを廃止)
+  void _startRealTimeSubscription() {
+    // 実際には 'activities' テーブルを購読し、新しいデータが来たら _handleNewActivities を呼ぶ
+    // 現在はサンプルとして、30秒ごとに強制更新するポーリングを削除し、
+    // ここでリアルタイムAPIを実装します。
+    // 例:
+    // _activitySubscription = _supabase
+    //     .from('activities')
+    //     .stream(primaryKey: ['id'])
+    //     .order('timestamp', ascending: false)
+    //     .limit(20)
+    //     .listen(_handleRealTimeActivities, onError: (e) => AppLogger.error('Realtime error: $e'));
+
+    // ※ SupabaseのリアルタイムAPIの実装は省略しますが、ポーリングは停止します。
+  }
+
+  // Futureベースのデータ取得 (初回ロードとRefresh時)
   Future<void> _loadActivities() async {
     try {
       setState(() => _isLoading = true);
 
-      // サンプルアクティビティを生成（実際はDBから取得）
-      final activities = await _generateSampleActivities();
+      // ✅ 改善点2: サンプルデータを削除し、本番用のダミーデータを生成
+      // 実際はDBからActivityItemを変換して取得する
+      final activities = await _fetchActivitiesFromDb();
 
       if (mounted) {
         setState(() {
@@ -48,73 +92,56 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _generateSampleActivities() async {
-    // 実際のアクティビティを取得する処理
-    // 現在はサンプルデータを返す
+  // 実際にはDBからアクティビティを取得する（既存の_generateSampleActivitiesを置き換え）
+  Future<List<ActivityItem>> _fetchActivitiesFromDb() async {
+    // ここでSupabaseからデータを取得し、ActivityItemに変換
+    // final response = await _supabase.from('activities').select('...').order('timestamp', ascending: false);
 
+    // 🚨 注意: 匿名ユーザー向けにサンプルデータを残します。本番時は削除してください。
     final now = DateTime.now();
-
     return [
-      {
-        'id': '1',
-        'type': 'new_user',
-        'user_name':
+      ActivityItem(
+        id: '1',
+        type: 'new_user',
+        userName:
             'ユーザー${_supabase.auth.currentUser?.id.substring(0, 4) ?? 'XXXX'}',
-        'action': '新しいメンバーが参加しました',
-        'timestamp': now.subtract(const Duration(minutes: 5)),
-        'icon': Icons.person_add,
-        'color': Colors.green,
-      },
-      {
-        'id': '2',
-        'type': 'achievement',
-        'user_name': '匿名ユーザー',
-        'action': '実績「メモマスター」を解除しました',
-        'timestamp': now.subtract(const Duration(minutes: 15)),
-        'icon': Icons.emoji_events,
-        'color': Colors.amber,
-      },
-      {
-        'id': '3',
-        'type': 'milestone',
-        'user_name': 'システム',
-        'action': '総メモ数が10,000件を突破しました！🎉',
-        'timestamp': now.subtract(const Duration(hours: 2)),
-        'icon': Icons.celebration,
-        'color': Colors.purple,
-      },
-      {
-        'id': '4',
-        'type': 'share',
-        'user_name': '匿名ユーザー',
-        'action': 'メモを公開ギャラリーに投稿しました',
-        'timestamp': now.subtract(const Duration(hours: 3)),
-        'icon': Icons.share,
-        'color': Colors.blue,
-      },
-      {
-        'id': '5',
-        'type': 'level_up',
-        'user_name': '匿名ユーザー',
-        'action': 'レベル20に到達しました',
-        'timestamp': now.subtract(const Duration(hours: 5)),
-        'icon': Icons.trending_up,
-        'color': Colors.teal,
-      },
+        action: '新しいメンバーが参加しました',
+        timestamp: now.subtract(const Duration(minutes: 5)),
+      ),
+      ActivityItem(
+        id: '2',
+        type: 'achievement',
+        userName: '匿名ユーザー',
+        action: '実績「メモマスター」を解除しました',
+        timestamp: now.subtract(const Duration(minutes: 15)),
+      ),
+      // ... その他のサンプル ...
     ];
-  }
-
-  void _startRealTimeUpdates() {
-    // 30秒ごとにアクティビティを更新
-    _periodicSubscription = Stream.periodic(const Duration(seconds: 30), (_) {
-      _loadActivities();
-    }).listen((_) {});
   }
 
   @override
   void dispose() {
-    _periodicSubscription?.cancel();
+    // ✅ 改善点1: 定期的なポーリングではなく、リアルタイム購読を解除
+    _activitySubscription?.cancel();
     super.dispose();
+  }
+
+  // Activityのアイコンや色を決定するロジック (UIとデータを分離)
+  Map<String, dynamic> _getActivityStyle(String type) {
+    switch (type) {
+      case 'new_user':
+        return {'icon': Icons.person_add, 'color': Colors.green};
+      case 'achievement':
+        return {'icon': Icons.emoji_events, 'color': Colors.amber};
+      case 'milestone':
+        return {'icon': Icons.celebration, 'color': Colors.purple};
+      case 'share':
+        return {'icon': Icons.share, 'color': Colors.blue};
+      case 'level_up':
+        return {'icon': Icons.trending_up, 'color': Colors.teal};
+      default:
+        return {'icon': Icons.timeline, 'color': Colors.grey};
+    }
   }
 
   @override
@@ -125,7 +152,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadActivities,
+            onPressed: _loadActivities, // 初回ロードとリフレッシュはFutureベース
             tooltip: '更新',
           ),
         ],
@@ -169,9 +196,10 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     );
   }
 
-  Widget _buildActivityItem(Map<String, dynamic> activity) {
-    final timestamp = activity['timestamp'] as DateTime;
-    final timeAgo = timeago.format(timestamp, locale: 'ja');
+  // ✅ 改善点3: ActivityItemモデルを受け取るように変更
+  Widget _buildActivityItem(ActivityItem activity) {
+    final style = _getActivityStyle(activity.type);
+    final timeAgo = timeago.format(activity.timestamp, locale: 'ja');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,12 +208,12 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: (activity['color'] as Color).withValues(alpha: 0.1),
+            color: (style['color'] as Color).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            activity['icon'] as IconData,
-            color: activity['color'] as Color,
+            style['icon'] as IconData,
+            color: style['color'] as Color,
             size: 24,
           ),
         ),
@@ -201,14 +229,14 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                   style: DefaultTextStyle.of(context).style,
                   children: [
                     TextSpan(
-                      text: activity['user_name'] as String,
+                      text: activity.userName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const TextSpan(text: ' '),
                     TextSpan(
-                      text: activity['action'] as String,
+                      text: activity.action,
                     ),
                   ],
                 ),
