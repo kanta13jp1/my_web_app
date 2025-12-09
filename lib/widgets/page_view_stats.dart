@@ -211,8 +211,11 @@ class _PageViewStatsState extends State<PageViewStats> {
     }
   }
 
-  Future<void> _shareToX(int total, int today,
-      {bool isMilestone = false}) async {
+  Future<void> _shareToX(
+    int total,
+    int today, {
+    bool isMilestone = false,
+  }) async {
     const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
     final versionText = appVersion.isNotEmpty ? ' (v$appVersion)' : '';
     final timeStr = _formatDuration(_timeUntilReset);

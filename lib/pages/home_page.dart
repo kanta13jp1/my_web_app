@@ -605,8 +605,8 @@ class _HomePageState extends State<HomePage> {
                         initiallyExpanded: true, // 最初は開いた状態にする
                         tilePadding:
                             const EdgeInsets.symmetric(horizontal: 16.0),
-                        title: Row(
-                          children: const [
+                        title: const Row(
+                          children: [
                             Icon(Icons.dashboard_outlined, color: Colors.grey),
                             SizedBox(width: 8),
                             Text(
@@ -628,7 +628,9 @@ class _HomePageState extends State<HomePage> {
                           // デイリーチャレンジサマリー
                           const Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
                             child: DailyChallengeSummaryCard(),
                           ),
 
@@ -666,13 +668,16 @@ class _HomePageState extends State<HomePage> {
                                     Text(
                                       '⚠️ 隠しページを見る',
                                       style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     Text(
                                       'タップして限定ボーナスを確認',
                                       style: TextStyle(
-                                          fontSize: 12, color: Colors.white70),
+                                        fontSize: 12,
+                                        color: Colors.white70,
+                                      ),
                                     ),
                                   ],
                                 ),

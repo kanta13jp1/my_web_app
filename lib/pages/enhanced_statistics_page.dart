@@ -135,8 +135,9 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 24.0), // 垂直方向のパディングを増やして、上部のスペースを確保
+                horizontal: 16.0,
+                vertical: 24.0,
+              ), // 垂直方向のパディングを増やして、上部のスペースを確保
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -199,7 +200,9 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
             child: Text(
               subtitle,
               style: const TextStyle(
-                  fontSize: 14, color: Colors.grey), // フォントサイズを調整
+                fontSize: 14,
+                color: Colors.grey,
+              ), // フォントサイズを調整
             ),
           ),
       ],
@@ -330,8 +333,11 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   color: Colors.white.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.emoji_events,
-                    color: Colors.white, size: 40), // アイコンサイズも大きく
+                child: const Icon(
+                  Icons.emoji_events,
+                  color: Colors.white,
+                  size: 40,
+                ), // アイコンサイズも大きく
               ),
             ],
           ),
@@ -345,14 +351,17 @@ class _EnhancedStatisticsPageState extends State<EnhancedStatisticsPage> {
                   Text(
                     '次のレベルまで',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.9), fontSize: 14),
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                    ),
                   ),
                   Text(
-                    '${progressPoints} / ${pointsPerLevel} XP', // XP表記を追加
+                    '$progressPoints / $pointsPerLevel XP', // XP表記を追加
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),

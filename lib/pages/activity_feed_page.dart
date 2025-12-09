@@ -22,7 +22,7 @@ class ActivityItem {
 
   // DBのJSONから変換するファクトリコンストラクタ (変更なし)
   factory ActivityItem.fromJson(Map<String, dynamic> json) {
-    final String defaultName = '匿名ユーザー';
+    const String defaultName = '匿名ユーザー';
     final String name = json['user_name'] ?? defaultName;
 
     // 以前の EnhancedStatisticsPage の画像で見たように、
@@ -76,10 +76,13 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         .stream(primaryKey: ['id'])
         .order('timestamp', ascending: false)
         .limit(30)
-        .listen(_handleRealTimeData, onError: (e) {
-          AppLogger.error('Realtime subscription error', error: e);
-          _loadActivities();
-        });
+        .listen(
+          _handleRealTimeData,
+          onError: (e) {
+            AppLogger.error('Realtime subscription error', error: e);
+            _loadActivities();
+          },
+        );
   }
 
   void _handleRealTimeData(List<Map<String, dynamic>> data) {
@@ -243,14 +246,17 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                   : ListView.separated(
                       // リスト全体のパディングを調整
                       padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
                       itemCount: _activities.length,
                       // 区切り線をより薄く、短く
                       separatorBuilder: (context, index) => const Divider(
-                          height: 24,
-                          thickness: 0.5,
-                          indent: 60,
-                          endIndent: 16),
+                        height: 24,
+                        thickness: 0.5,
+                        indent: 60,
+                        endIndent: 16,
+                      ),
                       itemBuilder: (context, index) {
                         final activity = _activities[index];
                         return _buildActivityItem(activity);
