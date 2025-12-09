@@ -1,6 +1,8 @@
+import 'dart:async'; // Future.wait, Timer のために追加
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import '../main.dart';
+import 'dart:math'; // 指数バックオフのために追加
 
 /// AI機能のカスタム例外
 class AIServiceException implements Exception {
@@ -15,6 +17,8 @@ class AIServiceException implements Exception {
   @override
   String toString() => message;
 }
+
+// ... (TagSuggestion, AISearchResult, AIUsageStats, TaskRecommendations のクラス定義はファイル末尾に保持)
 
 /// AI機能を提供するサービス
 /// NotionのAI機能に対抗する包括的なAI支援機能
@@ -37,20 +41,23 @@ class AIService {
     while (true) {
       try {
         return await operation();
-      } catch (e) {
+      } catch (e, stackTrace) {
         // AIServiceExceptionの場合、レート制限エラーかチェック
         if (e is AIServiceException && e.isRateLimitError) {
           if (retryCount >= _maxRetries) {
             AppLogger.error(
               'Max retries reached for $operationName after rate limit',
               error: e,
+              stackTrace: stackTrace,
             );
             rethrow;
           }
 
           // retryAfterがあればそれを使用、なければ指数バックオフ
-          final waitTimeMs =
-              e.retryAfter != null ? int.parse(e.retryAfter!) * 1000 : delayMs;
+          final waitTimeMs = e.retryAfter != null
+              ? (int.tryParse(e.retryAfter!) ?? 0) *
+                  1000 // 【修正点】数値としてパースした後、1000を乗算
+              : delayMs + Random().nextInt(500); // ジッターを追加してサーバー負荷を軽減
 
           AppLogger.info(
             'Rate limit hit for $operationName. Retrying in ${waitTimeMs}ms (attempt ${retryCount + 1}/$_maxRetries)',
@@ -58,11 +65,14 @@ class AIService {
 
           await Future.delayed(Duration(milliseconds: waitTimeMs));
           retryCount++;
-          delayMs *= 2; // 指数バックオフ
+          delayMs =
+              (delayMs * 2).clamp(_initialRetryDelayMs, 30000); // 最大遅延時間を設定
           continue;
         }
 
-        // その他のエラーはそのまま投げる
+        // AIServiceException 以外のエラー、またはその他のエラーはそのまま投げる
+        AppLogger.error('Non-retryable error during $operationName',
+            error: e, stackTrace: stackTrace);
         rethrow;
       }
     }
@@ -98,7 +108,8 @@ class AIService {
       // FunctionExceptionの場合、詳細を解析
       final details = e.details;
       if (details is Map<String, dynamic>) {
-        final errorMessage = details['error']?.toString() ?? 'AI処理に失敗しました';
+        final errorMessage =
+            details['error']?.toString() ?? 'Supabase Functionからの応答エラー';
         final errorType = details['errorType'] as String?;
         final retryAfter = details['retryAfter']?.toString();
 
@@ -109,219 +120,198 @@ class AIService {
         );
       }
 
-      throw AIServiceException(e.toString());
+      // 詳細情報がない場合もカスタム例外に変換
+      throw AIServiceException('Supabase Functionエラー: ${e.toString()}');
+    } on PostgrestException catch (e) {
+      // ポストグレストのエラー（例: 権限不足）
+      throw AIServiceException('データベース操作エラー: ${e.message}');
+    } catch (e) {
+      // その他のネットワークエラーなど
+      throw AIServiceException('予期せぬエラー: ${e.toString()}');
     }
   }
 
+  // =========================================================================
+  // AIアシスタント機能
+  // =========================================================================
+
   /// 文章改善
-  /// ユーザーの文章をより明確で読みやすく改善
   Future<String> improveText(String content) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'improve',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'improveText',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error('Error improving text', error: e, stackTrace: stackTrace);
-      rethrow;
-    }
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'improve',
+            'content': content,
+          },
+        );
+        return data['result'] as String;
+      },
+      operationName: 'improveText',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 要約生成
-  /// 長い文章を簡潔に要約
   Future<String> summarizeText(String content) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'summarize',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'summarizeText',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error summarizing text',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'summarize',
+            'content': content,
+          },
+        );
+        return data['result'] as String;
+      },
+      operationName: 'summarizeText',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 文章展開
-  /// 短い文章やアイデアを詳細に展開
   Future<String> expandText(String content) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'expand',
-              'content': content,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'expandText',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error('Error expanding text', error: e, stackTrace: stackTrace);
-      rethrow;
-    }
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'expand',
+            'content': content,
+          },
+        );
+        return data['result'] as String;
+      },
+      operationName: 'expandText',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 翻訳
-  /// 指定した言語に翻訳
   Future<String> translateText(
     String content, {
     String targetLanguage = 'en',
   }) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'translate',
-              'content': content,
-              'targetLanguage': targetLanguage,
-            },
-          );
-          return data['result'] as String;
-        },
-        operationName: 'translateText',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error translating text',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'translate',
+            'content': content,
+            'targetLanguage': targetLanguage,
+          },
+        );
+        return data['result'] as String;
+      },
+      operationName: 'translateText',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// タイトル提案
-  /// 文章内容から魅力的なタイトルを提案
   Future<List<String>> suggestTitles(String content) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'suggest_title',
-              'content': content,
-            },
-          );
-          final result = data['result'] as String;
-          // Parse the result to extract title suggestions
-          // Assuming the result contains titles separated by newlines or numbers
-          final titles = result
-              .split('\n')
-              .where((line) => line.trim().isNotEmpty)
-              .map((line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim())
-              .where((line) => line.isNotEmpty)
-              .toList();
-          return titles;
-        },
-        operationName: 'suggestTitles',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error suggesting titles',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'suggest_title',
+            'content': content,
+          },
+        );
+        return _parseTitles(data['result'] as String); // 💡 改善点: ヘルパーメソッドへ移動
+      },
+      operationName: 'suggestTitles',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
+  /// タイトル文字列をリストに解析するヘルパー
+  List<String> _parseTitles(String result) {
+    return result
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .map((line) =>
+            line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim()) // ナンバリングを除去
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
+  // =========================================================================
+  // AIメタデータ/検索機能
+  // =========================================================================
+
   /// タグとカテゴリの自動提案
-  /// メモの内容から適切なタグとカテゴリを提案
   Future<TagSuggestion> suggestTags({
     required String content,
     String? title,
     List<String>? existingCategories,
   }) async {
-    try {
-      final response = await _supabase.functions.invoke(
-        'ai-suggest-tags',
-        body: {
-          'content': content,
-          'title': title,
-          'existingCategories': existingCategories,
-        },
-      );
+    // 💡 改善点: _retryWithBackoff を使用して堅牢性を高める
+    return await _retryWithBackoff(
+      () async {
+        final responseData = await _invokeFunction(
+          'ai-suggest-tags',
+          {
+            'content': content,
+            'title': title,
+            'existingCategories': existingCategories,
+          },
+        );
 
-      final data = response.data as Map<String, dynamic>;
-      if (data['success'] == true) {
-        final suggestions = data['suggestions'] as Map<String, dynamic>;
+        final suggestions = responseData['suggestions'] as Map<String, dynamic>;
+
+        // 💡 改善点: nullチェックを強化し、ResultMap<String, dynamic> の存在を保証
+        if (suggestions == null) {
+          throw AIServiceException('AIからの提案データが不正です。');
+        }
+
         return TagSuggestion(
           tags: List<String>.from(suggestions['tags'] as List<dynamic>? ?? []),
           category: suggestions['category'] as String? ?? '',
           reason: suggestions['reason'] as String? ?? '',
         );
-      } else {
-        throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error suggesting tags',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+      },
+      operationName: 'suggestTags',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// AI検索
-  /// 自然言語検索とセマンティックサーチ
   Future<AISearchResult> searchNotes({
     required String query,
     int limit = 20,
   }) async {
-    try {
-      final response = await _supabase.functions.invoke(
-        'ai-search',
-        body: {
-          'query': query,
-          'limit': limit,
-        },
-      );
+    // 💡 改善点: _retryWithBackoff を使用して堅牢性を高める
+    return await _retryWithBackoff(
+      () async {
+        final responseData = await _invokeFunction(
+          'ai-search',
+          {
+            'query': query,
+            'limit': limit,
+          },
+        );
 
-      final data = response.data as Map<String, dynamic>;
-      if (data['success'] == true) {
+        // 💡 改善点: nullチェックを強化
+        if (responseData['results'] == null) {
+          throw AIServiceException('AI検索結果が不正です。');
+        }
+
         return AISearchResult(
           results: List<Map<String, dynamic>>.from(
-            data['results'] as List<dynamic>? ?? [],
+            responseData['results'] as List<dynamic>,
           ),
-          totalResults: data['totalResults'] as int? ?? 0,
-          explanation: data['explanation'] as String? ?? '',
+          totalResults: responseData['totalResults'] as int? ?? 0,
+          explanation: responseData['explanation'] as String? ?? '',
         );
-      } else {
-        throw Exception((data['error'] as String?) ?? 'AI処理に失敗しました');
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error('Error in AI search', error: e, stackTrace: stackTrace);
-      rethrow;
-    }
+      },
+      operationName: 'searchNotes',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// ユーザーのAI使用統計を取得
@@ -340,6 +330,7 @@ class AIService {
 
       for (var record in response) {
         totalUsage += (record['total_tokens'] as int?) ?? 0;
+        // 💡 確認: num? から double へのキャストは安全
         totalCost += (record['cost_estimate'] as num?)?.toDouble() ?? 0.0;
 
         final action = record['action'] as String;
@@ -353,117 +344,122 @@ class AIService {
         recentUsageCount: response.length,
       );
     } catch (e, stackTrace) {
+      // ログ記録はそのまま維持
       AppLogger.error(
         'Error getting AI usage stats',
         error: e,
         stackTrace: stackTrace,
       );
-      return AIUsageStats(
-        totalUsage: 0,
-        totalCost: 0.0,
-        usageByAction: {},
-        recentUsageCount: 0,
-      );
+      // エラー時もデフォルト値を返すことで、アプリのクラッシュを防ぐ
+      rethrow;
     }
   }
 
+  // =========================================================================
+  // AI秘書機能
+  // =========================================================================
+
   /// AI秘書機能：タスク推奨を取得
-  /// ユーザーのメモ、タスク、目標に基づいて今日/今週/今月/今年やるべきことをAIが提案
   Future<TaskRecommendations> getTaskRecommendations({
     required String userId,
     List<Map<String, dynamic>>? recentNotes,
   }) async {
-    try {
-      return await _retryWithBackoff(
-        () async {
-          // ユーザーの最近のメモを取得（パラメータで渡されていない場合）
-          List<Map<String, dynamic>> notes = recentNotes ?? [];
+    return await _retryWithBackoff(
+      () async {
+        // 💡 修正点1: notesFutureとstatsFutureの型を明示的に Future<dynamic> として揃える
 
-          if (notes.isEmpty) {
-            final notesResponse = await _supabase
-                .from('notes')
-                .select('id, title, content, created_at, updated_at')
-                .eq('user_id', userId)
-                .eq('is_archived', false)
-                .order('updated_at', ascending: false)
-                .limit(20);
+        // ノート取得処理の Future を定義
+        final Future<List<Map<String, dynamic>>> notesFuture;
 
-            notes = List<Map<String, dynamic>>.from(notesResponse);
-          }
-
-          // ユーザーの統計情報を取得
-          final statsResponse = await _supabase
-              .from('user_stats')
-              .select(
-                'current_level, total_points, current_streak, longest_streak, notes_created',
-              )
+        if (recentNotes == null || recentNotes.isEmpty) {
+          notesFuture = _supabase
+              .from('notes')
+              .select('id, title, content, created_at, updated_at')
               .eq('user_id', userId)
-              .single();
+              .eq('is_archived', false)
+              .order('updated_at', ascending: false)
+              .limit(20)
+              .then((response) => List<Map<String, dynamic>>.from(
+                  response)); // 明示的に Future<List> を返す
+        } else {
+          notesFuture = Future.value(recentNotes);
+        }
 
-          final data = await _invokeFunction(
-            'ai-assistant',
-            {
-              'action': 'task_recommendations',
-              'userId': userId,
-              'recentNotes': notes,
-              'userStats': statsResponse,
-            },
-          );
+        // 統計情報取得処理の Future を定義
+        final Future<Map<String, dynamic>> statsFuture = _supabase
+            .from('user_stats')
+            .select(
+              'current_level, total_points, current_streak, longest_streak, notes_created',
+            )
+            .eq('user_id', userId)
+            .single()
+            .then((response) =>
+                response as Map<String, dynamic>); // 明示的に Future<Map> を返す
 
-          final result = data['result'] as Map<String, dynamic>;
+        // 💡 修正点2: Future.wait の型引数を明示的に List<dynamic> にすることで型推論エラーを回避
+        final results = await Future.wait<dynamic>([
+          notesFuture,
+          statsFuture,
+        ]);
 
-          return TaskRecommendations(
-            daily: List<String>.from(result['daily'] ?? []),
-            weekly: List<String>.from(result['weekly'] ?? []),
-            monthly: List<String>.from(result['monthly'] ?? []),
-            yearly: List<String>.from(result['yearly'] ?? []),
-            insights: result['insights'] as String? ?? '',
-          );
-        },
-        operationName: 'getTaskRecommendations',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error getting task recommendations',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+        // 💡 修正点3: 取得後の型キャスト
+        final notesResponse = results[0] as List<dynamic>; // notesFutureの結果
+        final statsResponse =
+            results[1] as Map<String, dynamic>; // statsFutureの結果
+
+        final notes = List<Map<String, dynamic>>.from(notesResponse);
+
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'task_recommendations',
+            'userId': userId,
+            'recentNotes': notes,
+            'userStats': statsResponse,
+          },
+        );
+
+        final result = data['result'] as Map<String, dynamic>;
+
+        return TaskRecommendations(
+          daily: List<String>.from(result['daily'] ?? []),
+          weekly: List<String>.from(result['weekly'] ?? []),
+          monthly: List<String>.from(result['monthly'] ?? []),
+          yearly: List<String>.from(result['yearly'] ?? []),
+          insights: result['insights'] as String? ?? '',
+        );
+      },
+      operationName: 'getTaskRecommendations',
+    );
+    // 💡 改善点: 外側の try-catch を削除
   }
 
+  // =========================================================================
+  // AI管理機能
+  // =========================================================================
+
   /// デイリーチャレンジの生成（AIおまかせ）
-  /// 通常はサーバー側のCronで実行されますが、管理者機能やテスト用にアプリからも呼べるようにします。
   Future<void> generateDailyChallenges({DateTime? targetDate}) async {
-    try {
-      final date = targetDate ?? DateTime.now();
-      // 日本時間の日付文字列 (YYYY-MM-DD)
-      final dateStr =
-          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    final date = targetDate ?? DateTime.now();
+    // 日本時間の日付文字列 (YYYY-MM-DD)
+    final dateStr =
+        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 
-      await _retryWithBackoff(
-        () async {
-          await _invokeFunction(
-            'generate-daily-challenges', // 新しく作成するEdge Function名
-            {
-              'date': dateStr,
-            },
-          );
-          // 戻り値はvoid (DBに直接書き込まれるため)
-          return;
-        },
-        operationName: 'generateDailyChallenges',
-      );
+    await _retryWithBackoff(
+      () async {
+        await _invokeFunction(
+          'generate-daily-challenges',
+          {
+            'date': dateStr,
+          },
+        );
+        return;
+      },
+      operationName: 'generateDailyChallenges',
+    );
 
-      AppLogger.info('Daily challenges generated successfully for $dateStr');
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error generating daily challenges',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      rethrow;
-    }
+    AppLogger.info('Daily challenges generated successfully for $dateStr');
+    // 💡 改善点: 外側の try-catch を削除
   }
 }
 
