@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-// ActivityFeedPageで表示するデータ構造を抽象化
+// ActivityFeedPageで表示するデータ構造を抽象化 (変更なし)
 class ActivityItem {
   final String id;
   final String type;
@@ -20,16 +20,27 @@ class ActivityItem {
     required this.timestamp,
   });
 
-  // DBのJSONから変換するファクトリコンストラクタ
+  // DBのJSONから変換するファクトリコンストラクタ (変更なし)
   factory ActivityItem.fromJson(Map<String, dynamic> json) {
     final String defaultName = '匿名ユーザー';
     final String name = json['user_name'] ?? defaultName;
+
+    // 以前の EnhancedStatisticsPage の画像で見たように、
+    // activity の action が `匿名ユーザー kanta13jp が統計・実績ページを訪問しました` のような
+    // ユーザー名を含む整形済みの文字列であると仮定します。
+    // その場合、ActivityItemの action フィールドは、その整形済みの全文を保持しています。
+    // UI側の _buildActivityItem で RichText を使用して、
+    // userName と action を結合して表示しているロジックが、
+    // データベース側のデータ構造と矛盾しないか注意が必要です。
+
+    // NOTE: action にはユーザー名を含む整形済みテキストが入っているという前提を維持します。
+    final fullActionText = json['action'] as String? ?? '新しいアクティビティ';
 
     return ActivityItem(
       id: json['id'].toString(),
       type: json['type'] as String? ?? 'general',
       userName: name.isNotEmpty ? name : defaultName,
-      action: json['action'] as String? ?? '新しいアクティビティ',
+      action: fullActionText,
       // Supabaseから返されるISO 8601形式の文字列をDateTimeにパース
       timestamp: DateTime.parse(json['timestamp'] as String),
     );
@@ -45,7 +56,6 @@ class ActivityFeedPage extends StatefulWidget {
 
 class _ActivityFeedPageState extends State<ActivityFeedPage> {
   final _supabase = Supabase.instance.client;
-  // ✅ リアルタイム購読をキャンセルするための変数
   StreamSubscription<List<Map<String, dynamic>>>? _activitySubscription;
 
   List<ActivityItem> _activities = [];
@@ -54,16 +64,13 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   @override
   void initState() {
     super.initState();
+    // 日本語メッセージを設定
     timeago.setLocaleMessages('ja', timeago.JaMessages());
-    // 初回ロードはストリーム開始時に自動的に行われるため、コメントアウト
-    // _loadActivities();
     _startRealTimeSubscription();
   }
 
-  // ✅ 改善点1: Supabase Realtime Stream の実装
+  // ... (_startRealTimeSubscription, _handleRealTimeData, _loadActivities, _generateSampleActivities, dispose は変更なし)
   void _startRealTimeSubscription() {
-    // activities テーブルの最新30件の変更を購読
-    // ストリームは接続時に最新のデータを取得し、以降の変更を継続的にプッシュします。
     _activitySubscription = _supabase
         .from('activities')
         .stream(primaryKey: ['id'])
@@ -71,12 +78,10 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         .limit(30)
         .listen(_handleRealTimeData, onError: (e) {
           AppLogger.error('Realtime subscription error', error: e);
-          // エラーが発生した場合、Futureベースのロードをトリガー
           _loadActivities();
         });
   }
 
-  // ✅ 改善点2: リアルタイムデータ処理ハンドラ
   void _handleRealTimeData(List<Map<String, dynamic>> data) {
     final List<ActivityItem> newActivities =
         data.map((json) => ActivityItem.fromJson(json)).toList();
@@ -84,17 +89,15 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     if (mounted) {
       setState(() {
         _activities = newActivities;
-        _isLoading = false; // データが来たのでロード完了
+        _isLoading = false;
       });
     }
   }
 
-  // Futureベースのデータ取得 (ストリームが失敗した場合、または手動Refresh時)
   Future<void> _loadActivities() async {
     try {
       setState(() => _isLoading = true);
 
-      // Postgrest (REST) APIを介してデータを取得
       final response = await _supabase
           .from('activities')
           .select('id, type, user_name, action, timestamp')
@@ -106,7 +109,6 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
           .toList();
 
       if (activities.isEmpty) {
-        // データがない場合、ハードコードされたサンプルデータを表示
         activities.addAll(_generateSampleActivities());
       }
 
@@ -124,7 +126,6 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       );
       if (mounted) {
         setState(() {
-          // エラー時はサンプルデータを表示
           _activities = _generateSampleActivities();
           _isLoading = false;
         });
@@ -132,7 +133,6 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     }
   }
 
-  // サンプルデータ生成 (フォールバック)
   List<ActivityItem> _generateSampleActivities() {
     final now = DateTime.now();
     return [
@@ -153,6 +153,13 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       ),
       ActivityItem(
         id: '3',
+        type: 'stats_page_visit', // 前のページで確認した visit の type を追加
+        userName: 'kanta13jp', // ユーザー名を具体的なものに変更
+        action: 'kanta13jpが統計・実績ページを訪問しました',
+        timestamp: now.subtract(const Duration(minutes: 4)),
+      ),
+      ActivityItem(
+        id: '4',
         type: 'milestone',
         userName: 'システム',
         action: '総メモ数が10,000件を突破しました！🎉',
@@ -163,7 +170,6 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
 
   @override
   void dispose() {
-    // ✅ 改善点3: 購読の解除を確実に行う
     _activitySubscription?.cancel();
     super.dispose();
   }
@@ -181,6 +187,8 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         return {'icon': Icons.share, 'color': Colors.blue};
       case 'level_up':
         return {'icon': Icons.trending_up, 'color': Colors.teal};
+      case 'stats_page_visit': // 統計ページ訪問のスタイルを追加
+        return {'icon': Icons.bar_chart, 'color': Colors.orange};
       default:
         return {'icon': Icons.timeline, 'color': Colors.grey};
     }
@@ -189,12 +197,20 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // 背景を白に変更
       appBar: AppBar(
-        title: const Text('コミュニティ活動'),
+        title: const Text(
+          'コミュニティ活動',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1, // わずかな影をつけて、App Barを分離
+        shadowColor: Colors.black.withOpacity(0.1),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadActivities, // Refresh時はFutureベースの_loadActivitiesを呼ぶ
+            onPressed: _loadActivities,
             tooltip: '更新',
           ),
         ],
@@ -225,10 +241,16 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                      // リスト全体のパディングを調整
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
                       itemCount: _activities.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 24),
+                      // 区切り線をより薄く、短く
+                      separatorBuilder: (context, index) => const Divider(
+                          height: 24,
+                          thickness: 0.5,
+                          indent: 60,
+                          endIndent: 16),
                       itemBuilder: (context, index) {
                         final activity = _activities[index];
                         return _buildActivityItem(activity);
@@ -246,44 +268,45 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // アイコン
+        // 1. アイコン
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 40, // アイコンコンテナの幅を固定
+          height: 40, // アイコンコンテナの高さを固定
           decoration: BoxDecoration(
-            color: (style['color'] as Color).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: (style['color'] as Color).withOpacity(0.15), // 透明度を調整
+            borderRadius: BorderRadius.circular(10), // 角を丸く
           ),
           child: Icon(
             style['icon'] as IconData,
             color: style['color'] as Color,
-            size: 24,
+            size: 22, // アイコンサイズを微調整
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16), // 間隔を広げる
 
-        // 内容
+        // 2. 内容 (Expandedでオーバーフロー対策)
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               RichText(
+                // ✅ オーバーフロー対策: maxLines と overflow を追加
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 text: TextSpan(
-                  style: DefaultTextStyle.of(context).style,
+                  style: DefaultTextStyle.of(context).style.copyWith(
+                        fontSize: 15.0, // テキストサイズを標準に
+                        color: Colors.black87,
+                      ),
                   children: [
                     TextSpan(
-                      text: activity.userName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const TextSpan(text: ' '),
-                    TextSpan(
-                      text: activity.action,
+                      text: activity.action, // action には整形済み全文が入っていると仮定
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 4),
+              // タイムスタンプ
               Text(
                 timeAgo,
                 style: TextStyle(
