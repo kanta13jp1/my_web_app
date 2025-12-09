@@ -160,7 +160,7 @@ supabase functions deploy ai-assistant
 supabase secrets list
 
 # 必要に応じて再設定
-supabase secrets set GOOGLE_AI_API_KEY=AIzaSyA2XQvSH6FPitrXuIPmGuIwF0NfAJ88-YY
+supabase secrets set GOOGLE_AI_API_KEY="Your API KEY"
 ```
 
 ### エラー3: ブラウザキャッシュ

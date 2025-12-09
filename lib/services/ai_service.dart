@@ -55,8 +55,7 @@ class AIService {
 
           // retryAfterがあればそれを使用、なければ指数バックオフ
           final waitTimeMs = e.retryAfter != null
-              ? (int.tryParse(e.retryAfter!) ?? 0) *
-                  1000 // 【修正点】数値としてパースした後、1000を乗算
+              ? (int.tryParse(e.retryAfter!) ?? 0) * 1000 // 数値としてパースした後、1000を乗算
               : delayMs + Random().nextInt(500); // ジッターを追加してサーバー負荷を軽減
 
           AppLogger.info(
@@ -65,8 +64,7 @@ class AIService {
 
           await Future.delayed(Duration(milliseconds: waitTimeMs));
           retryCount++;
-          delayMs =
-              (delayMs * 2).clamp(_initialRetryDelayMs, 30000); // 最大遅延時間を設定
+          delayMs = (delayMs * 2).clamp(_initialRetryDelayMs, 30000); // 最大遅延時間を設定
           continue;
         }
 
@@ -83,6 +81,10 @@ class AIService {
     String functionName,
     Map<String, dynamic> body,
   ) async {
+    // 🔍 リクエスト前のログ出力
+    AppLogger.debug('Calling Supabase Function: $functionName');
+    AppLogger.debug('Request Body: $body');
+
     try {
       final response = await _supabase.functions.invoke(
         functionName,
@@ -91,10 +93,16 @@ class AIService {
 
       // エラーレスポンスのチェック
       final data = response.data as Map<String, dynamic>;
+      
+      // 🔍 レスポンス受信時のログ出力
+      AppLogger.debug('Supabase Function Response ($functionName): $data');
+
       if (data['success'] != true) {
         final errorMessage = (data['error'] as String?) ?? 'AI処理に失敗しました';
         final errorType = data['errorType'] as String?;
         final retryAfter = data['retryAfter']?.toString();
+
+        AppLogger.error('Supabase Function Error ($functionName): $errorMessage');
 
         throw AIServiceException(
           errorMessage,
@@ -107,6 +115,9 @@ class AIService {
     } on FunctionException catch (e) {
       // FunctionExceptionの場合、詳細を解析
       final details = e.details;
+      // 【修正点】e.message ではなく $e (e.toString()) を使用
+      AppLogger.error('FunctionException ($functionName): $e, details: $details'); 
+
       if (details is Map<String, dynamic>) {
         final errorMessage =
             details['error']?.toString() ?? 'Supabase Functionからの応答エラー';
@@ -123,9 +134,11 @@ class AIService {
       // 詳細情報がない場合もカスタム例外に変換
       throw AIServiceException('Supabase Functionエラー: ${e.toString()}');
     } on PostgrestException catch (e) {
+      AppLogger.error('PostgrestException ($functionName): ${e.message}');
       // ポストグレストのエラー（例: 権限不足）
       throw AIServiceException('データベース操作エラー: ${e.message}');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error in _invokeFunction ($functionName)', error: e, stackTrace: stackTrace);
       // その他のネットワークエラーなど
       throw AIServiceException('予期せぬエラー: ${e.toString()}');
     }
@@ -150,7 +163,6 @@ class AIService {
       },
       operationName: 'improveText',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 要約生成
@@ -168,7 +180,6 @@ class AIService {
       },
       operationName: 'summarizeText',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 文章展開
@@ -186,7 +197,6 @@ class AIService {
       },
       operationName: 'expandText',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// 翻訳
@@ -208,7 +218,6 @@ class AIService {
       },
       operationName: 'translateText',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// タイトル提案
@@ -222,11 +231,10 @@ class AIService {
             'content': content,
           },
         );
-        return _parseTitles(data['result'] as String); // 💡 改善点: ヘルパーメソッドへ移動
+        return _parseTitles(data['result'] as String);
       },
       operationName: 'suggestTitles',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// タイトル文字列をリストに解析するヘルパー
@@ -250,7 +258,6 @@ class AIService {
     String? title,
     List<String>? existingCategories,
   }) async {
-    // 💡 改善点: _retryWithBackoff を使用して堅牢性を高める
     return await _retryWithBackoff(
       () async {
         final responseData = await _invokeFunction(
@@ -264,7 +271,6 @@ class AIService {
 
         final suggestions = responseData['suggestions'] as Map<String, dynamic>;
 
-        // 💡 改善点: nullチェックを強化し、ResultMap<String, dynamic> の存在を保証
         if (suggestions == null) {
           throw AIServiceException('AIからの提案データが不正です。');
         }
@@ -277,7 +283,6 @@ class AIService {
       },
       operationName: 'suggestTags',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// AI検索
@@ -285,7 +290,6 @@ class AIService {
     required String query,
     int limit = 20,
   }) async {
-    // 💡 改善点: _retryWithBackoff を使用して堅牢性を高める
     return await _retryWithBackoff(
       () async {
         final responseData = await _invokeFunction(
@@ -296,7 +300,6 @@ class AIService {
           },
         );
 
-        // 💡 改善点: nullチェックを強化
         if (responseData['results'] == null) {
           throw AIServiceException('AI検索結果が不正です。');
         }
@@ -311,7 +314,6 @@ class AIService {
       },
       operationName: 'searchNotes',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   /// ユーザーのAI使用統計を取得
@@ -330,7 +332,6 @@ class AIService {
 
       for (var record in response) {
         totalUsage += (record['total_tokens'] as int?) ?? 0;
-        // 💡 確認: num? から double へのキャストは安全
         totalCost += (record['cost_estimate'] as num?)?.toDouble() ?? 0.0;
 
         final action = record['action'] as String;
@@ -344,13 +345,11 @@ class AIService {
         recentUsageCount: response.length,
       );
     } catch (e, stackTrace) {
-      // ログ記録はそのまま維持
       AppLogger.error(
         'Error getting AI usage stats',
         error: e,
         stackTrace: stackTrace,
       );
-      // エラー時もデフォルト値を返すことで、アプリのクラッシュを防ぐ
       rethrow;
     }
   }
@@ -366,8 +365,6 @@ class AIService {
   }) async {
     return await _retryWithBackoff(
       () async {
-        // 💡 修正点1: notesFutureとstatsFutureの型を明示的に Future<dynamic> として揃える
-
         // ノート取得処理の Future を定義
         final Future<List<Map<String, dynamic>>> notesFuture;
 
@@ -396,16 +393,18 @@ class AIService {
             .then((response) =>
                 response as Map<String, dynamic>); // 明示的に Future<Map> を返す
 
-        // 💡 修正点2: Future.wait の型引数を明示的に List<dynamic> にすることで型推論エラーを回避
+        // Future.wait で並列実行
         final results = await Future.wait<dynamic>([
           notesFuture,
           statsFuture,
         ]);
 
-        // 💡 修正点3: 取得後の型キャスト
-        final notesResponse = results[0] as List<dynamic>; // notesFutureの結果
-        final statsResponse =
-            results[1] as Map<String, dynamic>; // statsFutureの結果
+        final notesResponse = results[0];
+        final statsResponse = results[1];
+
+        // 🔍 パラメータのログ出力
+        AppLogger.debug('getTaskRecommendations - notes count: ${(notesResponse as List).length}');
+        AppLogger.debug('getTaskRecommendations - stats: $statsResponse');
 
         final notes = List<Map<String, dynamic>>.from(notesResponse);
 
@@ -431,7 +430,6 @@ class AIService {
       },
       operationName: 'getTaskRecommendations',
     );
-    // 💡 改善点: 外側の try-catch を削除
   }
 
   // =========================================================================
@@ -459,10 +457,10 @@ class AIService {
     );
 
     AppLogger.info('Daily challenges generated successfully for $dateStr');
-    // 💡 改善点: 外側の try-catch を削除
   }
 }
 
+// ... (クラス定義はそのまま)
 /// タグ提案の結果
 class TagSuggestion {
   final List<String> tags;
