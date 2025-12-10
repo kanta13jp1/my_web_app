@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart'; // 📦 追加
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../pages/archive_page.dart';
 import '../../pages/categories_page.dart';
 import '../../pages/stats_page.dart';
@@ -17,6 +17,7 @@ import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../pages/ai_secretary_page.dart';
 import '../../pages/personality_test_landing_page.dart';
+import '../../pages/feedback_page.dart'; // ✅ 追加: フィードバックページ
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -90,6 +91,37 @@ class _HomeAppBarState extends State<HomeAppBar> {
     }
   }
 
+  // フィルタリングアクションのマップ
+  static const Map<String, VoidCallback Function(HomeAppBar)> _filterActions = {
+    'advanced_search': (w) => w.onShowAdvancedSearch,
+    'reminder_filter': (w) => w.onShowReminderFilter,
+    'favorite_filter': (w) => w.onToggleFavorites,
+    'category_filter': (w) => w.onShowCategoryFilter,
+    'sort': (w) => w.onShowSortDialog,
+    'date_filter': (w) => w.onShowDateFilter,
+  };
+
+  // ページ遷移アクションのマップ
+  static const Map<String, Widget Function(BuildContext)> _pageBuilders = {
+    'categories': (c) => const CategoriesPage(),
+    'archive': (c) => const ArchivePage(),
+    'stats': (c) => const StatsPage(),
+    'leaderboard': (c) => const LeaderboardPage(),
+    'profile_settings': (c) => const ProfileSettingsPage(),
+    'site_stats': (c) => const EnhancedStatisticsPage(),
+    'referral': (c) => const ReferralPage(),
+    'daily_challenges': (c) => const DailyChallengesPage(),
+    'personality_test': (c) => const PersonalityTestLandingPage(),
+    'ai_secretary': (c) => const AISecretaryPage(),
+    'memo_gallery': (c) => const MemoGalleryPage(),
+    'growth_dashboard': (c) => const GrowthDashboardPage(),
+    'templates': (c) => const TemplateMarketplacePage(),
+    'import': (c) => const ImportPage(),
+    'activity_feed': (c) => const ActivityFeedPage(),
+    'settings': (c) => const SettingsPage(),
+    'feedback': (c) => const FeedbackPage(), // ✅ 追加
+  };
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -119,7 +151,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2), // 修正: withOpacity
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -271,127 +303,37 @@ class _HomeAppBarState extends State<HomeAppBar> {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       onSelected: (value) {
-        if (value == 'advanced_search') {
-          widget.onShowAdvancedSearch();
-        } else if (value == 'reminder_filter') {
-          widget.onShowReminderFilter();
-        } else if (value == 'favorite_filter') {
-          widget.onToggleFavorites();
-        } else if (value == 'category_filter') {
-          widget.onShowCategoryFilter();
-        } else if (value == 'sort') {
-          widget.onShowSortDialog();
-        } else if (value == 'date_filter') {
-          widget.onShowDateFilter();
-        } else if (value == 'categories') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CategoriesPage()),
-          ).then((_) {
-            widget.onRefresh();
-          });
-        } else if (value == 'archive') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ArchivePage()),
-          ).then((_) {
-            widget.onRefresh();
-          });
-        } else if (value == 'stats') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StatsPage()),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'leaderboard') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LeaderboardPage()),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'profile_settings') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
-          ).then((updated) {
-            if (updated == true) {
-              widget.onLoadUserStats();
-              widget.onRefresh();
-            }
-          });
-        } else if (value == 'site_stats') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedStatisticsPage()),
-          );
-        } else if (value == 'referral') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ReferralPage()),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'daily_challenges') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const DailyChallengesPage()),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'personality_test') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const PersonalityTestLandingPage(),
-            ),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'ai_secretary') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AISecretaryPage()),
-          ).then((_) {
-            widget.onLoadUserStats();
-          });
-        } else if (value == 'memo_gallery') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MemoGalleryPage()),
-          );
-        } else if (value == 'growth_dashboard') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const GrowthDashboardPage()),
-          );
-        } else if (value == 'templates') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TemplateMarketplacePage()),
-          );
-        } else if (value == 'import') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ImportPage()),
-          ).then((_) {
-            widget.onRefresh();
-          });
-        } else if (value == 'activity_feed') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ActivityFeedPage()),
-          );
-        } else if (value == 'share_app') {
+        if (value == 'share_app') {
           _showShareDialog(context);
-        } else if (value == 'settings') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SettingsPage()),
-          );
         } else if (value == 'logout') {
           widget.onSignOut();
+        } else if (_filterActions.containsKey(value)) {
+          // フィルタリング処理の実行
+          _filterActions[value]!(widget)();
+        } else if (_pageBuilders.containsKey(value)) {
+          // ページ遷移処理の実行
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => _pageBuilders[value]!(context)),
+          ).then((result) {
+            // 遷移後の処理 (リフレッシュ/統計ロード)
+            if (value == 'profile_settings' && result == true) {
+              widget.onLoadUserStats();
+              widget.onRefresh();
+            } else if (['categories', 'archive', 'import'].contains(value)) {
+              widget.onRefresh();
+            } else if ([
+              'stats',
+              'leaderboard',
+              'referral',
+              'daily_challenges',
+              'personality_test',
+              'ai_secretary'
+            ].contains(value)) {
+              widget.onLoadUserStats();
+            }
+            // その他のページは特になし
+          });
         }
       },
       itemBuilder: (context) => [
@@ -614,6 +556,17 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
         ),
         const PopupMenuDivider(),
+        // ✅ 追加: フィードバックメニュー
+        const PopupMenuItem(
+          value: 'feedback',
+          child: Row(
+            children: [
+              Icon(Icons.feedback_outlined, color: Colors.teal),
+              SizedBox(width: 8),
+              Text('ご意見・ご要望'),
+            ],
+          ),
+        ),
         const PopupMenuItem(
           value: 'share_app',
           child: Row(
@@ -689,7 +642,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: Colors.white
+                                  .withOpacity(0.2), // 修正: withOpacity
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -729,7 +683,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color:
+                              Colors.white.withOpacity(0.15), // 修正: withOpacity
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -749,20 +704,23 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.white.withValues(alpha: 0.25),
-                                Colors.white.withValues(alpha: 0.15),
+                                Colors.white
+                                    .withOpacity(0.25), // 修正: withOpacity
+                                Colors.white.withOpacity(0.15),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.4),
+                              color: Colors.white
+                                  .withOpacity(0.4), // 修正: withOpacity
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Colors.black
+                                    .withOpacity(0.1), // 修正: withOpacity
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -776,7 +734,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.3),
+                                  color: Colors.white
+                                      .withOpacity(0.3), // 修正: withOpacity
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -810,7 +769,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: Colors.white
+                                        .withOpacity(0.3), // 修正: withOpacity
                                   ),
                                   _buildStatItem(
                                     '⭐',
@@ -819,7 +779,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: Colors.white
+                                        .withOpacity(0.3), // 修正: withOpacity
                                   ),
                                   _buildStatItem(
                                     '🔥',
@@ -1197,7 +1158,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.3),
+              color: color.withOpacity(0.3), // 修正: withOpacity
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1236,8 +1197,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.05),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+          color: color.withOpacity(0.05), // 修正: withOpacity
+          border: Border.all(
+              color: color.withOpacity(0.3), width: 1.5), // 修正: withOpacity
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1245,7 +1207,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1), // 修正: withOpacity
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 22),
@@ -1301,7 +1263,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: color.withValues(alpha: 0.7),
+                        color: color.withOpacity(0.7), // 修正: withOpacity
                       ),
                     ),
                   ],
@@ -1311,7 +1273,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: color.withValues(alpha: 0.5),
+              color: color.withOpacity(0.5), // 修正: withOpacity
             ),
           ],
         ),

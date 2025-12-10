@@ -10,8 +10,8 @@ const corsHeaders = {
 }
 
 // Gemini API設定
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') // 環境変数名をGEMINI_API_KEYに統一
-const GEMINI_MODEL = 'gemini-1.5-flash' // モデル名を正確なIDに変更 (gemini-flash-latest等はエイリアス)
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+const GEMINI_MODEL = 'gemini-flash-latest'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {
@@ -83,6 +83,8 @@ serve(async (req) => {
     const prompt = buildPrompt(action, content, language, targetLanguage, recentNotes, userStats)
 
     // Call Gemini API
+    console.log(`Calling Gemini API (${GEMINI_MODEL})...`)
+
     const geminiResponse = await fetch(
       `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
       {
@@ -94,58 +96,50 @@ serve(async (req) => {
           contents: [{
             parts: [{ text: prompt }]
           }],
+          // 設定を最小限にしてエラーを回避（デフォルト値を使用）
           generationConfig: {
-            temperature: 0.7, // 少し創造性を高める
+            temperature: 0.7,
             maxOutputTokens: 2000,
-            topK: 40,
-            topP: 0.95,
           },
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-            },
-            {
-              category: 'HARM_CATEGORY_HATE_SPEECH',
-              threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-            }
-          ]
+          // Safety settingsはデフォルトを使用（過剰な設定によるエラー回避）
         }),
       }
     )
 
     if (!geminiResponse.ok) {
       const errorData = await geminiResponse.text()
-      console.error('Gemini API error:', errorData)
+      console.error('Gemini API error details:', errorData)
 
       // Handle rate limit errors
       if (geminiResponse.status === 429) {
         const retryAfter = geminiResponse.headers.get('retry-after') || '60'
         const error = new Error('Rate limit exceeded')
-        ;(error as any).statusCode = 429
-        ;(error as any).retryAfter = retryAfter
-        ;(error as any).errorType = 'RATE_LIMIT'
+          ; (error as any).statusCode = 429
+          ; (error as any).retryAfter = retryAfter
+          ; (error as any).errorType = 'RATE_LIMIT'
         throw error
       }
 
-      throw new Error(`Gemini API error: ${geminiResponse.status}`)
+      // エラーの詳細をクライアントに返すように変更
+      throw new Error(`Gemini API error: ${geminiResponse.status} - ${errorData}`)
     }
 
     const geminiData = await geminiResponse.json()
 
     // Extract result from Gemini response
-    let result = geminiData.candidates[0]?.content?.parts[0]?.text || ''
+    let result = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
     if (!result) {
-      throw new Error('No response from Gemini API')
+      console.error('Unexpected Gemini response:', JSON.stringify(geminiData))
+      throw new Error('No valid response text from Gemini API')
     }
 
     // Parse result based on action
     result = parseResult(result, action)
 
-    // Estimate token usage (Gemini doesn't provide exact counts)
+    // Estimate token usage
     const inputTokens = estimateTokens(prompt)
-    const outputTokens = estimateTokens(JSON.stringify(result)) // resultがオブジェクトの場合に対応
+    const outputTokens = estimateTokens(typeof result === 'string' ? result : JSON.stringify(result))
     const totalTokens = inputTokens + outputTokens
 
     // Track AI usage in database
@@ -155,7 +149,7 @@ serve(async (req) => {
       input_tokens: inputTokens,
       output_tokens: outputTokens,
       total_tokens: totalTokens,
-      cost_estimate: 0, // Gemini free tier - no cost
+      cost_estimate: 0,
       created_at: new Date().toISOString(),
     })
 
@@ -185,6 +179,7 @@ serve(async (req) => {
     const statusCode = (error as any).statusCode || 400
     const errorResponse: any = {
       success: false,
+      // エラーメッセージに詳細を含める
       error: error.message,
     }
 
@@ -272,38 +267,36 @@ ${content}
         `メモ${index + 1} (更新: ${note.updated_at}):\nタイトル: ${note.title}\n内容: ${note.content.substring(0, 500)}...\n`
       ).join('\n')
 
-      // 🔥 溝口勇児氏視点の戦略参謀プロンプトに更新
       prompt = `あなたは単なるスケジュール管理を行う秘書ではありません。
 ユーザーの人生と事業を劇的に成長させる、冷徹かつ情熱的な**「戦略参謀（Strategic Advisor）」**です。
 
 以下の【コンテキスト】を分析し、ユーザーに対して【戦略的提言】を行ってください。
 
 【ユーザーのコンテキスト】
-- 現在のレベル: ${userStats!.current_level} (成長度合い)
+- 現在のレベル: ${userStats!.current_level}
 - 最近の活動状況: ${userStats!.current_streak}日連続ログイン
 - 作成したメモ（直近の思考ログ）:
 ${notesContent}
 
 【思考プロセス】
 1. **現状分析**: ユーザーのメモから、現在「何に逃げているか（安易な作業やインプットに没頭していないか）」を見抜いてください。
-2. **ボトルネック特定**: ユーザーの目標達成（レベルアップや事業成長）を阻害している「真のボトルネック」を特定してください。表面的なタスクではなく、心理的な恐怖（失敗への恐れ、批判への恐れ）を探り当ててください。
+2. **ボトルネック特定**: ユーザーの目標達成を阻害している「真のボトルネック」を特定してください。
 3. **ハイレバレッジな行動の抽出**: ユーザーが少し恐怖を感じるかもしれないが、実行すれば最もリターンが大きい（ハイレバレッジな）行動を**たった1つ**見つけ出してください。
 
 【出力フォーマット (JSON)】
-以下のJSON形式のみを出力してください。余計なマークダウンや説明は不要です。
+以下のJSON形式のみを出力してください。余計なマークダウン( \`\`\`json 等)や説明は不要です。
 
 {
   "daily": ["今日やるべき・たった1つのクレイジーな行動 (例: 未完成のままアプリを友人に送り、辛辣な感想をもらう)"],
   "weekly": ["今週の戦略的フォーカス (例: 機能追加を全停止し、営業活動に100%リソースを割く)"],
   "monthly": ["今月のマイルストーン (恐怖を克服した先にある成果)"],
   "yearly": ["今年のビジョン (現状の延長線上にはない飛躍的な目標)"],
-  "insights": "戦略参謀からのメッセージ (150文字程度)。ユーザーに媚びず、本質を突く厳しいが愛のある言葉で、なぜ上記の『クレイジーな行動』が必要なのかを説いてください。「その作業は、本当にあなたの人生を変えますか？」と問いかけてください。"
+  "insights": "戦略参謀からのメッセージ (150文字程度)。ユーザーに媚びず、本質を突く厳しいが愛のある言葉で、なぜ上記の『クレイジーな行動』が必要なのかを説いてください。"
 }
 
 注意:
-- ToDoリスト（牛乳を買う、メールを返す等）は絶対に出力しないでください。
-- 「daily」は配列ですが、要素は**1つだけ**に絞り込んでください。選択と集中を促すためです。
-- 言葉遣いは丁寧ですが、内容は妥協のないプロフェッショナルなトーンでお願いします。`
+- ToDoリストは出力しないでください。
+- 「daily」は要素を**1つだけ**に絞り込んでください。`
       break
 
     default:
@@ -316,42 +309,31 @@ ${notesContent}
 function parseResult(result: string, action: string): any {
   if (action === 'task_recommendations') {
     try {
-      // Remove markdown code blocks if present (JSONのパースエラー防止)
       let cleaned = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-
-      // Try to extract JSON from the response
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         cleaned = jsonMatch[0]
       }
-
       const parsed = JSON.parse(cleaned)
-      
-      // dailyが空の場合のフォールバック
       if (!parsed.daily || parsed.daily.length === 0) {
         parsed.daily = ['まずは1つ、恐怖を感じる行動を選んで実行してください']
       }
-      
       return parsed
     } catch (e) {
-      console.error('Error parsing task recommendations JSON:', e)
+      console.error('Error parsing JSON:', e)
       console.error('Raw result:', result)
-      // Return fallback structure with Strategic Advisor tone
       return {
         daily: ['戦略を見直す時間を確保する'],
         weekly: ['ボトルネックを特定する'],
         monthly: ['コンフォートゾーンから抜け出す'],
         yearly: ['圧倒的な成果を定義する'],
-        insights: '申し訳ありません。現在、戦略的分析データが不足しています。しかし、立ち止まって考えることこそが重要です。目の前の作業が本当に未来を変えるのか、自問自答してください。'
+        insights: '申し訳ありません。戦略的分析を行いましたが、データの解析に失敗しました。しかし、立ち止まって考えることこそが重要です。'
       }
     }
   }
-
   return result
 }
 
 function estimateTokens(text: string): number {
-  // Rough estimation: 1 token ≈ 4 characters for Japanese
-  // 1 token ≈ 4 characters for English
   return Math.ceil(text.length / 4)
 }

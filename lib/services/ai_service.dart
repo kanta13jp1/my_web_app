@@ -64,7 +64,8 @@ class AIService {
 
           await Future.delayed(Duration(milliseconds: waitTimeMs));
           retryCount++;
-          delayMs = (delayMs * 2).clamp(_initialRetryDelayMs, 30000); // 最大遅延時間を設定
+          delayMs =
+              (delayMs * 2).clamp(_initialRetryDelayMs, 30000); // 最大遅延時間を設定
           continue;
         }
 
@@ -93,7 +94,7 @@ class AIService {
 
       // エラーレスポンスのチェック
       final data = response.data as Map<String, dynamic>;
-      
+
       // 🔍 レスポンス受信時のログ出力
       AppLogger.debug('Supabase Function Response ($functionName): $data');
 
@@ -102,7 +103,8 @@ class AIService {
         final errorType = data['errorType'] as String?;
         final retryAfter = data['retryAfter']?.toString();
 
-        AppLogger.error('Supabase Function Error ($functionName): $errorMessage');
+        AppLogger.error(
+            'Supabase Function Error ($functionName): $errorMessage');
 
         throw AIServiceException(
           errorMessage,
@@ -116,7 +118,8 @@ class AIService {
       // FunctionExceptionの場合、詳細を解析
       final details = e.details;
       // 【修正点】e.message ではなく $e (e.toString()) を使用
-      AppLogger.error('FunctionException ($functionName): $e, details: $details'); 
+      AppLogger.error(
+          'FunctionException ($functionName): $e, details: $details');
 
       if (details is Map<String, dynamic>) {
         final errorMessage =
@@ -138,7 +141,8 @@ class AIService {
       // ポストグレストのエラー（例: 権限不足）
       throw AIServiceException('データベース操作エラー: ${e.message}');
     } catch (e, stackTrace) {
-      AppLogger.error('Unexpected error in _invokeFunction ($functionName)', error: e, stackTrace: stackTrace);
+      AppLogger.error('Unexpected error in _invokeFunction ($functionName)',
+          error: e, stackTrace: stackTrace);
       // その他のネットワークエラーなど
       throw AIServiceException('予期せぬエラー: ${e.toString()}');
     }
@@ -403,7 +407,8 @@ class AIService {
         final statsResponse = results[1];
 
         // 🔍 パラメータのログ出力
-        AppLogger.debug('getTaskRecommendations - notes count: ${(notesResponse as List).length}');
+        AppLogger.debug(
+            'getTaskRecommendations - notes count: ${(notesResponse as List).length}');
         AppLogger.debug('getTaskRecommendations - stats: $statsResponse');
 
         final notes = List<Map<String, dynamic>>.from(notesResponse);
