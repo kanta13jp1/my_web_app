@@ -72,12 +72,22 @@ class DailyLoginService {
           .from('user_stats')
           .select('total_points')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle(); // Changed to maybeSingle()
 
-      final currentPoints = stats['total_points'] as int;
-      await _supabase.from('user_stats').update(
-        {'total_points': currentPoints + bonusPoints},
-      ).eq('user_id', userId);
+      if (stats != null) {
+        final currentPoints = stats['total_points'] as int;
+        await _supabase.from('user_stats').update(
+          {'total_points': currentPoints + bonusPoints},
+        ).eq('user_id', userId);
+      } else {
+        // Initialize stats if they don't exist
+        await _supabase.from('user_stats').insert({
+          'user_id': userId,
+          'total_points': bonusPoints,
+          // You might need to set other required defaults here depending on your schema
+          // e.g. 'current_level': 1, 'current_streak': consecutiveDays
+        });
+      }
 
       AppLogger.info(
         'Daily login bonus awarded: $bonusPoints points (Day $consecutiveDays)',
