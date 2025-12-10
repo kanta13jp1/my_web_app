@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../main.dart'; // supabaseインスタンスへのアクセス
 import '../../pages/archive_page.dart';
 import '../../pages/categories_page.dart';
 import '../../pages/stats_page.dart';
@@ -17,7 +18,8 @@ import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../pages/ai_secretary_page.dart';
 import '../../pages/personality_test_landing_page.dart';
-import '../../pages/feedback_page.dart';
+import '../../pages/feedback_page.dart'; // ✅ 追加: フィードバックページ
+import '../../pages/admin/feedback_list_page.dart'; // ✅ 追加: 管理者ページ
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -75,11 +77,13 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _HomeAppBarState extends State<HomeAppBar> {
   String? _appVersion;
+  bool _isAdmin = false; // ✅ 追加: 管理者フラグ
 
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    _checkAdminRole(); // ✅ 追加: 管理者チェック
   }
 
   Future<void> _loadAppVersion() async {
@@ -91,8 +95,33 @@ class _HomeAppBarState extends State<HomeAppBar> {
     }
   }
 
+  // ✅ 追加: 管理者権限チェック
+  Future<void> _checkAdminRole() async {
+    final user = supabase.auth.currentUser;
+    // 1. メールアドレスでの簡易チェック (UI表示用)
+    if (user?.email == 'kanta13jp@gmail.com') {
+      setState(() => _isAdmin = true);
+    }
+
+    // 2. DBのroleカラムで厳密チェック
+    if (user != null) {
+      try {
+        final data = await supabase
+            .from('user_profiles') // user_profilesテーブル
+            .select('role')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (data != null && data['role'] == 'admin') {
+          if (mounted) setState(() => _isAdmin = true);
+        }
+      } catch (e) {
+        // エラー時は何もしない
+      }
+    }
+  }
+
   // フィルタリングアクションのマップ
-  // 修正: const を削除し final に変更（関数はconstにできないため）
   static final Map<String, VoidCallback Function(HomeAppBar)> _filterActions = {
     'advanced_search': (w) => w.onShowAdvancedSearch,
     'reminder_filter': (w) => w.onShowReminderFilter,
@@ -103,7 +132,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
   };
 
   // ページ遷移アクションのマップ
-  // 修正: const を削除し final に変更
   static final Map<String, Widget Function(BuildContext)> _pageBuilders = {
     'categories': (c) => const CategoriesPage(),
     'archive': (c) => const ArchivePage(),
@@ -121,7 +149,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
     'import': (c) => const ImportPage(),
     'activity_feed': (c) => const ActivityFeedPage(),
     'settings': (c) => const SettingsPage(),
-    'feedback': (c) => const FeedbackPage(),
+    'feedback': (c) => const FeedbackPage(), // ✅ 追加
+    'admin_feedback': (c) => const FeedbackListPage(), // ✅ 追加: 管理者ページ
   };
 
   @override
@@ -558,6 +587,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
         ),
         const PopupMenuDivider(),
+        // ✅ 追加: フィードバックメニュー
         const PopupMenuItem(
           value: 'feedback',
           child: Row(
@@ -568,6 +598,18 @@ class _HomeAppBarState extends State<HomeAppBar> {
             ],
           ),
         ),
+        // ✅ 追加: 管理者のみ表示されるメニュー
+        if (_isAdmin)
+          const PopupMenuItem(
+            value: 'admin_feedback',
+            child: Row(
+              children: [
+                Icon(Icons.admin_panel_settings, color: Colors.red),
+                SizedBox(width: 8),
+                Text('【管理】フィードバック'),
+              ],
+            ),
+          ),
         const PopupMenuItem(
           value: 'share_app',
           child: Row(
@@ -618,6 +660,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // ヘッダー部分
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -642,7 +685,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white
+                                  .withOpacity(0.2), // 修正: withOpacity
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -682,7 +726,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color:
+                              Colors.white.withOpacity(0.15), // 修正: withOpacity
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -702,7 +747,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.white.withOpacity(0.25),
+                                Colors.white
+                                    .withOpacity(0.25), // 修正: withOpacity
                                 Colors.white.withOpacity(0.15),
                               ],
                               begin: Alignment.topLeft,
@@ -710,12 +756,14 @@ class _HomeAppBarState extends State<HomeAppBar> {
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.white
+                                  .withOpacity(0.4), // 修正: withOpacity
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black
+                                    .withOpacity(0.1), // 修正: withOpacity
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -729,7 +777,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white
+                                      .withOpacity(0.3), // 修正: withOpacity
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -763,7 +812,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white.withOpacity(0.3),
+                                    color: Colors.white
+                                        .withOpacity(0.3), // 修正: withOpacity
                                   ),
                                   _buildStatItem(
                                     '⭐',
@@ -772,7 +822,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white.withOpacity(0.3),
+                                    color: Colors.white
+                                        .withOpacity(0.3), // 修正: withOpacity
                                   ),
                                   _buildStatItem(
                                     '🔥',
@@ -787,6 +838,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     ],
                   ),
                 ),
+                // コンテンツ部分
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -847,8 +899,10 @@ class _HomeAppBarState extends State<HomeAppBar> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // SNS別シェアボタン（哲学者の名言版）
                       _buildSnsShareButtons(context),
                       const SizedBox(height: 12),
+                      // 画像カードを作成
                       _buildShareButton(
                         context,
                         icon: Icons.image,
@@ -1029,6 +1083,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             onTap: () async {
               Navigator.pop(context);
               try {
+                // 動的OGP対応: 哲学者の名言シェア
                 await AppShareService.shareToTwitterWithDynamicOgp(
                   level: widget.userStats?.currentLevel,
                   totalPoints: widget.userStats?.totalPoints,
@@ -1065,6 +1120,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             onTap: () async {
               Navigator.pop(context);
               try {
+                // 動的OGP対応: Facebookシェア
                 await AppShareService.shareToFacebookWithDynamicOgp();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1097,6 +1153,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             onTap: () async {
               Navigator.pop(context);
               try {
+                // 動的OGP対応: LINEシェア
                 await AppShareService.shareToLineWithDynamicOgp(
                   level: widget.userStats?.currentLevel,
                   totalPoints: widget.userStats?.totalPoints,
