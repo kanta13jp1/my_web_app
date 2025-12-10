@@ -10,8 +10,8 @@ const corsHeaders = {
 }
 
 // Gemini API設定
-const GEMINI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY')
-const GEMINI_MODEL = 'gemini-flash-latest' // 最新の高速・無料モデル (2024年12月リリース)
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') // 環境変数名をGEMINI_API_KEYに統一
+const GEMINI_MODEL = 'gemini-1.5-flash' // モデル名を正確なIDに変更 (gemini-flash-latest等はエイリアス)
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {
@@ -95,7 +95,7 @@ serve(async (req) => {
             parts: [{ text: prompt }]
           }],
           generationConfig: {
-            temperature: 0.7,
+            temperature: 0.7, // 少し創造性を高める
             maxOutputTokens: 2000,
             topK: 40,
             topP: 0.95,
@@ -145,7 +145,7 @@ serve(async (req) => {
 
     // Estimate token usage (Gemini doesn't provide exact counts)
     const inputTokens = estimateTokens(prompt)
-    const outputTokens = estimateTokens(result.toString())
+    const outputTokens = estimateTokens(JSON.stringify(result)) // resultがオブジェクトの場合に対応
     const totalTokens = inputTokens + outputTokens
 
     // Track AI usage in database
@@ -269,28 +269,41 @@ ${content}
 
     case 'task_recommendations':
       const notesContent = recentNotes!.map((note, index) =>
-        `メモ${index + 1}:\nタイトル: ${note.title}\n内容: ${note.content.substring(0, 500)}...\n`
+        `メモ${index + 1} (更新: ${note.updated_at}):\nタイトル: ${note.title}\n内容: ${note.content.substring(0, 500)}...\n`
       ).join('\n')
 
-      prompt = `あなたはAI秘書です。ユーザーのメモやタスクを分析し、今日/今週/今月/今年やるべきことを提案してください。
+      // 🔥 溝口勇児氏視点の戦略参謀プロンプトに更新
+      prompt = `あなたは単なるスケジュール管理を行う秘書ではありません。
+ユーザーの人生と事業を劇的に成長させる、冷徹かつ情熱的な**「戦略参謀（Strategic Advisor）」**です。
 
-ユーザー情報:
-- レベル: ${userStats!.current_level}
-- ポイント: ${userStats!.total_points}
-- 連続ログイン: ${userStats!.current_streak}日
-- 作成したメモ数: ${userStats!.notes_created}
+以下の【コンテキスト】を分析し、ユーザーに対して【戦略的提言】を行ってください。
 
-最近のメモ（${recentNotes!.length}件）:
+【ユーザーのコンテキスト】
+- 現在のレベル: ${userStats!.current_level} (成長度合い)
+- 最近の活動状況: ${userStats!.current_streak}日連続ログイン
+- 作成したメモ（直近の思考ログ）:
 ${notesContent}
 
-以下のJSON形式で提案を出力してください（他のテキストは含めない）:
+【思考プロセス】
+1. **現状分析**: ユーザーのメモから、現在「何に逃げているか（安易な作業やインプットに没頭していないか）」を見抜いてください。
+2. **ボトルネック特定**: ユーザーの目標達成（レベルアップや事業成長）を阻害している「真のボトルネック」を特定してください。表面的なタスクではなく、心理的な恐怖（失敗への恐れ、批判への恐れ）を探り当ててください。
+3. **ハイレバレッジな行動の抽出**: ユーザーが少し恐怖を感じるかもしれないが、実行すれば最もリターンが大きい（ハイレバレッジな）行動を**たった1つ**見つけ出してください。
+
+【出力フォーマット (JSON)】
+以下のJSON形式のみを出力してください。余計なマークダウンや説明は不要です。
+
 {
-  "daily": ["今日のタスク1", "今日のタスク2", "今日のタスク3"],
-  "weekly": ["今週のタスク1", "今週のタスク2", "今週のタスク3"],
-  "monthly": ["今月のタスク1", "今月のタスク2", "今月のタスク3"],
-  "yearly": ["今年の目標1", "今年の目標2", "今年の目標3"],
-  "insights": "ユーザーの活動パターンや傾向に基づくインサイト（2-3文）"
-}`
+  "daily": ["今日やるべき・たった1つのクレイジーな行動 (例: 未完成のままアプリを友人に送り、辛辣な感想をもらう)"],
+  "weekly": ["今週の戦略的フォーカス (例: 機能追加を全停止し、営業活動に100%リソースを割く)"],
+  "monthly": ["今月のマイルストーン (恐怖を克服した先にある成果)"],
+  "yearly": ["今年のビジョン (現状の延長線上にはない飛躍的な目標)"],
+  "insights": "戦略参謀からのメッセージ (150文字程度)。ユーザーに媚びず、本質を突く厳しいが愛のある言葉で、なぜ上記の『クレイジーな行動』が必要なのかを説いてください。「その作業は、本当にあなたの人生を変えますか？」と問いかけてください。"
+}
+
+注意:
+- ToDoリスト（牛乳を買う、メールを返す等）は絶対に出力しないでください。
+- 「daily」は配列ですが、要素は**1つだけ**に絞り込んでください。選択と集中を促すためです。
+- 言葉遣いは丁寧ですが、内容は妥協のないプロフェッショナルなトーンでお願いします。`
       break
 
     default:
@@ -303,7 +316,7 @@ ${notesContent}
 function parseResult(result: string, action: string): any {
   if (action === 'task_recommendations') {
     try {
-      // Remove markdown code blocks if present
+      // Remove markdown code blocks if present (JSONのパースエラー防止)
       let cleaned = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
 
       // Try to extract JSON from the response
@@ -312,17 +325,24 @@ function parseResult(result: string, action: string): any {
         cleaned = jsonMatch[0]
       }
 
-      return JSON.parse(cleaned)
+      const parsed = JSON.parse(cleaned)
+      
+      // dailyが空の場合のフォールバック
+      if (!parsed.daily || parsed.daily.length === 0) {
+        parsed.daily = ['まずは1つ、恐怖を感じる行動を選んで実行してください']
+      }
+      
+      return parsed
     } catch (e) {
       console.error('Error parsing task recommendations JSON:', e)
       console.error('Raw result:', result)
-      // Return default structure
+      // Return fallback structure with Strategic Advisor tone
       return {
-        daily: ['メモを確認する', '優先タスクを完了する', '進捗を記録する'],
-        weekly: ['目標を見直す', '長期タスクに取り組む', '新しいアイデアを考える'],
-        monthly: ['月次レビューを行う', '新しいスキルを学ぶ', '成果を振り返る'],
-        yearly: ['年間目標を設定する', '大きな挑戦をする', '成長を実感する'],
-        insights: 'メモを定期的に確認し、タスクを整理することで、生産性を向上させましょう。'
+        daily: ['戦略を見直す時間を確保する'],
+        weekly: ['ボトルネックを特定する'],
+        monthly: ['コンフォートゾーンから抜け出す'],
+        yearly: ['圧倒的な成果を定義する'],
+        insights: '申し訳ありません。現在、戦略的分析データが不足しています。しかし、立ち止まって考えることこそが重要です。目の前の作業が本当に未来を変えるのか、自問自答してください。'
       }
     }
   }
