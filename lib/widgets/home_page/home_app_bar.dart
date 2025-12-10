@@ -17,7 +17,7 @@ import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../pages/ai_secretary_page.dart';
 import '../../pages/personality_test_landing_page.dart';
-import '../../pages/feedback_page.dart'; // ✅ 追加: フィードバックページ
+import '../../pages/feedback_page.dart';
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -92,7 +92,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
   }
 
   // フィルタリングアクションのマップ
-  static const Map<String, VoidCallback Function(HomeAppBar)> _filterActions = {
+  // 修正: const を削除し final に変更（関数はconstにできないため）
+  static final Map<String, VoidCallback Function(HomeAppBar)> _filterActions = {
     'advanced_search': (w) => w.onShowAdvancedSearch,
     'reminder_filter': (w) => w.onShowReminderFilter,
     'favorite_filter': (w) => w.onToggleFavorites,
@@ -102,7 +103,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
   };
 
   // ページ遷移アクションのマップ
-  static const Map<String, Widget Function(BuildContext)> _pageBuilders = {
+  // 修正: const を削除し final に変更
+  static final Map<String, Widget Function(BuildContext)> _pageBuilders = {
     'categories': (c) => const CategoriesPage(),
     'archive': (c) => const ArchivePage(),
     'stats': (c) => const StatsPage(),
@@ -119,7 +121,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
     'import': (c) => const ImportPage(),
     'activity_feed': (c) => const ActivityFeedPage(),
     'settings': (c) => const SettingsPage(),
-    'feedback': (c) => const FeedbackPage(), // ✅ 追加
+    'feedback': (c) => const FeedbackPage(),
   };
 
   @override
@@ -151,7 +153,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2), // 修正: withOpacity
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -556,7 +558,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
         ),
         const PopupMenuDivider(),
-        // ✅ 追加: フィードバックメニュー
         const PopupMenuItem(
           value: 'feedback',
           child: Row(
@@ -617,7 +618,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ヘッダー部分
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -642,8 +642,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white
-                                  .withOpacity(0.2), // 修正: withOpacity
+                              color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -683,8 +682,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              Colors.white.withOpacity(0.15), // 修正: withOpacity
+                          color: Colors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -704,8 +702,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.white
-                                    .withOpacity(0.25), // 修正: withOpacity
+                                Colors.white.withOpacity(0.25),
                                 Colors.white.withOpacity(0.15),
                               ],
                               begin: Alignment.topLeft,
@@ -713,14 +710,12 @@ class _HomeAppBarState extends State<HomeAppBar> {
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white
-                                  .withOpacity(0.4), // 修正: withOpacity
+                              color: Colors.white.withOpacity(0.4),
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black
-                                    .withOpacity(0.1), // 修正: withOpacity
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -734,8 +729,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white
-                                      .withOpacity(0.3), // 修正: withOpacity
+                                  color: Colors.white.withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -769,8 +763,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white
-                                        .withOpacity(0.3), // 修正: withOpacity
+                                    color: Colors.white.withOpacity(0.3),
                                   ),
                                   _buildStatItem(
                                     '⭐',
@@ -779,8 +772,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                   Container(
                                     height: 40,
                                     width: 1,
-                                    color: Colors.white
-                                        .withOpacity(0.3), // 修正: withOpacity
+                                    color: Colors.white.withOpacity(0.3),
                                   ),
                                   _buildStatItem(
                                     '🔥',
@@ -795,7 +787,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
                     ],
                   ),
                 ),
-                // コンテンツ部分
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -856,10 +847,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // SNS別シェアボタン（哲学者の名言版）
                       _buildSnsShareButtons(context),
                       const SizedBox(height: 12),
-                      // 画像カードを作成
                       _buildShareButton(
                         context,
                         icon: Icons.image,
@@ -1035,12 +1024,11 @@ class _HomeAppBarState extends State<HomeAppBar> {
           child: _buildSnsButton(
             context,
             label: 'X',
-            icon: Icons.close, // Xのアイコン
+            icon: Icons.close,
             color: Colors.black,
             onTap: () async {
               Navigator.pop(context);
               try {
-                // 動的OGP対応: 哲学者の名言シェア
                 await AppShareService.shareToTwitterWithDynamicOgp(
                   level: widget.userStats?.currentLevel,
                   totalPoints: widget.userStats?.totalPoints,
@@ -1077,7 +1065,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
             onTap: () async {
               Navigator.pop(context);
               try {
-                // 動的OGP対応: Facebookシェア
                 await AppShareService.shareToFacebookWithDynamicOgp();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1110,7 +1097,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
             onTap: () async {
               Navigator.pop(context);
               try {
-                // 動的OGP対応: LINEシェア
                 await AppShareService.shareToLineWithDynamicOgp(
                   level: widget.userStats?.currentLevel,
                   totalPoints: widget.userStats?.totalPoints,
