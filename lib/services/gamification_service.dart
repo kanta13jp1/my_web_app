@@ -136,7 +136,8 @@ class GamificationService {
     }
   }
 
-  // Track activity and update streak
+  // Track activity and update streak (This counts as OUTPUT)
+  // ✅ 修正: 「アウトプット」があった場合のみストリークを更新し、last_output_atを記録する
   Future<UserStats> trackActivity(String userId) async {
     try {
       final stats = await getUserStats(userId);
@@ -163,7 +164,7 @@ class GamificationService {
 
         if (daysDifference == 0) {
           // Same day, no change to streak
-          return stats;
+          // But update last_output_at time
         } else if (daysDifference == 1) {
           // Consecutive day
           newStreak = stats.currentStreak + 1;
@@ -173,22 +174,104 @@ class GamificationService {
         }
       }
 
-      final updatedStats = stats.copyWith(
-        currentStreak: newStreak,
-        longestStreak:
-            newStreak > stats.longestStreak ? newStreak : stats.longestStreak,
-        lastActivityDate: now,
-        updatedAt: now,
-      );
+      // JSONに変換してから last_output_at を追加して更新
+      // (UserStatsモデルにまだ lastOutputAt フィールドがない場合でもDBには保存するため)
+      final statsJson = stats
+          .copyWith(
+            currentStreak: newStreak,
+            longestStreak: newStreak > stats.longestStreak
+                ? newStreak
+                : stats.longestStreak,
+            lastActivityDate: now,
+            updatedAt: now,
+          )
+          .toJson();
 
-      return await updateUserStats(updatedStats);
+      // ✅ 追加: アウトプット証明として last_output_at を記録
+      statsJson['last_output_at'] = now.toIso8601String();
+      statsJson['current_level'] = UserStats.calculateLevel(stats.totalPoints);
+
+      final response = await _supabase
+          .from('user_stats')
+          .update(statsJson)
+          .eq('user_id', userId)
+          .select()
+          .single();
+
+      return UserStats.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Error tracking activity',
+        'Error tracking activity (output)',
         error: e,
         stackTrace: stackTrace,
       );
       rethrow;
+    }
+  }
+
+  // ✅ 追加: 停滞ペナルティの執行 (ダウンレベル/ポイント没収)
+  Future<void> applyPenalty({
+    required String userId,
+    required String reason,
+    int levelDownAmount = 0,
+    int pointDeduction = 0,
+    bool resetStreak = false,
+  }) async {
+    try {
+      final stats = await getUserStats(userId);
+      if (stats == null) return;
+
+      int newLevel = stats.currentLevel;
+      int newPoints = stats.totalPoints;
+      int newStreak = stats.currentStreak;
+
+      // レベルダウン処理 (最低レベル1)
+      if (levelDownAmount > 0) {
+        newLevel = (newLevel - levelDownAmount).clamp(1, 999);
+      }
+
+      // ポイント没収処理 (最低ポイント0)
+      if (pointDeduction > 0) {
+        newPoints = (newPoints - pointDeduction).clamp(0, 9999999);
+        // ポイントが減ったのでレベルも再計算する必要があるかもしれないが、
+        // 「罰としてのレベルダウン」ならポイントと乖離してもレベルを下げるという設計もあり得る。
+        // ここでは整合性を保つため、ポイントも減らした上でレベル再計算はしない(強制ダウン)か、
+        // あるいはポイントベースに戻すかは設計次第。今回は「強制ダウン」を優先。
+      }
+
+      // ストリークリセット
+      if (resetStreak) {
+        newStreak = 0;
+      }
+
+      // ログ記録
+      await _supabase.from('penalty_logs').insert({
+        'user_id': userId,
+        'penalty_type': [
+          if (levelDownAmount > 0) 'level_down',
+          if (pointDeduction > 0) 'point_loss',
+          if (resetStreak) 'streak_reset'
+        ].join(','),
+        'reason': reason,
+        'amount_lost': pointDeduction, // 簡易的にポイント損失を記録
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      // 統計更新
+      await _supabase.from('user_stats').update({
+        'current_level': newLevel,
+        'total_points': newPoints,
+        'current_streak': newStreak,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
+
+      AppLogger.warning('Penalty applied to user $userId: $reason');
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error applying penalty',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -442,7 +525,7 @@ class GamificationService {
   // Handle note creation event
   Future<List<Achievement>> onNoteCreated(String userId) async {
     try {
-      // Track activity and update streak
+      // ✅ 修正: メモ作成は明確な「アウトプット」なのでストリーク更新対象
       final stats = await trackActivity(userId);
 
       // Increment notes created
@@ -469,6 +552,9 @@ class GamificationService {
   // Handle category creation event
   Future<List<Achievement>> onCategoryCreated(String userId) async {
     try {
+      // ✅ 修正: カテゴリ作成もアウトプットとしてストリーク更新
+      await trackActivity(userId);
+
       final stats = await getUserStats(userId);
       if (stats == null) return [];
 
@@ -494,6 +580,9 @@ class GamificationService {
   // Handle share creation event
   Future<List<Achievement>> onNoteShared(String userId) async {
     try {
+      // ✅ 修正: シェアも強力なアウトプット
+      await trackActivity(userId);
+
       final stats = await getUserStats(userId);
       if (stats == null) return [];
 
@@ -519,6 +608,7 @@ class GamificationService {
   // Handle favorite event
   Future<List<Achievement>> onNoteFavorited(String userId) async {
     try {
+      // お気に入りは「アウトプット」とはみなさないため、trackActivityは呼ばない
       await addPoints(userId, 5);
       final achievement =
           await updateAchievementProgress(userId, 'first_favorite', 1);
@@ -553,6 +643,7 @@ class GamificationService {
   // Handle attachment event
   Future<List<Achievement>> onAttachmentAdded(String userId) async {
     try {
+      // 添付ファイル追加はアウトプットとみなすことも可能だが、今回はメモ作成に含まれるとして除外
       await addPoints(userId, 10);
       final achievement =
           await updateAchievementProgress(userId, 'first_attachment', 1);
@@ -594,9 +685,6 @@ class GamificationService {
   }
 
   // Get leaderboard
-  // Note: Requires public read access to user_stats table via RLS policy:
-  // "Anyone can view user stats for leaderboard"
-  // This allows the leaderboard to display all users' stats
   Future<List<LeaderboardEntry>> getLeaderboard({
     int limit = 100,
     String orderBy = 'total_points',
@@ -652,8 +740,6 @@ class GamificationService {
   }
 
   // Get user's rank
-  // Note: Requires public read access to user_stats table via RLS policy
-  // to compare user's stats against all other users
   Future<int?> getUserRank(
     String userId, {
     String orderBy = 'total_points',
