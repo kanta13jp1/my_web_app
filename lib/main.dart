@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// ✅ 追加: ローカリゼーション用のパッケージ
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 // ❌ 削除: import 'pages/auth_page.dart';
@@ -101,6 +103,19 @@ class MyApp extends StatelessWidget {
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
       themeMode: themeService.getFlutterThemeMode(),
+
+      // ✅ 追加: 日本語ローカリゼーションの設定
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ja'), // 日本語
+        Locale('en'), // 英語
+      ],
+      locale: const Locale('ja'), // デフォルトを日本語に固定
+
       initialRoute: '/',
       onGenerateRoute: (settings) {
         // 共有リンク用のルーティング（認証不要）

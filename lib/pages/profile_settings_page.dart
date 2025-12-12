@@ -25,13 +25,18 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   final _locationController = TextEditingController();
   final _twitterHandleController = TextEditingController();
   final _githubHandleController = TextEditingController();
+  // ✅ 追加: 生年月日と目標寿命のコントローラー
+  final _birthDateController = TextEditingController();
+  final _targetDeathAgeController = TextEditingController();
 
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isPublic = true;
   UserProfile? _currentProfile;
+  // ✅ 追加: 生年月日の状態管理
+  DateTime? _birthDate;
 
-  // 🚨 追加: 画像アップロード関連の状態
+  // 画像アップロード関連の状態
   Uint8List? _pickedAvatarBytes;
   String? _avatarUrl; // 現在表示するアバター画像のURL
 
@@ -49,6 +54,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     _locationController.dispose();
     _twitterHandleController.dispose();
     _githubHandleController.dispose();
+    _birthDateController.dispose();
+    _targetDeathAgeController.dispose();
     super.dispose();
   }
 
@@ -71,8 +78,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           _twitterHandleController.text = profile.twitterHandle ?? '';
           _githubHandleController.text = profile.githubHandle ?? '';
           _isPublic = profile.isPublic;
-          // 🚨 修正: 既存のプロフィール画像URLを設定
           _avatarUrl = profile.avatarUrl;
+
+          // ✅ 追加: 生年月日の読み込みとフォーマット
+          if (profile.birthDate != null) {
+            _birthDate = profile.birthDate;
+            _birthDateController.text =
+                "${_birthDate!.year}/${_birthDate!.month.toString().padLeft(2, '0')}/${_birthDate!.day.toString().padLeft(2, '0')}";
+          }
+
+          // ✅ 追加: 目標寿命の読み込み（デフォルト80）
+          _targetDeathAgeController.text =
+              (profile.targetDeathAge ?? 80).toString();
+
           _isLoading = false;
         });
       }
@@ -88,7 +106,26 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     }
   }
 
-  // 🚨 新規: 画像選択・アップロード処理
+  // ✅ 追加: 日付選択ピッカーの表示
+  Future<void> _selectBirthDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(1990, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      locale: const Locale('ja'), // 日本語ロケール（必要に応じて）
+      helpText: '生年月日を選択',
+    );
+    if (picked != null && picked != _birthDate) {
+      setState(() {
+        _birthDate = picked;
+        _birthDateController.text =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
+  // 画像選択・アップロード処理
   Future<void> _pickAndUploadAvatar() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -97,14 +134,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
     if (result != null && result.files.single.bytes != null) {
       final currentUser = supabase.auth.currentUser;
-      if (currentUser == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ユーザーが認証されていません')),
-          );
-        }
-        return;
-      }
+      if (currentUser == null) return;
       final userId = currentUser.id;
 
       final file = result.files.single;
@@ -121,15 +151,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       final fileName = file.name;
       final fileExtension =
           fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
-      if (fileExtension.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ファイルに拡張子がありません。画像ファイルを選択してください。')),
-          );
-        }
-        return;
-      }
-      // 画像ファイル拡張子のバリデーション
+
       const allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
       if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
         if (mounted) {
@@ -146,11 +168,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
       setState(() {
         _isSaving = true;
-        _pickedAvatarBytes = fileBytes; // プレビュー用にローカルに保存
+        _pickedAvatarBytes = fileBytes;
       });
 
       try {
-        // Supabase Storage にアップロードし、公開URLを取得
         final newUrl = await _profileService.uploadAvatar(
           userId: userId,
           fileBytes: fileBytes,
@@ -160,9 +181,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
         if (mounted) {
           setState(() {
-            _avatarUrl = newUrl; // 新しいURLを保持
+            _avatarUrl = newUrl;
             _isSaving = false;
-            _pickedAvatarBytes = null; // 成功したのでプレビューをクリア
+            _pickedAvatarBytes = null;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('プロフィール画像を更新しました')),
@@ -172,7 +193,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         if (mounted) {
           setState(() {
             _isSaving = false;
-            _pickedAvatarBytes = null; // 失敗したのでプレビューをクリア
+            _pickedAvatarBytes = null;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('画像アップロードに失敗しました: $e')),
@@ -193,6 +214,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
     try {
       final userId = supabase.auth.currentUser!.id;
+      // ✅ 追加: 目標寿命のパース
+      final targetAge = int.tryParse(_targetDeathAgeController.text) ?? 80;
+
       final updatedProfile = UserProfile(
         userId: userId,
         displayName: _displayNameController.text.trim().isEmpty
@@ -214,7 +238,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             ? null
             : _githubHandleController.text.trim(),
         isPublic: _isPublic,
-        avatarUrl: _avatarUrl, // 🚨 修正: 新しいURLを含める
+        avatarUrl: _avatarUrl,
+        // ✅ 追加: 生年月日と目標寿命を保存
+        birthDate: _birthDate,
+        targetDeathAge: targetAge,
+
         createdAt: _currentProfile?.createdAt,
         updatedAt: DateTime.now(),
       );
@@ -231,7 +259,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             backgroundColor: Colors.green,
           ),
         );
-        // 前の画面に戻る
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -287,7 +314,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             backgroundColor: Theme.of(context)
                                 .primaryColor
                                 .withValues(alpha: 0.1),
-                            // 🚨 修正: 画像表示ロジック
                             backgroundImage: _pickedAvatarBytes != null
                                 ? MemoryImage(_pickedAvatarBytes!)
                                 : (_avatarUrl != null
@@ -311,7 +337,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               child: IconButton(
                                 icon: const Icon(Icons.camera_alt, size: 20),
                                 color: Colors.white,
-                                // 🚨 修正: 画像アップロード機能を実装
                                 onPressed:
                                     _isSaving ? null : _pickAndUploadAvatar,
                               ),
@@ -338,6 +363,54 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         }
                         if (value.trim().length > 50) {
                           return '表示名は50文字以内で入力してください';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ✅ 追加: 生年月日設定 (読み取り専用・タップでピッカー表示)
+                    TextFormField(
+                      controller: _birthDateController,
+                      readOnly: true,
+                      onTap: () => _selectBirthDate(context),
+                      decoration: const InputDecoration(
+                        labelText: '生年月日',
+                        hintText: 'YYYY/MM/DD',
+                        prefixIcon: Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(),
+                        helperText: '「死生観クロック」の残り時間計算に使用されます',
+                      ),
+                      validator: (value) {
+                        // 必須にする場合はここでチェック
+                        if (value == null || value.isEmpty) {
+                          return '生年月日を設定してください';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ✅ 追加: 目標寿命設定
+                    TextFormField(
+                      controller: _targetDeathAgeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: '目標寿命 (歳)',
+                        hintText: '80',
+                        prefixIcon: Icon(Icons.hourglass_bottom),
+                        border: OutlineInputBorder(),
+                        helperText: 'デフォルトは80歳です',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '目標寿命を入力してください';
+                        }
+                        final age = int.tryParse(value);
+                        if (age == null || age < 1 || age > 150) {
+                          return '有効な年齢を入力してください (1-150)';
                         }
                         return null;
                       },
@@ -519,7 +592,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             const SizedBox(height: 8),
                             Text(
                               '表示名を設定すると、リーダーボードであなたの名前が表示されます。\n'
-                              'プロフィールを充実させて、他のユーザーとつながりましょう！',
+                              '「生年月日」を設定すると、ダッシュボードの死生観クロックが有効になります。',
                               style: TextStyle(
                                 color: Colors.blue.shade900,
                                 fontSize: 13,

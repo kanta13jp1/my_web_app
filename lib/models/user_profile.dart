@@ -9,6 +9,12 @@ class UserProfile {
   final String? twitterHandle;
   final String? githubHandle;
   final bool isPublic;
+
+  // ✅ 追加: 死生観クロック用のフィールド
+  final DateTime? birthDate;
+  final int? targetDeathAge;
+  final double? disposableTimeRatio;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,6 +28,10 @@ class UserProfile {
     this.twitterHandle,
     this.githubHandle,
     this.isPublic = true,
+    // ✅ 追加
+    this.birthDate,
+    this.targetDeathAge,
+    this.disposableTimeRatio,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : createdAt = createdAt ?? DateTime.now(),
@@ -38,6 +48,15 @@ class UserProfile {
       twitterHandle: json['twitter_handle'] as String?,
       githubHandle: json['github_handle'] as String?,
       isPublic: json['is_public'] as bool? ?? true,
+
+      // ✅ 追加: JSONからのマッピング
+      birthDate: json['birth_date'] != null
+          ? DateTime.parse(json['birth_date'] as String)
+          : null,
+      targetDeathAge: json['target_death_age'] as int?,
+      // 数値型は num として取得してから double に変換するのが安全
+      disposableTimeRatio: (json['disposable_time_ratio'] as num?)?.toDouble(),
+
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -58,6 +77,12 @@ class UserProfile {
       'twitter_handle': twitterHandle,
       'github_handle': githubHandle,
       'is_public': isPublic,
+
+      // ✅ 追加: JSONへの変換
+      'birth_date': birthDate?.toIso8601String(),
+      'target_death_age': targetDeathAge,
+      'disposable_time_ratio': disposableTimeRatio,
+
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -72,6 +97,10 @@ class UserProfile {
     String? twitterHandle,
     String? githubHandle,
     bool? isPublic,
+    // ✅ 追加
+    DateTime? birthDate,
+    int? targetDeathAge,
+    double? disposableTimeRatio,
     DateTime? updatedAt,
   }) {
     return UserProfile(
@@ -84,6 +113,11 @@ class UserProfile {
       twitterHandle: twitterHandle ?? this.twitterHandle,
       githubHandle: githubHandle ?? this.githubHandle,
       isPublic: isPublic ?? this.isPublic,
+      // ✅ 追加
+      birthDate: birthDate ?? this.birthDate,
+      targetDeathAge: targetDeathAge ?? this.targetDeathAge,
+      disposableTimeRatio: disposableTimeRatio ?? this.disposableTimeRatio,
+
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
