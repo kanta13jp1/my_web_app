@@ -48,7 +48,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   // ----------------------------------------------------------------
-  // 認証ロジック (AuthPageから移植)
+  // 認証ロジック
   // ----------------------------------------------------------------
 
   Future<bool> _shouldShowOnboarding(String userId) async {
@@ -103,10 +103,16 @@ class _LandingPageState extends State<LandingPage> {
     AuthMode mode,
     StateSetter modalSetState,
   ) async {
-    // モーダル内のローディング表示のために modalSetState を使用する可能性あり
-    // 今回は全体の _isLoading を使用し、親Widgetを再描画させる
+    // バリデーション
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('メールアドレスとパスワードを入力してください')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
-    // モーダル側も再描画
     modalSetState(() {});
 
     try {
@@ -120,6 +126,21 @@ class _LandingPageState extends State<LandingPage> {
         );
         final userId = response.user?.id;
 
+        // メール確認待ちの場合
+        if (response.session == null && userId != null) {
+          if (mounted) {
+            Navigator.pop(context); // モーダルを閉じる
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('確認メールを送信しました。リンクをクリックして登録を完了してください。'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 6),
+              ),
+            );
+          }
+          return;
+        }
+
         // 紹介コード適用
         if (userId != null && _referralCodeController.text.trim().isNotEmpty) {
           try {
@@ -132,16 +153,19 @@ class _LandingPageState extends State<LandingPage> {
           }
         }
 
-        // ウェルカムボーナス (500pt)
+        // ウェルカムボーナス (500pt) - user_statsはトリガーで作られるためUpdateのみ試行
         if (userId != null) {
           try {
+            // 少し待ってから実行（トリガー完了待ち）
+            await Future.delayed(const Duration(milliseconds: 500));
             final stats = await supabase
                 .from('user_stats')
                 .select('total_points')
                 .eq('user_id', userId)
                 .maybeSingle();
+
             if (stats != null) {
-              final currentPoints = stats['total_points'] as int;
+              final currentPoints = (stats['total_points'] as int?) ?? 0;
               await supabase.from('user_stats').update(
                 {'total_points': currentPoints + 500},
               ).eq('user_id', userId);
@@ -149,16 +173,6 @@ class _LandingPageState extends State<LandingPage> {
           } catch (e) {
             AppLogger.error('Welcome bonus error', error: e);
           }
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('確認メールを送信しました。'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context); // モーダルを閉じる
         }
       } else {
         // --- ログイン ---
@@ -185,20 +199,32 @@ class _LandingPageState extends State<LandingPage> {
             AppLogger.error('Daily login error', error: e);
           }
         }
+      }
 
-        // 画面遷移判定
-        if (mounted && userId != null) {
-          final shouldShowOnboarding = await _shouldShowOnboarding(userId);
-          if (!mounted) return;
+      // 共通：画面遷移判定
+      final userId = supabase.auth.currentUser?.id;
+      if (mounted && userId != null) {
+        final shouldShowOnboarding = await _shouldShowOnboarding(userId);
+        if (!mounted) return;
 
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => shouldShowOnboarding
-                  ? const OnboardingPage()
-                  : const HomePage(),
-            ),
-          );
+        // モーダルが開いていれば閉じる
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
         }
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => shouldShowOnboarding
+                ? const OnboardingPage()
+                : const HomePage(),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -209,7 +235,9 @@ class _LandingPageState extends State<LandingPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        modalSetState(() {});
+        try {
+          modalSetState(() {});
+        } catch (_) {}
       }
     }
   }
@@ -220,6 +248,9 @@ class _LandingPageState extends State<LandingPage> {
 
   // ログイン/登録用のボトムシートを表示
   void _showAuthBottomSheet(BuildContext context, AuthMode initialMode) {
+    // ローカル変数でモードを管理
+    AuthMode currentMode = initialMode;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // 全画面近くまで広げられるように
@@ -227,13 +258,10 @@ class _LandingPageState extends State<LandingPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        // シート内でState管理（ログイン/サインアップの切り替え）をするためにStatefulBuilderを使用
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final currentMode = initialMode;
             final isSignUp = currentMode == AuthMode.signUp;
             final theme = Theme.of(context);
-            // キーボード分padding確保
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
             return Padding(
@@ -247,7 +275,6 @@ class _LandingPageState extends State<LandingPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ハンドルバー
                     Container(
                       width: 40,
                       height: 4,
@@ -257,8 +284,6 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // タイトル
                     Text(
                       isSignUp ? 'アカウント作成' : 'ログイン',
                       style: theme.textTheme.headlineSmall
@@ -284,12 +309,15 @@ class _LandingPageState extends State<LandingPage> {
                     // パスワード
                     TextField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
+                      // ✅ 修正箇所: ここにあった const を削除しました
+                      decoration: InputDecoration(
                         labelText: 'パスワード',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(
+                        prefixIcon: const Icon(Icons.lock),
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(12)),
                         ),
+                        // isSignUp という変数を使っているため const にできません
+                        helperText: isSignUp ? '6文字以上' : null,
                       ),
                       obscureText: true,
                       enabled: !_isLoading,
@@ -386,10 +414,9 @@ class _LandingPageState extends State<LandingPage> {
                           ? null
                           : () {
                               setModalState(() {
-                                initialMode = isSignUp
+                                currentMode = isSignUp
                                     ? AuthMode.signIn
                                     : AuthMode.signUp;
-                                // コントローラーのクリアなどは任意で
                               });
                             },
                       child: Text(
@@ -557,7 +584,7 @@ class _LandingPageState extends State<LandingPage> {
             ),
           ),
 
-          // Features Section (既存のまま)
+          // Features Section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
