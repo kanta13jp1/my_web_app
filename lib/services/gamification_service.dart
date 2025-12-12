@@ -137,7 +137,6 @@ class GamificationService {
   }
 
   // Track activity and update streak (This counts as OUTPUT)
-  // ✅ 修正: 「アウトプット」があった場合のみストリークを更新し、last_output_atを記録する
   Future<UserStats> trackActivity(String userId) async {
     try {
       final stats = await getUserStats(userId);
@@ -164,7 +163,6 @@ class GamificationService {
 
         if (daysDifference == 0) {
           // Same day, no change to streak
-          // But update last_output_at time
         } else if (daysDifference == 1) {
           // Consecutive day
           newStreak = stats.currentStreak + 1;
@@ -174,8 +172,6 @@ class GamificationService {
         }
       }
 
-      // JSONに変換してから last_output_at を追加して更新
-      // (UserStatsモデルにまだ lastOutputAt フィールドがない場合でもDBには保存するため)
       final statsJson = stats
           .copyWith(
             currentStreak: newStreak,
@@ -187,7 +183,6 @@ class GamificationService {
           )
           .toJson();
 
-      // ✅ 追加: アウトプット証明として last_output_at を記録
       statsJson['last_output_at'] = now.toIso8601String();
       statsJson['current_level'] = UserStats.calculateLevel(stats.totalPoints);
 
@@ -209,7 +204,7 @@ class GamificationService {
     }
   }
 
-  // ✅ 追加: 停滞ペナルティの執行 (ダウンレベル/ポイント没収)
+  // Apply penalty
   Future<void> applyPenalty({
     required String userId,
     required String reason,
@@ -225,26 +220,18 @@ class GamificationService {
       int newPoints = stats.totalPoints;
       int newStreak = stats.currentStreak;
 
-      // レベルダウン処理 (最低レベル1)
       if (levelDownAmount > 0) {
         newLevel = (newLevel - levelDownAmount).clamp(1, 999);
       }
 
-      // ポイント没収処理 (最低ポイント0)
       if (pointDeduction > 0) {
         newPoints = (newPoints - pointDeduction).clamp(0, 9999999);
-        // ポイントが減ったのでレベルも再計算する必要があるかもしれないが、
-        // 「罰としてのレベルダウン」ならポイントと乖離してもレベルを下げるという設計もあり得る。
-        // ここでは整合性を保つため、ポイントも減らした上でレベル再計算はしない(強制ダウン)か、
-        // あるいはポイントベースに戻すかは設計次第。今回は「強制ダウン」を優先。
       }
 
-      // ストリークリセット
       if (resetStreak) {
         newStreak = 0;
       }
 
-      // ログ記録
       await _supabase.from('penalty_logs').insert({
         'user_id': userId,
         'penalty_type': [
@@ -253,11 +240,10 @@ class GamificationService {
           if (resetStreak) 'streak_reset'
         ].join(','),
         'reason': reason,
-        'amount_lost': pointDeduction, // 簡易的にポイント損失を記録
+        'amount_lost': pointDeduction,
         'created_at': DateTime.now().toIso8601String(),
       });
 
-      // 統計更新
       await _supabase.from('user_stats').update({
         'current_level': newLevel,
         'total_points': newPoints,
@@ -324,7 +310,6 @@ class GamificationService {
         orElse: () => throw Exception('Achievement not found'),
       );
 
-      // Check if achievement exists in database
       final existing = await _supabase
           .from('user_achievements')
           .select()
@@ -336,7 +321,6 @@ class GamificationService {
       final now = DateTime.now();
 
       if (existing == null) {
-        // Create new achievement record
         await _supabase.from('user_achievements').insert({
           'user_id': userId,
           'achievement_id': achievementId,
@@ -347,7 +331,6 @@ class GamificationService {
           'updated_at': now.toIso8601String(),
         });
       } else {
-        // Update existing record
         final wasUnlocked = (existing['is_unlocked'] as bool?) ?? false;
         await _supabase
             .from('user_achievements')
@@ -363,7 +346,6 @@ class GamificationService {
             .eq('achievement_id', achievementId);
       }
 
-      // If newly unlocked, award points
       if (isUnlocked &&
           (existing == null ||
               !((existing['is_unlocked'] as bool?) ?? false))) {
@@ -375,7 +357,7 @@ class GamificationService {
         );
       }
 
-      return null; // Not newly unlocked
+      return null;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Error updating achievement progress',
@@ -394,7 +376,7 @@ class GamificationService {
 
       final newlyUnlocked = <Achievement>[];
 
-      // Check notes achievements
+      // Note achievements
       final noteAchievements = {
         'first_note': 1,
         'note_creator_10': 10,
@@ -416,7 +398,7 @@ class GamificationService {
         }
       }
 
-      // Check category achievements
+      // Category achievements
       final categoryAchievements = {
         'first_category': 1,
         'category_master': 5,
@@ -434,7 +416,7 @@ class GamificationService {
         }
       }
 
-      // Check sharing achievements
+      // Share achievements
       final shareAchievements = {
         'first_share': 1,
         'share_master': 10,
@@ -453,7 +435,7 @@ class GamificationService {
         }
       }
 
-      // Check streak achievements
+      // Streak achievements
       final streakAchievements = {
         'streak_3': 3,
         'streak_7': 7,
@@ -474,7 +456,7 @@ class GamificationService {
         }
       }
 
-      // Check level achievements
+      // Level achievements
       final levelAchievements = {
         'level_5': 5,
         'level_10': 10,
@@ -493,7 +475,7 @@ class GamificationService {
         }
       }
 
-      // Check points achievements
+      // Points achievements
       final pointsAchievements = {
         'points_1000': 1000,
         'points_5000': 5000,
@@ -522,22 +504,15 @@ class GamificationService {
     }
   }
 
-  // Handle note creation event
+  // Handle note creation
   Future<List<Achievement>> onNoteCreated(String userId) async {
     try {
-      // ✅ 修正: メモ作成は明確な「アウトプット」なのでストリーク更新対象
       final stats = await trackActivity(userId);
-
-      // Increment notes created
       final updatedStats = stats.copyWith(
         notesCreated: stats.notesCreated + 1,
       );
       await updateUserStats(updatedStats);
-
-      // Award points for creating a note
       await addPoints(userId, 10);
-
-      // Check for newly unlocked achievements
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -549,12 +524,10 @@ class GamificationService {
     }
   }
 
-  // Handle category creation event
+  // Handle category creation
   Future<List<Achievement>> onCategoryCreated(String userId) async {
     try {
-      // ✅ 修正: カテゴリ作成もアウトプットとしてストリーク更新
       await trackActivity(userId);
-
       final stats = await getUserStats(userId);
       if (stats == null) return [];
 
@@ -562,10 +535,7 @@ class GamificationService {
         categoriesCreated: stats.categoriesCreated + 1,
       );
       await updateUserStats(updatedStats);
-
-      // Award points for creating a category
       await addPoints(userId, 15);
-
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -577,12 +547,10 @@ class GamificationService {
     }
   }
 
-  // Handle share creation event
+  // Handle note shared
   Future<List<Achievement>> onNoteShared(String userId) async {
     try {
-      // ✅ 修正: シェアも強力なアウトプット
       await trackActivity(userId);
-
       final stats = await getUserStats(userId);
       if (stats == null) return [];
 
@@ -590,10 +558,7 @@ class GamificationService {
         notesShared: stats.notesShared + 1,
       );
       await updateUserStats(updatedStats);
-
-      // Award points for sharing a note
       await addPoints(userId, 15);
-
       return await checkAchievements(userId);
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -605,10 +570,9 @@ class GamificationService {
     }
   }
 
-  // Handle favorite event
+  // Handle note favorited
   Future<List<Achievement>> onNoteFavorited(String userId) async {
     try {
-      // お気に入りは「アウトプット」とはみなさないため、trackActivityは呼ばない
       await addPoints(userId, 5);
       final achievement =
           await updateAchievementProgress(userId, 'first_favorite', 1);
@@ -623,7 +587,7 @@ class GamificationService {
     }
   }
 
-  // Handle reminder event
+  // Handle reminder set
   Future<List<Achievement>> onReminderSet(String userId) async {
     try {
       await addPoints(userId, 10);
@@ -640,10 +604,9 @@ class GamificationService {
     }
   }
 
-  // Handle attachment event
+  // Handle attachment added
   Future<List<Achievement>> onAttachmentAdded(String userId) async {
     try {
-      // 添付ファイル追加はアウトプットとみなすことも可能だが、今回はメモ作成に含まれるとして除外
       await addPoints(userId, 10);
       final achievement =
           await updateAchievementProgress(userId, 'first_attachment', 1);
@@ -658,15 +621,13 @@ class GamificationService {
     }
   }
 
-  // ✅ 追加: アクティビティログをデータベースに記録する汎用メソッド
   Future<void> recordActivity({
     required String userId,
     required String type,
-    required String description, // ユーザー名を含む整形済みの行動説明 (例: "Aliceがメモを作成しました")
+    required String description,
     required DateTime timestamp,
   }) async {
     try {
-      // Activities テーブルにアクティビティを挿入
       await _supabase.from('activities').insert({
         'user_id': userId,
         'type': type,
@@ -680,24 +641,25 @@ class GamificationService {
         error: e,
         stackTrace: stackTrace,
       );
-      // アクティビティ記録の失敗は主要なアプリ機能の停止を引き起こすべきではないため、rethrowしません。
     }
   }
 
-  // Get leaderboard
+  // ✅ 修正: 匿名ユーザーを除外してリーダーボードを取得
   Future<List<LeaderboardEntry>> getLeaderboard({
     int limit = 100,
     String orderBy = 'total_points',
   }) async {
     try {
       AppLogger.debug(
-        'Fetching leaderboard - orderBy: $orderBy, limit: $limit, user: ${_supabase.auth.currentUser?.id ?? "Not authenticated"}',
+        'Fetching leaderboard - orderBy: $orderBy, limit: $limit',
       );
 
-      // Use the view that includes user profile information
+      // Viewではなく user_stats と user_profiles を内部結合(!inner)し、
+      // 匿名ユーザー(is_anonymous = true)を除外する
       final response = await _supabase
-          .from('user_stats_with_profiles')
-          .select()
+          .from('user_stats')
+          .select('*, user_profiles!inner(*)') // !inner で内部結合（条件に合うものだけ取得）
+          .eq('user_profiles.is_anonymous', false) // ✅ 匿名ユーザーを除外
           .order(orderBy, ascending: false)
           .limit(limit);
 
@@ -707,29 +669,18 @@ class GamificationService {
 
       final entries = <LeaderboardEntry>[];
       for (int i = 0; i < response.length; i++) {
-        entries.add(LeaderboardEntry.fromJson(response[i], i + 1));
+        // Joinしたデータを、LeaderboardEntry.fromJson が期待するフラットな形に変換
+        final data = Map<String, dynamic>.from(response[i]);
+        if (data['user_profiles'] != null) {
+          final profile = data['user_profiles'] as Map<String, dynamic>;
+          data.addAll(profile); // プロフィール情報をルートにマージ
+        }
+        entries.add(LeaderboardEntry.fromJson(data, i + 1));
       }
 
       AppLogger.debug('Leaderboard entries created: ${entries.length}');
-      if (entries.isNotEmpty) {
-        AppLogger.debug(
-          'Top entry: ${entries[0].userName} (${entries[0].totalPoints}pt)',
-        );
-      } else {
-        AppLogger.warning(
-          'Empty leaderboard - check RLS policies. Required: SELECT on user_stats_with_profiles view',
-        );
-      }
-
       return entries;
     } catch (e, stackTrace) {
-      if (e.toString().contains('row level security')) {
-        AppLogger.error(
-          'RLS policy error - users cannot read from user_stats_with_profiles view. Fix: Ensure migration 20251111140000 is applied',
-          error: e,
-        );
-      }
-
       AppLogger.error(
         'Error getting leaderboard',
         error: e,
@@ -739,7 +690,7 @@ class GamificationService {
     }
   }
 
-  // Get user's rank
+  // ✅ 修正: 自分のランク取得時も匿名ユーザーを除外してカウント
   Future<int?> getUserRank(
     String userId, {
     String orderBy = 'total_points',
@@ -747,12 +698,14 @@ class GamificationService {
     try {
       AppLogger.debug('Getting user rank for: $userId, orderBy: $orderBy');
 
+      // 匿名以外のユーザーのみを取得してソート
       final userList = await _supabase
           .from('user_stats')
-          .select('user_id, $orderBy')
+          .select('user_id, $orderBy, user_profiles!inner(is_anonymous)')
+          .eq('user_profiles.is_anonymous', false) // ✅ 匿名ユーザーを除外
           .order(orderBy, ascending: false);
 
-      AppLogger.debug('Total users in ranking: ${userList.length}');
+      AppLogger.debug('Total valid users in ranking: ${userList.length}');
 
       for (int i = 0; i < userList.length; i++) {
         if (userList[i]['user_id'] == userId) {
@@ -762,8 +715,7 @@ class GamificationService {
       }
 
       AppLogger.warning(
-        'User not found in ranking. This could mean user_stats record does not exist for this user',
-      );
+          'User not found in ranking (might be anonymous or no stats)');
       return null;
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -775,10 +727,9 @@ class GamificationService {
     }
   }
 
-  // Get user rewards (check unlocked status)
+  // Get user rewards
   Future<List<Reward>> getUserRewards(String userId) async {
     try {
-      // Get user stats and achievements
       final stats = await getUserStats(userId);
       final achievements = await getUserAchievements(userId);
 
@@ -787,17 +738,14 @@ class GamificationService {
       final allRewards = RewardDefinitions.getDefaultRewards();
       final achievementMap = {for (var a in achievements) a.id: a};
 
-      // Check which rewards are unlocked
       return allRewards.map((reward) {
         bool isUnlocked = false;
 
-        // Check level requirement
         if (reward.requiredLevel > 0 &&
             stats.currentLevel >= reward.requiredLevel) {
           isUnlocked = true;
         }
 
-        // Check achievement requirement
         if (reward.requiredAchievementId != null) {
           final requiredAchievement =
               achievementMap[reward.requiredAchievementId];
@@ -808,7 +756,6 @@ class GamificationService {
           }
         }
 
-        // Check points requirement
         if (reward.requiredPoints != null &&
             stats.totalPoints < reward.requiredPoints!) {
           isUnlocked = false;
@@ -863,7 +810,7 @@ class GamificationService {
     }
   }
 
-  // Check if a specific feature is unlocked
+  // Check if feature is unlocked
   Future<bool> isFeatureUnlocked(String userId, String featureId) async {
     try {
       final rewards = await getUserRewards(userId);
