@@ -3,8 +3,8 @@ import '../main.dart';
 import '../services/gamification_service.dart';
 import '../models/leaderboard_entry.dart';
 import '../models/user_stats.dart';
-// ❌ 削除: import 'auth_page.dart';
-import 'landing_page.dart'; // ✅ 追加: LandingPageをインポート
+// ✅ 修正: 認証ページではなくランディングページをインポート
+import 'landing_page.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -32,7 +32,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   @override
   void initState() {
     super.initState();
-    _gamificationService = GamificationService();
+    _gamificationService = GamificationService(supabase);
     _isAuthenticated = supabase.auth.currentUser != null;
     _loadLeaderboard();
     if (_isAuthenticated) {
@@ -456,13 +456,18 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                               ),
                               title: Row(
                                 children: [
-                                  Text(
-                                    entry.userName ?? 'ユーザー',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isCurrentUser
-                                          ? Theme.of(context).primaryColor
-                                          : null,
+                                  // ✅ 修正: RenderFlexオーバーフロー対策
+                                  Expanded(
+                                    child: Text(
+                                      entry.userName ?? 'ユーザー',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isCurrentUser
+                                            ? Theme.of(context).primaryColor
+                                            : null,
+                                      ),
+                                      overflow: TextOverflow.ellipsis, // 追加
+                                      maxLines: 1, // 追加
                                     ),
                                   ),
                                   if (isCurrentUser) ...[
