@@ -70,8 +70,11 @@ class AIService {
         }
 
         // AIServiceException 以外のエラー、またはその他のエラーはそのまま投げる
-        AppLogger.error('Non-retryable error during $operationName',
-            error: e, stackTrace: stackTrace);
+        AppLogger.error(
+          'Non-retryable error during $operationName',
+          error: e,
+          stackTrace: stackTrace,
+        );
         rethrow;
       }
     }
@@ -104,7 +107,8 @@ class AIService {
         final retryAfter = data['retryAfter']?.toString();
 
         AppLogger.error(
-            'Supabase Function Error ($functionName): $errorMessage');
+          'Supabase Function Error ($functionName): $errorMessage',
+        );
 
         throw AIServiceException(
           errorMessage,
@@ -119,7 +123,8 @@ class AIService {
       final details = e.details;
       // 【修正点】e.message ではなく $e (e.toString()) を使用
       AppLogger.error(
-          'FunctionException ($functionName): $e, details: $details');
+        'FunctionException ($functionName): $e, details: $details',
+      );
 
       if (details is Map<String, dynamic>) {
         final errorMessage =
@@ -141,8 +146,11 @@ class AIService {
       // ポストグレストのエラー（例: 権限不足）
       throw AIServiceException('データベース操作エラー: ${e.message}');
     } catch (e, stackTrace) {
-      AppLogger.error('Unexpected error in _invokeFunction ($functionName)',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Unexpected error in _invokeFunction ($functionName)',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // その他のネットワークエラーなど
       throw AIServiceException('予期せぬエラー: ${e.toString()}');
     }
@@ -246,8 +254,9 @@ class AIService {
     return result
         .split('\n')
         .where((line) => line.trim().isNotEmpty)
-        .map((line) =>
-            line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim()) // ナンバリングを除去
+        .map(
+          (line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim(),
+        ) // ナンバリングを除去
         .where((line) => line.isNotEmpty)
         .toList();
   }
@@ -274,10 +283,6 @@ class AIService {
         );
 
         final suggestions = responseData['suggestions'] as Map<String, dynamic>;
-
-        if (suggestions == null) {
-          throw AIServiceException('AIからの提案データが不正です。');
-        }
 
         return TagSuggestion(
           tags: List<String>.from(suggestions['tags'] as List<dynamic>? ?? []),
@@ -380,8 +385,11 @@ class AIService {
               .eq('is_archived', false)
               .order('updated_at', ascending: false)
               .limit(20)
-              .then((response) => List<Map<String, dynamic>>.from(
-                  response)); // 明示的に Future<List> を返す
+              .then(
+                (response) => List<Map<String, dynamic>>.from(
+                  response,
+                ),
+              ); // 明示的に Future<List> を返す
         } else {
           notesFuture = Future.value(recentNotes);
         }
@@ -394,8 +402,9 @@ class AIService {
             )
             .eq('user_id', userId)
             .single()
-            .then((response) =>
-                response as Map<String, dynamic>); // 明示的に Future<Map> を返す
+            .then(
+              (response) => response,
+            ); // 明示的に Future<Map> を返す
 
         // Future.wait で並列実行
         final results = await Future.wait<dynamic>([
@@ -408,7 +417,8 @@ class AIService {
 
         // 🔍 パラメータのログ出力
         AppLogger.debug(
-            'getTaskRecommendations - notes count: ${(notesResponse as List).length}');
+          'getTaskRecommendations - notes count: ${(notesResponse as List).length}',
+        );
         AppLogger.debug('getTaskRecommendations - stats: $statsResponse');
 
         final notes = List<Map<String, dynamic>>.from(notesResponse);

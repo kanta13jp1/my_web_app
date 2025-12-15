@@ -40,8 +40,11 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error loading feedbacks',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error loading feedbacks',
+        error: e,
+        stackTrace: stackTrace,
+      );
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -101,7 +104,9 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
         title: const Text('【管理】フィードバック一覧'),
         actions: [
           IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _loadFeedbacks),
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadFeedbacks,
+          ),
         ],
       ),
       body: _isLoading
@@ -123,8 +128,10 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                         leading: CircleAvatar(
                           backgroundColor:
                               _getStatusColor(status).withOpacity(0.2),
-                          child: Icon(_getCategoryIcon(fb['category']),
-                              color: _getStatusColor(status)),
+                          child: Icon(
+                            _getCategoryIcon(fb['category']),
+                            color: _getStatusColor(status),
+                          ),
                         ),
                         title: Text(
                           fb['content'],
@@ -143,26 +150,40 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Text('詳細内容:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
+                                const Text(
+                                  '詳細内容:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 const SizedBox(height: 8),
                                 Text(fb['content']),
                                 const SizedBox(height: 16),
-                                const Text('ステータス変更:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'ステータス変更:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     _buildStatusButton(
-                                        fb['id'], 'new', '未対応', status),
+                                      fb['id'],
+                                      'new',
+                                      '未対応',
+                                      status,
+                                    ),
                                     _buildStatusButton(
-                                        fb['id'], 'reviewed', '確認済', status),
+                                      fb['id'],
+                                      'reviewed',
+                                      '確認済',
+                                      status,
+                                    ),
                                     _buildStatusButton(
-                                        fb['id'], 'implemented', '対応完', status),
+                                      fb['id'],
+                                      'implemented',
+                                      '対応完',
+                                      status,
+                                    ),
                                   ],
                                 ),
                               ],
@@ -177,7 +198,11 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
   }
 
   Widget _buildStatusButton(
-      int id, String statusKey, String label, String currentStatus) {
+    int id,
+    String statusKey,
+    String label,
+    String currentStatus,
+  ) {
     final isSelected = statusKey == currentStatus;
     return ElevatedButton(
       onPressed: isSelected ? null : () => _updateStatus(id, statusKey),

@@ -21,7 +21,7 @@ class MementoMoriClock extends StatefulWidget {
 class _MementoMoriClockState extends State<MementoMoriClock> {
   Timer? _timer;
   int? _remainingSeconds;
-  String _wasteImpact = "0.0000";
+  String _wasteImpact = '0.0000';
 
   @override
   void initState() {
@@ -91,7 +91,7 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
       return _buildUnsetContainer();
     }
 
-    final formatter = NumberFormat("#,###");
+    final formatter = NumberFormat('#,###');
     final hours = _remainingSeconds != null ? _remainingSeconds! ~/ 3600 : 0;
     final minutes =
         _remainingSeconds != null ? (_remainingSeconds! % 3600) ~/ 60 : 0;
@@ -106,12 +106,12 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
         boxShadow: [
           BoxShadow(
             color: Colors.red.withValues(
-                alpha:
-                    0.2), // alpha is deprecated inside withValues? No, withOpacity is. using withValues for Flutter 3.27+ or withOpacity for older. Assuming standard.
+              alpha: 0.2,
+            ), // alpha is deprecated inside withValues? No, withOpacity is. using withValues for Flutter 3.27+ or withOpacity for older. Assuming standard.
             // color: Colors.red.withOpacity(0.2), // Use this if older Flutter
             blurRadius: 15,
             spreadRadius: 1,
-          )
+          ),
         ],
       ),
       child: Column(
@@ -128,7 +128,7 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "MEMENTO MORI PROTOCOL",
+                  'MEMENTO MORI PROTOCOL',
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontSize: 10,
@@ -137,7 +137,7 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
                   ),
                 ),
                 Text(
-                  "TARGET: ${widget.targetAge}",
+                  'TARGET: ${widget.targetAge}',
                   style: TextStyle(
                     color: Colors.red.shade200,
                     fontSize: 10,
@@ -153,13 +153,15 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
             child: Column(
               children: [
                 const Text(
-                  "夢を叶えるための正味の残り時間",
+                  '夢を叶えるための正味の残り時間',
                   style: TextStyle(color: Colors.grey, fontSize: 11),
                 ),
                 const SizedBox(height: 8),
                 if (_remainingSeconds == null)
-                  const Text("CALCULATING...",
-                      style: TextStyle(color: Colors.white))
+                  const Text(
+                    'CALCULATING...',
+                    style: TextStyle(color: Colors.white),
+                  )
                 else
                   FittedBox(
                     fit: BoxFit.scaleDown,
@@ -169,14 +171,23 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         _buildTimeUnit(
-                            formatter.format(hours), "hours", Colors.red),
+                          formatter.format(hours),
+                          'hours',
+                          Colors.red,
+                        ),
                         _buildSeparator(),
-                        _buildTimeUnit(minutes.toString().padLeft(2, '0'),
-                            "min", Colors.white),
+                        _buildTimeUnit(
+                          minutes.toString().padLeft(2, '0'),
+                          'min',
+                          Colors.white,
+                        ),
                         _buildSeparator(),
-                        _buildTimeUnit(seconds.toString().padLeft(2, '0'),
-                            "sec", Colors.white,
-                            isPulse: true),
+                        _buildTimeUnit(
+                          seconds.toString().padLeft(2, '0'),
+                          'sec',
+                          Colors.white,
+                          isPulse: true,
+                        ),
                       ],
                     ),
                   ),
@@ -196,18 +207,20 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       style: const TextStyle(
-                          fontSize: 11, color: Colors.redAccent),
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                      ),
                       children: [
-                        const TextSpan(text: "警告: 今1時間を無駄にすると、残りの人生の "),
+                        const TextSpan(text: '警告: 今1時間を無駄にすると、残りの人生の '),
                         TextSpan(
-                          text: "$_wasteImpact%",
+                          text: '$_wasteImpact%',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Colors.white,
                           ),
                         ),
-                        const TextSpan(text: " が永久に失われます。"),
+                        const TextSpan(text: ' が永久に失われます。'),
                       ],
                     ),
                   ),
@@ -215,7 +228,7 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
 
                 const SizedBox(height: 8),
                 const Text(
-                  "\"今日という日は、残りの人生で最初の日であり、最も若い日である\"",
+                  '"今日という日は、残りの人生で最初の日であり、最も若い日である"',
                   style: TextStyle(
                     color: Colors.grey,
                     fontSize: 9,
@@ -245,11 +258,11 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
           Icon(Icons.hourglass_disabled, color: Colors.grey),
           SizedBox(height: 8),
           Text(
-            "死のリミット計測不能",
+            '死のリミット計測不能',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           Text(
-            "プロフィール画面で「生年月日」を設定し、\n現実を直視してください。",
+            'プロフィール画面で「生年月日」を設定し、\n現実を直視してください。',
             style: TextStyle(color: Colors.grey, fontSize: 11),
             textAlign: TextAlign.center,
           ),
@@ -258,8 +271,12 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
     );
   }
 
-  Widget _buildTimeUnit(String value, String unit, Color color,
-      {bool isPulse = false}) {
+  Widget _buildTimeUnit(
+    String value,
+    String unit,
+    Color color, {
+    bool isPulse = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
@@ -286,7 +303,7 @@ class _MementoMoriClockState extends State<MementoMoriClock> {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 4),
       child: Text(
-        ":",
+        ':',
         style: TextStyle(color: Colors.grey, fontSize: 24),
       ),
     );

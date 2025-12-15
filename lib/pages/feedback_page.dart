@@ -49,8 +49,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
         Navigator.pop(context); // 前の画面に戻る
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error submitting feedback',
-          error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        'Error submitting feedback',
+        error: e,
+        stackTrace: stackTrace,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -75,8 +78,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('ご意見・ご要望',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'ご意見・ご要望',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -113,8 +118,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
               const SizedBox(height: 32),
 
               // カテゴリ選択
-              const Text('カテゴリ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'カテゴリ',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -134,8 +141,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
                       );
                     }).toList(),
                     onChanged: (value) {
-                      if (value != null)
+                      if (value != null) {
                         setState(() => _selectedCategory = value);
+                      }
                     },
                   ),
                 ),
@@ -144,8 +152,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
               const SizedBox(height: 24),
 
               // 内容入力
-              const Text('内容',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                '内容',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _contentController,
@@ -200,9 +210,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
                           children: [
                             Icon(Icons.send_rounded),
                             SizedBox(width: 8),
-                            Text('開発者に送信する',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text(
+                              '開発者に送信する',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                 ),

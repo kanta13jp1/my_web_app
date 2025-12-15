@@ -359,7 +359,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
               'referral',
               'daily_challenges',
               'personality_test',
-              'ai_secretary'
+              'ai_secretary',
             ].contains(value)) {
               widget.onLoadUserStats();
             }
@@ -1242,7 +1242,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.05), // 修正: withOpacity
           border: Border.all(
-              color: color.withOpacity(0.3), width: 1.5), // 修正: withOpacity
+            color: color.withOpacity(0.3),
+            width: 1.5,
+          ), // 修正: withOpacity
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

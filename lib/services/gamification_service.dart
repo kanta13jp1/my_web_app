@@ -237,7 +237,7 @@ class GamificationService {
         'penalty_type': [
           if (levelDownAmount > 0) 'level_down',
           if (pointDeduction > 0) 'point_loss',
-          if (resetStreak) 'streak_reset'
+          if (resetStreak) 'streak_reset',
         ].join(','),
         'reason': reason,
         'amount_lost': pointDeduction,
@@ -716,7 +716,8 @@ class GamificationService {
       }
 
       AppLogger.warning(
-          'User not found in ranking (might be anonymous or no stats)');
+        'User not found in ranking (might be anonymous or no stats)',
+      );
       return null;
     } catch (e, stackTrace) {
       AppLogger.error(
