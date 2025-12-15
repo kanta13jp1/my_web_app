@@ -621,6 +621,7 @@ class GamificationService {
     }
   }
 
+  // Record generic activity log
   Future<void> recordActivity({
     required String userId,
     required String type,
@@ -644,7 +645,7 @@ class GamificationService {
     }
   }
 
-  // ✅ 修正: 匿名ユーザーを除外してリーダーボードを取得
+  // ✅ 修正済み: 匿名ユーザーを除外してリーダーボードを取得
   Future<List<LeaderboardEntry>> getLeaderboard({
     int limit = 100,
     String orderBy = 'total_points',
@@ -658,8 +659,8 @@ class GamificationService {
       // 匿名ユーザー(is_anonymous = true)を除外する
       final response = await _supabase
           .from('user_stats')
-          .select('*, user_profiles!inner(*)') // !inner で内部結合（条件に合うものだけ取得）
-          .eq('user_profiles.is_anonymous', false) // ✅ 匿名ユーザーを除外
+          .select('*, user_profiles!inner(*)') // !inner で内部結合を指定
+          .eq('user_profiles.is_anonymous', false) // 結合先テーブルの条件指定
           .order(orderBy, ascending: false)
           .limit(limit);
 
@@ -690,7 +691,7 @@ class GamificationService {
     }
   }
 
-  // ✅ 修正: 自分のランク取得時も匿名ユーザーを除外してカウント
+  // ✅ 修正済み: 自分のランク取得時も匿名ユーザーを除外してカウント
   Future<int?> getUserRank(
     String userId, {
     String orderBy = 'total_points',
@@ -702,7 +703,7 @@ class GamificationService {
       final userList = await _supabase
           .from('user_stats')
           .select('user_id, $orderBy, user_profiles!inner(is_anonymous)')
-          .eq('user_profiles.is_anonymous', false) // ✅ 匿名ユーザーを除外
+          .eq('user_profiles.is_anonymous', false)
           .order(orderBy, ascending: false);
 
       AppLogger.debug('Total valid users in ranking: ${userList.length}');
@@ -727,7 +728,7 @@ class GamificationService {
     }
   }
 
-  // Get user rewards
+  // Get user rewards (check unlocked status)
   Future<List<Reward>> getUserRewards(String userId) async {
     try {
       final stats = await getUserStats(userId);
@@ -741,11 +742,13 @@ class GamificationService {
       return allRewards.map((reward) {
         bool isUnlocked = false;
 
+        // Check level requirement
         if (reward.requiredLevel > 0 &&
             stats.currentLevel >= reward.requiredLevel) {
           isUnlocked = true;
         }
 
+        // Check achievement requirement
         if (reward.requiredAchievementId != null) {
           final requiredAchievement =
               achievementMap[reward.requiredAchievementId];
@@ -756,6 +759,7 @@ class GamificationService {
           }
         }
 
+        // Check points requirement
         if (reward.requiredPoints != null &&
             stats.totalPoints < reward.requiredPoints!) {
           isUnlocked = false;
