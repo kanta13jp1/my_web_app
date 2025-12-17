@@ -18,8 +18,9 @@ import '../../pages/import_page.dart';
 import '../../pages/activity_feed_page.dart';
 import '../../pages/ai_secretary_page.dart';
 import '../../pages/personality_test_landing_page.dart';
-import '../../pages/feedback_page.dart'; // ✅ 追加: フィードバックページ
-import '../../pages/admin/feedback_list_page.dart'; // ✅ 追加: 管理者ページ
+import '../../pages/feedback_page.dart';
+import '../../pages/admin/feedback_list_page.dart';
+import '../../pages/task_page.dart'; // ✅ 追加: タスクページ
 import '../../services/search_history_service.dart';
 import '../../services/app_share_service.dart';
 import '../../models/user_stats.dart';
@@ -77,13 +78,13 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _HomeAppBarState extends State<HomeAppBar> {
   String? _appVersion;
-  bool _isAdmin = false; // ✅ 追加: 管理者フラグ
+  bool _isAdmin = false;
 
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
-    _checkAdminRole(); // ✅ 追加: 管理者チェック
+    _checkAdminRole();
   }
 
   Future<void> _loadAppVersion() async {
@@ -95,19 +96,16 @@ class _HomeAppBarState extends State<HomeAppBar> {
     }
   }
 
-  // ✅ 追加: 管理者権限チェック
   Future<void> _checkAdminRole() async {
     final user = supabase.auth.currentUser;
-    // 1. メールアドレスでの簡易チェック (UI表示用)
     if (user?.email == 'kanta13jp@gmail.com') {
       setState(() => _isAdmin = true);
     }
 
-    // 2. DBのroleカラムで厳密チェック
     if (user != null) {
       try {
         final data = await supabase
-            .from('user_profiles') // user_profilesテーブル
+            .from('user_profiles')
             .select('role')
             .eq('user_id', user.id)
             .maybeSingle();
@@ -133,6 +131,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   // ページ遷移アクションのマップ
   static final Map<String, Widget Function(BuildContext)> _pageBuilders = {
+    'tasks': (c) => const TaskPage(), // ✅ 追加: タスクページへの遷移定義
     'categories': (c) => const CategoriesPage(),
     'archive': (c) => const ArchivePage(),
     'stats': (c) => const StatsPage(),
@@ -149,8 +148,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
     'import': (c) => const ImportPage(),
     'activity_feed': (c) => const ActivityFeedPage(),
     'settings': (c) => const SettingsPage(),
-    'feedback': (c) => const FeedbackPage(), // ✅ 追加
-    'admin_feedback': (c) => const FeedbackListPage(), // ✅ 追加: 管理者ページ
+    'feedback': (c) => const FeedbackPage(),
+    'admin_feedback': (c) => const FeedbackListPage(),
   };
 
   @override
@@ -351,7 +350,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
             if (value == 'profile_settings' && result == true) {
               widget.onLoadUserStats();
               widget.onRefresh();
-            } else if (['categories', 'archive', 'import'].contains(value)) {
+            } else if (['categories', 'archive', 'import', 'tasks']
+                .contains(value)) {
               widget.onRefresh();
             } else if ([
               'stats',
@@ -434,6 +434,22 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
           const PopupMenuDivider(),
         ],
+        // ✅ 追加: 優先順位タスク (目立つ位置に配置)
+        const PopupMenuItem(
+          value: 'tasks',
+          child: Row(
+            children: [
+              Icon(Icons.assignment_turned_in, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Text(
+                '🔥 優先順位タスク',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.redAccent),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
         const PopupMenuItem(
           value: 'categories',
           child: Row(
@@ -587,7 +603,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
           ),
         ),
         const PopupMenuDivider(),
-        // ✅ 追加: フィードバックメニュー
         const PopupMenuItem(
           value: 'feedback',
           child: Row(
@@ -598,7 +613,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
             ],
           ),
         ),
-        // ✅ 追加: 管理者のみ表示されるメニュー
         if (_isAdmin)
           const PopupMenuItem(
             value: 'admin_feedback',

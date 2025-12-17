@@ -503,7 +503,7 @@ class GamificationService {
       final profilesResponse = await _supabase
           .from('user_profiles')
           .select()
-          .in_('user_id', userIds);
+          .filter('user_id', 'in', userIds); // ✅ .filterを使う
 
       final profilesList = List<Map<String, dynamic>>.from(profilesResponse);
 

@@ -35,6 +35,7 @@ import '../widgets/page_view_stats.dart';
 import '../widgets/daily_challenge_summary_card.dart';
 import 'enhanced_statistics_page.dart';
 import '../widgets/memento_mori_clock.dart';
+import 'task_page.dart'; // ✅ 追加: タスクページへのインポート
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -794,6 +795,80 @@ class _HomePageState extends State<HomePage> {
         hasDateFilter: _startDate != null || _endDate != null,
         userStats: _userStats,
       ),
+      // ✅ 追加: サイドメニュー (Drawer)
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'メニュー',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '思考停止タスク管理',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+            // タスクページへのリンク
+            ListTile(
+              leading: const Icon(Icons.assignment_turned_in,
+                  color: Colors.redAccent),
+              title: const Text(
+                '優先順位タスク',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.redAccent),
+              ),
+              subtitle: const Text('A→B→C→D 順守'),
+              onTap: () {
+                Navigator.pop(context); // ドロワーを閉じる
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TaskPage()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('アーカイブ'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ArchivePage()),
+                ).then((_) => _loadNotes());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('統計・分析'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const EnhancedStatisticsPage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       body: Stack(
         children: [
           _isLoading
@@ -887,8 +962,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // 👇✅ ここに不足していたメソッド群を追加しました 👇
 
   void _showDeleteDialog(Note note) {
     dialogs.showDeleteDialog(
