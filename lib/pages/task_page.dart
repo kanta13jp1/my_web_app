@@ -14,15 +14,14 @@ class _TaskPageState extends State<TaskPage> {
   List<TaskModel> _tasks = [];
   bool _isLoading = true;
 
-  // ユーザーが意識すべき「掟」
+  // ユーザーが意識すべき「掟」：今回頂いた言葉に刷新
   final List<String> _principles = [
-    '長い説明を処理しきれない\n👉 長い説明を処理する',
-    '締切ギリギリまで動けない\n👉 締切がある作業は今すぐ着手',
-    '単純作業ほど凡ミスが増える\n👉 絶対にミスがないよう注意する',
-    '感情や疲労が顔にそのまま出る\n👉 感情や疲労は顔に出さない',
-    'タスクが重なると思考が停止する\n👉 タスクが重なった場合は必ずメモ',
-    '言わなくていい一言を足してしまう\n👉 必要以外言わない',
-    '距離感を測れず、私的な話をしすぎる\n👉 必要以外言わない',
+    '頭がごちゃごちゃになっていないか？\n👉 部屋・デスクトップ・未読を放置するな',
+    '過去と未来を整理せよ\n👉 必要ないものは思い切って捨てる',
+    'データはゴミ箱へ、物は倉庫へ\n👉 1年不要ならそのまま捨てろ',
+    '多すぎる情報・物はマイナスだ\n👉 大事なこと3つだけに集中せよ',
+    '先の心配より目の前のこと\n👉 それ以外は忘れるし遮断する',
+    '今週も明るくすっきり前に進む\n👉 思考停止で目の前のタスクを処理',
   ];
 
   @override
@@ -75,6 +74,14 @@ class _TaskPageState extends State<TaskPage> {
     TaskType type,
     DateTime? deadline,
   ) async {
+    // 【制限追加】未完了タスクが3つ以上なら登録させない
+    if (_tasks.length >= 3) {
+      if (mounted) {
+        _showLimitReachedDialog();
+      }
+      return;
+    }
+
     try {
       final userId = supabase.auth.currentUser!.id;
       final newTask = TaskModel(
@@ -129,6 +136,50 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
+  // 3つ制限を超えたときのアラート
+  void _showLimitReachedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.block, color: Colors.red, size: 28),
+            SizedBox(width: 8),
+            Text('詰め込みすぎるな'),
+          ],
+        ),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'タスクは3つまでです。',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 12),
+              Text('頭がごちゃごちゃになっていませんか？\n世の中、物も情報も多すぎてむしろマイナスです。'),
+              SizedBox(height: 12),
+              Text(
+                '・まずは過去1ヶ月を振り返り、不要なものを捨てる。\n・今あるタスクを終わらせることに集中する。\n・それ以外は忘れて遮断する。',
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+              SizedBox(height: 12),
+              Text('明るくすっきり前に進むために、今はこれ以上増やしてはいけません。',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('理解しました'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLockedDialog() {
     showDialog(
       context: context,
@@ -181,7 +232,7 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
-  // ■ 掟ヘッダー（デザイン改善版）
+  // ■ 掟ヘッダー（黒グラデーションカード）
   Widget _buildPrinciplesCard() {
     final todaySeed = DateTime.now().day;
     final principle = _principles[todaySeed % _principles.length];
@@ -228,7 +279,7 @@ class _TaskPageState extends State<TaskPage> {
             principle,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 16, // 少し文字サイズ調整
               fontWeight: FontWeight.bold,
               height: 1.5,
             ),
@@ -239,7 +290,7 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  // ■ タスクカード（デザイン改善版）
+  // ■ タスクカード
   Widget _buildTaskCard(TaskModel task, bool isTopTask) {
     bool isLocked = false;
     if (task.taskType == TaskType.reward) {
@@ -440,11 +491,11 @@ class _TaskPageState extends State<TaskPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.task_alt,
-                                size: 64, color: Colors.grey.shade300),
+                            Icon(Icons.wb_sunny,
+                                size: 64, color: Colors.orange.shade300),
                             const SizedBox(height: 16),
                             Text(
-                              'タスクなし\n素晴らしい！やるべきことは全て完了しました。',
+                              '素晴らしい！\n頭の中もスッキリ空っぽです。\n今週も明るく前へ進みましょう。',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color: Colors.grey.shade500,
@@ -509,6 +560,10 @@ class _TaskPageState extends State<TaskPage> {
                   const Text('タスクを追加',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('※ 登録は最大3つまでです。大事なことだけに集中。',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.red.shade700)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: titleController,
