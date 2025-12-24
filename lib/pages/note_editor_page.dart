@@ -53,8 +53,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   List<Attachment> _attachments = [];
   bool _isLoadingAttachments = false;
 
-  // 表示モード管理（タブの代わり）
-  bool _isPreviewMode = false;
+  // 表示モード管理
+  bool _isPreviewMode = true;
 
   // ゲーミフィケーション用
   late final GamificationService _gamificationService;
@@ -117,8 +117,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  final FocusNode _contentFocusNode = FocusNode();
   @override
   void dispose() {
+    _contentFocusNode.dispose();
     _titleController.removeListener(_onTextChanged);
     _contentController.removeListener(_onTextChanged);
     _titleController.dispose();
@@ -388,6 +390,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     // 閉じる前の保存処理
     await _saveNoteWithoutClosing();
     if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _saveAndBackToPreview() async {
+    await _saveNoteWithoutClosing();
+    if (!mounted) return;
+
+    setState(() {
+      _isPreviewMode = true; // ← プレビューへ戻す
+    });
   }
 
   void _showAchievementNotifications(List<dynamic> achievements) {
@@ -1034,18 +1045,29 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ),
           actions: [
             IconButton(
-              icon: Icon(
-                _isPreviewMode
-                    ? Icons.edit_outlined
-                    : Icons.visibility_outlined,
-              ),
+              icon: Icon(_isPreviewMode
+                  ? Icons.edit_outlined
+                  : Icons.visibility_outlined),
               onPressed: () {
                 setState(() {
                   _isPreviewMode = !_isPreviewMode;
                 });
+                if (!_isPreviewMode) {
+                  // 次フレームでフォーカス
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _contentFocusNode.requestFocus();
+                  });
+                }
               },
-              tooltip: _isPreviewMode ? '編集モード' : 'プレビュー',
+              tooltip: _isPreviewMode ? '編集する' : 'プレビューに戻る',
             ),
+            // ✅ 追加：保存だけしてプレビューへ戻る（編集モードのときだけ表示）
+            if (!_isPreviewMode)
+              IconButton(
+                icon: const Icon(Icons.save_outlined),
+                onPressed: _saveAndBackToPreview,
+                tooltip: '保存してプレビューへ戻る',
+              ),
             IconButton(
               icon: const Icon(Icons.info_outline),
               onPressed: _showNoteInfo,
@@ -1085,6 +1107,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     const Divider(height: 1),
                     Expanded(
                       child: TextField(
+                        focusNode: _contentFocusNode,
                         controller: _contentController,
                         decoration: const InputDecoration(
                           hintText: 'メモを入力...',
