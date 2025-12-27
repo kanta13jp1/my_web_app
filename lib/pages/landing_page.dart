@@ -19,6 +19,30 @@ class _LandingPageState extends State<LandingPage> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _logLandingView(); //  画面表示時にViewをカウント
+  }
+
+  // 訪問数をカウントする関数
+  Future<void> _logLandingView() async {
+    try {
+      await Supabase.instance.client.rpc('increment_landing_view');
+    } catch (e) {
+      debugPrint('Analytics error: $e');
+    }
+  }
+
+  // コンバージョン（登録）をカウントする関数
+  Future<void> _logConversion() async {
+    try {
+      await Supabase.instance.client.rpc('increment_conversion');
+    } catch (e) {
+      debugPrint('Analytics error: $e');
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -33,6 +57,9 @@ class _LandingPageState extends State<LandingPage> {
     setState(() => _isLoading = true);
     try {
       await Supabase.instance.client.auth.signInAnonymously();
+
+      await _logConversion(); //  成功時にコンバージョン計測
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomePage()),
@@ -89,6 +116,8 @@ class _LandingPageState extends State<LandingPage> {
       }
 
       if (mounted && supabase.auth.currentUser != null) {
+        await _logConversion(); //  成功時にコンバージョン計測
+
         Navigator.pop(context); // モーダルを閉じる
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomePage()),

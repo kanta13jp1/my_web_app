@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart'; // supabaseクライアントのため
 
@@ -46,8 +46,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       totalViews += (stat['landing_views'] as int? ?? 0);
       totalConversions += (stat['conversions'] as int? ?? 0);
     }
-    
-    double totalCvr = totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
+
+    double totalCvr =
+        totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
 
     return Scaffold(
       appBar: AppBar(
@@ -78,14 +79,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
-                          const Text('現在のコンバージョン率 (CVR)', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                          const Text('現在のコンバージョン率 (CVR)',
+                              style:
+                                  TextStyle(fontSize: 14, color: Colors.grey)),
                           const SizedBox(height: 8),
                           Text(
                             '${totalCvr.toStringAsFixed(1)}%',
                             style: TextStyle(
                               fontSize: 48,
                               fontWeight: FontWeight.bold,
-                              color: totalCvr >= 10 ? Colors.green : (totalCvr >= 5 ? Colors.orange : Colors.red),
+                              color: totalCvr >= 10
+                                  ? Colors.green
+                                  : (totalCvr >= 5
+                                      ? Colors.orange
+                                      : Colors.red),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -101,9 +108,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text('日別レポート', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('日別レポート',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -120,7 +128,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           title: Text(stat['date'].toString()),
                           trailing: Text(
                             '${cvr.toStringAsFixed(1)}%',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           subtitle: Text('View: $views / Conv: $conv'),
                         ),
@@ -136,7 +145,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildStatItem(String label, String value) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
