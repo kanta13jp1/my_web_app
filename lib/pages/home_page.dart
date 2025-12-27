@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart'; // シェア機能用
+import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
 import 'gemini_university_page.dart';
 import 'danshari_page.dart';
 import 'real_world_danshari_page.dart';
-import 'admin_analytics_page.dart'; // 管理者用ページ
+import 'admin_analytics_page.dart';
 import '../models/note.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
     _loadNotes();
   }
 
-  // すべてのメモを取得
   Future<void> _loadNotes() async {
     try {
       final userId = supabase.auth.currentUser?.id;
@@ -59,9 +58,17 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //  シェア機能の実装 (URL変更済み)
-  void _shareApp() {
-    Share.share(
+  //  シェア機能 (計測ロジック追加)
+  Future<void> _shareApp() async {
+    // 1. 裏側でシェア数をカウントアップ (エラーでもシェア自体は止めない)
+    try {
+      supabase.rpc('increment_share_count');
+    } catch (e) {
+      debugPrint('Share analytics error: $e');
+    }
+
+    // 2. シェア画面を呼び出し
+    await Share.share(
       'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/',
       subject: '最強の断捨離アプリを見つけました',
     );
@@ -73,7 +80,6 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('マイメモ'),
         actions: [
-          // シェアボタン (AppBarに追加)
           IconButton(
             icon: const Icon(Icons.share, color: Colors.indigo),
             onPressed: _shareApp,
@@ -86,7 +92,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      // ドロワー追加 (管理者用メニュー)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -133,11 +138,8 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
-                  //  2大機能カードエリア
                   Row(
                     children: [
-                      // 1. Gemini大学
                       Expanded(
                         child: _buildBigFeatureCard(
                           title: 'Gemini大学',
@@ -152,14 +154,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // 2. 断捨離クエスト
                       Expanded(
                         child: _buildBigFeatureCard(
                           title: '断捨離\nクエスト',
                           subtitle: '不要を捨てる',
                           icon: Icons.cleaning_services,
                           color: Colors.redAccent,
-                          isHighlight: true, // 強調
+                          isHighlight: true,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -172,10 +173,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
-                  //  リアル断捨離ボタン
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -206,14 +204,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-
                   const Text(
                     'すべてのメモ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-
-                  // メモリスト
                   if (_notes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
@@ -243,10 +238,7 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         )),
-
                   const SizedBox(height: 24),
-
-                  //  友達紹介カード（下部にも配置）
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -284,14 +276,10 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-
-                  // リスト下の余白
                   const SizedBox(height: 80),
                 ],
               ),
             ),
-
-      // FAB
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(

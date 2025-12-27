@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart'; // supabaseクライアントのため
+import '../main.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
   const AdminAnalyticsPage({super.key});
@@ -42,9 +42,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget build(BuildContext context) {
     int totalViews = 0;
     int totalConversions = 0;
+    int totalShares = 0; // 追加
+
     for (var stat in _dailyStats) {
       totalViews += (stat['landing_views'] as int? ?? 0);
       totalConversions += (stat['conversions'] as int? ?? 0);
+      totalShares += (stat['share_count'] as int? ?? 0); // 追加
     }
 
     double totalCvr =
@@ -99,8 +102,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatItem('訪問数', '$totalViews'),
-                              _buildStatItem('登録数', '$totalConversions'),
+                              _buildStatItem(
+                                  '訪問数', '$totalViews', Icons.visibility),
+                              _buildStatItem(
+                                  '登録数', '$totalConversions', Icons.person_add),
+                              _buildStatItem(
+                                  'シェア数', '$totalShares', Icons.share), // 追加
                             ],
                           )
                         ],
@@ -120,6 +127,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final stat = _dailyStats[index];
                       final views = stat['landing_views'] as int? ?? 0;
                       final conv = stat['conversions'] as int? ?? 0;
+                      final shares = stat['share_count'] as int? ?? 0; // 追加
                       final cvr = views == 0 ? 0.0 : (conv / views * 100);
 
                       return Card(
@@ -131,7 +139,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                          subtitle: Text('View: $views / Conv: $conv'),
+                          subtitle: Text(
+                              'View: $views / Conv: $conv / Share: $shares'), // 表示追加
                         ),
                       );
                     },
@@ -142,9 +151,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
+        Icon(icon, size: 24, color: Colors.indigo.shade300),
+        const SizedBox(height: 4),
         Text(value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
