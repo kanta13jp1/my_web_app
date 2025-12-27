@@ -25,7 +25,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           .from('app_analytics')
           .select()
           .order('date', ascending: false)
-          .limit(30); // 過去30日分
+          .limit(30);
 
       if (mounted) {
         setState(() {
@@ -38,9 +38,33 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
+  // デバッグ用: テストデータを増やす
+  Future<void> _generateTestData() async {
+    setState(() => _isLoading = true);
+    try {
+      // 訪問とコンバージョンを人工的に増やす
+      await supabase.rpc('increment_landing_view'); // View +1
+      await supabase.rpc('increment_landing_view'); // View +1 (計2)
+      await supabase.rpc('increment_conversion'); // Conv +1
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('テストデータを生成しました (View+2, Conv+1)')),
+        );
+        _loadStats(); // リロード
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: データベース関数が見つかりません。\nSQLを実行してください: $e')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 全期間の集計
     int totalViews = 0;
     int totalConversions = 0;
     for (var stat in _dailyStats) {
@@ -56,6 +80,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         title: const Text(' アプリ分析ダッシュボード'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() => _isLoading = true);
+              _loadStats();
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -64,7 +97,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // サマリーカード
                   Card(
                     elevation: 4,
                     color: Colors.indigo.shade50,
@@ -100,13 +132,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // テストデータ生成ボタン (デバッグ用)
+                  OutlinedButton.icon(
+                    onPressed: _generateTestData,
+                    icon: const Icon(Icons.bug_report),
+                    label: const Text('テストデータを生成 (動作確認用)'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey,
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                   const Text('日別レポート',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
-                  // 日別リスト
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
