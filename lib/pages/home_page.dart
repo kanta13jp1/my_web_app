@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart'; // 日付操作用
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -20,11 +21,51 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Note> _notes = [];
   bool _isLoading = true;
+  
+  //  今日の断捨離ノルマ設定
+  final int _dailyDanshariGoal = 5; 
+  int _todayDanshariCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadNotes();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadNotes(),
+      _loadDailyProgress(),
+    ]);
+  }
+
+  // 今日の断捨離進捗を確認
+  Future<void> _loadDailyProgress() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 今日の0時0分を取得
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+
+      // 今日アーカイブされた（断捨離された）メモをカウント
+      // 注意: アーカイブ時に updated_at を更新する前提
+      final response = await supabase
+          .from('notes')
+          .count(CountOption.exact)
+          .eq('user_id', userId)
+          .eq('is_archived', true)
+          .gte('updated_at', todayStart);
+
+      if (mounted) {
+        setState(() {
+          _todayDanshariCount = response.count;
+        });
+      }
+    } catch (e) {
+      debugPrint('Progress load error: $e');
+    }
   }
 
   Future<void> _loadNotes() async {
@@ -59,42 +100,19 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ---------------------------------------------------
-  //  シェア機能群 (マーケティング強化版)
-  // ---------------------------------------------------
-
-  // 1. 汎用シェア
   Future<void> _shareApp() async {
-    try {
-      await supabase.rpc('increment_share_count');
-    } catch (e) {
-      debugPrint('Share analytics error: $e');
-    }
-
+    try { await supabase.rpc('increment_share_count'); } catch (_) {}
     await Share.share(
-      '私の部屋、AI鬼コーチに「ゴミ屋敷」判定されました\nあなたもAIに判定してもらいませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_general',
+      '私の部屋、AI鬼コーチに「ゴミ屋敷」判定されました\nhttps://my-web-app-b67f4.web.app/?ref=share_general',
       subject: 'AI断捨離アプリで判定中',
     );
   }
 
-  // 2. X (Twitter) 直接投稿
   Future<void> _postToX() async {
-    try {
-      await supabase.rpc('increment_share_count');
-    } catch (e) {
-      debugPrint('Share analytics error: $e');
-    }
-
-    //  工夫: ユーザーがクリックしたくなるような「煽り」や「結果」を入れる
-    const text =
-        'AI鬼コーチに部屋の写真を判定してもらったら、衝撃のアドバイスが...\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
-
-    //  追跡: ?ref=x_share を追加して、どこから来たか計測する
+    try { await supabase.rpc('increment_share_count'); } catch (_) {}
+    const text = 'AI鬼コーチに部屋の写真を判定してもらったら、衝撃のアドバイスが...\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
     const url = 'https://my-web-app-b67f4.web.app/?ref=x_share';
-
-    final tweetUrl = Uri.parse(
-        'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
-
+    final tweetUrl = Uri.parse('https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
     } else {
@@ -102,7 +120,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // 3. シェアメニュー
   void _showShareMenu() {
     showModalBottomSheet(
       context: context,
@@ -111,21 +128,15 @@ class _HomePageState extends State<HomePage> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.close),
+                leading: const Icon(Icons.close), 
                 title: const Text('Xでポスト (おすすめ)'),
                 subtitle: const Text('AIの判定結果をみんなに教える'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _postToX();
-                },
+                onTap: () { Navigator.pop(context); _postToX(); },
               ),
               ListTile(
                 leading: const Icon(Icons.share),
                 title: const Text('その他のアプリでシェア'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _shareApp();
-                },
+                onTap: () { Navigator.pop(context); _shareApp(); },
               ),
             ],
           ),
@@ -136,19 +147,21 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // ノルマ達成判定
+    final isGoalMet = _todayDanshariCount >= _dailyDanshariGoal;
+    final remaining = _dailyDanshariGoal - _todayDanshariCount;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('マイメモ'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share, color: Colors.indigo),
-            onPressed: _showShareMenu,
-            tooltip: 'アプリをシェア',
+            onPressed: _showShareMenu, 
           ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _signOut,
-            tooltip: 'ログアウト',
           ),
         ],
       ),
@@ -162,13 +175,9 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.settings, color: Colors.white, size: 40),
-                  SizedBox(height: 10),
-                  Text('設定管理',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold)),
+                   Icon(Icons.settings, color: Colors.white, size: 40),
+                   SizedBox(height: 10),
+                   Text('設定管理', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -193,12 +202,82 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  //  ベッドタイムライセンス (寝ていいか判定)
+                  GestureDetector(
+                    onTap: () async {
+                      if (!isGoalMet) {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DanshariPage()),
+                        );
+                        _loadData(); // 戻ってきたら再読み込み
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isGoalMet ? Colors.green.shade50 : Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isGoalMet ? Colors.green : Colors.red,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                           BoxShadow(
+                             color: (isGoalMet ? Colors.green : Colors.red).withOpacity(0.2),
+                             blurRadius: 10,
+                             offset: const Offset(0, 4),
+                           )
+                        ]
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isGoalMet ? Colors.bed : Colors.lock_clock, 
+                            size: 40, 
+                            color: isGoalMet ? Colors.green : Colors.red
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isGoalMet ? '就寝許可証: 発行済み' : '就寝禁止: ロック中',
+                                  style: TextStyle(
+                                    fontSize: 18, 
+                                    fontWeight: FontWeight.bold,
+                                    color: isGoalMet ? Colors.green.shade800 : Colors.red.shade800
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isGoalMet 
+                                    ? 'お疲れ様でした。良い夢を。' 
+                                    : 'あと $remaining 個 片付けるまで\n寝ることは許されません。',
+                                  style: TextStyle(
+                                    fontSize: 14, 
+                                    color: isGoalMet ? Colors.green.shade700 : Colors.red.shade700
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!isGoalMet)
+                            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.red),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
                   const Text(
                     '最重要タスク',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
+                  
                   Row(
                     children: [
                       Expanded(
@@ -209,8 +288,7 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.indigo,
                           onTap: () => Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (_) => const GeminiUniversityPage()),
+                            MaterialPageRoute(builder: (_) => const GeminiUniversityPage()),
                           ),
                         ),
                       ),
@@ -218,17 +296,16 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: _buildBigFeatureCard(
                           title: '断捨離\nクエスト',
-                          subtitle: '不要を捨てる',
+                          subtitle: isGoalMet ? '完了済み' : '残り $remaining 個',
                           icon: Icons.cleaning_services,
-                          color: Colors.redAccent,
+                          color: isGoalMet ? Colors.green : Colors.redAccent,
                           isHighlight: true,
                           onTap: () async {
                             await Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                  builder: (_) => const DanshariPage()),
+                              MaterialPageRoute(builder: (_) => const DanshariPage()),
                             );
-                            _loadNotes();
+                            _loadData();
                           },
                         ),
                       ),
@@ -236,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   const SizedBox(height: 24),
-
+                  
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -245,8 +322,7 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (_) => const RealWorldDanshariPage()),
+                          MaterialPageRoute(builder: (_) => const RealWorldDanshariPage()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -255,15 +331,13 @@ class _HomePageState extends State<HomePage> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side:
-                              BorderSide(color: Colors.indigo.withOpacity(0.3)),
+                          side: BorderSide(color: Colors.indigo.withOpacity(0.3)),
                         ),
                       ),
                       icon: const Icon(Icons.camera_alt, size: 32),
                       label: const Text(
                         '現実のゴミも捨てる (AI判定)',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -273,37 +347,33 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-
+                  
                   if (_notes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
-                      child: Text('メモはまだありません。',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey)),
+                      child: Text('メモはまだありません。', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                     )
                   else
                     ..._notes.map((note) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            title: Text(note.title,
-                                maxLines: 1, overflow: TextOverflow.ellipsis),
-                            subtitle: Text(
-                              note.content,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => NoteEditorPage(note: note)),
-                              );
-                              _loadNotes();
-                            },
-                          ),
-                        )),
-
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        title: Text(note.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        subtitle: Text(
+                          note.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => NoteEditorPage(note: note)),
+                          );
+                          _loadData(); // 戻ってきたら更新
+                        },
+                      ),
+                    )),
+                  
                   const SizedBox(height: 24),
 
                   //  友達紹介カード
@@ -320,8 +390,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.diversity_3,
-                                size: 40, color: Colors.indigo),
+                            const Icon(Icons.diversity_3, size: 40, color: Colors.indigo),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
@@ -329,12 +398,9 @@ class _HomePageState extends State<HomePage> {
                                 children: const [
                                   Text(
                                     '仲間を増やそう！',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                   ),
-                                  Text('AI鬼コーチの判定をシェアして盛り上がろう。',
-                                      style: TextStyle(fontSize: 12)),
+                                  Text('AI鬼コーチの判定をシェアして盛り上がろう。', style: TextStyle(fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -343,7 +409,6 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            // Xでポストボタン
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _postToX,
@@ -352,21 +417,18 @@ class _HomePageState extends State<HomePage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.black,
                                   foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
-                            // その他のシェアボタン
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: _shareApp,
                                 icon: const Icon(Icons.share),
                                 label: const Text('その他'),
                                 style: OutlinedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),
                             ),
@@ -380,13 +442,14 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+      
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NoteEditorPage()),
           );
-          _loadNotes();
+          _loadData();
         },
         backgroundColor: Colors.white,
         foregroundColor: Colors.indigo,
@@ -417,9 +480,7 @@ class _HomePageState extends State<HomePage> {
               offset: const Offset(0, 4),
             ),
           ],
-          border: isHighlight
-              ? null
-              : Border.all(color: color.withOpacity(0.3), width: 2),
+          border: isHighlight ? null : Border.all(color: color.withOpacity(0.3), width: 2),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -445,7 +506,8 @@ class _HomePageState extends State<HomePage> {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: isHighlight ? Colors.white70 : Colors.grey,
+                fontWeight: FontWeight.bold,
+                color: isHighlight ? Colors.white : Colors.grey,
               ),
             ),
           ],
