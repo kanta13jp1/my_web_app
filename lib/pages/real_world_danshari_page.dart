@@ -1,8 +1,9 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:share_plus/share_plus.dart'; // シェア用
+import 'dart:io'; // モバイル用
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb判定用
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
@@ -13,17 +14,22 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  File? _image;
+  // Web対応のため File ではなく XFile を使用
+  XFile? _image;
   final picker = ImagePicker();
   bool _isAnalyzing = false;
   String? _analysisResult;
 
   Future<void> _getImage(ImageSource source) async {
-    final pickedFile = await picker.pickImage(source: source, maxWidth: 800);
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 800,
+      imageQuality: 80, // サイズ圧縮
+    );
 
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _image = pickedFile;
         _analysisResult = null;
       });
       _analyzeImage();
@@ -33,13 +39,12 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   Future<void> _analyzeImage() async {
     if (_image == null) return;
 
-    setState(() {
-      _isAnalyzing = true;
-    });
+    setState(() => _isAnalyzing = true);
 
     try {
-      List<int> imageBytes = await _image!.readAsBytes();
-      String base64Image = base64Encode(imageBytes);
+      // XFileならWebでもモバイルでもreadAsBytesが使える
+      final imageBytes = await _image!.readAsBytes();
+      final base64Image = base64Encode(imageBytes);
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
@@ -72,24 +77,18 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         );
       }
     } finally {
-      setState(() {
-        _isAnalyzing = false;
-      });
+      if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
-  //  判定結果をシェアする機能 (新規追加)
   void _shareResult(String result) {
-    // 結果からキャッチーな部分を抽出（簡易的に最初の数行）
     final shortResult = result.split('\n').take(5).join('\n');
-
     Share.share(
       'AI鬼コーチに部屋のモノを判定してもらいました\n\n$shortResult\n...\n\nあなたも無料で診断！\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_image_result',
       subject: 'AI断捨離コーチの衝撃診断',
     );
   }
 
-  // ダイアログを修正
   void _showAnalysisResultDialog(String result) {
     showDialog(
       context: context,
@@ -108,7 +107,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           ),
         ),
         actions: [
-          // シェアボタンを追加
           TextButton.icon(
             onPressed: () {
               _shareResult(result);
@@ -144,13 +142,21 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
+
+            // 画像表示エリア (Web対応)
             if (_image != null) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.file(_image!, height: 300, fit: BoxFit.cover),
+                child: SizedBox(
+                  height: 300,
+                  child: kIsWeb
+                      ? Image.network(_image!.path, fit: BoxFit.cover)
+                      : Image.file(File(_image!.path), fit: BoxFit.cover),
+                ),
               ),
               const SizedBox(height: 32),
             ],
+
             if (_isAnalyzing)
               const Column(
                 children: [
