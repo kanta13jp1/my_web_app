@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// メモ作成支援、文章改善、要約生成、および画像認識（リアル断捨離）機能を提供
+// メモ作成支援、文章改善、要約生成、および画像テキスト断捨離判定機能を提供
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -16,8 +16,9 @@ const GEMINI_MODEL = 'gemini-flash-latest'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {
-  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations' | 'analyze_image'
+  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations' | 'analyze_image' | 'analyze_note_text'
   content?: string
+  title?: string // メモ判定用に追加
   imageBase64?: string
   language?: string
   targetLanguage?: string
@@ -61,7 +62,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { action, content, imageBase64, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
+    const { action, content, title, imageBase64, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
 
     if (!action) {
       throw new Error('Missing required parameters')
@@ -80,9 +81,12 @@ serve(async (req) => {
       }
     };
 
+    // ============================================
     // アクションに応じた処理分岐
+    // ============================================
+
+    // --- 画像認識（リアル断捨離）モード ---
     if (action === 'analyze_image') {
-      // --- 画像認識（リアル断捨離）モード ---
       if (!imageBase64) {
         throw new Error('Image data missing for analyze_image action')
       }
@@ -116,8 +120,38 @@ serve(async (req) => {
         ]
       }];
 
+    // --- テキストメモ判定（デジタル断捨離）モード ---
+    } else if (action === 'analyze_note_text') {
+      if (!content && !title) {
+        throw new Error('Note content or title missing for analyze_note_text action')
+      }
+
+      const promptText = `
+        あなたは「デジタルの断捨離鬼コーチ」です。
+        ユーザーがため込んだ以下のメモを見て、今後この情報が必要か否かを厳しく判定してください。
+        口調は厳しめで、情報が古いか、行動に繋がっていないか、ただの執着かを指摘してください。
+
+        【メモタイトル】: ${title || '(なし)'}
+        【メモ内容】: ${content || '(なし)'}
+
+        以下のフォーマットで回答せよ。
+
+        【判定】
+        （「即アーカイブ推奨」または「保留」）
+
+        【鬼コーチの理由】
+        （なぜこの情報が不要か、デジタルゴミになっている理由を痛烈に指摘）
+
+        【助言】
+        （デジタル情報を整理するための短い一言）
+      `;
+      
+      requestBody.contents = [{
+        parts: [{ text: promptText }]
+      }];
+
+    // --- その他のテキスト処理モード ---
     } else {
-      // --- テキスト処理モード ---
       if (action === 'task_recommendations' && (!recentNotes || !userStats)) {
         throw new Error('Missing required parameters for task recommendations')
       } else if (action !== 'task_recommendations' && !content) {
@@ -174,7 +208,8 @@ serve(async (req) => {
     result = parseResult(result, action)
 
     // Estimate token usage (簡易計算: 画像は計算に含まない)
-    const inputTokens = estimateTokens(JSON.stringify(requestBody.contents))
+    let inputTokenSource = typeof requestBody.contents[0].parts[0].text === 'string' ? requestBody.contents[0].parts[0].text : JSON.stringify(requestBody.contents);
+    const inputTokens = estimateTokens(inputTokenSource)
     const outputTokens = estimateTokens(typeof result === 'string' ? result : JSON.stringify(result))
     const totalTokens = inputTokens + outputTokens
 

@@ -14,6 +14,7 @@ class _DanshariPageState extends State<DanshariPage>
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _staleMemos = [];
   bool _isLoading = true;
+  bool _isAnalyzing = false; // AI解析中フラグ
   int _deletedCount = 0;
   int _earnedPoints = 0;
 
@@ -78,7 +79,7 @@ class _DanshariPageState extends State<DanshariPage>
     }
   }
 
-  // 🗑️ 断捨離実行（削除してポイントゲット）
+  //  断捨離実行（削除してポイントゲット）
   Future<void> _executeDanshari() async {
     if (_staleMemos.isEmpty) return;
 
@@ -89,8 +90,10 @@ class _DanshariPageState extends State<DanshariPage>
     await _animController.forward();
 
     try {
-      // 1. DBから削除
-      await supabase.from('notes').delete().eq('id', memoId);
+      // 1. DB更新（アーカイブ化）
+      await supabase
+          .from('notes')
+          .update({'is_archived': true}).eq('id', memoId);
 
       // 2. ユーザーにポイント付与（作成よりも高い報酬！）
       final userId = supabase.auth.currentUser!.id;
@@ -130,7 +133,7 @@ class _DanshariPageState extends State<DanshariPage>
     }
   }
 
-  // 🛡️ 残す（スキップ）
+  //  残す（スキップ）
   void _keepMemo() {
     if (_staleMemos.isEmpty) return;
     setState(() {
@@ -140,12 +143,92 @@ class _DanshariPageState extends State<DanshariPage>
     });
   }
 
+  //  AI判定機能
+  Future<void> _analyzeCurrentNoteWithAI() async {
+    if (_staleMemos.isEmpty) return;
+
+    final currentMemo = _staleMemos.first;
+    setState(() => _isAnalyzing = true);
+
+    try {
+      // Edge Function呼び出し
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': 'analyze_note_text',
+          'title': currentMemo['title'] ?? '',
+          'content': currentMemo['content'] ?? '',
+        },
+      );
+
+      if (response.status != 200) {
+        throw Exception('Server error: ${response.status}');
+      }
+
+      final data = response.data;
+      if (data['success'] != true) {
+        throw Exception(data['error'] ?? 'Unknown error');
+      }
+
+      if (mounted) {
+        _showAnalysisResultDialog(data['result']);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI解析エラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
+
+  // 解析結果表示ダイアログ
+  void _showAnalysisResultDialog(String result) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.psychology, color: Colors.indigo),
+            SizedBox(width: 8),
+            Text('鬼コーチの判定'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            result,
+            style: const TextStyle(fontSize: 16, height: 1.5),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _executeDanshari(); // アドバイスに従って捨てる
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white),
+            icon: const Icon(Icons.delete_forever),
+            label: const Text('アドバイスに従って捨てる'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('🔥 断捨離クエスト'),
+        title: const Text(' 断捨離クエスト'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 1,
@@ -283,7 +366,30 @@ class _DanshariPageState extends State<DanshariPage>
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+
+          //  AI判定ボタン (追加)
+          Center(
+            child: _isAnalyzing
+                ? const CircularProgressIndicator()
+                : ElevatedButton.icon(
+                    onPressed: _analyzeCurrentNoteWithAI,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo.shade50,
+                      foregroundColor: Colors.indigo,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
+                    ),
+                    icon: const Icon(Icons.psychology),
+                    label: const Text('AI鬼コーチの判定を受ける',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+          ),
+
+          const SizedBox(height: 20),
 
           // 操作ボタン
           Row(
