@@ -58,16 +58,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //  シェア機能 (計測ロジック追加)
+  //  シェア機能 (修正版)
   Future<void> _shareApp() async {
-    // 1. 裏側でシェア数をカウントアップ (エラーでもシェア自体は止めない)
+    // 1. 裏側でシェア数をカウントアップ (awaitを追加して確実に実行)
     try {
-      supabase.rpc('increment_share_count');
+      await supabase.rpc('increment_share_count');
     } catch (e) {
       debugPrint('Share analytics error: $e');
     }
 
     // 2. シェア画面を呼び出し
+    // Note: awaitしないと、シェア画面が閉じるまで次の処理に行かない場合があるため、
+    // ここはawaitしてもしなくても良いですが、ロジック的にはカウント後が良いです。
     await Share.share(
       'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/',
       subject: '最強の断捨離アプリを見つけました',
