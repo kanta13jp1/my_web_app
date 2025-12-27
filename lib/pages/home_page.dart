@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // 🔥 2大機能カードエリア
+                  //  2大機能カードエリア
                   Row(
                     children: [
                       // 1. Gemini大学
@@ -185,7 +185,7 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 160,
+        height: 180, //  修正: 160 -> 180 に拡大（文字数増加に対応）
         decoration: BoxDecoration(
           color: isHighlight ? color : Colors.white,
           borderRadius: BorderRadius.circular(20),
