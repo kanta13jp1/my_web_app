@@ -42,11 +42,21 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalViews = 0;
     int totalConversions = 0;
     int totalShares = 0;
+    Map<String, int> sourceBreakdown = {};
 
     for (var stat in _dailyStats) {
       totalViews += (stat['landing_views'] as int? ?? 0);
       totalConversions += (stat['conversions'] as int? ?? 0);
       totalShares += (stat['share_count'] as int? ?? 0);
+
+      // ソース内訳を集計
+      final sources = stat['source_details'];
+      if (sources != null && sources is Map) {
+        sources.forEach((key, value) {
+          final count = value as int? ?? 0;
+          sourceBreakdown[key] = (sourceBreakdown[key] ?? 0) + count;
+        });
+      }
     }
 
     double totalCvr =
@@ -113,11 +123,40 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // 流入元レポート
+                  const Text('流入元 (どこから来た？)',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  if (sourceBreakdown.isEmpty)
+                    const Text('データなし', style: TextStyle(color: Colors.grey))
+                  else
+                    ...sourceBreakdown.entries.map((e) => Card(
+                          child: ListTile(
+                            leading: Icon(
+                              e.key.contains('x_share')
+                                  ? Icons.close
+                                  : Icons.link,
+                              color: Colors.black,
+                            ),
+                            title: Text(e.key == 'direct'
+                                ? '直接アクセス / その他'
+                                : (e.key == 'x_share' ? 'X (Twitter)' : e.key)),
+                            trailing: Text('${e.value} 人',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                          ),
+                        )),
+
                   const SizedBox(height: 24),
                   const Text('日別レポート',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
+
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

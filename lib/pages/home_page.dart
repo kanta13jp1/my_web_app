@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart'; // URL起動用
+import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -60,10 +60,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ---------------------------------------------------
-  //  シェア機能群
+  //  シェア機能群 (マーケティング強化版)
   // ---------------------------------------------------
 
-  // 1. 汎用シェア (OS標準)
+  // 1. 汎用シェア
   Future<void> _shareApp() async {
     try {
       await supabase.rpc('increment_share_count');
@@ -72,24 +72,25 @@ class _HomePageState extends State<HomePage> {
     }
 
     await Share.share(
-      'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/',
-      subject: '最強の断捨離アプリを見つけました',
+      '私の部屋、AI鬼コーチに「ゴミ屋敷」判定されました\nあなたもAIに判定してもらいませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_general',
+      subject: 'AI断捨離アプリで判定中',
     );
   }
 
   // 2. X (Twitter) 直接投稿
   Future<void> _postToX() async {
-    // まず計測
     try {
       await supabase.rpc('increment_share_count');
     } catch (e) {
       debugPrint('Share analytics error: $e');
     }
 
-    // Xの投稿用URLを作成
+    //  工夫: ユーザーがクリックしたくなるような「煽り」や「結果」を入れる
     const text =
-        'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini';
-    const url = 'https://my-web-app-b67f4.web.app/';
+        'AI鬼コーチに部屋の写真を判定してもらったら、衝撃のアドバイスが...\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
+
+    //  追跡: ?ref=x_share を追加して、どこから来たか計測する
+    const url = 'https://my-web-app-b67f4.web.app/?ref=x_share';
 
     final tweetUrl = Uri.parse(
         'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
@@ -101,7 +102,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // 3. シェアメニューを表示 (AppBar用)
+  // 3. シェアメニュー
   void _showShareMenu() {
     showModalBottomSheet(
       context: context,
@@ -110,8 +111,9 @@ class _HomePageState extends State<HomePage> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.close), // Xロゴの代用
-                title: const Text('Xでポスト'),
+                leading: const Icon(Icons.close),
+                title: const Text('Xでポスト (おすすめ)'),
+                subtitle: const Text('AIの判定結果をみんなに教える'),
                 onTap: () {
                   Navigator.pop(context);
                   _postToX();
@@ -138,7 +140,6 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('マイメモ'),
         actions: [
-          // 修正: シェアボタンを押すとメニューが出るように変更
           IconButton(
             icon: const Icon(Icons.share, color: Colors.indigo),
             onPressed: _showShareMenu,
@@ -332,7 +333,7 @@ class _HomePageState extends State<HomePage> {
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16),
                                   ),
-                                  Text('シェアして断捨離仲間を見つけましょう。',
+                                  Text('AI鬼コーチの判定をシェアして盛り上がろう。',
                                       style: TextStyle(fontSize: 12)),
                                 ],
                               ),
