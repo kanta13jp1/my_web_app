@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart'; // シェア機能用
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -36,7 +37,6 @@ class _HomePageState extends State<HomePage> {
           .eq('user_id', userId)
           .eq('is_archived', false)
           .order('updated_at', ascending: false);
-      // .limit(5) を削除しました
 
       if (mounted) {
         setState(() {
@@ -58,12 +58,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //  シェア機能の実装
+  void _shareApp() {
+    Share.share(
+      'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://github.com/kanta13jp1/my_web_app',
+      subject: '最強の断捨離アプリを見つけました',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('マイメモ'),
         actions: [
+          // シェアボタン (AppBarに追加)
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.indigo),
+            onPressed: _shareApp,
+            tooltip: 'アプリをシェア',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _signOut,
@@ -194,7 +208,48 @@ class _HomePageState extends State<HomePage> {
                           ),
                         )),
 
-                  // リスト下の余白（FABと被らないように）
+                  const SizedBox(height: 24),
+
+                  //  友達紹介カード（下部にも配置）
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.purple.shade50, Colors.blue.shade50],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.diversity_3,
+                            size: 40, color: Colors.indigo),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                '仲間を増やそう！',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              Text('このアプリをシェアして、断捨離仲間を見つけましょう。',
+                                  style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _shareApp,
+                          icon: const Icon(Icons.ios_share),
+                          style: IconButton.styleFrom(
+                              backgroundColor: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // リスト下の余白
                   const SizedBox(height: 80),
                 ],
               ),

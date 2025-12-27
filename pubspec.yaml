@@ -28,7 +28,7 @@ dependencies:
   google_fonts: ^6.1.0  # 追加
   # 新規追加（メモカード機能用）
   screenshot: ^3.0.0          # Widget to Image変換
-  share_plus: ^10.1.2         # SNS共有
+  share_plus: ^12.0.1         # SNS共有
   path_provider: ^2.1.5       # ファイルパス取得
   image_gallery_saver: ^2.0.3 # ギャラリー保存（オプション）
   logger: ^2.0.2              # ロギング
