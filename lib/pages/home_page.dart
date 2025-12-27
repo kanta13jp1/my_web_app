@@ -1,42 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../main.dart';
-import '../models/note.dart';
-import '../models/category.dart';
-import '../models/sort_type.dart';
 import 'landing_page.dart';
-import '../utils/app_logger.dart';
 import 'note_editor_page.dart';
-import 'share_note_dialog.dart';
-import '../widgets/advanced_search_dialog.dart';
-import '../services/attachment_cache_service.dart';
-import 'archive_page.dart';
-import '../services/auto_archive_service.dart';
-import '../services/gamification_service.dart';
-import '../models/user_stats.dart';
-import '../widgets/home_page/sort_dialog.dart';
-import '../widgets/home_page/date_filter_dialog.dart';
-import '../widgets/home_page/reminder_filter_dialog.dart';
-import '../widgets/home_page/user_stats_header.dart';
-import '../widgets/home_page/empty_state_view.dart';
-import '../widgets/home_page/category_filter_dialog.dart';
-import '../widgets/home_page/reminder_stats_banner.dart';
-import '../widgets/home_page/filter_chips_area.dart';
-import '../widgets/home_page/note_card_item.dart';
-import '../widgets/home_page/note_dialogs.dart' as dialogs;
-import '../services/note_operations_service.dart';
-import '../services/note_filter_service.dart';
-import '../widgets/home_page/home_app_bar.dart';
-import '../services/presence_service.dart';
-import '../services/daily_login_service.dart';
-import '../widgets/growth_metrics_banner.dart';
-import '../widgets/campaigns_banner.dart';
-import '../widgets/floating_timer_widget.dart';
-import '../widgets/page_view_stats.dart';
-import '../widgets/daily_challenge_summary_card.dart';
-import 'enhanced_statistics_page.dart';
-import '../widgets/memento_mori_clock.dart';
-import 'task_page.dart'; // ✅ 追加: タスクページへのインポート
+import 'gemini_university_page.dart';
 import 'danshari_page.dart';
+import '../models/note.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -46,433 +14,42 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Note> _notes = [];
-  List<Note> _filteredNotes = [];
-  List<Category> _categories = [];
+  // 必要最低限のデータのみ保持
+  List<Note> _recentNotes = [];
   bool _isLoading = true;
-  bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
-
-  DateTime? _startDate;
-  DateTime? _endDate;
-  String _selectedDateFilter = '全期間';
-  bool _showFavoritesOnly = false;
-  SortType _sortType = SortType.updatedDesc;
-  String? _selectedCategoryId;
-  String? _reminderFilter;
-  String? _searchCategoryId;
-  DateTime? _searchStartDate;
-  DateTime? _searchEndDate;
-
-  bool get _isMobile => MediaQuery.of(context).size.width < 600;
-
-  late final GamificationService _gamificationService;
-  UserStats? _userStats;
-  late final PresenceService _presenceService;
-  late final DailyLoginService _dailyLoginService;
-
-  Map<String, dynamic>? _userProfile;
 
   @override
   void initState() {
     super.initState();
-    _gamificationService = GamificationService(supabase);
-    _presenceService = PresenceService(supabase);
-    _dailyLoginService = DailyLoginService(supabase);
-
-    _loadCategories();
-    _loadNotes();
-    _loadUserStats();
-    _loadUserProfile();
-    _searchController.addListener(_onSearchChanged);
-    _runAutoArchive();
-    _startPresenceTracking();
-    _checkDailyLoginBonus();
+    _loadRecentNotes();
   }
 
-  Future<void> _loadUserProfile() async {
+  // 最新のメモを少しだけ表示（断捨離候補として認識させる）
+  Future<void> _loadRecentNotes() async {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final response = await supabase
-          .from('user_profiles')
-          .select('birth_date, target_death_age, disposable_time_ratio')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (mounted && response != null) {
-        setState(() {
-          _userProfile = response;
-        });
-      }
-    } catch (e) {
-      AppLogger.error('Failed to load user profile for clock', error: e);
-    }
-  }
-
-  void _startPresenceTracking() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId != null) {
-      await _presenceService.startPresenceTracking(userId, pagePath: '/home');
-    }
-  }
-
-  void _checkDailyLoginBonus() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    try {
-      final bonus = await _dailyLoginService.checkDailyLoginBonus(userId);
-
-      if (bonus != null && bonus['is_new_bonus'] == true) {
-        final consecutiveDays = bonus['consecutive_days'] as int;
-        final bonusPoints = bonus['bonus_points'] as int;
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'デイリーログインボーナス！+$bonusPointsポイント ($consecutiveDays日連続)',
-              ),
-              backgroundColor: Colors.amber,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-        _loadUserStats();
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to check daily login bonus',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  Future<void> _loadUserStats() async {
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      var stats = await _gamificationService.getUserStats(userId);
-      stats ??= await _gamificationService.initializeUserStats(userId);
-
-      if (mounted) {
-        setState(() {
-          _userStats = stats;
-        });
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error loading user stats',
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    final userId = supabase.auth.currentUser?.id;
-    _presenceService.stopPresenceTracking(userId);
-    _presenceService.dispose();
-    super.dispose();
-  }
-
-  void _showShareOptionsDialog(Note note) {
-    final category = _getCategoryById(note.categoryId);
-    dialogs.showShareOptionsDialog(
-      context: context,
-      note: note,
-      category: category,
-      onShareAsCard: () => _showNoteCardDialog(note),
-      onShareAsLink: () => _showShareDialog(note),
-    );
-  }
-
-  void _showNoteCardDialog(Note note) {
-    final category = _getCategoryById(note.categoryId);
-    dialogs.showNoteCardDialog(
-      context: context,
-      note: note,
-      category: category,
-    );
-  }
-
-  void _onSearchChanged() {
-    _applyFilters();
-  }
-
-  Future<void> _togglePin(Note note) async {
-    try {
-      await NoteOperationsService.togglePin(note);
-      if (!mounted) return;
-      _loadNotes();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            note.isPinned ? 'ピン留めを解除しました' : 'ピン留めしました',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
-  }
-
-  Future<void> _runAutoArchive() async {
-    final archivedCount = await AutoArchiveService.autoArchiveOverdueNotes();
-    if (archivedCount > 0 && mounted && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('期限切れのメモ$archivedCount件を自動アーカイブしました'),
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: '表示',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ArchivePage()),
-              ).then((_) => _loadNotes());
-            },
-          ),
-        ),
-      );
-    }
-  }
-
-  void _showReminderFilterDialog() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => ReminderFilterDialog(
-        currentFilter: _reminderFilter,
-        notes: _notes,
-        onFilterChanged: (filter) {
-          setState(() {
-            _reminderFilter = filter;
-            _applyFilters();
-          });
-        },
-      ),
-    );
-  }
-
-  Future<void> _archiveNote(Note note) async {
-    try {
-      await NoteOperationsService.archiveNote(note);
-      if (!mounted) return;
-      _loadNotes();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('メモをアーカイブしました'),
-          duration: const Duration(seconds: 2),
-          action: SnackBarAction(
-            label: '元に戻す',
-            onPressed: () => _restoreNote(note.id),
-          ),
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
-  }
-
-  Future<void> _restoreNote(int noteId) async {
-    try {
-      await NoteOperationsService.restoreNote(noteId);
-      if (!mounted) return;
-      _loadNotes();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('メモを復元しました'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
-  }
-
-  void _showArchiveDialog(Note note) {
-    dialogs.showArchiveDialog(
-      context: context,
-      note: note,
-      onArchive: () => _archiveNote(note),
-    );
-  }
-
-  Future<void> _quickSetReminder(Note note) async {
-    await dialogs.showQuickReminderDialog(
-      context: context,
-      note: note,
-      onReminderSet: (reminderDate) => _updateReminder(note, reminderDate),
-      onLoadNotes: _loadNotes,
-    );
-  }
-
-  Future<void> _updateReminder(Note note, DateTime? reminderDate) async {
-    try {
-      await NoteOperationsService.updateReminder(note, reminderDate);
-      if (!mounted) return;
-      _loadNotes();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            reminderDate != null ? 'リマインダーを設定しました' : 'リマインダーを削除しました',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
-  }
-
-  Future<void> _toggleFavorite(Note note) async {
-    try {
-      await NoteOperationsService.toggleFavorite(note);
-      if (!mounted) return;
-      setState(() {
-        final index = _notes.indexWhere((n) => n.id == note.id);
-        if (index != -1) {
-          _notes[index] = Note(
-            id: note.id,
-            userId: note.userId,
-            title: note.title,
-            content: note.content,
-            createdAt: note.createdAt,
-            updatedAt: DateTime.now(),
-            categoryId: note.categoryId,
-            isFavorite: !note.isFavorite,
-          );
-        }
-        _applyFilters();
-      });
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            note.isFavorite ? 'お気に入りから削除しました' : 'お気に入りに追加しました',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $error')),
-      );
-    }
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final response = await supabase
-          .from('categories')
-          .select()
-          .eq('user_id', supabase.auth.currentUser!.id)
-          .order('name', ascending: true);
-
-      setState(() {
-        _categories = (response as List)
-            .map((category) => Category.fromJson(category))
-            .toList();
-      });
-    } catch (error) {
-      // カテゴリがなくても動作可能
-    }
-  }
-
-  void _applyFilters() {
-    setState(() {
-      final filterService = NoteFilterService(
-        searchQuery: _searchController.text,
-        searchCategoryId: _searchCategoryId,
-        searchStartDate: _searchStartDate,
-        searchEndDate: _searchEndDate,
-        selectedCategoryId: _selectedCategoryId,
-        startDate: _startDate,
-        endDate: _endDate,
-        showFavoritesOnly: _showFavoritesOnly,
-        reminderFilter: _reminderFilter,
-      );
-
-      final filtered = filterService.filterNotes(_notes);
-      NoteFilterService.sortNotes(filtered, _sortType);
-      _filteredNotes = filtered;
-    });
-  }
-
-  Future<void> _loadNotes() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
       final response = await supabase
           .from('notes')
           .select()
-          .eq('user_id', supabase.auth.currentUser!.id)
-          .eq('is_archived', false);
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('updated_at', ascending: false)
+          .limit(5); // 最新5件のみ
 
-      setState(() {
-        _notes = (response as List).map((note) => Note.fromJson(note)).toList();
-        _applyFilters();
-        _isLoading = false;
-      });
-    } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
+        setState(() {
+          _recentNotes = (response as List).map((n) => Note.fromJson(n)).toList();
+          _isLoading = false;
+        });
       }
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _deleteNote(int noteId) async {
-    try {
-      await NoteOperationsService.deleteNote(noteId);
-      _loadNotes();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メモを削除しました')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
-      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _signOut() async {
-    AttachmentCacheService.clearCache();
     await supabase.auth.signOut();
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -481,564 +58,176 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _toggleSearch() {
-    setState(() {
-      _isSearching = !_isSearching;
-      if (!_isSearching) {
-        _searchController.clear();
-        _applyFilters();
-      }
-    });
-  }
-
-  void _showCategoryFilterDialog() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => CategoryFilterDialog(
-        selectedCategoryId: _selectedCategoryId,
-        categories: _categories,
-        notes: _notes,
-        onCategoryChanged: (categoryId) {
-          setState(() {
-            _selectedCategoryId = categoryId;
-            _applyFilters();
-          });
-        },
-      ),
-    );
-  }
-
-  void _showSortDialog() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SortDialog(
-        currentSortType: _sortType,
-        onSortTypeChanged: (sortType) {
-          setState(() {
-            _sortType = sortType;
-            _applyFilters();
-          });
-        },
-      ),
-    );
-  }
-
-  void _showDateFilterDialog() async {
-    final result = await showDialog<DateFilterResult>(
-      context: context,
-      builder: (context) => DateFilterDialog(
-        initialStartDate: _startDate,
-        initialEndDate: _endDate,
-        initialPreset: _selectedDateFilter,
-      ),
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        _startDate = result.startDate;
-        _endDate = result.endDate;
-        _selectedDateFilter = result.selectedPreset;
-        _applyFilters();
-      });
-    }
-  }
-
-  Category? _getCategoryById(String? categoryId) {
-    if (categoryId == null) return null;
-    try {
-      return _categories.firstWhere((c) => c.id == categoryId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  IconData _getSortIcon(SortType sortType) {
-    switch (sortType) {
-      case SortType.updatedDesc:
-      case SortType.updatedAsc:
-        return Icons.update;
-      case SortType.createdDesc:
-      case SortType.createdAsc:
-        return Icons.event;
-      case SortType.titleAsc:
-      case SortType.titleDesc:
-        return Icons.sort_by_alpha;
-    }
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // キャンペーンバナー
-        const CampaignsBanner(),
-        // 成長メトリクスバナー
-        const GrowthMetricsBanner(),
-
-        // ダッシュボード（クロック含む）
-        Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 16.0),
-            title: const Row(
-              children: [
-                Icon(Icons.dashboard_outlined, color: Colors.grey),
-                SizedBox(width: 8),
-                Text(
-                  '本日のダッシュボード',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-            children: [
-              // メメント・モリ・クロック
-              MementoMoriClock(
-                birthDateString: _userProfile?['birth_date'],
-                targetAge: _userProfile?['target_death_age'] ?? 80,
-                maintenanceRatio:
-                    (_userProfile?['disposable_time_ratio'] as num?)
-                            ?.toDouble() ??
-                        0.5,
-              ),
-
-              // ページビュー統計
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: PageViewStats(pagePath: '/home'),
-              ),
-
-              // デイリーチャレンジサマリー
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                child: DailyChallengeSummaryCard(),
-              ),
-
-              // 統計ページへの強力な誘導ボタン
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const EnhancedStatisticsPage(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      elevation: 8,
-                      shadowColor: Colors.redAccent.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.new_releases, size: 28),
-                    label: const Column(
-                      children: [
-                        Text(
-                          '⚠️ 隠しページを見る',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'タップして限定ボーナスを確認',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // レベル表示
-        if (_userStats != null)
-          UserStatsHeader(
-            userStats: _userStats!,
-            onStatsUpdated: _loadUserStats,
-          ),
-
-        // リマインダー統計バナー
-        ReminderStatsBanner(
-          notes: _notes,
-          overdueCount:
-              NoteFilterService.calculateReminderStats(_notes)['overdue'] ?? 0,
-          dueSoonCount:
-              NoteFilterService.calculateReminderStats(_notes)['dueSoon'] ?? 0,
-          todayCount:
-              NoteFilterService.calculateReminderStats(_notes)['today'] ?? 0,
-          isMobile: _isMobile,
-          onFilterChanged: (filter) {
-            setState(() {
-              _reminderFilter = filter;
-              _applyFilters();
-            });
-          },
-        ),
-
-        // フィルター情報表示
-        FilterChipsArea(
-          hasAnyFilter: _searchController.text.isNotEmpty ||
-              _startDate != null ||
-              _endDate != null ||
-              _selectedCategoryId != null ||
-              _showFavoritesOnly ||
-              _reminderFilter != null,
-          sortType: _sortType,
-          showFavoritesOnly: _showFavoritesOnly,
-          reminderFilter: _reminderFilter,
-          searchText: _searchController.text,
-          searchCategoryId: _searchCategoryId,
-          searchStartDate: _searchStartDate,
-          searchEndDate: _searchEndDate,
-          selectedCategoryId: _selectedCategoryId,
-          startDate: _startDate,
-          endDate: _endDate,
-          selectedDateFilter: _selectedDateFilter,
-          filteredNotes: _filteredNotes,
-          notes: _notes,
-          categories: _categories,
-          isMobile: _isMobile,
-          onClearSearch: (_) => _searchController.clear(),
-          onClearSearchCategory: (_) {
-            setState(() {
-              _searchCategoryId = null;
-              _applyFilters();
-            });
-          },
-          onClearSearchDates: (_, __) {
-            setState(() {
-              _searchStartDate = null;
-              _searchEndDate = null;
-              _applyFilters();
-            });
-          },
-          onClearReminderFilter: (_) {
-            setState(() {
-              _reminderFilter = null;
-              _applyFilters();
-            });
-          },
-          onClearFavoriteFilter: (value) {
-            setState(() {
-              _showFavoritesOnly = value;
-              _applyFilters();
-            });
-          },
-          onClearCategoryFilter: (_) {
-            setState(() {
-              _selectedCategoryId = null;
-              _applyFilters();
-            });
-          },
-          onClearDateFilter: (_, __, filter) {
-            setState(() {
-              _startDate = null;
-              _endDate = null;
-              _selectedDateFilter = filter;
-              _applyFilters();
-            });
-          },
-          getSortIcon: _getSortIcon,
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HomeAppBar(
-        isSearching: _isSearching,
-        searchController: _searchController,
-        onToggleSearch: _toggleSearch,
-        onShowAdvancedSearch: _showAdvancedSearch,
-        onShowReminderFilter: _showReminderFilterDialog,
-        onShowCategoryFilter: _showCategoryFilterDialog,
-        onShowSortDialog: _showSortDialog,
-        onShowDateFilter: _showDateFilterDialog,
-        onToggleFavorites: () {
-          setState(() {
-            _showFavoritesOnly = !_showFavoritesOnly;
-            _applyFilters();
-          });
-        },
-        onRefresh: () {
-          _loadCategories();
-          _loadNotes();
-        },
-        onSignOut: _signOut,
-        onLoadUserStats: _loadUserStats,
-        isMobile: _isMobile,
-        hasActiveAdvancedFilters: _hasActiveAdvancedFilters(),
-        reminderFilter: _reminderFilter,
-        showFavoritesOnly: _showFavoritesOnly,
-        hasCategoryFilter: _selectedCategoryId != null,
-        hasDateFilter: _startDate != null || _endDate != null,
-        userStats: _userStats,
+      appBar: AppBar(
+        title: const Text('マイメモ'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
+            tooltip: 'ログアウト',
+          ),
+        ],
       ),
-      // ✅ 追加: サイドメニュー (Drawer)
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'メニュー',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const Text(
+                    '最重要タスク',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    '思考停止タスク管理',
-                    style: TextStyle(color: Colors.white70),
+                  const SizedBox(height: 16),
+                  
+                  // 🔥 2大機能カードエリア
+                  Row(
+                    children: [
+                      // 1. Gemini大学
+                      Expanded(
+                        child: _buildBigFeatureCard(
+                          title: 'Gemini大学',
+                          subtitle: 'AIを学ぶ',
+                          icon: Icons.school,
+                          color: Colors.indigo,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const GeminiUniversityPage()),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // 2. 断捨離クエスト
+                      Expanded(
+                        child: _buildBigFeatureCard(
+                          title: '断捨離\nクエスト',
+                          subtitle: '不要を捨てる',
+                          icon: Icons.cleaning_services,
+                          color: Colors.redAccent,
+                          isHighlight: true, // 強調
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const DanshariPage()),
+                            );
+                            _loadRecentNotes();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
+
+                  const SizedBox(height: 32),
+                  const Text(
+                    '最近のメモ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // シンプルなメモリスト
+                  if (_recentNotes.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text('メモはまだありません。', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                    )
+                  else
+                    ..._recentNotes.map((note) => Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        title: Text(note.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        subtitle: Text(
+                          note.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => NoteEditorPage(note: note)),
+                          );
+                          _loadRecentNotes();
+                        },
+                      ),
+                    )),
                 ],
               ),
             ),
-            // タスクページへのリンク
-            ListTile(
-              leading: const Icon(Icons.assignment_turned_in,
-                  color: Colors.redAccent),
-              title: const Text(
-                '優先順位タスク',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.redAccent),
+      
+      // シンプルなFAB
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NoteEditorPage()),
+          );
+          _loadRecentNotes();
+        },
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.indigo,
+        child: const Icon(Icons.edit),
+      ),
+    );
+  }
+
+  Widget _buildBigFeatureCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool isHighlight = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 160,
+        decoration: BoxDecoration(
+          color: isHighlight ? color : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: isHighlight ? null : Border.all(color: color.withOpacity(0.3), width: 2),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: isHighlight ? Colors.white : color,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isHighlight ? Colors.white : Colors.black87,
               ),
-              subtitle: const Text('A→B→C→D 順守'),
-              onTap: () {
-                Navigator.pop(context); // ドロワーを閉じる
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TaskPage()),
-                );
-              },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.archive_outlined),
-              title: const Text('アーカイブ'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ArchivePage()),
-                ).then((_) => _loadNotes());
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bar_chart),
-              title: const Text('統計・分析'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const EnhancedStatisticsPage()),
-                );
-              },
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: isHighlight ? Colors.white70 : Colors.grey,
+              ),
             ),
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    await _loadCategories();
-                    await _loadNotes();
-                  },
-                  child: _filteredNotes.isEmpty
-                      ? SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            children: [
-                              _buildHeader(),
-                              EmptyStateView(
-                                hasAnyFilter:
-                                    _searchController.text.isNotEmpty ||
-                                        _startDate != null ||
-                                        _endDate != null ||
-                                        _selectedCategoryId != null ||
-                                        _showFavoritesOnly ||
-                                        _reminderFilter != null,
-                                showFavoritesOnly: _showFavoritesOnly,
-                                reminderFilter: _reminderFilter,
-                                allNotes: _notes,
-                                onClearReminderFilter: () {
-                                  setState(() {
-                                    _reminderFilter = null;
-                                    _applyFilters();
-                                  });
-                                },
-                                onClearFavoritesFilter: () {
-                                  setState(() {
-                                    _showFavoritesOnly = false;
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          itemCount: _filteredNotes.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return _buildHeader();
-                            }
-
-                            final note = _filteredNotes[index - 1];
-                            final category = _getCategoryById(note.categoryId);
-
-                            return NoteCardItem(
-                              note: note,
-                              category: category,
-                              searchQuery: _searchController.text,
-                              isMobile: _isMobile,
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => NoteEditorPage(note: note),
-                                  ),
-                                );
-                                _loadNotes();
-                              },
-                              onTogglePin: _togglePin,
-                              onArchive: _showArchiveDialog,
-                              onShare: _showShareOptionsDialog,
-                              onSetReminder: _quickSetReminder,
-                              onToggleFavorite: _toggleFavorite,
-                              onDelete: _showDeleteDialog,
-                            );
-                          },
-                        ),
-                ),
-          const FloatingTimerWidget(),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // 以前のメイン機能「新規作成」はサブ扱いに降格
-          FloatingActionButton.small(
-            heroTag: 'create_note',
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NoteEditorPage()),
-              );
-              _loadNotes();
-            },
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.grey[800],
-            child: const Icon(Icons.edit),
-          ),
-          const SizedBox(height: 16),
-
-          // 🔥 断捨離ボタンをメインアクションに昇格
-          FloatingActionButton.extended(
-            heroTag: 'danshari_mode',
-            onPressed: () async {
-              // 断捨離ページへ遷移
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DanshariPage()),
-              );
-              // 戻ってきたらメモリストとステータスを更新
-              _loadNotes();
-              _loadUserStats();
-            },
-            backgroundColor: Colors.redAccent, // 「捨てる」意志を表す色
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.cleaning_services_outlined),
-            label: const Text(
-              '断捨離クエスト',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            elevation: 4,
-          ),
-        ],
-      ),
     );
-  }
-
-  void _showDeleteDialog(Note note) {
-    dialogs.showDeleteDialog(
-      context: context,
-      note: note,
-      onDelete: () => _deleteNote(note.id),
-    );
-  }
-
-  void _showShareDialog(Note note) {
-    showDialog(
-      context: context,
-      builder: (context) => ShareNoteDialog(note: note),
-    );
-  }
-
-  bool _hasActiveAdvancedFilters() {
-    return _searchCategoryId != null ||
-        _searchStartDate != null ||
-        _searchEndDate != null;
-  }
-
-  Future<void> _showAdvancedSearch() async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => AdvancedSearchDialog(
-        categories: _categories,
-        initialQuery: _searchController.text,
-        initialCategoryId: _searchCategoryId,
-        initialStartDate: _searchStartDate,
-        initialEndDate: _searchEndDate,
-      ),
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        final query = result['query'] ?? '';
-        _searchController.text = query;
-        _searchCategoryId = result['categoryId'];
-        _searchStartDate = result['startDate'];
-        _searchEndDate = result['endDate'];
-      });
-      _applyFilters();
-    }
   }
 }
