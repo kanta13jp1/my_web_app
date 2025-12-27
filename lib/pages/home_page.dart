@@ -97,9 +97,39 @@ class _HomePageState extends State<HomePage> {
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
     } else {
-      // 開けなかった場合は汎用シェアにフォールバック
       _shareApp();
     }
+  }
+
+  // 3. シェアメニューを表示 (AppBar用)
+  void _showShareMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.close), // Xロゴの代用
+                title: const Text('Xでポスト'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _postToX();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share),
+                title: const Text('その他のアプリでシェア'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _shareApp();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -108,9 +138,10 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('マイメモ'),
         actions: [
+          // 修正: シェアボタンを押すとメニューが出るように変更
           IconButton(
             icon: const Icon(Icons.share, color: Colors.indigo),
-            onPressed: _shareApp,
+            onPressed: _showShareMenu,
             tooltip: 'アプリをシェア',
           ),
           IconButton(
@@ -274,7 +305,7 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 24),
 
-                  //  友達紹介カード（改修: Xボタン追加）
+                  //  友達紹介カード
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -311,12 +342,11 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            // Xでポストボタン (黒背景)
+                            // Xでポストボタン
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _postToX,
-                                icon: const Icon(Icons.close,
-                                    size: 18), // Xロゴの代用としてcloseアイコン
+                                icon: const Icon(Icons.close, size: 18),
                                 label: const Text('Xでポスト'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.black,
