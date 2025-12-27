@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart'; // URL起動用
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -58,22 +59,47 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //  シェア機能 (修正版)
+  // ---------------------------------------------------
+  //  シェア機能群
+  // ---------------------------------------------------
+
+  // 1. 汎用シェア (OS標準)
   Future<void> _shareApp() async {
-    // 1. 裏側でシェア数をカウントアップ (awaitを追加して確実に実行)
     try {
       await supabase.rpc('increment_share_count');
     } catch (e) {
       debugPrint('Share analytics error: $e');
     }
 
-    // 2. シェア画面を呼び出し
-    // Note: awaitしないと、シェア画面が閉じるまで次の処理に行かない場合があるため、
-    // ここはawaitしてもしなくても良いですが、ロジック的にはカウント後が良いです。
     await Share.share(
       'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/',
       subject: '最強の断捨離アプリを見つけました',
     );
+  }
+
+  // 2. X (Twitter) 直接投稿
+  Future<void> _postToX() async {
+    // まず計測
+    try {
+      await supabase.rpc('increment_share_count');
+    } catch (e) {
+      debugPrint('Share analytics error: $e');
+    }
+
+    // Xの投稿用URLを作成
+    const text =
+        'AIと一緒に断捨離！「Gemini大学」で学んで、リアル断捨離クエストで部屋も心もスッキリしませんか？\n\n#マイメモ #断捨離 #Gemini';
+    const url = 'https://my-web-app-b67f4.web.app/';
+
+    final tweetUrl = Uri.parse(
+        'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
+
+    if (await canLaunchUrl(tweetUrl)) {
+      await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
+    } else {
+      // 開けなかった場合は汎用シェアにフォールバック
+      _shareApp();
+    }
   }
 
   @override
@@ -140,6 +166,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
+
                   Row(
                     children: [
                       Expanded(
@@ -175,7 +202,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 24),
+
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -206,11 +235,13 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
+
                   const Text(
                     'すべてのメモ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
+
                   if (_notes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
@@ -240,7 +271,10 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         )),
+
                   const SizedBox(height: 24),
+
+                  //  友達紹介カード（改修: Xボタン追加）
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -250,34 +284,67 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.blue.withOpacity(0.2)),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        const Icon(Icons.diversity_3,
-                            size: 40, color: Colors.indigo),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                '仲間を増やそう！',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                        Row(
+                          children: [
+                            const Icon(Icons.diversity_3,
+                                size: 40, color: Colors.indigo),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    '仲間を増やそう！',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                  Text('シェアして断捨離仲間を見つけましょう。',
+                                      style: TextStyle(fontSize: 12)),
+                                ],
                               ),
-                              Text('このアプリをシェアして、断捨離仲間を見つけましょう。',
-                                  style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          onPressed: _shareApp,
-                          icon: const Icon(Icons.ios_share),
-                          style: IconButton.styleFrom(
-                              backgroundColor: Colors.white),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            // Xでポストボタン (黒背景)
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _postToX,
+                                icon: const Icon(Icons.close,
+                                    size: 18), // Xロゴの代用としてcloseアイコン
+                                label: const Text('Xでポスト'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // その他のシェアボタン
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _shareApp,
+                                icon: const Icon(Icons.share),
+                                label: const Text('その他'),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 80),
                 ],
               ),
