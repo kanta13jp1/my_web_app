@@ -36,6 +36,7 @@ import '../widgets/daily_challenge_summary_card.dart';
 import 'enhanced_statistics_page.dart';
 import '../widgets/memento_mori_clock.dart';
 import 'task_page.dart'; // ✅ 追加: タスクページへのインポート
+import 'danshari_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -949,16 +950,49 @@ class _HomePageState extends State<HomePage> {
           const FloatingTimerWidget(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NoteEditorPage()),
-          );
-          _loadNotes();
-        },
-        mini: _isMobile,
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // 以前のメイン機能「新規作成」はサブ扱いに降格
+          FloatingActionButton.small(
+            heroTag: 'create_note',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NoteEditorPage()),
+              );
+              _loadNotes();
+            },
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.grey[800],
+            child: const Icon(Icons.edit),
+          ),
+          const SizedBox(height: 16),
+
+          // 🔥 断捨離ボタンをメインアクションに昇格
+          FloatingActionButton.extended(
+            heroTag: 'danshari_mode',
+            onPressed: () async {
+              // 断捨離ページへ遷移
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DanshariPage()),
+              );
+              // 戻ってきたらメモリストとステータスを更新
+              _loadNotes();
+              _loadUserStats();
+            },
+            backgroundColor: Colors.redAccent, // 「捨てる」意志を表す色
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.cleaning_services_outlined),
+            label: const Text(
+              '断捨離クエスト',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            elevation: 4,
+          ),
+        ],
       ),
     );
   }
