@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../models/note.dart';
-import '../models/category.dart';
-import '../utils/app_logger.dart';
-import '../services/note_operations_service.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
-
   const NoteEditorPage({super.key, this.note});
 
   @override
@@ -17,19 +14,15 @@ class NoteEditorPage extends StatefulWidget {
 class _NoteEditorPageState extends State<NoteEditorPage> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  String? _selectedCategoryId;
-  List<Category> _categories = [];
   bool _isLoading = false;
-  bool _isSaving = false;
+  bool _isAiLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
     if (widget.note != null) {
       _titleController.text = widget.note!.title;
       _contentController.text = widget.note!.content;
-      _selectedCategoryId = widget.note!.categoryId;
     }
   }
 
@@ -40,152 +33,229 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
-    try {
-      final response = await supabase
-          .from('categories')
-          .select()
-          .eq('user_id', supabase.auth.currentUser!.id)
-          .order('name', ascending: true);
-
-      if (mounted) {
-        setState(() {
-          _categories = (response as List)
-              .map((category) => Category.fromJson(category))
-              .toList();
-        });
-      }
-    } catch (e) {
-      // カテゴリロード失敗時は無視
-    }
-  }
-
   Future<void> _saveNote() async {
-    if (_titleController.text.isEmpty && _contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('タイトルまたは内容を入力してください')),
-      );
-      return;
-    }
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
 
-    setState(() => _isSaving = true);
+    if (title.isEmpty && content.isEmpty) return;
+
+    setState(() => _isLoading = true);
 
     try {
       final userId = supabase.auth.currentUser!.id;
-      final noteData = {
-        'user_id': userId,
-        'title': _titleController.text,
-        'content': _contentController.text,
-        'category_id': _selectedCategoryId,
-        'updated_at': DateTime.now().toIso8601String(),
-        'is_archived': false,
-        'is_pinned': widget.note?.isPinned ?? false,
-        'is_favorite': widget.note?.isFavorite ?? false,
-      };
+      final now = DateTime.now().toIso8601String();
 
       if (widget.note == null) {
         // 新規作成
-        noteData['created_at'] = DateTime.now().toIso8601String();
-        await supabase.from('notes').insert(noteData);
+        await supabase.from('notes').insert({
+          'user_id': userId,
+          'title': title,
+          'content': content,
+          'is_archived': false, // デフォルトでアーカイブなし
+          'created_at': now,
+          'updated_at': now,
+        });
       } else {
         // 更新
-        await supabase.from('notes').update(noteData).eq('id', widget.note!.id);
+        await supabase.from('notes').update({
+          'title': title,
+          'content': content,
+          'updated_at': now,
+        }).eq('id', widget.note!.id);
       }
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存しました')),
-        );
       }
     } catch (e) {
-      AppLogger.error('Error saving note', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('保存エラー: $e')),
         );
       }
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  //  AI機能: 文章校正要約など
+  Future<void> _callAiAssistant(String action) async {
+    final content = _contentController.text;
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AIに依頼するテキストを入力してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAiLoading = true);
+
+    try {
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': action,
+          'content': content,
+          'language': 'ja', // 日本語指定
+        },
+      );
+
+      if (response.status != 200)
+        throw Exception('AI Server Error: ${response.status}');
+
+      final data = response.data;
+      if (data['success'] != true)
+        throw Exception(data['error'] ?? 'Unknown Error');
+
+      final result = data['result'] as String;
+
+      if (mounted) {
+        // 結果をダイアログで表示し、採用するか選ばせる
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(children: [
+              Icon(Icons.auto_awesome, color: Colors.indigo),
+              SizedBox(width: 8),
+              Text('AIの提案')
+            ]),
+            content: SingleChildScrollView(child: Text(result)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('キャンセル')),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // 提案を採用（上書きまたは追記）
+                  if (action == 'improve') {
+                    _contentController.text = result; // 校正なら置き換え
+                  } else {
+                    _contentController.text =
+                        '$content\n\n--- AIによる追記 ---\n$result'; // その他は追記
+                  }
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.check),
+                label: const Text('採用する'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AIエラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAiLoading = false);
+    }
+  }
+
+  void _showAiMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.cleaning_services),
+              title: const Text('文章を校正改善する'),
+              onTap: () {
+                Navigator.pop(context);
+                _callAiAssistant('improve');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.summarize),
+              title: const Text('要約する'),
+              onTap: () {
+                Navigator.pop(context);
+                _callAiAssistant('summarize');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lightbulb),
+              title: const Text('アイデアを広げる'),
+              onTap: () {
+                Navigator.pop(context);
+                _callAiAssistant('expand');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.title),
+              title: const Text('タイトル案を出す'),
+              onTap: () {
+                Navigator.pop(context);
+                _callAiAssistant('suggest_title');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.note == null ? '新規メモ' : 'メモを編集'),
+        title: Text(widget.note == null ? '新しいメモ' : 'メモの編集'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
         actions: [
+          // AIボタン
           IconButton(
-            icon: _isSaving
+            icon: _isAiLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.check),
-            onPressed: _isSaving ? null : _saveNote,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.auto_awesome, color: Colors.indigo),
+            onPressed: _isAiLoading ? null : _showAiMenu,
+            tooltip: 'AIアシスタント',
+          ),
+          // 保存ボタン
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _isLoading ? null : _saveNote,
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // カテゴリ選択（簡易版）
-                  if (_categories.isNotEmpty)
-                    DropdownButtonFormField<String>(
-                      value: _selectedCategoryId,
-                      decoration: const InputDecoration(
-                        labelText: 'カテゴリ',
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('なし')),
-                        ..._categories.map((category) => DropdownMenuItem(
-                              value: category.id,
-                              child: Text(category.name),
-                            )),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _selectedCategoryId = value),
-                    ),
-                  const SizedBox(height: 16),
-
-                  // タイトル入力
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'タイトル',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.title),
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 本文入力
-                  Expanded(
-                    child: TextField(
-                      controller: _contentController,
-                      decoration: const InputDecoration(
-                        labelText: '内容',
-                        border: OutlineInputBorder(),
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                    ),
-                  ),
-                ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                hintText: 'タイトル',
+                border: InputBorder.none,
+                hintStyle: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black26),
+              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            Expanded(
+              child: TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(
+                  hintText: '内容を入力...',
+                  border: InputBorder.none,
+                ),
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                style: const TextStyle(fontSize: 16, height: 1.5),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }
