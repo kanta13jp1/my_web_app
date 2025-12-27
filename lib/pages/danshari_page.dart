@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart'; // シェア用
 
 class DanshariPage extends StatefulWidget {
   const DanshariPage({super.key});
@@ -14,11 +15,10 @@ class _DanshariPageState extends State<DanshariPage>
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _staleMemos = [];
   bool _isLoading = true;
-  bool _isAnalyzing = false; // AI解析中フラグ
+  bool _isAnalyzing = false;
   int _deletedCount = 0;
   int _earnedPoints = 0;
 
-  // アニメーション用
   late AnimationController _animController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
@@ -32,7 +32,6 @@ class _DanshariPageState extends State<DanshariPage>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    // 上にスライドして消える動き
     _slideAnimation =
         Tween<Offset>(begin: Offset.zero, end: const Offset(0, -1)).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeIn),
@@ -48,19 +47,17 @@ class _DanshariPageState extends State<DanshariPage>
     super.dispose();
   }
 
-  // 古い順にメモを取得（「断捨離候補」）
   Future<void> _fetchStaleMemos() async {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 作成日が古い順に最大10件取得
       final response = await supabase
           .from('notes')
           .select()
           .eq('user_id', userId)
-          .eq('is_archived', false) // アーカイブ済みは除外
-          .order('created_at', ascending: true) // 最も古いものから
+          .eq('is_archived', false)
+          .order('created_at', ascending: true)
           .limit(10);
 
       if (mounted) {
@@ -79,32 +76,26 @@ class _DanshariPageState extends State<DanshariPage>
     }
   }
 
-  //  断捨離実行（削除してポイントゲット）
   Future<void> _executeDanshari() async {
     if (_staleMemos.isEmpty) return;
 
     final memo = _staleMemos.first;
     final memoId = memo['id'];
 
-    // アニメーション開始
     await _animController.forward();
 
     try {
-      // 1. DB更新（アーカイブ化）
       await supabase
           .from('notes')
           .update({'is_archived': true}).eq('id', memoId);
 
-      // 2. ユーザーにポイント付与（作成よりも高い報酬！）
       final userId = supabase.auth.currentUser!.id;
-      const pointsReward = 100; // 断捨離は高配当
+      const pointsReward = 100;
 
-      // 現在のポイント取得と更新（簡易実装）
       try {
         await supabase.rpc('increment_points',
             params: {'user_id': userId, 'points_to_add': pointsReward});
       } catch (_) {
-        // RPCがない場合のフォールバック（手動更新）
         final stats = await supabase
             .from('user_stats')
             .select('total_points')
@@ -121,7 +112,7 @@ class _DanshariPageState extends State<DanshariPage>
           _deletedCount++;
           _earnedPoints += pointsReward;
         });
-        _animController.reset(); // アニメーションリセット
+        _animController.reset();
       }
     } catch (e) {
       if (mounted) {
@@ -133,17 +124,14 @@ class _DanshariPageState extends State<DanshariPage>
     }
   }
 
-  //  残す（スキップ）
   void _keepMemo() {
     if (_staleMemos.isEmpty) return;
     setState(() {
-      // リストの最後に回す
       final item = _staleMemos.removeAt(0);
       _staleMemos.add(item);
     });
   }
 
-  //  AI判定機能
   Future<void> _analyzeCurrentNoteWithAI() async {
     if (_staleMemos.isEmpty) return;
 
@@ -151,7 +139,6 @@ class _DanshariPageState extends State<DanshariPage>
     setState(() => _isAnalyzing = true);
 
     try {
-      // Edge Function呼び出し
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
@@ -161,14 +148,11 @@ class _DanshariPageState extends State<DanshariPage>
         },
       );
 
-      if (response.status != 200) {
+      if (response.status != 200)
         throw Exception('Server error: ${response.status}');
-      }
-
       final data = response.data;
-      if (data['success'] != true) {
+      if (data['success'] != true)
         throw Exception(data['error'] ?? 'Unknown error');
-      }
 
       if (mounted) {
         _showAnalysisResultDialog(data['result']);
@@ -184,7 +168,16 @@ class _DanshariPageState extends State<DanshariPage>
     }
   }
 
-  // 解析結果表示ダイアログ
+  //  判定結果をシェアする機能 (新規追加)
+  void _shareResult(String result) {
+    final shortResult = result.split('\n').take(5).join('\n');
+    Share.share(
+      '溜め込んだメモをAI鬼コーチに判定してもらいました...\n\n$shortResult\n...\n\n#マイメモ #デジタル断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_text_result',
+      subject: 'AI断捨離コーチの診断結果',
+    );
+  }
+
+  // ダイアログを修正
   void _showAnalysisResultDialog(String result) {
     showDialog(
       context: context,
@@ -203,6 +196,14 @@ class _DanshariPageState extends State<DanshariPage>
           ),
         ),
         actions: [
+          // シェアボタンを追加
+          TextButton.icon(
+            onPressed: () {
+              _shareResult(result);
+            },
+            icon: const Icon(Icons.share),
+            label: const Text('結果をシェア'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('閉じる'),
@@ -210,7 +211,7 @@ class _DanshariPageState extends State<DanshariPage>
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              _executeDanshari(); // アドバイスに従って捨てる
+              _executeDanshari();
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
@@ -260,7 +261,6 @@ class _DanshariPageState extends State<DanshariPage>
     );
   }
 
-  // 断捨離完了画面
   Widget _buildCompletionView() {
     return Center(
       child: Column(
@@ -281,7 +281,7 @@ class _DanshariPageState extends State<DanshariPage>
           ),
           const SizedBox(height: 40),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true), // trueを返してリロードさせる
+            onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 12)),
@@ -292,7 +292,6 @@ class _DanshariPageState extends State<DanshariPage>
     );
   }
 
-  // メインの断捨離画面
   Widget _buildDanshariView() {
     final memo = _staleMemos.first;
     final date = DateTime.parse(memo['created_at']);
@@ -310,8 +309,6 @@ class _DanshariPageState extends State<DanshariPage>
                 fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-
-          // メモカードエリア
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -365,10 +362,7 @@ class _DanshariPageState extends State<DanshariPage>
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          //  AI判定ボタン (追加)
           Center(
             child: _isAnalyzing
                 ? const CircularProgressIndicator()
@@ -388,10 +382,7 @@ class _DanshariPageState extends State<DanshariPage>
                         style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
           ),
-
           const SizedBox(height: 20),
-
-          // 操作ボタン
           Row(
             children: [
               Expanded(
