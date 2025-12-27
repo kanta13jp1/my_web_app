@@ -18,7 +18,6 @@ class _DanshariPageState extends State<DanshariPage>
   bool _isAnalyzing = false;
   int _earnedPoints = 0;
 
-  // 今日の進捗管理
   final int _dailyGoal = 5;
   int _todayCount = 0;
 
@@ -66,10 +65,10 @@ class _DanshariPageState extends State<DanshariPage>
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 修正: count() は int を直接返すため、.count は不要
+      // 修正: CountOption.exact を削除
       final count = await supabase
           .from('notes')
-          .count(CountOption.exact)
+          .count()
           .eq('user_id', userId)
           .eq('is_archived', true)
           .gte('updated_at', todayStart);

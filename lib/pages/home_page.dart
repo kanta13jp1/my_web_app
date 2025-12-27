@@ -47,10 +47,10 @@ class _HomePageState extends State<HomePage> {
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 修正: count() は int を直接返す
+      // 修正: CountOption.exact を削除し、引数なしの .count() に変更
       final count = await supabase
           .from('notes')
-          .count(CountOption.exact)
+          .count()
           .eq('user_id', userId)
           .eq('is_archived', true)
           .gte('updated_at', todayStart);
