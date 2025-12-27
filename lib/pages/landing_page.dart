@@ -1,8 +1,9 @@
+import 'dart:ui'; // 追加: グラスモーフィズム用
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart'; // supabase変数へのアクセスのため
+import '../main.dart';
 import 'home_page.dart';
-import 'onboarding_page.dart'; // オンボーディング遷移用
+import 'onboarding_page.dart';
 import '../services/referral_service.dart';
 import '../services/daily_login_service.dart';
 import '../utils/app_logger.dart';
@@ -22,8 +23,14 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> {
+class _LandingPageState extends State<LandingPage>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+
+  // アニメーション用
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   // Auth用のコントローラーとサービス
   final _emailController = TextEditingController();
@@ -37,6 +44,21 @@ class _LandingPageState extends State<LandingPage> {
     super.initState();
     _referralService = ReferralService(supabase);
     _dailyLoginService = DailyLoginService(supabase);
+
+    // アニメーション初期化
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutQuad),
+    );
+
+    _animationController.forward();
   }
 
   @override
@@ -44,11 +66,12 @@ class _LandingPageState extends State<LandingPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _referralCodeController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   // ----------------------------------------------------------------
-  // 認証ロジック
+  // 認証ロジック (変更なし)
   // ----------------------------------------------------------------
 
   Future<bool> _shouldShowOnboarding(String userId) async {
@@ -59,22 +82,18 @@ class _LandingPageState extends State<LandingPage> {
           .eq('user_id', userId)
           .maybeSingle();
 
-      if (response == null) return true; // New user
+      if (response == null) return true;
 
       final metadata = response['metadata'] as Map<String, dynamic>?;
       final onboardingCompleted = metadata?['onboarding_completed'] as bool?;
       return onboardingCompleted != true;
     } catch (e, stackTrace) {
-      AppLogger.error(
-        'Failed to check onboarding status',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.error('Failed to check onboarding status',
+          error: e, stackTrace: stackTrace);
       return false;
     }
   }
 
-  // ゲストログイン処理
   Future<void> _signInAnonymously() async {
     setState(() => _isLoading = true);
     try {
@@ -90,6 +109,7 @@ class _LandingPageState extends State<LandingPage> {
           SnackBar(
             content: Text('ゲストログインに失敗しました: $e'),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating, // モダンなスタイル
           ),
         );
       }
@@ -98,12 +118,8 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // メールアドレス認証処理 (Login / SignUp)
   Future<void> _handleEmailAuth(
-    AuthMode mode,
-    StateSetter modalSetState,
-  ) async {
-    // バリデーション
+      AuthMode mode, StateSetter modalSetState) async {
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,17 +135,15 @@ class _LandingPageState extends State<LandingPage> {
       final isSignUp = mode == AuthMode.signUp;
 
       if (isSignUp) {
-        // --- サインアップ ---
         final response = await supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
         final userId = response.user?.id;
 
-        // メール確認待ちの場合
         if (response.session == null && userId != null) {
           if (mounted) {
-            Navigator.pop(context); // モーダルを閉じる
+            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('確認メールを送信しました。リンクをクリックして登録を完了してください。'),
@@ -141,7 +155,6 @@ class _LandingPageState extends State<LandingPage> {
           return;
         }
 
-        // 紹介コード適用
         if (userId != null && _referralCodeController.text.trim().isNotEmpty) {
           try {
             await _referralService.applyReferralCode(
@@ -153,10 +166,8 @@ class _LandingPageState extends State<LandingPage> {
           }
         }
 
-        // ウェルカムボーナス (500pt) - user_statsはトリガーで作られるためUpdateのみ試行
         if (userId != null) {
           try {
-            // 少し待ってから実行（トリガー完了待ち）
             await Future.delayed(const Duration(milliseconds: 500));
             final stats = await supabase
                 .from('user_stats')
@@ -175,15 +186,12 @@ class _LandingPageState extends State<LandingPage> {
           }
         }
       } else {
-        // --- ログイン ---
         await supabase.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
         final userId = supabase.auth.currentUser?.id;
-
-        // デイリーボーナス確認
         if (userId != null) {
           try {
             final bonus = await _dailyLoginService.checkDailyLoginBonus(userId);
@@ -201,13 +209,11 @@ class _LandingPageState extends State<LandingPage> {
         }
       }
 
-      // 共通：画面遷移判定
       final userId = supabase.auth.currentUser?.id;
       if (mounted && userId != null) {
         final shouldShowOnboarding = await _shouldShowOnboarding(userId);
         if (!mounted) return;
 
-        // モーダルが開いていれば閉じる
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
@@ -246,17 +252,13 @@ class _LandingPageState extends State<LandingPage> {
   // UI コンポーネント
   // ----------------------------------------------------------------
 
-  // ログイン/登録用のボトムシートを表示
   void _showAuthBottomSheet(BuildContext context, AuthMode initialMode) {
-    // ローカル変数でモードを管理
     AuthMode currentMode = initialMode;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // 全画面近くまで広げられるように
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent, // グラスモーフィズムのため透明に
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -264,167 +266,135 @@ class _LandingPageState extends State<LandingPage> {
             final theme = Theme.of(context);
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-            return Padding(
-              padding: EdgeInsets.only(
-                top: 24,
-                left: 24,
-                right: 24,
-                bottom: bottomPadding + 24,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      isSignUp ? 'アカウント作成' : 'ログイン',
-                      style: theme.textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // メールアドレス
-                    TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'メールアドレス',
-                        prefixIcon: Icon(Icons.email),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
+            return ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: Colors.white.withOpacity(0.9),
+                  padding: EdgeInsets.only(
+                    top: 24,
+                    left: 24,
+                    right: 24,
+                    bottom: bottomPadding + 24,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2)),
                         ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // パスワード
-                    TextField(
-                      controller: _passwordController,
-                      // ✅ 修正箇所: ここにあった const を削除しました
-                      decoration: InputDecoration(
-                        labelText: 'パスワード',
-                        prefixIcon: const Icon(Icons.lock),
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        const SizedBox(height: 24),
+                        Text(
+                          isSignUp ? 'アカウント作成' : 'ログイン',
+                          style: theme.textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        // isSignUp という変数を使っているため const にできません
-                        helperText: isSignUp ? '6文字以上' : null,
-                      ),
-                      obscureText: true,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 紹介コード (サインアップ時のみ)
-                    if (isSignUp) ...[
-                      TextField(
-                        controller: _referralCodeController,
-                        decoration: const InputDecoration(
-                          labelText: '紹介コード (任意)',
-                          prefixIcon: Icon(Icons.card_giftcard),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                        const SizedBox(height: 24),
+                        TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'メールアドレス',
+                            prefixIcon: Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(12))),
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
-                          filled: true,
-                          fillColor: Color(0xFFFFF8E1), // 薄いアンバー
+                          keyboardType: TextInputType.emailAddress,
+                          enabled: !_isLoading,
                         ),
-                        textCapitalization: TextCapitalization.characters,
-                        enabled: !_isLoading,
-                      ),
-                      const SizedBox(height: 8),
-                      // 紹介コード特典メッセージ
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: 'パスワード',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            border: const OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(12))),
+                            filled: true,
+                            fillColor: Colors.white,
+                            helperText: isSignUp ? '6文字以上' : null,
+                          ),
+                          obscureText: true,
+                          enabled: !_isLoading,
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 16,
-                              color: Colors.green[700],
+                        const SizedBox(height: 16),
+                        if (isSignUp) ...[
+                          TextField(
+                            controller: _referralCodeController,
+                            decoration: const InputDecoration(
+                              labelText: '紹介コード (任意)',
+                              prefixIcon: Icon(Icons.card_giftcard),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12))),
+                              filled: true,
+                              fillColor: Color(0xFFFFF8E1),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'コード入力でボーナスポイント獲得！',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.green[700],
-                                fontWeight: FontWeight.bold,
-                              ),
+                            textCapitalization: TextCapitalization.characters,
+                            enabled: !_isLoading,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _handleEmailAuth(
+                                    currentMode, setModalState),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ] else ...[
-                      const SizedBox(height: 24),
-                    ],
-
-                    // アクションボタン
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () =>
-                                _handleEmailAuth(currentMode, setModalState),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
+                                : Text(
+                                    isSignUp ? '登録して始める' : 'ログイン',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
                           ),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                isSignUp ? '登録して始める' : 'ログイン',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                      ),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  setModalState(() {
+                                    currentMode = isSignUp
+                                        ? AuthMode.signIn
+                                        : AuthMode.signUp;
+                                  });
+                                },
+                          child: Text(
+                            isSignUp
+                                ? 'すでにアカウントをお持ちの方はログイン'
+                                : 'アカウントをお持ちでない方は新規登録',
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // モード切り替えボタン
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              setModalState(() {
-                                currentMode = isSignUp
-                                    ? AuthMode.signIn
-                                    : AuthMode.signUp;
-                              });
-                            },
-                      child: Text(
-                        isSignUp ? 'すでにアカウントをお持ちの方はログイン' : 'アカウントをお持ちでない方は新規登録',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );
@@ -439,190 +409,309 @@ class _LandingPageState extends State<LandingPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      // 常に表示されるゲストログインボタン
-      floatingActionButton: _isLoading
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _signInAnonymously,
-              backgroundColor: Colors.amber.shade700,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              icon: const Icon(Icons.rocket_launch),
-              label: const Text(
-                '登録不要で試す (ゲスト)',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-
-      body: CustomScrollView(
-        slivers: [
-          // Hero Section
-          SliverToBoxAdapter(
+      // FABは削除しました。メインCTAは画面中央にあります。
+      body: Stack(
+        children: [
+          // 背景：グラデーションとパターン
+          Positioned.fill(
             child: Container(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height * 0.7,
-              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    theme.primaryColor,
-                    theme.primaryColor.withValues(alpha: 0.7),
+                    theme.primaryColor.withOpacity(0.9),
+                    Colors.indigo.shade900,
                   ],
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        // アイコン
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.note_alt_outlined,
-                            size: 60,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // タイトル
-                        const Text(
-                          'マイメモ',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'ゲーミフィケーションで楽しく続けられる\nメモアプリ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        // メインアクションエリア
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 400),
-                          child: Column(
-                            children: [
-                              // アカウント作成ボタン -> モーダル起動
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _showAuthBottomSheet(
-                                    context,
-                                    AuthMode.signUp,
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: theme.primaryColor,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.mail_outline),
-                                  label: const Text(
-                                    'メールアドレスで登録・ログイン',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        // ライブ統計など
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 600),
-                          child: const LiveStatsBanner(),
-                        ),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const PageViewStats(),
-                        ),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
           ),
 
-          // Features Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  Text(
-                    '特徴',
-                    style: theme.textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+          // 装飾的な円形（背景アクセント）
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.2), // 影の色
+                    blurRadius: 50, // ✅ BoxShadowの中で指定します
+                    spreadRadius: 20, // ぼかしの広がり
                   ),
-                  const SizedBox(height: 32),
-                  const _FeatureCard(
-                    icon: Icons.emoji_events,
-                    iconColor: Colors.amber,
-                    title: 'レベルアップシステム',
-                    description: 'メモを書くほどレベルアップ！\n経験値とポイントを獲得して成長しよう',
-                  ),
-                  const SizedBox(height: 16),
-                  const _FeatureCard(
-                    icon: Icons.military_tech,
-                    iconColor: Colors.purple,
-                    title: '28種類以上の達成項目',
-                    description: '様々なチャレンジをクリアして\n実績を解除しよう',
-                  ),
-                  const SizedBox(height: 16),
-                  const _FeatureCard(
-                    icon: Icons.leaderboard,
-                    iconColor: Colors.blue,
-                    title: 'リーダーボード',
-                    description: '他のユーザーと競い合って\nトップを目指そう',
-                  ),
-                  const SizedBox(height: 60),
                 ],
               ),
             ),
           ),
+
+          // メインコンテンツ
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      // ✅ 変更点1: SliverToBoxAdapterにする
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          // ✅ 変更点2: 最低でも画面の高さを確保（はみ出たら伸びる）
+                          minHeight: MediaQuery.of(context).size.height,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            mainAxisAlignment:
+                                MainAxisAlignment.center, // ✅ 上下中央寄せ
+                            children: [
+                              // ✅ 変更点3: Spacer()を削除し、固定の余白に変更
+                              const SizedBox(height: 80), // 上部の余白
+
+                              // 1. ロゴとタイトル
+                              _buildHeroHeader(),
+
+                              const SizedBox(height: 48),
+
+                              // 2. メインCTA: ゲストログイン
+                              _buildPrimaryButton(),
+
+                              const SizedBox(height: 16),
+
+                              // 3. サブCTA: メールログイン
+                              _buildSecondaryButton(),
+
+                              const SizedBox(height: 60), // 中央の余白
+
+                              // 4. ソーシャルプルーフ（統計情報）
+                              _buildGlassStats(),
+
+                              const SizedBox(height: 40),
+
+                              // 5. 特徴セクションへの誘導
+                              const Icon(Icons.keyboard_arrow_down,
+                                  color: Colors.white54, size: 30),
+                              const Text("スクロールして詳細を見る",
+                                  style: TextStyle(
+                                      color: Colors.white54, fontSize: 12)),
+
+                              const SizedBox(height: 40), // 下部の余白
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 特徴セクション（下部に続く）
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(24.0),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(30)),
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(2))),
+                            const SizedBox(height: 40),
+                            Text(
+                              'ゲーム感覚で、\n毎日がもっと楽しくなる。',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                            const _FeatureCard(
+                              icon: Icons.rocket_launch_rounded,
+                              iconColor: Colors.amber,
+                              title: 'レベルアップ',
+                              description: 'メモを書くほど経験値ゲット。\nあなたの成長を可視化します。',
+                            ),
+                            const SizedBox(height: 16),
+                            const _FeatureCard(
+                              icon: Icons.emoji_events_rounded,
+                              iconColor: Colors.purple,
+                              title: '実績システム',
+                              description: '「3日連続記録」など、\n28種類以上のバッジを集めよう。',
+                            ),
+                            const SizedBox(height: 16),
+                            const _FeatureCard(
+                              icon: Icons.bar_chart_rounded,
+                              iconColor: Colors.blue,
+                              title: 'みんなと競争',
+                              description: 'リーダーボードで上位を目指して\nモチベーション維持。',
+                            ),
+                            const SizedBox(height: 60),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ローディングインジケーター
+          if (_isLoading)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeroHeader() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.note_alt_outlined,
+            size: 64,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'My Memo',
+          style: TextStyle(
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '書くことが、冒険になる。',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 64, // 大きく押しやすく
+      child: ElevatedButton(
+        onPressed: _signInAnonymously,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Theme.of(context).primaryColor,
+          elevation: 8,
+          shadowColor: Colors.black.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '今すぐ始める',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward_rounded, size: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton() {
+    return TextButton(
+      onPressed: () => _showAuthBottomSheet(context, AuthMode.signIn),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.login, size: 18),
+          const SizedBox(width: 8),
+          // ✅ Flexibleで囲むことで、幅が足りないときに自動で折り返すようになる
+          Flexible(
+            child: Text(
+              'すでにアカウントをお持ちの方はこちら',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white.withOpacity(0.9),
+              ),
+              // 必要に応じて省略記号を出すなら: overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassStats() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: [
+              const LiveStatsBanner(), // 既存のウィジェットを再利用
+              const SizedBox(height: 16),
+              Divider(color: Colors.white.withOpacity(0.1), height: 1),
+              const SizedBox(height: 16),
+              const PageViewStats(), // 既存のウィジェットを再利用
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -643,48 +732,57 @@ class _FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 32, color: iconColor),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: Icon(icon, size: 30, color: iconColor),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      height: 1.5,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.5,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
