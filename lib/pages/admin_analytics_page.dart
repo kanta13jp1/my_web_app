@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
@@ -42,12 +41,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget build(BuildContext context) {
     int totalViews = 0;
     int totalConversions = 0;
-    int totalShares = 0; // 追加
+    int totalShares = 0;
 
     for (var stat in _dailyStats) {
       totalViews += (stat['landing_views'] as int? ?? 0);
       totalConversions += (stat['conversions'] as int? ?? 0);
-      totalShares += (stat['share_count'] as int? ?? 0); // 追加
+      totalShares += (stat['share_count'] as int? ?? 0);
     }
 
     double totalCvr =
@@ -107,7 +106,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               _buildStatItem(
                                   '登録数', '$totalConversions', Icons.person_add),
                               _buildStatItem(
-                                  'シェア数', '$totalShares', Icons.share), // 追加
+                                  'シェア数', '$totalShares', Icons.share),
                             ],
                           )
                         ],
@@ -127,7 +126,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final stat = _dailyStats[index];
                       final views = stat['landing_views'] as int? ?? 0;
                       final conv = stat['conversions'] as int? ?? 0;
-                      final shares = stat['share_count'] as int? ?? 0; // 追加
+                      final shares = stat['share_count'] as int? ?? 0;
                       final cvr = views == 0 ? 0.0 : (conv / views * 100);
 
                       return Card(
@@ -140,7 +139,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                 fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           subtitle: Text(
-                              'View: $views / Conv: $conv / Share: $shares'), // 表示追加
+                              'View: $views / Conv: $conv / Share: $shares'),
                         ),
                       );
                     },
