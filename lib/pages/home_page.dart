@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -41,7 +41,8 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
-          _recentNotes = (response as List).map((n) => Note.fromJson(n)).toList();
+          _recentNotes =
+              (response as List).map((n) => Note.fromJson(n)).toList();
           _isLoading = false;
         });
       }
@@ -84,7 +85,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   //  2大機能カードエリア
                   Row(
                     children: [
@@ -97,7 +98,8 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.indigo,
                           onTap: () => Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const GeminiUniversityPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const GeminiUniversityPage()),
                           ),
                         ),
                       ),
@@ -113,7 +115,8 @@ class _HomePageState extends State<HomePage> {
                           onTap: () async {
                             await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const DanshariPage()),
+                              MaterialPageRoute(
+                                  builder: (_) => const DanshariPage()),
                             );
                             _loadRecentNotes();
                           },
@@ -123,7 +126,7 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   const SizedBox(height: 24),
-                  
+
                   //  リアル断捨離ボタン (新規追加)
                   Container(
                     width: double.infinity,
@@ -133,7 +136,8 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const RealWorldDanshariPage()),
+                          MaterialPageRoute(
+                              builder: (_) => const RealWorldDanshariPage()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -142,13 +146,15 @@ class _HomePageState extends State<HomePage> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.indigo.withOpacity(0.3)),
+                          side:
+                              BorderSide(color: Colors.indigo.withOpacity(0.3)),
                         ),
                       ),
                       icon: const Icon(Icons.camera_alt, size: 32),
                       label: const Text(
                         '現実のゴミも捨てる (AI判定)',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -158,37 +164,41 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // シンプルなメモリスト
                   if (_recentNotes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
-                      child: Text('メモはまだありません。', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                      child: Text('メモはまだありません。',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey)),
                     )
                   else
                     ..._recentNotes.map((note) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(note.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle: Text(
-                          note.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => NoteEditorPage(note: note)),
-                          );
-                          _loadRecentNotes();
-                        },
-                      ),
-                    )),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            title: Text(note.title,
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(
+                              note.content,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => NoteEditorPage(note: note)),
+                              );
+                              _loadRecentNotes();
+                            },
+                          ),
+                        )),
                 ],
               ),
             ),
-      
+
       // シンプルなFAB
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -227,7 +237,9 @@ class _HomePageState extends State<HomePage> {
               offset: const Offset(0, 4),
             ),
           ],
-          border: isHighlight ? null : Border.all(color: color.withOpacity(0.3), width: 2),
+          border: isHighlight
+              ? null
+              : Border.all(color: color.withOpacity(0.3), width: 2),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(

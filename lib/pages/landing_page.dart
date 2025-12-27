@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_page.dart';
@@ -41,7 +41,8 @@ class _LandingPageState extends State<LandingPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ゲストログインエラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('ゲストログインエラー: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -49,8 +50,10 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  Future<void> _handleEmailAuth(AuthMode mode, StateSetter modalSetState) async {
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+  Future<void> _handleEmailAuth(
+      AuthMode mode, StateSetter modalSetState) async {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('メールアドレスとパスワードを入力してください')),
       );
@@ -71,7 +74,9 @@ class _LandingPageState extends State<LandingPage> {
           if (mounted) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('確認メールを送信しました。'), backgroundColor: Colors.green),
+              const SnackBar(
+                  content: Text('確認メールを送信しました。'),
+                  backgroundColor: Colors.green),
             );
           }
           return;
@@ -104,7 +109,9 @@ class _LandingPageState extends State<LandingPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        try { modalSetState(() {}); } catch (_) {}
+        try {
+          modalSetState(() {});
+        } catch (_) {}
       }
     }
   }
@@ -122,27 +129,34 @@ class _LandingPageState extends State<LandingPage> {
             final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
             return ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   color: Colors.white.withOpacity(0.9),
-                  padding: EdgeInsets.only(top: 24, left: 24, right: 24, bottom: bottomPadding + 24),
+                  padding: EdgeInsets.only(
+                      top: 24, left: 24, right: 24, bottom: bottomPadding + 24),
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(isSignUp ? 'アカウント作成' : 'ログイン', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(isSignUp ? 'アカウント作成' : 'ログイン',
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
                         TextField(
                           controller: _emailController,
-                          decoration: const InputDecoration(labelText: 'メールアドレス', border: OutlineInputBorder()),
+                          decoration: const InputDecoration(
+                              labelText: 'メールアドレス',
+                              border: OutlineInputBorder()),
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passwordController,
-                          decoration: const InputDecoration(labelText: 'パスワード', border: OutlineInputBorder()),
+                          decoration: const InputDecoration(
+                              labelText: 'パスワード', border: OutlineInputBorder()),
                           obscureText: true,
                         ),
                         const SizedBox(height: 24),
@@ -150,12 +164,18 @@ class _LandingPageState extends State<LandingPage> {
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : () => _handleEmailAuth(currentMode, setModalState),
-                            child: _isLoading ? const CircularProgressIndicator() : Text(isSignUp ? '登録' : 'ログイン'),
+                            onPressed: _isLoading
+                                ? null
+                                : () => _handleEmailAuth(
+                                    currentMode, setModalState),
+                            child: _isLoading
+                                ? const CircularProgressIndicator()
+                                : Text(isSignUp ? '登録' : 'ログイン'),
                           ),
                         ),
                         TextButton(
-                          onPressed: () => setModalState(() => currentMode = isSignUp ? AuthMode.signIn : AuthMode.signUp),
+                          onPressed: () => setModalState(() => currentMode =
+                              isSignUp ? AuthMode.signIn : AuthMode.signUp),
                           child: Text(isSignUp ? 'ログインへ切り替え' : '新規登録へ切り替え'),
                         ),
                       ],
@@ -190,25 +210,37 @@ class _LandingPageState extends State<LandingPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.note_alt_outlined, size: 80, color: Colors.white),
+                  const Icon(Icons.note_alt_outlined,
+                      size: 80, color: Colors.white),
                   const SizedBox(height: 24),
-                  const Text('My Memo', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text('My Memo',
+                      style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                   const SizedBox(height: 12),
-                  const Text('シンプルに学び、スマートに捨てる。', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text('シンプルに学び、スマートに捨てる。',
+                      style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 60),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: _signInAnonymously,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.indigo),
-                      child: const Text('すぐに始める (登録不要)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.indigo),
+                      child: const Text('すぐに始める (登録不要)',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () => _showAuthBottomSheet(context, AuthMode.signIn),
-                    child: const Text('ログイン / 登録', style: TextStyle(color: Colors.white)),
+                    onPressed: () =>
+                        _showAuthBottomSheet(context, AuthMode.signIn),
+                    child: const Text('ログイン / 登録',
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),

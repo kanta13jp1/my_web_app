@@ -1,8 +1,10 @@
-﻿import 'dart:io';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // for kIsWeb
 import 'package:image_picker/image_picker.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../main.dart'; // supabaseクライアントのため
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -18,14 +20,12 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   String? _aiAdvice;
   bool _isDisposed = false;
 
-  //  ここにGoogle AI Studioで取得したAPIキーを入力してください 
-  final String _apiKey = 'YOUR_GEMINI_API_KEY';
-
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        maxWidth: 800,
+        maxWidth: 800, // API制限と転送量削減のためリサイズ
+        imageQuality: 80,
       );
 
       if (pickedFile != null) {
@@ -34,7 +34,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           _aiAdvice = null;
           _isDisposed = false;
         });
-        _analyzeImageWithGemini(pickedFile);
+        _analyzeImageWithEdgeFunction(pickedFile);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -43,48 +43,35 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     }
   }
 
-  Future<void> _analyzeImageWithGemini(XFile imageFile) async {
+  Future<void> _analyzeImageWithEdgeFunction(XFile imageFile) async {
     setState(() => _isAnalyzing = true);
 
     try {
-      if (_apiKey == 'YOUR_GEMINI_API_KEY') {
-        throw Exception('APIキーが設定されていません。コード内の_apiKeyを書き換えてください。');
+      // 1. 画像をBase64に変換
+      final bytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      // 2. Edge Function呼び出し
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': 'analyze_image',
+          'imageBase64': base64Image,
+        },
+      );
+
+      if (response.status != 200) {
+        throw Exception('Server error: ${response.status}');
       }
 
-      final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: _apiKey,
-      );
-
-      final imageBytes = await imageFile.readAsBytes();
-      final prompt = TextPart(
-        '''
-        あなたは「断捨離の鬼コーチ」です。ユーザーがアップロードした写真の物体を見て、以下のフォーマットで回答してください。
-        口調は少し厳しめで、ユーモアを交えて「捨てるべき理由」を力説してください。
-
-        【物体名】
-        （ここに物体名）
-
-        【断捨離判定】
-        （「即捨て推奨」または「保留」）
-
-        【鬼コーチの助言】
-        （なぜこれを捨てるべきか、過去の執着を断ち切るような短いアドバイス）
-
-        【捨て方ヒント】
-        （一般的に何ゴミになるか、どう処分すべきか）
-        '''
-      );
-
-      final imagePart = DataPart('image/jpeg', imageBytes);
-      
-      final response = await model.generateContent([
-        Content.multi([prompt, imagePart])
-      ]);
+      final data = response.data;
+      if (data['success'] != true) {
+        throw Exception(data['error'] ?? 'Unknown error');
+      }
 
       if (mounted) {
         setState(() {
-          _aiAdvice = response.text;
+          _aiAdvice = data['result'];
           _isAnalyzing = false;
         });
       }
@@ -145,14 +132,16 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.camera_alt, size: 64, color: Colors.grey[400]),
+                          Icon(Icons.camera_alt,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 8),
-                          Text('写真を撮る / 選ぶ', style: TextStyle(color: Colors.grey[600])),
+                          Text('写真を撮る / 選ぶ',
+                              style: TextStyle(color: Colors.grey[600])),
                         ],
                       ),
                     )
-                  : kIsWeb 
-                      ? Image.network(_image!.path, fit: BoxFit.cover) 
+                  : kIsWeb
+                      ? Image.network(_image!.path, fit: BoxFit.cover)
                       : Image.file(File(_image!.path), fit: BoxFit.cover),
             ),
 

@@ -25,7 +25,8 @@ final List<Module> geminiCurriculum = [
       Lesson(
         title: 'Geminiとは？',
         iconEmoji: '🌟',
-        content: 'GeminiはGoogleが開発した最新のマルチモーダルAIモデルです。\nテキストだけでなく、画像、音声、動画も理解することができます。',
+        content:
+            'GeminiはGoogleが開発した最新のマルチモーダルAIモデルです。\nテキストだけでなく、画像、音声、動画も理解することができます。',
       ),
       Lesson(
         title: '基本的な使い方',
@@ -84,12 +85,14 @@ class GeminiUniversityPage extends StatelessWidget {
             child: ExpansionTile(
               title: Text(
                 module.title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               initiallyExpanded: index == 0, // 最初の章だけ開いておく
               children: module.lessons.map((lesson) {
                 return ListTile(
-                  leading: Text(lesson.iconEmoji, style: const TextStyle(fontSize: 24)),
+                  leading: Text(lesson.iconEmoji,
+                      style: const TextStyle(fontSize: 24)),
                   title: Text(lesson.title),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
@@ -156,7 +159,8 @@ class LessonDetailPage extends StatelessWidget {
                 icon: const Icon(Icons.check),
                 label: const Text('学習完了'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
               ),
             ),

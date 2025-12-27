@@ -1,5 +1,5 @@
-// AI Assistant Edge Function with Google Gemini
-// メモ作成支援、文章改善、要約生成などのAI機能を提供
+﻿// AI Assistant Edge Function with Google Gemini
+// メモ作成支援、文章改善、要約生成、および画像認識（リアル断捨離）機能を提供
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -11,12 +11,14 @@ const corsHeaders = {
 
 // Gemini API設定
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+// ユーザー指定のモデルを使用
 const GEMINI_MODEL = 'gemini-flash-latest'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {
-  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations'
+  action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations' | 'analyze_image'
   content?: string
+  imageBase64?: string
   language?: string
   targetLanguage?: string
   userId?: string
@@ -59,19 +61,10 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { action, content, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
+    const { action, content, imageBase64, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
 
     if (!action) {
       throw new Error('Missing required parameters')
-    }
-
-    // Validate parameters based on action
-    if (action === 'task_recommendations') {
-      if (!recentNotes || !userStats) {
-        throw new Error('Missing required parameters for task recommendations')
-      }
-    } else if (!content) {
-      throw new Error('Missing content parameter')
     }
 
     // Check API key
@@ -79,11 +72,72 @@ serve(async (req) => {
       throw new Error('Google AI API key not configured')
     }
 
-    // Build prompt
-    const prompt = buildPrompt(action, content, language, targetLanguage, recentNotes, userStats)
+    // リクエストボディの構築
+    let requestBody: any = {
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      }
+    };
+
+    // アクションに応じた処理分岐
+    if (action === 'analyze_image') {
+      // --- 画像認識（リアル断捨離）モード ---
+      if (!imageBase64) {
+        throw new Error('Image data missing for analyze_image action')
+      }
+
+      const promptText = `
+        あなたは「断捨離の鬼コーチ」です。ユーザーがアップロードした写真の物体を見て、以下のフォーマットで回答してください。
+        口調は少し厳しめで、ユーモアを交えて「捨てるべき理由」を力説してください。
+
+        【物体名】
+        （ここに物体名）
+
+        【断捨離判定】
+        （「即捨て推奨」または「保留」）
+
+        【鬼コーチの助言】
+        （なぜこれを捨てるべきか、過去の執着を断ち切るような短いアドバイス）
+
+        【捨て方ヒント】
+        （一般的に何ゴミになるか、どう処分すべきか）
+      `;
+
+      requestBody.contents = [{
+        parts: [
+          { text: promptText },
+          {
+            inline_data: {
+              mime_type: "image/jpeg",
+              data: imageBase64
+            }
+          }
+        ]
+      }];
+
+    } else {
+      // --- テキスト処理モード ---
+      if (action === 'task_recommendations' && (!recentNotes || !userStats)) {
+        throw new Error('Missing required parameters for task recommendations')
+      } else if (action !== 'task_recommendations' && !content) {
+        throw new Error('Missing content parameter')
+      }
+
+      const prompt = buildPrompt(action, content, language, targetLanguage, recentNotes, userStats)
+      
+      requestBody.contents = [{
+        parts: [{ text: prompt }]
+      }];
+
+      // JSONレスポンスが必要な場合の設定
+      if (action === 'task_recommendations') {
+        requestBody.generationConfig.responseMimeType = 'application/json';
+      }
+    }
 
     // Call Gemini API
-    console.log(`Calling Gemini API (${GEMINI_MODEL})...`)
+    console.log(`Calling Gemini API (${GEMINI_MODEL}) for action: ${action}...`)
 
     const geminiResponse = await fetch(
       `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
@@ -92,17 +146,7 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          // 設定を最小限にしてエラーを回避（デフォルト値を使用）
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2000,
-          },
-          // Safety settingsはデフォルトを使用（過剰な設定によるエラー回避）
-        }),
+        body: JSON.stringify(requestBody),
       }
     )
 
@@ -110,23 +154,15 @@ serve(async (req) => {
       const errorData = await geminiResponse.text()
       console.error('Gemini API error details:', errorData)
 
-      // Handle rate limit errors
       if (geminiResponse.status === 429) {
-        const retryAfter = geminiResponse.headers.get('retry-after') || '60'
-        const error = new Error('Rate limit exceeded')
-          ; (error as any).statusCode = 429
-          ; (error as any).retryAfter = retryAfter
-          ; (error as any).errorType = 'RATE_LIMIT'
-        throw error
+        throw new Error('Rate limit exceeded')
       }
-
-      // エラーの詳細をクライアントに返すように変更
       throw new Error(`Gemini API error: ${geminiResponse.status} - ${errorData}`)
     }
 
     const geminiData = await geminiResponse.json()
 
-    // Extract result from Gemini response
+    // Extract result
     let result = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
     if (!result) {
@@ -134,11 +170,11 @@ serve(async (req) => {
       throw new Error('No valid response text from Gemini API')
     }
 
-    // Parse result based on action
+    // Parse result based on action (JSON parsing if needed)
     result = parseResult(result, action)
 
-    // Estimate token usage
-    const inputTokens = estimateTokens(prompt)
+    // Estimate token usage (簡易計算: 画像は計算に含まない)
+    const inputTokens = estimateTokens(JSON.stringify(requestBody.contents))
     const outputTokens = estimateTokens(typeof result === 'string' ? result : JSON.stringify(result))
     const totalTokens = inputTokens + outputTokens
 
@@ -162,37 +198,24 @@ serve(async (req) => {
         success: true,
         result: result,
         action: action,
-        usage: {
-          prompt_tokens: inputTokens,
-          completion_tokens: outputTokens,
-          total_tokens: totalTokens
-        },
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
+
   } catch (error) {
     console.error('Error in AI assistant:', error)
-
-    const statusCode = (error as any).statusCode || 400
-    const errorResponse: any = {
-      success: false,
-      // エラーメッセージに詳細を含める
-      error: error.message,
-    }
-
-    if ((error as any).errorType === 'RATE_LIMIT') {
-      errorResponse.errorType = 'RATE_LIMIT'
-      errorResponse.retryAfter = (error as any).retryAfter
-    }
-
+    
     return new Response(
-      JSON.stringify(errorResponse),
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: statusCode,
+        status: 400,
       }
     )
   }
@@ -287,7 +310,7 @@ ${notesContent}
 以下のJSON形式のみを出力してください。余計なマークダウン( \`\`\`json 等)や説明は不要です。
 
 {
-  "daily": ["今日やるべき・たった1つのクレイジーな行動 (例: 未完成のままアプリを友人に送り、辛辣な感想をもらう)"],
+  "daily": ["今日やるべきたった1つのクレイジーな行動 (例: 未完成のままアプリを友人に送り、辛辣な感想をもらう)"],
   "weekly": ["今週の戦略的フォーカス (例: 機能追加を全停止し、営業活動に100%リソースを割く)"],
   "monthly": ["今月のマイルストーン (恐怖を克服した先にある成果)"],
   "yearly": ["今年のビジョン (現状の延長線上にはない飛躍的な目標)"],
@@ -314,20 +337,15 @@ function parseResult(result: string, action: string): any {
       if (jsonMatch) {
         cleaned = jsonMatch[0]
       }
-      const parsed = JSON.parse(cleaned)
-      if (!parsed.daily || parsed.daily.length === 0) {
-        parsed.daily = ['まずは1つ、恐怖を感じる行動を選んで実行してください']
-      }
-      return parsed
+      return JSON.parse(cleaned)
     } catch (e) {
       console.error('Error parsing JSON:', e)
-      console.error('Raw result:', result)
       return {
         daily: ['戦略を見直す時間を確保する'],
         weekly: ['ボトルネックを特定する'],
         monthly: ['コンフォートゾーンから抜け出す'],
         yearly: ['圧倒的な成果を定義する'],
-        insights: '申し訳ありません。戦略的分析を行いましたが、データの解析に失敗しました。しかし、立ち止まって考えることこそが重要です。'
+        insights: '申し訳ありません。解析に失敗しましたが、立ち止まって考えることこそが重要です。'
       }
     }
   }

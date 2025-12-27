@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../models/category.dart';
@@ -89,10 +89,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         await supabase.from('notes').insert(noteData);
       } else {
         // 更新
-        await supabase
-            .from('notes')
-            .update(noteData)
-            .eq('id', widget.note!.id);
+        await supabase.from('notes').update(noteData).eq('id', widget.note!.id);
       }
 
       if (mounted) {
@@ -124,7 +121,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.check),
             onPressed: _isSaving ? null : _saveNote,
@@ -144,7 +142,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       decoration: const InputDecoration(
                         labelText: 'カテゴリ',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                       items: [
                         const DropdownMenuItem(value: null, child: Text('なし')),
@@ -153,10 +152,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               child: Text(category.name),
                             )),
                       ],
-                      onChanged: (value) => setState(() => _selectedCategoryId = value),
+                      onChanged: (value) =>
+                          setState(() => _selectedCategoryId = value),
                     ),
                   const SizedBox(height: 16),
-                  
+
                   // タイトル入力
                   TextField(
                     controller: _titleController,
@@ -168,7 +168,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // 本文入力
                   Expanded(
                     child: TextField(

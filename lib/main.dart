@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +18,8 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
 
   runApp(
@@ -57,9 +58,12 @@ class _AuthenticatedHomePage extends StatelessWidget {
       future: _shouldShowOnboarding(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
-        return (snapshot.data ?? false) ? const OnboardingPage() : const HomePage();
+        return (snapshot.data ?? false)
+            ? const OnboardingPage()
+            : const HomePage();
       },
     );
   }
@@ -88,7 +92,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
-        
+
         switch (uri.path) {
           case '/':
             return MaterialPageRoute(
@@ -99,7 +103,8 @@ class MyApp extends StatelessWidget {
           case '/home':
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/gemini-university':
-            return MaterialPageRoute(builder: (_) => const GeminiUniversityPage());
+            return MaterialPageRoute(
+                builder: (_) => const GeminiUniversityPage());
           case '/danshari':
             return MaterialPageRoute(builder: (_) => const DanshariPage());
           default:
