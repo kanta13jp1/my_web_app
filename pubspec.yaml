@@ -15,28 +15,28 @@ dependencies:
   supabase_flutter: ^2.0.0
   cupertino_icons: ^1.0.6
   web: ^1.1.0
-  intl: ^0.20.2                    # 日付フォーマッチE
-  flutter_markdown: ^0.7.4+1       # マ�Eクダウンレンダリング
-  url_launcher: ^6.3.2             # リンククリチE��対忁E
-  markdown: ^7.2.2                 # マ�Eクダウンパ�Eス
-  highlight: ^0.7.0                # シンタチE��スハイライチE
-  shared_preferences: ^2.3.3       # 追加�E�ローカルストレージ
-  provider: ^6.1.2  # 追加
-  file_picker: ^9.2.3  # Web版で安定動作するバージョン
-  mime: ^1.0.6  # 追加
-  path: ^1.9.0  # 追加
-  google_fonts: ^6.1.0  # 追加
-  # 新規追加�E�メモカード機�E用�E�E
-  screenshot: ^3.0.0          # Widget to Image変換
-  share_plus: ^12.0.1         # SNS共朁E
-  path_provider: ^2.1.5       # ファイルパス取征E
-  image_gallery_saver: ^2.0.3 # ギャラリー保存（オプション�E�E
-  logger: ^2.0.2              # ロギング
-  timeago: ^3.7.0             # 相対時間表示
-  fl_chart: ^0.69.0           # チャート表示
-  package_info_plus: ^8.0.0   # 🚨 追加: バ�Eジョン惁E��取征E
+  intl: ^0.20.2                    # 譌･莉倥ヵ繧ｩ繝ｼ繝槭ャ繝・
+  flutter_markdown: ^0.7.4+1       # 繝槭・繧ｯ繝繧ｦ繝ｳ繝ｬ繝ｳ繝繝ｪ繝ｳ繧ｰ
+  url_launcher: ^6.3.2             # 繝ｪ繝ｳ繧ｯ繧ｯ繝ｪ繝・け蟇ｾ蠢・
+  markdown: ^7.2.2                 # 繝槭・繧ｯ繝繧ｦ繝ｳ繝代・繧ｹ
+  highlight: ^0.7.0                # 繧ｷ繝ｳ繧ｿ繝・け繧ｹ繝上う繝ｩ繧､繝・
+  shared_preferences: ^2.3.3       # 霑ｽ蜉・壹Ο繝ｼ繧ｫ繝ｫ繧ｹ繝医Ξ繝ｼ繧ｸ
+  provider: ^6.1.2  # 霑ｽ蜉
+  file_picker: ^9.2.3  # Web迚医〒螳牙ｮ壼虚菴懊☆繧九ヰ繝ｼ繧ｸ繝ｧ繝ｳ
+  mime: ^1.0.6  # 霑ｽ蜉
+  path: ^1.9.0  # 霑ｽ蜉
+  google_fonts: ^6.1.0  # 霑ｽ蜉
+  # 譁ｰ隕剰ｿｽ蜉・医Γ繝｢繧ｫ繝ｼ繝画ｩ溯・逕ｨ・・
+  screenshot: ^3.0.0          # Widget to Image螟画鋤
+  share_plus: ^12.0.1         # SNS蜈ｱ譛・
+  path_provider: ^2.1.5       # 繝輔ぃ繧､繝ｫ繝代せ蜿門ｾ・
+  image_gallery_saver: ^2.0.3 # 繧ｮ繝｣繝ｩ繝ｪ繝ｼ菫晏ｭ假ｼ医が繝励す繝ｧ繝ｳ・・
+  logger: ^2.0.2              # 繝ｭ繧ｮ繝ｳ繧ｰ
+  timeago: ^3.7.0             # 逶ｸ蟇ｾ譎る俣陦ｨ遉ｺ
+  fl_chart: ^0.69.0           # 繝√Ε繝ｼ繝郁｡ｨ遉ｺ
+  package_info_plus: ^8.0.0   # 圷 霑ｽ蜉: 繝舌・繧ｸ繝ｧ繝ｳ諠・ｱ蜿門ｾ・
   device_info_plus: ^12.3.0
-  uuid: ^4.3.3               # UUID生�E用
+  uuid: ^4.3.3               # UUID逕滓・逕ｨ
   image_picker: ^1.2.1
   google_generative_ai: ^0.4.7
 
