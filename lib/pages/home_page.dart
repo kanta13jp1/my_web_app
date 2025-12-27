@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -47,7 +46,7 @@ class _HomePageState extends State<HomePage> {
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 修正: CountOption.exact を削除し、引数なしの .count() に変更
+      // 引数なしの .count() を使用
       final count = await supabase
           .from('notes')
           .count()
