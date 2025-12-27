@@ -46,7 +46,6 @@ class _HomePageState extends State<HomePage> {
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 引数なしの .count() を使用
       final count = await supabase
           .from('notes')
           .count()
@@ -245,7 +244,11 @@ class _HomePageState extends State<HomePage> {
                           ]),
                       child: Row(
                         children: [
-                          Icon(isGoalMet ? Colors.bed : Colors.lock_clock,
+                          Icon(
+                              isGoalMet
+                                  ? Icons.bed
+                                  : Icons
+                                      .lock_clock, // 修正: Colors.bed -> Icons.bed
                               size: 40,
                               color: isGoalMet ? Colors.green : Colors.red),
                           const SizedBox(width: 16),
