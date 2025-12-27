@@ -4,7 +4,7 @@ import 'landing_page.dart';
 import 'note_editor_page.dart';
 import 'gemini_university_page.dart';
 import 'danshari_page.dart';
-import 'real_world_danshari_page.dart'; // Import追加
+import 'real_world_danshari_page.dart';
 import '../models/note.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,18 +15,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 必要最低限のデータのみ保持
-  List<Note> _recentNotes = [];
+  List<Note> _notes = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadRecentNotes();
+    _loadNotes();
   }
 
-  // 最新のメモを少しだけ表示（断捨離候補として認識させる）
-  Future<void> _loadRecentNotes() async {
+  // すべてのメモを取得
+  Future<void> _loadNotes() async {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -36,13 +35,12 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('user_id', userId)
           .eq('is_archived', false)
-          .order('updated_at', ascending: false)
-          .limit(5); // 最新5件のみ
+          .order('updated_at', ascending: false);
+      // .limit(5) を削除しました
 
       if (mounted) {
         setState(() {
-          _recentNotes =
-              (response as List).map((n) => Note.fromJson(n)).toList();
+          _notes = (response as List).map((n) => Note.fromJson(n)).toList();
           _isLoading = false;
         });
       }
@@ -118,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                               MaterialPageRoute(
                                   builder: (_) => const DanshariPage()),
                             );
-                            _loadRecentNotes();
+                            _loadNotes();
                           },
                         ),
                       ),
@@ -127,7 +125,7 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 24),
 
-                  //  リアル断捨離ボタン (新規追加)
+                  //  リアル断捨離ボタン
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -160,13 +158,13 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   const Text(
-                    '最近のメモ',
+                    'すべてのメモ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
 
-                  // シンプルなメモリスト
-                  if (_recentNotes.isEmpty)
+                  // メモリスト
+                  if (_notes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Text('メモはまだありません。',
@@ -174,7 +172,7 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(color: Colors.grey)),
                     )
                   else
-                    ..._recentNotes.map((note) => Card(
+                    ..._notes.map((note) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(note.title,
@@ -191,22 +189,25 @@ class _HomePageState extends State<HomePage> {
                                 MaterialPageRoute(
                                     builder: (_) => NoteEditorPage(note: note)),
                               );
-                              _loadRecentNotes();
+                              _loadNotes();
                             },
                           ),
                         )),
+
+                  // リスト下の余白（FABと被らないように）
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
 
-      // シンプルなFAB
+      // FAB
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NoteEditorPage()),
           );
-          _loadRecentNotes();
+          _loadNotes();
         },
         backgroundColor: Colors.white,
         foregroundColor: Colors.indigo,
