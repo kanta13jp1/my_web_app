@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart'; // 日付操作用
+import 'package:intl/intl.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -22,7 +22,6 @@ class _HomePageState extends State<HomePage> {
   List<Note> _notes = [];
   bool _isLoading = true;
 
-  //  今日の断捨離ノルマ設定
   final int _dailyDanshariGoal = 5;
   int _todayDanshariCount = 0;
 
@@ -39,20 +38,17 @@ class _HomePageState extends State<HomePage> {
     ]);
   }
 
-  // 今日の断捨離進捗を確認
   Future<void> _loadDailyProgress() async {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 今日の0時0分を取得
       final now = DateTime.now();
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 今日アーカイブされた（断捨離された）メモをカウント
-      // 注意: アーカイブ時に updated_at を更新する前提
-      final response = await supabase
+      // 修正: count() は int を直接返す
+      final count = await supabase
           .from('notes')
           .count(CountOption.exact)
           .eq('user_id', userId)
@@ -61,7 +57,7 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
-          _todayDanshariCount = response.count;
+          _todayDanshariCount = count;
         });
       }
     } catch (e) {
@@ -160,7 +156,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ノルマ達成判定
     final isGoalMet = _todayDanshariCount >= _dailyDanshariGoal;
     final remaining = _dailyDanshariGoal - _todayDanshariCount;
 
@@ -219,7 +214,6 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  //  ベッドタイムライセンス (寝ていいか判定)
                   GestureDetector(
                     onTap: () async {
                       if (!isGoalMet) {
@@ -228,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                           MaterialPageRoute(
                               builder: (_) => const DanshariPage()),
                         );
-                        _loadData(); // 戻ってきたら再読み込み
+                        _loadData();
                       }
                     },
                     child: Container(
@@ -290,15 +284,12 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   const Text(
                     '最重要タスク',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     children: [
                       Expanded(
@@ -334,9 +325,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -367,13 +356,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-
                   const Text(
                     'すべてのメモ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-
                   if (_notes.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(24.0),
@@ -399,14 +386,11 @@ class _HomePageState extends State<HomePage> {
                                 MaterialPageRoute(
                                     builder: (_) => NoteEditorPage(note: note)),
                               );
-                              _loadData(); // 戻ってきたら更新
+                              _loadData();
                             },
                           ),
                         )),
-
                   const SizedBox(height: 24),
-
-                  //  友達紹介カード
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -473,7 +457,6 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 80),
                 ],
               ),

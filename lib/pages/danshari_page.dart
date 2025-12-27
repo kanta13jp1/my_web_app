@@ -66,14 +66,15 @@ class _DanshariPageState extends State<DanshariPage>
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      final response = await supabase
+      // 修正: count() は int を直接返すため、.count は不要
+      final count = await supabase
           .from('notes')
           .count(CountOption.exact)
           .eq('user_id', userId)
           .eq('is_archived', true)
           .gte('updated_at', todayStart);
 
-      if (mounted) setState(() => _todayCount = response.count);
+      if (mounted) setState(() => _todayCount = count);
     } catch (_) {}
   }
 
@@ -110,7 +111,6 @@ class _DanshariPageState extends State<DanshariPage>
     await _animController.forward();
 
     try {
-      //  重要: updated_at を現在時刻に更新しないと、今日の成果としてカウントされない
       await supabase.from('notes').update({
         'is_archived': true,
         'updated_at': DateTime.now().toIso8601String()
@@ -119,19 +119,16 @@ class _DanshariPageState extends State<DanshariPage>
       final userId = supabase.auth.currentUser!.id;
       const pointsReward = 100;
 
-      // ポイント加算（エラー無視）
       try {
         await supabase.rpc('increment_points',
             params: {'user_id': userId, 'points_to_add': pointsReward});
-      } catch (_) {
-        // RPCがない場合のフォールバックは省略（簡易化）
-      }
+      } catch (_) {}
 
       if (mounted) {
         setState(() {
           _staleMemos.removeAt(0);
           _earnedPoints += pointsReward;
-          _todayCount++; // カウントアップ
+          _todayCount++;
         });
         _animController.reset();
       }
@@ -276,7 +273,6 @@ class _DanshariPageState extends State<DanshariPage>
       ),
       body: Column(
         children: [
-          //  今日のノルマ進捗バー
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -309,7 +305,6 @@ class _DanshariPageState extends State<DanshariPage>
               ],
             ),
           ),
-
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
