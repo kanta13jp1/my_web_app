@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart'; 
+import 'package:share_plus/share_plus.dart';
 
 class DanshariPage extends StatefulWidget {
   const DanshariPage({super.key});
@@ -17,7 +17,7 @@ class _DanshariPageState extends State<DanshariPage>
   bool _isLoading = true;
   bool _isAnalyzing = false;
   int _earnedPoints = 0;
-  
+
   // 今日の進捗管理
   final int _dailyGoal = 5;
   int _todayCount = 0;
@@ -61,9 +61,10 @@ class _DanshariPageState extends State<DanshariPage>
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-      
+
       final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day).toIso8601String();
+      final todayStart =
+          DateTime(now.year, now.month, now.day).toIso8601String();
 
       final response = await supabase
           .from('notes')
@@ -123,7 +124,7 @@ class _DanshariPageState extends State<DanshariPage>
         await supabase.rpc('increment_points',
             params: {'user_id': userId, 'points_to_add': pointsReward});
       } catch (_) {
-         // RPCがない場合のフォールバックは省略（簡易化）
+        // RPCがない場合のフォールバックは省略（簡易化）
       }
 
       if (mounted) {
@@ -154,7 +155,7 @@ class _DanshariPageState extends State<DanshariPage>
 
   Future<void> _analyzeCurrentNoteWithAI() async {
     if (_staleMemos.isEmpty) return;
-    
+
     final currentMemo = _staleMemos.first;
     setState(() => _isAnalyzing = true);
 
@@ -168,9 +169,11 @@ class _DanshariPageState extends State<DanshariPage>
         },
       );
 
-      if (response.status != 200) throw Exception('Server error: ${response.status}');
+      if (response.status != 200)
+        throw Exception('Server error: ${response.status}');
       final data = response.data;
-      if (data['success'] != true) throw Exception(data['error'] ?? 'Unknown error');
+      if (data['success'] != true)
+        throw Exception(data['error'] ?? 'Unknown error');
 
       if (mounted) {
         _showAnalysisResultDialog(data['result']);
@@ -213,7 +216,9 @@ class _DanshariPageState extends State<DanshariPage>
         ),
         actions: [
           TextButton.icon(
-            onPressed: () { _shareResult(result); },
+            onPressed: () {
+              _shareResult(result);
+            },
             icon: const Icon(Icons.share),
             label: const Text('結果をシェア'),
           ),
@@ -226,7 +231,9 @@ class _DanshariPageState extends State<DanshariPage>
               Navigator.pop(context);
               _executeDanshari();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white),
             icon: const Icon(Icons.delete_forever),
             label: const Text('捨てる'),
           ),
@@ -257,7 +264,10 @@ class _DanshariPageState extends State<DanshariPage>
                 const SizedBox(width: 4),
                 Text(
                   '+$_earnedPoints pt',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 18),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber,
+                      fontSize: 18),
                 ),
               ],
             ),
@@ -276,12 +286,13 @@ class _DanshariPageState extends State<DanshariPage>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(isMet ? ' 今日のノルマ達成！' : '今日のノルマ: 残り ${_dailyGoal - _todayCount} 件',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        color: isMet ? Colors.green : Colors.redAccent
-                      )
-                    ),
+                    Text(
+                        isMet
+                            ? ' 今日のノルマ達成！'
+                            : '今日のノルマ: 残り ${_dailyGoal - _todayCount} 件',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isMet ? Colors.green : Colors.redAccent)),
                     Text('$_todayCount / $_dailyGoal'),
                   ],
                 ),
@@ -301,10 +312,10 @@ class _DanshariPageState extends State<DanshariPage>
 
           Expanded(
             child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _staleMemos.isEmpty
-                  ? _buildCompletionView()
-                  : _buildDanshariView(),
+                ? const Center(child: CircularProgressIndicator())
+                : _staleMemos.isEmpty
+                    ? _buildCompletionView()
+                    : _buildDanshariView(),
           ),
         ],
       ),
@@ -316,15 +327,21 @@ class _DanshariPageState extends State<DanshariPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_outline, size: 100, color: Colors.green),
+          const Icon(Icons.check_circle_outline,
+              size: 100, color: Colors.green),
           const SizedBox(height: 20),
-          const Text('All Clean!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const Text('All Clean!',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text('今日の分はもうありません。\n素晴らしい！', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey)),
+          const Text('今日の分はもうありません。\n素晴らしい！',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12)),
+            style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12)),
             child: const Text('ホームに戻る'),
           ),
         ],
@@ -342,9 +359,13 @@ class _DanshariPageState extends State<DanshariPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('このメモはまだ必要ですか？', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.bold)),
+          const Text('このメモはまだ必要ですか？',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
-
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -352,7 +373,8 @@ class _DanshariPageState extends State<DanshariPage>
                 position: _slideAnimation,
                 child: Card(
                   elevation: 8,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
@@ -360,14 +382,23 @@ class _DanshariPageState extends State<DanshariPage>
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.history, size: 16, color: Colors.grey),
+                            const Icon(Icons.history,
+                                size: 16, color: Colors.grey),
                             const SizedBox(width: 8),
-                            Text(dateStr, style: const TextStyle(color: Colors.grey)),
+                            Text(dateStr,
+                                style: const TextStyle(color: Colors.grey)),
                             const Spacer(),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                              child: const Text('断捨離候補', style: TextStyle(fontSize: 12, color: Colors.amber, fontWeight: FontWeight.bold)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: const Text('断捨離候補',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.amber,
+                                      fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
@@ -387,28 +418,27 @@ class _DanshariPageState extends State<DanshariPage>
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
           Center(
             child: _isAnalyzing
-              ? const CircularProgressIndicator()
-              : ElevatedButton.icon(
-                  onPressed: _analyzeCurrentNoteWithAI,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo.shade50,
-                    foregroundColor: Colors.indigo,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ? const CircularProgressIndicator()
+                : ElevatedButton.icon(
+                    onPressed: _analyzeCurrentNoteWithAI,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo.shade50,
+                      foregroundColor: Colors.indigo,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
+                    ),
+                    icon: const Icon(Icons.psychology),
+                    label: const Text('AI鬼コーチの判定を受ける',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  icon: const Icon(Icons.psychology),
-                  label: const Text('AI鬼コーチの判定を受ける', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
           ),
-
           const SizedBox(height: 20),
-
           Row(
             children: [
               Expanded(
@@ -416,7 +446,9 @@ class _DanshariPageState extends State<DanshariPage>
                   onPressed: _keepMemo,
                   icon: const Icon(Icons.refresh),
                   label: const Text('まだ残す'),
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), foregroundColor: Colors.grey),
+                  style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      foregroundColor: Colors.grey),
                 ),
               ),
               const SizedBox(width: 16),
@@ -426,7 +458,11 @@ class _DanshariPageState extends State<DanshariPage>
                   onPressed: _executeDanshari,
                   icon: const Icon(Icons.delete_forever),
                   label: const Text('捨ててスッキリ (+100pt)'),
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.redAccent, foregroundColor: Colors.white, elevation: 4),
+                  style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      elevation: 4),
                 ),
               ),
             ],
