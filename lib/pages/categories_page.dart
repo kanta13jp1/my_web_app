@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -41,7 +40,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        // テーブルがない場合などは静かに失敗させるか、エラーを表示
         debugPrint('Error fetching categories: $e');
       }
     }
