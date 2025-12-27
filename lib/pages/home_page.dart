@@ -4,6 +4,7 @@ import 'landing_page.dart';
 import 'note_editor_page.dart';
 import 'gemini_university_page.dart';
 import 'danshari_page.dart';
+import 'real_world_danshari_page.dart'; // Import追加
 import '../models/note.dart';
 
 class HomePage extends StatefulWidget {
@@ -121,7 +122,37 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                  
+                  //  リアル断捨離ボタン (新規追加)
+                  Container(
+                    width: double.infinity,
+                    height: 80,
+                    margin: const EdgeInsets.only(bottom: 24),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RealWorldDanshariPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo.shade50,
+                        foregroundColor: Colors.indigo,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: Colors.indigo.withOpacity(0.3)),
+                        ),
+                      ),
+                      icon: const Icon(Icons.camera_alt, size: 32),
+                      label: const Text(
+                        '現実のゴミも捨てる (AI判定)',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
                   const Text(
                     '最近のメモ',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -185,7 +216,7 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 180, //  修正: 160 -> 180 に拡大（文字数増加に対応）
+        height: 180,
         decoration: BoxDecoration(
           color: isHighlight ? color : Colors.white,
           borderRadius: BorderRadius.circular(20),

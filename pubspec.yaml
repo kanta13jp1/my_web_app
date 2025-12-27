@@ -37,6 +37,8 @@ dependencies:
   package_info_plus: ^8.0.0   # 🚨 追加: バージョン情報取得
   device_info_plus: ^12.3.0
   uuid: ^4.3.3               # UUID生成用
+  image_picker: ^1.2.1
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:
