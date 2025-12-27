@@ -24,10 +24,16 @@ class _LandingPageState extends State<LandingPage> {
     _logLandingView(); //  画面表示時にViewをカウント
   }
 
-  // 訪問数をカウントする関数
+  // 訪問数をカウントする関数 (流入元解析付き)
   Future<void> _logLandingView() async {
     try {
-      await Supabase.instance.client.rpc('increment_landing_view');
+      // URLパラメータから 'ref' を取得 (Flutter Web用)
+      final uri = Uri.base;
+      final source = uri.queryParameters['ref'] ?? 'direct';
+
+      await Supabase.instance.client.rpc('increment_landing_view', params: {
+        'source_name': source,
+      });
     } catch (e) {
       debugPrint('Analytics error: $e');
     }
