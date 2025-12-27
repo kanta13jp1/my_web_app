@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// リトライ機能付き (Rate Limit対策)
+// リトライ機能付き (Rate Limit対策) & モデル名修正版 (v2.0)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -11,8 +11,8 @@ const corsHeaders = {
 
 // Gemini API設定
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-// モデル名を具体的なバージョン指定に変更（安定性向上）
-const GEMINI_MODEL = 'gemini-1.5-flash'
+// 修正: 現在有効なモデルID (gemini-2.0-flash) を指定
+const GEMINI_MODEL = 'gemini-2.0-flash'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 interface AIRequest {
@@ -110,7 +110,7 @@ serve(async (req) => {
 
     while (attempt < maxRetries) {
       try {
-        console.log(`Calling Gemini API (Attempt ${attempt + 1}/${maxRetries})...`);
+        console.log(`Calling Gemini API (Attempt ${attempt + 1}/${maxRetries}) Model: ${GEMINI_MODEL}...`);
         geminiResponse = await fetch(
           `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
           {
@@ -122,6 +122,13 @@ serve(async (req) => {
 
         // 成功、または429(Rate Limit)以外のエラーならループを抜ける
         if (geminiResponse.ok) break;
+
+        // 404 (Not Found) の場合はモデル名ミスの可能性が高いため、即座にエラーとして終了（リトライしても無駄なので）
+        if (geminiResponse.status === 404) {
+           lastErrorDetails = await geminiResponse.text();
+           throw new Error(`Model not found (404): ${lastErrorDetails}. Check if ${GEMINI_MODEL} is valid.`);
+        }
+
         if (geminiResponse.status !== 429) {
            lastErrorDetails = await geminiResponse.text();
            break; 
@@ -133,14 +140,14 @@ serve(async (req) => {
         attempt++;
 
       } catch (e) {
-        console.error("Network error during fetch:", e);
+        console.error("Network or Model error during fetch:", e);
+        if (e.message.includes('Model not found')) throw e;
         attempt++;
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
     if (!geminiResponse || !geminiResponse.ok) {
-       // 全リトライ失敗
        if (geminiResponse?.status === 429) {
           throw new Error('Rate limit exceeded (Busy). Please try again in a minute.');
        }
