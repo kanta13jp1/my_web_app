@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class RewardsPage extends StatefulWidget {
@@ -112,7 +111,7 @@ class _RewardsPageState extends State<RewardsPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 簡易的な称号リスト（実装簡略化のため固定表示または将来的な拡張用）
+                  // 簡易的な称号リスト
                   if (_totalPoints == 0)
                     const Center(
                       child: Padding(
