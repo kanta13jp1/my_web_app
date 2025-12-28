@@ -18,14 +18,14 @@ class AISecretaryPage extends StatefulWidget {
 
 class _AISecretaryPageState extends State<AISecretaryPage> {
   bool _isLoading = false;
-  bool _isTranslating = false; // 翻訳中フラグ
+  bool _isTranslating = false;
   String? _strategyResult;
   String? _usedModel;
+  List<String> _attemptLogs = []; // ログ保存用
   String _currentStrategyType = 'today';
 
   final ImagePicker _picker = ImagePicker();
 
-  // 汎用翻訳メソッド (Edge Functionのtranslateアクションを使用)
   Future<String?> _translateText(String text) async {
     try {
       final response = await supabase.functions.invoke(
@@ -33,38 +33,33 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         body: {
           'action': 'translate',
           'content': text,
-          'targetLanguage': 'Japanese', // 日本語への翻訳を明示
+          'targetLanguage': 'Japanese'
         },
       );
-
       if (response.status != 200)
         throw Exception('Server error: ${response.status}');
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
-
       return data['result'];
     } catch (e) {
-      debugPrint('Translation error: $e');
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('翻訳エラー: $e')));
-      }
       return null;
     }
   }
 
-  // 戦略を立てる
   Future<void> _consultSecretary(String strategyType) async {
     setState(() {
       _isLoading = true;
       _currentStrategyType = strategyType;
       _strategyResult = null;
+      _attemptLogs = [];
     });
 
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-
       final notesResponse = await supabase
           .from('notes')
           .select()
@@ -72,16 +67,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           .eq('is_archived', false)
           .order('updated_at', ascending: false)
           .limit(10);
-
       final recentNotes =
           (notesResponse as List).map((n) => Note.fromJson(n)).toList();
-
       final recentNotesJson = recentNotes
-          .map((n) => {
-                'id': n.id,
-                'title': n.title,
-                'content': n.content,
-              })
+          .map((n) => {'id': n.id, 'title': n.title, 'content': n.content})
           .toList();
 
       final response = await supabase.functions.invoke(
@@ -89,7 +78,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         body: {
           'action': 'secretary_strategy',
           'strategyType': strategyType,
-          'recentNotes': recentNotesJson,
+          'recentNotes': recentNotesJson
         },
       );
 
@@ -101,55 +90,45 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
       setState(() {
         _strategyResult = data['result']?.toString() ?? '回答が得られませんでした';
         _usedModel = data['used_model']?.toString();
+        _attemptLogs = List<String>.from(data['attempt_logs'] ?? []); // ログ
       });
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('秘書との通信エラー: $e'), backgroundColor: Colors.red));
-      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // 表示されている戦略を翻訳して置換
   Future<void> _translateStrategy() async {
     if (_strategyResult == null) return;
     setState(() => _isTranslating = true);
-
     final translated = await _translateText(_strategyResult!);
-
-    if (mounted && translated != null) {
+    if (mounted && translated != null)
       setState(() {
         _strategyResult = translated;
       });
-    }
     setState(() => _isTranslating = false);
   }
 
-  // カメラ/画像からタスクを追加
   Future<void> _addTaskFromImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(
         source: source, maxWidth: 800, imageQuality: 80);
     if (image == null) return;
-
     setState(() => _isLoading = true);
-
     try {
       final bytes = await image.readAsBytes();
       final base64Image = base64Encode(bytes);
-
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'secretary_task_from_image',
-          'imageBase64': base64Image,
+          'imageBase64': base64Image
         },
       );
-
       if (response.status != 200)
         throw Exception('Server error: ${response.status}');
-
       final data = response.data;
       if (data is! Map) throw Exception('Invalid response format');
       if (data['success'] != true)
@@ -157,7 +136,6 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
 
       final resultData = data['result'];
       Map<String, dynamic> taskData;
-
       if (resultData is Map) {
         taskData = Map<String, dynamic>.from(resultData);
       } else {
@@ -167,14 +145,12 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           'priority': '中'
         };
       }
-
       if (!mounted) return;
       await _showTaskConfirmDialog(taskData, image);
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('解析エラー: $e'), backgroundColor: Colors.red));
-      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -187,13 +163,11 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     final contentController =
         TextEditingController(text: taskData['content']?.toString() ?? '');
     String priority = taskData['priority']?.toString() ?? '中';
-
-    // ダイアログの状態管理用 (翻訳中のローディング表示など)
     bool isDialogTranslating = false;
 
     await showDialog(
       context: context,
-      barrierDismissible: false, // 誤操作防止
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
         return AlertDialog(
           title: const Text(' 新規タスク案'),
@@ -205,8 +179,6 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 Text('AI秘書が画像からタスクを起案しました。',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                 const SizedBox(height: 16),
-
-                //  翻訳ボタン
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
@@ -214,18 +186,14 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                         ? null
                         : () async {
                             setDialogState(() => isDialogTranslating = true);
-
-                            // タイトルと内容を並行して翻訳
                             final results = await Future.wait([
                               _translateText(titleController.text),
-                              _translateText(contentController.text),
+                              _translateText(contentController.text)
                             ]);
-
                             if (results[0] != null)
                               titleController.text = results[0]!;
                             if (results[1] != null)
                               contentController.text = results[1]!;
-
                             setDialogState(() => isDialogTranslating = false);
                           },
                     icon: isDialogTranslating
@@ -237,28 +205,23 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                     label: const Text('日本語に翻訳'),
                   ),
                 ),
-
                 TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                      labelText: '件名', border: OutlineInputBorder()),
-                ),
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                        labelText: '件名', border: OutlineInputBorder())),
                 const SizedBox(height: 8),
                 TextField(
-                  controller: contentController,
-                  decoration: const InputDecoration(
-                      labelText: '詳細', border: OutlineInputBorder()),
-                  maxLines: 3,
-                ),
+                    controller: contentController,
+                    decoration: const InputDecoration(
+                        labelText: '詳細', border: OutlineInputBorder()),
+                    maxLines: 3),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.priority_high,
-                        size: 16, color: Colors.orange),
-                    const SizedBox(width: 4),
-                    Text('推奨優先度: $priority'),
-                  ],
-                )
+                Row(children: [
+                  const Icon(Icons.priority_high,
+                      size: 16, color: Colors.orange),
+                  const SizedBox(width: 4),
+                  Text('推奨優先度: $priority')
+                ]),
               ],
             ),
           ),
@@ -287,7 +250,6 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     try {
       final userId = supabase.auth.currentUser!.id;
       final now = DateTime.now().toIso8601String();
-
       final noteData = await supabase
           .from('notes')
           .insert({
@@ -296,28 +258,22 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             'content': content,
             'is_archived': false,
             'created_at': now,
-            'updated_at': now,
+            'updated_at': now
           })
           .select()
           .single();
-
       final noteId = noteData['id'] as int;
-
       final bytes = await imageFile.readAsBytes();
       final size = await imageFile.length();
       final file = PlatformFile(name: imageFile.name, size: size, bytes: bytes);
-
       await AttachmentService.uploadFile(noteId: noteId, file: file);
-
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('タスクが登録されました'), backgroundColor: Colors.green));
-      }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('保存失敗: $e')));
-      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -333,14 +289,12 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         actions: [
           if (_strategyResult != null)
             IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () {
-                Share.share(
-                  '【自分株式会社 経営戦略】\n\n$_strategyResult\n\n(Generated by AI Secretary)\n#マイメモ',
-                  subject: '本日の戦略',
-                );
-              },
-            )
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  Share.share(
+                      '【自分株式会社 経営戦略】\n\n$_strategyResult\n\n(Generated by AI Secretary)\n#マイメモ',
+                      subject: '本日の戦略');
+                })
         ],
       ),
       backgroundColor: Colors.blueGrey[50],
@@ -358,26 +312,24 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                         color: Colors.grey)),
                 const SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStrategyButton('今', 'now', Icons.flash_on),
-                    _buildStrategyButton('今日', 'today', Icons.today),
-                    _buildStrategyButton(
-                        '今週', 'week', Icons.calendar_view_week),
-                    _buildStrategyButton('今月', 'month', Icons.calendar_month),
-                    _buildStrategyButton('今年', 'year', Icons.rocket_launch),
-                  ],
-                ),
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStrategyButton('今', 'now', Icons.flash_on),
+                      _buildStrategyButton('今日', 'today', Icons.today),
+                      _buildStrategyButton(
+                          '今週', 'week', Icons.calendar_view_week),
+                      _buildStrategyButton('今月', 'month', Icons.calendar_month),
+                      _buildStrategyButton('今年', 'year', Icons.rocket_launch)
+                    ]),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _isLoading
                       ? null
                       : () => _addTaskFromImage(ImageSource.camera),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50)),
                   icon: const Icon(Icons.add_a_photo),
                   label: const Text('視覚情報からタスクを追加 (Camera)'),
                 ),
@@ -390,16 +342,14 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 : _strategyResult == null
                     ? Center(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                             Icon(Icons.assistant,
                                 size: 80, color: Colors.blueGrey[200]),
                             const SizedBox(height: 16),
                             const Text('「期間」を選択して、戦略立案を指示してください。',
-                                style: TextStyle(color: Colors.grey)),
-                          ],
-                        ),
-                      )
+                                style: TextStyle(color: Colors.grey))
+                          ]))
                     : SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -409,20 +359,36 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 if (_usedModel != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: Colors.amber[100],
-                                        borderRadius: BorderRadius.circular(4)),
-                                    child: Text('Strategist: $_usedModel',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.amber[900],
-                                            fontWeight: FontWeight.bold)),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                            color: Colors.amber[100],
+                                            borderRadius:
+                                                BorderRadius.circular(4)),
+                                        child: Text('Strategist: $_usedModel',
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.amber[900],
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      //  失敗ログ表示
+                                      if (_attemptLogs.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 4.0),
+                                          child: Text(
+                                              '(${_attemptLogs.length} attempts failed)',
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.red[300])),
+                                        )
+                                    ],
                                   ),
-
-                                //  結果画面の翻訳ボタン
                                 TextButton.icon(
                                   onPressed: _isTranslating
                                       ? null
@@ -438,21 +404,33 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            MarkdownBody(
-                              data: _strategyResult!,
-                              styleSheet: MarkdownStyleSheet(
-                                h1: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.indigo),
-                                h2: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87),
-                                p: const TextStyle(fontSize: 16, height: 1.6),
+                            //  失敗ログ詳細（タップで展開できるようにするとベストだが、今回はシンプルにリスト表示）
+                            if (_attemptLogs.isNotEmpty)
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Retry Logs:',
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey)),
+                                    ..._attemptLogs.map((log) => Text(' $log',
+                                        style: const TextStyle(
+                                            fontSize: 10,
+                                            fontFamily: 'monospace',
+                                            color: Colors.grey))),
+                                  ],
+                                ),
                               ),
-                            ),
+
+                            const SizedBox(height: 8),
+                            MarkdownBody(data: _strategyResult!),
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -472,9 +450,8 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.indigo : Colors.grey[200],
-              shape: BoxShape.circle,
-            ),
+                color: isSelected ? Colors.indigo : Colors.grey[200],
+                shape: BoxShape.circle),
             child: Icon(icon,
                 color: isSelected ? Colors.white : Colors.grey[600], size: 20),
           ),

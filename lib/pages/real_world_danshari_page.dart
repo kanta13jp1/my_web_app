@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:file_picker/file_picker.dart'; // PlatformFile用に追加
+import 'package:file_picker/file_picker.dart';
 import '../main.dart';
-import '../services/attachment_service.dart'; // AttachmentServiceを追加
+import '../services/attachment_service.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -23,6 +23,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   bool _isRegistering = false;
   String? _analysisResult;
   String? _usedModel;
+  List<String> _attemptLogs = []; // 失敗ログ保存用
 
   Future<void> _getImage(ImageSource source) async {
     final pickedFile = await picker.pickImage(
@@ -36,6 +37,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         _image = pickedFile;
         _analysisResult = null;
         _usedModel = null;
+        _attemptLogs = [];
       });
       _analyzeImage();
     }
@@ -70,6 +72,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       setState(() {
         _analysisResult = data['result'];
         _usedModel = data['used_model'];
+        _attemptLogs = List<String>.from(data['attempt_logs'] ?? []); // ログ取得
       });
 
       if (mounted) {
@@ -97,7 +100,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     return '断捨離アイテム';
   }
 
-  //  画像を添付ファイルとしてアップロードするヘルパー
   Future<void> _uploadImageAsAttachment(int noteId) async {
     if (_image == null) return;
 
@@ -105,7 +107,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       final bytes = await _image!.readAsBytes();
       final size = await _image!.length();
 
-      // XFile -> PlatformFile 変換
       final file = PlatformFile(
         name: _image!.name,
         size: size,
@@ -118,7 +119,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       );
     } catch (e) {
       debugPrint('画像アップロードエラー: $e');
-      // 画像アップロード失敗は致命的エラーにせず、ログのみ出して続行
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,20 +129,14 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     }
   }
 
-  //  判定結果を通常のメモとして保存（画像付き）
   Future<void> _saveAsNote() async {
     if (_analysisResult == null) return;
-
     setState(() => _isRegistering = true);
-
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-
       final itemName = _extractItemName(_analysisResult!);
       final now = DateTime.now().toIso8601String();
-
-      // 1. メモを作成し、作成されたレコード（特にID）を取得
       final noteData = await supabase
           .from('notes')
           .insert({
@@ -155,18 +149,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           })
           .select()
           .single();
-
-      // 2. 取得したIDを使って画像をアップロード
       final noteId = noteData['id'] as int;
       await _uploadImageAsAttachment(noteId);
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('判定結果と画像を保存しました！'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('判定結果と画像を保存しました！'), backgroundColor: Colors.green));
         Navigator.pop(context);
         setState(() {
           _image = null;
@@ -174,30 +161,22 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red),
-        );
-      }
+            SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isRegistering = false);
     }
   }
 
-  //  実際に捨ててポイント獲得（画像付きアーカイブ）
   Future<void> _executeRealWorldDanshari() async {
     if (_analysisResult == null) return;
-
     setState(() => _isRegistering = true);
-
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-
       final itemName = _extractItemName(_analysisResult!);
       final now = DateTime.now().toIso8601String();
-
-      // 1. メモを作成 (アーカイブ済み)
       final noteData = await supabase
           .from('notes')
           .insert({
@@ -210,26 +189,17 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           })
           .select()
           .single();
-
-      // 2. 画像をアップロード
       final noteId = noteData['id'] as int;
       await _uploadImageAsAttachment(noteId);
-
-      // 3. ポイント加算
       const pointsReward = 100;
       try {
         await supabase.rpc('increment_points',
             params: {'user_id': userId, 'points_to_add': pointsReward});
       } catch (_) {}
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('「$itemName」を断捨離しました！\n画像も記録しました (+100pt)'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+            backgroundColor: Colors.green));
         Navigator.pop(context);
         setState(() {
           _image = null;
@@ -237,11 +207,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('登録エラー: $e'), backgroundColor: Colors.red),
-        );
-      }
+            SnackBar(content: Text('登録エラー: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isRegistering = false);
     }
@@ -250,10 +218,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   void _shareResult(String result) {
     final shortResult = result.split('\n').take(5).join('\n');
     final box = context.findRenderObject() as RenderBox?;
-
     final modelInfo =
         _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: Gemini 14モデル総力戦)";
-
     final patterns = [
       {
         'text':
@@ -275,46 +241,16 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             '片付けられない私 vs 14体のAI \n「どれか1つくらい許してくれるだろう」と思ったら、全員に「捨てろ」と言われました。',
         'ref': 'share_pattern_d_desperate'
       },
-      {
-        'text':
-            '私の部屋のガラクタを判定するために、Googleの最新AIリソースを湯水のように使っています。\nコスト度外視の全力判定結果がこちら',
-        'ref': 'share_pattern_e_high_cost'
-      },
-      {
-        'text': '1対1なら無視できたけど、1対14は無理。\nGeminiの歴代モデル全員による「合議制」で、断捨離を迫られています。',
-        'ref': 'share_pattern_f_majority'
-      },
-      {
-        'text':
-            'Gemini 3.0 Previewを含む最新AI軍団に、私の部屋を晒しました。\n未来の技術で、過去の遺物を捨てています。',
-        'ref': 'share_pattern_g_future_tech'
-      },
-      {
-        'text': 'AIに忖度は通用しない。\n14種類のモデルが「それはゴミです」と即答してきました。ぐうの音も出ない判定結果',
-        'ref': 'share_pattern_h_no_mercy'
-      },
-      {
-        'text': '見てください。\nこれが14種類の超高性能AIに「汚部屋」と認定された、伝説のアイテムです。',
-        'ref': 'share_pattern_i_shame'
-      },
-      {
-        'text': '断捨離の最終兵器。\nスマホをかざすだけで、14のAIが「捨てる理由」を論理的に叩きつけてきます。',
-        'ref': 'share_pattern_j_weapon'
-      },
     ];
-
     final random = Random();
     final selected = patterns[random.nextInt(patterns.length)];
     final shareText =
         '${selected['text']}\n\n$modelInfo\n$shortResult\n...\n\nあなたも無料で診断\n#マイメモ #Gemini #断捨離';
     final shareUrl = 'https://my-web-app-b67f4.web.app/?ref=${selected['ref']}';
-
-    Share.share(
-      '$shareText\n$shareUrl',
-      subject: 'AI断捨離コーチの判定',
-      sharePositionOrigin:
-          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
-    );
+    Share.share('$shareText\n$shareUrl',
+        subject: 'AI断捨離コーチの判定',
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null);
   }
 
   void _showAnalysisResultDialog(String result) {
@@ -322,13 +258,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       context: context,
       builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
         return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.psychology, color: Colors.indigo),
-              SizedBox(width: 8),
-              Text('鬼コーチの判定'),
-            ],
-          ),
+          title: const Row(children: [
+            Icon(Icons.psychology, color: Colors.indigo),
+            SizedBox(width: 8),
+            Text('鬼コーチの判定')
+          ]),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,21 +274,48 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      color: Colors.amber.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '担当AI: $_usedModel',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.amber.shade900,
+                        color: Colors.amber.shade100,
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Text('担当AI: $_usedModel',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.amber.shade900,
+                            fontWeight: FontWeight.bold)),
+                  ),
+
+                //  失敗ログの表示エリア
+                if (_attemptLogs.isNotEmpty)
+                  ExpansionTile(
+                    title: Text(
+                      ' ${_attemptLogs.length}つのモデルが脱落しました',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.red,
                           fontWeight: FontWeight.bold),
                     ),
+                    dense: true,
+                    tilePadding: EdgeInsets.zero,
+                    children: _attemptLogs
+                        .map((log) => Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 16, bottom: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.close,
+                                      size: 12, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  Text(log,
+                                      style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey,
+                                          fontFamily: 'monospace')),
+                                ],
+                              ),
+                            ))
+                        .toList(),
                   ),
-                Text(
-                  result,
-                  style: const TextStyle(fontSize: 16, height: 1.5),
-                ),
+
+                Text(result, style: const TextStyle(fontSize: 16, height: 1.5)),
               ],
             ),
           ),
@@ -363,13 +324,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () => _shareResult(result),
-                  child: const Icon(Icons.share),
-                ),
+                    onPressed: () => _shareResult(result),
+                    child: const Icon(Icons.share)),
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('閉じる'),
-                ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('閉じる')),
               ],
             ),
             const SizedBox(height: 8),
@@ -384,10 +343,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           await _saveAsNote();
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade50,
-                    foregroundColor: Colors.blue.shade800,
-                    elevation: 0,
-                  ),
+                      backgroundColor: Colors.blue.shade50,
+                      foregroundColor: Colors.blue.shade800,
+                      elevation: 0),
                   icon: const Icon(Icons.note_add),
                   label: const Text('画像付きでメモに保存'),
                 ),
@@ -400,9 +358,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           await _executeRealWorldDanshari();
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white),
                   icon: _isRegistering
                       ? const SizedBox(
                           width: 16,
@@ -424,50 +381,42 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(' リアル断捨離判定'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-      ),
+          title: const Text(' リアル断捨離判定'),
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '捨てられないモノを撮影してください。\n14種類の最新AIモデルが、あなたの代わりに断捨離を即決します。',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
+            const Text('捨てられないモノを撮影してください。\n14種類の最新AIモデルが、あなたの代わりに断捨離を即決します。',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 32),
             if (_image != null) ...[
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: SizedBox(
-                  height: 300,
-                  child: kIsWeb
-                      ? Image.network(_image!.path, fit: BoxFit.cover)
-                      : Image.file(File(_image!.path), fit: BoxFit.cover),
-                ),
-              ),
+                  borderRadius: BorderRadius.circular(20),
+                  child: SizedBox(
+                      height: 300,
+                      child: kIsWeb
+                          ? Image.network(_image!.path, fit: BoxFit.cover)
+                          : Image.file(File(_image!.path), fit: BoxFit.cover))),
               const SizedBox(height: 32),
             ],
             if (_isAnalyzing)
-              const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('14種類のAI脳みそに問い合わせ中...',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              )
+              const Column(children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('14種類のAI脳みそに問い合わせ中...',
+                    style: TextStyle(fontWeight: FontWeight.bold))
+              ])
             else ...[
               ElevatedButton.icon(
                 onPressed: () => _getImage(ImageSource.camera),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                ),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white),
                 icon: const Icon(Icons.camera_alt, size: 32),
                 label: const Text('カメラで撮影', style: TextStyle(fontSize: 20)),
               ),
@@ -475,8 +424,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               OutlinedButton.icon(
                 onPressed: () => _getImage(ImageSource.gallery),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                ),
+                    padding: const EdgeInsets.symmetric(vertical: 20)),
                 icon: const Icon(Icons.photo_library),
                 label: const Text('アルバムから選択'),
               ),

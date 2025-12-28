@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & 日本語強制強化版
+// 14モデル総当たり & 日本語強制 & 試行ログ返却版
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -11,7 +11,7 @@ const corsHeaders = {
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
-//  14種のモデル全てを試行リスト (このアプリの最大の売り)
+//  14種のモデル全てを試行リスト
 const MODELS_TO_TRY = [
   'gemini-3-flash-preview',
   'gemini-2.5-flash-lite',
@@ -80,7 +80,6 @@ serve(async (req) => {
       try {
         console.log(`Trying model: ${model}...`)
         
-        // JSONモードは一部モデルのみ対応のため、エラー回避のためbodyをクローン
         let currentBody = JSON.parse(JSON.stringify(requestBody));
         
         const response = await fetch(
@@ -103,10 +102,9 @@ serve(async (req) => {
             break;
           }
         } else {
-          const errorText = await response.text()
-          logMessages.push(`${model}: ${response.status}`)
+          logMessages.push(`${model}: ${response.status}`) // 失敗ログを記録
           console.warn(`Model ${model} failed: ${response.status}`)
-          await new Promise(r => setTimeout(r, 500)) 
+          await new Promise(r => setTimeout(r, 300)) 
         }
       } catch (e) {
         logMessages.push(`${model}: Exception`)
@@ -135,8 +133,14 @@ serve(async (req) => {
       note: `Model: ${usedModel}`
     })
 
+    //  attempt_logs を返却に追加
     return new Response(
-      JSON.stringify({ success: true, result: parsedResult, used_model: usedModel }),
+      JSON.stringify({ 
+        success: true, 
+        result: parsedResult, 
+        used_model: usedModel,
+        attempt_logs: logMessages // ここに追加！
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
@@ -233,7 +237,6 @@ function buildRequestBody(data: AIRequest): any {
       const promptText = `**Output in Japanese.**\n断捨離コーチとして、以下のメモが必要か判定せよ。\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【鬼コーチの理由】\n【助言】`;
       body.contents = [{ parts: [{ text: promptText }] }];
   } else {
-       // その他
        body.contents = [{ parts: [{ text: content || '' }] }];
   }
   return body
@@ -250,7 +253,6 @@ function parseJsonResult(result: string): any {
       return JSON.parse(cleaned);
     } catch (e) {
       console.error("JSON Parse Error", e);
-      // JSONパースエラー時は、なんとか日本語で返す
       return { 
           title: '画像解析完了', 
           content: 'タスクの詳細を読み取れませんでした。内容を編集して保存してください。\n\n解析結果:\n' + result, 
