@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// リトライ機能付き (Rate Limit対策) & モデル名修正版 (v2.0)
+// 14種のモデル総当たりフォールバック機能付き
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -9,11 +9,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Gemini API設定
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-// 修正: 現在有効なモデルID (gemini-2.0-flash) を指定
-const GEMINI_MODEL = 'gemini-2.0-flash'
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+
+//  14種のモデル全てを試行リストに追加
+// 汎用性が高く高速なものを上位に、特殊的実験的なものを下位に配置しています
+const MODELS_TO_TRY = [
+  // 1. 軽量高速最新 (Flash系)
+  'gemini-3-flash-preview',
+  'gemini-2.5-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-2.5-flash-lite-preview-09-2025',
+  'gemini-2.5-flash-preview-09-2025',
+
+  // 2. 高性能プロ版 (Pro系)
+  'gemini-pro-latest',
+  'gemini-3-pro-preview',
+  
+  // 3. 画像特化 (テキストのみの場合エラーになる可能性あり -> スキップされます)
+  'gemini-2.5-flash-image',
+  'gemini-2.5-flash-image-preview',
+  'gemini-3-pro-image-preview',
+  'nano-banana-pro-preview', // 謎のモデルも試行
+
+  // 4. 特殊用途実験的
+  'deep-research-pro-preview-12-2025',
+  'gemini-2.5-computer-use-preview-10-2025',
+  'gemini-robotics-er-1.5-preview'
+]
+
+const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 interface AIRequest {
   action: 'improve' | 'summarize' | 'expand' | 'translate' | 'suggest_title' | 'task_recommendations' | 'analyze_image' | 'analyze_note_text'
@@ -45,21 +69,104 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     if (userError || !user) throw new Error('Unauthorized')
 
-    const { action, content, title, imageBase64, language = 'ja', targetLanguage = 'en', userId, recentNotes, userStats }: AIRequest = await req.json()
+    const requestData: AIRequest = await req.json()
+    const { action } = requestData
 
     if (!action) throw new Error('Missing required parameters')
     if (!GEMINI_API_KEY) throw new Error('Google AI API key not configured')
 
-    let requestBody: any = {
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000,
-      }
-    };
+    const requestBody = buildRequestBody(requestData)
 
-    // プロンプト構築
-    if (action === 'analyze_image') {
-      if (!imageBase64) throw new Error('Image data missing')
+    //  総当たり実行ループ
+    let finalResult = ''
+    let usedModel = ''
+    let success = false
+    let logMessages: string[] = []
+
+    for (const model of MODELS_TO_TRY) {
+      try {
+        console.log(`Trying model: ${model}...`)
+        const response = await fetch(
+          `${BASE_URL}/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          }
+        )
+
+        if (response.ok) {
+          const data = await response.json()
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+          if (text) {
+            finalResult = text
+            usedModel = model
+            success = true
+            console.log(` Success with ${model}`)
+            break; // 成功！ループを抜ける
+          }
+        } else {
+          // エラー時
+          const errorText = await response.text()
+          const status = response.status
+          logMessages.push(`${model}: ${status}`)
+          console.warn(` Model ${model} failed (${status})`)
+          
+          // APIへの負荷を考慮し、少しだけ待機して次へ
+          await new Promise(r => setTimeout(r, 300))
+        }
+      } catch (e) {
+        console.error(`Error with model ${model}:`, e)
+        logMessages.push(`${model}: Exception`)
+      }
+    }
+
+    if (!success) {
+      throw new Error(`All 14 models failed. Logs: ${logMessages.join(', ')}`)
+    }
+
+    // 結果の整形
+    finalResult = parseResult(finalResult, action)
+
+    // ログ保存 (実際に成功したモデル名を記録)
+    const inputLength = JSON.stringify(requestBody).length
+    const outputLength = finalResult.length
+    await supabaseClient.from('ai_usage_log').insert({
+      user_id: user.id,
+      action: action,
+      input_tokens: Math.ceil(inputLength / 4),
+      output_tokens: Math.ceil(outputLength / 4),
+      total_tokens: Math.ceil((inputLength + outputLength) / 4),
+      cost_estimate: 0,
+      note: `Model: ${usedModel}` // 成功したモデル名
+    })
+
+    return new Response(
+      JSON.stringify({ success: true, result: finalResult, used_model: usedModel }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
+
+  } catch (error) {
+    console.error('AI Service Error:', error)
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+    )
+  }
+})
+
+function buildRequestBody(data: AIRequest): any {
+  const { action, content, title, imageBase64, language, targetLanguage, recentNotes, userStats } = data
+  
+  let body: any = {
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2000,
+    },
+    contents: []
+  }
+
+  if (action === 'analyze_image') {
       const promptText = `
         あなたは「断捨離の鬼コーチ」です。ユーザーがアップロードした写真の物体を見て、以下のフォーマットで回答してください。
         口調は少し厳しめで、ユーモアを交えて「捨てるべき理由」を力説してください。
@@ -76,134 +183,41 @@ serve(async (req) => {
         【捨て方ヒント】
         （一般的に何ゴミになるか、どう処分すべきか）
       `;
-      requestBody.contents = [{
+      body.contents = [{
         parts: [
           { text: promptText },
           { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
         ]
       }];
-    } else if (action === 'analyze_note_text') {
+  } else if (action === 'analyze_note_text') {
       const promptText = `
         あなたは「デジタルの断捨離鬼コーチ」です。
         ユーザーがため込んだ以下のメモを見て、今後この情報が必要か否かを厳しく判定してください。
-        
         【メモタイトル】: ${title || '(なし)'}
         【メモ内容】: ${content || '(なし)'}
-
         以下のフォーマットで回答せよ。
         【判定】（「即アーカイブ推奨」または「保留」）
         【鬼コーチの理由】（なぜこの情報が不要か、デジタルゴミになっている理由を痛烈に指摘）
         【助言】（デジタル情報を整理するための短い一言）
       `;
-      requestBody.contents = [{ parts: [{ text: promptText }] }];
-    } else {
-      const prompt = buildPrompt(action, content, language, targetLanguage, recentNotes, userStats)
-      requestBody.contents = [{ parts: [{ text: prompt }] }];
-      if (action === 'task_recommendations') requestBody.generationConfig.responseMimeType = 'application/json';
-    }
-
-    //  リトライロジック (最大3回試行)
-    let geminiResponse;
-    let attempt = 0;
-    const maxRetries = 3;
-    let lastErrorDetails = '';
-
-    while (attempt < maxRetries) {
-      try {
-        console.log(`Calling Gemini API (Attempt ${attempt + 1}/${maxRetries}) Model: ${GEMINI_MODEL}...`);
-        geminiResponse = await fetch(
-          `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody),
-          }
-        );
-
-        // 成功、または429(Rate Limit)以外のエラーならループを抜ける
-        if (geminiResponse.ok) break;
-
-        // 404 (Not Found) の場合はモデル名ミスの可能性が高いため、即座にエラーとして終了（リトライしても無駄なので）
-        if (geminiResponse.status === 404) {
-           lastErrorDetails = await geminiResponse.text();
-           throw new Error(`Model not found (404): ${lastErrorDetails}. Check if ${GEMINI_MODEL} is valid.`);
-        }
-
-        if (geminiResponse.status !== 429) {
-           lastErrorDetails = await geminiResponse.text();
-           break; 
-        }
-
-        // 429エラーの場合のみリトライ
-        console.warn(`Rate limit exceeded. Retrying in ${(attempt + 1) * 2} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1))); // 2秒, 4秒...と待機
-        attempt++;
-
-      } catch (e) {
-        console.error("Network or Model error during fetch:", e);
-        if (e.message.includes('Model not found')) throw e;
-        attempt++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      body.contents = [{ parts: [{ text: promptText }] }];
+  } else {
+      let prompt = ''
+      switch (action) {
+        case 'improve': prompt = `文章校正:\n${content}`; break;
+        case 'summarize': prompt = `要約:\n${content}`; break;
+        case 'expand': prompt = `アイデア展開:\n${content}`; break;
+        case 'translate': prompt = `${targetLanguage}へ翻訳:\n${content}`; break;
+        case 'suggest_title': prompt = `タイトル案3つ:\n${content}`; break;
+        case 'task_recommendations':
+          const notesContent = recentNotes!.map((note: any, i: number) => `メモ${i+1}: ${note.title}`).join('\n');
+          prompt = `戦略参謀として、以下のユーザー状況に基づきJSONで助言せよ。\nレベル:${userStats.current_level}\nメモ:\n${notesContent}\n出力キー:daily,weekly,monthly,yearly,insights`;
+          body.generationConfig.responseMimeType = 'application/json';
+          break;
       }
-    }
-
-    if (!geminiResponse || !geminiResponse.ok) {
-       if (geminiResponse?.status === 429) {
-          throw new Error('Rate limit exceeded (Busy). Please try again in a minute.');
-       }
-       throw new Error(`Gemini API error: ${geminiResponse?.status} - ${lastErrorDetails}`);
-    }
-
-    const geminiData = await geminiResponse.json()
-    let result = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    if (!result) throw new Error('No valid response text from Gemini API')
-
-    result = parseResult(result, action)
-
-    // Token計算とログ保存
-    let inputTokenSource = typeof requestBody.contents[0].parts[0].text === 'string' ? requestBody.contents[0].parts[0].text : JSON.stringify(requestBody.contents);
-    const inputTokens = Math.ceil(inputTokenSource.length / 4)
-    const outputTokens = Math.ceil((typeof result === 'string' ? result : JSON.stringify(result)).length / 4)
-
-    await supabaseClient.from('ai_usage_log').insert({
-      user_id: user.id,
-      action: action,
-      input_tokens: inputTokens,
-      output_tokens: outputTokens,
-      total_tokens: inputTokens + outputTokens,
-      cost_estimate: 0,
-    })
-
-    return new Response(
-      JSON.stringify({ success: true, result: result, action: action }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    )
-
-  } catch (error) {
-    console.error('Error in AI assistant:', error)
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    )
+      body.contents = [{ parts: [{ text: prompt }] }];
   }
-})
-
-// Helper Functions
-function buildPrompt(action: string, content: string | undefined, language: string, targetLanguage: string, recentNotes: any[] | undefined, userStats: any | undefined): string {
-  let prompt = ''
-  switch (action) {
-    case 'improve': prompt = `文章校正:\n${content}`; break;
-    case 'summarize': prompt = `要約:\n${content}`; break;
-    case 'expand': prompt = `アイデア展開:\n${content}`; break;
-    case 'translate': prompt = `${targetLanguage}へ翻訳:\n${content}`; break;
-    case 'suggest_title': prompt = `タイトル案3つ:\n${content}`; break;
-    case 'task_recommendations':
-      const notesContent = recentNotes!.map((note, i) => `メモ${i+1}: ${note.title}`).join('\n');
-      prompt = `戦略参謀として、以下のユーザー状況に基づきJSONで助言せよ。\nレベル:${userStats.current_level}\nメモ:\n${notesContent}\n出力キー:daily,weekly,monthly,yearly,insights`;
-      break;
-    default: throw new Error('Invalid action')
-  }
-  return prompt
+  return body
 }
 
 function parseResult(result: string, action: string): any {
