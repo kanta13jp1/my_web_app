@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart'; // PlatformFile用に追加
 import '../main.dart';
+import '../services/attachment_service.dart'; // AttachmentServiceを追加
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -95,7 +97,39 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     return '断捨離アイテム';
   }
 
-  //  判定結果を通常のメモとして保存
+  //  画像を添付ファイルとしてアップロードするヘルパー
+  Future<void> _uploadImageAsAttachment(int noteId) async {
+    if (_image == null) return;
+
+    try {
+      final bytes = await _image!.readAsBytes();
+      final size = await _image!.length();
+
+      // XFile -> PlatformFile 変換
+      final file = PlatformFile(
+        name: _image!.name,
+        size: size,
+        bytes: bytes,
+      );
+
+      await AttachmentService.uploadFile(
+        noteId: noteId,
+        file: file,
+      );
+    } catch (e) {
+      debugPrint('画像アップロードエラー: $e');
+      // 画像アップロード失敗は致命的エラーにせず、ログのみ出して続行
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('画像の保存に失敗しました: $e'),
+              backgroundColor: Colors.orange),
+        );
+      }
+    }
+  }
+
+  //  判定結果を通常のメモとして保存（画像付き）
   Future<void> _saveAsNote() async {
     if (_analysisResult == null) return;
 
@@ -108,19 +142,28 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       final itemName = _extractItemName(_analysisResult!);
       final now = DateTime.now().toIso8601String();
 
-      await supabase.from('notes').insert({
-        'user_id': userId,
-        'title': ' 判定: $itemName',
-        'content': _analysisResult,
-        'is_archived': false, // アーカイブせず、アクティブなメモとして保存
-        'created_at': now,
-        'updated_at': now,
-      });
+      // 1. メモを作成し、作成されたレコード（特にID）を取得
+      final noteData = await supabase
+          .from('notes')
+          .insert({
+            'user_id': userId,
+            'title': ' 判定: $itemName',
+            'content': _analysisResult,
+            'is_archived': false,
+            'created_at': now,
+            'updated_at': now,
+          })
+          .select()
+          .single();
+
+      // 2. 取得したIDを使って画像をアップロード
+      final noteId = noteData['id'] as int;
+      await _uploadImageAsAttachment(noteId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('判定結果をメモに保存しました！'),
+            content: Text('判定結果と画像を保存しました！'),
             backgroundColor: Colors.green,
           ),
         );
@@ -141,7 +184,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     }
   }
 
-  //  実際に捨ててポイント獲得（アーカイブ済みとして保存）
+  //  実際に捨ててポイント獲得（画像付きアーカイブ）
   Future<void> _executeRealWorldDanshari() async {
     if (_analysisResult == null) return;
 
@@ -154,15 +197,25 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       final itemName = _extractItemName(_analysisResult!);
       final now = DateTime.now().toIso8601String();
 
-      await supabase.from('notes').insert({
-        'user_id': userId,
-        'title': ' 断捨離: $itemName',
-        'content': _analysisResult,
-        'is_archived': true, // 最初からアーカイブ済み
-        'created_at': now,
-        'updated_at': now,
-      });
+      // 1. メモを作成 (アーカイブ済み)
+      final noteData = await supabase
+          .from('notes')
+          .insert({
+            'user_id': userId,
+            'title': ' 断捨離: $itemName',
+            'content': _analysisResult,
+            'is_archived': true,
+            'created_at': now,
+            'updated_at': now,
+          })
+          .select()
+          .single();
 
+      // 2. 画像をアップロード
+      final noteId = noteData['id'] as int;
+      await _uploadImageAsAttachment(noteId);
+
+      // 3. ポイント加算
       const pointsReward = 100;
       try {
         await supabase.rpc('increment_points',
@@ -172,7 +225,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('「$itemName」を断捨離しました！\n+100pt & ノルマ達成カウント +1'),
+            content: Text('「$itemName」を断捨離しました！\n画像も記録しました (+100pt)'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
@@ -320,12 +373,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               ],
             ),
             const SizedBox(height: 8),
-
-            //  ボタンエリア
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // メモに保存（未アーカイブ）
                 ElevatedButton.icon(
                   onPressed: _isRegistering
                       ? null
@@ -339,11 +389,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     elevation: 0,
                   ),
                   icon: const Icon(Icons.note_add),
-                  label: const Text('メモとして保存する'),
+                  label: const Text('画像付きでメモに保存'),
                 ),
                 const SizedBox(height: 8),
-
-                // 実際に捨てる（アーカイブ＆ポイント）
                 ElevatedButton.icon(
                   onPressed: _isRegistering
                       ? null
@@ -362,7 +410,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
                       : const Icon(Icons.delete_forever),
-                  label: const Text('実際に捨てて +100pt'),
+                  label: const Text('画像付きで捨てる (+100pt)'),
                 ),
               ],
             )
