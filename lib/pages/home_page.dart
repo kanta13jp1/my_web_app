@@ -1,3 +1,4 @@
+import 'dart:math'; // ランダム用に必要
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -95,16 +96,71 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //  ランダムなシェア文言とURLを取得するヘルパー
+  Map<String, String> _getRandomShareContent() {
+    final patterns = [
+      {
+        'text':
+            '私のゴミを判定するためだけに、Gemini 3.0含む『14種類のAI』を総動員するアプリを使ってます\n1つがダメでも残りの13体が絶対に判定を通す...この執念、まさに鬼コーチ。',
+        'ref': 'home_pattern_a_tech_overkill'
+      },
+      {
+        'text':
+            'AI鬼コーチが14人に増殖しました\nGemini 3.0 / 2.5 / Pro... 最新モデル14種の「総当たり判定」からは、どんなゴミも逃げられません。',
+        'ref': 'home_pattern_b_demon_coach'
+      },
+      {
+        'text':
+            '【エンジニアの断捨離】\nAPI Rate Limitを回避するため、14種類のGeminiモデルをラウンドロビンで総当たり実装したアプリ。\n世界一（無駄に）可用性が高い断捨離ツールです。',
+        'ref': 'home_pattern_c_engineer'
+      },
+      {
+        'text':
+            '片付けられない私 vs 14体のAI \n「どれか1つくらい許してくれるだろう」と思ったら、全員に「捨てろ」と言われました。',
+        'ref': 'home_pattern_d_desperate'
+      },
+      {
+        'text':
+            '私の部屋のガラクタを判定するために、Googleの最新AIリソースを湯水のように使うアプリ。\nコスト度外視の全力断捨離がこちら',
+        'ref': 'home_pattern_e_high_cost'
+      },
+      {
+        'text': '1対1なら無視できたけど、1対14は無理。\nGeminiの歴代モデル全員による「合議制」で、断捨離を迫られています。',
+        'ref': 'home_pattern_f_majority'
+      },
+      {
+        'text':
+            'Gemini 3.0 Previewを含む最新AI軍団に、私の部屋を晒しています。\n未来の技術で、過去の遺物を捨てる日々。',
+        'ref': 'home_pattern_g_future_tech'
+      },
+      {
+        'text': 'AIに忖度は通用しない。\n14種類のモデルが「それはゴミです」と即答してくるアプリ。ぐうの音も出ません。',
+        'ref': 'home_pattern_h_no_mercy'
+      },
+      {
+        'text': '私の「汚部屋」画像が、14種類の超高性能AIによって解析されています。\nデジタル技術の正しい無駄遣い。',
+        'ref': 'home_pattern_i_shame'
+      },
+      {
+        'text': '断捨離の最終兵器。\nスマホをかざすだけで、14のAIが「捨てる理由」を論理的に叩きつけてくるアプリ',
+        'ref': 'home_pattern_j_weapon'
+      },
+    ];
+
+    final random = Random();
+    return patterns[random.nextInt(patterns.length)];
+  }
+
   Future<void> _shareApp() async {
     try {
       await supabase.rpc('increment_share_count');
     } catch (_) {}
 
-    // 修正: シェア位置を指定
+    final content = _getRandomShareContent();
     final box = context.findRenderObject() as RenderBox?;
 
     await Share.share(
-      '私の部屋、AI鬼コーチに「ゴミ屋敷」判定されました\nhttps://my-web-app-b67f4.web.app/?ref=share_general',
+      '${content['text']}\nhttps://my-web-app-b67f4.web.app/?ref=${content['ref']}',
       subject: 'AI断捨離アプリで判定中',
       sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
@@ -115,11 +171,15 @@ class _HomePageState extends State<HomePage> {
     try {
       await supabase.rpc('increment_share_count');
     } catch (_) {}
-    const text =
-        'AI鬼コーチに部屋の写真を判定してもらったら、衝撃のアドバイスが...\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
-    const url = 'https://my-web-app-b67f4.web.app/?ref=x_share';
+
+    final content = _getRandomShareContent();
+    final text = '${content['text']}\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
+    final url =
+        'https://my-web-app-b67f4.web.app/?ref=${content['ref']}'; // refを動的に変更
+
     final tweetUrl = Uri.parse(
         'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
+
     if (await canLaunchUrl(tweetUrl)) {
       await launchUrl(tweetUrl, mode: LaunchMode.externalApplication);
     } else {
@@ -137,7 +197,7 @@ class _HomePageState extends State<HomePage> {
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('Xでポスト (おすすめ)'),
-                subtitle: const Text('AIの判定結果をみんなに教える'),
+                subtitle: const Text('14種類のAIの凄さをみんなに教える'),
                 onTap: () {
                   Navigator.pop(context);
                   _postToX();
