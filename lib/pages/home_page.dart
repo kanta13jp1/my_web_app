@@ -99,9 +99,15 @@ class _HomePageState extends State<HomePage> {
     try {
       await supabase.rpc('increment_share_count');
     } catch (_) {}
+
+    // 修正: シェア位置を指定
+    final box = context.findRenderObject() as RenderBox?;
+
     await Share.share(
       '私の部屋、AI鬼コーチに「ゴミ屋敷」判定されました\nhttps://my-web-app-b67f4.web.app/?ref=share_general',
       subject: 'AI断捨離アプリで判定中',
+      sharePositionOrigin:
+          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );
   }
 
@@ -244,11 +250,7 @@ class _HomePageState extends State<HomePage> {
                           ]),
                       child: Row(
                         children: [
-                          Icon(
-                              isGoalMet
-                                  ? Icons.bed
-                                  : Icons
-                                      .lock_clock, // 修正: Colors.bed -> Icons.bed
+                          Icon(isGoalMet ? Icons.bed : Icons.lock_clock,
                               size: 40,
                               color: isGoalMet ? Colors.green : Colors.red),
                           const SizedBox(width: 16),
