@@ -21,6 +21,9 @@ class _DanshariPageState extends State<DanshariPage>
   final int _dailyGoal = 5;
   int _todayCount = 0;
 
+  // 判定に使用されたモデル名を保持
+  String? _usedModel;
+
   late AnimationController _animController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
@@ -65,7 +68,6 @@ class _DanshariPageState extends State<DanshariPage>
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 修正: CountOption.exact を削除
       final count = await supabase
           .from('notes')
           .count()
@@ -128,6 +130,7 @@ class _DanshariPageState extends State<DanshariPage>
           _staleMemos.removeAt(0);
           _earnedPoints += pointsReward;
           _todayCount++;
+          _usedModel = null; // リセット
         });
         _animController.reset();
       }
@@ -146,6 +149,7 @@ class _DanshariPageState extends State<DanshariPage>
     setState(() {
       final item = _staleMemos.removeAt(0);
       _staleMemos.add(item);
+      _usedModel = null;
     });
   }
 
@@ -153,7 +157,10 @@ class _DanshariPageState extends State<DanshariPage>
     if (_staleMemos.isEmpty) return;
 
     final currentMemo = _staleMemos.first;
-    setState(() => _isAnalyzing = true);
+    setState(() {
+      _isAnalyzing = true;
+      _usedModel = null;
+    });
 
     try {
       final response = await supabase.functions.invoke(
@@ -172,6 +179,9 @@ class _DanshariPageState extends State<DanshariPage>
         throw Exception(data['error'] ?? 'Unknown error');
 
       if (mounted) {
+        setState(() {
+          _usedModel = data['used_model']; // モデル名を保存
+        });
         _showAnalysisResultDialog(data['result']);
       }
     } catch (e) {
@@ -187,9 +197,16 @@ class _DanshariPageState extends State<DanshariPage>
 
   void _shareResult(String result) {
     final shortResult = result.split('\n').take(5).join('\n');
+    final box = context.findRenderObject() as RenderBox?;
+
+    final modelInfo =
+        _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: Gemini 14モデル総力戦)";
+
     Share.share(
-      '溜め込んだメモをAI鬼コーチに判定してもらいました...\n\n$shortResult\n...\n\n#マイメモ #デジタル断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_text_result',
+      '溜め込んだメモを14種類のAIモデルに判定してもらいました...\n\n$modelInfo\n$shortResult\n...\n\n#マイメモ #デジタル断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_text_result',
       subject: 'AI断捨離コーチの診断結果',
+      sharePositionOrigin:
+          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );
   }
 
@@ -205,9 +222,33 @@ class _DanshariPageState extends State<DanshariPage>
           ],
         ),
         content: SingleChildScrollView(
-          child: Text(
-            result,
-            style: const TextStyle(fontSize: 16, height: 1.5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              //  モデル名の表示バッジ
+              if (_usedModel != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '担当AI: $_usedModel',
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              Text(
+                result,
+                style: const TextStyle(fontSize: 16, height: 1.5),
+              ),
+            ],
           ),
         ),
         actions: [
