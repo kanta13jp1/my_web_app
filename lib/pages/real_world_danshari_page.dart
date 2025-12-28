@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import '../main.dart'; // supabaseクライアントへのアクセス
+import '../main.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -18,7 +18,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   XFile? _image;
   final picker = ImagePicker();
   bool _isAnalyzing = false;
-  bool _isRegistering = false; // 登録処理中フラグ
+  bool _isRegistering = false;
   String? _analysisResult;
   String? _usedModel;
 
@@ -84,20 +84,64 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     }
   }
 
-  // AIの回答から物体名を抽出する簡易ヘルパー
   String _extractItemName(String text) {
     try {
-      // "【物体名】" の後の行を取得してみる
       final regex = RegExp(r'【物体名】\s*\n?([^\n]+)');
       final match = regex.firstMatch(text);
       if (match != null && match.groupCount >= 1) {
         return match.group(1)?.trim() ?? '謎の物体';
       }
     } catch (_) {}
-    return '断捨離したモノ';
+    return '断捨離アイテム';
   }
 
-  //  断捨離を実行してポイント＆ノルマに加算する処理
+  //  判定結果を通常のメモとして保存
+  Future<void> _saveAsNote() async {
+    if (_analysisResult == null) return;
+
+    setState(() => _isRegistering = true);
+
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final itemName = _extractItemName(_analysisResult!);
+      final now = DateTime.now().toIso8601String();
+
+      await supabase.from('notes').insert({
+        'user_id': userId,
+        'title': ' 判定: $itemName',
+        'content': _analysisResult,
+        'is_archived': false, // アーカイブせず、アクティブなメモとして保存
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('判定結果をメモに保存しました！'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+        setState(() {
+          _image = null;
+          _analysisResult = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRegistering = false);
+    }
+  }
+
+  //  実際に捨ててポイント獲得（アーカイブ済みとして保存）
   Future<void> _executeRealWorldDanshari() async {
     if (_analysisResult == null) return;
 
@@ -110,18 +154,15 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
       final itemName = _extractItemName(_analysisResult!);
       final now = DateTime.now().toIso8601String();
 
-      // 1. ノルマ達成のために、アーカイブ済みのメモとして記録する
-      // これにより home_page.dart のカウントロジックが反応します
       await supabase.from('notes').insert({
         'user_id': userId,
         'title': ' 断捨離: $itemName',
-        'content': _analysisResult, // AIの判定結果を本文に残す
-        'is_archived': true, // 最初からアーカイブ済み（＝断捨離完了）とする
+        'content': _analysisResult,
+        'is_archived': true, // 最初からアーカイブ済み
         'created_at': now,
         'updated_at': now,
       });
 
-      // 2. ポイント加算 (100pt)
       const pointsReward = 100;
       try {
         await supabase.rpc('increment_points',
@@ -136,10 +177,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-        Navigator.pop(context); // ダイアログを閉じる
-
-        // 連続で撮影したいかもしれないので画像はクリアしないでおくか、
-        // あるいはリセットするか。ここではリセットして次の撮影を促す
+        Navigator.pop(context);
         setState(() {
           _image = null;
           _analysisResult = null;
@@ -229,8 +267,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   void _showAnalysisResultDialog(String result) {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(// ダイアログ内でローディング状態を更新するために必要
-          builder: (context, setDialogState) {
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
         return AlertDialog(
           title: const Row(
             children: [
@@ -269,41 +306,66 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             ),
           ),
           actions: [
-            // シェアボタン
-            TextButton.icon(
-              onPressed: () => _shareResult(result),
-              icon: const Icon(Icons.share),
-              label: const Text('シェア'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => _shareResult(result),
+                  child: const Icon(Icons.share),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('閉じる'),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
 
-            // 閉じるボタン
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('閉じる'),
-            ),
+            //  ボタンエリア
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // メモに保存（未アーカイブ）
+                ElevatedButton.icon(
+                  onPressed: _isRegistering
+                      ? null
+                      : () async {
+                          setDialogState(() => _isRegistering = true);
+                          await _saveAsNote();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade50,
+                    foregroundColor: Colors.blue.shade800,
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.note_add),
+                  label: const Text('メモとして保存する'),
+                ),
+                const SizedBox(height: 8),
 
-            //  実際に捨てる（ポイント＆ノルマ加算）ボタン
-            ElevatedButton.icon(
-              onPressed: _isRegistering
-                  ? null
-                  : () async {
-                      setDialogState(
-                          () => _isRegistering = true); // ダイアログ内のボタンをローディングに
-                      await _executeRealWorldDanshari();
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              icon: _isRegistering
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.delete_forever),
-              label: const Text('実際に捨てる (+100pt)'),
-            ),
+                // 実際に捨てる（アーカイブ＆ポイント）
+                ElevatedButton.icon(
+                  onPressed: _isRegistering
+                      ? null
+                      : () async {
+                          setDialogState(() => _isRegistering = true);
+                          await _executeRealWorldDanshari();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: _isRegistering
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.delete_forever),
+                  label: const Text('実際に捨てて +100pt'),
+                ),
+              ],
+            )
           ],
         );
       }),
