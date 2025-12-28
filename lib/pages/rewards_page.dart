@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
-import '../services/gamification_service.dart';
-import '../models/reward.dart';
-import '../models/user_stats.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -12,405 +10,170 @@ class RewardsPage extends StatefulWidget {
 }
 
 class _RewardsPageState extends State<RewardsPage> {
-  late final GamificationService _gamificationService;
-  List<Reward> _rewards = [];
-  UserStats? _userStats;
   bool _isLoading = true;
-  RewardType? _filterType;
+  int _totalPoints = 0;
+  int _currentLevel = 1;
 
   @override
   void initState() {
     super.initState();
-    _gamificationService = GamificationService();
-    _loadRewards();
-    _loadUserStats();
+    _fetchUserStats();
   }
 
-  Future<void> _loadRewards() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _fetchUserStats() async {
     try {
-      final rewards = await _gamificationService.getUserRewards(
-        supabase.auth.currentUser!.id,
-      );
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final data = await supabase
+          .from('user_stats')
+          .select('total_points, current_level')
+          .eq('user_id', userId)
+          .maybeSingle();
 
       if (mounted) {
         setState(() {
-          _rewards = rewards;
+          if (data != null) {
+            _totalPoints = data['total_points'] as int? ?? 0;
+            _currentLevel = data['current_level'] as int? ?? 1;
+          }
           _isLoading = false;
         });
       }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $error')),
-        );
-      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+      debugPrint('Error fetching rewards: $e');
     }
   }
-
-  Future<void> _loadUserStats() async {
-    try {
-      final stats = await _gamificationService.getUserStats(
-        supabase.auth.currentUser!.id,
-      );
-      if (mounted) {
-        setState(() {
-          _userStats = stats;
-        });
-      }
-    } catch (error) {
-      // エラーは無視
-    }
-  }
-
-  List<Reward> get _filteredRewards {
-    if (_filterType == null) return _rewards;
-    return _rewards.where((r) => r.type == _filterType).toList();
-  }
-
-  int get _unlockedCount => _filteredRewards.where((r) => r.isUnlocked).length;
-  int get _totalCount => _filteredRewards.length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('報酬'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadRewards,
-            tooltip: '更新',
-          ),
-        ],
+        title: const Text(' ステータス報酬'),
+        backgroundColor: Colors.amber,
+        foregroundColor: Colors.black87,
       ),
-      body: Column(
-        children: [
-          // 統計表示
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.deepPurple,
-                  Colors.deepPurple.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem(
-                      '🏆',
-                      '$_unlockedCount',
-                      'アンロック済み',
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                    _buildStatItem(
-                      '🎁',
-                      '$_totalCount',
-                      '全報酬',
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                    _buildStatItem(
-                      '⭐',
-                      '${((_unlockedCount / _totalCount) * 100).toStringAsFixed(0)}%',
-                      '達成率',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // フィルター
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildFilterChip(null, 'すべて', Icons.grid_view),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    RewardType.theme,
-                    'テーマ',
-                    Icons.palette,
+                  // ステータスカード
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.shade300, Colors.orange.shade400],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.emoji_events,
+                            size: 60, color: Colors.white),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Level $_currentLevel',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$_totalPoints pt',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    RewardType.badge,
-                    'バッジ',
-                    Icons.military_tech,
+                  const SizedBox(height: 32),
+
+                  const Text(
+                    '獲得した称号',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    RewardType.feature,
-                    '機能',
-                    Icons.star,
-                  ),
+                  const SizedBox(height: 16),
+
+                  // 簡易的な称号リスト（実装簡略化のため固定表示または将来的な拡張用）
+                  if (_totalPoints == 0)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text('まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                    )
+                  else
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildBadge(
+                            '初めの一歩', Icons.directions_walk, _totalPoints >= 10),
+                        _buildBadge('断捨離見習い', Icons.cleaning_services,
+                            _totalPoints >= 100),
+                        _buildBadge(
+                            'メモの達人', Icons.edit_note, _totalPoints >= 500),
+                        _buildBadge(
+                            '継続の力', Icons.calendar_month, _totalPoints >= 1000),
+                        _buildBadge('ミニマリスト', Icons.home, _totalPoints >= 2000),
+                        _buildBadge(
+                            '伝説', Icons.auto_awesome, _totalPoints >= 5000),
+                      ],
+                    ),
                 ],
               ),
             ),
-          ),
-
-          const Divider(height: 1),
-
-          // 報酬リスト
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredRewards.isEmpty
-                    ? const Center(
-                        child: Text(
-                          '報酬がありません',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.85,
-                        ),
-                        itemCount: _filteredRewards.length,
-                        itemBuilder: (context, index) {
-                          final reward = _filteredRewards[index];
-                          return _buildRewardCard(reward);
-                        },
-                      ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildStatItem(String icon, String value, String label) {
+  Widget _buildBadge(String label, IconData icon, bool isUnlocked) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          icon,
-          style: const TextStyle(fontSize: 32),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isUnlocked ? Colors.amber.shade100 : Colors.grey.shade200,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 30,
+            color: isUnlocked ? Colors.amber.shade800 : Colors.grey,
           ),
         ),
+        const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: Colors.white70,
+            color: isUnlocked ? Colors.black87 : Colors.grey,
+            fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
-  }
-
-  Widget _buildFilterChip(RewardType? type, String label, IconData icon) {
-    final isSelected = _filterType == type;
-    return FilterChip(
-      selected: isSelected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 4),
-          Text(label),
-        ],
-      ),
-      onSelected: (selected) {
-        setState(() {
-          _filterType = selected ? type : null;
-        });
-      },
-    );
-  }
-
-  Widget _buildRewardCard(Reward reward) {
-    return Card(
-      elevation: reward.isUnlocked ? 4 : 1,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: reward.isUnlocked
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    _getRewardColor(reward.type).withValues(alpha: 0.3),
-                    _getRewardColor(reward.type).withValues(alpha: 0.1),
-                  ],
-                )
-              : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // アイコン
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: reward.isUnlocked
-                          ? _getRewardColor(reward.type).withValues(alpha: 0.2)
-                          : Colors.grey.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: reward.isUnlocked
-                            ? _getRewardColor(reward.type)
-                            : Colors.grey,
-                        width: 3,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        reward.icon,
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: reward.isUnlocked ? null : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (!reward.isUnlocked)
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.lock,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // タイトル
-              Text(
-                reward.title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: reward.isUnlocked ? null : Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-
-              // 説明
-              Text(
-                reward.description,
-                style: TextStyle(
-                  fontSize: 11,
-                  color:
-                      reward.isUnlocked ? Colors.grey[600] : Colors.grey[400],
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-
-              // 要件
-              if (!reward.isUnlocked) ...[
-                const Divider(),
-                Text(
-                  _getRequirementText(reward),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.orange,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getRewardColor(RewardType type) {
-    switch (type) {
-      case RewardType.theme:
-        return Colors.purple;
-      case RewardType.badge:
-        return Colors.amber;
-      case RewardType.feature:
-        return Colors.blue;
-      case RewardType.icon:
-        return Colors.green;
-    }
-  }
-
-  String _getRequirementText(Reward reward) {
-    final requirements = <String>[];
-
-    if (reward.requiredLevel > 0) {
-      final currentLevel = _userStats?.currentLevel ?? 1;
-      requirements.add('Lv.${reward.requiredLevel} (現在: Lv.$currentLevel)');
-    }
-
-    if (reward.requiredPoints != null) {
-      final currentPoints = _userStats?.totalPoints ?? 0;
-      requirements.add('${reward.requiredPoints}pt (現在: ${currentPoints}pt)');
-    }
-
-    if (reward.requiredAchievementId != null) {
-      requirements.add('特定の実績が必要');
-    }
-
-    return requirements.join('\n');
   }
 }
