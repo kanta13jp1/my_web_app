@@ -64,15 +64,16 @@ class _HealthPageState extends State<HealthPage> {
       final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-                  title: const Text(' ラーメン許可証を提示'),
-                  content: const Text('CHOの厳しい監査を無効化し、カロリーを「経費」として処理しますか？'),
+                  title: const Text(' 特別免罪符 (ラーメン許可証)'),
+                  content:
+                      const Text('CHOの監査権限を無効化し、今回の摂取カロリーを「福利厚生費」として処理しますか？'),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('使わない')),
+                        child: const Text('却下')),
                     ElevatedButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('使う'))
+                        child: const Text('行使する'))
                   ]));
       usePermit = confirm ?? false;
     }
@@ -119,7 +120,7 @@ class _HealthPageState extends State<HealthPage> {
         _showAuditResultDialog(_lastAudit!, _usedModel, _attemptLogs);
     } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('監査エラー: $e')));
+          .showSnackBar(SnackBar(content: Text('監査プロセスエラー: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -165,7 +166,7 @@ class _HealthPageState extends State<HealthPage> {
                       Text(result['menu_name'] ?? '不明',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 18)),
-                      Text('$score点',
+                      Text('健康スコア: $score点',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
@@ -173,7 +174,7 @@ class _HealthPageState extends State<HealthPage> {
                       const Divider(),
                       Text(result['audit_result'] ?? ''),
                       const SizedBox(height: 8),
-                      Text('【助言】 ${result['advice'] ?? ''}',
+                      Text('【是正勧告】 ${result['advice'] ?? ''}',
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, color: Colors.blue))
                     ])),
@@ -183,7 +184,7 @@ class _HealthPageState extends State<HealthPage> {
                         Navigator.pop(context);
                         _saveAuditResult(result);
                       },
-                      child: const Text('記録する'))
+                      child: const Text('監査ログに記録'))
                 ]));
   }
 
@@ -200,7 +201,7 @@ class _HealthPageState extends State<HealthPage> {
             color: Colors.teal.shade50,
             child: Column(children: [
               if (_hasPermit)
-                const Text(' ラーメン許可証 保有中',
+                const Text(' 特別免罪符 (ラーメン許可証) 保有中',
                     style: TextStyle(
                         color: Colors.pink, fontWeight: FontWeight.bold)),
               ElevatedButton.icon(
@@ -210,7 +211,7 @@ class _HealthPageState extends State<HealthPage> {
                       backgroundColor: Colors.teal.shade700,
                       foregroundColor: Colors.white),
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text('食事を監査する (Camera)'))
+                  label: const Text('健康資本を監査する (Camera)'))
             ])),
         Expanded(
             child: ListView.builder(
@@ -222,13 +223,12 @@ class _HealthPageState extends State<HealthPage> {
                         child: Text('${log['performance_score']}')),
                     title: Text(log['menu_name'] ?? ''),
                     subtitle: Text(log['advice'] ?? ''),
-                    //  シェアボタン更新
                     trailing: IconButton(
                         icon: const Icon(Icons.share),
                         onPressed: () {
                           Share.share(
-                              '【自分株式会社 CHO監査報告】\nメニュー: ${log['menu_name']}\nスコア: ${log['performance_score']}点\n判定: ${log['advice']}\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社',
-                              subject: '食事監査結果');
+                              '【自分株式会社 CHO監査報告】\n対象: ${log['menu_name']}\n評価: ${log['performance_score']}点\n判定: ${log['advice']}\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #健康経営',
+                              subject: '健康監査結果');
                         }),
                   );
                 })),
