@@ -50,10 +50,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         'user_id': user.id,
         'metadata': {'onboarding_completed': true},
         'updated_at': DateTime.now().toIso8601String(),
-      },
-          onConflict:
-              'user_id'); // 既存データがあればマージ更新される想定（Relying on DB trigger or upsert logic）
-      // 念のためupdateも試みる（RSLによってはupsertが弾かれる場合があるため）
+      }, onConflict: 'user_id'); // 既存データがあればマージ更新される想定
+
       try {
         await supabase.from('user_stats').update({
           'metadata': {'onboarding_completed': true}
@@ -145,9 +143,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            '14種類のAIモデルが、あなたの専属役員として\n24時間365日、経営をサポートします。',
+            'OpenAI, Gemini, Claude, DeepSeek, Grok...\n世界最高峰の知能（五賢帝）が、あなたの専属役員として\n24時間365日、経営をサポートします。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Colors.grey, height: 1.5),
           ),
           const SizedBox(height: 40),
           Wrap(
