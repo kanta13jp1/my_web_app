@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Strict Japanese & Role Enforced)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Updated for Meal Suggestion)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -27,6 +27,7 @@ interface AIRequest {
   userStats?: any
   paymentSources?: any[]
   currentTime?: string
+  recentMeals?: any[] // Added for meal suggestion
 }
 
 serve(async (req) => {
@@ -47,11 +48,13 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action } = requestData
 
+    // ---  Priority Queue ---
     let providerQueue: string[] = [];
     if (requestData.imageBase64 || requestData.fileBase64) {
         providerQueue = ['gemini', 'openai', 'anthropic', 'grok'];
     } else {
-        providerQueue = ['deepseek', 'gemini', 'openai', 'anthropic', 'grok'];
+        // DeepSeek is excellent for logic/recipes and cheap
+        providerQueue = ['deepseek', 'anthropic', 'openai', 'gemini', 'grok'];
     }
 
     let finalResult = '';
@@ -103,8 +106,14 @@ serve(async (req) => {
         throw new Error(`All providers exhausted. Logs: ${logs.join(' | ')}`);
     }
 
+    // JSON Parsing
     let parsedResult = finalResult;
-    if (['secretary_task_from_image', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance', 'hold_board_meeting', 'proactive_intervention'].includes(action)) {
+    const jsonActions = [
+      'secretary_task_from_image', 'extract_subscriptions_from_file', 
+      'audit_meal', 'evaluate_performance', 'hold_board_meeting', 
+      'proactive_intervention', 'suggest_next_meal'
+    ];
+    if (jsonActions.includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
@@ -178,7 +187,7 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "system", content: "You are an executive AI. Output in Japanese." }, { role: "user", content: prompt }];
     let responseFormat = undefined;
-    if (data.action.includes('json') || ['audit_subscriptions', 'hold_board_meeting', 'proactive_intervention'].includes(data.action)) responseFormat = { type: "json_object" };
+    if (data.action.includes('json') || ['audit_subscriptions', 'hold_board_meeting', 'proactive_intervention', 'suggest_next_meal'].includes(data.action)) responseFormat = { type: "json_object" };
     if (data.imageBase64 && (provider === 'openai' || provider === 'grok')) messages = [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${data.mimeType||'image/jpeg'};base64,${data.imageBase64}` } }] }];
     const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages, response_format: responseFormat, temperature: 0.7 }) });
     if (!resp.ok) throw new Error(`${resp.status} ${await resp.text()}`);
@@ -189,7 +198,7 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
     let system = "Executive AI. Japanese.";
-    if (data.action.includes('json') || ['hold_board_meeting'].includes(data.action)) system += " Valid JSON only.";
+    if (data.action.includes('json') || ['hold_board_meeting', 'suggest_next_meal'].includes(data.action)) system += " Valid JSON only.";
     let messages: any[] = [{ role: "user", content: prompt }];
     if (data.imageBase64) messages = [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: data.mimeType||"image/jpeg", data: data.imageBase64 } }, { type: "text", text: prompt }] }];
     const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model, max_tokens: 4000, system, messages }) });
@@ -210,12 +219,32 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
 }
 
 function buildPrompt(data: AIRequest): string {
-    const { action, content, boardData, currentTime } = data;
+    const { action, content, boardData, currentTime, recentMeals } = data;
     const jsonPrefix = "Output purely valid JSON.";
     
+    if (action === 'suggest_next_meal') {
+        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
+        return `${jsonPrefix}
+        Role: CHO (Chief Health Officer) & 3-Star Chef.
+        Current Time: ${currentTime}.
+        Recent Meals: ${mealHistory}.
+        
+        Task: Suggest the optimal NEXT meal based on time and history. If morning, breakfast. If night, light dinner.
+        Include a simple recipe.
+        
+        Output JSON:
+        {
+          "menu_name": "料理名",
+          "reason": "推奨理由 (例: 昨夜が重かったので...)",
+          "ingredients": ["材料1", "材料2"],
+          "recipe_steps": ["手順1", "手順2"],
+          "calorie_estimate": 500,
+          "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" }
+        }`;
+    }
+
     if (action === 'proactive_intervention') {
         const d = boardData || {};
-        // 厳密な未監査カウント（今月まだ監査していないもの）
         let unaudited = 0;
         if (d.paymentSources) {
             unaudited = d.paymentSources.filter((s:any) => {
@@ -225,22 +254,7 @@ function buildPrompt(data: AIRequest): string {
                 return last.getMonth() !== now.getMonth() || last.getFullYear() !== now.getFullYear();
             }).length;
         }
-
-        return `${jsonPrefix}
-        Time: ${currentTime}. Unaudited Items: ${unaudited}.
-        
-        Rules:
-        1. If unaudited > 0: Role="CFO". Warn about monthly closing (月次決算) in JAPANESE.
-        2. If time > 23:00: Role="CHO". Warn about sleep in JAPANESE.
-        3. Else: Role="CSO". Give strategic advice in JAPANESE.
-        
-        Output JSON Format:
-        {
-          "should_intervene": boolean,
-          "role": "CFO" | "CHO" | "CSO" | "CHRO",
-          "message": "Japanese text (60 chars max)",
-          "action_label": "Button label in Japanese"
-        }`;
+        return `${jsonPrefix} Time: ${currentTime}. Unaudited: ${unaudited}. Rules: 1. Unaudited>0 -> Role=CFO, Warn in Japanese. 2. Time>23:00 -> Role=CHO, Warn Sleep. 3. Else -> Role=CSO, Advice. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO"|"CHRO", "message": "JP text (60 chars)", "action_label": "Button" }`;
     }
 
     if (action === 'hold_board_meeting') {
@@ -248,7 +262,7 @@ function buildPrompt(data: AIRequest): string {
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
         return `${jsonPrefix} Role: Chairman. Agenda: Activities(${notes}), Assets(${d.userStats?.total_points}pt). Simulate debate. JSON: { "agenda": string, "discussion": string, "decision": string, "stock_price_impact": string }`;
     }
-    if (action === 'audit_meal') return `${jsonPrefix} Audit meal image. JSON: { "menu_name": string, "calorie_estimate": number, "performance_score": number, "audit_result": string, "advice": string }`;
+    if (action === 'audit_meal') return `${jsonPrefix} Role: Nutritionist. Audit image. JSON: { "menu_name": string, "calorie_estimate": number, "performance_score": number, "audit_result": string, "advice": string }`;
     if (action === 'mental_chat') return `Empathize & Advise:\n${content}`;
     if (action === 'improve') return `Refine:\n${content}`;
     if (action === 'extract_subscriptions_from_file') return `${jsonPrefix} Extract subscriptions. JSON: [{ "service_name": string, "price": number, "description": string }]`;
