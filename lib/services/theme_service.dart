@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeService extends ChangeNotifier {
@@ -9,8 +9,10 @@ class ThemeService extends ChangeNotifier {
   }
 
   //  自分株式会社 Corporate Identity Colors
-  static const Color _corpNavy = Color(0xFF0F172A); // Deep Strategy Navy (CEO/CSO)
-  static const Color _corpGold = Color(0xFFD4AF37); // Prosperity Gold (Wealth/Reward)
+  static const Color _corpNavy =
+      Color(0xFF0F172A); // Deep Strategy Navy (CEO/CSO)
+  static const Color _corpGold =
+      Color(0xFFD4AF37); // Prosperity Gold (Wealth/Reward)
   static const Color _corpBlueGrey = Color(0xFF334155); // Professional Grey
   static const Color _bgLight = Color(0xFFF8FAFC); // Clean Office White
   static const Color _bgDark = Color(0xFF020617); // Midnight Strategy Room
@@ -26,7 +28,8 @@ class ThemeService extends ChangeNotifier {
   ThemeMode getFlutterThemeMode() => _themeMode;
 
   void toggleTheme() async {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme_mode', _themeMode.toString());
@@ -62,13 +65,13 @@ class ThemeService extends ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontSize: 18, 
-          fontWeight: FontWeight.bold, 
-          letterSpacing: 1.2,
-          color: Colors.white
-        ),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            color: Colors.white),
       ),
-      cardTheme: CardThemeData( // Changed from CardTheme to CardThemeData
+      cardTheme: CardThemeData(
+        // Changed from CardTheme to CardThemeData
         color: Colors.white,
         elevation: 2,
         shadowColor: _corpNavy.withOpacity(0.1),
@@ -82,7 +85,8 @@ class ThemeService extends ChangeNotifier {
           elevation: 3,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          textStyle:
+              const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -125,13 +129,13 @@ class ThemeService extends ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontSize: 18, 
-          fontWeight: FontWeight.bold, 
-          letterSpacing: 1.2,
-          color: Colors.white
-        ),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            color: Colors.white),
       ),
-      cardTheme: CardThemeData( // Changed from CardTheme to CardThemeData
+      cardTheme: CardThemeData(
+        // Changed from CardTheme to CardThemeData
         color: _corpBlueGrey.withOpacity(0.3),
         elevation: 0,
         shape: RoundedRectangleBorder(

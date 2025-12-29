@@ -21,13 +21,12 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void initState() {
     super.initState();
-    _logLandingView(); //  画面表示時にViewをカウント
+    _logLandingView();
   }
 
   // 訪問数をカウントする関数 (流入元解析付き)
   Future<void> _logLandingView() async {
     try {
-      // URLパラメータから 'ref' を取得 (Flutter Web用)
       final uri = Uri.base;
       final source = uri.queryParameters['ref'] ?? 'direct';
 
@@ -64,7 +63,7 @@ class _LandingPageState extends State<LandingPage> {
     try {
       await Supabase.instance.client.auth.signInAnonymously();
 
-      await _logConversion(); //  成功時にコンバージョン計測
+      await _logConversion();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -122,9 +121,9 @@ class _LandingPageState extends State<LandingPage> {
       }
 
       if (mounted && supabase.auth.currentUser != null) {
-        await _logConversion(); //  成功時にコンバージョン計測
+        await _logConversion();
 
-        Navigator.pop(context); // モーダルを閉じる
+        Navigator.pop(context);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
@@ -235,7 +234,8 @@ class _LandingPageState extends State<LandingPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1A237E), Color(0xFF311B92)],
+                //  ブランドカラー: ストラテジックネイビー & ゴールドの気配
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
               ),
             ),
           ),
@@ -245,16 +245,18 @@ class _LandingPageState extends State<LandingPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.note_alt_outlined,
-                      size: 80, color: Colors.white),
+                  const Icon(Icons.business_center, // アイコンもビジネス仕様に変更
+                      size: 80,
+                      color: Color(0xFFD4AF37)), // ゴールド
                   const SizedBox(height: 24),
-                  const Text('My Memo',
+                  const Text('自分株式会社', //  My Memo -> 自分株式会社
                       style: TextStyle(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                          color: Colors.white,
+                          letterSpacing: 2.0)),
                   const SizedBox(height: 12),
-                  const Text('シンプルに学び、スマートに捨てる。',
+                  const Text('人生を経営する、最強のOS。', //  サブタイトル刷新
                       style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 60),
                   SizedBox(
@@ -263,9 +265,9 @@ class _LandingPageState extends State<LandingPage> {
                     child: ElevatedButton(
                       onPressed: _signInAnonymously,
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo),
-                      child: const Text('すぐに始める (登録不要)',
+                          backgroundColor: const Color(0xFFD4AF37), // ゴールド
+                          foregroundColor: const Color(0xFF0F172A)), // ネイビー
+                      child: const Text('経営を開始する (登録不要)',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
