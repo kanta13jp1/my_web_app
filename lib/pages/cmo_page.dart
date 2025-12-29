@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // 繝√Ε繝ｼ繝育畑・・ubspec縺ｫ蜷ｫ縺ｾ繧後※縺・ｋ諠ｳ螳夲ｼ・import 'package:share_plus/share_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 
 class CmoPage extends StatefulWidget {
@@ -14,12 +15,12 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   bool _isGeneratingPr = false;
 
-  // 蛻・梵繝・・繧ｿ
+  // 分析データ
   int _totalPoints = 0;
   int _taskCount = 0;
   List<FlSpot> _pointHistory = [];
 
-  // PR繝・・繧ｿ
+  // PRデータ
   Map<String, dynamic>? _lastPr;
   String? _usedModel;
 
@@ -35,19 +36,23 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 蝓ｺ譛ｬ邨ｱ險・      final stats = await supabase
+      // 基本統計
+      final stats = await supabase
           .from('user_stats')
           .select()
           .eq('user_id', userId)
           .maybeSingle();
 
-      // 邁｡譏鍋噪縺ｪ螻･豁ｴ繝・・繧ｿ縺ｮ繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ・域悽譚･縺ｯ螻･豁ｴ繝・・繝悶Ν縺悟ｿ・ｦ√□縺後√％縺薙〒縺ｯstats縺九ｉ謫ｬ莨ｼ逕滓・縺吶ｋ縺九］otes縺ｮ螻･豁ｴ繧剃ｽｿ縺・ｼ・      // 莉雁屓縺ｯnotes縺ｮ菴懈・譌･繧剃ｽｿ縺｣縺ｦ縲梧ｴｻ蜍暮㍼縺ｮ謗ｨ遘ｻ縲阪ｒ繧ｰ繝ｩ繝募喧縺励∪縺・      final notes = await supabase
+      // 簡易的な履歴データのシミュレーション（本来は履歴テーブルが必要だが、ここではstatsから擬似生成するか、notesの履歴を使う）
+      // 今回はnotesの作成日を使って「活動量の推移」をグラフ化します
+      final notes = await supabase
           .from('notes')
           .select('created_at')
           .eq('user_id', userId)
           .order('created_at', ascending: true);
 
-      // 譌･縺斐→縺ｮ繧ｿ繧ｹ繧ｯ謨ｰ繧帝寔險・      Map<String, int> dailyCounts = {};
+      // 日ごとのタスク数を集計
+      Map<String, int> dailyCounts = {};
       for (var note in notes) {
         String date = note['created_at'].toString().substring(0, 10);
         dailyCounts[date] = (dailyCounts[date] ?? 0) + 1;
@@ -55,7 +60,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
 
       List<FlSpot> spots = [];
       double index = 0;
-      // 逶ｴ霑・譌･蛻・↑縺ｩ繧定｡ｨ遉ｺ
+      // 直近7日分などを表示
       dailyCounts.forEach((date, count) {
         spots.add(FlSpot(index, count.toDouble()));
         index++;
@@ -79,7 +84,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
   Future<void> _generatePressRelease() async {
     setState(() => _isGeneratingPr = true);
     try {
-      // 譛ｬ譌･縺ｮ螳溽ｸｾ繧帝寔險茨ｼ育ｰ｡譏鍋沿・壼・譛滄俣縺ｮ蟷ｳ蝮・↑縺ｩ繧呈ｷｷ縺懊※縺昴ｌ縺｣縺ｽ縺上☆繧具ｼ・      // 譛ｬ譚･縺ｯ created_at >= today 縺ｮ繧ｯ繧ｨ繝ｪ繧呈兜縺偵ｋ
+      // 本日の実績を集計
       final now = DateTime.now();
       final todayStr = now.toIso8601String().substring(0, 10);
       final userId = supabase.auth.currentUser!.id;
@@ -99,7 +104,8 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
       final dailyStats = {
         'task_count': todayNotes,
         'danshari_count': todayDanshari,
-        'points_earned': (todayDanshari * 100) + (todayNotes * 10) // 讎らｮ・      };
+        'points_earned': (todayDanshari * 100) + (todayNotes * 10) // 概算
+      };
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
@@ -115,7 +121,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
       });
     } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('PR逕滓・繧ｨ繝ｩ繝ｼ: $e')));
+          .showSnackBar(SnackBar(content: Text('PR生成エラー: $e')));
     } finally {
       setState(() => _isGeneratingPr = false);
     }
@@ -125,7 +131,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(' 蠎・ｱ繝槭・繧ｱ繝・ぅ繝ｳ繧ｰ (CMO)'),
+        title: const Text(' 広報マーケティング (CMO)'),
         backgroundColor: Colors.purple.shade700,
         foregroundColor: Colors.white,
         bottom: TabBar(
@@ -134,8 +140,8 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
           labelColor: Colors.white,
           unselectedLabelColor: Colors.purple.shade200,
           tabs: const [
-            Tab(icon: Icon(Icons.campaign), text: '繝励Ξ繧ｹ繝ｪ繝ｪ繝ｼ繧ｹ'),
-            Tab(icon: Icon(Icons.show_chart), text: '繝悶Λ繝ｳ繝牙・譫・),
+            Tab(icon: Icon(Icons.campaign), text: 'プレスリリース'),
+            Tab(icon: Icon(Icons.show_chart), text: 'ブランド分析'),
           ],
         ),
       ),
@@ -158,13 +164,13 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
           const Icon(Icons.newspaper, size: 64, color: Colors.purple),
           const SizedBox(height: 16),
           const Text(
-            '譛ｬ譌･縺ｮ豢ｻ蜍輔ｒ縲∽ｸ也阜縺ｸ縲・,
+            '本日の活動を、世界へ。',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
-            'AI縺後≠縺ｪ縺溘・莠帷ｴｰ縺ｪ譌･蟶ｸ繧偵∝｣ｮ螟ｧ縺ｪ莨∵･ｭ繝九Η繝ｼ繧ｹ縺ｫ螟峨∴縺ｾ縺吶・,
+            'AIがあなたの些細な日常を、壮大な企業ニュースに変えます。',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),
@@ -183,7 +189,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
                 : const Icon(Icons.auto_awesome),
-            label: const Text('譛ｬ譌･縺ｮ繝励Ξ繧ｹ繝ｪ繝ｪ繝ｼ繧ｹ繧堤匱陦後☆繧・),
+            label: const Text('本日のプレスリリースを発行する'),
           ),
           if (_lastPr != null) ...[
             const SizedBox(height: 32),
@@ -238,11 +244,11 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Share.share(
-                            '${_lastPr!['headline']}\n\n${_lastPr!['body']}\n\n#閾ｪ蛻・ｪ蠑丈ｼ夂､ｾ',
-                            subject: '繝励Ξ繧ｹ繝ｪ繝ｪ繝ｼ繧ｹ');
+                            '${_lastPr!['headline']}\n\n${_lastPr!['body']}\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社',
+                            subject: 'プレスリリース');
                       },
                       icon: const Icon(Icons.share),
-                      label: const Text('繝｡繝・ぅ繧｢・・NS・峨↓蜈ｬ髢・),
+                      label: const Text('メディア（SNS）に公開'),
                     ),
                   ),
                 ],
@@ -263,15 +269,15 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
               children: [
                 Row(
                   children: [
-                    _buildStatCard('譎ゆｾ｡邱城｡・Pt)', '$_totalPoints',
+                    _buildStatCard('時価総額(Pt)', '$_totalPoints',
                         Icons.currency_yen, Colors.amber),
                     const SizedBox(width: 16),
-                    _buildStatCard('邏ｯ遨咲函逕｣謨ｰ', '$_taskCount', Icons.check_circle,
+                    _buildStatCard('累積生産数', '$_taskCount', Icons.check_circle,
                         Colors.green),
                   ],
                 ),
                 const SizedBox(height: 24),
-                const Text('逕溽肇諤ｧ繝√Ε繝ｼ繝・(Activity)',
+                const Text('生産性チャート (Activity)',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Expanded(
@@ -308,7 +314,7 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('縺薙・繝・・繧ｿ縺ｯ縺ゅ↑縺溘・縲後ヶ繝ｩ繝ｳ繝我ｾ｡蛟､縲阪ｒ遉ｺ縺励※縺・∪縺吶・,
+                const Text('このデータはあなたの「ブランド価値」を示しています。',
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
@@ -347,4 +353,3 @@ class _CmoPageState extends State<CmoPage> with SingleTickerProviderStateMixin {
     );
   }
 }
-
