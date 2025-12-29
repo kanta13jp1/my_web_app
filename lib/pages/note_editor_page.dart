@@ -50,7 +50,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           'user_id': userId,
           'title': title,
           'content': content,
-          'is_archived': false, // デフォルトでアーカイブなし
+          'is_archived': false,
           'created_at': now,
           'updated_at': now,
         });
@@ -65,11 +65,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       if (mounted) {
         Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('案件が決裁（保存）されました'), backgroundColor: Colors.green),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存エラー: $e')),
+          SnackBar(content: Text('決裁エラー: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -82,7 +86,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final content = _contentController.text;
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AIに依頼するテキストを入力してください')),
+        const SnackBar(content: Text('起案内容（テキスト）を入力してください')),
       );
       return;
     }
@@ -116,13 +120,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             title: const Row(children: [
               Icon(Icons.auto_awesome, color: Colors.indigo),
               SizedBox(width: 8),
-              Text('AIの提案')
+              Text('CKOからの修正案')
             ]),
             content: SingleChildScrollView(child: Text(result)),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('キャンセル')),
+                  child: const Text('却下')),
               ElevatedButton.icon(
                 onPressed: () {
                   // 提案を採用（上書きまたは追記）
@@ -130,7 +134,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     _contentController.text = result; // 校正なら置き換え
                   } else {
                     _contentController.text =
-                        '$content\n\n--- AIによる追記 ---\n$result'; // その他は追記
+                        '$content\n\n--- CKO追記事項 ---\n$result'; // その他は追記
                   }
                   Navigator.pop(context);
                 },
@@ -144,7 +148,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AIエラー: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('CKO接続エラー: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -160,7 +164,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.cleaning_services),
-              title: const Text('文章を校正改善する'),
+              title: const Text('起案書の校正ブラッシュアップ'),
               onTap: () {
                 Navigator.pop(context);
                 _callAiAssistant('improve');
@@ -168,7 +172,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             ),
             ListTile(
               leading: const Icon(Icons.summarize),
-              title: const Text('要約する'),
+              title: const Text('要約（エグゼクティブサマリー作成）'),
               onTap: () {
                 Navigator.pop(context);
                 _callAiAssistant('summarize');
@@ -176,7 +180,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             ),
             ListTile(
               leading: const Icon(Icons.lightbulb),
-              title: const Text('アイデアを広げる'),
+              title: const Text('事業アイデアの拡張'),
               onTap: () {
                 Navigator.pop(context);
                 _callAiAssistant('expand');
@@ -184,7 +188,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             ),
             ListTile(
               leading: const Icon(Icons.title),
-              title: const Text('タイトル案を出す'),
+              title: const Text('プロジェクト名（タイトル）案出し'),
               onTap: () {
                 Navigator.pop(context);
                 _callAiAssistant('suggest_title');
@@ -200,10 +204,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.note == null ? '新しいメモ' : 'メモの編集'),
+        title: Text(widget.note == null ? '新規事業起案' : '稟議書編集'),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
+        foregroundColor: const Color(0xFF0F172A), // Navy
+        elevation: 1,
         actions: [
           // AIボタン
           IconButton(
@@ -212,14 +216,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.auto_awesome, color: Colors.indigo),
+                : const Icon(Icons.psychology, color: Colors.indigo),
             onPressed: _isAiLoading ? null : _showAiMenu,
-            tooltip: 'AIアシスタント',
+            tooltip: 'CKOに相談',
           ),
           // 保存ボタン
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _isLoading ? null : _saveNote,
+          Container(
+            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _saveNote,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F172A), // Navy
+                foregroundColor: Colors.white,
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.verified, size: 18),
+              label: const Text('決裁'),
+            ),
           ),
         ],
       ),
@@ -230,21 +243,24 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                hintText: 'タイトル',
+                hintText: '案件名 (Project Title)',
                 border: InputBorder.none,
                 hintStyle: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black26),
               ),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A)),
             ),
             const Divider(),
             Expanded(
               child: TextField(
                 controller: _contentController,
                 decoration: const InputDecoration(
-                  hintText: '内容を入力...',
+                  hintText: '事業計画詳細内容を入力...',
                   border: InputBorder.none,
                 ),
                 maxLines: null,
