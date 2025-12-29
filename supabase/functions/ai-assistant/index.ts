@@ -1,5 +1,4 @@
-﻿// AI Assistant Edge Function: "The All-Seeing Eye"
-// Detailed Logging & Observability
+﻿// AI Assistant Edge Function: "The Five Emperors" (Strict Japanese & Role Enforced)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -48,7 +47,6 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action } = requestData
 
-    // ---  Priority Queue ---
     let providerQueue: string[] = [];
     if (requestData.imageBase64 || requestData.fileBase64) {
         providerQueue = ['gemini', 'openai', 'anthropic', 'grok'];
@@ -61,12 +59,10 @@ serve(async (req) => {
     let usedModel = '';
     let logs: string[] = [];
 
-    // ---  The Loop ---
     for (const provider of providerQueue) {
         if (!KEYS[provider as keyof typeof KEYS]) continue;
 
         try {
-            console.log(` Scanning models for: ${provider}...`);
             const models = await fetchDynamicModels(provider, KEYS[provider as keyof typeof KEYS]!);
             
             for (const model of models) {
@@ -85,7 +81,6 @@ serve(async (req) => {
                     usedProvider = provider;
                     usedModel = model;
                     
-                    //  Success Log
                     await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
                     break; 
 
@@ -93,11 +88,7 @@ serve(async (req) => {
                     const duration = Date.now() - startTime;
                     const statusMatch = e.message.match(/(\d{3})/);
                     const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
-                    
-                    console.warn(` Failed [${model}]: ${e.message}`);
                     logs.push(`${provider}/${model}: ${statusCode}`);
-                    
-                    //  Error Log (429, 402, etc.)
                     await logRequest(supabaseClient, user.id, action, provider, model, statusCode, duration, e.message);
                 }
             }
@@ -112,7 +103,6 @@ serve(async (req) => {
         throw new Error(`All providers exhausted. Logs: ${logs.join(' | ')}`);
     }
 
-    // JSON Parsing
     let parsedResult = finalResult;
     if (['secretary_task_from_image', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance', 'hold_board_meeting', 'proactive_intervention'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
@@ -128,7 +118,6 @@ serve(async (req) => {
   }
 })
 
-// ---  Logger Function ---
 async function logRequest(supabase: any, userId: string, action: string, provider: string, model: string, status: number, duration: number, errorMsg: string = '') {
     try {
         await supabase.from('ai_request_logs').insert({
@@ -138,16 +127,10 @@ async function logRequest(supabase: any, userId: string, action: string, provide
             model: model,
             status_code: status,
             duration_ms: duration,
-            error_message: errorMsg.substring(0, 1000) // Truncate if too long
+            error_message: errorMsg.substring(0, 1000)
         });
-    } catch(e) {
-        console.error("Logging failed:", e);
-    }
+    } catch(e) { console.error("Logging failed:", e); }
 }
-
-// ... (以下、前回と同じ fetchDynamicModels, Callers, buildPrompt, parseJsonResult 関数を維持) ...
-//  長くなるため省略しますが、前回のコードの関数群をここに続けてください。
-// このPowerShellコマンドは既存ファイルを上書きするため、以下のヘルパー関数群が必要です。
 
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
     try {
@@ -229,15 +212,41 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
 function buildPrompt(data: AIRequest): string {
     const { action, content, boardData, currentTime } = data;
     const jsonPrefix = "Output purely valid JSON.";
+    
+    if (action === 'proactive_intervention') {
+        const d = boardData || {};
+        // 厳密な未監査カウント（今月まだ監査していないもの）
+        let unaudited = 0;
+        if (d.paymentSources) {
+            unaudited = d.paymentSources.filter((s:any) => {
+                if (!s.last_audited_at) return true;
+                const last = new Date(s.last_audited_at);
+                const now = new Date();
+                return last.getMonth() !== now.getMonth() || last.getFullYear() !== now.getFullYear();
+            }).length;
+        }
+
+        return `${jsonPrefix}
+        Time: ${currentTime}. Unaudited Items: ${unaudited}.
+        
+        Rules:
+        1. If unaudited > 0: Role="CFO". Warn about monthly closing (月次決算) in JAPANESE.
+        2. If time > 23:00: Role="CHO". Warn about sleep in JAPANESE.
+        3. Else: Role="CSO". Give strategic advice in JAPANESE.
+        
+        Output JSON Format:
+        {
+          "should_intervene": boolean,
+          "role": "CFO" | "CHO" | "CSO" | "CHRO",
+          "message": "Japanese text (60 chars max)",
+          "action_label": "Button label in Japanese"
+        }`;
+    }
+
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
         return `${jsonPrefix} Role: Chairman. Agenda: Activities(${notes}), Assets(${d.userStats?.total_points}pt). Simulate debate. JSON: { "agenda": string, "discussion": string, "decision": string, "stock_price_impact": string }`;
-    }
-    if (action === 'proactive_intervention') {
-        const d = boardData || {};
-        let unaudited = d.paymentSources?.filter((s:any) => !s.last_audited_at).length || 0;
-        return `${jsonPrefix} Time: ${currentTime}. Unaudited: ${unaudited}. Warn if >0. JSON: { "should_intervene": boolean, "role": string, "message": "60 chars max", "action_label": string }`;
     }
     if (action === 'audit_meal') return `${jsonPrefix} Audit meal image. JSON: { "menu_name": string, "calorie_estimate": number, "performance_score": number, "audit_result": string, "advice": string }`;
     if (action === 'mental_chat') return `Empathize & Advise:\n${content}`;
