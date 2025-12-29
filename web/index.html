@@ -1,84 +1,62 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="🎮 メモが楽しいゲームに変わる！レベルアップ×28種類のアチーブメント×ストリーク機能で、3日坊主を卒業。全国ランキングで仲間と競争しながら、楽しくメモ習慣を身につけよう！完全無料。">
-  <meta name="keywords" content="メモアプリ,ノートアプリ,ゲーミフィケーション,Notion代替,Evernote代替,無料メモアプリ,タスク管理,生産性向上,レベルアップ,アチーブメント,ストリーク,デイリーチャレンジ,note taking,productivity">
-  <meta name="author" content="マイメモ">
+  
+  <meta name="description" content="あなたがCEO。Gemini 3.0, GPT-5, Claude 4.5ら「五賢帝」を役員に迎え、資産健康時間を完全管理。世界最強のAIライフマネジメントシステム「自分株式会社」。">
+  <meta name="keywords" content="自分株式会社,Jibun Inc,AI経営,ライフマネジメント,Gemini 3.0,GPT-5,Claude 4.5,DeepSeek,五賢帝,断捨離,目標達成,生産性向上,CEO">
+  <meta name="author" content="自分株式会社 (Jibun Inc.)">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://my-web-app-b67f4.web.app/">
 
-  <!-- PWA meta tags -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#5E35B1">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0F172A">
 
-  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="og:title" content="マイメモ 🎮 メモが楽しいゲームに変わる！">
-  <meta property="og:description" content="「メモが続かない...」を解決！レベルアップ×28種類のアチーブメント×ストリーク機能で毎日のメモ習慣が楽しく続く📝✨ 全国ランキングで仲間と競争！完全無料で今すぐ体験👇">
-  <!-- 🚨 修正: パスを web/ogp.png に合わせ、キャッシュ対策パラメータ(?v=2)を付与 -->
-  <meta property="og:image" content="https://my-web-app-b67f4.web.app/ogp.png?v=2">
+  <meta property="og:title" content="自分株式会社 | AI五賢帝と経営する最強の人生">
+  <meta property="og:description" content="「メモ」の時代は終わった。これからは「経営」だ。最強のAI役員たちと共に、あなたの人生を上場企業へ。完全無料の次世代ERP。">
+  
+  <meta property="og:image" content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:alt" content="マイメモ - ゲーミフィケーションで楽しくメモ習慣を！">
-  <meta property="og:site_name" content="マイメモ">
+  <meta property="og:image:alt" content="自分株式会社 - The Five Emperors System">
+  <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
 
-  <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="twitter:title" content="マイメモ 🎮 メモが楽しいゲームに変わる！">
-  <meta property="twitter:description" content="「メモが続かない...」を解決！レベルアップ×28種類のアチーブメント×ストリーク機能で毎日のメモ習慣が楽しく続く📝✨ 全国ランキングで仲間と競争！完全無料で今すぐ体験👇">
-  <!-- 🚨 修正: パスを web/ogp.png に合わせ、キャッシュ対策パラメータ(?v=2)を付与 -->
-  <meta property="twitter:image" content="https://my-web-app-b67f4.web.app/ogp.png?v=2">
-  <meta property="twitter:image:alt" content="マイメモ - ゲーミフィケーションで楽しくメモ習慣を！">
+  <meta property="twitter:title" content="自分株式会社 | AI五賢帝と経営する最強の人生">
+  <meta property="twitter:description" content="「メモ」の時代は終わった。これからは「経営」だ。最強のAI役員たちと共に、あなたの人生を上場企業へ。">
+  <meta property="twitter:image" content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp">
+  <meta property="twitter:image:alt" content="自分株式会社 - Management Console">
 
-  <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="マイメモ">
+  <meta name="apple-mobile-web-app-title" content="自分株式会社">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <!-- Google Fonts preconnect for faster loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
 
-  <!-- Preload Noto Sans JP and fallback fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans:wght@400;500;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-
-  <title>マイメモ 🎮 メモが楽しいゲームに変わる！</title>
+  <title>自分株式会社 | AI五賢帝と経営する最強の人生</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Structured Data (JSON-LD) for SEO -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "マイメモ",
-    "alternateName": "MyMemo",
+    "name": "自分株式会社",
+    "alternateName": "Jibun Inc.",
     "url": "https://my-web-app-b67f4.web.app/",
-    "description": "ゲーミフィケーション機能を搭載した無料のメモ・ノートアプリケーション。レベルアップ、アチーブメント、ストリーク機能でメモ習慣を楽しく継続できます。",
-    "applicationCategory": "ProductivityApplication",
+    "description": "世界最強のAIモデル群（五賢帝）を統合したライフマネジメントERP。",
+    "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android",
     "offers": {
       "@type": "Offer",
@@ -86,79 +64,17 @@
       "priceCurrency": "JPY"
     },
     "featureList": [
-      "ゲーミフィケーション（レベル、ポイント、アチーブメント）",
-      "デイリーチャレンジ",
-      "リーダーボード",
-      "リマインダー機能",
-      "カテゴリ管理",
-      "AI支援（文章改善、要約、翻訳）",
-      "メモ共有",
-      "アーカイブ機能",
-      "検索機能"
+      "五賢帝システム (Gemini 3.0, GPT-5, Claude 4.5)",
+      "緊急役員会議",
+      "リアル断捨離",
+      "プロアクティブ介入",
+      "健康管理"
     ],
-    "audience": {
-      "@type": "Audience",
-      "audienceType": "学生、ビジネスパーソン、クリエイター、すべての方"
-    },
     "inLanguage": "ja",
     "publisher": {
       "@type": "Organization",
-      "name": "マイメモ"
+      "name": "自分株式会社"
     }
-  }
-  </script>
-
-  <!-- Organization Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "マイメモ",
-    "url": "https://my-web-app-b67f4.web.app/",
-    "logo": "https://my-web-app-b67f4.web.app/icons/Icon-192.png",
-    "sameAs": []
-  }
-  </script>
-
-  <!-- FAQ Structured Data for SEO -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "マイメモは無料で使えますか？",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "はい、マイメモは完全無料でご利用いただけます。メモ数の制限もなく、すべての基本機能をお使いいただけます。"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "NotionやEvernoteと何が違いますか？",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "マイメモの最大の特徴はゲーミフィケーション機能です。メモを書くとポイントが貯まり、レベルアップしたり、アチーブメントを解除したりできます。また、Evernoteと違い完全無料で制限がありません。"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "どんな人におすすめですか？",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "メモを続けたいけど3日坊主になってしまう方、学習記録を楽しく続けたい学生の方、タスク管理を習慣化したいビジネスパーソンの方など、すべての方におすすめです。"
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "モバイルでも使えますか？",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "はい、スマートフォンやタブレットのブラウザからアクセスできます。レスポンシブデザインで快適にご利用いただけます。"
-        }
-      }
-    ]
   }
   </script>
 </head>

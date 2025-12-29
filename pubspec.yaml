@@ -1,4 +1,4 @@
-name: my_web_app
+﻿name: my_web_app
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -15,28 +15,28 @@ dependencies:
   supabase_flutter: ^2.0.0
   cupertino_icons: ^1.0.6
   web: ^1.1.0
-  intl: ^0.20.2                    # 譌･莉倥ヵ繧ｩ繝ｼ繝槭ャ繝・
-  flutter_markdown: ^0.7.4+1       # 繝槭・繧ｯ繝繧ｦ繝ｳ繝ｬ繝ｳ繝繝ｪ繝ｳ繧ｰ
-  url_launcher: ^6.3.2             # 繝ｪ繝ｳ繧ｯ繧ｯ繝ｪ繝・け蟇ｾ蠢・
-  markdown: ^7.2.2                 # 繝槭・繧ｯ繝繧ｦ繝ｳ繝代・繧ｹ
-  highlight: ^0.7.0                # 繧ｷ繝ｳ繧ｿ繝・け繧ｹ繝上う繝ｩ繧､繝・
-  shared_preferences: ^2.3.3       # 霑ｽ蜉・壹Ο繝ｼ繧ｫ繝ｫ繧ｹ繝医Ξ繝ｼ繧ｸ
-  provider: ^6.1.2  # 霑ｽ蜉
-  file_picker: ^9.2.3  # Web迚医〒螳牙ｮ壼虚菴懊☆繧九ヰ繝ｼ繧ｸ繝ｧ繝ｳ
-  mime: ^1.0.6  # 霑ｽ蜉
-  path: ^1.9.0  # 霑ｽ蜉
-  google_fonts: ^6.1.0  # 霑ｽ蜉
-  # 譁ｰ隕剰ｿｽ蜉・医Γ繝｢繧ｫ繝ｼ繝画ｩ溯・逕ｨ・・
-  screenshot: ^3.0.0          # Widget to Image螟画鋤
-  share_plus: ^12.0.1         # SNS蜈ｱ譛・
-  path_provider: ^2.1.5       # 繝輔ぃ繧､繝ｫ繝代せ蜿門ｾ・
-  image_gallery_saver: ^2.0.3 # 繧ｮ繝｣繝ｩ繝ｪ繝ｼ菫晏ｭ假ｼ医が繝励す繝ｧ繝ｳ・・
-  logger: ^2.0.2              # 繝ｭ繧ｮ繝ｳ繧ｰ
-  timeago: ^3.7.0             # 逶ｸ蟇ｾ譎る俣陦ｨ遉ｺ
-  fl_chart: ^0.69.0           # 繝√Ε繝ｼ繝郁｡ｨ遉ｺ
-  package_info_plus: ^8.0.0   # 圷 霑ｽ蜉: 繝舌・繧ｸ繝ｧ繝ｳ諠・ｱ蜿門ｾ・
+  intl: ^0.20.2                    # 隴鯉ｽ･闔牙･繝ｵ郢ｧ・ｩ郢晢ｽｼ郢晄ｧｭ繝｣郢昴・
+  flutter_markdown: ^0.7.4+1       # 郢晄ｧｭ繝ｻ郢ｧ・ｯ郢敖郢ｧ・ｦ郢晢ｽｳ郢晢ｽｬ郢晢ｽｳ郢敖郢晢ｽｪ郢晢ｽｳ郢ｧ・ｰ
+  url_launcher: ^6.3.2             # 郢晢ｽｪ郢晢ｽｳ郢ｧ・ｯ郢ｧ・ｯ郢晢ｽｪ郢昴・縺題汞・ｾ陟｢繝ｻ
+  markdown: ^7.2.2                 # 郢晄ｧｭ繝ｻ郢ｧ・ｯ郢敖郢ｧ・ｦ郢晢ｽｳ郢昜ｻ｣繝ｻ郢ｧ・ｹ
+  highlight: ^0.7.0                # 郢ｧ・ｷ郢晢ｽｳ郢ｧ・ｿ郢昴・縺醍ｹｧ・ｹ郢昜ｸ翫≧郢晢ｽｩ郢ｧ・､郢昴・
+  shared_preferences: ^2.3.3       # 髴托ｽｽ陷会｣ｰ繝ｻ螢ｹﾎ溽ｹ晢ｽｼ郢ｧ・ｫ郢晢ｽｫ郢ｧ・ｹ郢晏現ﾎ樒ｹ晢ｽｼ郢ｧ・ｸ
+  provider: ^6.1.2  # 髴托ｽｽ陷会｣ｰ
+  file_picker: ^9.2.3  # Web霑壼現縲定楜迚呻ｽｮ螢ｼ陌夊抄諛岩・郢ｧ荵昴Σ郢晢ｽｼ郢ｧ・ｸ郢晢ｽｧ郢晢ｽｳ
+  mime: ^1.0.6  # 髴托ｽｽ陷会｣ｰ
+  path: ^1.9.0  # 髴托ｽｽ陷会｣ｰ
+  google_fonts: ^6.1.0  # 髴托ｽｽ陷会｣ｰ
+  # 隴・ｽｰ髫募臆・ｿ・ｽ陷会｣ｰ繝ｻ蛹ｻﾎ鍋ｹ晢ｽ｢郢ｧ・ｫ郢晢ｽｼ郢晉判・ｩ貅ｯ繝ｻ騾包ｽｨ繝ｻ繝ｻ
+  screenshot: ^3.0.0          # Widget to Image陞溽判驪､
+  share_plus: ^12.0.1         # SNS陷茨ｽｱ隴帙・
+  path_provider: ^2.1.5       # 郢晁ｼ斐＜郢ｧ・､郢晢ｽｫ郢昜ｻ｣縺幄愾髢・ｾ繝ｻ
+  image_gallery_saver: ^2.0.3 # 郢ｧ・ｮ郢晢ｽ｣郢晢ｽｩ郢晢ｽｪ郢晢ｽｼ闖ｫ譎擾ｽｭ蛛・ｽｼ蛹ｻ縺檎ｹ晏干縺咏ｹ晢ｽｧ郢晢ｽｳ繝ｻ繝ｻ
+  logger: ^2.0.2              # 郢晢ｽｭ郢ｧ・ｮ郢晢ｽｳ郢ｧ・ｰ
+  timeago: ^3.7.0             # 騾ｶ・ｸ陝・ｽｾ隴弱ｋ菫｣髯ｦ・ｨ驕会ｽｺ
+  fl_chart: ^0.69.0           # 郢昶・ﾎ慕ｹ晢ｽｼ郢晞メ・｡・ｨ驕会ｽｺ
+  package_info_plus: ^8.0.0   # 﨟槫惺 髴托ｽｽ陷会｣ｰ: 郢晁・繝ｻ郢ｧ・ｸ郢晢ｽｧ郢晢ｽｳ隲繝ｻ・ｰ・ｱ陷ｿ髢・ｾ繝ｻ
   device_info_plus: ^12.3.0
-  uuid: ^4.3.3               # UUID逕滓・逕ｨ
+  uuid: ^4.3.3               # UUID騾墓ｻ薙・騾包ｽｨ
   image_picker: ^1.2.1
   google_generative_ai: ^0.4.7
 
@@ -50,7 +50,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - web/assets/images/ogp-image.svg
     - web/assets/fonts/
     - docs/
     - docs/release-notes/
