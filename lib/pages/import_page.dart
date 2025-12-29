@@ -99,7 +99,7 @@ class _ImportPageState extends State<ImportPage> {
       AppLogger.error('Error picking file', error: e, stackTrace: stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ファイル選択エラー: $e')),
+          SnackBar(content: Text('資産ファイル選択エラー: $e')),
         );
       }
     }
@@ -132,7 +132,7 @@ class _ImportPageState extends State<ImportPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${notes.length}件のメモを検出しました')),
+          SnackBar(content: Text('${notes.length}件の知的財産を検出しました')),
         );
       }
     } catch (e, stackTrace) {
@@ -141,7 +141,7 @@ class _ImportPageState extends State<ImportPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ファイル解析エラー: $e')),
+          SnackBar(content: Text('デューデリジェンス（解析）エラー: $e')),
         );
       }
     }
@@ -150,7 +150,7 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _importNotes() async {
     if (_parsedNotes == null || _parsedNotes!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('インポートするメモがありません')),
+        const SnackBar(content: Text('統合する資産がありません')),
       );
       return;
     }
@@ -174,8 +174,8 @@ class _ImportPageState extends State<ImportPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$importedCount件のメモをインポートしました！'),
-            backgroundColor: Colors.green,
+            content: Text('M&A完了: $importedCount件の資産を統合しました。'),
+            backgroundColor: Colors.teal,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -193,7 +193,7 @@ class _ImportPageState extends State<ImportPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('インポートエラー: $e')),
+          SnackBar(content: Text('統合プロセスエラー: $e')),
         );
       }
     }
@@ -203,10 +203,13 @@ class _ImportPageState extends State<ImportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('メモのインポート'),
+        title: const Text('M&A (データ統合)'),
+        backgroundColor: const Color(0xFF0F172A), // Navy
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0F172A)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -214,6 +217,13 @@ class _ImportPageState extends State<ImportPage> {
                 children: [
                   // 説明
                   Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                          color: const Color(0xFFD4AF37)
+                              .withValues(alpha: 0.3)), // Gold hint
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -221,21 +231,23 @@ class _ImportPageState extends State<ImportPage> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.info_outline, color: Colors.blue),
+                              Icon(Icons.domain_add, color: Color(0xFF0F172A)),
                               SizedBox(width: 8),
                               Text(
-                                'Notion/Evernoteから簡単移行',
+                                '外部事業の買収統合',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            '既存のメモアプリからマイメモへ移行できます。インポート数に応じてボーナスポイントを獲得！',
-                            style: TextStyle(color: Colors.grey[700]),
+                            '他社（Notion/Evernote等）に眠る知的財産を「自分株式会社」へ統合します。買収規模（インポート数）に応じて、特別配当（Pt）が付与されます。',
+                            style:
+                                TextStyle(color: Colors.grey[700], height: 1.5),
                           ),
                         ],
                       ),
@@ -245,16 +257,19 @@ class _ImportPageState extends State<ImportPage> {
 
                   // インポート元の選択
                   Text(
-                    'インポート元を選択',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    '買収対象企業の選定',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800]),
                   ),
                   const SizedBox(height: 16),
 
                   // Notion
                   _buildImportCard(
                     title: 'Notion',
-                    description: 'CSVファイル形式でエクスポートしたデータをインポート',
-                    icon: Icons.language,
+                    description: 'CSV形式の経営資源を取り込む',
+                    icon: Icons.language, // Notionぽいアイコンがないため代替
                     color: Colors.black,
                     onTap: () => _pickFile('notion'),
                   ),
@@ -263,8 +278,8 @@ class _ImportPageState extends State<ImportPage> {
                   // Evernote
                   _buildImportCard(
                     title: 'Evernote',
-                    description: 'ENEX形式でエクスポートしたデータをインポート',
-                    icon: Icons.note,
+                    description: 'ENEX形式のアーカイブを吸収',
+                    icon: Icons.inventory_2, // 象の代わりにアーカイブっぽいもの
                     color: Colors.green,
                     onTap: () => _pickFile('evernote'),
                   ),
@@ -272,22 +287,32 @@ class _ImportPageState extends State<ImportPage> {
 
                   // Markdown
                   _buildImportCard(
-                    title: 'Markdown',
-                    description: 'Markdownファイル（.md）をインポート',
+                    title: 'Markdown / Text',
+                    description: '標準規格のドキュメントを統合',
                     icon: Icons.description,
-                    color: Colors.blue,
+                    color: Colors.blueGrey,
                     onTap: () => _pickFile('markdown'),
                   ),
                   const SizedBox(height: 24),
 
                   // プレビュー
                   if (_fileName != null) ...[
+                    const Divider(),
+                    const SizedBox(height: 12),
                     Text(
-                      'プレビュー',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      'デューデリジェンス (資産査定)',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800]),
                     ),
                     const SizedBox(height: 12),
                     Card(
+                      elevation: 0,
+                      color: Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade300)),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -296,8 +321,8 @@ class _ImportPageState extends State<ImportPage> {
                             Row(
                               children: [
                                 const Icon(
-                                  Icons.file_present,
-                                  color: Colors.blue,
+                                  Icons.folder_open,
+                                  color: Color(0xFF0F172A),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -312,20 +337,23 @@ class _ImportPageState extends State<ImportPage> {
                             ),
                             if (_parsedNotes != null) ...[
                               const SizedBox(height: 12),
-                              Text('検出されたメモ: ${_parsedNotes!.length}件'),
+                              Text('検出された資産: ${_parsedNotes!.length} 件',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.teal)),
                               const SizedBox(height: 16),
 
                               // カテゴリ選択
                               DropdownButtonFormField<String?>(
                                 decoration: const InputDecoration(
-                                  labelText: 'インポート先カテゴリ（任意）',
+                                  labelText: '統合先事業部（カテゴリ選択）',
                                   border: OutlineInputBorder(),
                                 ),
                                 initialValue: _selectedCategoryId,
                                 items: [
                                   const DropdownMenuItem<String?>(
                                     value: null,
-                                    child: Text('カテゴリなし'),
+                                    child: Text('事業部指定なし (未分類)'),
                                   ),
                                   ..._categories.map((category) {
                                     return DropdownMenuItem<String>(
@@ -340,7 +368,7 @@ class _ImportPageState extends State<ImportPage> {
                                   });
                                 },
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 24),
 
                               // インポートボタン
                               SizedBox(
@@ -353,14 +381,26 @@ class _ImportPageState extends State<ImportPage> {
                                           height: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
+                                            color: Colors.white,
                                           ),
                                         )
-                                      : const Icon(Icons.upload),
+                                      : const Icon(Icons.merge_type),
                                   label: Text(
-                                    _isImporting ? 'インポート中...' : 'インポート開始',
+                                    _isImporting
+                                        ? '統合プロセス実行中...'
+                                        : '買収を執行する (インポート)',
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        const Color(0xFF0F172A), // Navy
+                                    foregroundColor: Colors.white,
                                     padding: const EdgeInsets.all(16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -384,6 +424,8 @@ class _ImportPageState extends State<ImportPage> {
     required VoidCallback onTap,
   }) {
     return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -415,14 +457,14 @@ class _ImportPageState extends State<ImportPage> {
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),
         ),
