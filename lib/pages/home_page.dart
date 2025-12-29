@@ -10,7 +10,8 @@ import 'danshari_page.dart';
 import 'real_world_danshari_page.dart';
 import 'ai_secretary_page.dart';
 import 'subscription_page.dart';
-import 'health_page.dart'; // 追加
+import 'health_page.dart';
+import 'chro_page.dart'; // 追加: 人事厚生局
 import 'admin_analytics_page.dart';
 import '../models/note.dart';
 
@@ -108,6 +109,10 @@ class _HomePageState extends State<HomePage> {
       {
         'text': 'AI CHOに食事を監査されました。揚げ物を食べたら株価（パフォーマンス）が暴落しました',
         'ref': 'home_pattern_cho'
+      },
+      {
+        'text': '自分株式会社の株主総会（AI人事評価）の結果、今月はSランクでした！',
+        'ref': 'home_pattern_chro'
       },
     ];
     final random = Random();
@@ -286,7 +291,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text('5大経営タスク',
+                  const Text('6大経営タスク',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
@@ -353,16 +358,34 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      //  第5の機能: 健康管理室 (CHO)
-                      _buildBigFeatureCard(
-                        title: '健康管理室 (CHO)',
-                        subtitle: 'パフォーマンス検食',
-                        icon: Icons.health_and_safety,
-                        color: Colors.teal.shade800,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const HealthPage())),
+                      Row(
+                        children: [
+                          // 第5の機能: 健康管理室 (CHO)
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: '健康管理室\n(CHO)',
+                            subtitle: 'パフォーマンス検食',
+                            icon: Icons.health_and_safety,
+                            color: Colors.teal.shade800,
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const HealthPage())),
+                          )),
+                          const SizedBox(width: 12),
+                          //  第6の機能: 人事厚生局 (CHRO)
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: '人事厚生局\n(CHRO)',
+                            subtitle: '福利厚生 & メンタル',
+                            icon: Icons.diversity_3,
+                            color: Colors.pink,
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const ChroPage())),
+                          )),
+                        ],
                       ),
                     ],
                   ),

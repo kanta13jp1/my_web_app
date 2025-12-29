@@ -17,16 +17,33 @@ class _HealthPageState extends State<HealthPage> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   List<Map<String, dynamic>> _mealLogs = [];
-
-  // 最新の監査結果
   Map<String, dynamic>? _lastAudit;
   String? _usedModel;
   List<String> _attemptLogs = [];
+
+  //  許可証チェック用
+  bool _hasPermit = false;
 
   @override
   void initState() {
     super.initState();
     _fetchMealLogs();
+    _checkPermit();
+  }
+
+  Future<void> _checkPermit() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    // user_inventoryから effect_type='ramen_permit' かつ未使用のものを探す
+    final permit = await supabase
+        .from('user_inventory')
+        .select('*, welfare_items!inner(*)')
+        .eq('user_id', userId)
+        .eq('is_used', false)
+        .eq('welfare_items.effect_type', 'ramen_permit')
+        .maybeSingle();
+
+    if (mounted) setState(() => _hasPermit = permit != null);
   }
 
   Future<void> _fetchMealLogs() async {
@@ -39,18 +56,35 @@ class _HealthPageState extends State<HealthPage> {
           .eq('user_id', userId)
           .order('created_at', ascending: false)
           .limit(20);
-
-      if (mounted) {
-        setState(() {
-          _mealLogs = List<Map<String, dynamic>>.from(response);
-        });
-      }
+      if (mounted)
+        setState(() => _mealLogs = List<Map<String, dynamic>>.from(response));
     } catch (e) {
-      debugPrint('Error fetching meals: $e');
+      debugPrint('$e');
     }
   }
 
   Future<void> _auditMeal(ImageSource source) async {
+    // 許可証がある場合、使用するか確認
+    bool usePermit = false;
+    if (_hasPermit) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(' ラーメン許可証を提示'),
+          content: const Text('CHOの厳しい監査を無効化し、カロリーを「経費」として処理しますか？'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('使わない（ガチ監査）')),
+            ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('使う（福利厚生）')),
+          ],
+        ),
+      );
+      usePermit = confirm ?? false;
+    }
+
     final XFile? image = await _picker.pickImage(
         source: source, maxWidth: 800, imageQuality: 80);
     if (image == null) return;
@@ -65,34 +99,48 @@ class _HealthPageState extends State<HealthPage> {
       final bytes = await image.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+      // 許可証使用ならインベントリ消費
+      if (usePermit) {
+        final userId = supabase.auth.currentUser!.id;
+        // 1つだけ使用済みにする（簡易ロジック）
+        final item = await supabase
+            .from('user_inventory')
+            .select('id, welfare_items!inner(*)')
+            .eq('user_id', userId)
+            .eq('is_used', false)
+            .eq('welfare_items.effect_type', 'ramen_permit')
+            .limit(1)
+            .single();
+        await supabase
+            .from('user_inventory')
+            .update({'is_used': true}).eq('id', item['id']);
+        _checkPermit(); // 再チェック
+      }
+
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'audit_meal',
           'imageBase64': base64Image,
+          'hasPermit': usePermit, //  AIに許可証の有無を伝達
         },
       );
 
-      if (response.status != 200)
-        throw Exception('Server error: ${response.status}');
+      if (response.status != 200) throw Exception('Server error');
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
 
-      final result = data['result']; // JSON map
-      final usedModel = data['used_model'];
-      final logs = List<String>.from(data['attempt_logs'] ?? []);
-
       setState(() {
-        _lastAudit = result;
-        _usedModel = usedModel;
-        _attemptLogs = logs;
+        _lastAudit = data['result'];
+        _usedModel = data['used_model'];
+        _attemptLogs = List<String>.from(data['attempt_logs'] ?? []);
       });
 
       if (!mounted) return;
-      _showAuditResultDialog(result, usedModel, logs);
+      _showAuditResultDialog(_lastAudit!, _usedModel, _attemptLogs);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('監査エラー: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('監査エラー: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -102,7 +150,6 @@ class _HealthPageState extends State<HealthPage> {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-
       await supabase.from('meal_logs').insert({
         'user_id': userId,
         'menu_name': result['menu_name'],
@@ -111,15 +158,8 @@ class _HealthPageState extends State<HealthPage> {
         'audit_result': result['audit_result'],
         'advice': result['advice'],
       });
-
       _fetchMealLogs();
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('監査ログを記録しました'), backgroundColor: Colors.green));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('保存エラー: $e')));
-    }
+    } catch (e) {}
   }
 
   void _showAuditResultDialog(
@@ -131,99 +171,40 @@ class _HealthPageState extends State<HealthPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.health_and_safety, color: scoreColor),
-            const SizedBox(width: 8),
-            const Text('CHO 監査報告書'),
-          ],
-        ),
+        title: Row(children: [
+          Icon(Icons.health_and_safety, color: scoreColor),
+          const SizedBox(width: 8),
+          const Text('CHO 監査報告書')
+        ]),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (model != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                      color: Colors.amber[100],
-                      borderRadius: BorderRadius.circular(4)),
-                  child: Text('Auditor: $model',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.amber[900],
-                          fontWeight: FontWeight.bold)),
-                ),
-              if (logs.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text('(${logs.length} attempts failed)',
-                      style: TextStyle(fontSize: 10, color: Colors.red[300])),
-                ),
-              Text(result['menu_name'] ?? '不明なメニュー',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('推定カロリー',
-                            style: TextStyle(fontSize: 10, color: Colors.grey)),
-                        Text('${result['calorie_estimate']} kcal',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Text('パフォーマンス',
-                            style: TextStyle(fontSize: 10, color: Colors.grey)),
-                        Text('$score点',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
-                                color: scoreColor)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const Text('【監査コメント】',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              Text(result['audit_result'] ?? '',
-                  style: const TextStyle(fontSize: 14)),
-              const SizedBox(height: 8),
-              const Text('【CHOの助言】',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: Colors.blue)),
-              Text(result['advice'] ?? '',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (model != null)
+              Text('Auditor: $model',
+                  style: TextStyle(fontSize: 10, color: Colors.amber[900])),
+            Text(result['menu_name'] ?? '不明',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text('$score点',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: scoreColor)),
+            const Divider(),
+            Text(result['audit_result'] ?? ''),
+            const SizedBox(height: 8),
+            Text('【助言】 ${result['advice'] ?? ''}',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.blue)),
+          ]),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('破棄'),
-          ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _saveAuditResult(result);
-            },
-            child: const Text('記録する'),
-          ),
+              onPressed: () {
+                Navigator.pop(context);
+                _saveAuditResult(result);
+              },
+              child: const Text('記録する')),
         ],
       ),
     );
@@ -233,122 +214,45 @@ class _HealthPageState extends State<HealthPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(' 健康管理室 (CHO)'),
-        backgroundColor: Colors.teal.shade800,
-        foregroundColor: Colors.white,
-      ),
+          title: const Text(' 健康管理室 (CHO)'),
+          backgroundColor: Colors.teal.shade800,
+          foregroundColor: Colors.white),
       body: Column(
         children: [
-          // ダッシュボード
           Container(
             padding: const EdgeInsets.all(20),
             color: Colors.teal.shade50,
             child: Column(
               children: [
-                const Text('本日のパフォーマンススコア',
-                    style: TextStyle(color: Colors.teal)),
-                const SizedBox(height: 8),
-                // 平均スコアなどを計算してもよいが、ここでは簡易表示
-                const Text('Ready to Audit',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal)),
-                const SizedBox(height: 20),
+                if (_hasPermit)
+                  const Text(' ラーメン許可証 保有中',
+                      style: TextStyle(
+                          color: Colors.pink, fontWeight: FontWeight.bold)),
                 ElevatedButton.icon(
                   onPressed:
                       _isLoading ? null : () => _auditMeal(ImageSource.camera),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 12),
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  icon: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.camera_alt),
+                      backgroundColor: Colors.teal.shade700,
+                      foregroundColor: Colors.white),
+                  icon: const Icon(Icons.camera_alt),
                   label: const Text('食事を監査する (Camera)'),
                 ),
               ],
             ),
           ),
-
-          // ログリスト
           Expanded(
-            child: _mealLogs.isEmpty
-                ? const Center(child: Text('食事履歴がありません。\nAI監査を受けてください。'))
-                : ListView.builder(
-                    itemCount: _mealLogs.length,
-                    itemBuilder: (context, index) {
-                      final log = _mealLogs[index];
-                      final score = log['performance_score'] as int? ?? 0;
-                      final scoreColor = score >= 80
-                          ? Colors.green
-                          : (score >= 50 ? Colors.orange : Colors.red);
-
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: ExpansionTile(
-                          leading: CircleAvatar(
-                            backgroundColor: scoreColor,
-                            child: Text('$score',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                          title: Text(log['menu_name'] ?? '不明',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                              '${log['calorie_estimate']} kcal - ${log['created_at'].toString().substring(0, 10)}'),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(log['audit_result'] ?? '',
-                                      style: const TextStyle(fontSize: 14)),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.tips_and_updates,
-                                          size: 16, color: Colors.blue),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                          child: Text(log['advice'] ?? '',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue))),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () {
-                                        Share.share(
-                                            '【自分株式会社 CHO監査報告】\nメニュー: ${log['menu_name']}\nスコア: $score点\n判定: ${log['advice']}\n\n#マイメモ #AI検食',
-                                            subject: '食事監査結果');
-                                      },
-                                      icon: const Icon(Icons.share, size: 16),
-                                      label: const Text('シェア'),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+            child: ListView.builder(
+              itemCount: _mealLogs.length,
+              itemBuilder: (context, index) {
+                final log = _mealLogs[index];
+                return ListTile(
+                  leading:
+                      CircleAvatar(child: Text('${log['performance_score']}')),
+                  title: Text(log['menu_name'] ?? ''),
+                  subtitle: Text(log['advice'] ?? ''),
+                );
+              },
+            ),
           ),
         ],
       ),
