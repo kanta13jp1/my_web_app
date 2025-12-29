@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'landing_page.dart';
@@ -25,47 +24,91 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Note> _notes = [];
+  // KPI Data
+  int _totalPoints = 0;
+  int _taskCount = 0;
+  int _todayDanshariCount = 0;
+  int _healthScore = 0;
+  int _fixedCost = 0;
+
   bool _isLoading = true;
   bool _isMeeting = false;
   final int _dailyDanshariGoal = 5;
-  int _todayDanshariCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadData();
-    _checkMorningBriefing(); //  モーニングブリーフィングのチェック
+    _checkMorningBriefing();
   }
 
   Future<void> _loadData() async {
-    await Future.wait([_loadNotes(), _loadDailyProgress()]);
+    await Future.wait([
+      _fetchUserStats(),
+      _fetchHealthStats(),
+      _fetchFixedCosts(),
+      _fetchDanshariProgress(),
+    ]);
+    if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _checkMorningBriefing() async {
+  Future<void> _fetchUserStats() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final lastDate = prefs.getString('last_briefing_date');
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-
-      // 今日まだブリーフィングしていなければ実行
-      if (lastDate != todayStr) {
-        // UI描画後に実行するために少し待つ
-        await Future.delayed(const Duration(seconds: 2));
-        if (!mounted) return;
-
-        // 自動実行
-        _holdBoardMeeting(isMorning: true);
-
-        // 記録更新
-        await prefs.setString('last_briefing_date', todayStr);
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final stats = await supabase
+          .from('user_stats')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (stats != null) {
+        setState(() {
+          _totalPoints = stats['total_points'] ?? 0;
+          _taskCount = stats['notes_created'] ?? 0;
+        });
       }
-    } catch (e) {
-      debugPrint('Briefing check error: $e');
-    }
+    } catch (_) {}
   }
 
-  Future<void> _loadDailyProgress() async {
+  Future<void> _fetchHealthStats() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final meals = await supabase
+          .from('meal_logs')
+          .select('performance_score')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(5);
+      if (meals.isNotEmpty) {
+        final avg = meals
+                .map((m) => m['performance_score'] as int)
+                .reduce((a, b) => a + b) /
+            meals.length;
+        setState(() => _healthScore = avg.round());
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _fetchFixedCosts() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final subs = await supabase
+          .from('subscriptions')
+          .select('price, billing_cycle')
+          .eq('user_id', userId);
+      double total = 0;
+      for (var s in subs) {
+        double price = (s['price'] as num).toDouble();
+        if (s['billing_cycle'] == 'yearly') price /= 12;
+        total += price;
+      }
+      setState(() => _fixedCost = total.round());
+    } catch (_) {}
+  }
+
+  Future<void> _fetchDanshariProgress() async {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -78,33 +121,24 @@ class _HomePageState extends State<HomePage> {
           .eq('user_id', userId)
           .eq('is_archived', true)
           .gte('updated_at', todayStart);
-      if (mounted) setState(() => _todayDanshariCount = count);
-    } catch (e) {
-      debugPrint('$e');
-    }
+      setState(() => _todayDanshariCount = count);
+    } catch (_) {}
   }
 
-  Future<void> _loadNotes() async {
+  Future<void> _checkMorningBriefing() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final response = await supabase
-          .from('notes')
-          .select()
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .order('updated_at', ascending: false);
-      if (mounted)
-        setState(() {
-          _notes = (response as List).map((n) => Note.fromJson(n)).toList();
-          _isLoading = false;
-        });
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      final prefs = await SharedPreferences.getInstance();
+      final lastDate = prefs.getString('last_briefing_date');
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      if (lastDate != todayStr) {
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        _holdBoardMeeting(isMorning: true);
+        await prefs.setString('last_briefing_date', todayStr);
+      }
+    } catch (_) {}
   }
 
-  //  役員会議 / モーニングブリーフィング
   Future<void> _holdBoardMeeting({bool isMorning = false}) async {
     setState(() => _isMeeting = true);
     try {
@@ -143,7 +177,7 @@ class _HomePageState extends State<HomePage> {
         body: {
           'action': 'hold_board_meeting',
           'boardData': boardData,
-          'context': isMorning ? 'morning_briefing' : 'emergency' //  文脈を指定
+          'context': isMorning ? 'morning_briefing' : 'emergency'
         },
       );
 
@@ -165,13 +199,15 @@ class _HomePageState extends State<HomePage> {
       {bool isMorning = false}) {
     showDialog(
       context: context,
-      barrierDismissible: !isMorning, // 朝礼は確認必須感
+      barrierDismissible: !isMorning,
       builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A), // Navy
         title: Row(children: [
           Icon(isMorning ? Icons.wb_sunny : Icons.meeting_room,
-              color: isMorning ? Colors.orange : Colors.indigo),
+              color: const Color(0xFFD4AF37)),
           const SizedBox(width: 8),
-          Text(isMorning ? 'モーニングブリーフィング' : '緊急役員会議 議事録')
+          Text(isMorning ? 'Morning Briefing' : 'Board Meeting',
+              style: const TextStyle(color: Colors.white))
         ]),
         content: SingleChildScrollView(
           child: Column(
@@ -180,36 +216,34 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text(result['agenda'] ?? '',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
-              const Divider(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white)),
+              const Divider(color: Colors.white24),
               Text(isMorning ? '【昨日の分析】' : '【議論】',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12)),
               Text(result['discussion'] ?? '',
-                  style: const TextStyle(fontSize: 14)),
+                  style: const TextStyle(fontSize: 14, color: Colors.white70)),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color:
-                        isMorning ? Colors.orange.shade50 : Colors.red.shade50,
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: isMorning
-                            ? Colors.orange.shade200
-                            : Colors.red.shade200)),
+                    border: Border.all(color: const Color(0xFFD4AF37))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isMorning ? '【本日のミッション】' : '【決定事項 (Action Item)】',
-                        style: TextStyle(
+                    Text(isMorning ? '【本日のミッション】' : '【決定事項】',
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isMorning
-                                ? Colors.orange.shade900
-                                : Colors.red)),
+                            color: Color(0xFFD4AF37))),
                     const SizedBox(height: 4),
                     Text(result['decision'] ?? '',
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.white)),
                   ],
                 ),
               ),
@@ -220,34 +254,28 @@ class _HomePageState extends State<HomePage> {
                       style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green))),
+                          color: Colors.greenAccent))),
             ],
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('了解')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('了解', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                _shareAppWithContent(result['decision'] ?? '人生経営中');
+                final shareText =
+                    '${isMorning ? 'モーニングブリーフィング' : '緊急役員会議'}\n決定事項: ${result['decision']}\n予想株価: ${result['stock_price_impact']}\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社';
+                Share.share(shareText);
               },
-              child: const Text('共有する')),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4AF37),
+                  foregroundColor: Colors.black),
+              child: const Text('全社通達 (シェア)')),
         ],
       ),
     );
-  }
-
-  //  URL付きシェア機能（共通化）
-  Future<void> _shareAppWithContent(String content) async {
-    try {
-      await supabase.rpc('increment_share_count');
-    } catch (_) {}
-    final box = context.findRenderObject() as RenderBox?;
-    await Share.share(
-        '$content\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社',
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null);
   }
 
   Future<void> _signOut() async {
@@ -259,253 +287,298 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isGoalMet = _todayDanshariCount >= _dailyDanshariGoal;
-    final remaining = _dailyDanshariGoal - _todayDanshariCount;
+    final navy = const Color(0xFF0F172A);
+    final gold = const Color(0xFFD4AF37);
+    final isDanshariMet = _todayDanshariCount >= _dailyDanshariGoal;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('自分株式会社'),
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.campaign, color: Colors.purple),
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => const CmoPage()))),
-          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
-        ],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.indigo),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Icon(Icons.business, color: Colors.white, size: 40),
-                    SizedBox(height: 10),
-                    Text('経営管理',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold))
-                  ]),
-            ),
-            ListTile(
-                leading: const Icon(Icons.analytics),
-                title: const Text('アプリ分析 (管理者用)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const AdminAnalyticsPage()));
-                }),
-          ],
-        ),
-      ),
+      backgroundColor: const Color(0xFFF1F5F9),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isMeeting
-                          ? null
-                          : () => _holdBoardMeeting(isMorning: false),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(16),
-                          elevation: 4),
-                      icon: _isMeeting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.groups),
-                      label: const Text('緊急役員会議を開催する',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () async {
-                      if (!isGoalMet) {
-                        await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const DanshariPage()));
-                        _loadData();
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
+          ? Center(child: CircularProgressIndicator(color: navy))
+          : CustomScrollView(
+              slivers: [
+                // Header
+                SliverAppBar(
+                  expandedHeight: 280.0,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: navy,
+                  foregroundColor: Colors.white,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
                       decoration: BoxDecoration(
-                          color: isGoalMet
-                              ? Colors.green.shade50
-                              : Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: isGoalMet ? Colors.green : Colors.red,
-                              width: 2)),
-                      child: Row(children: [
-                        Icon(isGoalMet ? Icons.bed : Icons.lock_clock,
-                            size: 40,
-                            color: isGoalMet ? Colors.green : Colors.red),
-                        const SizedBox(width: 16),
-                        Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                              Text(isGoalMet ? '就寝許可証: 発行済み' : '就寝禁止: ロック中',
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [navy, const Color(0xFF1E293B)],
+                        ),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 80, 24, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Capital (Assets)',
+                              style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                  letterSpacing: 1.5)),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('$_totalPoints',
                                   style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: isGoalMet
-                                          ? Colors.green.shade800
-                                          : Colors.red.shade800)),
-                              const SizedBox(height: 4),
-                              Text(
-                                  isGoalMet
-                                      ? 'お疲れ様でした。良い夢を。'
-                                      : 'あと $remaining 個 片付けるまで\n寝ることは許されません。',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: isGoalMet
-                                          ? Colors.green.shade700
-                                          : Colors.red.shade700))
-                            ])),
-                      ]),
+                                      color: gold,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.bold)),
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 10, left: 4),
+                                child: Text('Pt',
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 20)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildKpiItem(Icons.health_and_safety, 'Health',
+                                  '$_healthScore', 'Score'),
+                              _buildKpiItem(Icons.money_off, 'Fixed Cost',
+                                  '$_fixedCost', '/mo'),
+                              _buildKpiItem(
+                                  Icons.task, 'Tasks', '$_taskCount', 'Total'),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+                    title: const Text('自分株式会社',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    centerTitle: true,
                   ),
-                  const SizedBox(height: 24),
-                  const Text('経営役員会',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Wrap(spacing: 12, runSpacing: 12, children: [
-                    _buildFeatureCard(
-                        context,
-                        'AI戦略室 (CSO)',
-                        '秘書 & 参謀',
-                        Icons.business_center,
-                        Colors.blueGrey,
-                        const AISecretaryPage()),
-                    _buildFeatureCard(
-                        context,
-                        '断捨離クエスト',
-                        '残り $remaining 個',
-                        Icons.cleaning_services,
-                        isGoalMet ? Colors.green : Colors.redAccent,
-                        const DanshariPage(),
-                        isHighlight: true),
-                    _buildFeatureCard(
-                        context,
-                        '財務省 (CFO)',
-                        '固定費監査',
-                        Icons.attach_money,
-                        Colors.teal,
-                        const SubscriptionPage()),
-                    _buildFeatureCard(
-                        context,
-                        '健康管理室 (CHO)',
-                        'AI検食',
-                        Icons.health_and_safety,
-                        Colors.teal.shade800,
-                        const HealthPage()),
-                    _buildFeatureCard(context, '人事局 (CHRO)', '福利厚生',
-                        Icons.diversity_3, Colors.pink, const ChroPage()),
-                    _buildFeatureCard(context, '広報室 (CMO)', 'PR & 分析',
-                        Icons.campaign, Colors.purple, const CmoPage()),
-                    _buildFeatureCard(
-                        context,
-                        '知的財産本部 (CKO)',
-                        'AIシンクタンク',
-                        Icons.school,
-                        Colors.indigo,
-                        const GeminiUniversityPage()),
-                  ]),
-                  const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    height: 80,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
+                  actions: [
+                    IconButton(
+                        icon: const Icon(Icons.campaign),
+                        onPressed: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const RealWorldDanshariPage()));
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo.shade50,
-                          foregroundColor: Colors.indigo,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                  color: Colors.indigo.withOpacity(0.3)))),
-                      icon: const Icon(Icons.camera_alt, size: 32),
-                      label: const Text('現実のゴミも捨てる (AI判定)',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const Text('すべてのメモ',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  if (_notes.isEmpty)
-                    const Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Text('メモはまだありません。',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey)))
-                  else
-                    ..._notes.map((note) => Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                            title: Text(note.title,
-                                maxLines: 1, overflow: TextOverflow.ellipsis),
-                            subtitle: Text(note.content,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12)),
-                            onTap: () async {
+                                builder: (_) => const CmoPage()))),
+                    IconButton(
+                        icon: const Icon(Icons.logout), onPressed: _signOut),
+                  ],
+                ),
+
+                // Control Panel
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 20),
+                          child: ElevatedButton.icon(
+                            onPressed: _isMeeting
+                                ? null
+                                : () => _holdBoardMeeting(isMorning: false),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: navy,
+                              foregroundColor: gold,
+                              padding: const EdgeInsets.all(20),
+                              elevation: 8,
+                              shadowColor: navy.withOpacity(0.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: _isMeeting
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                        color: gold, strokeWidth: 2))
+                                : const Icon(Icons.groups, size: 28),
+                            label: const Text('緊急役員会議を招集',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0)),
+                          ),
+                        ),
+                        const Text('DEPARTMENTS (各部署)',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2)),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _buildDeptCard(
+                                '戦略室 (CSO)',
+                                'AI秘書',
+                                Icons.psychology,
+                                Colors.blueGrey,
+                                const AISecretaryPage()),
+                            _buildDeptCard(
+                                '財務省 (CFO)',
+                                '固定費監査',
+                                Icons.account_balance,
+                                Colors.teal,
+                                const SubscriptionPage()),
+                            _buildDeptCard('知財本部 (CKO)', 'AI大学', Icons.school,
+                                Colors.indigo, const GeminiUniversityPage()),
+                            _buildDeptCard(
+                                '健康管理 (CHO)',
+                                'AI検食',
+                                Icons.monitor_heart,
+                                Colors.green[800]!,
+                                const HealthPage()),
+                            _buildDeptCard('広報室 (CMO)', '分析 & PR',
+                                Icons.campaign, Colors.purple, const CmoPage()),
+                            _buildDeptCard(
+                                '人事局 (CHRO)',
+                                '福利厚生',
+                                Icons.diversity_3,
+                                Colors.pink,
+                                const ChroPage()),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        const Text('OPERATIONS (業務遂行)',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2)),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () async {
+                            if (!isDanshariMet) {
                               await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) =>
-                                          NoteEditorPage(note: note)));
+                                      builder: (_) => const DanshariPage()));
                               _loadData();
-                            }))),
-                  const SizedBox(height: 80),
-                ],
-              ),
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                  colors: isDanshariMet
+                                      ? [
+                                          Colors.green.shade700,
+                                          Colors.green.shade400
+                                        ]
+                                      : [
+                                          Colors.red.shade700,
+                                          Colors.red.shade400
+                                        ]),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4))
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                    isDanshariMet
+                                        ? Icons.check_circle
+                                        : Icons.warning,
+                                    color: Colors.white,
+                                    size: 32),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          isDanshariMet
+                                              ? '就寝許可証: 発行済'
+                                              : '就寝許可証: 未発行',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      Text(
+                                          isDanshariMet
+                                              ? '本日の業務は順調です。'
+                                              : '残り ${_dailyDanshariGoal - _todayDanshariCount} 個の断捨離が必要です。',
+                                          style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                                if (!isDanshariMet)
+                                  const Icon(Icons.arrow_forward_ios,
+                                      color: Colors.white70, size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildOperationButton('リアル断捨離',
+                                  Icons.camera_alt, Colors.orange[800]!, () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const RealWorldDanshariPage()));
+                              }),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildOperationButton(
+                                  'クイックメモ', Icons.edit_note, Colors.blue[800]!,
+                                  () async {
+                                await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NoteEditorPage()));
+                                _loadData();
+                              }),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const NoteEditorPage()));
-            _loadData();
-          },
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.indigo,
-          child: const Icon(Icons.edit)),
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, String subtitle,
-      IconData icon, Color color, Widget page,
-      {bool isHighlight = false}) {
+  Widget _buildKpiItem(IconData icon, String label, String value, String unit) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white70, size: 20),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
+        Text('$label ($unit)',
+            style: const TextStyle(color: Colors.white38, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildDeptCard(
+      String title, String subtitle, IconData icon, Color color, Widget page) {
     final width = (MediaQuery.of(context).size.width - 48) / 2;
     return GestureDetector(
       onTap: () async {
@@ -514,38 +587,57 @@ class _HomePageState extends State<HomePage> {
       },
       child: Container(
         width: width,
-        height: 140,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-            color: isHighlight ? color : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: color.withOpacity(0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3))
-            ],
-            border: isHighlight
-                ? null
-                : Border.all(color: color.withOpacity(0.3), width: 2)),
-        padding: const EdgeInsets.all(12),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: 32, color: isHighlight ? Colors.white : color),
-          const SizedBox(height: 8),
-          Text(title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: isHighlight ? Colors.white : Colors.black87)),
-          const SizedBox(height: 4),
-          Text(subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: isHighlight ? Colors.white : Colors.grey))
-        ]),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border(left: BorderSide(color: color, width: 4)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color, size: 28),
+                Icon(Icons.arrow_forward, color: Colors.grey[300], size: 16),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(title,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey[800])),
+            Text(subtitle,
+                style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildOperationButton(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: color,
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: color.withOpacity(0.3))),
+      ),
+      icon: Icon(icon),
+      label: Text(label),
     );
   }
 }
