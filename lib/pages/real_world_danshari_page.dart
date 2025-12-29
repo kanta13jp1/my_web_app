@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data'; // For Uint8List
-import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'dart:typed_data'; // Required for Uint8List
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,7 +13,7 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  // Web対応のため File ではなく Uint8List (バイトデータ) を使用
+  //  CHANGED: Use Uint8List instead of File for Web compatibility
   Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isAnalyzing = false;
@@ -34,7 +33,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           source: source, maxWidth: 800, maxHeight: 800, imageQuality: 80);
 
       if (pickedFile != null) {
-        // Webでも動くようにバイトデータを読み込む
+        //  CHANGED: Read as bytes immediately (works on Web & Mobile)
         final bytes = await pickedFile.readAsBytes();
 
         setState(() {
@@ -43,6 +42,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           _itemName = null;
           _keepScore = null;
         });
+
+        // Auto-start analysis
         _analyzeImage();
       }
     } catch (e) {
@@ -56,14 +57,14 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      // バイトデータをBase64に変換 (Web対応済み)
+      // Convert memory bytes to Base64
       final base64Image = base64Encode(_imageBytes!);
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'analyze_image',
-          'imageBase64': base64Image,
+          'imageBase64': base64Image, // Sending base64 string
           'mimeType': 'image/jpeg',
         },
       );
@@ -119,7 +120,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             ),
             const SizedBox(height: 24),
 
-            // Image Area (Web対応: Image.memoryを使用)
+            //  CHANGED: Use Image.memory instead of Image.file
             Container(
               height: 300,
               decoration: BoxDecoration(
@@ -131,11 +132,15 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   ? Icon(Icons.camera_alt, size: 60, color: Colors.grey[400])
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                      child: Image.memory(
+                        _imageBytes!,
+                        fit: BoxFit.cover,
+                      ),
                     ),
             ),
             const SizedBox(height: 24),
 
+            // Control Buttons
             if (!_isAnalyzing && _analysisResult == null) ...[
               ElevatedButton.icon(
                 onPressed: () => _pickImage(ImageSource.camera),
@@ -166,6 +171,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               ),
             ],
 
+            // Loading Indicator
             if (_isAnalyzing)
               Column(
                 children: [
@@ -177,8 +183,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 ],
               ),
 
+            // Results Area
             if (_analysisResult != null) ...[
               const SizedBox(height: 20),
+
+              // Score Card
               if (_keepScore != null)
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -230,7 +239,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     ],
                   ),
                 ),
+
               const SizedBox(height: 16),
+
+              // The Verdict (Coach's Comment)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -269,7 +281,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 24),
+
+              // Action Buttons
               Row(
                 children: [
                   Expanded(
