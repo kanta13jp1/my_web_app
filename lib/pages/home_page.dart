@@ -221,6 +221,18 @@ class _HomePageState extends State<HomePage> {
         final data = response.data;
         if (data['success'] == true) {
           final result = data['result'];
+          //  モデル名を表示
+          if (mounted && data['used_model'] != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'AI介入: ${data['provider']} (${data['used_model']}) が分析しました'),
+                backgroundColor: Colors.blueGrey,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+
           if (result['should_intervene'] == true) {
             await Future.delayed(const Duration(seconds: 3));
             if (mounted) _showInterventionDialog(result);
@@ -347,7 +359,21 @@ class _HomePageState extends State<HomePage> {
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
 
-      if (mounted) _showMeetingResult(data['result'], isMorning: isMorning);
+      //  実行されたモデルを表示
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 20),
+              const SizedBox(width: 8),
+              Text('議長: ${data['provider']} (${data['used_model']})')
+            ]),
+            backgroundColor: Colors.black87,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        _showMeetingResult(data['result'], isMorning: isMorning);
+      }
     } catch (e) {
       if (!isMorning)
         ScaffoldMessenger.of(context)
@@ -569,6 +595,7 @@ class _HomePageState extends State<HomePage> {
                                 builder: (_) => const CmoPage()))),
                   ],
                 ),
+
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -654,7 +681,6 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 12),
                         InkWell(
                           onTap: () async {
-                            //  修正: 達成済みでもアクセス可能にする
                             await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -714,7 +740,6 @@ class _HomePageState extends State<HomePage> {
                                     ],
                                   ),
                                 ),
-                                //  修正: 常に矢印を表示
                                 const Icon(Icons.arrow_forward_ios,
                                     color: Colors.white70, size: 16),
                               ],
@@ -760,6 +785,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+
+                // メモリスト
                 _notes.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
