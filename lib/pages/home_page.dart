@@ -14,6 +14,7 @@ import 'health_page.dart';
 import 'chro_page.dart';
 import 'cmo_page.dart';
 import 'admin_analytics_page.dart';
+import 'ai_status_page.dart'; // 稼働モニター
 import '../models/note.dart';
 
 class HomePage extends StatefulWidget {
@@ -168,6 +169,7 @@ class _HomePageState extends State<HomePage> {
       final lastCheck = prefs.getInt('last_intervention_ts') ?? 0;
       final nowTs = DateTime.now().millisecondsSinceEpoch;
 
+      // 頻度制御: 1時間
       if (nowTs - lastCheck < 3600000) return;
 
       final userId = supabase.auth.currentUser?.id;
@@ -221,7 +223,8 @@ class _HomePageState extends State<HomePage> {
         final data = response.data;
         if (data['success'] == true) {
           final result = data['result'];
-          //  モデル名を表示
+
+          //  AIモデル名を表示
           if (mounted && data['used_model'] != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -512,6 +515,15 @@ class _HomePageState extends State<HomePage> {
                     context,
                     MaterialPageRoute(
                         builder: (_) => const AdminAnalyticsPage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.monitor_heart, color: Colors.teal),
+              title: const Text('AI稼働モニター'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const AiStatusPage()));
               },
             ),
             const Divider(),
