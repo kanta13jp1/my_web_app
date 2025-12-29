@@ -27,7 +27,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // KPI Data
   int _totalPoints = 0;
-  int _taskCount = 0; // Active tasks (Digital debt)
+  int _taskCount = 0;
   int _healthScore = 0;
   int _fixedCost = 0;
   List<Note> _notes = [];
@@ -35,8 +35,8 @@ class _HomePageState extends State<HomePage> {
   // Danshari Progress
   int _todayDigitalCount = 0;
   int _todayRealCount = 0;
-  int _dailyDigitalGoal = 5; // Default (will be calculated)
-  int _dailyRealGoal = 1; // Default (will be calculated)
+  int _dailyDigitalGoal = 5;
+  int _dailyRealGoal = 1;
 
   bool _isLoading = true;
   bool _isMeeting = false;
@@ -54,7 +54,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _runExecutiveChecks() async {
     await _loadData();
-    // Calculate dynamic goals based on loaded stats
     _calculateDynamicGoals();
     await _checkMorningBriefing();
     await _checkProactiveIntervention();
@@ -62,14 +61,7 @@ class _HomePageState extends State<HomePage> {
 
   void _calculateDynamicGoals() {
     setState(() {
-      // 1. デジタルノルマ: 「未完了タスク数（負債）」に応じて増加
-      // 基本5件 + (タスク残数 / 20)
-      // 例: タスク100件溜まっていれば、5 + 5 = 10件捨てる必要がある
       _dailyDigitalGoal = 5 + (_taskCount / 20).floor();
-
-      // 2. リアルノルマ: 「総資産（実績）」に応じてレベルアップ（ノブレスオブリージュ）
-      // 基本1件 + (ポイント / 3000)
-      // 例: 6000pt貯まれば、1 + 2 = 3件の実践が求められる
       _dailyRealGoal = 1 + (_totalPoints / 3000).floor();
     });
   }
@@ -113,11 +105,7 @@ class _HomePageState extends State<HomePage> {
       if (stats != null) {
         setState(() {
           _totalPoints = stats['total_points'] ?? 0;
-          _taskCount = stats['notes_created'] ??
-              0; // Assuming this tracks active tasks or roughly similar
-          // Ideally we should query count of is_archived=false for accurate debt
         });
-        // Get accurate active task count for goal calculation
         final countRes = await supabase
             .from('notes')
             .count()
@@ -174,7 +162,6 @@ class _HomePageState extends State<HomePage> {
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
 
-      // 1. Real World Danshari (Title starts with '断捨離:' and created today)
       final realCount = await supabase
           .from('notes')
           .count()
@@ -183,9 +170,6 @@ class _HomePageState extends State<HomePage> {
           .ilike('title', '断捨離:%')
           .gte('created_at', todayStart);
 
-      // 2. Total Archived Today (Includes both Digital and Real)
-      // Note: For digital, updated_at is today. For real, created_at is today (and equals updated_at).
-      // Using updated_at covers both cases effectively for "Action taken today".
       final totalArchivedCount = await supabase
           .from('notes')
           .count()
@@ -195,7 +179,6 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _todayRealCount = realCount;
-        // Digital is total minus real (approximation, assuming Real ones strictly follow the naming convention)
         _todayDigitalCount = (totalArchivedCount - realCount) < 0
             ? 0
             : (totalArchivedCount - realCount);
@@ -532,7 +515,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Both goals must be met for the "Permit"
     final isDigitalMet = _todayDigitalCount >= _dailyDigitalGoal;
     final isRealMet = _todayRealCount >= _dailyRealGoal;
     final isAllMet = isDigitalMet && isRealMet;
@@ -551,7 +533,6 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Emergency Meeting Button
                         Container(
                           width: double.infinity,
                           height: 60,
@@ -588,8 +569,6 @@ class _HomePageState extends State<HomePage> {
                                     fontSize: 18, fontWeight: FontWeight.bold)),
                           ),
                         ),
-
-                        // Departments Header
                         Text('DEPARTMENTS',
                             style: TextStyle(
                                 color: Colors.grey[600],
@@ -601,8 +580,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-
-                // Departments Grid
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid.count(
@@ -626,7 +603,6 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -641,8 +617,6 @@ class _HomePageState extends State<HomePage> {
                                 fontSize: 12,
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
-
-                        // Danshari Card (Consolidated)
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -681,7 +655,6 @@ class _HomePageState extends State<HomePage> {
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              // Digital Progress
                               _buildProgressRow('デジタル断捨離', _todayDigitalCount,
                                   _dailyDigitalGoal, Colors.blue, () async {
                                 await Navigator.push(
@@ -691,7 +664,6 @@ class _HomePageState extends State<HomePage> {
                                 _loadData();
                               }),
                               const SizedBox(height: 12),
-                              // Real Progress
                               _buildProgressRow('リアル断捨離', _todayRealCount,
                                   _dailyRealGoal, Colors.orange, () {
                                 Navigator.push(
@@ -704,10 +676,7 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Quick Action Row
                         Row(
                           children: [
                             Expanded(
@@ -725,7 +694,6 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 24),
                         Text('PROJECTS',
                             style: TextStyle(
@@ -738,8 +706,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-
-                // Note List
                 _notes.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
@@ -799,9 +765,101 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 320.0, // Increased height to prevent overlap
+      floating: false,
+      pinned: true,
+      backgroundColor: _navy,
+      foregroundColor: Colors.white,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [_navy, const Color(0xFF1E293B)],
+            ),
+          ),
+          child: SafeArea(
+            // Use SafeArea to handle notches
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 60.0, left: 20, right: 20, bottom: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Total Capital (Assets)',
+                      style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          letterSpacing: 1.0)),
+                  const SizedBox(height: 8),
+                  // Main Score
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text('$_totalPoints',
+                            style: TextStyle(
+                                color: _gold,
+                                fontSize: 56,
+                                fontWeight: FontWeight.bold,
+                                height: 1.0)),
+                        const SizedBox(width: 8),
+                        const Text('Pt',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 24)),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  // KPIs Row
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildKpiItem(Icons.health_and_safety, 'Health',
+                            '$_healthScore', 'Score'),
+                        _buildVerticalDivider(),
+                        _buildKpiItem(Icons.account_balance_wallet,
+                            'Fixed Cost', '$_fixedCost', '/mo'),
+                        _buildVerticalDivider(),
+                        _buildKpiItem(Icons.check_circle, 'Tasks',
+                            '$_taskCount', 'Active'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        title:
+            const Text('自分株式会社', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      actions: [
+        IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => const CmoPage()))),
+      ],
+    );
+  }
+
   Widget _buildProgressRow(
       String label, int current, int goal, Color color, VoidCallback onTap) {
-    final progress = (current / goal).clamp(0.0, 1.0);
+    final progress = (goal == 0) ? 1.0 : (current / goal).clamp(0.0, 1.0);
     final isMet = current >= goal;
 
     return InkWell(
@@ -832,95 +890,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      expandedHeight: 260.0,
-      floating: false,
-      pinned: true,
-      backgroundColor: _navy,
-      foregroundColor: Colors.white,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          padding: const EdgeInsets.fromLTRB(20, 90, 20, 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [_navy, const Color(0xFF1E293B)],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Total Capital (Assets)',
-                  style: TextStyle(
-                      color: Colors.white54, fontSize: 12, letterSpacing: 1.0)),
-              const SizedBox(height: 4),
-              Expanded(
-                flex: 2,
-                child: FittedBox(
-                  alignment: Alignment.centerLeft,
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text('$_totalPoints',
-                          style: TextStyle(
-                              color: _gold,
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              height: 1.0)),
-                      const SizedBox(width: 8),
-                      const Text('Pt',
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 20)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildKpiItem(Icons.health_and_safety, 'Health',
-                          '$_healthScore', 'Score'),
-                      _buildVerticalDivider(),
-                      _buildKpiItem(Icons.account_balance_wallet, 'Fixed Cost',
-                          '$_fixedCost', '/mo'),
-                      _buildVerticalDivider(),
-                      _buildKpiItem(
-                          Icons.check_circle, 'Tasks', '$_taskCount', 'Active'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        title:
-            const Text('自分株式会社', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      actions: [
-        IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const CmoPage()))),
-      ],
     );
   }
 
