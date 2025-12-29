@@ -189,15 +189,20 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('user_id', userId)
           .maybeSingle();
-      // テーブルが存在しない場合のエラーハンドリングを追加するか、機能を条件付きにする
-      // 今回は既存実装に合わせて呼び出し
-      dynamic paymentSources = [];
+
+      // Payment Sourcesの取得を安全に行う
+      List<dynamic> paymentSources = [];
       try {
-        paymentSources = await supabase
+        // テーブルが存在しない場合やエラーを想定してtry-catch
+        final res = await supabase
             .from('payment_sources')
             .select()
             .eq('user_id', userId);
-      } catch (_) {}
+        paymentSources = res as List<dynamic>;
+      } catch (_) {
+        // テーブルがない等の場合は空リストで続行
+        paymentSources = [];
+      }
 
       final boardData = {
         'recentMeals': meals,
@@ -453,7 +458,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
-      //  Drawer (管理者メニュー) の復活
+      // Drawer (管理者メニュー)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -566,8 +571,6 @@ class _HomePageState extends State<HomePage> {
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const CmoPage()))),
-                    // ハンバーガーメニューは左側に出るので、右側のアクションからはログアウトなどを削除しても良いが、利便性のため残す
-                    // IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
                   ],
                 ),
                 SliverToBoxAdapter(
