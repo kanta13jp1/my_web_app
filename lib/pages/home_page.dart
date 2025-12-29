@@ -81,6 +81,7 @@ class _HomePageState extends State<HomePage> {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
+      // Fetch list of notes. .select() returns a list by default.
       final response = await supabase
           .from('notes')
           .select()
@@ -97,14 +98,18 @@ class _HomePageState extends State<HomePage> {
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
-      final stats = await supabase
+
+      // FIX: Use .limit(1).maybeSingle() to safely handle cases where multiple rows might exist
+      final response = await supabase
           .from('user_stats')
           .select()
           .eq('user_id', userId)
+          .limit(1)
           .maybeSingle();
-      if (stats != null) {
+
+      if (response != null) {
         setState(() {
-          _totalPoints = stats['total_points'] ?? 0;
+          _totalPoints = response['total_points'] ?? 0;
         });
         final countRes = await supabase
             .from('notes')
@@ -113,7 +118,9 @@ class _HomePageState extends State<HomePage> {
             .eq('is_archived', false);
         setState(() => _taskCount = countRes);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error fetching user stats: $e');
+    }
   }
 
   Future<void> _fetchHealthStats() async {
@@ -226,7 +233,8 @@ class _HomePageState extends State<HomePage> {
           .from('user_stats')
           .select()
           .eq('user_id', userId)
-          .maybeSingle();
+          .limit(1)
+          .maybeSingle(); // Fix here too
 
       dynamic paymentSources = [];
       try {
@@ -362,7 +370,12 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('is_archived', false)
           .limit(5);
-      final stats = await supabase.from('user_stats').select().maybeSingle();
+      final stats = await supabase
+          .from('user_stats')
+          .select()
+          .eq('user_id', userId)
+          .limit(1)
+          .maybeSingle(); // Fix here too
 
       final boardData = {
         'recentMeals': meals,
@@ -538,7 +551,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  //  復活させたログアウト機能
   Future<void> _signOut() async {
     await supabase.auth.signOut();
     if (mounted) {
