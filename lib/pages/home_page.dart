@@ -9,7 +9,8 @@ import 'gemini_university_page.dart';
 import 'danshari_page.dart';
 import 'real_world_danshari_page.dart';
 import 'ai_secretary_page.dart';
-import 'subscription_page.dart'; // 追加
+import 'subscription_page.dart';
+import 'health_page.dart'; // 追加
 import 'admin_analytics_page.dart';
 import '../models/note.dart';
 
@@ -105,8 +106,8 @@ class _HomePageState extends State<HomePage> {
         'ref': 'home_pattern_a_tech_overkill'
       },
       {
-        'text': 'AI CFOに固定費を監査してもらいました。無駄遣いがバレて叱責されています。',
-        'ref': 'home_pattern_cfo'
+        'text': 'AI CHOに食事を監査されました。揚げ物を食べたら株価（パフォーマンス）が暴落しました',
+        'ref': 'home_pattern_cho'
       },
     ];
     final random = Random();
@@ -284,15 +285,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  const Text('4大経営タスク',
+                  const Text('5大経営タスク',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-
-                  //  4つの目玉機能 (2列x2行)
                   Column(
                     children: [
                       Row(
@@ -342,7 +339,6 @@ class _HomePageState extends State<HomePage> {
                                     builder: (_) => const AISecretaryPage())),
                           )),
                           const SizedBox(width: 12),
-                          //  第4の機能: サブスク管理
                           Expanded(
                               child: _buildBigFeatureCard(
                             title: '固定費\n削減室',
@@ -356,11 +352,21 @@ class _HomePageState extends State<HomePage> {
                           )),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      //  第5の機能: 健康管理室 (CHO)
+                      _buildBigFeatureCard(
+                        title: '健康管理室 (CHO)',
+                        subtitle: 'パフォーマンス検食',
+                        icon: Icons.health_and_safety,
+                        color: Colors.teal.shade800,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const HealthPage())),
+                      ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   Container(
                     width: double.infinity,
                     height: 80,
@@ -387,12 +393,10 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
-
                   const Text('すべてのメモ',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-
                   if (_notes.isEmpty)
                     const Padding(
                         padding: EdgeInsets.all(24.0),
@@ -419,7 +423,6 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         )),
-
                   const SizedBox(height: 80),
                 ],
               ),
