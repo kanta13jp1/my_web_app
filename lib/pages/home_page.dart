@@ -38,9 +38,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
-    // モーニングブリーフィングとプロアクティブ介入のダブルチェック
     _runExecutiveChecks();
+  }
+
+  Future<void> _runExecutiveChecks() async {
+    await _loadData();
+    await _checkMorningBriefing();
+    await _checkProactiveIntervention();
   }
 
   Future<void> _loadData() async {
@@ -51,18 +55,6 @@ class _HomePageState extends State<HomePage> {
       _fetchDanshariProgress(),
     ]);
     if (mounted) setState(() => _isLoading = false);
-  }
-
-  Future<void> _runExecutiveChecks() async {
-    // まずデータをロードしてからチェック
-    await _loadData();
-
-    // 1. モーニングブリーフィング (1日1回)
-    await _checkMorningBriefing();
-
-    // 2. プロアクティブ介入 (時間帯に応じて随時)
-    // ブリーフィング直後なら少し待つなどの制御も可能だが、今回は独立してチェック
-    await _checkProactiveIntervention();
   }
 
   Future<void> _fetchUserStats() async {
@@ -152,20 +144,19 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {}
   }
 
-  //  プロアクティブ介入チェック
+  // プロアクティブ介入チェック
   Future<void> _checkProactiveIntervention() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final lastCheck = prefs.getInt('last_intervention_ts') ?? 0;
       final nowTs = DateTime.now().millisecondsSinceEpoch;
 
-      // 頻度制御: 前回の介入から最低1時間は空ける
+      // 頻度制御: 1時間
       if (nowTs - lastCheck < 3600000) return;
 
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 必要な最小限のデータを取得
       final meals = await supabase
           .from('meal_logs')
           .select()
@@ -182,20 +173,22 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('user_id', userId)
           .maybeSingle();
+      final paymentSources =
+          await supabase.from('payment_sources').select().eq('user_id', userId);
 
       final boardData = {
         'recentMeals': meals,
-        'recentNotes': notes, // 数だけ分かれば良い
-        'userStats': stats
+        'recentNotes': notes,
+        'userStats': stats,
+        'paymentSources': paymentSources
       };
 
-      // AIに問い合わせ
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'proactive_intervention',
           'boardData': boardData,
-          'currentTime': TimeOfDay.now().format(context), // "12:30 PM" 等
+          'currentTime': TimeOfDay.now().format(context),
         },
       );
 
@@ -203,9 +196,8 @@ class _HomePageState extends State<HomePage> {
         final data = response.data;
         if (data['success'] == true) {
           final result = data['result'];
-          // 介入すべきと判断された場合のみ表示
           if (result['should_intervene'] == true) {
-            await Future.delayed(const Duration(seconds: 3)); // 少し間を置く演出
+            await Future.delayed(const Duration(seconds: 3));
             if (mounted) _showInterventionDialog(result);
             await prefs.setInt('last_intervention_ts', nowTs);
           }
@@ -216,13 +208,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //  介入ダイアログ (通知風)
   void _showInterventionDialog(Map<String, dynamic> result) {
     final role = result['role'] ?? 'AI';
     final message = result['message'] ?? '';
     final actionLabel = result['action_label'] ?? '確認';
 
-    // 役職ごとの色設定
     Color roleColor = Colors.white;
     IconData roleIcon = Icons.notifications;
     switch (role) {
@@ -248,7 +238,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B), // Dark Slate
+        backgroundColor: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: roleColor, width: 2)),
@@ -276,7 +266,6 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // アクションに応じた遷移なども可能だが、まずは閉じるだけ
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: roleColor, foregroundColor: Colors.white),
@@ -349,7 +338,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       barrierDismissible: !isMorning,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A), // Navy
+        backgroundColor: const Color(0xFF0F172A),
         title: Row(children: [
           Icon(isMorning ? Icons.wb_sunny : Icons.meeting_room,
               color: const Color(0xFFD4AF37)),
@@ -445,7 +434,6 @@ class _HomePageState extends State<HomePage> {
           ? Center(child: CircularProgressIndicator(color: navy))
           : CustomScrollView(
               slivers: [
-                // Header
                 SliverAppBar(
                   expandedHeight: 280.0,
                   floating: false,
@@ -516,8 +504,6 @@ class _HomePageState extends State<HomePage> {
                         icon: const Icon(Icons.logout), onPressed: _signOut),
                   ],
                 ),
-
-                // Control Panel
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -572,7 +558,7 @@ class _HomePageState extends State<HomePage> {
                                 const AISecretaryPage()),
                             _buildDeptCard(
                                 '財務省 (CFO)',
-                                '固定費監査',
+                                '月次決算',
                                 Icons.account_balance,
                                 Colors.teal,
                                 const SubscriptionPage()),

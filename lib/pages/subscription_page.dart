@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 import '../main.dart';
 
 class SubscriptionPage extends StatefulWidget {
@@ -15,7 +16,11 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> {
+  // Data
   List<Map<String, dynamic>> _subscriptions = [];
+  List<Map<String, dynamic>> _paymentSources = []; //  決済ソースリスト
+
+  // State
   bool _isLoading = true;
   bool _isAuditing = false;
   bool _isScanning = false;
@@ -26,7 +31,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   @override
   void initState() {
     super.initState();
-    _fetchSubscriptions();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    await Future.wait([
+      _fetchSubscriptions(),
+      _fetchPaymentSources(),
+    ]);
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _fetchSubscriptions() async {
@@ -39,14 +53,89 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           .eq('user_id', userId)
           .order('price', ascending: false);
       if (mounted)
-        setState(() {
-          _subscriptions = List<Map<String, dynamic>>.from(response);
-          _isLoading = false;
-        });
+        setState(
+            () => _subscriptions = List<Map<String, dynamic>>.from(response));
+    } catch (_) {}
+  }
+
+  Future<void> _fetchPaymentSources() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final response = await supabase
+          .from('payment_sources')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
+      if (mounted)
+        setState(
+            () => _paymentSources = List<Map<String, dynamic>>.from(response));
+    } catch (_) {}
+  }
+
+  // --- Payment Source Management ---
+
+  Future<void> _addPaymentSource(String name) async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      await supabase
+          .from('payment_sources')
+          .insert({'user_id': userId, 'name': name});
+      _fetchPaymentSources();
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('登録エラー: $e')));
     }
   }
+
+  Future<void> _deletePaymentSource(int id) async {
+    try {
+      await supabase.from('payment_sources').delete().eq('id', id);
+      _fetchPaymentSources();
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('削除エラー: $e')));
+    }
+  }
+
+  Future<void> _updateSourceAuditDate(int sourceId) async {
+    try {
+      await supabase
+          .from('payment_sources')
+          .update({'last_audited_at': DateTime.now().toIso8601String()}).eq(
+              'id', sourceId);
+      _fetchPaymentSources();
+    } catch (_) {}
+  }
+
+  void _showAddSourceDialog() {
+    final nameCtrl = TextEditingController();
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+                title: const Text('決済チャネルの追加'),
+                content: TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                        labelText: '名称 (例: PayPayカード, auかんたん決済)',
+                        border: OutlineInputBorder())),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('キャンセル')),
+                  ElevatedButton(
+                      onPressed: () {
+                        if (nameCtrl.text.isNotEmpty) {
+                          _addPaymentSource(nameCtrl.text);
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text('登録'))
+                ]));
+  }
+
+  // --- Subscriptions Management ---
 
   Future<void> _addSubscription(
       String name, double price, String cycle, String desc) async {
@@ -77,7 +166,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     }
   }
 
-  Future<void> _scanStatement() async {
+  // --- AI Scan Logic ---
+
+  Future<void> _scanStatement(int? sourceId) async {
     await showModalBottomSheet(
         context: context,
         builder: (context) => SafeArea(
@@ -87,35 +178,35 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   title: const Text('証憑書類を撮影 (Camera)'),
                   onTap: () {
                     Navigator.pop(context);
-                    _processFile(ImageSource.camera);
+                    _processFile(ImageSource.camera, sourceId);
                   }),
               ListTile(
                   leading: const Icon(Icons.photo_library),
                   title: const Text('画像フォルダから参照'),
                   onTap: () {
                     Navigator.pop(context);
-                    _processFile(ImageSource.gallery);
+                    _processFile(ImageSource.gallery, sourceId);
                   }),
               ListTile(
                   leading: const Icon(Icons.picture_as_pdf),
                   title: const Text('PDF明細をインポート'),
                   onTap: () {
                     Navigator.pop(context);
-                    _processPdf();
+                    _processPdf(sourceId);
                   }),
             ])));
   }
 
-  Future<void> _processFile(ImageSource source) async {
+  Future<void> _processFile(ImageSource source, int? sourceId) async {
     final XFile? image = await _picker.pickImage(
         source: source, maxWidth: 1024, imageQuality: 80);
     if (image == null) return;
     final bytes = await image.readAsBytes();
     final base64 = base64Encode(bytes);
-    await _analyzeStatement(base64, 'image/jpeg');
+    await _analyzeStatement(base64, 'image/jpeg', sourceId);
   }
 
-  Future<void> _processPdf() async {
+  Future<void> _processPdf(int? sourceId) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: FileType.custom, allowedExtensions: ['pdf'], withData: true);
@@ -127,14 +218,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         return;
       }
       final base64 = base64Encode(file.bytes!);
-      await _analyzeStatement(base64, 'application/pdf');
+      await _analyzeStatement(base64, 'application/pdf', sourceId);
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('読込エラー: $e')));
     }
   }
 
-  Future<void> _analyzeStatement(String fileBase64, String mimeType) async {
+  Future<void> _analyzeStatement(
+      String fileBase64, String mimeType, int? sourceId) async {
     setState(() => _isScanning = true);
     try {
       final response = await supabase.functions.invoke('ai-assistant', body: {
@@ -149,6 +241,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       final result = data['result'];
       if (result is! List) throw Exception('Invalid response format');
       if (!mounted) return;
+
+      // ソースIDがある場合（特定のカードの明細としてスキャンした場合）、監査日時を更新
+      if (sourceId != null) {
+        await _updateSourceAuditDate(sourceId);
+      }
+
       _showScanResultDialog(result);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -341,108 +439,221 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       if (sub['billing_cycle'] == 'yearly') price /= 12;
       monthlyTotal += price;
     }
+
+    // 今月の監査状況
+    int auditedCount = 0;
+    final now = DateTime.now();
+    for (var source in _paymentSources) {
+      if (source['last_audited_at'] != null) {
+        final auditDate = DateTime.parse(source['last_audited_at']);
+        if (auditDate.year == now.year && auditDate.month == now.month)
+          auditedCount++;
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-          title: const Text(' 固定費削減室 (CFO)'),
-          backgroundColor: Colors.teal,
-          foregroundColor: Colors.white),
+        title: const Text(' 固定費削減室 (CFO)'),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_card),
+            tooltip: '決済チャネル追加',
+            onPressed: _showAddSourceDialog,
+          )
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(children: [
-              Container(
-                  padding: const EdgeInsets.all(20),
-                  color: Colors.teal.shade50,
-                  child: Column(children: [
-                    const Text('月次固定費 (概算予算)',
-                        style: TextStyle(fontSize: 14, color: Colors.teal)),
-                    Text('${monthlyTotal.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.teal)),
-                    const SizedBox(height: 16),
-                    Row(children: [
-                      Expanded(
-                          child: ElevatedButton.icon(
-                              onPressed: _isScanning ? null : _scanStatement,
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.teal,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(
-                                          color: Colors.teal))),
-                              icon: _isScanning
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2))
-                                  : const Icon(Icons.document_scanner),
-                              label: const Text('監査資料読込',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)))),
-                      const SizedBox(width: 12),
-                      Expanded(
-                          flex: 2,
-                          child: ElevatedButton.icon(
-                              onPressed:
-                                  _isAuditing ? null : _runFinancialAudit,
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12)),
-                              icon: _isAuditing
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 2))
-                                  : const Icon(Icons.gavel),
-                              label: const Text('特別会計監査を実行',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))))
-                    ])
-                  ])),
-              Expanded(
-                  child: _subscriptions.isEmpty
-                      ? const Center(
-                          child: Text('監査資料をスキャンするか、\n「+」で経常費用を計上してください'))
-                      : ListView.builder(
-                          itemCount: _subscriptions.length,
-                          itemBuilder: (context, index) {
-                            final sub = _subscriptions[index];
-                            final isMonthly = sub['billing_cycle'] == 'monthly';
-                            return Card(
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                child: ListTile(
-                                    title: Text(sub['service_name'],
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    subtitle: Text(sub['description'] ?? ''),
-                                    trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                              '${sub['price']} / ${isMonthly ? '月' : '年'}',
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                              icon: const Icon(Icons.delete,
-                                                  color: Colors.grey),
-                                              onPressed: () =>
-                                                  _deleteSubscription(
-                                                      sub['id']))
-                                        ])));
-                          })),
-            ]),
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  // KPI Header
+                  Container(
+                      padding: const EdgeInsets.all(20),
+                      color: Colors.teal.shade50,
+                      child: Column(children: [
+                        const Text('月次固定費 (概算予算)',
+                            style: TextStyle(fontSize: 14, color: Colors.teal)),
+                        Text('${monthlyTotal.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal)),
+                        const SizedBox(height: 16),
+                        Row(children: [
+                          Expanded(
+                              flex: 2,
+                              child: ElevatedButton.icon(
+                                  onPressed:
+                                      _isAuditing ? null : _runFinancialAudit,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12)),
+                                  icon: _isAuditing
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2))
+                                      : const Icon(Icons.gavel),
+                                  label: const Text('特別会計監査を実行',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold))))
+                        ])
+                      ])),
+
+                  // Payment Sources (Monthly Closing)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.verified_user, color: Colors.teal),
+                            const SizedBox(width: 8),
+                            const Text('決済チャネル監査状況 (月次決算)',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal)),
+                            const Spacer(),
+                            Text('$auditedCount / ${_paymentSources.length} 完了',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold))
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (_paymentSources.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8)),
+                            child: const Center(
+                                child: Text('右上のアイコンから\n使用しているカードや口座を登録してください',
+                                    textAlign: TextAlign.center)),
+                          ),
+                        ..._paymentSources.map((source) {
+                          final lastAuditStr = source['last_audited_at'];
+                          bool isAuditedThisMonth = false;
+                          if (lastAuditStr != null) {
+                            final d = DateTime.parse(lastAuditStr);
+                            isAuditedThisMonth =
+                                d.year == now.year && d.month == now.month;
+                          }
+
+                          return Card(
+                            elevation: 0,
+                            color: isAuditedThisMonth
+                                ? Colors.green.shade50
+                                : Colors.red.shade50,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                    color: isAuditedThisMonth
+                                        ? Colors.green
+                                        : Colors.red.shade200)),
+                            child: ListTile(
+                              leading: Icon(
+                                  isAuditedThisMonth
+                                      ? Icons.check_circle
+                                      : Icons.warning_amber,
+                                  color: isAuditedThisMonth
+                                      ? Colors.green
+                                      : Colors.red),
+                              title: Text(source['name'] ?? ''),
+                              subtitle: Text(isAuditedThisMonth
+                                  ? '監査完了: ${DateFormat('MM/dd').format(DateTime.parse(lastAuditStr))}'
+                                  : '今月の明細が未確認です'),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.document_scanner),
+                                tooltip: '明細をスキャン',
+                                onPressed: () => _scanStatement(source['id']),
+                              ),
+                              onLongPress: () => showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                          title: const Text('削除しますか？'),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text('キャンセル')),
+                                            TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  _deletePaymentSource(
+                                                      source['id']);
+                                                },
+                                                child: const Text('削除'))
+                                          ])),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+
+                  // Subscriptions List
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('計上済み経常費用一覧',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700]))),
+                  ),
+                  if (_subscriptions.isEmpty)
+                    const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text('明細をスキャンするか、\n「+」で経常費用を計上してください',
+                            textAlign: TextAlign.center)),
+
+                  ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _subscriptions.length,
+                      itemBuilder: (context, index) {
+                        final sub = _subscriptions[index];
+                        final isMonthly = sub['billing_cycle'] == 'monthly';
+                        return Card(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: ListTile(
+                                title: Text(sub['service_name'],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                subtitle: Text(sub['description'] ?? ''),
+                                trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                          '${sub['price']} / ${isMonthly ? '月' : '年'}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold)),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.grey),
+                                          onPressed: () =>
+                                              _deleteSubscription(sub['id']))
+                                    ])));
+                      }),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
           onPressed: _showAddDialog,
           backgroundColor: Colors.teal,
