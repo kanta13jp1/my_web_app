@@ -87,6 +87,9 @@ class _HomePageState extends State<HomePage> {
 
   // シェア機能はCMOに移譲するため、ここは簡易的なものにするかCMOへ誘導しても良いが、既存機能として残す
   Future<void> _shareApp() async {
+    try {
+      await supabase.rpc('increment_share_count');
+    } catch (_) {}
     final box = context.findRenderObject() as RenderBox?;
     await Share.share('自分株式会社アプリで人生経営中！\n#自分株式会社',
         sharePositionOrigin:

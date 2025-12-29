@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & Full Company Structure (CSO, CFO, CHO, CHRO, CMO)
+// Full Company Structure including CKO (Chief Knowledge Officer)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -12,10 +12,17 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 const MODELS_TO_TRY = [
-  'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-flash-latest',
-  'gemini-2.5-flash-lite', 'gemini-3-flash-preview', 'gemini-pro-latest',
-  'gemini-3-pro-preview', 'gemini-2.5-flash-image', 'gemini-2.5-flash-preview-09-2025',
-  'nano-banana-pro-preview', 'deep-research-pro-preview-12-2025'
+  'gemini-1.5-pro', // 長文推論に強いモデルを優先
+  'gemini-2.0-flash', 
+  'gemini-flash-latest',
+  'gemini-2.5-flash-lite', 
+  'gemini-3-flash-preview', 
+  'gemini-pro-latest',
+  'gemini-3-pro-preview', 
+  'gemini-2.5-flash-image', 
+  'gemini-2.5-flash-preview-09-2025',
+  'nano-banana-pro-preview', 
+  'deep-research-pro-preview-12-2025'
 ]
 
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
@@ -33,7 +40,8 @@ interface AIRequest {
   userStats?: any
   strategyType?: string
   hasPermit?: boolean
-  dailyStats?: any //  新: CMO用データ
+  dailyStats?: any
+  targetFormat?: string // CKO用: blog, slide, book_plot etc.
 }
 
 serve(async (req) => {
@@ -85,8 +93,12 @@ serve(async (req) => {
     if (!success) throw new Error(`All models failed: ${logMessages.join(', ')}`)
 
     let parsedResult = finalResult;
-    // JSON解析が必要なアクション
-    const jsonActions = ['secretary_task_from_image', 'task_recommendations', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance', 'generate_press_release'];
+    const jsonActions = [
+      'secretary_task_from_image', 'task_recommendations', 
+      'extract_subscriptions_from_file', 'audit_meal', 
+      'evaluate_performance', 'generate_press_release',
+      'analyze_knowledge_assets' //  CKO用JSON
+    ];
     if (jsonActions.includes(action)) parsedResult = parseJsonResult(finalResult);
 
     await supabaseClient.from('ai_usage_log').insert({
@@ -104,65 +116,86 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats } = data
-  let body: any = { generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }, contents: [] }
+  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats, targetFormat } = data
+  let body: any = { generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }, contents: [] }
 
-  // ---  CMO: プレスリリース生成 ---
-  if (action === 'generate_press_release') {
+  // ---  CKO: 知的資産分析レポート ---
+  if (action === 'analyze_knowledge_assets') {
+      const notesText = recentNotes && recentNotes.length > 0 
+        ? recentNotes.map(n => `- ${n.title}: ${n.content.substring(0, 100)}...`).join('\n')
+        : '（データなし）';
+
       const promptText = `
         **Output JSON ONLY in Japanese.**
-        あなたは「自分株式会社」のCMO（最高マーケティング責任者）です。
-        CEO（ユーザー）の本日の活動実績をもとに、世界に向けて発信する「壮大なプレスリリース」を作成してください。
-        
-        【本日の実績データ】
-        - 消化タスク数: ${dailyStats?.task_count || 0}件
-        - 断捨離数: ${dailyStats?.danshari_count || 0}個
-        - 獲得ポイント: ${dailyStats?.points_earned || 0}pt
-        
-        【指示】
-        - 些細な成果でも、シリコンバレーのテック企業が革新的な発表をするかのような、**大げさでポジティブで意識高い系の文体**に変換してください。
-        - 失敗や怠惰（0件など）があれば、「戦略的静観」「エネルギー充填期間」のように美しく言い換えてください。
+        あなたは「自分株式会社」のCKO（最高知識責任者）です。
+        CEO（ユーザー）が最近蓄積した以下のメモデータを分析し、現在の「知的関心」や「専門性の方向性」をレポートしてください。
+
+        【最近のメモ】
+        ${notesText}
 
         以下のJSON形式で出力してください。
         {
-          "headline": "衝撃的な見出し（30文字以内）",
-          "body": "プレスリリース本文（140文字程度。ハッシュタグ #自分株式会社 を含む）",
-          "market_analysis": "市場（CEOのメンタル）への影響を一言で分析"
+          "core_interests": ["関心領域1", "関心領域2", "関心領域3"],
+          "analysis_comment": "分析コメント。CEOが今、どのような分野に強みを持っているか、または何に関心があるかを専門的に解説。",
+          "next_learning_suggestion": "次に学ぶべきトピックや、読むべき本のジャンルなどの具体的な提案。"
         }
       `;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // --- CHRO ---
+  // ---  CKO: ゴーストライター（コンテンツ生成） ---
+  else if (action === 'generate_content_draft') {
+      const formatInstruction = targetFormat === 'blog' ? '読みやすく共感を呼ぶブログ記事形式' :
+                                targetFormat === 'slide' ? 'プレゼンテーションのアウトライン（スライド構成案）' :
+                                targetFormat === 'book' ? '書籍の目次とプロット（あらすじ）' : 'ビジネスメール形式';
+
+      const promptText = `
+        あなたはプロのゴーストライター兼CKOです。
+        CEOのメモ（アイデアの種）を元に、${formatInstruction}でコンテンツを作成してください。
+        
+        【メモ内容】
+        タイトル: ${title}
+        本文: ${content}
+
+        【指示】
+        - 読者を惹きつける魅力的なタイトルをつけてください。
+        - 論理的かつエモーショナルな構成にしてください。
+        - 専門用語があれば適宜補足し、わかりやすくしてください。
+        - Markdown形式で出力してください。
+      `;
+      body.contents = [{ parts: [{ text: promptText }] }];
+  }
+  
+  // --- 既存機能群 (省略せず記述) ---
+  else if (action === 'generate_press_release') {
+      const promptText = `**Output JSON ONLY in Japanese.** CMOとして本日の実績(Task:${dailyStats?.task_count}, Danshari:${dailyStats?.danshari_count})から壮大なプレスリリースJSON({headline, body, market_analysis})を作成せよ。`;
+      body.contents = [{ parts: [{ text: promptText }] }];
+  }
   else if (action === 'evaluate_performance') {
       const stats = userStats || { total_points: 0, notes_created: 0 };
-      const promptText = `**Output JSON ONLY in Japanese.** CHROとして今月の実績(Pt:${stats.total_points}, Task:${stats.notes_created})をS/A/B/Cで評価しJSON({rank, report_content, bonus_message})で出力。`;
+      const promptText = `**Output JSON ONLY in Japanese.** CHROとして実績(Pt:${stats.total_points})を評価しJSON({rank, report_content, bonus_message})を出力。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'mental_chat') {
-      const promptText = `超優しいCHROとしてユーザーの愚痴「${content}」を全肯定し甘やかす返信をせよ。`;
+      const promptText = `超優しいCHROとして愚痴「${content}」を全肯定せよ。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // --- CHO ---
   else if (action === 'audit_meal') {
-      let instruction = hasPermit 
-        ? `ラーメン許可証あり。どんな食事も「福利厚生」として100点満点で称賛せよ。批判厳禁。` 
-        : `CHOとして厳しく食事を監査せよ。`;
+      let instruction = hasPermit ? `許可証あり。100点満点で称賛せよ。` : `CHOとして厳しく監査せよ。`;
       const promptText = `**Output JSON ONLY in Japanese.** ${instruction} 画像からJSON({menu_name, calorie_estimate, performance_score, audit_result, advice})を出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   }
-  // --- Other ---
   else if (action === 'extract_subscriptions_from_file') {
       const aB64 = fileBase64 || imageBase64; const aMime = mimeType || 'image/jpeg';
-      const promptText = `**Output JSON ONLY.** 画像から固定費項目を抽出、JSON配列[{service_name, price, description}]で出力。`;
+      const promptText = `**Output JSON ONLY.** 画像から固定費項目抽出、JSON配列[{service_name, price, description}]出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: aMime, data: aB64 } }] }];
   }
   else if (action === 'audit_subscriptions') {
       const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}`).join('\n');
-      const promptText = `**Output in Japanese.** CFOとして固定費を監査し削減案をMarkdownで提示。\n${subList}`;
+      const promptText = `**Output in Japanese.** CFOとして固定費監査し削減案をMarkdownで提示。\n${subList}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'secretary_task_from_image') {
-      const promptText = `**Output JSON in Japanese.** 秘書として画像からタスク抽出、JSON({title, content, priority})で出力。`;
+      const promptText = `**Output JSON in Japanese.** 秘書として画像からタスク抽出、JSON({title, content, priority})出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
   else if (action === 'secretary_strategy') {

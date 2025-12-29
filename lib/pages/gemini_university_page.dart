@@ -1,172 +1,328 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import '../main.dart';
+import '../models/note.dart';
 
-// --- 1. データモデル (講義と章の定義) ---
-class Lesson {
-  final String title;
-  final String content;
-  final String iconEmoji;
-
-  Lesson({required this.title, required this.content, required this.iconEmoji});
-}
-
-class Module {
-  final String title;
-  final List<Lesson> lessons;
-
-  Module({required this.title, required this.lessons});
-}
-
-// --- 2. カリキュラムデータ (Gemini大学のコンテンツ) ---
-// ※以前の構想に基づき、サンプルデータを入れています。内容は自由に変更可能です。
-final List<Module> geminiCurriculum = [
-  Module(
-    title: '第1章: Gemini入門',
-    lessons: [
-      Lesson(
-        title: 'Geminiとは？',
-        iconEmoji: '🌟',
-        content:
-            'GeminiはGoogleが開発した最新のマルチモーダルAIモデルです。\nテキストだけでなく、画像、音声、動画も理解することができます。',
-      ),
-      Lesson(
-        title: '基本的な使い方',
-        iconEmoji: '💬',
-        content: '「〜について教えて」のように自然な言葉で話しかけてみましょう。\n情報の要約、アイデア出し、翻訳など幅広く活用できます。',
-      ),
-    ],
-  ),
-  Module(
-    title: '第2章: プロンプトエンジニアリング',
-    lessons: [
-      Lesson(
-        title: '効果的な指示の出し方',
-        iconEmoji: '🎯',
-        content: 'AIに意図を明確に伝えるには、「役割を与える」「制約条件をつける」「出力形式を指定する」ことが重要です。',
-      ),
-      Lesson(
-        title: 'few-shot プロンプティング',
-        iconEmoji: '📝',
-        content: 'いくつかの例（例題と回答）を提示してから質問することで、AIの回答精度を劇的に向上させるテクニックです。',
-      ),
-    ],
-  ),
-  Module(
-    title: '第3章: 活用事例',
-    lessons: [
-      Lesson(
-        title: 'プログラミング支援',
-        iconEmoji: '💻',
-        content: 'コードの生成、デバッグ、リファクタリング、コメントの追加など、開発者の強力なパートナーになります。',
-      ),
-    ],
-  ),
-];
-
-// --- 3. UI実装 (大学トップ画面) ---
-class GeminiUniversityPage extends StatelessWidget {
+class GeminiUniversityPage extends StatefulWidget {
   const GeminiUniversityPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('🎓 Gemini大学'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: geminiCurriculum.length,
-        itemBuilder: (context, index) {
-          final module = geminiCurriculum[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16.0),
-            elevation: 2,
-            child: ExpansionTile(
-              title: Text(
-                module.title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              initiallyExpanded: index == 0, // 最初の章だけ開いておく
-              children: module.lessons.map((lesson) {
-                return ListTile(
-                  leading: Text(lesson.iconEmoji,
-                      style: const TextStyle(fontSize: 24)),
-                  title: Text(lesson.title),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    // 詳細画面へ遷移
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LessonDetailPage(lesson: lesson),
-                      ),
-                    );
-                  },
-                );
-              }).toList(),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  State<GeminiUniversityPage> createState() => _GeminiUniversityPageState();
 }
 
-// --- 4. UI実装 (講義詳細画面) ---
-class LessonDetailPage extends StatelessWidget {
-  final Lesson lesson;
+class _GeminiUniversityPageState extends State<GeminiUniversityPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool _isLoading = false;
 
-  const LessonDetailPage({super.key, required this.lesson});
+  // 分析タブ用
+  Map<String, dynamic>? _knowledgeReport;
+  String? _analysisModel;
+
+  // コンテンツ生成タブ用
+  List<Note> _myNotes = [];
+  Note? _selectedNote;
+  String _targetFormat = 'blog';
+  String? _generatedContent;
+  String? _writerModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchNotes();
+  }
+
+  Future<void> _fetchNotes() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final response = await supabase
+          .from('notes')
+          .select()
+          .eq('user_id', userId)
+          .order('updated_at', ascending: false)
+          .limit(50);
+      if (mounted)
+        setState(() => _myNotes =
+            (response as List).map((n) => Note.fromJson(n)).toList());
+    } catch (e) {}
+  }
+
+  // CKO: 知的資産分析
+  Future<void> _analyzeKnowledge() async {
+    setState(() => _isLoading = true);
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 直近のメモを抽出
+      final recent = _myNotes
+          .take(10)
+          .map((n) => {'title': n.title, 'content': n.content})
+          .toList();
+
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {'action': 'analyze_knowledge_assets', 'recentNotes': recent},
+      );
+
+      if (response.status != 200) throw Exception('AI Error');
+      final data = response.data;
+
+      setState(() {
+        _knowledgeReport = data['result'];
+        _analysisModel = data['used_model'];
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('分析エラー: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // CKO: ゴーストライター
+  Future<void> _generateContent() async {
+    if (_selectedNote == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': 'generate_content_draft',
+          'title': _selectedNote!.title,
+          'content': _selectedNote!.content,
+          'targetFormat': _targetFormat
+        },
+      );
+
+      if (response.status != 200) throw Exception('AI Error');
+      final data = response.data;
+
+      setState(() {
+        _generatedContent = data['result']; // Raw Markdown string
+        _writerModel = data['used_model'];
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('生成エラー: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(lesson.title),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                lesson.iconEmoji,
-                style: const TextStyle(fontSize: 64),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              lesson.title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
-                  ),
-            ),
-            const Divider(height: 32),
-            Text(
-              lesson.content,
-              style: const TextStyle(fontSize: 16, height: 1.6),
-            ),
-            const SizedBox(height: 40),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('学習完了'),
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-              ),
-            ),
+        title: const Text(' 知的財産教育本部 (CKO)'),
+        backgroundColor: Colors.indigo.shade800,
+        foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.indigo.shade200,
+          tabs: const [
+            Tab(icon: Icon(Icons.analytics), text: 'AIシンクタンク'),
+            Tab(icon: Icon(Icons.create), text: 'コンテンツ制作局'),
           ],
         ),
       ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildAnalysisTab(),
+          _buildGhostWriterTab(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisTab() {
+    if (_knowledgeReport == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lightbulb_outline, size: 80, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text('あなたのメモから「知的資産」を分析します',
+                style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _analyzeKnowledge,
+              icon: _isLoading
+                  ? const CircularProgressIndicator()
+                  : const Icon(Icons.auto_awesome),
+              label: const Text('知的資産レポートを作成'),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final interests =
+        List<String>.from(_knowledgeReport!['core_interests'] ?? []);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_analysisModel != null)
+            Align(
+                alignment: Alignment.centerRight,
+                child: Text('Analyst: $_analysisModel',
+                    style: TextStyle(
+                        fontSize: 10, color: Colors.indigo.shade300))),
+          const Text('現在の関心領域 (Core Interests)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: interests
+                .map((tag) => Chip(
+                    label: Text(tag), backgroundColor: Colors.indigo.shade50))
+                .toList(),
+          ),
+          const Divider(height: 32),
+          const Text('CKOの分析コメント',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(_knowledgeReport!['analysis_comment'] ?? '',
+              style: const TextStyle(fontSize: 15, height: 1.6)),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber.shade200)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.school, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  const Text('学習のススメ',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.amber))
+                ]),
+                const SizedBox(height: 8),
+                Text(_knowledgeReport!['next_learning_suggestion'] ?? '',
+                    style: TextStyle(color: Colors.amber.shade900)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          OutlinedButton(
+              onPressed: _analyzeKnowledge, child: const Text('再分析する')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGhostWriterTab() {
+    return Column(
+      children: [
+        // コントロールパネル
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.indigo.shade50,
+          child: Column(
+            children: [
+              DropdownButton<Note>(
+                value: _selectedNote,
+                hint: const Text('元ネタにするメモを選択'),
+                isExpanded: true,
+                items: _myNotes.map((note) {
+                  return DropdownMenuItem(
+                      value: note,
+                      child: Text(note.title, overflow: TextOverflow.ellipsis));
+                }).toList(),
+                onChanged: (val) => setState(() => _selectedNote = val),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: _targetFormat,
+                      isExpanded: true,
+                      items: const [
+                        DropdownMenuItem(value: 'blog', child: Text('ブログ記事')),
+                        DropdownMenuItem(value: 'slide', child: Text('プレゼン構成')),
+                        DropdownMenuItem(value: 'book', child: Text('書籍プロット')),
+                      ],
+                      onChanged: (val) => setState(() => _targetFormat = val!),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: (_isLoading || _selectedNote == null)
+                        ? null
+                        : _generateContent,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child:
+                                CircularProgressIndicator(color: Colors.white))
+                        : const Icon(Icons.edit_note),
+                    label: const Text('執筆開始'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        foregroundColor: Colors.white),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // 生成結果エリア
+        Expanded(
+          child: _generatedContent == null
+              ? const Center(
+                  child: Text('メモを選んで「執筆開始」を押してください。\nAIがプロ級のコンテンツに仕上げます。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey)))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (_writerModel != null)
+                            Text('Ghost Writer: $_writerModel',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.indigo.shade300)),
+                          IconButton(
+                            icon: const Icon(Icons.share, color: Colors.indigo),
+                            onPressed: () {
+                              Share.share(_generatedContent!);
+                            },
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      MarkdownBody(data: _generatedContent!),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }
