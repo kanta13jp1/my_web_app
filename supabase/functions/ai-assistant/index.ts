@@ -1,5 +1,5 @@
-﻿// AI Assistant Edge Function: The Five Emperors (Gemini, OpenAI, Claude, DeepSeek, Grok)
-// "Unsinkable Governance System"
+﻿// AI Assistant Edge Function: The Five Emperors (Failover System)
+// "Unsinkable Governance"
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -16,13 +16,18 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
 const XAI_API_KEY = Deno.env.get('XAI_API_KEY')
 
-// Models & Endpoints
+// Models & Endpoints Configuration
 const PROVIDERS = {
-    openai:   { model: 'gpt-4o',              url: 'https://api.openai.com/v1/chat/completions', key: OPENAI_API_KEY },
+    // 1. DeepSeek: Cost-effective & Smart (V3)
+    deepseek: { model: 'deepseek-chat', url: 'https://api.deepseek.com/chat/completions', key: DEEPSEEK_API_KEY },
+    // 2. Gemini: Fast & Multimodal (2.0 Flash)
+    gemini:   { model: 'gemini-2.0-flash', url: 'https://generativelanguage.googleapis.com/v1beta/models/', key: GEMINI_API_KEY },
+    // 3. OpenAI: Reliable Standard (GPT-4o)
+    openai:   { model: 'gpt-4o', url: 'https://api.openai.com/v1/chat/completions', key: OPENAI_API_KEY },
+    // 4. Grok: Creative (Grok-2)
+    grok:     { model: 'grok-2-latest', url: 'https://api.x.ai/v1/chat/completions', key: XAI_API_KEY },
+    // 5. Anthropic: High Context (Claude 3.5)
     anthropic:{ model: 'claude-3-5-sonnet-20241022', url: 'https://api.anthropic.com/v1/messages', key: ANTHROPIC_API_KEY },
-    gemini:   { model: 'gemini-2.0-flash',    url: 'https://generativelanguage.googleapis.com/v1beta/models/', key: GEMINI_API_KEY },
-    deepseek: { model: 'deepseek-chat',       url: 'https://api.deepseek.com/chat/completions', key: DEEPSEEK_API_KEY },
-    grok:     { model: 'grok-2-latest',       url: 'https://api.x.ai/v1/chat/completions', key: XAI_API_KEY },
 };
 
 interface AIRequest {
@@ -40,16 +45,15 @@ interface AIRequest {
   boardData?: any
   context?: string
   currentTime?: string
-  language?: string
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
+    // Auth Check
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('Missing authorization header')
-    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -61,51 +65,33 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action } = requestData
 
-    // ---  The Five Emperors Router ---
-    // 戦略的リレー順序の決定
+    // ---  The Failover Strategy ---
+    // 優先順位リストを作成 (DeepSeekを先頭に配置してコスト削減と負荷分散を狙う)
     let providerQueue: string[] = [];
 
-    // 1. Logic & Finance (数字、監査) 
-    // DeepSeek(安価高速) -> OpenAI(王道) -> Claude(賢明) -> Grok(打開)
-    if (['audit_subscriptions', 'extract_subscriptions_from_file'].includes(action)) {
-        providerQueue = ['deepseek', 'openai', 'anthropic', 'grok', 'gemini'];
-    }
-    
-    // 2. Strategy & Board Meeting (戦略、議長)
-    // Claude(議長) -> OpenAI(顧問) -> DeepSeek(実務) -> Gemini
-    else if (['hold_board_meeting', 'evaluate_performance'].includes(action)) {
-        providerQueue = ['anthropic', 'openai', 'deepseek', 'grok', 'gemini'];
-    }
-
-    // 3. Creative & Chat (アイデア、会話)
-    // Grok(ユニーク) -> Gemini(高速) -> Claude -> OpenAI
-    else if (['expand', 'suggest_title', 'mental_chat'].includes(action)) {
-        providerQueue = ['grok', 'gemini', 'anthropic', 'openai'];
-    }
-
-    // 4. Vision (画像認識)
-    // Gemini(ネイティブ) -> OpenAI -> Claude
-    //  DeepSeek/Grokの画像対応状況によるが、現状はGemini/GPT/Claudeが安定
-    else if (requestData.imageBase64 || requestData.fileBase64) {
-        providerQueue = ['gemini', 'openai', 'anthropic'];
-    }
-
-    // Default Fallback
+    // 画像処理が含まれる場合 (Gemini, OpenAI, Claudeが強い)
+    if (requestData.imageBase64 || requestData.fileBase64) {
+        providerQueue = ['gemini', 'openai', 'anthropic', 'grok'];
+    } 
+    // 通常のテキスト/JSON処理
     else {
-        providerQueue = ['gemini', 'deepseek', 'openai', 'anthropic'];
+        // DeepSeek -> Gemini -> OpenAI -> Grok -> Claude
+        providerQueue = ['deepseek', 'gemini', 'openai', 'grok', 'anthropic'];
     }
 
-    // 利用可能なAPIキーがあるものだけを残す
+    // キーが設定されていないプロバイダは除外
     providerQueue = providerQueue.filter(p => !!PROVIDERS[p as keyof typeof PROVIDERS].key);
 
-    if (providerQueue.length === 0) throw new Error('No available AI providers configured with API keys.');
+    if (providerQueue.length === 0) {
+        throw new Error('No available AI providers. Please set DEEPSEEK_API_KEY, GEMINI_API_KEY, or others in Supabase Secrets.');
+    }
 
     let finalResult = '';
     let usedProvider = '';
     let usedModel = '';
     let attemptLogs: string[] = [];
 
-    // ---  The Failover Loop ---
+    // ---  Execution Loop ---
     for (const provider of providerQueue) {
         try {
             console.log(` Attempting: ${action} via ${provider}...`);
@@ -116,26 +102,28 @@ serve(async (req) => {
             } else if (provider === 'anthropic') {
                 finalResult = await callAnthropic(conf.model, conf.key!, requestData);
             } else {
-                // OpenAI, DeepSeek, Grok share the same interface!
+                // OpenAI, DeepSeek, Grok share the same interface
                 finalResult = await callOpenAICompatible(conf.url, conf.model, conf.key!, requestData);
             }
 
             usedProvider = provider;
             usedModel = conf.model;
             console.log(` Success with ${provider}`);
-            break; 
+            break; // 成功したらループを抜ける
 
         } catch (e) {
             console.error(` Failed with ${provider}: ${e.message}`);
             attemptLogs.push(`${provider}: ${e.message}`);
+            // 失敗したら次のループへ (Failover)
         }
     }
 
+    // 全滅判定
     if (!usedProvider) {
         throw new Error(`All providers failed. Logs: ${attemptLogs.join(' | ')}`);
     }
 
-    // JSON Parsing
+    // JSON Parsing (if needed)
     let parsedResult = finalResult;
     const jsonActions = [
       'secretary_task_from_image', 'extract_subscriptions_from_file', 
@@ -148,7 +136,7 @@ serve(async (req) => {
         parsedResult = parseJsonResult(finalResult);
     }
 
-    // Log usage
+    // Log Usage
     await supabaseClient.from('ai_usage_log').insert({
       user_id: user.id, 
       action: action, 
@@ -165,7 +153,7 @@ serve(async (req) => {
   }
 })
 
-// --- Universal OpenAI-Compatible Client (OpenAI, DeepSeek, Grok) ---
+// ---  Universal Client (OpenAI, DeepSeek, Grok) ---
 async function callOpenAICompatible(endpoint: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
     
@@ -174,15 +162,14 @@ async function callOpenAICompatible(endpoint: string, model: string, apiKey: str
         { role: "user", content: prompt }
     ];
 
-    // Force JSON output for data tasks
+    // Force JSON output
     let responseFormat = undefined;
     if (data.action.includes('json') || ['audit_subscriptions', 'extract_subscriptions_from_file', 'proactive_intervention', 'audit_meal', 'hold_board_meeting'].includes(data.action)) {
         responseFormat = { type: "json_object" };
-        // DeepSeek/Grok sometimes need explicit instruction in system prompt for JSON, which buildPrompt handles.
     }
 
-    // Vision Support (Only for OpenAI currently in this unified function to be safe, others might vary)
-    if (data.imageBase64 && endpoint.includes('openai.com')) {
+    // Vision Support (for OpenAI/Grok if supported)
+    if (data.imageBase64 && (endpoint.includes('openai') || endpoint.includes('x.ai'))) {
         messages = [
             { role: "system", content: "You are an executive AI assistant." },
             { 
@@ -193,9 +180,6 @@ async function callOpenAICompatible(endpoint: string, model: string, apiKey: str
                 ] 
             }
         ];
-    } else if (data.imageBase64) {
-        // Fallback for non-vision models in this path: Just send text
-        // (Ideally, the router shouldn't send vision tasks here unless the model supports it)
     }
 
     const response = await fetch(endpoint, {
@@ -221,7 +205,7 @@ async function callOpenAICompatible(endpoint: string, model: string, apiKey: str
     return json.choices?.[0]?.message?.content || '';
 }
 
-// --- Anthropic Client ---
+// ---  Anthropic Client ---
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const url = 'https://api.anthropic.com/v1/messages';
     const prompt = buildPrompt(data);
@@ -267,7 +251,7 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
     return json.content?.[0]?.text || '';
 }
 
-// --- Gemini Client ---
+// ---  Gemini Client ---
 async function callGemini(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const prompt = buildPrompt(data);
@@ -298,39 +282,34 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-// --- Prompt Builder ---
+// ---  Prompt Builder ---
 function buildPrompt(data: AIRequest): string {
-    const { action, content, title, recentNotes, subscriptions, userStats, boardData, paymentSources, currentTime } = data;
+    const { action, content, boardData, paymentSources, currentTime, subscriptions } = data;
     const jsonPrefix = "Output purely valid JSON without Markdown code fences.";
 
     if (action === 'hold_board_meeting') {
-        const d = boardData!;
+        const d = boardData || {};
         const notesSummary = d.recentNotes?.map((n:any) => n.title).join(', ') || 'なし';
         const subTotal = d.subscriptions?.reduce((sum: number, s: any) => sum + Number(s.price), 0) || 0;
         
         return `
         ${jsonPrefix}
-        あなたは「自分株式会社」の取締役会議長です。
-        以下の議題について、DeepSeek（財務論理）、Grok（革新）、Gemini（直感）の意見をシミュレーションし、最終的な合議結果（Claudeとしての決断）を出力してください。
-
-        【議題データ】
-        - 直近の活動: ${notesSummary}
-        - 財務状況(月次固定費): ${subTotal}円
-        - 経営者(CEO)資産: ${d.userStats?.total_points || 0}pt
+        あなたは「自分株式会社」のAI役員です。
+        議題: 直近の活動(${notesSummary})と財務状況(固定費月額:${subTotal})。
         
-        【出力JSONフォーマット】
+        JSON Schema:
         {
           "agenda": "議題タイトル",
-          "discussion": "各AI役員（DeepSeek, Grok, Gemini）の議論要約",
-          "decision": "最終決裁事項 (Action Item)",
-          "stock_price_impact": "株価変動予測 (例: +5%)"
+          "discussion": "各役員(DeepSeek, Grok, Gemini)の議論",
+          "decision": "最終決裁事項",
+          "stock_price_impact": "株価変動予測"
         }
         `;
     }
 
     if (action === 'proactive_intervention') {
-        const d = boardData!;
-        // 安全にパース
+        const d = boardData || {};
+        const points = d.userStats?.total_points || 0;
         let unAuditedCount = 0;
         if (d.paymentSources && Array.isArray(d.paymentSources)) {
              unAuditedCount = d.paymentSources.filter((s: any) => {
@@ -343,35 +322,32 @@ function buildPrompt(data: AIRequest): string {
         
         return `
         ${jsonPrefix}
-        あなたは「自分株式会社」のAI役員団です。現在時刻: ${currentTime}。
-        未監査チャネル数=${unAuditedCount}。
-        
-        未監査がある場合はDeepSeek(CFO)として監査を要求。
-        それ以外はGrok(CTO)やGemini(CHO)として気の利いた助言を。
+        現在時刻: ${currentTime}。CEO資産=${points}pt, 未監査決済=${unAuditedCount}件。
+        未監査ならCFOとして警告。深夜ならCHOとして就寝勧告。それ以外はCSOとして助言。
         
         JSON Schema:
         {
           "should_intervene": boolean,
-          "role": "CFO" | "CHO" | "CSO" | "CHRO" | "CTO",
-          "message": "CEOへの提言 (日本語, 60文字以内)",
-          "action_label": "アクションボタン名"
+          "role": "CFO" | "CHO" | "CSO" | "CHRO",
+          "message": "CEOへの提言(60文字以内)",
+          "action_label": "ボタン名"
         }
         `;
     }
 
     if (action === 'audit_subscriptions') {
-        const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}円`).join('\n');
-        return `CFO (DeepSeek/OpenAI) として、以下の固定費を厳格に監査し、無駄を指摘せよ。\n${subList}`;
+        const subList = subscriptions ? subscriptions.map((s:any) => `- ${s.service_name}: ${s.price}円`).join('\n') : '';
+        return `CFOとして以下の固定費を監査せよ。\n${subList}`;
     }
 
-    if (action === 'audit_meal') return `${jsonPrefix} 料理画像を栄養士(CHO)として監査。JSON Schema: { "menu_name": string, "calorie_estimate": number, "performance_score": number (0-100), "audit_result": string, "advice": string }`;
+    if (action === 'audit_meal') return `${jsonPrefix} 画像の食事を栄養士として監査。JSON Schema: { "menu_name": string, "calorie_estimate": number, "performance_score": number, "audit_result": string, "advice": string }`;
     
     if (action === 'extract_subscriptions_from_file') return `${jsonPrefix} 画像/PDFから定期支払いを抽出。JSON Schema: [{ "service_name": string, "price": number, "description": string }]`;
 
-    if (action === 'improve') return `以下をビジネス文書として洗練された文体で校正せよ:\n${content}`;
-    if (action === 'mental_chat') return `CHROとして、以下の愚痴に対し、深く共感しつつも建設的な視点を提供せよ:\n${content}`;
-    if (action === 'expand') return `Grokのように、以下を大胆かつユニークに拡張せよ:\n${content}`;
-    if (action === 'suggest_title') return `以下の内容にふさわしいプロジェクト名を5つ提案せよ:\n${content}`;
+    if (action === 'improve') return `以下をビジネス文書として校正:\n${content}`;
+    if (action === 'mental_chat') return `CHROとして、以下の発言に共感し助言せよ:\n${content}`;
+    if (action === 'expand') return `Grokのように、以下をユニークに拡張せよ:\n${content}`;
+    if (action === 'suggest_title') return `以下の内容に合うプロジェクト名を5つ提案:\n${content}`;
 
     return content || '';
 }
@@ -383,8 +359,5 @@ function parseJsonResult(result: string): any {
       const lastBrace = cleaned.lastIndexOf(cleaned.endsWith(']') ? ']' : '}');
       if (firstBrace !== -1 && lastBrace !== -1) cleaned = cleaned.substring(firstBrace, lastBrace + 1);
       return JSON.parse(cleaned);
-    } catch (e) { 
-        console.error("JSON Parse Error:", e);
-        return {}; 
-    }
+    } catch (e) { return {}; }
 }
