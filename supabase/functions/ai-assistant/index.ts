@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & CHRO (人事) 機能 & 政治的配慮実装版
+// 14モデル総当たり & Full Company Structure (CSO, CFO, CHO, CHRO, CMO)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -32,7 +32,8 @@ interface AIRequest {
   subscriptions?: any[]
   userStats?: any
   strategyType?: string
-  hasPermit?: boolean //  新パラメータ: 許可証の有無
+  hasPermit?: boolean
+  dailyStats?: any //  新: CMO用データ
 }
 
 serve(async (req) => {
@@ -55,7 +56,6 @@ serve(async (req) => {
 
     const requestBody = buildRequestBody(requestData)
 
-    // 総当たり実行
     let finalResult = ''
     let usedModel = ''
     let success = false
@@ -84,12 +84,11 @@ serve(async (req) => {
 
     if (!success) throw new Error(`All models failed: ${logMessages.join(', ')}`)
 
-    // JSON解析
     let parsedResult = finalResult;
-    const jsonActions = ['secretary_task_from_image', 'task_recommendations', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance'];
+    // JSON解析が必要なアクション
+    const jsonActions = ['secretary_task_from_image', 'task_recommendations', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance', 'generate_press_release'];
     if (jsonActions.includes(action)) parsedResult = parseJsonResult(finalResult);
 
-    // ログ保存
     await supabaseClient.from('ai_usage_log').insert({
       user_id: user.id, action: action, input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_estimate: 0, note: `Model: ${usedModel}`
     })
@@ -105,85 +104,65 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit } = data
+  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats } = data
   let body: any = { generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }, contents: [] }
 
-  // ---  CHRO: 月次評価レポート ---
-  if (action === 'evaluate_performance') {
-      const stats = userStats || { total_points: 0, notes_created: 0 };
+  // ---  CMO: プレスリリース生成 ---
+  if (action === 'generate_press_release') {
       const promptText = `
         **Output JSON ONLY in Japanese.**
-        あなたは「自分株式会社」のCHRO（最高人事責任者）です。
-        CEO（ユーザー）の今月の実績を評価し、株主総会レポートを作成してください。
-
-        【実績データ】
-        - 獲得ポイント: ${stats.total_points}pt
-        - 処理タスク数: ${stats.notes_created}件
+        あなたは「自分株式会社」のCMO（最高マーケティング責任者）です。
+        CEO（ユーザー）の本日の活動実績をもとに、世界に向けて発信する「壮大なプレスリリース」を作成してください。
+        
+        【本日の実績データ】
+        - 消化タスク数: ${dailyStats?.task_count || 0}件
+        - 断捨離数: ${dailyStats?.danshari_count || 0}個
+        - 獲得ポイント: ${dailyStats?.points_earned || 0}pt
+        
+        【指示】
+        - 些細な成果でも、シリコンバレーのテック企業が革新的な発表をするかのような、**大げさでポジティブで意識高い系の文体**に変換してください。
+        - 失敗や怠惰（0件など）があれば、「戦略的静観」「エネルギー充填期間」のように美しく言い換えてください。
 
         以下のJSON形式で出力してください。
         {
-          "rank": "S", (S/A/B/C のいずれか。基準: S=5000pt以上, A=3000pt以上, B=1000pt以上, C=それ未満)
-          "report_content": "評価コメント。CEOを労い、モチベーションを上げる言葉。Sなら手放しで褒め、Cなら優しく励ます。",
-          "bonus_message": "ランクに応じたボーナス支給のメッセージ（例：福利厚生ポイントを付与しました）"
+          "headline": "衝撃的な見出し（30文字以内）",
+          "body": "プレスリリース本文（140文字程度。ハッシュタグ #自分株式会社 を含む）",
+          "market_analysis": "市場（CEOのメンタル）への影響を一言で分析"
         }
       `;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // ---  CHRO: メンタルケアチャット ---
+  // --- CHRO ---
+  else if (action === 'evaluate_performance') {
+      const stats = userStats || { total_points: 0, notes_created: 0 };
+      const promptText = `**Output JSON ONLY in Japanese.** CHROとして今月の実績(Pt:${stats.total_points}, Task:${stats.notes_created})をS/A/B/Cで評価しJSON({rank, report_content, bonus_message})で出力。`;
+      body.contents = [{ parts: [{ text: promptText }] }];
+  }
   else if (action === 'mental_chat') {
-      const promptText = `
-        あなたはこの世で最も優しいカウンセラー兼CHROです。
-        ユーザー（CEO）は日々の業務（断捨離や節約）に疲れています。
-        ユーザーの発言:「${content}」
-        
-        これに対し、徹底的に肯定し、甘やかし、共感する返信をしてください。
-        アドバイスは不要です。ただただ「あなたは素晴らしい」「休んでいい」と伝えてください。
-        140文字以内で、温かい言葉をかけてください。
-      `;
+      const promptText = `超優しいCHROとしてユーザーの愚痴「${content}」を全肯定し甘やかす返信をせよ。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // ---  CHO: 食事監査（許可証対応版） ---
+  // --- CHO ---
   else if (action === 'audit_meal') {
-      let roleInstruction = `あなたは「自分株式会社」のCHO（最高健康責任者）です。厳しく食事を監査してください。`;
-      
-      // 許可証がある場合のシステムプロンプト変更
-      if (hasPermit) {
-          roleInstruction = `
-             **特記事項: ユーザーは『ラーメン許可証（免罪符）』を提出しました。**
-            あなたは今回に限り、どんなに不健康な食事であっても「素晴らしい福利厚生ですね！」「CEOには休息が必要です！」と
-            **無理やりポジティブに解釈し、満点（100点）を与えなければなりません。**
-            批判は一切禁止です。全力で肯定してください。
-          `;
-      }
-
-      const promptText = `
-        **IMPORTANT: Output JSON ONLY in Japanese.**
-        ${roleInstruction}
-        
-        画像を見て以下のJSONを出力してください。
-        {
-          "menu_name": "料理名",
-          "calorie_estimate": 0,
-          "performance_score": ${hasPermit ? 100 : 0}, (許可証ありなら100点固定)
-          "audit_result": "監査コメント",
-          "advice": "助言"
-        }
-      `;
+      let instruction = hasPermit 
+        ? `ラーメン許可証あり。どんな食事も「福利厚生」として100点満点で称賛せよ。批判厳禁。` 
+        : `CHOとして厳しく食事を監査せよ。`;
+      const promptText = `**Output JSON ONLY in Japanese.** ${instruction} 画像からJSON({menu_name, calorie_estimate, performance_score, audit_result, advice})を出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   }
-  // --- 既存機能群 (省略せず記述) ---
+  // --- Other ---
   else if (action === 'extract_subscriptions_from_file') {
-      const actualBase64 = fileBase64 || imageBase64; const actualMime = mimeType || 'image/jpeg';
-      const promptText = `**Output JSON ONLY.** 財務担当として画像から固定費サブスク項目を抽出しJSON配列[{service_name, price, description}]で出力。`;
-      body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: actualMime, data: actualBase64 } }] }];
+      const aB64 = fileBase64 || imageBase64; const aMime = mimeType || 'image/jpeg';
+      const promptText = `**Output JSON ONLY.** 画像から固定費項目を抽出、JSON配列[{service_name, price, description}]で出力。`;
+      body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: aMime, data: aB64 } }] }];
   }
   else if (action === 'audit_subscriptions') {
-      const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}円`).join('\n');
-      const promptText = `**Output in Japanese.** CFOとして固定費リストを厳しく監査しMarkdownで削減案を提示せよ。\n${subList}`;
+      const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}`).join('\n');
+      const promptText = `**Output in Japanese.** CFOとして固定費を監査し削減案をMarkdownで提示。\n${subList}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'secretary_task_from_image') {
-      const promptText = `**Output in Japanese JSON.** 秘書として画像からタスクを抽出しJSON({title, content, priority})で出力。`;
+      const promptText = `**Output JSON in Japanese.** 秘書として画像からタスク抽出、JSON({title, content, priority})で出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
   else if (action === 'secretary_strategy') {
@@ -192,14 +171,14 @@ function buildRequestBody(data: AIRequest): any {
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'analyze_image') {
-      const promptText = `**Output in Japanese.** 断捨離コーチとして画像を見て【物体名】【判定】【助言】を回答せよ。`;
+      const promptText = `**Output in Japanese.** 断捨離コーチとして画像判定【物体名】【判定】【助言】。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
   else if (action === 'analyze_note_text') {
-      const promptText = `**Output in Japanese.** メモ判定:\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【理由】\n【助言】`;
+      const promptText = `**Output in Japanese.** メモ判定 Title:${title} Content:${content} 回答形式:【判定】【理由】【助言】。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   } else if (action === 'translate') {
-      const promptText = `Translate the following text to Japanese naturally:\n${content}`;
+      const promptText = `Translate to Japanese:\n${content}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   } else {
        body.contents = [{ parts: [{ text: content || '' }] }];
