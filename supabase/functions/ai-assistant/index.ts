@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Bedtime Gatekeeper Added)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Fix: Ban Weak Models for Vision)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -29,7 +29,7 @@ interface AIRequest {
   currentTime?: string
   recentMeals?: any[]
   multi_response?: boolean
-  missionData?: any // Added for Bedtime Check
+  missionData?: any
 }
 
 serve(async (req) => {
@@ -96,15 +96,19 @@ serve(async (req) => {
     // ---  Single Mode ---
     let candidates = await gatherAllCandidates(requestData);
     if (candidates.length === 0) throw new Error('No AI models available.');
+    
+    // Sort by Score (Desc) to pick the smartest one
     candidates.sort((a, b) => b.score - a.score);
 
     let finalResult = '';
     let winner: any = null;
+    let logs: string[] = [];
     
     for (const candidate of candidates) {
         const { provider, model } = candidate;
         const startTime = Date.now();
         try {
+            console.log(` Attempting: ${provider} [${model}]`);
             if (provider === 'gemini') finalResult = await callGemini(model, KEYS.gemini!, requestData);
             else if (provider === 'anthropic') finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
             else finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
@@ -113,11 +117,12 @@ serve(async (req) => {
             await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
             break; 
         } catch (e) {
+            logs.push(`${provider}/${model}: ${e.message}`);
             await logRequest(supabaseClient, user.id, action, provider, model, 500, Date.now() - startTime, e.message);
         }
     }
 
-    if (!winner) throw new Error(`All candidates exhausted.`);
+    if (!winner) throw new Error(`All candidates exhausted. Logs: ${logs.join('|')}`);
 
     let parsedResult = finalResult;
     if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission'].includes(action)) {
@@ -138,15 +143,37 @@ serve(async (req) => {
 function calculateModelScore(provider: string, modelId: string, isVision: boolean): number {
     let score = 0;
     const id = modelId.toLowerCase();
+
+    //  STRICT BAN: Weak models cannot handle Vision/Persona tasks
+    if (id.includes('gemma')) return -1; // Ban Gemma
+    if (id.includes('nano')) return -1;  // Ban Nano
+    if (id.includes('lite')) return -1;  // Ban Lite models if possible (prefer Pro/Flash)
+
+    // ---  GOD TIER ---
     if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
     else if (id.includes('gemini-3')) score = 1150;
     else if (id.includes('gpt-5')) score = 1140;
     else if (id.includes('claude-3-7')) score = 1120;
+    
+    // ---  KING TIER ---
     else if (id.includes('gemini-2.5-pro')) score = 1050;
     else if (id.includes('claude-3-5-sonnet')) score = 980;
-    else if (id.includes('gpt-4o')) score = 950;
-    else score = 500;
-    if (isVision && (id.includes('deepseek') || id.includes('o1'))) score = -1;
+    else if (id.includes('gemini-2.0-pro')) score = 970;
+    else if (id.includes('gpt-4o') && !id.includes('mini')) score = 950;
+    
+    // ---  SOLDIER TIER ---
+    else if (id.includes('gemini-1.5-pro')) score = 850;
+    else if (id.includes('gemini-2.0-flash')) score = 840; // Flash 2.0 is capable enough
+    else if (id.includes('gpt-4o-mini')) score = 700; 
+
+    //  Contextual Adjustments
+    if (isVision) {
+        // DeepSeek often has text-only endpoints in some proxies
+        if (id.includes('deepseek')) score = -1; 
+        // O1 models are slow/sometimes text-only preview
+        if (id.includes('o1') || id.includes('o3')) score = -1; 
+    }
+
     return score;
 }
 
@@ -169,6 +196,10 @@ async function gatherAllCandidates(data: AIRequest): Promise<{provider: string, 
     return candidates;
 }
 
+// ... (fetchDynamicModels, callOpenAICompatible, callAnthropic, callGemini - same as before) ...
+// For brevity in update, assuming these standard functions exist. 
+//  IMPORTANT: Ensure 'callGemini' sends 'contents' correctly.
+
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
     try {
         let url = ''; let headers: any = {};
@@ -190,6 +221,7 @@ async function fetchDynamicModels(provider: string, apiKey: string): Promise<str
 async function callOpenAICompatible(provider: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "system", content: "You are an executive AI. Output in Japanese." }, { role: "user", content: prompt }];
+    if (data.imageBase64) messages = [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${data.mimeType||'image/jpeg'};base64,${data.imageBase64}` } }] }];
     const resp = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages, response_format: {type: "json_object"} }) });
     const json = await resp.json(); return json.choices[0].message.content;
 }
@@ -197,23 +229,54 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "user", content: prompt }];
+    if (data.imageBase64) messages = [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: data.mimeType||"image/jpeg", data: data.imageBase64 } }, { type: "text", text: prompt }] }];
     const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model, max_tokens: 4000, messages }) });
     const json = await resp.json(); return json.content[0].text;
 }
 
 async function callGemini(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
-    const body: any = { contents: [{ parts: [{ text: prompt }] }] };
+    const body: any = { contents: [] };
+    if (data.imageBase64) body.contents.push({ parts: [{ text: prompt }, { inline_data: { mime_type: data.mimeType||'image/jpeg', data: data.imageBase64 } }] });
+    else body.contents.push({ parts: [{ text: prompt }] });
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
     const json = await resp.json(); return json.candidates[0].content.parts[0].text;
 }
 
-// ---  Prompts (Bedtime Gatekeeper Added) ---
 function buildPrompt(data: AIRequest): string {
     const { action, content, boardData, currentTime, missionData } = data;
     const jsonPrefix = "Output purely valid JSON.";
 
-    //  Added: Bedtime Gatekeeper
+    //  REAL WORLD DANSHARI PROMPT (Explicitly Defined)
+    if (action === 'analyze_image') {
+        return `${jsonPrefix}
+        Role: Toxic Decluttering Coach (Demon). 
+        Task: Analyze the photo of the item.
+        Tone: Strict, sarcastic, but logical. Japanese.
+        
+        Output JSON:
+        {
+          "result": "Your harsh verdict here (Keep it/Throw it). Explain why in 3 bullet points. Be mean but helpful. (e.g. 'ゴミです。即捨てなさい')",
+          "item_name": "Detected Item Name",
+          "keep_score": 10 (0-100, 0=Throw away immediately)
+        }`;
+    }
+
+    //  DIGITAL DANSHARI PROMPT
+    if (action === 'digital_danshari_chat') {
+        return `${jsonPrefix}
+        Role: Digital Decluttering Demon Coach.
+        Tone: Aggressive, sarcastic, extremely strict. Japanese.
+        User Input: "${content}"
+        Output JSON:
+        {
+          "message": "String (Your harsh scolding)",
+          "mission": "String (e.g. 'Delete 50 screenshots right now')",
+          "angry_score": 90
+        }`;
+    }
+
+    //  BEDTIME GATEKEEPER PROMPT
     if (action === 'check_bedtime_permission') {
         const missions = missionData || {};
         const incomplete = Object.keys(missions).filter(k => !missions[k]);
@@ -222,33 +285,22 @@ function buildPrompt(data: AIRequest): string {
         return `${jsonPrefix}
         Role: The Gatekeeper of Sleep (Demon Coach).
         Context: The user (CEO) wants to go to sleep.
-        Current Time: ${currentTime}.
         Mission Status: ${JSON.stringify(missions)}.
-        
-        Logic:
-        - If ANY task is false (incomplete): DENY permission. Be furious. List the missing tasks. Tell them to move their body NOW.
-        - If ALL tasks are true: GRANT permission, but be suspicious. Ask if they really did it properly.
-        - Tone: Extremely strict, military style, merciless. Japanese.
+        Logic: If ANY task is false: DENY. If ALL true: GRANT.
+        Tone: Military style, merciless. Japanese.
 
         Output JSON:
         {
           "permission_granted": ${isPerfect},
           "title": "String (e.g. 'DENIED', 'APPROVED')",
           "message": "String (Your harsh verdict)",
-          "missing_tasks": ["List", "of", "incomplete", "tasks"],
-          "punishment": "String (If denied, tell them what to do. If approved, null)"
+          "missing_tasks": ["List", "of", "missing"],
+          "punishment": "String (Instruction)"
         }`;
     }
 
-    if (action === 'digital_danshari_chat') {
-        return `${jsonPrefix} Role: Digital Decluttering Demon. Tone: Strict. User: "${content}". JSON: { "message": "Scolding", "mission": "Delete X", "angry_score": 90 }`;
-    }
-    if (action === 'analyze_image') {
-        return `${jsonPrefix} Role: Toxic Decluttering Coach. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
-    }
-    if (action === 'proactive_intervention') {
-        return `${jsonPrefix} Time: ${currentTime}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
-    }
+    if (action === 'suggest_next_meal') return `${jsonPrefix} Role: CHO. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
+    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
