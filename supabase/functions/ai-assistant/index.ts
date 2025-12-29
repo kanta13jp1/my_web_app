@@ -1,4 +1,5 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Updated for Meal Suggestion)
+﻿// AI Assistant Edge Function: "The Five Emperors" (2025 Ultimate Edition v2)
+// Fully optimized for discovered models (Gemini 3, GPT-5, Claude 3.7/4.5)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -27,7 +28,7 @@ interface AIRequest {
   userStats?: any
   paymentSources?: any[]
   currentTime?: string
-  recentMeals?: any[] // Added for meal suggestion
+  recentMeals?: any[]
 }
 
 serve(async (req) => {
@@ -48,77 +49,67 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action } = requestData
 
-    // ---  Priority Queue ---
-    let providerQueue: string[] = [];
-    if (requestData.imageBase64 || requestData.fileBase64) {
-        providerQueue = ['gemini', 'openai', 'anthropic', 'grok'];
-    } else {
-        // DeepSeek is excellent for logic/recipes and cheap
-        providerQueue = ['deepseek', 'anthropic', 'openai', 'gemini', 'grok'];
-    }
+    // ---  Unified Model Ranking ---
+    console.log(` Gathering candidates for: ${action}...`);
+    
+    let candidates = await gatherAllCandidates(requestData);
+    if (candidates.length === 0) throw new Error('No AI models available.');
+
+    // Sort by Score (Desc)
+    candidates.sort((a, b) => b.score - a.score);
+    
+    // Log Top Candidates
+    const topCandidates = candidates.slice(0, 5).map(c => `${c.provider}:${c.model}(${c.score})`).join(' > ');
+    console.log(` Model Hierarchy: ${topCandidates}`);
 
     let finalResult = '';
-    let usedProvider = '';
-    let usedModel = '';
+    let winner: any = null;
     let logs: string[] = [];
 
-    for (const provider of providerQueue) {
-        if (!KEYS[provider as keyof typeof KEYS]) continue;
-
+    // ---  The Meritocracy Loop ---
+    for (const candidate of candidates) {
+        const { provider, model } = candidate;
+        const startTime = Date.now();
+        
         try {
-            const models = await fetchDynamicModels(provider, KEYS[provider as keyof typeof KEYS]!);
+            console.log(` Attempting: ${provider} [${model}]`);
             
-            for (const model of models) {
-                const startTime = Date.now();
-                try {
-                    console.log(` Attempting: ${action} via ${provider} [${model}]`);
-                    
-                    if (provider === 'gemini') {
-                        finalResult = await callGemini(model, KEYS.gemini!, requestData);
-                    } else if (provider === 'anthropic') {
-                        finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
-                    } else {
-                        finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
-                    }
-
-                    usedProvider = provider;
-                    usedModel = model;
-                    
-                    await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
-                    break; 
-
-                } catch (e) {
-                    const duration = Date.now() - startTime;
-                    const statusMatch = e.message.match(/(\d{3})/);
-                    const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
-                    logs.push(`${provider}/${model}: ${statusCode}`);
-                    await logRequest(supabaseClient, user.id, action, provider, model, statusCode, duration, e.message);
-                }
+            if (provider === 'gemini') {
+                finalResult = await callGemini(model, KEYS.gemini!, requestData);
+            } else if (provider === 'anthropic') {
+                finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
+            } else {
+                finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
             }
-            if (usedProvider) break;
+
+            winner = candidate;
+            await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
+            console.log(` WINNER: ${provider} (${model})`);
+            break; 
 
         } catch (e) {
-            console.error(` Provider Failed ${provider}: ${e.message}`);
+            const duration = Date.now() - startTime;
+            const statusMatch = e.message.match(/(\d{3})/);
+            const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
+            
+            console.warn(` Failed [${model}]: ${e.message}`);
+            logs.push(`${provider}/${model}: ${statusCode}`);
+            
+            await logRequest(supabaseClient, user.id, action, provider, model, statusCode, duration, e.message);
         }
     }
 
-    if (!usedProvider) {
-        throw new Error(`All providers exhausted. Logs: ${logs.join(' | ')}`);
+    if (!winner) {
+        throw new Error(`All candidates exhausted. Logs: ${logs.join(' | ')}`);
     }
 
-    // JSON Parsing
     let parsedResult = finalResult;
-    const jsonActions = [
-      'secretary_task_from_image', 'extract_subscriptions_from_file', 
-      'audit_meal', 'evaluate_performance', 'hold_board_meeting', 
-      'proactive_intervention', 'suggest_next_meal'
-    ];
-    if (jsonActions.includes(action)) {
+    if (['secretary_task_from_image', 'extract_subscriptions_from_file', 'audit_meal', 'evaluate_performance', 'hold_board_meeting', 'proactive_intervention', 'suggest_next_meal'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
     return new Response(
-      JSON.stringify({ success: true, result: parsedResult, provider: usedProvider, used_model: usedModel }),
+      JSON.stringify({ success: true, result: parsedResult, provider: winner.provider, used_model: winner.model }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
@@ -127,20 +118,89 @@ serve(async (req) => {
   }
 })
 
-async function logRequest(supabase: any, userId: string, action: string, provider: string, model: string, status: number, duration: number, errorMsg: string = '') {
-    try {
-        await supabase.from('ai_request_logs').insert({
-            user_id: userId,
-            action: action,
-            provider: provider,
-            model: model,
-            status_code: status,
-            duration_ms: duration,
-            error_message: errorMsg.substring(0, 1000)
-        });
-    } catch(e) { console.error("Logging failed:", e); }
+// ---  2025 Model Scoring Logic (Based on Actual List) ---
+function calculateModelScore(provider: string, modelId: string, isVision: boolean): number {
+    let score = 0;
+    const id = modelId.toLowerCase();
+
+    // ---  GOD TIER (Score: 1100+) ---
+    // The absolute bleeding edge discovered in the logs.
+    if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200; // Claude 4.5
+    else if (id.includes('gemini-3')) score = 1150; // Gemini 3.0
+    else if (id.includes('gpt-5')) score = 1140; // GPT-5
+    else if (id.includes('o3')) score = 1130; // OpenAI O3
+    else if (id.includes('claude-3-7')) score = 1120; // Claude 3.7
+
+    // ---  KING TIER (Score: 1000-1099) ---
+    // Exceptional performance.
+    else if (id.includes('gemini-2.5-pro')) score = 1050;
+    else if (id.includes('o1-pro')) score = 1040;
+    else if (id.includes('gpt-4.1')) score = 1030;
+    else if (id.includes('deepseek-reasoner')) score = 1020; // DeepSeek R1/Reasoner
+
+    // ---  KNIGHT TIER (Score: 900-999) ---
+    // High standard for daily tasks.
+    else if (id.includes('claude-3-5-sonnet')) score = 980;
+    else if (id.includes('gemini-2.0-pro')) score = 970;
+    else if (id.includes('gemini-2.5-flash')) score = 960;
+    else if (id.includes('gpt-4o') && !id.includes('mini')) score = 950;
+    else if (id.includes('o1') && !id.includes('mini')) score = 940;
+
+    // ---  SOLDIER TIER (Score: 800-899) ---
+    // Previous gen flagships.
+    else if (id.includes('gemini-1.5-pro')) score = 850;
+    else if (id.includes('claude-3-opus')) score = 840;
+    else if (id.includes('deepseek-chat')) score = 830;
+    else if (id.includes('grok-2')) score = 820;
+
+    // ---  SCOUT TIER (Score: < 800) ---
+    // Fast & Cheap.
+    else if (id.includes('claude-3-5-haiku') || id.includes('claude-haiku-4-5')) score = 780; // Haiku 4.5 is strong
+    else if (id.includes('gemini-2.0-flash')) score = 760;
+    else if (id.includes('gpt-4o-mini')) score = 700;
+    else if (id.includes('gemini-1.5-flash')) score = 680;
+
+    // ---  Contextual Adjustments ---
+    
+    // Vision Task Penalty
+    if (isVision) {
+        if (id.includes('deepseek') && !id.includes('vision')) score = -1; // Text only
+        if (id.includes('o1') || id.includes('o3')) score -= 200; // Reasoning models are often slow/bad at vision
+        if (id.includes('nano') || id.includes('embedding')) score = -1;
+    }
+
+    // Preview/Exp Bonus (Newer is usually smarter)
+    if (id.includes('preview') || id.includes('exp') || id.includes('latest')) score += 10;
+
+    return score;
 }
 
+async function gatherAllCandidates(data: AIRequest): Promise<{provider: string, model: string, score: number}[]> {
+    const isVision = !!(data.imageBase64 || data.fileBase64);
+    const promises: Promise<any>[] = [];
+    const candidates: {provider: string, model: string, score: number}[] = [];
+
+    Object.keys(KEYS).forEach(provider => {
+        const key = KEYS[provider as keyof typeof KEYS];
+        if (key) {
+            promises.push(
+                fetchDynamicModels(provider, key)
+                    .then(models => {
+                        models.forEach(model => {
+                            const score = calculateModelScore(provider, model, isVision);
+                            if (score > 0) candidates.push({ provider, model, score });
+                        });
+                    })
+                    .catch(e => console.warn(`Skipping ${provider}: ${e.message}`))
+            );
+        }
+    });
+
+    await Promise.all(promises);
+    return candidates;
+}
+
+// ---  API Fetchers ---
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
     try {
         let url = '';
@@ -156,30 +216,30 @@ async function fetchDynamicModels(provider: string, apiKey: string): Promise<str
         if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
         const json = await resp.json();
         let models: string[] = [];
+        
         if (provider === 'gemini') {
-            models = (json.models || []).map((m: any) => m.name.replace('models/', '')).filter((n: string) => n.includes('gemini') && !n.includes('vision')).sort((a: string, b: string) => b.localeCompare(a));
+            models = (json.models || []).map((m: any) => m.name.replace('models/', '')).filter((n: string) => n.includes('gemini') && !n.includes('vision') && !n.includes('embedding'));
         } else if (provider === 'anthropic') {
-             models = (json.data || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((m: any) => m.id);
+             models = (json.data || []).map((m: any) => m.id);
         } else {
             models = (json.data || []).map((m: any) => m.id).filter((id: string) => {
-                if (provider === 'openai') return id.includes('gpt-4') || id.includes('o1');
-                if (provider === 'deepseek') return id.includes('chat');
+                if (provider === 'openai') return id.includes('gpt-') || id.includes('o1') || id.includes('o3') || id.includes('chatgpt-4o');
+                if (provider === 'deepseek') return id.includes('deepseek');
                 if (provider === 'grok') return id.includes('grok');
                 return false;
-            }).sort((a: string, b: string) => b.localeCompare(a));
+            });
         }
-        if (models.length === 0) throw new Error('No compatible models');
         return models;
     } catch (e) {
         if (provider === 'openai') return ['gpt-4o'];
         if (provider === 'anthropic') return ['claude-3-5-sonnet-20241022'];
         if (provider === 'gemini') return ['gemini-2.0-flash'];
         if (provider === 'deepseek') return ['deepseek-chat'];
-        if (provider === 'grok') return ['grok-2-latest'];
         return [];
     }
 }
 
+// ---  Callers ---
 async function callOpenAICompatible(provider: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
     let url = 'https://api.openai.com/v1/chat/completions';
     if (provider === 'deepseek') url = 'https://api.deepseek.com/chat/completions';
@@ -187,7 +247,12 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "system", content: "You are an executive AI. Output in Japanese." }, { role: "user", content: prompt }];
     let responseFormat = undefined;
-    if (data.action.includes('json') || ['audit_subscriptions', 'hold_board_meeting', 'proactive_intervention', 'suggest_next_meal'].includes(data.action)) responseFormat = { type: "json_object" };
+    
+    // DeepSeek & o1 often don't support json_object mode, so we rely on prompt engineering
+    if (provider !== 'deepseek' && !model.includes('o1') && !model.includes('o3')) {
+        if (data.action.includes('json') || ['audit_subscriptions', 'hold_board_meeting', 'proactive_intervention', 'suggest_next_meal'].includes(data.action)) responseFormat = { type: "json_object" };
+    }
+
     if (data.imageBase64 && (provider === 'openai' || provider === 'grok')) messages = [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${data.mimeType||'image/jpeg'};base64,${data.imageBase64}` } }] }];
     const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages, response_format: responseFormat, temperature: 0.7 }) });
     if (!resp.ok) throw new Error(`${resp.status} ${await resp.text()}`);
@@ -218,45 +283,20 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
+// ---  Prompts & Helper ---
 function buildPrompt(data: AIRequest): string {
     const { action, content, boardData, currentTime, recentMeals } = data;
     const jsonPrefix = "Output purely valid JSON.";
-    
     if (action === 'suggest_next_meal') {
         const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
-        return `${jsonPrefix}
-        Role: CHO (Chief Health Officer) & 3-Star Chef.
-        Current Time: ${currentTime}.
-        Recent Meals: ${mealHistory}.
-        
-        Task: Suggest the optimal NEXT meal based on time and history. If morning, breakfast. If night, light dinner.
-        Include a simple recipe.
-        
-        Output JSON:
-        {
-          "menu_name": "料理名",
-          "reason": "推奨理由 (例: 昨夜が重かったので...)",
-          "ingredients": ["材料1", "材料2"],
-          "recipe_steps": ["手順1", "手順2"],
-          "calorie_estimate": 500,
-          "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" }
-        }`;
+        return `${jsonPrefix} Role: CHO (3-Star Chef). Time: ${currentTime}. History: ${mealHistory}. Suggest OPTIMAL next meal. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": ["A","B"], "recipe_steps": ["1","2"], "calorie_estimate": 500, "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" } }`;
     }
-
     if (action === 'proactive_intervention') {
         const d = boardData || {};
         let unaudited = 0;
-        if (d.paymentSources) {
-            unaudited = d.paymentSources.filter((s:any) => {
-                if (!s.last_audited_at) return true;
-                const last = new Date(s.last_audited_at);
-                const now = new Date();
-                return last.getMonth() !== now.getMonth() || last.getFullYear() !== now.getFullYear();
-            }).length;
-        }
-        return `${jsonPrefix} Time: ${currentTime}. Unaudited: ${unaudited}. Rules: 1. Unaudited>0 -> Role=CFO, Warn in Japanese. 2. Time>23:00 -> Role=CHO, Warn Sleep. 3. Else -> Role=CSO, Advice. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO"|"CHRO", "message": "JP text (60 chars)", "action_label": "Button" }`;
+        if (d.paymentSources) unaudited = d.paymentSources.filter((s:any) => !s.last_audited_at).length;
+        return `${jsonPrefix} Time: ${currentTime}. Unaudited: ${unaudited}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO"|"CHRO", "message": "JP text (60 chars)", "action_label": "Button" }`;
     }
-
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
@@ -277,4 +317,18 @@ function parseJsonResult(result: string): any {
       if (first !== -1 && last !== -1) cleaned = cleaned.substring(first, last + 1);
       return JSON.parse(cleaned);
     } catch (e) { return {}; }
+}
+
+async function logRequest(supabase: any, userId: string, action: string, provider: string, model: string, status: number, duration: number, errorMsg: string = '') {
+    try {
+        await supabase.from('ai_request_logs').insert({
+            user_id: userId,
+            action: action,
+            provider: provider,
+            model: model,
+            status_code: status,
+            duration_ms: duration,
+            error_message: errorMsg.substring(0, 1000)
+        });
+    } catch(e) { console.error("Logging failed:", e); }
 }
