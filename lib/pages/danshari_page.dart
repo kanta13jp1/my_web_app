@@ -21,7 +21,6 @@ class _DanshariPageState extends State<DanshariPage>
   final int _dailyGoal = 5;
   int _todayCount = 0;
 
-  // 判定に使用されたモデル名を保持
   String? _usedModel;
 
   late AnimationController _animController;
@@ -130,7 +129,7 @@ class _DanshariPageState extends State<DanshariPage>
           _staleMemos.removeAt(0);
           _earnedPoints += pointsReward;
           _todayCount++;
-          _usedModel = null; // リセット
+          _usedModel = null;
         });
         _animController.reset();
       }
@@ -180,7 +179,7 @@ class _DanshariPageState extends State<DanshariPage>
 
       if (mounted) {
         setState(() {
-          _usedModel = data['used_model']; // モデル名を保存
+          _usedModel = data['used_model'];
         });
         _showAnalysisResultDialog(data['result']);
       }
@@ -202,8 +201,9 @@ class _DanshariPageState extends State<DanshariPage>
     final modelInfo =
         _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: Gemini 14モデル総力戦)";
 
+    //  シェア内容を自分株式会社仕様に更新
     Share.share(
-      '溜め込んだメモを14種類のAIモデルに判定してもらいました...\n\n$modelInfo\n$shortResult\n...\n\n#マイメモ #デジタル断捨離 #Gemini\nhttps://my-web-app-b67f4.web.app/?ref=share_text_result',
+      '溜め込んだメモを14種類のAIモデルに判定してもらいました...\n\n$modelInfo\n$shortResult\n...\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #デジタル断捨離 #Gemini',
       subject: 'AI断捨離コーチの診断結果',
       sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
@@ -226,7 +226,6 @@ class _DanshariPageState extends State<DanshariPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              //  モデル名の表示バッジ
               if (_usedModel != null)
                 Container(
                   padding:
