@@ -27,15 +27,19 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // KPI Data
   int _totalPoints = 0;
-  int _taskCount = 0;
-  int _todayDanshariCount = 0;
+  int _taskCount = 0; // Active tasks (Digital debt)
   int _healthScore = 0;
   int _fixedCost = 0;
   List<Note> _notes = [];
 
+  // Danshari Progress
+  int _todayDigitalCount = 0;
+  int _todayRealCount = 0;
+  int _dailyDigitalGoal = 5; // Default (will be calculated)
+  int _dailyRealGoal = 1; // Default (will be calculated)
+
   bool _isLoading = true;
   bool _isMeeting = false;
-  final int _dailyDanshariGoal = 5;
 
   // Colors
   final Color _navy = const Color(0xFF0F172A);
@@ -50,8 +54,24 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _runExecutiveChecks() async {
     await _loadData();
+    // Calculate dynamic goals based on loaded stats
+    _calculateDynamicGoals();
     await _checkMorningBriefing();
     await _checkProactiveIntervention();
+  }
+
+  void _calculateDynamicGoals() {
+    setState(() {
+      // 1. デジタルノルマ: 「未完了タスク数（負債）」に応じて増加
+      // 基本5件 + (タスク残数 / 20)
+      // 例: タスク100件溜まっていれば、5 + 5 = 10件捨てる必要がある
+      _dailyDigitalGoal = 5 + (_taskCount / 20).floor();
+
+      // 2. リアルノルマ: 「総資産（実績）」に応じてレベルアップ（ノブレスオブリージュ）
+      // 基本1件 + (ポイント / 3000)
+      // 例: 6000pt貯まれば、1 + 2 = 3件の実践が求められる
+      _dailyRealGoal = 1 + (_totalPoints / 3000).floor();
+    });
   }
 
   Future<void> _loadData() async {
@@ -93,8 +113,17 @@ class _HomePageState extends State<HomePage> {
       if (stats != null) {
         setState(() {
           _totalPoints = stats['total_points'] ?? 0;
-          _taskCount = stats['notes_created'] ?? 0;
+          _taskCount = stats['notes_created'] ??
+              0; // Assuming this tracks active tasks or roughly similar
+          // Ideally we should query count of is_archived=false for accurate debt
         });
+        // Get accurate active task count for goal calculation
+        final countRes = await supabase
+            .from('notes')
+            .count()
+            .eq('user_id', userId)
+            .eq('is_archived', false);
+        setState(() => _taskCount = countRes);
       }
     } catch (_) {}
   }
@@ -144,13 +173,33 @@ class _HomePageState extends State<HomePage> {
       final now = DateTime.now();
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
-      final count = await supabase
+
+      // 1. Real World Danshari (Title starts with '断捨離:' and created today)
+      final realCount = await supabase
+          .from('notes')
+          .count()
+          .eq('user_id', userId)
+          .eq('is_archived', true)
+          .ilike('title', '断捨離:%')
+          .gte('created_at', todayStart);
+
+      // 2. Total Archived Today (Includes both Digital and Real)
+      // Note: For digital, updated_at is today. For real, created_at is today (and equals updated_at).
+      // Using updated_at covers both cases effectively for "Action taken today".
+      final totalArchivedCount = await supabase
           .from('notes')
           .count()
           .eq('user_id', userId)
           .eq('is_archived', true)
           .gte('updated_at', todayStart);
-      setState(() => _todayDanshariCount = count);
+
+      setState(() {
+        _todayRealCount = realCount;
+        // Digital is total minus real (approximation, assuming Real ones strictly follow the naming convention)
+        _todayDigitalCount = (totalArchivedCount - realCount) < 0
+            ? 0
+            : (totalArchivedCount - realCount);
+      });
     } catch (_) {}
   }
 
@@ -483,7 +532,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDanshariMet = _todayDanshariCount >= _dailyDanshariGoal;
+    // Both goals must be met for the "Permit"
+    final isDigitalMet = _todayDigitalCount >= _dailyDigitalGoal;
+    final isRealMet = _todayRealCount >= _dailyRealGoal;
+    final isAllMet = isDigitalMet && isRealMet;
 
     return Scaffold(
       backgroundColor: _bgGrey,
@@ -590,97 +642,74 @@ class _HomePageState extends State<HomePage> {
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
 
-                        // Danshari Card
-                        InkWell(
-                          onTap: () async {
-                            await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const DanshariPage()));
-                            _loadData();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                  colors: isDanshariMet
-                                      ? [
-                                          Colors.green.shade700,
-                                          Colors.green.shade500
-                                        ]
-                                      : [
-                                          Colors.red.shade700,
-                                          Colors.red.shade500
-                                        ]),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2))
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                      color: Colors.white24,
-                                      shape: BoxShape.circle),
-                                  child: Icon(
-                                      isDanshariMet
-                                          ? Icons.check
-                                          : Icons.priority_high,
-                                      color: Colors.white,
-                                      size: 24),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                          isDanshariMet
-                                              ? '就寝許可証: 発行済'
-                                              : '就寝許可証: 未発行',
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16)),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                          isDanshariMet
-                                              ? '本日の業務は順調です'
-                                              : '残り ${_dailyDanshariGoal - _todayDanshariCount} 個の断捨離が必要です',
-                                          style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_forward_ios,
-                                    color: Colors.white70, size: 14),
-                              ],
-                            ),
+                        // Danshari Card (Consolidated)
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2))
+                            ],
+                            border: Border.all(
+                                color: isAllMet
+                                    ? Colors.green
+                                    : Colors.red.withOpacity(0.3),
+                                width: 2),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                      isAllMet
+                                          ? Icons.verified
+                                          : Icons.warning_amber,
+                                      color: isAllMet
+                                          ? Colors.green
+                                          : Colors.redAccent),
+                                  const SizedBox(width: 8),
+                                  Text(isAllMet ? '就寝許可証: 発行済' : '就寝許可証: 未発行',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: _navy)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              // Digital Progress
+                              _buildProgressRow('デジタル断捨離', _todayDigitalCount,
+                                  _dailyDigitalGoal, Colors.blue, () async {
+                                await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const DanshariPage()));
+                                _loadData();
+                              }),
+                              const SizedBox(height: 12),
+                              // Real Progress
+                              _buildProgressRow('リアル断捨離', _todayRealCount,
+                                  _dailyRealGoal, Colors.orange, () {
+                                Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const RealWorldDanshariPage()))
+                                    .then((_) => _loadData());
+                              }),
+                            ],
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
+                        // Quick Action Row
                         Row(
                           children: [
-                            Expanded(
-                              child: _buildOperationButton('リアル断捨離',
-                                  Icons.camera_alt, Colors.orange.shade800, () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const RealWorldDanshariPage()));
-                              }),
-                            ),
-                            const SizedBox(width: 12),
                             Expanded(
                               child: _buildOperationButton(
                                   'クイックメモ',
@@ -770,6 +799,42 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildProgressRow(
+      String label, int current, int goal, Color color, VoidCallback onTap) {
+    final progress = (current / goal).clamp(0.0, 1.0);
+    final isMet = current >= goal;
+
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('$current / $goal',
+                  style: TextStyle(
+                      fontSize: 13, color: isMet ? color : Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: color.withOpacity(0.1),
+              color: color,
+              minHeight: 8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSliverAppBar() {
     return SliverAppBar(
       expandedHeight: 260.0,
@@ -779,8 +844,7 @@ class _HomePageState extends State<HomePage> {
       foregroundColor: Colors.white,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          padding: const EdgeInsets.fromLTRB(
-              20, 90, 20, 20), // Top padding for status bar + toolbar
+          padding: const EdgeInsets.fromLTRB(20, 90, 20, 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -795,7 +859,6 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                       color: Colors.white54, fontSize: 12, letterSpacing: 1.0)),
               const SizedBox(height: 4),
-              // Main Score
               Expanded(
                 flex: 2,
                 child: FittedBox(
@@ -820,7 +883,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 20),
-              // KPIs Row
               Expanded(
                 flex: 2,
                 child: Container(
@@ -841,7 +903,7 @@ class _HomePageState extends State<HomePage> {
                           '$_fixedCost', '/mo'),
                       _buildVerticalDivider(),
                       _buildKpiItem(
-                          Icons.check_circle, 'Tasks', '$_taskCount', 'Done'),
+                          Icons.check_circle, 'Tasks', '$_taskCount', 'Active'),
                     ],
                   ),
                 ),
@@ -960,7 +1022,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.transparent)), // removed border
+            side: BorderSide(color: Colors.transparent)),
       ),
       icon: Icon(icon, size: 20),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
