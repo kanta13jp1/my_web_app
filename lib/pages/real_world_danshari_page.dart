@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data'; // For Uint8List
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,7 +14,8 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  File? _image;
+  // Web対応のため File ではなく Uint8List (バイトデータ) を使用
+  Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isAnalyzing = false;
 
@@ -28,11 +30,15 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final pickedFile = await _picker.pickImage(
+      final XFile? pickedFile = await _picker.pickImage(
           source: source, maxWidth: 800, maxHeight: 800, imageQuality: 80);
+
       if (pickedFile != null) {
+        // Webでも動くようにバイトデータを読み込む
+        final bytes = await pickedFile.readAsBytes();
+
         setState(() {
-          _image = File(pickedFile.path);
+          _imageBytes = bytes;
           _analysisResult = null; // Reset previous result
           _itemName = null;
           _keepScore = null;
@@ -45,13 +51,13 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   }
 
   Future<void> _analyzeImage() async {
-    if (_image == null) return;
+    if (_imageBytes == null) return;
 
     setState(() => _isAnalyzing = true);
 
     try {
-      final bytes = await _image!.readAsBytes();
-      final base64Image = base64Encode(bytes);
+      // バイトデータをBase64に変換 (Web対応済み)
+      final base64Image = base64Encode(_imageBytes!);
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
@@ -67,11 +73,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
 
       final data = response.data;
       if (data['success'] == true) {
-        //  JSON Parsing Logic (Fixed for Nested Structure)
         final resultData = data['result']; // This is a Map
 
         setState(() {
-          // If resultData is just a string (fallback), handle it. Otherwise parse fields.
           if (resultData is String) {
             _analysisResult = resultData;
           } else {
@@ -108,7 +112,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Text
             const Text(
               '捨てられないモノを撮影してください。\nOpenAI, Gemini, Claudeなど最新のAIが、あなたの代わりに断捨離を即決します。',
               textAlign: TextAlign.center,
@@ -116,25 +119,23 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             ),
             const SizedBox(height: 24),
 
-            // Image Area
+            // Image Area (Web対応: Image.memoryを使用)
             Container(
               height: 300,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade300),
-                image: _image != null
-                    ? DecorationImage(
-                        image: FileImage(_image!), fit: BoxFit.cover)
-                    : null,
               ),
-              child: _image == null
+              child: _imageBytes == null
                   ? Icon(Icons.camera_alt, size: 60, color: Colors.grey[400])
-                  : null,
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                    ),
             ),
             const SizedBox(height: 24),
 
-            // Buttons
             if (!_isAnalyzing && _analysisResult == null) ...[
               ElevatedButton.icon(
                 onPressed: () => _pickImage(ImageSource.camera),
@@ -165,7 +166,6 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               ),
             ],
 
-            // Analyzing Indicator
             if (_isAnalyzing)
               Column(
                 children: [
@@ -177,10 +177,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 ],
               ),
 
-            // Result Display
             if (_analysisResult != null) ...[
               const SizedBox(height: 20),
-              // Score Card
               if (_keepScore != null)
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -232,10 +230,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     ],
                   ),
                 ),
-
               const SizedBox(height: 16),
-
-              // The Verdict (Advice)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -274,20 +269,16 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Action Buttons
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // ここで「捨てた！」アクション（ポイント加算など）を実装可能
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('素晴らしい決断です！ +50pt')));
                         setState(() {
-                          _image = null;
+                          _imageBytes = null;
                           _analysisResult = null;
                         });
                       },
@@ -304,7 +295,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     child: OutlinedButton(
                       onPressed: () {
                         setState(() {
-                          _image = null;
+                          _imageBytes = null;
                           _analysisResult = null;
                         });
                       },
