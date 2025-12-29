@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 on:
   pull_request:
@@ -58,8 +58,9 @@ jobs:
           fail_ci_if_error: false
         continue-on-error: true
 
+      #  修正: --no-tree-shake-icons を追加
       - name: Build web (production)
-        run: flutter build web --release
+        run: flutter build web --release --no-tree-shake-icons
         env:
           FLUTTER_WEB: true
 
@@ -122,8 +123,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      #  修正: --no-tree-shake-icons を追加
       - name: Build test
-        run: flutter build web --release
+        run: flutter build web --release --no-tree-shake-icons
 
   pr-comment:
     name: PR Comment
@@ -142,5 +144,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ All CI checks passed (with some allowed failures)! The code is ready for review.'
+              body: ' All CI checks passed (with some allowed failures)! The code is ready for review.'
             })
