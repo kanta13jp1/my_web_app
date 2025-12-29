@@ -39,7 +39,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadData();
-    _checkMorningBriefing();
+    // モーニングブリーフィングとプロアクティブ介入のダブルチェック
+    _runExecutiveChecks();
   }
 
   Future<void> _loadData() async {
@@ -50,6 +51,18 @@ class _HomePageState extends State<HomePage> {
       _fetchDanshariProgress(),
     ]);
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _runExecutiveChecks() async {
+    // まずデータをロードしてからチェック
+    await _loadData();
+
+    // 1. モーニングブリーフィング (1日1回)
+    await _checkMorningBriefing();
+
+    // 2. プロアクティブ介入 (時間帯に応じて随時)
+    // ブリーフィング直後なら少し待つなどの制御も可能だが、今回は独立してチェック
+    await _checkProactiveIntervention();
   }
 
   Future<void> _fetchUserStats() async {
@@ -137,6 +150,141 @@ class _HomePageState extends State<HomePage> {
         await prefs.setString('last_briefing_date', todayStr);
       }
     } catch (_) {}
+  }
+
+  //  プロアクティブ介入チェック
+  Future<void> _checkProactiveIntervention() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastCheck = prefs.getInt('last_intervention_ts') ?? 0;
+      final nowTs = DateTime.now().millisecondsSinceEpoch;
+
+      // 頻度制御: 前回の介入から最低1時間は空ける
+      if (nowTs - lastCheck < 3600000) return;
+
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 必要な最小限のデータを取得
+      final meals = await supabase
+          .from('meal_logs')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1);
+      final notes = await supabase
+          .from('notes')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('is_archived', false);
+      final stats = await supabase
+          .from('user_stats')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final boardData = {
+        'recentMeals': meals,
+        'recentNotes': notes, // 数だけ分かれば良い
+        'userStats': stats
+      };
+
+      // AIに問い合わせ
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': 'proactive_intervention',
+          'boardData': boardData,
+          'currentTime': TimeOfDay.now().format(context), // "12:30 PM" 等
+        },
+      );
+
+      if (response.status == 200) {
+        final data = response.data;
+        if (data['success'] == true) {
+          final result = data['result'];
+          // 介入すべきと判断された場合のみ表示
+          if (result['should_intervene'] == true) {
+            await Future.delayed(const Duration(seconds: 3)); // 少し間を置く演出
+            if (mounted) _showInterventionDialog(result);
+            await prefs.setInt('last_intervention_ts', nowTs);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Intervention check failed: $e');
+    }
+  }
+
+  //  介入ダイアログ (通知風)
+  void _showInterventionDialog(Map<String, dynamic> result) {
+    final role = result['role'] ?? 'AI';
+    final message = result['message'] ?? '';
+    final actionLabel = result['action_label'] ?? '確認';
+
+    // 役職ごとの色設定
+    Color roleColor = Colors.white;
+    IconData roleIcon = Icons.notifications;
+    switch (role) {
+      case 'CHO':
+        roleColor = Colors.green;
+        roleIcon = Icons.health_and_safety;
+        break;
+      case 'CSO':
+        roleColor = Colors.blueGrey;
+        roleIcon = Icons.psychology;
+        break;
+      case 'CFO':
+        roleColor = Colors.teal;
+        roleIcon = Icons.attach_money;
+        break;
+      case 'CHRO':
+        roleColor = Colors.pink;
+        roleIcon = Icons.diversity_3;
+        break;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B), // Dark Slate
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: roleColor, width: 2)),
+        title: Row(
+          children: [
+            CircleAvatar(
+                backgroundColor: roleColor.withOpacity(0.2),
+                child: Icon(roleIcon, color: roleColor)),
+            const SizedBox(width: 12),
+            Text('$role からの提言',
+                style: TextStyle(
+                    color: roleColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
+          ],
+        ),
+        content: Text(message,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 16, height: 1.5)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('あとで', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // アクションに応じた遷移なども可能だが、まずは閉じるだけ
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: roleColor, foregroundColor: Colors.white),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _holdBoardMeeting({bool isMorning = false}) async {
