@@ -1,5 +1,5 @@
-﻿// AI Assistant Edge Function: MAGI System (Gemini + OpenAI + Claude)
-// "The Tri-Brain Governance"
+﻿// AI Assistant Edge Function: MAGI System with Failover
+// "The Immortal Council"
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -14,7 +14,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 
-// Models (The Magi)
+// Models
 const MODEL_MELCHIOR = 'gpt-4o'          // Logic & Finance
 const MODEL_BALTHASAR = 'gemini-2.0-flash' // Speed & Vision
 const MODEL_CASPER = 'claude-3-5-sonnet-20241022' // Strategy & Nuance
@@ -55,36 +55,72 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action } = requestData
 
-    // ---  MAGI Router ---
-    let provider = 'gemini'; 
-    let model = MODEL_BALTHASAR;
+    // ---  MAGI Router & Failover Logic ---
+    // アクションに基づいて「試行する優先順位」を決定する
+    let providerQueue: string[] = [];
 
-    // 1. MELCHIOR (OpenAI): 数字、監査、構造化データ
+    // 1. Logic & Finance (数字、監査) -> OpenAI優先
     if (['audit_subscriptions', 'extract_subscriptions_from_file'].includes(action)) {
-       if (OPENAI_API_KEY) { provider = 'openai'; model = MODEL_MELCHIOR; }
+        providerQueue = ['openai', 'anthropic', 'gemini'];
     }
     
-    // 2. CASPER (Claude): 戦略、人事、文章作成、議長
+    // 2. Strategy & Writing (戦略、文章、議長) -> Claude優先
     else if (['hold_board_meeting', 'evaluate_performance', 'improve', 'expand', 'mental_chat'].includes(action)) {
-       if (ANTHROPIC_API_KEY) { provider = 'anthropic'; model = MODEL_CASPER; }
+        providerQueue = ['anthropic', 'openai', 'gemini'];
     }
 
-    // 3. BALTHASAR (Gemini): 画像認識、スピード、デフォルト
+    // 3. Vision & Speed (画像、デフォルト) -> Gemini優先
     else {
-       // audit_meal, proactive_intervention, analyze_image are handled here
-       provider = 'gemini'; model = MODEL_BALTHASAR;
+        providerQueue = ['gemini', 'openai', 'anthropic'];
     }
 
-    console.log(` MAGI Activation: ${action} | Provider: ${provider} | Model: ${model}`);
+    // 利用可能なAPIキーに基づいてフィルタリング（キーがないプロバイダは除外）
+    providerQueue = providerQueue.filter(p => {
+        if (p === 'gemini') return !!GEMINI_API_KEY;
+        if (p === 'openai') return !!OPENAI_API_KEY;
+        if (p === 'anthropic') return !!ANTHROPIC_API_KEY;
+        return false;
+    });
+
+    if (providerQueue.length === 0) throw new Error('No available AI providers configured.');
 
     let finalResult = '';
-    
-    if (provider === 'openai') {
-        finalResult = await callOpenAI(model, requestData);
-    } else if (provider === 'anthropic') {
-        finalResult = await callAnthropic(model, requestData);
-    } else {
-        finalResult = await callGemini(model, requestData);
+    let usedProvider = '';
+    let usedModel = '';
+    let lastError: any = null;
+    let attemptLogs: string[] = [];
+
+    // ---  The Failover Loop ---
+    for (const provider of providerQueue) {
+        try {
+            console.log(` Attempting: ${action} via ${provider}...`);
+            
+            if (provider === 'openai') {
+                finalResult = await callOpenAI(MODEL_MELCHIOR, requestData);
+                usedModel = MODEL_MELCHIOR;
+            } else if (provider === 'anthropic') {
+                finalResult = await callAnthropic(MODEL_CASPER, requestData);
+                usedModel = MODEL_CASPER;
+            } else {
+                finalResult = await callGemini(MODEL_BALTHASAR, requestData);
+                usedModel = MODEL_BALTHASAR;
+            }
+
+            usedProvider = provider;
+            console.log(` Success with ${provider}`);
+            break; // 成功したらループを抜ける
+
+        } catch (e) {
+            console.error(` Failed with ${provider}: ${e.message}`);
+            lastError = e;
+            attemptLogs.push(`${provider}: ${e.message}`);
+            // 次のプロバイダへ（continue）
+        }
+    }
+
+    // 全滅した場合
+    if (!usedProvider) {
+        throw new Error(`All AI providers failed. Logs: ${attemptLogs.join(' | ')}`);
     }
 
     // JSON Parsing
@@ -104,44 +140,54 @@ serve(async (req) => {
     await supabaseClient.from('ai_usage_log').insert({
       user_id: user.id, 
       action: action, 
-      note: `MAGI: ${provider} (${model})`
+      note: `MAGI Result: ${usedProvider} (${usedModel}) / Failures: ${attemptLogs.length}`
     })
 
     return new Response(
-      JSON.stringify({ success: true, result: parsedResult, provider, used_model: model }),
+      JSON.stringify({ success: true, result: parsedResult, provider: usedProvider, used_model: usedModel }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
-    console.error("MAGI Error:", error);
+    console.error("MAGI Fatal Error:", error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
 
-// --- Claude Implementation (The Strategist) ---
+// --- Claude Implementation ---
 async function callAnthropic(model: string, data: AIRequest): Promise<string> {
-    if (!ANTHROPIC_API_KEY) throw new Error('Anthropic API key missing');
     const url = 'https://api.anthropic.com/v1/messages';
-
     const prompt = buildPrompt(data);
     
-    // System Prompt for JSON enforcement where needed
     let systemPrompt = "You are an executive AI assistant for 'Jibun Inc.' (自分株式会社). Output in Japanese.";
-    if (data.action.includes('json') || ['hold_board_meeting', 'evaluate_performance'].includes(data.action)) {
+    if (data.action.includes('json') || ['hold_board_meeting', 'evaluate_performance', 'proactive_intervention', 'extract_subscriptions_from_file', 'audit_meal'].includes(data.action)) {
         systemPrompt += " You MUST output strictly valid JSON only. No markdown, no commentary.";
+    }
+
+    let messages: any[] = [{ role: "user", content: prompt }];
+
+    // Vision Support for Claude
+    if (data.imageBase64) {
+        messages = [{
+            role: "user",
+            content: [
+                { type: "image", source: { type: "base64", media_type: data.mimeType || "image/jpeg", data: data.imageBase64 } },
+                { type: "text", text: prompt }
+            ]
+        }];
     }
 
     const body = {
         model: model,
         max_tokens: 4000,
         system: systemPrompt,
-        messages: [{ role: "user", content: prompt }]
+        messages: messages
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'x-api-key': ANTHROPIC_API_KEY,
+            'x-api-key': ANTHROPIC_API_KEY!,
             'anthropic-version': '2023-06-01',
             'content-type': 'application/json'
         },
@@ -150,16 +196,15 @@ async function callAnthropic(model: string, data: AIRequest): Promise<string> {
 
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Anthropic API Error: ${response.status} - ${errText}`);
+        throw new Error(`Anthropic Error: ${response.status} - ${errText}`);
     }
 
     const json = await response.json();
     return json.content?.[0]?.text || '';
 }
 
-// --- Gemini Implementation (The Visionary) ---
+// --- Gemini Implementation ---
 async function callGemini(model: string, data: AIRequest): Promise<string> {
-    if (!GEMINI_API_KEY) throw new Error('Gemini API key missing');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
     
     const prompt = buildPrompt(data);
@@ -186,16 +231,15 @@ async function callGemini(model: string, data: AIRequest): Promise<string> {
 
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+        throw new Error(`Gemini Error: ${response.status} - ${errText}`);
     }
 
     const json = await response.json();
     return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-// --- OpenAI Implementation (The Logician) ---
+// --- OpenAI Implementation ---
 async function callOpenAI(model: string, data: AIRequest): Promise<string> {
-    if (!OPENAI_API_KEY) throw new Error('OpenAI API key missing');
     const url = 'https://api.openai.com/v1/chat/completions';
 
     const prompt = buildPrompt(data);
@@ -211,7 +255,7 @@ async function callOpenAI(model: string, data: AIRequest): Promise<string> {
                 role: "user", 
                 content: [
                     { type: "text", text: prompt },
-                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${data.imageBase64}` } }
+                    { type: "image_url", image_url: { url: `data:${data.mimeType || 'image/jpeg'};base64,${data.imageBase64}` } }
                 ] 
             }
         ];
@@ -228,14 +272,14 @@ async function callOpenAI(model: string, data: AIRequest): Promise<string> {
             messages: messages,
             temperature: 0.7,
             response_format: data.action.includes('json') || [
-                'audit_subscriptions', 'extract_subscriptions_from_file'
+                'audit_subscriptions', 'extract_subscriptions_from_file', 'proactive_intervention', 'audit_meal', 'hold_board_meeting'
             ].includes(data.action) ? { type: "json_object" } : undefined
         })
     });
 
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`OpenAI API Error: ${response.status} - ${errText}`);
+        throw new Error(`OpenAI Error: ${response.status} - ${errText}`);
     }
 
     const json = await response.json();
@@ -247,7 +291,6 @@ function buildPrompt(data: AIRequest): string {
     const { action, content, title, recentNotes, subscriptions, userStats, boardData, paymentSources, currentTime } = data;
     const jsonPrefix = "Output purely valid JSON without Markdown code fences.";
 
-    //  MAGI Board Meeting (Casper as Chairman)
     if (action === 'hold_board_meeting') {
         const d = boardData!;
         const notesSummary = d.recentNotes?.map((n:any) => n.title).join(', ') || 'なし';
@@ -276,17 +319,22 @@ function buildPrompt(data: AIRequest): string {
     if (action === 'proactive_intervention') {
         const d = boardData!;
         const points = d.userStats?.total_points || 0;
-        const unAuditedSources = d.paymentSources?.filter((s: any) => {
-             if(!s.last_audited_at) return true;
-             const audit = new Date(s.last_audited_at);
-             const now = new Date();
-             return audit.getMonth() !== now.getMonth() || audit.getFullYear() !== now.getFullYear();
-        }) || [];
+        
+        // 安全にパース
+        let unAuditedCount = 0;
+        if (d.paymentSources && Array.isArray(d.paymentSources)) {
+             unAuditedCount = d.paymentSources.filter((s: any) => {
+                 if(!s.last_audited_at) return true;
+                 const audit = new Date(s.last_audited_at);
+                 const now = new Date();
+                 return audit.getMonth() !== now.getMonth() || audit.getFullYear() !== now.getFullYear();
+            }).length;
+        }
         
         return `
         ${jsonPrefix}
         あなたは「自分株式会社」のAI役員団です。現在時刻: ${currentTime}。
-        CEOの状況: 資産=${points}pt, 未監査の決済チャネル数=${unAuditedSources.length}。
+        CEOの状況: 資産=${points}pt, 未監査の決済チャネル数=${unAuditedCount}。
         
         未監査チャネルがある場合、CFO(Melchior)として監査を要求せよ。
         深夜(23時以降)ならCHO(Balthasar)として就寝を要求せよ。
@@ -304,11 +352,11 @@ function buildPrompt(data: AIRequest): string {
 
     if (action === 'audit_subscriptions') {
         const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}円`).join('\n');
-        return `CFO (Melchior/OpenAI) として、以下の固定費を厳格に監査し、無駄を指摘せよ。\n${subList}`;
+        return `CFOとして、以下の固定費を厳格に監査し、無駄を指摘せよ。\n${subList}`;
     }
 
     if (action === 'audit_meal') {
-        return `${jsonPrefix} 料理画像を栄養士(CHO/Gemini)として監査。JSON Schema: { "menu_name": string, "calorie_estimate": number, "performance_score": number (0-100), "audit_result": string, "advice": string }`;
+        return `${jsonPrefix} 料理画像を栄養士(CHO)として監査。JSON Schema: { "menu_name": string, "calorie_estimate": number, "performance_score": number (0-100), "audit_result": string, "advice": string }`;
     }
 
     if (action === 'extract_subscriptions_from_file') {
