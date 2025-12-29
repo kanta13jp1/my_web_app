@@ -190,17 +190,14 @@ class _HomePageState extends State<HomePage> {
           .eq('user_id', userId)
           .maybeSingle();
 
-      // Payment Sourcesの取得を安全に行う
-      List<dynamic> paymentSources = [];
+      dynamic paymentSources = [];
       try {
-        // テーブルが存在しない場合やエラーを想定してtry-catch
         final res = await supabase
             .from('payment_sources')
             .select()
             .eq('user_id', userId);
-        paymentSources = res as List<dynamic>;
+        paymentSources = res;
       } catch (_) {
-        // テーブルがない等の場合は空リストで続行
         paymentSources = [];
       }
 
@@ -458,7 +455,6 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
-      // Drawer (管理者メニュー)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -573,6 +569,7 @@ class _HomePageState extends State<HomePage> {
                                 builder: (_) => const CmoPage()))),
                   ],
                 ),
+
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -765,6 +762,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+
+                // メモリスト
                 _notes.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
