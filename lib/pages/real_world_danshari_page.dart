@@ -1,13 +1,9 @@
-import 'dart:io';
 import 'dart:convert';
-import 'dart:math';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
-import '../services/attachment_service.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -17,29 +13,34 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  XFile? _image;
-  final picker = ImagePicker();
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
   bool _isAnalyzing = false;
-  bool _isRegistering = false;
+
+  // Analysis Results
+  String? _itemName;
+  int? _keepScore;
   String? _analysisResult;
   String? _usedModel;
-  List<String> _attemptLogs = []; // 失敗ログ保存用
 
-  Future<void> _getImage(ImageSource source) async {
-    final pickedFile = await picker.pickImage(
-      source: source,
-      maxWidth: 800,
-      imageQuality: 80,
-    );
+  final Color _navy = const Color(0xFF0F172A);
+  final Color _gold = const Color(0xFFD4AF37);
 
-    if (pickedFile != null) {
-      setState(() {
-        _image = pickedFile;
-        _analysisResult = null;
-        _usedModel = null;
-        _attemptLogs = [];
-      });
-      _analyzeImage();
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(
+          source: source, maxWidth: 800, maxHeight: 800, imageQuality: 80);
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+          _analysisResult = null; // Reset previous result
+          _itemName = null;
+          _keepScore = null;
+        });
+        _analyzeImage();
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
     }
   }
 
@@ -49,388 +50,272 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      final imageBytes = await _image!.readAsBytes();
-      final base64Image = base64Encode(imageBytes);
+      final bytes = await _image!.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'analyze_image',
           'imageBase64': base64Image,
+          'mimeType': 'image/jpeg',
         },
       );
 
-      if (response.status != 200) {
-        throw Exception('Server error: ${response.status}');
-      }
+      if (response.status != 200)
+        throw Exception('API Error: ${response.status}');
 
       final data = response.data;
-      if (data['success'] != true) {
+      if (data['success'] == true) {
+        //  JSON Parsing Logic (Fixed for Nested Structure)
+        final resultData = data['result']; // This is a Map
+
+        setState(() {
+          // If resultData is just a string (fallback), handle it. Otherwise parse fields.
+          if (resultData is String) {
+            _analysisResult = resultData;
+          } else {
+            _analysisResult = resultData['result'] ?? 'No advice returned.';
+            _itemName = resultData['item_name'];
+            _keepScore = resultData['keep_score'];
+          }
+          _usedModel = data['used_model'];
+        });
+      } else {
         throw Exception(data['error'] ?? 'Unknown error');
-      }
-
-      setState(() {
-        _analysisResult = data['result'];
-        _usedModel = data['used_model'];
-        _attemptLogs = List<String>.from(data['attempt_logs'] ?? []); // ログ取得
-      });
-
-      if (mounted) {
-        _showAnalysisResultDialog(_analysisResult!);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI解析エラー: $e'), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('解析エラー: $e')));
       }
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
-  String _extractItemName(String text) {
-    try {
-      final regex = RegExp(r'【物体名】\s*\n?([^\n]+)');
-      final match = regex.firstMatch(text);
-      if (match != null && match.groupCount >= 1) {
-        return match.group(1)?.trim() ?? '謎の物体';
-      }
-    } catch (_) {}
-    return '断捨離アイテム';
-  }
-
-  Future<void> _uploadImageAsAttachment(int noteId) async {
-    if (_image == null) return;
-
-    try {
-      final bytes = await _image!.readAsBytes();
-      final size = await _image!.length();
-
-      final file = PlatformFile(
-        name: _image!.name,
-        size: size,
-        bytes: bytes,
-      );
-
-      await AttachmentService.uploadFile(
-        noteId: noteId,
-        file: file,
-      );
-    } catch (e) {
-      debugPrint('画像アップロードエラー: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('画像の保存に失敗しました: $e'),
-              backgroundColor: Colors.orange),
-        );
-      }
-    }
-  }
-
-  Future<void> _saveAsNote() async {
-    if (_analysisResult == null) return;
-    setState(() => _isRegistering = true);
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final itemName = _extractItemName(_analysisResult!);
-      final now = DateTime.now().toIso8601String();
-      final noteData = await supabase
-          .from('notes')
-          .insert({
-            'user_id': userId,
-            'title': ' 判定: $itemName',
-            'content': _analysisResult,
-            'is_archived': false,
-            'created_at': now,
-            'updated_at': now,
-          })
-          .select()
-          .single();
-      final noteId = noteData['id'] as int;
-      await _uploadImageAsAttachment(noteId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('判定結果と画像を保存しました！'), backgroundColor: Colors.green));
-        Navigator.pop(context);
-        setState(() {
-          _image = null;
-          _analysisResult = null;
-        });
-      }
-    } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isRegistering = false);
-    }
-  }
-
-  Future<void> _executeRealWorldDanshari() async {
-    if (_analysisResult == null) return;
-    setState(() => _isRegistering = true);
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final itemName = _extractItemName(_analysisResult!);
-      final now = DateTime.now().toIso8601String();
-      final noteData = await supabase
-          .from('notes')
-          .insert({
-            'user_id': userId,
-            'title': ' 断捨離: $itemName',
-            'content': _analysisResult,
-            'is_archived': true,
-            'created_at': now,
-            'updated_at': now,
-          })
-          .select()
-          .single();
-      final noteId = noteData['id'] as int;
-      await _uploadImageAsAttachment(noteId);
-      const pointsReward = 100;
-      try {
-        await supabase.rpc('increment_points',
-            params: {'user_id': userId, 'points_to_add': pointsReward});
-      } catch (_) {}
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('「$itemName」を断捨離しました！\n画像も記録しました (+100pt)'),
-            backgroundColor: Colors.green));
-        Navigator.pop(context);
-        setState(() {
-          _image = null;
-          _analysisResult = null;
-        });
-      }
-    } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('登録エラー: $e'), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isRegistering = false);
-    }
-  }
-
-  void _shareResult(String result) {
-    final shortResult = result.split('\n').take(5).join('\n');
-    final box = context.findRenderObject() as RenderBox?;
-
-    // 文言修正
-    final modelInfo =
-        _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: 五賢帝システム)";
-
-    final patterns = [
-      {
-        'text':
-            '私のゴミを判定するためだけに、世界最高峰のAI『五賢帝』を総動員するアプリを作りました\n1つがダメでも残りが判定を通す...この執念、まさに鬼コーチ。',
-        'ref': 'share_pattern_a_tech_overkill'
-      },
-      {
-        'text':
-            'AI鬼コーチが最強体制になりました\nOpenAI / Gemini / Claude... 全モデル総力戦の「総当たり判定」からは、どんなゴミも逃げられません。',
-        'ref': 'share_pattern_b_demon_coach'
-      },
-      {
-        'text':
-            '【エンジニアの断捨離】\nAPI Rate Limitを回避するため、5種類のAIプロバイダをラウンドロビンで総当たり実装しました。\n世界一（無駄に）可用性が高い断捨離アプリです。',
-        'ref': 'share_pattern_c_engineer'
-      },
-      {
-        'text': '片付けられない私 vs AI五賢帝 \n「どれか1つくらい許してくれるだろう」と思ったら、全員に「捨てろ」と言われました。',
-        'ref': 'share_pattern_d_desperate'
-      },
-    ];
-    final random = Random();
-    final selected = patterns[random.nextInt(patterns.length)];
-    final shareText =
-        '${selected['text']}\n\n$modelInfo\n$shortResult\n...\n\nあなたも無料で診断\n#自分株式会社 #AI #断捨離';
-    final shareUrl = 'https://my-web-app-b67f4.web.app/?ref=${selected['ref']}';
-    Share.share('$shareText\n$shareUrl',
-        subject: 'AI断捨離コーチの判定',
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null);
-  }
-
-  void _showAnalysisResultDialog(String result) {
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-          title: const Row(children: [
-            Icon(Icons.psychology, color: Colors.indigo),
-            SizedBox(width: 8),
-            Text('鬼コーチの判定')
-          ]),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_usedModel != null)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
-                        borderRadius: BorderRadius.circular(4)),
-                    child: Text('担当AI: $_usedModel',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.amber.shade900,
-                            fontWeight: FontWeight.bold)),
-                  ),
-
-                //  失敗ログの表示エリア
-                if (_attemptLogs.isNotEmpty)
-                  ExpansionTile(
-                    title: Text(
-                      ' ${_attemptLogs.length}つのモデルが脱落しました',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    dense: true,
-                    tilePadding: EdgeInsets.zero,
-                    children: _attemptLogs
-                        .map((log) => Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16, bottom: 4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.close,
-                                      size: 12, color: Colors.grey),
-                                  const SizedBox(width: 4),
-                                  Text(log,
-                                      style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey,
-                                          fontFamily: 'monospace')),
-                                ],
-                              ),
-                            ))
-                        .toList(),
-                  ),
-
-                Text(result, style: const TextStyle(fontSize: 16, height: 1.5)),
-              ],
-            ),
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                    onPressed: () => _shareResult(result),
-                    child: const Icon(Icons.share)),
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('閉じる')),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isRegistering
-                      ? null
-                      : () async {
-                          setDialogState(() => _isRegistering = true);
-                          await _saveAsNote();
-                        },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      foregroundColor: Colors.blue.shade800,
-                      elevation: 0),
-                  icon: const Icon(Icons.note_add),
-                  label: const Text('画像付きでメモに保存'),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: _isRegistering
-                      ? null
-                      : () async {
-                          setDialogState(() => _isRegistering = true);
-                          await _executeRealWorldDanshari();
-                        },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white),
-                  icon: _isRegistering
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.delete_forever),
-                  label: const Text('画像付きで捨てる (+100pt)'),
-                ),
-              ],
-            )
-          ],
-        );
-      }),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-          title: const Text(' リアル断捨離判定'),
-          backgroundColor: Colors.indigo,
-          foregroundColor: Colors.white),
+        title: const Text('リアル断捨離判定'),
+        backgroundColor: _navy,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Header Text
             const Text(
-                '捨てられないモノを撮影してください。\nOpenAI, Gemini, Claudeなど最新のAIが、あなたの代わりに断捨離を即決します。',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey)),
-            const SizedBox(height: 32),
-            if (_image != null) ...[
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: SizedBox(
-                      height: 300,
-                      child: kIsWeb
-                          ? Image.network(_image!.path, fit: BoxFit.cover)
-                          : Image.file(File(_image!.path), fit: BoxFit.cover))),
-              const SizedBox(height: 32),
-            ],
-            if (_isAnalyzing)
-              const Column(children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('五賢帝（最新AIモデル群）に問い合わせ中...',
-                    style: TextStyle(fontWeight: FontWeight.bold))
-              ])
-            else ...[
+              '捨てられないモノを撮影してください。\nOpenAI, Gemini, Claudeなど最新のAIが、あなたの代わりに断捨離を即決します。',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+
+            // Image Area
+            Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+                image: _image != null
+                    ? DecorationImage(
+                        image: FileImage(_image!), fit: BoxFit.cover)
+                    : null,
+              ),
+              child: _image == null
+                  ? Icon(Icons.camera_alt, size: 60, color: Colors.grey[400])
+                  : null,
+            ),
+            const SizedBox(height: 24),
+
+            // Buttons
+            if (!_isAnalyzing && _analysisResult == null) ...[
               ElevatedButton.icon(
-                onPressed: () => _getImage(ImageSource.camera),
+                onPressed: () => _pickImage(ImageSource.camera),
                 style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white),
-                icon: const Icon(Icons.camera_alt, size: 32),
-                label: const Text('カメラで撮影', style: TextStyle(fontSize: 20)),
+                  backgroundColor: _navy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('カメラで撮影',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: () => _getImage(ImageSource.gallery),
+                onPressed: () => _pickImage(ImageSource.gallery),
                 style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20)),
-                icon: const Icon(Icons.photo_library),
-                label: const Text('アルバムから選択'),
+                  padding: const EdgeInsets.all(16),
+                  side: BorderSide(color: _navy),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: Icon(Icons.photo_library, color: _navy),
+                label: Text('アルバムから選択',
+                    style:
+                        TextStyle(color: _navy, fontWeight: FontWeight.bold)),
               ),
+            ],
+
+            // Analyzing Indicator
+            if (_isAnalyzing)
+              Column(
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text('鬼コーチが画像を解析中...\n(Claude 4.5 Opus / Gemini 3.0)',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: _navy)),
+                ],
+              ),
+
+            // Result Display
+            if (_analysisResult != null) ...[
+              const SizedBox(height: 20),
+              // Score Card
+              if (_keepScore != null)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [_navy, const Color(0xFF1E293B)]),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                          color: _navy.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5))
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_itemName ?? '不明なアイテム',
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 14)),
+                            const SizedBox(height: 4),
+                            const Text('未練スコア (Keep Score)',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1)),
+                        child: Text(
+                          '$_keepScore',
+                          style: TextStyle(
+                            color: (_keepScore ?? 0) < 30
+                                ? Colors.redAccent
+                                : _gold,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 16),
+
+              // The Verdict (Advice)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Colors.redAccent.withOpacity(0.3), width: 2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.gavel, color: Colors.redAccent),
+                        const SizedBox(width: 8),
+                        const Text('鬼コーチの判定',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.redAccent)),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      _analysisResult!,
+                      style: const TextStyle(
+                          fontSize: 15, height: 1.6, color: Colors.black87),
+                    ),
+                    if (_usedModel != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text('Judge: $_usedModel',
+                            style: const TextStyle(
+                                fontSize: 10, color: Colors.grey)),
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // ここで「捨てた！」アクション（ポイント加算など）を実装可能
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('素晴らしい決断です！ +50pt')));
+                        setState(() {
+                          _image = null;
+                          _analysisResult = null;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                      icon: const Icon(Icons.delete_forever),
+                      label: const Text('今すぐ捨てる'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _image = null;
+                          _analysisResult = null;
+                        });
+                      },
+                      style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                      child: const Text('次のモノへ'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
             ],
           ],
         ),
