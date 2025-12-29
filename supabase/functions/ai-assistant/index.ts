@@ -27,7 +27,7 @@ const PROVIDERS = {
     // 4. Grok: Creative (Grok-2)
     grok:     { model: 'grok-2-latest', url: 'https://api.x.ai/v1/chat/completions', key: XAI_API_KEY },
     // 5. Anthropic: High Context (Claude 3.5)
-    anthropic:{ model: 'claude-3-5-sonnet-20241022', url: 'https://api.anthropic.com/v1/messages', key: ANTHROPIC_API_KEY },
+    anthropic:{ model: 'claude-3-5-sonnet-latest', url: 'https://api.anthropic.com/v1/messages', key: ANTHROPIC_API_KEY },
 };
 
 interface AIRequest {
@@ -361,3 +361,4 @@ function parseJsonResult(result: string): any {
       return JSON.parse(cleaned);
     } catch (e) { return {}; }
 }
+
