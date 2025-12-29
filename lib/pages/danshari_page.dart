@@ -195,15 +195,14 @@ class _DanshariPageState extends State<DanshariPage>
   }
 
   void _shareResult(String result) {
-    final shortResult = result.split('\n').take(5).join('\n');
+    // 修正: take(5)を削除し、全文をシェア対象にする
     final box = context.findRenderObject() as RenderBox?;
 
     final modelInfo =
         _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: Gemini 14モデル総力戦)";
 
-    //  シェア内容を自分株式会社仕様に更新
     Share.share(
-      '溜め込んだメモを14種類のAIモデルに判定してもらいました...\n\n$modelInfo\n$shortResult\n...\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #デジタル断捨離 #Gemini',
+      '溜め込んだメモを14種類のAIモデルに判定してもらいました...\n\n$modelInfo\n$result\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #デジタル断捨離',
       subject: 'AI断捨離コーチの診断結果',
       sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
