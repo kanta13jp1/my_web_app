@@ -30,6 +30,7 @@ class _HomePageState extends State<HomePage> {
   int _todayDanshariCount = 0;
   int _healthScore = 0;
   int _fixedCost = 0;
+  List<Note> _notes = []; // 復活: メモリスト
 
   bool _isLoading = true;
   bool _isMeeting = false;
@@ -53,8 +54,26 @@ class _HomePageState extends State<HomePage> {
       _fetchHealthStats(),
       _fetchFixedCosts(),
       _fetchDanshariProgress(),
+      _fetchNotes(), // 復活: メモ取得
     ]);
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  // 復活: メモ取得ロジック
+  Future<void> _fetchNotes() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final response = await supabase
+          .from('notes')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('updated_at', ascending: false);
+      setState(() {
+        _notes = (response as List).map((n) => Note.fromJson(n)).toList();
+      });
+    } catch (_) {}
   }
 
   Future<void> _fetchUserStats() async {
@@ -144,14 +163,12 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {}
   }
 
-  // プロアクティブ介入チェック
   Future<void> _checkProactiveIntervention() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final lastCheck = prefs.getInt('last_intervention_ts') ?? 0;
       final nowTs = DateTime.now().millisecondsSinceEpoch;
 
-      // 頻度制御: 1時間
       if (nowTs - lastCheck < 3600000) return;
 
       final userId = supabase.auth.currentUser?.id;
@@ -504,6 +521,7 @@ class _HomePageState extends State<HomePage> {
                         icon: const Icon(Icons.logout), onPressed: _signOut),
                   ],
                 ),
+
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -540,12 +558,14 @@ class _HomePageState extends State<HomePage> {
                                     letterSpacing: 1.0)),
                           ),
                         ),
+
                         const Text('DEPARTMENTS (各部署)',
                             style: TextStyle(
                                 color: Colors.grey,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
+
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
@@ -580,6 +600,7 @@ class _HomePageState extends State<HomePage> {
                                 const ChroPage()),
                           ],
                         ),
+
                         const SizedBox(height: 32),
                         const Text('OPERATIONS (業務遂行)',
                             style: TextStyle(
@@ -587,6 +608,7 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
+
                         InkWell(
                           onTap: () async {
                             if (!isDanshariMet) {
@@ -657,7 +679,9 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 16),
+
                         Row(
                           children: [
                             Expanded(
@@ -685,11 +709,74 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
+
+                        //  復活: PROJECTS (案件一覧)
+                        const Text('PROJECTS (進行中案件)',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2)),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
                 ),
+
+                // メモリスト
+                _notes.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Center(
+                              child: Text(
+                                  '現在進行中の案件はありません。\n「クイックメモ」から起案してください。',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.grey[400]))),
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final note = _notes[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 4.0),
+                              child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade300)),
+                                child: ListTile(
+                                  title: Text(note.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(note.content,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 12, color: Colors.grey)),
+                                  trailing: const Icon(Icons.arrow_forward_ios,
+                                      size: 12, color: Colors.grey),
+                                  onTap: () async {
+                                    await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                NoteEditorPage(note: note)));
+                                    _loadData();
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: _notes.length,
+                        ),
+                      ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
     );
