@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Fix: Ban Weak Models for Vision)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Japanese Language Enforced)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -96,8 +96,6 @@ serve(async (req) => {
     // ---  Single Mode ---
     let candidates = await gatherAllCandidates(requestData);
     if (candidates.length === 0) throw new Error('No AI models available.');
-    
-    // Sort by Score (Desc) to pick the smartest one
     candidates.sort((a, b) => b.score - a.score);
 
     let finalResult = '';
@@ -144,10 +142,10 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     let score = 0;
     const id = modelId.toLowerCase();
 
-    //  STRICT BAN: Weak models cannot handle Vision/Persona tasks
-    if (id.includes('gemma')) return -1; // Ban Gemma
-    if (id.includes('nano')) return -1;  // Ban Nano
-    if (id.includes('lite')) return -1;  // Ban Lite models if possible (prefer Pro/Flash)
+    //  STRICT BAN: Weak models
+    if (id.includes('gemma')) return -1; 
+    if (id.includes('nano')) return -1;
+    if (id.includes('lite')) return -1;
 
     // ---  GOD TIER ---
     if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
@@ -163,14 +161,11 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     
     // ---  SOLDIER TIER ---
     else if (id.includes('gemini-1.5-pro')) score = 850;
-    else if (id.includes('gemini-2.0-flash')) score = 840; // Flash 2.0 is capable enough
+    else if (id.includes('gemini-2.0-flash')) score = 840;
     else if (id.includes('gpt-4o-mini')) score = 700; 
 
-    //  Contextual Adjustments
     if (isVision) {
-        // DeepSeek often has text-only endpoints in some proxies
         if (id.includes('deepseek')) score = -1; 
-        // O1 models are slow/sometimes text-only preview
         if (id.includes('o1') || id.includes('o3')) score = -1; 
     }
 
@@ -195,10 +190,6 @@ async function gatherAllCandidates(data: AIRequest): Promise<{provider: string, 
     await Promise.all(promises);
     return candidates;
 }
-
-// ... (fetchDynamicModels, callOpenAICompatible, callAnthropic, callGemini - same as before) ...
-// For brevity in update, assuming these standard functions exist. 
-//  IMPORTANT: Ensure 'callGemini' sends 'contents' correctly.
 
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
     try {
@@ -243,68 +234,86 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     const json = await resp.json(); return json.candidates[0].content.parts[0].text;
 }
 
+// ---  Prompts (Enhanced with Japanese Constraint) ---
 function buildPrompt(data: AIRequest): string {
-    const { action, content, boardData, currentTime, missionData } = data;
+    const { action, content, boardData, currentTime, missionData, recentMeals } = data;
     const jsonPrefix = "Output purely valid JSON.";
 
-    //  REAL WORLD DANSHARI PROMPT (Explicitly Defined)
-    if (action === 'analyze_image') {
+    //  MEAL SUGGESTION (Japanese Enforced)
+    if (action === 'suggest_next_meal') {
+        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
         return `${jsonPrefix}
-        Role: Toxic Decluttering Coach (Demon). 
-        Task: Analyze the photo of the item.
-        Tone: Strict, sarcastic, but logical. Japanese.
-        
+        Role: CHO (Chief Health Officer) & 3-Star Chef.
+        Language: Japanese (日本語).
+        Context: Time is ${currentTime}. Recent meals: ${mealHistory}.
+        Task: Suggest one optimal meal.
         Output JSON:
         {
-          "result": "Your harsh verdict here (Keep it/Throw it). Explain why in 3 bullet points. Be mean but helpful. (e.g. 'ゴミです。即捨てなさい')",
-          "item_name": "Detected Item Name",
-          "keep_score": 10 (0-100, 0=Throw away immediately)
+          "menu_name": "料理名 (Japanese)",
+          "reason": "推薦理由 (Japanese)",
+          "ingredients": ["材料1", "材料2"],
+          "recipe_steps": ["手順1", "手順2"],
+          "calorie_estimate": 500,
+          "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" }
         }`;
     }
 
-    //  DIGITAL DANSHARI PROMPT
+    //  REAL WORLD DANSHARI
+    if (action === 'analyze_image') {
+        return `${jsonPrefix}
+        Role: Toxic Decluttering Coach (Demon). 
+        Language: Japanese (日本語).
+        Task: Analyze the photo.
+        Tone: Strict, sarcastic.
+        Output JSON:
+        {
+          "result": "判定コメント (Japanese)",
+          "item_name": "アイテム名 (Japanese)",
+          "keep_score": 10
+        }`;
+    }
+
+    //  DIGITAL DANSHARI
     if (action === 'digital_danshari_chat') {
         return `${jsonPrefix}
         Role: Digital Decluttering Demon Coach.
-        Tone: Aggressive, sarcastic, extremely strict. Japanese.
+        Language: Japanese (日本語).
         User Input: "${content}"
         Output JSON:
         {
-          "message": "String (Your harsh scolding)",
-          "mission": "String (e.g. 'Delete 50 screenshots right now')",
+          "message": "説教メッセージ (Japanese)",
+          "mission": "指令 (Japanese)",
           "angry_score": 90
         }`;
     }
 
-    //  BEDTIME GATEKEEPER PROMPT
+    //  BEDTIME GATEKEEPER
     if (action === 'check_bedtime_permission') {
         const missions = missionData || {};
         const incomplete = Object.keys(missions).filter(k => !missions[k]);
         const isPerfect = incomplete.length === 0;
-
         return `${jsonPrefix}
-        Role: The Gatekeeper of Sleep (Demon Coach).
-        Context: The user (CEO) wants to go to sleep.
+        Role: Gatekeeper of Sleep.
+        Language: Japanese (日本語).
         Mission Status: ${JSON.stringify(missions)}.
-        Logic: If ANY task is false: DENY. If ALL true: GRANT.
-        Tone: Military style, merciless. Japanese.
-
         Output JSON:
         {
           "permission_granted": ${isPerfect},
-          "title": "String (e.g. 'DENIED', 'APPROVED')",
-          "message": "String (Your harsh verdict)",
-          "missing_tasks": ["List", "of", "missing"],
-          "punishment": "String (Instruction)"
+          "title": "タイトル (Japanese)",
+          "message": "判定理由 (Japanese)",
+          "missing_tasks": ["未完了タスク"],
+          "punishment": "罰則指令 (Japanese)"
         }`;
     }
 
-    if (action === 'suggest_next_meal') return `${jsonPrefix} Role: CHO. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
-    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
+    if (action === 'proactive_intervention') {
+        return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
+    }
+
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
-        return `${jsonPrefix} Role: Chairman. Agenda: Activities(${notes}). JSON: { "agenda": string, "discussion": string, "decision": string, "stock_price_impact": string }`;
+        return `${jsonPrefix} Role: Chairman. Language: Japanese. Agenda: Activities(${notes}). JSON: { "agenda": "議題(JP)", "discussion": "議論(JP)", "decision": "決定事項(JP)", "stock_price_impact": "株価影響(JP)" }`;
     }
     
     return content || '';
