@@ -569,7 +569,6 @@ class _HomePageState extends State<HomePage> {
                                 builder: (_) => const CmoPage()))),
                   ],
                 ),
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -655,13 +654,12 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 12),
                         InkWell(
                           onTap: () async {
-                            if (!isDanshariMet) {
-                              await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const DanshariPage()));
-                              _loadData();
-                            }
+                            //  修正: 達成済みでもアクセス可能にする
+                            await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const DanshariPage()));
+                            _loadData();
                           },
                           child: Container(
                             padding: const EdgeInsets.all(20),
@@ -716,9 +714,9 @@ class _HomePageState extends State<HomePage> {
                                     ],
                                   ),
                                 ),
-                                if (!isDanshariMet)
-                                  const Icon(Icons.arrow_forward_ios,
-                                      color: Colors.white70, size: 16),
+                                //  修正: 常に矢印を表示
+                                const Icon(Icons.arrow_forward_ios,
+                                    color: Colors.white70, size: 16),
                               ],
                             ),
                           ),
@@ -762,8 +760,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-
-                // メモリスト
                 _notes.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
