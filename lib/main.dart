@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
     final themeService = Provider.of<ThemeService>(context);
 
     return MaterialApp(
-      title: 'マイメモ',
+      title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
       debugShowCheckedModeBanner: false,
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
