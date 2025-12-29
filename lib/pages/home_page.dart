@@ -12,7 +12,7 @@ import 'ai_secretary_page.dart';
 import 'subscription_page.dart';
 import 'health_page.dart';
 import 'chro_page.dart';
-import 'cmo_page.dart'; // 追加
+import 'cmo_page.dart';
 import 'admin_analytics_page.dart';
 import '../models/note.dart';
 
@@ -26,6 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Note> _notes = [];
   bool _isLoading = true;
+  bool _isMeeting = false; // 会議中フラグ
   final int _dailyDanshariGoal = 5;
   int _todayDanshariCount = 0;
 
@@ -78,22 +79,134 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //  役員会議を開催
+  Future<void> _holdBoardMeeting() async {
+    setState(() => _isMeeting = true);
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 各部門のデータを取得
+      final meals = await supabase
+          .from('meal_logs')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(5);
+      final notes = await supabase
+          .from('notes')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .limit(5);
+      final subs =
+          await supabase.from('subscriptions').select().eq('user_id', userId);
+      final stats = await supabase
+          .from('user_stats')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final boardData = {
+        'recentMeals': meals,
+        'recentNotes': notes,
+        'subscriptions': subs,
+        'userStats': stats
+      };
+
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {'action': 'hold_board_meeting', 'boardData': boardData},
+      );
+
+      if (response.status != 200) throw Exception('AI Error');
+      final data = response.data;
+      if (data['success'] != true) throw Exception(data['error']);
+
+      if (mounted) _showMeetingResult(data['result']);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
+    } finally {
+      setState(() => _isMeeting = false);
+    }
+  }
+
+  void _showMeetingResult(Map<String, dynamic> result) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(children: [
+          Icon(Icons.meeting_room, color: Colors.indigo),
+          SizedBox(width: 8),
+          Text('緊急役員会議 議事録')
+        ]),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(result['agenda'] ?? '',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
+              const Divider(),
+              Text('【議論】',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text(result['discussion'] ?? '',
+                  style: const TextStyle(fontSize: 14)),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('【決定事項 (Action Item)】',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.red)),
+                    const SizedBox(height: 4),
+                    Text(result['decision'] ?? '',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('予想株価変動: ${result['stock_price_impact']}',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green))),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('閉じる')),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Share.share(
+                    '【自分株式会社 緊急役員会議】\n決定事項: ${result['decision']}\n予想株価: ${result['stock_price_impact']}\n#自分株式会社',
+                    subject: '役員会議');
+              },
+              child: const Text('全社通達 (シェア)')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _signOut() async {
     await supabase.auth.signOut();
     if (mounted)
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LandingPage()));
-  }
-
-  // シェア機能はCMOに移譲するため、ここは簡易的なものにするかCMOへ誘導しても良いが、既存機能として残す
-  Future<void> _shareApp() async {
-    try {
-      await supabase.rpc('increment_share_count');
-    } catch (_) {}
-    final box = context.findRenderObject() as RenderBox?;
-    await Share.share('自分株式会社アプリで人生経営中！\n#自分株式会社',
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null);
   }
 
   @override
@@ -108,9 +221,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
               icon: const Icon(Icons.campaign, color: Colors.purple),
               onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const CmoPage()))), // シェアボタンをCMOへ
+                  context, MaterialPageRoute(builder: (_) => const CmoPage()))),
           IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
         ],
       ),
@@ -153,7 +264,32 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 就寝許可証（断捨離ステータス）
+                  //  役員会議ボタン
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isMeeting ? null : _holdBoardMeeting,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black87,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        elevation: 4,
+                      ),
+                      icon: _isMeeting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : const Icon(Icons.groups),
+                      label: const Text('緊急役員会議を開催する',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+
+                  // 就寝許可証
                   GestureDetector(
                     onTap: () async {
                       if (!isGoalMet) {
@@ -213,12 +349,10 @@ class _HomePageState extends State<HomePage> {
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
 
-                  //  グリッドレイアウトで役職を表示
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      // 戦略 (CSO)
                       _buildFeatureCard(
                           context,
                           'AI戦略室 (CSO)',
@@ -226,7 +360,6 @@ class _HomePageState extends State<HomePage> {
                           Icons.business_center,
                           Colors.blueGrey,
                           const AISecretaryPage()),
-                      // 断捨離 (CSO直轄)
                       _buildFeatureCard(
                           context,
                           '断捨離クエスト',
@@ -235,7 +368,6 @@ class _HomePageState extends State<HomePage> {
                           isGoalMet ? Colors.green : Colors.redAccent,
                           const DanshariPage(),
                           isHighlight: true),
-                      // 財務 (CFO)
                       _buildFeatureCard(
                           context,
                           '財務省 (CFO)',
@@ -243,7 +375,6 @@ class _HomePageState extends State<HomePage> {
                           Icons.attach_money,
                           Colors.teal,
                           const SubscriptionPage()),
-                      // 健康 (CHO)
                       _buildFeatureCard(
                           context,
                           '健康管理室 (CHO)',
@@ -251,17 +382,14 @@ class _HomePageState extends State<HomePage> {
                           Icons.health_and_safety,
                           Colors.teal.shade800,
                           const HealthPage()),
-                      // 人事 (CHRO)
                       _buildFeatureCard(context, '人事局 (CHRO)', '福利厚生',
                           Icons.diversity_3, Colors.pink, const ChroPage()),
-                      // 広報 (CMO)  New
                       _buildFeatureCard(context, '広報室 (CMO)', 'PR & 分析',
                           Icons.campaign, Colors.purple, const CmoPage()),
-                      // 教育 (Gemini大学)
                       _buildFeatureCard(
                           context,
-                          'Gemini大学',
-                          'AI学習',
+                          '知的財産本部 (CKO)',
+                          'AIシンクタンク',
                           Icons.school,
                           Colors.indigo,
                           const GeminiUniversityPage()),
@@ -341,9 +469,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildFeatureCard(BuildContext context, String title, String subtitle,
       IconData icon, Color color, Widget page,
       {bool isHighlight = false}) {
-    // 画面幅に応じてサイズ調整（2列想定）
     final width = (MediaQuery.of(context).size.width - 48) / 2;
-
     return GestureDetector(
       onTap: () async {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => page));

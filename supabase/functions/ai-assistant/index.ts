@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// Full Company Structure including CKO (Chief Knowledge Officer)
+// 14モデル総当たり & AI Board Meeting (役員会議) 機能搭載
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -12,7 +12,7 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 const MODELS_TO_TRY = [
-  'gemini-1.5-pro', // 長文推論に強いモデルを優先
+  'gemini-1.5-pro', // 複雑なコンテキスト理解にはProが最適
   'gemini-2.0-flash', 
   'gemini-flash-latest',
   'gemini-2.5-flash-lite', 
@@ -41,7 +41,14 @@ interface AIRequest {
   strategyType?: string
   hasPermit?: boolean
   dailyStats?: any
-  targetFormat?: string // CKO用: blog, slide, book_plot etc.
+  targetFormat?: string
+  //  役員会議用データ
+  boardData?: {
+    recentMeals: any[],
+    recentNotes: any[],
+    subscriptions: any[],
+    userStats: any
+  }
 }
 
 serve(async (req) => {
@@ -97,7 +104,8 @@ serve(async (req) => {
       'secretary_task_from_image', 'task_recommendations', 
       'extract_subscriptions_from_file', 'audit_meal', 
       'evaluate_performance', 'generate_press_release',
-      'analyze_knowledge_assets' //  CKO用JSON
+      'analyze_knowledge_assets',
+      'hold_board_meeting' //  役員会議用
     ];
     if (jsonActions.includes(action)) parsedResult = parseJsonResult(finalResult);
 
@@ -116,63 +124,61 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats, targetFormat } = data
+  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats, targetFormat, boardData } = data
   let body: any = { generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }, contents: [] }
 
-  // ---  CKO: 知的資産分析レポート ---
-  if (action === 'analyze_knowledge_assets') {
-      const notesText = recentNotes && recentNotes.length > 0 
-        ? recentNotes.map(n => `- ${n.title}: ${n.content.substring(0, 100)}...`).join('\n')
-        : '（データなし）';
+  // ---  AI Board Meeting (役員会議) ---
+  if (action === 'hold_board_meeting') {
+      const d = boardData!;
+      // データの要約
+      const mealSummary = d.recentMeals?.slice(0, 3).map(m => `${m.menu_name}(${m.performance_score}点)`).join(', ') || 'なし';
+      const noteSummary = d.recentNotes?.slice(0, 3).map(n => n.title).join(', ') || 'なし';
+      const subTotal = d.subscriptions?.reduce((sum: number, s: any) => sum + Number(s.price), 0) || 0;
+      const points = d.userStats?.total_points || 0;
 
       const promptText = `
         **Output JSON ONLY in Japanese.**
-        あなたは「自分株式会社」のCKO（最高知識責任者）です。
-        CEO（ユーザー）が最近蓄積した以下のメモデータを分析し、現在の「知的関心」や「専門性の方向性」をレポートしてください。
+        あなたは「自分株式会社」の全CxO（CSO, CFO, CHO, CHRO, CKO, CMO）を兼任するAIです。
+        CEO（ユーザー）の現在の経営状態（ライフログ）を横断的に分析し、各部門が連携した「緊急動議（提案）」を行ってください。
 
-        【最近のメモ】
-        ${notesText}
+        【現状データ】
+        - 健康(CHO): 直近の食事=[${mealSummary}]
+        - 戦略(CSO): 直近タスク=[${noteSummary}]
+        - 財務(CFO): 月間固定費=${subTotal}円
+        - 資産(CHRO): 保有ポイント=${points}pt
+
+        【指示】
+        - 単なる報告ではなく、「食事の質が悪いからタスクを減らそう」のような**部門間連携（クロスオーバー）した提案**を1つだけ作成してください。
+        - 最も優先すべき課題を特定し、それを解決するための具体的なアクションを提示してください。
 
         以下のJSON形式で出力してください。
         {
-          "core_interests": ["関心領域1", "関心領域2", "関心領域3"],
-          "analysis_comment": "分析コメント。CEOが今、どのような分野に強みを持っているか、または何に関心があるかを専門的に解説。",
-          "next_learning_suggestion": "次に学ぶべきトピックや、読むべき本のジャンルなどの具体的な提案。"
+          "agenda": "議題タイトル（例：健康悪化に伴う緊急業務縮小の件）",
+          "discussion": "役員たちの議論内容（会話形式で短く）。CHOが懸念し、CSOが対策を打つ等の流れ。",
+          "decision": "最終決定事項（CEOが今すぐやるべきこと）",
+          "stock_price_impact": "この決定による自分株価への影響予測（例：+5%）"
         }
       `;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // ---  CKO: ゴーストライター（コンテンツ生成） ---
-  else if (action === 'generate_content_draft') {
-      const formatInstruction = targetFormat === 'blog' ? '読みやすく共感を呼ぶブログ記事形式' :
-                                targetFormat === 'slide' ? 'プレゼンテーションのアウトライン（スライド構成案）' :
-                                targetFormat === 'book' ? '書籍の目次とプロット（あらすじ）' : 'ビジネスメール形式';
-
-      const promptText = `
-        あなたはプロのゴーストライター兼CKOです。
-        CEOのメモ（アイデアの種）を元に、${formatInstruction}でコンテンツを作成してください。
-        
-        【メモ内容】
-        タイトル: ${title}
-        本文: ${content}
-
-        【指示】
-        - 読者を惹きつける魅力的なタイトルをつけてください。
-        - 論理的かつエモーショナルな構成にしてください。
-        - 専門用語があれば適宜補足し、わかりやすくしてください。
-        - Markdown形式で出力してください。
-      `;
+  
+  // --- 既存機能 ---
+  else if (action === 'analyze_knowledge_assets') {
+      const notesText = recentNotes && recentNotes.length > 0 ? recentNotes.map(n => `- ${n.title}: ${n.content.substring(0, 50)}...`).join('\n') : 'なし';
+      const promptText = `**Output JSON ONLY in Japanese.** CKOとしてメモ分析しJSON({core_interests, analysis_comment, next_learning_suggestion})出力。\n${notesText}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  
-  // --- 既存機能群 (省略せず記述) ---
+  else if (action === 'generate_content_draft') {
+      const promptText = `ゴーストライターとして「${title}」を${targetFormat}形式でMarkdown作成。`;
+      body.contents = [{ parts: [{ text: promptText }] }];
+  }
   else if (action === 'generate_press_release') {
-      const promptText = `**Output JSON ONLY in Japanese.** CMOとして本日の実績(Task:${dailyStats?.task_count}, Danshari:${dailyStats?.danshari_count})から壮大なプレスリリースJSON({headline, body, market_analysis})を作成せよ。`;
+      const promptText = `**Output JSON ONLY in Japanese.** CMOとして実績(Task:${dailyStats?.task_count})からPR JSON({headline, body, market_analysis})作成。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'evaluate_performance') {
       const stats = userStats || { total_points: 0, notes_created: 0 };
-      const promptText = `**Output JSON ONLY in Japanese.** CHROとして実績(Pt:${stats.total_points})を評価しJSON({rank, report_content, bonus_message})を出力。`;
+      const promptText = `**Output JSON ONLY in Japanese.** CHROとして実績(Pt:${stats.total_points})評価JSON({rank, report_content, bonus_message})。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'mental_chat') {
@@ -186,21 +192,21 @@ function buildRequestBody(data: AIRequest): any {
   }
   else if (action === 'extract_subscriptions_from_file') {
       const aB64 = fileBase64 || imageBase64; const aMime = mimeType || 'image/jpeg';
-      const promptText = `**Output JSON ONLY.** 画像から固定費項目抽出、JSON配列[{service_name, price, description}]出力。`;
+      const promptText = `**Output JSON ONLY.** 画像から固定費抽出JSON配列。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: aMime, data: aB64 } }] }];
   }
   else if (action === 'audit_subscriptions') {
       const subList = subscriptions!.map(s => `- ${s.service_name}: ${s.price}`).join('\n');
-      const promptText = `**Output in Japanese.** CFOとして固定費監査し削減案をMarkdownで提示。\n${subList}`;
+      const promptText = `**Output in Japanese.** CFOとして固定費監査Markdown。\n${subList}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'secretary_task_from_image') {
-      const promptText = `**Output JSON in Japanese.** 秘書として画像からタスク抽出、JSON({title, content, priority})出力。`;
+      const promptText = `**Output JSON in Japanese.** 秘書として画像からタスク抽出JSON。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
   else if (action === 'secretary_strategy') {
       const notesList = recentNotes && recentNotes.length > 0 ? recentNotes.map((n) => `- ${n.title}`).join('\n') : 'なし';
-      const promptText = `**Output in Japanese.** 秘書としてタスク状況(${notesList})を踏まえ${strategyType || '今日'}の戦略をMarkdownで立案せよ。`;
+      const promptText = `**Output in Japanese.** 秘書としてタスク状況(${notesList})から${strategyType || '今日'}の戦略Markdown。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   else if (action === 'analyze_image') {
