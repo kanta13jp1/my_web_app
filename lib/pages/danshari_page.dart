@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+import '../main.dart';
 
 class DanshariPage extends StatefulWidget {
   const DanshariPage({super.key});
@@ -10,497 +8,214 @@ class DanshariPage extends StatefulWidget {
   State<DanshariPage> createState() => _DanshariPageState();
 }
 
-class _DanshariPageState extends State<DanshariPage>
-    with SingleTickerProviderStateMixin {
-  final SupabaseClient supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _staleMemos = [];
-  bool _isLoading = true;
-  bool _isAnalyzing = false;
-  int _earnedPoints = 0;
+class _DanshariPageState extends State<DanshariPage> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Map<String, dynamic>> _messages = [];
+  bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
-  final int _dailyGoal = 5;
-  int _todayCount = 0;
-
-  String? _usedModel;
-
-  late AnimationController _animController;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
+  // Colors
+  final Color _navy = const Color(0xFF0F172A);
+  final Color _gold = const Color(0xFFD4AF37);
 
   @override
   void initState() {
     super.initState();
-    _fetchData();
-
-    _animController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation =
-        Tween<Offset>(begin: Offset.zero, end: const Offset(0, -1)).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
-    );
-    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
-    );
+    // Initial greeting from the Demon
+    _addMessage('デジタルゴミ屋敷の住人へ。\nスマホの容量が悲鳴を上げているぞ。何を捨てればいいか、正直に言ってみろ。', false);
   }
 
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
+  void _addMessage(String text, bool isUser) {
+    setState(() {
+      _messages.add({'text': text, 'isUser': isUser});
+    });
+    _scrollToBottom();
   }
 
-  Future<void> _fetchData() async {
-    await Future.wait([
-      _fetchStaleMemos(),
-      _fetchDailyProgress(),
-    ]);
-  }
-
-  Future<void> _fetchDailyProgress() async {
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final now = DateTime.now();
-      final todayStart =
-          DateTime(now.year, now.month, now.day).toIso8601String();
-
-      final count = await supabase
-          .from('notes')
-          .count()
-          .eq('user_id', userId)
-          .eq('is_archived', true)
-          .gte('updated_at', todayStart);
-
-      if (mounted) setState(() => _todayCount = count);
-    } catch (_) {}
-  }
-
-  Future<void> _fetchStaleMemos() async {
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final response = await supabase
-          .from('notes')
-          .select()
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .order('created_at', ascending: true)
-          .limit(10);
-
-      if (mounted) {
-        setState(() {
-          _staleMemos = List<Map<String, dynamic>>.from(response);
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _executeDanshari() async {
-    if (_staleMemos.isEmpty) return;
-
-    final memo = _staleMemos.first;
-    final memoId = memo['id'];
-
-    await _animController.forward();
-
-    try {
-      await supabase.from('notes').update({
-        'is_archived': true,
-        'updated_at': DateTime.now().toIso8601String()
-      }).eq('id', memoId);
-
-      final userId = supabase.auth.currentUser!.id;
-      const pointsReward = 100;
-
-      try {
-        await supabase.rpc('increment_points',
-            params: {'user_id': userId, 'points_to_add': pointsReward});
-      } catch (_) {}
-
-      if (mounted) {
-        setState(() {
-          _staleMemos.removeAt(0);
-          _earnedPoints += pointsReward;
-          _todayCount++;
-          _usedModel = null;
-        });
-        _animController.reset();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('削除に失敗しました')),
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
         );
-        _animController.reset();
       }
-    }
-  }
-
-  void _keepMemo() {
-    if (_staleMemos.isEmpty) return;
-    setState(() {
-      final item = _staleMemos.removeAt(0);
-      _staleMemos.add(item);
-      _usedModel = null;
     });
   }
 
-  Future<void> _analyzeCurrentNoteWithAI() async {
-    if (_staleMemos.isEmpty) return;
+  Future<void> _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
 
-    final currentMemo = _staleMemos.first;
-    setState(() {
-      _isAnalyzing = true;
-      _usedModel = null;
-    });
+    _addMessage(text, true);
+    _controller.clear();
+    setState(() => _isLoading = true);
 
     try {
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
-          'action': 'analyze_note_text',
-          'title': currentMemo['title'] ?? '',
-          'content': currentMemo['content'] ?? '',
+          'action': 'digital_danshari_chat', //  Calling the Demon
+          'content': text,
         },
       );
 
-      if (response.status != 200)
-        throw Exception('Server error: ${response.status}');
-      final data = response.data;
-      if (data['success'] != true)
-        throw Exception(data['error'] ?? 'Unknown error');
+      if (response.status != 200) throw Exception('API Error');
 
-      if (mounted) {
-        setState(() {
-          _usedModel = data['used_model'];
-        });
-        _showAnalysisResultDialog(data['result']);
+      final data = response.data;
+      if (data['success'] == true) {
+        final result = data['result'];
+        // Parse the JSON result from the demon
+        final message = result['message'] ?? '...';
+        final mission = result['mission'];
+
+        String display = message;
+        if (mission != null) {
+          display += "\n\n 指令: $mission";
+        }
+
+        _addMessage(display, false);
+      } else {
+        _addMessage('通信エラーだ。言い訳する時間が増えたな。', false);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI解析エラー: $e'), backgroundColor: Colors.red),
-        );
-      }
+      _addMessage('エラー: $e', false);
     } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
+      setState(() => _isLoading = false);
     }
-  }
-
-  void _shareResult(String result) {
-    final box = context.findRenderObject() as RenderBox?;
-
-    // 文言修正: 最新の実装に合わせて更新
-    final modelInfo =
-        _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: 五賢帝システム)";
-
-    Share.share(
-      '溜め込んだメモを最新のAIモデル群(五賢帝)に判定してもらいました...\n\n$modelInfo\n$result\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #デジタル断捨離 #AI',
-      subject: 'AI断捨離コーチの診断結果',
-      sharePositionOrigin:
-          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
-    );
-  }
-
-  void _showAnalysisResultDialog(String result) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.psychology, color: Colors.indigo),
-            SizedBox(width: 8),
-            Text('鬼コーチの判定'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_usedModel != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '担当AI: $_usedModel',
-                    style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.amber.shade900,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              Text(
-                result,
-                style: const TextStyle(fontSize: 16, height: 1.5),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              _shareResult(result);
-            },
-            icon: const Icon(Icons.share),
-            label: const Text('結果をシェア'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              _executeDanshari();
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white),
-            icon: const Icon(Icons.delete_forever),
-            label: const Text('捨てる'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = _todayCount / _dailyGoal;
-    final isMet = _todayCount >= _dailyGoal;
-
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text(' 断捨離クエスト'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 1,
+        title: const Text('デジタル断捨離道場'),
+        backgroundColor: _navy,
+        foregroundColor: Colors.white,
         actions: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            alignment: Alignment.center,
-            child: Row(
-              children: [
-                const Icon(Icons.stars, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  '+$_earnedPoints pt',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber,
-                      fontSize: 18),
-                ),
-              ],
-            ),
-          ),
+          IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            onPressed: () {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('履歴を消去しました')));
+              setState(() => _messages.clear());
+              _addMessage('逃げるのか？まあいい、最初からやり直せ。', false);
+            },
+          )
         ],
       ),
       body: Column(
         children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        isMet
-                            ? ' 今日のノルマ達成！'
-                            : '今日のノルマ: 残り ${_dailyGoal - _todayCount} 件',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isMet ? Colors.green : Colors.redAccent)),
-                    Text('$_todayCount / $_dailyGoal'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress > 1 ? 1 : progress,
-                    backgroundColor: Colors.grey.shade200,
-                    color: isMet ? Colors.green : Colors.redAccent,
-                    minHeight: 8,
-                  ),
-                ),
-              ],
-            ),
-          ),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _staleMemos.isEmpty
-                    ? _buildCompletionView()
-                    : _buildDanshariView(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletionView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle_outline,
-              size: 100, color: Colors.green),
-          const SizedBox(height: 20),
-          const Text('All Clean!',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const Text('今日の分はもうありません。\n素晴らしい！',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12)),
-            child: const Text('ホームに戻る'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDanshariView() {
-    final memo = _staleMemos.first;
-    final date = DateTime.parse(memo['created_at']);
-    final dateStr = DateFormat('yyyy/MM/dd').format(date);
-
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('このメモはまだ必要ですか？',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          Expanded(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                final isUser = msg['isUser'];
+                return Align(
+                  alignment:
+                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(12),
+                    constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.8),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.white : _navy,
+                      borderRadius: BorderRadius.circular(12).copyWith(
+                        bottomRight:
+                            isUser ? Radius.zero : const Radius.circular(12),
+                        bottomLeft:
+                            isUser ? const Radius.circular(12) : Radius.zero,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1))
+                      ],
+                      border: isUser
+                          ? Border.all(color: Colors.grey.shade200)
+                          : null,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.history,
-                                size: 16, color: Colors.grey),
-                            const SizedBox(width: 8),
-                            Text(dateStr,
-                                style: const TextStyle(color: Colors.grey)),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                  color: Colors.amber.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8)),
-                              child: const Text('断捨離候補',
+                        if (!isUser)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  color: Colors.redAccent, size: 16),
+                              const SizedBox(width: 4),
+                              Text("鬼コーチ",
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.amber,
+                                      color: _gold,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 30),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Text(
-                              memo['content'] ?? (memo['title'] ?? '内容なし'),
-                              style: const TextStyle(fontSize: 20, height: 1.6),
-                            ),
+                            ],
                           ),
+                        if (!isUser) const SizedBox(height: 4),
+                        Text(
+                          msg['text'],
+                          style: TextStyle(
+                              color: isUser ? Colors.black87 : Colors.white,
+                              height: 1.4),
                         ),
                       ],
                     ),
                   ),
-                ),
+                );
+              },
+            ),
+          ),
+          if (_isLoading)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('鬼コーチが激怒中...',
+                  style: TextStyle(color: _navy, fontSize: 12)),
+            ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: '例: スクショが3000枚あります...',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton(
+                    onPressed: _sendMessage,
+                    backgroundColor: _navy,
+                    mini: true,
+                    child: Icon(Icons.send, color: _gold, size: 18),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Center(
-            child: _isAnalyzing
-                ? const CircularProgressIndicator()
-                : ElevatedButton.icon(
-                    onPressed: _analyzeCurrentNoteWithAI,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.indigo.shade50,
-                      foregroundColor: Colors.indigo,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                    ),
-                    icon: const Icon(Icons.psychology),
-                    label: const Text('AI鬼コーチの判定を受ける',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _keepMemo,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('まだ残す'),
-                  style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      foregroundColor: Colors.grey),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: _executeDanshari,
-                  icon: const Icon(Icons.delete_forever),
-                  label: const Text('捨ててスッキリ (+100pt)'),
-                  style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
-                      elevation: 4),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
         ],
       ),
     );

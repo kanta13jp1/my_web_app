@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Bug Fix: Restored Danshari Coach)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Full Demon Mode)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -49,15 +49,12 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action, multi_response } = requestData
 
-    console.log(` Gathering candidates for: ${action}...`);
-    
-    let candidates = await gatherAllCandidates(requestData);
-    if (candidates.length === 0) throw new Error('No AI models available.');
-
-    candidates.sort((a, b) => b.score - a.score);
-
     // ---  Battle Mode ---
     if (multi_response) {
+        let candidates = await gatherAllCandidates(requestData);
+        if (candidates.length === 0) throw new Error('No AI models available.');
+        candidates.sort((a, b) => b.score - a.score);
+
         const providers = ['anthropic', 'gemini', 'openai'];
         const champions = [];
         for (const p of providers) {
@@ -77,8 +74,10 @@ serve(async (req) => {
                 await logRequest(supabaseClient, user.id, action, fighter.provider, fighter.model, 200, Date.now() - start);
                 
                 let parsed = text;
-                if (action.includes('board_meeting') || action.includes('json') || action === 'analyze_image') parsed = parseJsonResult(text);
-
+                // JSON parse target actions
+                if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat'].includes(action)) {
+                    parsed = parseJsonResult(text);
+                }
                 return { success: true, provider: fighter.provider, model: fighter.model, result: parsed };
             } catch (e) {
                 return { success: false, provider: fighter.provider, error: e.message };
@@ -86,7 +85,7 @@ serve(async (req) => {
         }));
 
         const successes = results.filter(r => r.success);
-        if (successes.length === 0) throw new Error('All models failed in battle mode.');
+        if (successes.length === 0) throw new Error('All models failed.');
 
         return new Response(
             JSON.stringify({ success: true, is_multi: true, results: successes }),
@@ -95,15 +94,17 @@ serve(async (req) => {
     }
 
     // ---  Single Mode ---
+    let candidates = await gatherAllCandidates(requestData);
+    if (candidates.length === 0) throw new Error('No AI models available.');
+    candidates.sort((a, b) => b.score - a.score);
+
     let finalResult = '';
     let winner: any = null;
-    let logs: string[] = [];
-
+    
     for (const candidate of candidates) {
         const { provider, model } = candidate;
         const startTime = Date.now();
         try {
-            console.log(` Attempting: ${provider} [${model}]`);
             if (provider === 'gemini') finalResult = await callGemini(model, KEYS.gemini!, requestData);
             else if (provider === 'anthropic') finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
             else finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
@@ -112,7 +113,6 @@ serve(async (req) => {
             await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
             break; 
         } catch (e) {
-            logs.push(`${provider}/${model}: ${e.message}`);
             await logRequest(supabaseClient, user.id, action, provider, model, 500, Date.now() - startTime, e.message);
         }
     }
@@ -120,8 +120,7 @@ serve(async (req) => {
     if (!winner) throw new Error(`All candidates exhausted.`);
 
     let parsedResult = finalResult;
-    // analyze_image を JSON パース対象に追加
-    if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal'].includes(action)) {
+    if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
@@ -145,11 +144,8 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     else if (id.includes('claude-3-7')) score = 1120;
     else if (id.includes('gemini-2.5-pro')) score = 1050;
     else if (id.includes('claude-3-5-sonnet')) score = 980;
-    else if (id.includes('gemini-2.0-pro')) score = 970;
     else if (id.includes('gpt-4o')) score = 950;
-    else if (id.includes('gemini-1.5-pro')) score = 850;
     else score = 500;
-
     if (isVision && (id.includes('deepseek') || id.includes('o1'))) score = -1;
     return score;
 }
@@ -216,42 +212,46 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     const json = await resp.json(); return json.candidates[0].content.parts[0].text;
 }
 
-// ---  Prompts (Fixed: Added analyze_image) ---
+// ---  Prompts (Digital Danshari Added) ---
 function buildPrompt(data: AIRequest): string {
-    const { action, content, boardData, currentTime, recentMeals } = data;
+    const { action, content, boardData, currentTime } = data;
     const jsonPrefix = "Output purely valid JSON.";
 
-    //  Added: Real World Danshari Prompt
-    if (action === 'analyze_image') {
+    //  Added: Digital Danshari Demon Coach
+    if (action === 'digital_danshari_chat') {
         return `${jsonPrefix}
-        Role: Toxic Decluttering Coach (Demon). 
-        Task: Analyze the photo of the item.
-        Tone: Strict, sarcastic, but logical. Japanese.
+        Role: Digital Decluttering Demon Coach (Spartan).
+        Tone: Aggressive, sarcastic, extremely strict. Japanese.
+        Context: The user is hoarding digital junk (files, apps, emails).
+        User Input: "${content}"
+        
+        Task: 
+        1. Insult the user's digital hygiene based on their input.
+        2. Give a concrete, painful mission to delete something NOW.
+        3. Do NOT be kind.
         
         Output JSON:
         {
-          "result": "Your harsh verdict here (Keep it/Throw it). Explain why in 3 bullet points. Be mean but helpful. (e.g. 'ゴミです。即捨てなさい')",
-          "item_name": "Detected Item Name",
-          "keep_score": 10 (0-100, 0=Throw away immediately)
+          "message": "String (Your harsh scolding)",
+          "mission": "String (e.g. 'Delete 50 screenshots right now')",
+          "angry_score": 90 (0-100)
         }`;
     }
 
+    if (action === 'analyze_image') {
+        return `${jsonPrefix} Role: Toxic Decluttering Coach. Tone: Strict. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
+    }
     if (action === 'suggest_next_meal') {
-        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
-        return `${jsonPrefix} Role: CHO (3-Star Chef). Time: ${currentTime}. History: ${mealHistory}. Suggest OPTIMAL next meal. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": ["A","B"], "recipe_steps": ["1","2"], "calorie_estimate": 500, "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" } }`;
+        return `${jsonPrefix} Role: CHO. Suggest meal. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
     }
     if (action === 'proactive_intervention') {
-        const d = boardData || {};
-        let unaudited = 0;
-        if (d.paymentSources) unaudited = d.paymentSources.filter((s:any) => !s.last_audited_at).length;
-        return `${jsonPrefix} Time: ${currentTime}. Unaudited: ${unaudited}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO"|"CHRO", "message": "JP text (60 chars)", "action_label": "Button" }`;
+        return `${jsonPrefix} Time: ${currentTime}. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO"|"CHRO", "message": "JP text", "action_label": "Button" }`;
     }
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
-        return `${jsonPrefix} Role: Chairman. Agenda: Activities(${notes}), Assets(${d.userStats?.total_points}pt). Simulate debate. JSON: { "agenda": string, "discussion": string, "decision": string, "stock_price_impact": string }`;
+        return `${jsonPrefix} Role: Chairman. Agenda: Activities(${notes}). JSON: { "agenda": string, "discussion": string, "decision": string, "stock_price_impact": string }`;
     }
-    if (action === 'audit_meal') return `${jsonPrefix} Role: Nutritionist. Audit image. JSON: { "menu_name": string, "calorie_estimate": number, "performance_score": number, "audit_result": string, "advice": string }`;
     
     return content || '';
 }
