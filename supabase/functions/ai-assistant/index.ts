@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Japanese Language Enforced)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Evidence Verification Mode)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -30,6 +30,7 @@ interface AIRequest {
   recentMeals?: any[]
   multi_response?: boolean
   missionData?: any
+  missionName?: string // Added for evidence check
 }
 
 serve(async (req) => {
@@ -75,7 +76,7 @@ serve(async (req) => {
                 await logRequest(supabaseClient, user.id, action, fighter.provider, fighter.model, 200, Date.now() - start);
                 
                 let parsed = text;
-                if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission'].includes(action)) {
+                if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action)) {
                     parsed = parseJsonResult(text);
                 }
                 return { success: true, provider: fighter.provider, model: fighter.model, result: parsed };
@@ -123,7 +124,8 @@ serve(async (req) => {
     if (!winner) throw new Error(`All candidates exhausted. Logs: ${logs.join('|')}`);
 
     let parsedResult = finalResult;
-    if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission'].includes(action)) {
+    // Add 'verify_mission_proof' to JSON parse list
+    if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
@@ -142,24 +144,18 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     let score = 0;
     const id = modelId.toLowerCase();
 
-    //  STRICT BAN: Weak models
     if (id.includes('gemma')) return -1; 
     if (id.includes('nano')) return -1;
     if (id.includes('lite')) return -1;
 
-    // ---  GOD TIER ---
     if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
     else if (id.includes('gemini-3')) score = 1150;
     else if (id.includes('gpt-5')) score = 1140;
     else if (id.includes('claude-3-7')) score = 1120;
-    
-    // ---  KING TIER ---
     else if (id.includes('gemini-2.5-pro')) score = 1050;
     else if (id.includes('claude-3-5-sonnet')) score = 980;
     else if (id.includes('gemini-2.0-pro')) score = 970;
     else if (id.includes('gpt-4o') && !id.includes('mini')) score = 950;
-    
-    // ---  SOLDIER TIER ---
     else if (id.includes('gemini-1.5-pro')) score = 850;
     else if (id.includes('gemini-2.0-flash')) score = 840;
     else if (id.includes('gpt-4o-mini')) score = 700; 
@@ -234,68 +230,42 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     const json = await resp.json(); return json.candidates[0].content.parts[0].text;
 }
 
-// ---  Prompts (Enhanced with Japanese Constraint) ---
+// ---  Prompts (Enhanced with Evidence Verification) ---
 function buildPrompt(data: AIRequest): string {
-    const { action, content, boardData, currentTime, missionData, recentMeals } = data;
+    const { action, content, boardData, currentTime, missionData, missionName, recentMeals } = data;
     const jsonPrefix = "Output purely valid JSON.";
 
-    //  MEAL SUGGESTION (Japanese Enforced)
-    if (action === 'suggest_next_meal') {
-        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
+    //  EVIDENCE VERIFICATION (Strict Gatekeeper)
+    if (action === 'verify_mission_proof') {
         return `${jsonPrefix}
-        Role: CHO (Chief Health Officer) & 3-Star Chef.
+        Role: Strict Task Inspector (Demon Coach).
         Language: Japanese (日本語).
-        Context: Time is ${currentTime}. Recent meals: ${mealHistory}.
-        Task: Suggest one optimal meal.
+        Task: Verify if the photo proves the mission "${missionName}" is COMPLETED perfectly.
+        Context: User claims they finished "${missionName}".
+        
+        Logic:
+        - If "Washing Dishes": Sink must be EMPTY and CLEAN. No bubbles, no food.
+        - If "Cleaning": Floor/Desk must be TIDY.
+        - If photo is irrelevant/dark/blurry: REJECT immediately.
+        - If photo shows mess: REJECT and scold.
+        - Only APPROVE if it looks pristine.
+
         Output JSON:
         {
-          "menu_name": "料理名 (Japanese)",
-          "reason": "推薦理由 (Japanese)",
-          "ingredients": ["材料1", "材料2"],
-          "recipe_steps": ["手順1", "手順2"],
-          "calorie_estimate": 500,
-          "nutrients": { "protein": "20g", "fat": "15g", "carbs": "60g" }
+          "verified": boolean,
+          "comment": "String (Strict verdict in Japanese. e.g. '汚れが残っている。やり直し。' or 'よし、完璧だ。')",
+          "score": 80 (0-100)
         }`;
     }
 
-    //  REAL WORLD DANSHARI
-    if (action === 'analyze_image') {
-        return `${jsonPrefix}
-        Role: Toxic Decluttering Coach (Demon). 
-        Language: Japanese (日本語).
-        Task: Analyze the photo.
-        Tone: Strict, sarcastic.
-        Output JSON:
-        {
-          "result": "判定コメント (Japanese)",
-          "item_name": "アイテム名 (Japanese)",
-          "keep_score": 10
-        }`;
-    }
-
-    //  DIGITAL DANSHARI
-    if (action === 'digital_danshari_chat') {
-        return `${jsonPrefix}
-        Role: Digital Decluttering Demon Coach.
-        Language: Japanese (日本語).
-        User Input: "${content}"
-        Output JSON:
-        {
-          "message": "説教メッセージ (Japanese)",
-          "mission": "指令 (Japanese)",
-          "angry_score": 90
-        }`;
-    }
-
-    //  BEDTIME GATEKEEPER
     if (action === 'check_bedtime_permission') {
         const missions = missionData || {};
+        // Filter tasks that are NOT verified (false)
         const incomplete = Object.keys(missions).filter(k => !missions[k]);
         const isPerfect = incomplete.length === 0;
         return `${jsonPrefix}
-        Role: Gatekeeper of Sleep.
-        Language: Japanese (日本語).
-        Mission Status: ${JSON.stringify(missions)}.
+        Role: Gatekeeper of Sleep. Language: Japanese.
+        Mission Status (Verified by AI): ${JSON.stringify(missions)}.
         Output JSON:
         {
           "permission_granted": ${isPerfect},
@@ -306,14 +276,23 @@ function buildPrompt(data: AIRequest): string {
         }`;
     }
 
+    if (action === 'suggest_next_meal') {
+        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
+        return `${jsonPrefix} Role: CHO. Language: Japanese. Context: ${currentTime}, History: ${mealHistory}. Suggest meal. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
+    }
+    if (action === 'analyze_image') {
+        return `${jsonPrefix} Role: Toxic Decluttering Coach. Language: Japanese. Tone: Strict. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
+    }
+    if (action === 'digital_danshari_chat') {
+        return `${jsonPrefix} Role: Digital Demon. Language: Japanese. User: "${content}". JSON: { "message": "Scolding", "mission": "Delete X", "angry_score": 90 }`;
+    }
     if (action === 'proactive_intervention') {
         return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
     }
-
     if (action === 'hold_board_meeting') {
         const d = boardData || {};
         const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
-        return `${jsonPrefix} Role: Chairman. Language: Japanese. Agenda: Activities(${notes}). JSON: { "agenda": "議題(JP)", "discussion": "議論(JP)", "decision": "決定事項(JP)", "stock_price_impact": "株価影響(JP)" }`;
+        return `${jsonPrefix} Role: Chairman. Language: Japanese. Agenda: Activities(${notes}). JSON: { "agenda": "議題", "discussion": "議論", "decision": "決定", "stock_price_impact": "株価" }`;
     }
     
     return content || '';
