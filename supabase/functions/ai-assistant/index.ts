@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & 日本語強制 & 試行ログ返却版
+// 14モデル総当たり & CFO機能追加版
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -39,9 +39,10 @@ interface AIRequest {
   language?: string
   targetLanguage?: string
   userId?: string
-  recentNotes?: Array<{ id: string; title: string; content: string; created_at: string; updated_at: string }>
-  userStats?: { current_level: number; total_points: number; current_streak: number; longest_streak: number; notes_created: number }
-  strategyType?: 'now' | 'today' | 'week' | 'month' | 'year'
+  recentNotes?: any[]
+  subscriptions?: any[] // サブスクリスト用
+  userStats?: any
+  strategyType?: string
 }
 
 serve(async (req) => {
@@ -70,7 +71,7 @@ serve(async (req) => {
 
     const requestBody = buildRequestBody(requestData)
 
-    //  14モデル総当たりループ実行
+    //  総当たり実行ループ
     let finalResult = ''
     let usedModel = ''
     let success = false
@@ -102,23 +103,22 @@ serve(async (req) => {
             break;
           }
         } else {
-          logMessages.push(`${model}: ${response.status}`) // 失敗ログを記録
-          console.warn(`Model ${model} failed: ${response.status}`)
-          await new Promise(r => setTimeout(r, 300)) 
+          const errorText = await response.text()
+          logMessages.push(`${model}: ${response.status}`)
+          await new Promise(r => setTimeout(r, 300))
         }
       } catch (e) {
         logMessages.push(`${model}: Exception`)
-        console.error(e)
       }
     }
 
     if (!success) {
-      throw new Error(`All 14 models failed. Logs: ${logMessages.join(', ')}`)
+      throw new Error(`All models failed. Logs: ${logMessages.join(', ')}`)
     }
 
     // 結果の整形
     let parsedResult = finalResult;
-    if (action === 'secretary_task_from_image' || action === 'task_recommendations') {
+    if (['secretary_task_from_image', 'task_recommendations'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
@@ -133,13 +133,12 @@ serve(async (req) => {
       note: `Model: ${usedModel}`
     })
 
-    //  attempt_logs を返却に追加
     return new Response(
       JSON.stringify({ 
         success: true, 
         result: parsedResult, 
         used_model: usedModel,
-        attempt_logs: logMessages // ここに追加！
+        attempt_logs: logMessages 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
@@ -154,7 +153,7 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, language, targetLanguage, recentNotes, userStats, strategyType } = data
+  const { action, content, title, imageBase64, language, targetLanguage, recentNotes, userStats, strategyType, subscriptions } = data
   
   let body: any = {
     generationConfig: {
@@ -164,77 +163,46 @@ function buildRequestBody(data: AIRequest): any {
     contents: []
   }
 
-  // 秘書機能: 画像からタスク生成 (日本語強制)
-  if (action === 'secretary_task_from_image') {
-      const promptText = `
-        **IMPORTANT: Output MUST be in Japanese language.**
-        
-        あなたは優秀な日本人秘書です。
-        CEO（ユーザー）から送られてきた画像を分析し、会社経営（人生）において実行すべきタスクを抽出してください。
-        
-        以下のJSONフォーマットのみを出力してください。Markdown記法や説明文は不要です。
-        必ず日本語で記述してください。
+  // ---  新機能: サブスク財務監査 ---
+  if (action === 'audit_subscriptions') {
+      const subList = subscriptions!.map(s => 
+        `- ${s.service_name}: ${s.price}円/${s.billing_cycle === 'monthly' ? '月' : '年'} (${s.description || '詳細なし'})`
+      ).join('\n');
 
-        {
-          "title": "タスクのタイトル（日本語で短く）",
-          "content": "タスクの詳細説明、なぜこれをやるべきか（日本語で）",
-          "priority": "高/中/低"
-        }
-      `;
-      body.contents = [{
-        parts: [
-          { text: promptText },
-          { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-        ]
-      }];
-  } 
-  // 秘書機能: 戦略立案 (日本語強制)
-  else if (action === 'secretary_strategy') {
-      const notesList = recentNotes && recentNotes.length > 0 
-        ? recentNotes.map((n) => `- ${n.title}: ${n.content}`).join('\n')
-        : '（現在タスクなし）';
-      
       const promptText = `
         **IMPORTANT: Output MUST be in Japanese language.**
 
-        あなたは「自分株式会社」の最高戦略責任者（CSO）兼 秘書です。
-        CEO（ユーザー）のタスク状況を分析し、${strategyType || '今日'}の戦略スケジュールを立案してください。
+        あなたは「自分株式会社」の冷徹なCFO（最高財務責任者）です。
+        CEO（ユーザー）が契約している以下のサブスクリプションリストを厳しく監査し、コスト削減案を提示してください。
 
-        【CEOのタスク一覧】
-        ${notesList}
+        【契約中のサブスク一覧】
+        ${subList}
 
         【指示】
-        - ユーザーは「自分株式会社」のCEOです。
-        - 感情論ではなく、効率と成果を最優先したプロフェッショナルな口調で話してください。
-        - **必ず日本語で回答してください。英語は禁止です。**
-        - 見出しや箇条書きを使い、Markdown形式で見やすく出力してください。
+        1. **総評**: 現在の固定費が経営（生活）に与えるインパクトをズバリ指摘してください。
+        2. **解約推奨リスト**: 無駄、または重複していそうなサービスを名指しで「解約候補」として挙げ、その理由を論理的に述べてください。
+        3. **叱咤激励**: 無駄な固定費を垂れ流しているCEOに対して、愛のある厳しい言葉で目を覚まさせてください。
+        
+        Markdown形式で見やすく出力してください。
       `;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // 既存機能: 断捨離判定 (日本語強制)
+  // --- 既存機能 ---
+  else if (action === 'secretary_task_from_image') {
+      const promptText = `**Output in Japanese.**\nあなたは優秀な日本人秘書です。画像からタスクを抽出しJSON({title, content, priority})で出力してください。`;
+      body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
+  } 
+  else if (action === 'secretary_strategy') {
+      const notesList = recentNotes && recentNotes.length > 0 ? recentNotes.map((n) => `- ${n.title}`).join('\n') : 'なし';
+      const promptText = `**Output in Japanese.**\nあなたは「自分株式会社」の秘書です。タスク状況(${notesList})を踏まえ、${strategyType || '今日'}の戦略を立案してください。`;
+      body.contents = [{ parts: [{ text: promptText }] }];
+  }
   else if (action === 'analyze_image') {
-      const promptText = `
-        **Output in Japanese.**
-        あなたは「断捨離の鬼コーチ」です。
-        口調は日本語で、少し厳しめに、ユーモアを交えて回答してください。
-
-        【物体名】
-        ...
-        【断捨離判定】
-        ...
-        【鬼コーチの助言】
-        ...
-        【捨て方ヒント】
-        ...
-      `;
-      body.contents = [{
-        parts: [
-          { text: promptText },
-          { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-        ]
-      }];
-  } else if (action === 'analyze_note_text') {
-      const promptText = `**Output in Japanese.**\n断捨離コーチとして、以下のメモが必要か判定せよ。\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【鬼コーチの理由】\n【助言】`;
+      const promptText = `**Output in Japanese.**\nあなたは断捨離コーチです。画像を見て【物体名】【判定】【助言】を回答してください。`;
+      body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
+  } 
+  else if (action === 'analyze_note_text') {
+      const promptText = `**Output in Japanese.**\n断捨離コーチとして、以下のメモが必要か判定せよ。\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【理由】\n【助言】`;
       body.contents = [{ parts: [{ text: promptText }] }];
   } else {
        body.contents = [{ parts: [{ text: content || '' }] }];
@@ -252,11 +220,6 @@ function parseJsonResult(result: string): any {
       }
       return JSON.parse(cleaned);
     } catch (e) {
-      console.error("JSON Parse Error", e);
-      return { 
-          title: '画像解析完了', 
-          content: 'タスクの詳細を読み取れませんでした。内容を編集して保存してください。\n\n解析結果:\n' + result, 
-          priority: '中' 
-      };
+      return { title: '解析エラー', content: result, priority: '中' };
     }
 }

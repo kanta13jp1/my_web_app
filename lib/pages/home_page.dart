@@ -8,7 +8,8 @@ import 'note_editor_page.dart';
 import 'gemini_university_page.dart';
 import 'danshari_page.dart';
 import 'real_world_danshari_page.dart';
-import 'ai_secretary_page.dart'; // 追加
+import 'ai_secretary_page.dart';
+import 'subscription_page.dart'; // 追加
 import 'admin_analytics_page.dart';
 import '../models/note.dart';
 
@@ -97,18 +98,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // シェア文言ヘルパー（省略せず実装）
   Map<String, String> _getRandomShareContent() {
     final patterns = [
-      {
-        'text': 'AI秘書に経営戦略を委ねています。\n14種類のAIが私の人生（会社）をコンサルティング中。',
-        'ref': 'home_pattern_secretary'
-      },
       {
         'text': '私のゴミを判定するためだけに、Gemini 3.0含む『14種類のAI』を総動員するアプリを使ってます',
         'ref': 'home_pattern_a_tech_overkill'
       },
-      // ... 他のパターンは既存のものを使用
+      {
+        'text': 'AI CFOに固定費を監査してもらいました。無駄遣いがバレて叱責されています。',
+        'ref': 'home_pattern_cfo'
+      },
     ];
     final random = Random();
     return patterns[random.nextInt(patterns.length)];
@@ -122,7 +121,7 @@ class _HomePageState extends State<HomePage> {
     final box = context.findRenderObject() as RenderBox?;
     await Share.share(
       '${content['text']}\nhttps://my-web-app-b67f4.web.app/?ref=${content['ref']}',
-      subject: 'AI断捨離アプリ',
+      subject: '自分株式会社',
       sharePositionOrigin:
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );
@@ -133,7 +132,7 @@ class _HomePageState extends State<HomePage> {
       await supabase.rpc('increment_share_count');
     } catch (_) {}
     final content = _getRandomShareContent();
-    final text = '${content['text']}\n\n無料でAI断捨離診断できます\n#マイメモ #Gemini #断捨離';
+    final text = '${content['text']}\n\n無料でAI経営診断できます\n#マイメモ #Gemini #自分株式会社';
     final url = 'https://my-web-app-b67f4.web.app/?ref=${content['ref']}';
     final tweetUrl = Uri.parse(
         'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}&url=${Uri.encodeComponent(url)}');
@@ -181,7 +180,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('マイメモ'),
+        title: const Text('自分株式会社'),
         actions: [
           IconButton(
               icon: const Icon(Icons.share, color: Colors.indigo),
@@ -199,9 +198,9 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.settings, color: Colors.white, size: 40),
+                  Icon(Icons.business, color: Colors.white, size: 40),
                   SizedBox(height: 10),
-                  Text('設定管理',
+                  Text('経営管理',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -288,54 +287,75 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 24),
 
-                  const Text('最重要タスク',
+                  const Text('4大経営タスク',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
 
-                  //  3つの目玉機能（AI秘書を追加）
-                  Row(
+                  //  4つの目玉機能 (2列x2行)
+                  Column(
                     children: [
-                      Expanded(
-                          child: _buildBigFeatureCard(
-                        title: 'Gemini大学',
-                        subtitle: 'AIを学ぶ',
-                        icon: Icons.school,
-                        color: Colors.indigo,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const GeminiUniversityPage())),
-                      )),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: _buildBigFeatureCard(
-                        title: '断捨離\nクエスト',
-                        subtitle: '残り $remaining 個',
-                        icon: Icons.cleaning_services,
-                        color: isGoalMet ? Colors.green : Colors.redAccent,
-                        isHighlight: true,
-                        onTap: () async {
-                          await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const DanshariPage()));
-                          _loadData();
-                        },
-                      )),
-                      const SizedBox(width: 8),
-                      //  新機能: AI戦略秘書
-                      Expanded(
-                          child: _buildBigFeatureCard(
-                        title: 'AI戦略\n秘書室',
-                        subtitle: '社長の右腕',
-                        icon: Icons.business_center,
-                        color: Colors.blueGrey,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const AISecretaryPage())),
-                      )),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: 'Gemini大学',
+                            subtitle: 'AIを学ぶ',
+                            icon: Icons.school,
+                            color: Colors.indigo,
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const GeminiUniversityPage())),
+                          )),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: '断捨離\nクエスト',
+                            subtitle: '残り $remaining 個',
+                            icon: Icons.cleaning_services,
+                            color: isGoalMet ? Colors.green : Colors.redAccent,
+                            isHighlight: true,
+                            onTap: () async {
+                              await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const DanshariPage()));
+                              _loadData();
+                            },
+                          )),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: 'AI戦略\n秘書室',
+                            subtitle: '社長の右腕',
+                            icon: Icons.business_center,
+                            color: Colors.blueGrey,
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AISecretaryPage())),
+                          )),
+                          const SizedBox(width: 12),
+                          //  第4の機能: サブスク管理
+                          Expanded(
+                              child: _buildBigFeatureCard(
+                            title: '固定費\n削減室',
+                            subtitle: 'AI CFOの監査',
+                            icon: Icons.attach_money,
+                            color: Colors.teal,
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SubscriptionPage())),
+                          )),
+                        ],
+                      ),
                     ],
                   ),
 
@@ -428,7 +448,7 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 160, // 少し高さを調整
+        height: 160,
         decoration: BoxDecoration(
           color: isHighlight ? color : Colors.white,
           borderRadius: BorderRadius.circular(16),
