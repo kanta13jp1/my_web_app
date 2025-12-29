@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & CFO機能追加版
+// 14モデル総当たり & CFO機能 & 明細スキャン機能搭載
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -13,16 +13,16 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 //  14種のモデル全てを試行リスト
 const MODELS_TO_TRY = [
+  'gemini-2.0-flash',        // 文書解析に強い
+  'gemini-1.5-pro',          // 文書解析に非常に強い
+  'gemini-1.5-flash',
+  'gemini-flash-latest',
+  'gemini-2.5-flash-lite',   // 新モデル
   'gemini-3-flash-preview',
-  'gemini-2.5-flash-lite',
-  'gemini-flash-lite-latest',
-  'gemini-2.5-flash-lite-preview-09-2025',
-  'gemini-2.5-flash-preview-09-2025',
   'gemini-pro-latest',
   'gemini-3-pro-preview',
   'gemini-2.5-flash-image',
-  'gemini-2.5-flash-image-preview',
-  'gemini-3-pro-image-preview',
+  'gemini-2.5-flash-preview-09-2025',
   'nano-banana-pro-preview',
   'deep-research-pro-preview-12-2025',
   'gemini-2.5-computer-use-preview-10-2025',
@@ -35,12 +35,14 @@ interface AIRequest {
   action: string
   content?: string
   title?: string
-  imageBase64?: string
+  imageBase64?: string // 互換性のため残す
+  fileBase64?: string  // 新: 汎用ファイルデータ (画像/PDF)
+  mimeType?: string    // 新: MIMEタイプ
   language?: string
   targetLanguage?: string
   userId?: string
   recentNotes?: any[]
-  subscriptions?: any[] // サブスクリスト用
+  subscriptions?: any[]
   userStats?: any
   strategyType?: string
 }
@@ -71,7 +73,7 @@ serve(async (req) => {
 
     const requestBody = buildRequestBody(requestData)
 
-    //  総当たり実行ループ
+    //  14モデル総当たりループ
     let finalResult = ''
     let usedModel = ''
     let success = false
@@ -116,9 +118,10 @@ serve(async (req) => {
       throw new Error(`All models failed. Logs: ${logMessages.join(', ')}`)
     }
 
-    // 結果の整形
+    // JSON解析が必要なアクションの処理
     let parsedResult = finalResult;
-    if (['secretary_task_from_image', 'task_recommendations'].includes(action)) {
+    const jsonActions = ['secretary_task_from_image', 'task_recommendations', 'extract_subscriptions_from_file'];
+    if (jsonActions.includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
@@ -153,56 +156,76 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, language, targetLanguage, recentNotes, userStats, strategyType, subscriptions } = data
+  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, strategyType } = data
   
   let body: any = {
     generationConfig: {
-      temperature: 0.7,
+      temperature: 0.5, // 分析系は少し創造性を抑える
       maxOutputTokens: 2000,
     },
     contents: []
   }
 
-  // ---  新機能: サブスク財務監査 ---
-  if (action === 'audit_subscriptions') {
-      const subList = subscriptions!.map(s => 
-        `- ${s.service_name}: ${s.price}円/${s.billing_cycle === 'monthly' ? '月' : '年'} (${s.description || '詳細なし'})`
-      ).join('\n');
+  // ---  新機能: 明細書からサブスク抽出 ---
+  if (action === 'extract_subscriptions_from_file') {
+      const actualBase64 = fileBase64 || imageBase64; // 互換性
+      const actualMime = mimeType || 'image/jpeg';
 
       const promptText = `
-        **IMPORTANT: Output MUST be in Japanese language.**
+        **IMPORTANT: Output JSON ONLY.**
 
-        あなたは「自分株式会社」の冷徹なCFO（最高財務責任者）です。
-        CEO（ユーザー）が契約している以下のサブスクリプションリストを厳しく監査し、コスト削減案を提示してください。
-
-        【契約中のサブスク一覧】
-        ${subList}
-
-        【指示】
-        1. **総評**: 現在の固定費が経営（生活）に与えるインパクトをズバリ指摘してください。
-        2. **解約推奨リスト**: 無駄、または重複していそうなサービスを名指しで「解約候補」として挙げ、その理由を論理的に述べてください。
-        3. **叱咤激励**: 無駄な固定費を垂れ流しているCEOに対して、愛のある厳しい言葉で目を覚まさせてください。
+        あなたは「自分株式会社」のAI財務担当です。
+        アップロードされた画像（クレジットカード明細や領収書）を解析し、
+        「定期的な支払いや固定費（サブスクリプション、家賃、光熱費、携帯代など）」と思われる項目を抽出してください。
         
-        Markdown形式で見やすく出力してください。
+        1回限りの買い物（スーパー、コンビニ、レストラン）は除外してください。ただし判断に迷う場合は抽出して構いません。
+
+        以下のJSON配列形式で出力してください。
+        [
+          {
+            "service_name": "サービス名（店名）",
+            "price": 1000, (数値のみ、通貨記号なし)
+            "description": "日付などの備考"
+          },
+          ...
+        ]
       `;
+      
+      body.contents = [{
+        parts: [
+          { text: promptText },
+          { inline_data: { mime_type: actualMime, data: actualBase64 } }
+        ]
+      }];
+  }
+  // --- 既存機能: サブスク財務監査 ---
+  else if (action === 'audit_subscriptions') {
+      const subList = subscriptions!.map(s => 
+        `- ${s.service_name}: ${s.price}円/${s.billing_cycle === 'monthly' ? '月' : '年'}`
+      ).join('\n');
+
+      const promptText = `**Output in Japanese.**\nあなたは冷徹なCFOです。以下の固定費リストを厳しく監査し、コスト削減案（解約推奨リストと理由）をMarkdownで提示してください。\n\n${subList}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
-  // --- 既存機能 ---
+  // --- 既存機能: 秘書タスク ---
   else if (action === 'secretary_task_from_image') {
-      const promptText = `**Output in Japanese.**\nあなたは優秀な日本人秘書です。画像からタスクを抽出しJSON({title, content, priority})で出力してください。`;
+      const promptText = `**Output in Japanese JSON.**\n優秀な秘書として画像からタスクを抽出しJSON({title, content, priority})で出力。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
+  // --- 既存機能: 戦略 ---
   else if (action === 'secretary_strategy') {
       const notesList = recentNotes && recentNotes.length > 0 ? recentNotes.map((n) => `- ${n.title}`).join('\n') : 'なし';
-      const promptText = `**Output in Japanese.**\nあなたは「自分株式会社」の秘書です。タスク状況(${notesList})を踏まえ、${strategyType || '今日'}の戦略を立案してください。`;
+      const promptText = `**Output in Japanese.**\n秘書として、タスク状況(${notesList})を踏まえ${strategyType || '今日'}の戦略をMarkdownで立案せよ。`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
+  // --- 既存機能: 断捨離判定 ---
   else if (action === 'analyze_image') {
-      const promptText = `**Output in Japanese.**\nあなたは断捨離コーチです。画像を見て【物体名】【判定】【助言】を回答してください。`;
+      const promptText = `**Output in Japanese.**\n断捨離コーチとして画像を見て【物体名】【判定】【助言】を回答せよ。`;
       body.contents = [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }] }];
   } 
+  // --- 既存機能: テキスト判定 ---
   else if (action === 'analyze_note_text') {
-      const promptText = `**Output in Japanese.**\n断捨離コーチとして、以下のメモが必要か判定せよ。\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【理由】\n【助言】`;
+      const promptText = `**Output in Japanese.**\nメモ判定:\nタイトル:${title}\n内容:${content}\n回答形式:\n【判定】\n【理由】\n【助言】`;
       body.contents = [{ parts: [{ text: promptText }] }];
   } else {
        body.contents = [{ parts: [{ text: content || '' }] }];
@@ -213,13 +236,14 @@ function buildRequestBody(data: AIRequest): any {
 function parseJsonResult(result: string): any {
     try {
       let cleaned = result.replace(/```json/g, '').replace(/```/g, '').trim();
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
+      const firstBrace = cleaned.indexOf(cleaned.startsWith('[') ? '[' : '{');
+      const lastBrace = cleaned.lastIndexOf(cleaned.endsWith(']') ? ']' : '}');
       if (firstBrace !== -1 && lastBrace !== -1) {
           cleaned = cleaned.substring(firstBrace, lastBrace + 1);
       }
       return JSON.parse(cleaned);
     } catch (e) {
-      return { title: '解析エラー', content: result, priority: '中' };
+      console.error("JSON Parse Error", e);
+      return []; // 配列を期待するケースが多いので空配列、またはエラーオブジェクト
     }
 }
