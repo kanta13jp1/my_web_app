@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   int _todayDanshariCount = 0;
   int _healthScore = 0;
   int _fixedCost = 0;
-  List<Note> _notes = []; // 復活: メモリスト
+  List<Note> _notes = [];
 
   bool _isLoading = true;
   bool _isMeeting = false;
@@ -54,12 +54,11 @@ class _HomePageState extends State<HomePage> {
       _fetchHealthStats(),
       _fetchFixedCosts(),
       _fetchDanshariProgress(),
-      _fetchNotes(), // 復活: メモ取得
+      _fetchNotes(),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
 
-  // 復活: メモ取得ロジック
   Future<void> _fetchNotes() async {
     try {
       final userId = supabase.auth.currentUser?.id;
@@ -190,8 +189,15 @@ class _HomePageState extends State<HomePage> {
           .select()
           .eq('user_id', userId)
           .maybeSingle();
-      final paymentSources =
-          await supabase.from('payment_sources').select().eq('user_id', userId);
+      // テーブルが存在しない場合のエラーハンドリングを追加するか、機能を条件付きにする
+      // 今回は既存実装に合わせて呼び出し
+      dynamic paymentSources = [];
+      try {
+        paymentSources = await supabase
+            .from('payment_sources')
+            .select()
+            .eq('user_id', userId);
+      } catch (_) {}
 
       final boardData = {
         'recentMeals': meals,
@@ -447,6 +453,49 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
+      //  Drawer (管理者メニュー) の復活
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: navy),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(Icons.business, color: gold, size: 40),
+                  const SizedBox(height: 10),
+                  const Text('自分株式会社',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold)),
+                  const Text('Management Console',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.analytics, color: Colors.blueGrey),
+              title: const Text('アプリ分析 (Admin)'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AdminAnalyticsPage()));
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('サインアウト'),
+              onTap: _signOut,
+            ),
+          ],
+        ),
+      ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: navy))
           : CustomScrollView(
@@ -517,11 +566,10 @@ class _HomePageState extends State<HomePage> {
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const CmoPage()))),
-                    IconButton(
-                        icon: const Icon(Icons.logout), onPressed: _signOut),
+                    // ハンバーガーメニューは左側に出るので、右側のアクションからはログアウトなどを削除しても良いが、利便性のため残す
+                    // IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
                   ],
                 ),
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -558,14 +606,12 @@ class _HomePageState extends State<HomePage> {
                                     letterSpacing: 1.0)),
                           ),
                         ),
-
                         const Text('DEPARTMENTS (各部署)',
                             style: TextStyle(
                                 color: Colors.grey,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
-
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
@@ -600,7 +646,6 @@ class _HomePageState extends State<HomePage> {
                                 const ChroPage()),
                           ],
                         ),
-
                         const SizedBox(height: 32),
                         const Text('OPERATIONS (業務遂行)',
                             style: TextStyle(
@@ -608,7 +653,6 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2)),
                         const SizedBox(height: 12),
-
                         InkWell(
                           onTap: () async {
                             if (!isDanshariMet) {
@@ -679,9 +723,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
                         Row(
                           children: [
                             Expanded(
@@ -710,8 +752,6 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                         const SizedBox(height: 32),
-
-                        //  復活: PROJECTS (案件一覧)
                         const Text('PROJECTS (進行中案件)',
                             style: TextStyle(
                                 color: Colors.grey,
@@ -722,8 +762,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-
-                // メモリスト
                 _notes.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
