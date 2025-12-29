@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'landing_page.dart';
 import 'note_editor_page.dart';
@@ -26,7 +27,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Note> _notes = [];
   bool _isLoading = true;
-  bool _isMeeting = false; // 会議中フラグ
+  bool _isMeeting = false;
   final int _dailyDanshariGoal = 5;
   int _todayDanshariCount = 0;
 
@@ -34,10 +35,34 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadData();
+    _checkMorningBriefing(); //  モーニングブリーフィングのチェック
   }
 
   Future<void> _loadData() async {
     await Future.wait([_loadNotes(), _loadDailyProgress()]);
+  }
+
+  Future<void> _checkMorningBriefing() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastDate = prefs.getString('last_briefing_date');
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+
+      // 今日まだブリーフィングしていなければ実行
+      if (lastDate != todayStr) {
+        // UI描画後に実行するために少し待つ
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+
+        // 自動実行
+        _holdBoardMeeting(isMorning: true);
+
+        // 記録更新
+        await prefs.setString('last_briefing_date', todayStr);
+      }
+    } catch (e) {
+      debugPrint('Briefing check error: $e');
+    }
   }
 
   Future<void> _loadDailyProgress() async {
@@ -79,14 +104,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  //  役員会議を開催
-  Future<void> _holdBoardMeeting() async {
+  //  役員会議 / モーニングブリーフィング
+  Future<void> _holdBoardMeeting({bool isMorning = false}) async {
     setState(() => _isMeeting = true);
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 各部門のデータを取得
       final meals = await supabase
           .from('meal_logs')
           .select()
@@ -116,30 +140,38 @@ class _HomePageState extends State<HomePage> {
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
-        body: {'action': 'hold_board_meeting', 'boardData': boardData},
+        body: {
+          'action': 'hold_board_meeting',
+          'boardData': boardData,
+          'context': isMorning ? 'morning_briefing' : 'emergency' //  文脈を指定
+        },
       );
 
       if (response.status != 200) throw Exception('AI Error');
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
 
-      if (mounted) _showMeetingResult(data['result']);
+      if (mounted) _showMeetingResult(data['result'], isMorning: isMorning);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
+      if (!isMorning)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
     } finally {
-      setState(() => _isMeeting = false);
+      if (mounted) setState(() => _isMeeting = false);
     }
   }
 
-  void _showMeetingResult(Map<String, dynamic> result) {
+  void _showMeetingResult(Map<String, dynamic> result,
+      {bool isMorning = false}) {
     showDialog(
       context: context,
+      barrierDismissible: !isMorning, // 朝礼は確認必須感
       builder: (context) => AlertDialog(
-        title: const Row(children: [
-          Icon(Icons.meeting_room, color: Colors.indigo),
-          SizedBox(width: 8),
-          Text('緊急役員会議 議事録')
+        title: Row(children: [
+          Icon(isMorning ? Icons.wb_sunny : Icons.meeting_room,
+              color: isMorning ? Colors.orange : Colors.indigo),
+          const SizedBox(width: 8),
+          Text(isMorning ? 'モーニングブリーフィング' : '緊急役員会議 議事録')
         ]),
         content: SingleChildScrollView(
           child: Column(
@@ -150,7 +182,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16)),
               const Divider(),
-              Text('【議論】',
+              Text(isMorning ? '【昨日の分析】' : '【議論】',
                   style: TextStyle(color: Colors.grey[600], fontSize: 12)),
               Text(result['discussion'] ?? '',
                   style: const TextStyle(fontSize: 14)),
@@ -158,15 +190,22 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color:
+                        isMorning ? Colors.orange.shade50 : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200)),
+                    border: Border.all(
+                        color: isMorning
+                            ? Colors.orange.shade200
+                            : Colors.red.shade200)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('【決定事項 (Action Item)】',
+                    Text(isMorning ? '【本日のミッション】' : '【決定事項 (Action Item)】',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.red)),
+                            fontWeight: FontWeight.bold,
+                            color: isMorning
+                                ? Colors.orange.shade900
+                                : Colors.red)),
                     const SizedBox(height: 4),
                     Text(result['decision'] ?? '',
                         style: const TextStyle(
@@ -187,19 +226,28 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('閉じる')),
+              onPressed: () => Navigator.pop(context), child: const Text('了解')),
           ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Share.share(
-                    '【自分株式会社 緊急役員会議】\n決定事項: ${result['decision']}\n予想株価: ${result['stock_price_impact']}\n#自分株式会社',
-                    subject: '役員会議');
+                _shareAppWithContent(result['decision'] ?? '人生経営中');
               },
-              child: const Text('全社通達 (シェア)')),
+              child: const Text('共有する')),
         ],
       ),
     );
+  }
+
+  //  URL付きシェア機能（共通化）
+  Future<void> _shareAppWithContent(String content) async {
+    try {
+      await supabase.rpc('increment_share_count');
+    } catch (_) {}
+    final box = context.findRenderObject() as RenderBox?;
+    await Share.share(
+        '$content\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社',
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null);
   }
 
   Future<void> _signOut() async {
@@ -264,18 +312,18 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  //  役員会議ボタン
                   Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _isMeeting ? null : _holdBoardMeeting,
+                      onPressed: _isMeeting
+                          ? null
+                          : () => _holdBoardMeeting(isMorning: false),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black87,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(16),
-                        elevation: 4,
-                      ),
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(16),
+                          elevation: 4),
                       icon: _isMeeting
                           ? const SizedBox(
                               width: 20,
@@ -288,8 +336,6 @@ class _HomePageState extends State<HomePage> {
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-
-                  // 就寝許可証
                   GestureDetector(
                     onTap: () async {
                       if (!isGoalMet) {
@@ -310,92 +356,83 @@ class _HomePageState extends State<HomePage> {
                           border: Border.all(
                               color: isGoalMet ? Colors.green : Colors.red,
                               width: 2)),
-                      child: Row(
-                        children: [
-                          Icon(isGoalMet ? Icons.bed : Icons.lock_clock,
-                              size: 40,
-                              color: isGoalMet ? Colors.green : Colors.red),
-                          const SizedBox(width: 16),
-                          Expanded(
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                Text(isGoalMet ? '就寝許可証: 発行済み' : '就寝禁止: ロック中',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: isGoalMet
-                                            ? Colors.green.shade800
-                                            : Colors.red.shade800)),
-                                const SizedBox(height: 4),
-                                Text(
-                                    isGoalMet
-                                        ? 'お疲れ様でした。良い夢を。'
-                                        : 'あと $remaining 個 片付けるまで\n寝ることは許されません。',
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        color: isGoalMet
-                                            ? Colors.green.shade700
-                                            : Colors.red.shade700))
-                              ])),
-                        ],
-                      ),
+                      child: Row(children: [
+                        Icon(isGoalMet ? Icons.bed : Icons.lock_clock,
+                            size: 40,
+                            color: isGoalMet ? Colors.green : Colors.red),
+                        const SizedBox(width: 16),
+                        Expanded(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                              Text(isGoalMet ? '就寝許可証: 発行済み' : '就寝禁止: ロック中',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: isGoalMet
+                                          ? Colors.green.shade800
+                                          : Colors.red.shade800)),
+                              const SizedBox(height: 4),
+                              Text(
+                                  isGoalMet
+                                      ? 'お疲れ様でした。良い夢を。'
+                                      : 'あと $remaining 個 片付けるまで\n寝ることは許されません。',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: isGoalMet
+                                          ? Colors.green.shade700
+                                          : Colors.red.shade700))
+                            ])),
+                      ]),
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   const Text('経営役員会',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _buildFeatureCard(
-                          context,
-                          'AI戦略室 (CSO)',
-                          '秘書 & 参謀',
-                          Icons.business_center,
-                          Colors.blueGrey,
-                          const AISecretaryPage()),
-                      _buildFeatureCard(
-                          context,
-                          '断捨離クエスト',
-                          '残り $remaining 個',
-                          Icons.cleaning_services,
-                          isGoalMet ? Colors.green : Colors.redAccent,
-                          const DanshariPage(),
-                          isHighlight: true),
-                      _buildFeatureCard(
-                          context,
-                          '財務省 (CFO)',
-                          '固定費監査',
-                          Icons.attach_money,
-                          Colors.teal,
-                          const SubscriptionPage()),
-                      _buildFeatureCard(
-                          context,
-                          '健康管理室 (CHO)',
-                          'AI検食',
-                          Icons.health_and_safety,
-                          Colors.teal.shade800,
-                          const HealthPage()),
-                      _buildFeatureCard(context, '人事局 (CHRO)', '福利厚生',
-                          Icons.diversity_3, Colors.pink, const ChroPage()),
-                      _buildFeatureCard(context, '広報室 (CMO)', 'PR & 分析',
-                          Icons.campaign, Colors.purple, const CmoPage()),
-                      _buildFeatureCard(
-                          context,
-                          '知的財産本部 (CKO)',
-                          'AIシンクタンク',
-                          Icons.school,
-                          Colors.indigo,
-                          const GeminiUniversityPage()),
-                    ],
-                  ),
-
+                  Wrap(spacing: 12, runSpacing: 12, children: [
+                    _buildFeatureCard(
+                        context,
+                        'AI戦略室 (CSO)',
+                        '秘書 & 参謀',
+                        Icons.business_center,
+                        Colors.blueGrey,
+                        const AISecretaryPage()),
+                    _buildFeatureCard(
+                        context,
+                        '断捨離クエスト',
+                        '残り $remaining 個',
+                        Icons.cleaning_services,
+                        isGoalMet ? Colors.green : Colors.redAccent,
+                        const DanshariPage(),
+                        isHighlight: true),
+                    _buildFeatureCard(
+                        context,
+                        '財務省 (CFO)',
+                        '固定費監査',
+                        Icons.attach_money,
+                        Colors.teal,
+                        const SubscriptionPage()),
+                    _buildFeatureCard(
+                        context,
+                        '健康管理室 (CHO)',
+                        'AI検食',
+                        Icons.health_and_safety,
+                        Colors.teal.shade800,
+                        const HealthPage()),
+                    _buildFeatureCard(context, '人事局 (CHRO)', '福利厚生',
+                        Icons.diversity_3, Colors.pink, const ChroPage()),
+                    _buildFeatureCard(context, '広報室 (CMO)', 'PR & 分析',
+                        Icons.campaign, Colors.purple, const CmoPage()),
+                    _buildFeatureCard(
+                        context,
+                        '知的財産本部 (CKO)',
+                        'AIシンクタンク',
+                        Icons.school,
+                        Colors.indigo,
+                        const GeminiUniversityPage()),
+                  ]),
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,

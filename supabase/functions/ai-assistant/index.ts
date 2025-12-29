@@ -1,5 +1,5 @@
 ﻿// AI Assistant Edge Function with Google Gemini
-// 14モデル総当たり & AI Board Meeting (役員会議) 機能搭載
+// 14モデル総当たり & Morning Briefing & Share URL Support
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -12,7 +12,7 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 const MODELS_TO_TRY = [
-  'gemini-1.5-pro', // 複雑なコンテキスト理解にはProが最適
+  'gemini-1.5-pro',
   'gemini-2.0-flash', 
   'gemini-flash-latest',
   'gemini-2.5-flash-lite', 
@@ -42,13 +42,13 @@ interface AIRequest {
   hasPermit?: boolean
   dailyStats?: any
   targetFormat?: string
-  //  役員会議用データ
   boardData?: {
     recentMeals: any[],
     recentNotes: any[],
     subscriptions: any[],
     userStats: any
   }
+  context?: string //  新追加: 'morning_briefing' などの文脈
 }
 
 serve(async (req) => {
@@ -104,8 +104,7 @@ serve(async (req) => {
       'secretary_task_from_image', 'task_recommendations', 
       'extract_subscriptions_from_file', 'audit_meal', 
       'evaluate_performance', 'generate_press_release',
-      'analyze_knowledge_assets',
-      'hold_board_meeting' //  役員会議用
+      'analyze_knowledge_assets', 'hold_board_meeting'
     ];
     if (jsonActions.includes(action)) parsedResult = parseJsonResult(finalResult);
 
@@ -124,47 +123,66 @@ serve(async (req) => {
 })
 
 function buildRequestBody(data: AIRequest): any {
-  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats, targetFormat, boardData } = data
+  const { action, content, title, imageBase64, fileBase64, mimeType, recentNotes, subscriptions, userStats, strategyType, hasPermit, dailyStats, targetFormat, boardData, context } = data
   let body: any = { generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }, contents: [] }
 
-  // ---  AI Board Meeting (役員会議) ---
+  // --- AI Board Meeting / Morning Briefing ---
   if (action === 'hold_board_meeting') {
       const d = boardData!;
-      // データの要約
       const mealSummary = d.recentMeals?.slice(0, 3).map(m => `${m.menu_name}(${m.performance_score}点)`).join(', ') || 'なし';
       const noteSummary = d.recentNotes?.slice(0, 3).map(n => n.title).join(', ') || 'なし';
       const subTotal = d.subscriptions?.reduce((sum: number, s: any) => sum + Number(s.price), 0) || 0;
       const points = d.userStats?.total_points || 0;
 
-      const promptText = `
-        **Output JSON ONLY in Japanese.**
-        あなたは「自分株式会社」の全CxO（CSO, CFO, CHO, CHRO, CKO, CMO）を兼任するAIです。
-        CEO（ユーザー）の現在の経営状態（ライフログ）を横断的に分析し、各部門が連携した「緊急動議（提案）」を行ってください。
+      let promptText = "";
 
-        【現状データ】
-        - 健康(CHO): 直近の食事=[${mealSummary}]
-        - 戦略(CSO): 直近タスク=[${noteSummary}]
-        - 財務(CFO): 月間固定費=${subTotal}円
-        - 資産(CHRO): 保有ポイント=${points}pt
+      if (context === 'morning_briefing') {
+          //  モーニングブリーフィング用プロンプト
+          promptText = `
+            **Output JSON ONLY in Japanese.**
+            あなたは「自分株式会社」のAI役員団（CSO, CFO, CHO, CHRO, CKO, CMO）です。
+            CEO（ユーザー）が朝、アプリを開きました。昨日のデータに基づき、今日の経営指針（ブリーフィング）を行ってください。
 
-        【指示】
-        - 単なる報告ではなく、「食事の質が悪いからタスクを減らそう」のような**部門間連携（クロスオーバー）した提案**を1つだけ作成してください。
-        - 最も優先すべき課題を特定し、それを解決するための具体的なアクションを提示してください。
+            【現状データ】
+            - 健康(CHO): 直近食事=[${mealSummary}]
+            - 戦略(CSO): 直近タスク=[${noteSummary}]
+            - 財務(CFO): 月次固定費=${subTotal}円
+            - 資産(CHRO): ポイント=${points}pt
 
-        以下のJSON形式で出力してください。
-        {
-          "agenda": "議題タイトル（例：健康悪化に伴う緊急業務縮小の件）",
-          "discussion": "役員たちの議論内容（会話形式で短く）。CHOが懸念し、CSOが対策を打つ等の流れ。",
-          "decision": "最終決定事項（CEOが今すぐやるべきこと）",
-          "stock_price_impact": "この決定による自分株価への影響予測（例：+5%）"
-        }
-      `;
+            【指示】
+            - 親しみやすく、かつプロフェッショナルな「おはようございます」から始めてください。
+            - 昨日の活動をポジティブに評価しつつ、今日一点だけ集中すべき「本日のミッション」を提示してください。
+            - JSON形式:
+            {
+              "agenda": "おはようございます、CEO！ (挨拶タイトル)",
+              "discussion": "昨日の分析コメント（例：昨日は断捨離が進みましたね。ただ食事が乱れ気味です）。役員たちが交互に話す形式で。",
+              "decision": "本日の最優先ミッション（具体的な行動目標）",
+              "stock_price_impact": "達成時の予想株価上昇率"
+            }
+          `;
+      } else {
+          // 通常の役員会議プロンプト
+          promptText = `
+            **Output JSON ONLY in Japanese.**
+            あなたは「自分株式会社」の全CxOを兼任するAIです。
+            CEOの経営状態を分析し、部門間連携した「緊急動議」を行ってください。
+            (データ: 食事=[${mealSummary}], タスク=[${noteSummary}], 固定費=${subTotal}円, Pt=${points})
+            
+            JSON形式:
+            {
+              "agenda": "議題タイトル",
+              "discussion": "役員たちの議論内容（クロスオーバーな会話）",
+              "decision": "最終決定事項（Action Item）",
+              "stock_price_impact": "株価への影響予測"
+            }
+          `;
+      }
       body.contents = [{ parts: [{ text: promptText }] }];
   }
   
-  // --- 既存機能 ---
+  // --- その他の機能 (既存維持) ---
   else if (action === 'analyze_knowledge_assets') {
-      const notesText = recentNotes && recentNotes.length > 0 ? recentNotes.map(n => `- ${n.title}: ${n.content.substring(0, 50)}...`).join('\n') : 'なし';
+      const notesText = recentNotes && recentNotes.length > 0 ? recentNotes.map(n => `- ${n.title}`).join('\n') : 'なし';
       const promptText = `**Output JSON ONLY in Japanese.** CKOとしてメモ分析しJSON({core_interests, analysis_comment, next_learning_suggestion})出力。\n${notesText}`;
       body.contents = [{ parts: [{ text: promptText }] }];
   }
