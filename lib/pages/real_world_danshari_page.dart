@@ -218,34 +218,36 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   void _shareResult(String result) {
     final shortResult = result.split('\n').take(5).join('\n');
     final box = context.findRenderObject() as RenderBox?;
+
+    // 文言修正
     final modelInfo =
-        _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: Gemini 14モデル総力戦)";
+        _usedModel != null ? "(担当AI: $_usedModel)" : "(担当AI: 五賢帝システム)";
+
     final patterns = [
       {
         'text':
-            '私のゴミを判定するためだけに、Gemini 3.0含む『14種類のAI』を総動員するアプリを作りました\n1つがダメでも残りの13体が絶対に判定を通す...この執念、まさに鬼コーチ。',
+            '私のゴミを判定するためだけに、世界最高峰のAI『五賢帝』を総動員するアプリを作りました\n1つがダメでも残りが判定を通す...この執念、まさに鬼コーチ。',
         'ref': 'share_pattern_a_tech_overkill'
       },
       {
         'text':
-            'AI鬼コーチが14人に増殖しました\nGemini 3.0 / 2.5 / Pro... 最新モデル14種の「総当たり判定」からは、どんなゴミも逃げられません。',
+            'AI鬼コーチが最強体制になりました\nOpenAI / Gemini / Claude... 全モデル総力戦の「総当たり判定」からは、どんなゴミも逃げられません。',
         'ref': 'share_pattern_b_demon_coach'
       },
       {
         'text':
-            '【エンジニアの断捨離】\nAPI Rate Limitを回避するため、14種類のGeminiモデルをラウンドロビンで総当たり実装しました。\n世界一（無駄に）可用性が高い断捨離アプリです。',
+            '【エンジニアの断捨離】\nAPI Rate Limitを回避するため、5種類のAIプロバイダをラウンドロビンで総当たり実装しました。\n世界一（無駄に）可用性が高い断捨離アプリです。',
         'ref': 'share_pattern_c_engineer'
       },
       {
-        'text':
-            '片付けられない私 vs 14体のAI \n「どれか1つくらい許してくれるだろう」と思ったら、全員に「捨てろ」と言われました。',
+        'text': '片付けられない私 vs AI五賢帝 \n「どれか1つくらい許してくれるだろう」と思ったら、全員に「捨てろ」と言われました。',
         'ref': 'share_pattern_d_desperate'
       },
     ];
     final random = Random();
     final selected = patterns[random.nextInt(patterns.length)];
     final shareText =
-        '${selected['text']}\n\n$modelInfo\n$shortResult\n...\n\nあなたも無料で診断\n#マイメモ #Gemini #断捨離';
+        '${selected['text']}\n\n$modelInfo\n$shortResult\n...\n\nあなたも無料で診断\n#自分株式会社 #AI #断捨離';
     final shareUrl = 'https://my-web-app-b67f4.web.app/?ref=${selected['ref']}';
     Share.share('$shareText\n$shareUrl',
         subject: 'AI断捨離コーチの判定',
@@ -389,7 +391,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('捨てられないモノを撮影してください。\n14種類の最新AIモデルが、あなたの代わりに断捨離を即決します。',
+            const Text(
+                '捨てられないモノを撮影してください。\nOpenAI, Gemini, Claudeなど最新のAIが、あなたの代わりに断捨離を即決します。',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 32),
@@ -407,7 +410,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               const Column(children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('14種類のAI脳みそに問い合わせ中...',
+                Text('五賢帝（最新AIモデル群）に問い合わせ中...',
                     style: TextStyle(fontWeight: FontWeight.bold))
               ])
             else ...[
