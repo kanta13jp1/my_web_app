@@ -181,15 +181,15 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
 
-                            // ベンチマーク結果の表示
-                            if (_visionScores.containsKey(modelName)) ...[
+                            // --- 修正点: Nullチェックを厳格化し、エラーを回避 ---
+                            if (_visionScores.containsKey(modelName) &&
+                                _visionScores[modelName] != null) ...[
                               const SizedBox(height: 8),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 4,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  // 認識成否アイコン
                                   Icon(
                                     _visionScores[modelName]!['score'] == 100
                                         ? Icons.visibility
@@ -205,13 +205,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                       "${_visionScores[modelName]!['score']}%",
                                       Colors.purple),
                                   _buildScoreBadge(
-                                      "応答速度",
+                                      "速度",
                                       "${(_visionScores[modelName]!['latency'] / 1000).toStringAsFixed(2)}s",
                                       Colors.teal),
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              // AIの生の回答を表示
+                              // 認識結果のテキストを表示
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(6),
@@ -229,7 +229,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                               ),
                             ],
 
-                            // エラー詳細の表示
+                            // エラー詳細の表示（クォータ制限など）
                             if (_testErrors.containsKey(modelName))
                               Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
