@@ -373,6 +373,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
   /// レベル別詳細のWidget
   Widget _buildLevelDetail(Map<String, dynamic> levelData) {
     final String levelName = levelData['level'] as String? ?? '';
+    final String? description = levelData['description'] as String?;
     final int levelScore = levelData['score'] as int? ?? 0;
     final int maxPoints = levelData['maxPoints'] as int? ?? 0;
     final bool passed = levelData['passed'] as bool? ?? false;
@@ -404,12 +405,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 color: passed ? Colors.green : Colors.red,
               ),
               const SizedBox(width: 8),
-              Text(
-                _getLevelLabel(levelName),
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              Expanded(
+                child: Text(
+                  _getLevelLabel(levelName, description),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
-              const Spacer(),
               Text(
                 '$levelScore/$maxPoints',
                 style: TextStyle(
@@ -447,14 +449,26 @@ class _AiStatusPageState extends State<AiStatusPage> {
   }
 
   /// レベル名のラベル変換
-  String _getLevelLabel(String levelName) {
+  String _getLevelLabel(String levelName, String? description) {
+    // descriptionがあればそれを使用（サーバーから送られてくる）
+    if (description != null && description.isNotEmpty) {
+      final levelNum = levelName.replaceAll('level', 'L');
+      return '$levelNum: $description';
+    }
+    // フォールバック
     switch (levelName) {
       case 'level1':
         return 'L1: 色認識';
       case 'level2':
-        return 'L2: OCR（文字読取）';
+        return 'L2: 単純OCR';
       case 'level3':
-        return 'L3: 複合認識';
+        return 'L3: 複雑カウント';
+      case 'level4':
+        return 'L4: 空間認識';
+      case 'level5':
+        return 'L5: 論理推論';
+      case 'level6':
+        return 'L6: 微細識別';
       default:
         return levelName;
     }
