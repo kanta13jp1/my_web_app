@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
+import '../main.dart';
 
 class AiStatusPage extends StatefulWidget {
   const AiStatusPage({super.key});
@@ -10,157 +10,129 @@ class AiStatusPage extends StatefulWidget {
 }
 
 class _AiStatusPageState extends State<AiStatusPage> {
-  final SupabaseClient supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _logs = [];
+  List<dynamic> _models = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _fetchLogs();
+    _fetchAvailableModels();
   }
 
-  Future<void> _fetchLogs() async {
+  Future<void> _fetchAvailableModels() async {
     try {
-      final response = await supabase
-          .from('ai_request_logs')
-          .select()
-          .order('created_at', ascending: false)
-          .limit(100);
+      setState(() => _isLoading = true);
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      );
 
-      if (mounted) {
-        setState(() {
-          _logs = List<Map<String, dynamic>>.from(response);
-          _isLoading = false;
-        });
-      }
+      if (response.status != 200)
+        throw Exception('API Error: ${response.status}');
+
+      setState(() {
+        _models = response.data['models'] ?? [];
+        _models
+            .sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+        _isLoading = false;
+        _error = null;
+      });
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
-  }
-
-  Color _getStatusColor(int? status) {
-    if (status == 200) return Colors.green.shade100;
-    if (status == 429) return Colors.orange.shade100;
-    if (status == 402) return Colors.red.shade100; // Payment Required
-    return Colors.grey.shade100;
-  }
-
-  String _getStatusText(int? status) {
-    if (status == 200) return 'OK';
-    if (status == 429) return 'Limit (429)';
-    if (status == 402) return 'No Credit (402)';
-    return 'Err ($status)';
   }
 
   @override
   Widget build(BuildContext context) {
+    final Color navy = const Color(0xFF0F172A);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI稼働状況モニター'),
+      backgroundColor: const Color(0xFFF8FAFC),
+      app_appBar: AppBar(
+        title: const Text('AI稼働モニター'),
+        backgroundColor: navy,
+        foregroundColor: Colors.white,
         actions: [
-          IconButton(onPressed: _fetchLogs, icon: const Icon(Icons.refresh))
+          IconButton(
+              icon: const Icon(Icons.refresh), onPressed: _fetchAvailableModels)
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Summary Cards
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      _buildSummaryCard(
-                        '総リクエスト',
-                        '${_logs.length}',
-                        Icons.analytics,
-                        Colors.blue,
-                      ),
-                      const SizedBox(width: 12),
-                      _buildSummaryCard(
-                        'エラー率',
-                        '${(_logs.where((l) => l['status_code'] != 200).length / (_logs.isEmpty ? 1 : _logs.length) * 100).toStringAsFixed(1)}%',
-                        Icons.warning_amber,
-                        Colors.redAccent,
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _logs.length,
-                    itemBuilder: (context, index) {
-                      final log = _logs[index];
-                      final date = DateTime.parse(log['created_at']).toLocal();
-                      final dateStr = DateFormat('MM/dd HH:mm:ss').format(date);
-                      final status = log['status_code'] as int;
-                      final provider = log['provider'] ?? 'unknown';
-                      final model = log['model'] ?? '';
-
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        color: _getStatusColor(status),
-                        child: ListTile(
-                          leading: Icon(
-                            status == 200 ? Icons.check_circle : Icons.error,
-                            color: status == 200 ? Colors.green : Colors.red,
-                          ),
-                          title: Text('$provider ($model)',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Action: ${log['action']}'),
-                              Text(
-                                  'Time: $dateStr | Duration: ${log['duration_ms']}ms'),
-                              if (status != 200)
-                                Text('Error: ${log['error_message']}',
-                                    style: const TextStyle(
-                                        color: Colors.red, fontSize: 12)),
-                            ],
-                          ),
-                          trailing: Text(
-                            _getStatusText(status),
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: status == 200
-                                    ? Colors.green[800]
-                                    : Colors.red[800]),
-                          ),
+          : _error != null
+              ? Center(
+                  child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text('エラー: $_error',
+                      style: const TextStyle(color: Colors.red)),
+                ))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _models.length,
+                  itemBuilder: (context, index) {
+                    final model = _models[index];
+                    final provider = model['provider'] as String;
+                    final score = model['score'] as int;
+                    return Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade200)),
+                      child: ListTile(
+                        leading: _buildProviderBadge(provider),
+                        title: Text(model['model'],
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text('Provider: ${provider.toUpperCase()}'),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('$score',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: score >= 1100
+                                        ? Colors.blue
+                                        : (score >= 900
+                                            ? Colors.green
+                                            : Colors.grey))),
+                            const Text('Score', style: TextStyle(fontSize: 10)),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
     );
   }
 
-  Widget _buildSummaryCard(
-      String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 8),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.bold)),
-              Text(title,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
-          ),
-        ),
-      ),
-    );
+  Widget _buildProviderBadge(String provider) {
+    Color color;
+    IconData icon;
+    switch (provider.toLowerCase()) {
+      case 'openai':
+        color = Colors.green;
+        icon = Icons.bolt;
+        break;
+      case 'anthropic':
+        color = Colors.orange;
+        icon = Icons.auto_awesome;
+        break;
+      case 'gemini':
+        color = Colors.blue;
+        icon = Icons.auto_graph;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.help_outline;
+    }
+    return CircleAvatar(
+        backgroundColor: color.withOpacity(0.1),
+        child: Icon(icon, color: color, size: 20));
   }
 }

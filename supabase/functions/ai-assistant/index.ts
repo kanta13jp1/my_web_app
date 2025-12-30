@@ -1,17 +1,17 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (CMO Upgrade)
-// CMO（広報担当）機能を強化し、プレスリリース生成に対応したバージョン。
-// 五賢帝システム（複数AIモデルの協調動作）を基盤としている。
+﻿// AI Assistant Edge Function: "The Five Emperors" (CMO Upgrade / Battle Mode)
+// 概要: 複数の次世代AIモデル（GPT-5, Claude 4.5, Gemini 3等）を統合制御し、
+// 単独実行（Single Mode）または競演（Battle Mode）により最適な回答を生成するシステム。
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// CORS設定：ブラウザからのクロスオリジンリクエストを許可
+// CORS設定: ブラウザ（Flutter Web）からのアクセスを許可するためのヘッダー
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// 各種AIプロバイダーのAPIキー設定
+// APIキー管理: 各AIプロバイダーの鍵を環境変数から取得
 const KEYS = {
   gemini: Deno.env.get('GEMINI_API_KEY'),
   openai: Deno.env.get('OPENAI_API_KEY'),
@@ -20,169 +20,195 @@ const KEYS = {
   grok: Deno.env.get('XAI_API_KEY'),
 };
 
-// リクエストボディの型定義
+// リクエストデータの型定義
 interface AIRequest {
-  action: string // AIに実行させるアクションの種類
-  content?: string // テキスト入力
-  imageBase64?: string // 画像入力（Base64）
-  fileBase64?: string // ファイル入力（Base64）
-  mimeType?: string // MIMEタイプ
-  boardData?: any // 取締役会用データ
-  subscriptions?: any[] // サブスク情報
-  userStats?: any // ユーザー統計
-  paymentSources?: any[] // 支払い元情報
-  currentTime?: string // 現在時刻
-  recentMeals?: any[] // 直近の食事データ
-  multi_response?: boolean // 複数AIによる回答（バトルモード）を要求するか
-  missionData?: any // ミッションデータ（就寝許可などで使用）
-  missionName?: string // 証拠確認用ミッション名
+  action: string          // 実行する業務（例: 'audit_meal', 'draft_press_release'）
+  content?: string        // ユーザーの入力テキスト
+  imageBase64?: string    // 画像データ（Base64形式）
+  fileBase64?: string     // その他ファイル
+  mimeType?: string       // ファイル形式
+  boardData?: any         // 役員会議や広報用のコンテキストデータ
+  subscriptions?: any[]   // 財務データ
+  userStats?: any         // ユーザー統計（資産など）
+  paymentSources?: any[]  // 決済情報
+  currentTime?: string    // 現在時刻（コンテキスト用）
+  recentMeals?: any[]     // 食事履歴
+  multi_response?: boolean // 🔥 バトルモード（複数AI回答）の有効化フラグ
+  missionData?: any       // ミッション進捗（就寝許可などで使用）
+  missionName?: string    // 特定のタスク名
 }
 
 serve(async (req) => {
-  // CORSプリフライトリクエストへの対応
+  // 1. CORSプリフライトリクエスト（OPTIONS）への即時応答
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    // 認証ヘッダーの確認
+    // 2. 認証チェック: Supabaseの認証ヘッダーが必須
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('Missing authorization header')
     
-    // Supabaseクライアントの初期化とユーザー認証
+    // Supabaseクライアント作成（DB操作やログ記録に使用）
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     )
+    // ユーザー情報の検証
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     if (userError || !user) throw new Error('Unauthorized')
 
-    // リクエストデータのパース
-    const requestData: AIRequest = await req.json()
+    // 3. リクエストボディの取得
+        const requestData: AIRequest = await req.json()
     const { action, multi_response } = requestData
 
-    // --- ⚔️ Battle Mode (複数AIによる競演) ---
+    //  AI稼働モニター用：利用可能モデル一覧を返すアクション
+    if (action === 'get_models') {
+        const models = await gatherAllCandidates(requestData);
+        return new Response(JSON.stringify({ success: true, models }), { headers: corsHeaders });
+    }
+
+    // ============================================================
+    // ⚔️ Battle Mode (複数AIによる競演・並列処理)
+    // ============================================================
     if (multi_response) {
-        // 利用可能なAI候補を収集
+        // [Step 1] 全プロバイダーから利用可能なモデル候補を収集・スコアリング
         let candidates = await gatherAllCandidates(requestData);
         if (candidates.length === 0) throw new Error('No AI models available.');
         
-        // スコア順にソート（優秀なモデルを優先）
+        // [Step 2] スコア順（賢い順）にソート
         candidates.sort((a, b) => b.score - a.score);
 
-        // 異なるプロバイダーから上位2つを選抜
+        // [Step 3] "五賢帝"選抜ロジック
+        // 各プロバイダー（OpenAI, Anthropic, Gemini）から「最強の1体」を選出
         const providers = ['anthropic', 'gemini', 'openai'];
         const champions = [];
         for (const p of providers) {
             const best = candidates.find(c => c.provider === p);
             if (best) champions.push(best);
         }
+        // 上位2名を「対戦者（Fighters）」として採用（例: Claude 4.5 vs GPT-5）
         const fighters = champions.slice(0, 2); 
         
-        // 選抜されたAIたちに並列実行させる
+        // [Step 4] 並列実行（Promise.all）
         const results = await Promise.all(fighters.map(async (fighter) => {
             const start = Date.now();
             try {
                 let text = '';
-                // プロバイダーに応じたAPI呼び出し
+                // プロバイダーごとのAPI呼び出し分岐
                 if (fighter.provider === 'gemini') text = await callGemini(fighter.model, KEYS.gemini!, requestData);
                 else if (fighter.provider === 'anthropic') text = await callAnthropic(fighter.model, KEYS.anthropic!, requestData);
                 else text = await callOpenAICompatible(fighter.provider, fighter.model, KEYS[fighter.provider as keyof typeof KEYS]!, requestData);
                 
-                // ログ記録
+                // 実行ログの保存（DBへ）
                 await logRequest(supabaseClient, user.id, action, fighter.provider, fighter.model, 200, Date.now() - start);
                 
+                // JSONパースが必要なアクションならパースして返す
                 let parsed = text;
-                // 特定のアクションの場合はJSONパースを試みる
                 if (shouldParseJson(action)) {
                     parsed = parseJsonResult(text);
                 }
                 return { success: true, provider: fighter.provider, model: fighter.model, result: parsed };
             } catch (e) {
+                // エラー時も他を止めないよう失敗情報を返す
                 return { success: false, provider: fighter.provider, error: e.message };
             }
         }));
 
+        // 成功した結果のみを抽出
         const successes = results.filter(r => r.success);
         if (successes.length === 0) throw new Error('All models failed.');
 
-        // 結果を返却
+        // 結果を返却（フロントエンドで2つの回答を比較表示する）
         return new Response(
             JSON.stringify({ success: true, is_multi: true, results: successes }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         )
     }
 
-    // --- 🛡️ Single Mode (単一AIによる処理) ---
-    // 利用可能なAI候補を収集
+    // ============================================================
+    // 🛡️ Single Mode (単一AIによる確実な処理)
+    // ============================================================
+    
+    // [Step 1] 候補収集とソート
     let candidates = await gatherAllCandidates(requestData);
     if (candidates.length === 0) throw new Error('No AI models available.');
-    candidates.sort((a, b) => b.score - a.score); // スコア順
+    candidates.sort((a, b) => b.score - a.score);
 
     let finalResult = '';
     let winner: any = null;
     let logs: string[] = [];
     
-    // 候補の上位から順に実行を試みる（成功するまで）
+    // [Step 2] フォールバック実行ループ
+    // 最強モデルから順に試し、成功したら即終了。失敗したら次のモデルへ（冗長化構成）
     for (const candidate of candidates) {
         const { provider, model } = candidate;
         const startTime = Date.now();
         try {
             console.log(` Attempting: ${provider} [${model}]`);
-            // プロバイダーに応じたAPI呼び出し
+            
             if (provider === 'gemini') finalResult = await callGemini(model, KEYS.gemini!, requestData);
             else if (provider === 'anthropic') finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
             else finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
 
             winner = candidate;
-            // ログ記録
             await logRequest(supabaseClient, user.id, action, provider, model, 200, Date.now() - startTime);
-            break; // 成功したらループを抜ける
+            break; // 成功！脱出
         } catch (e) {
             logs.push(`${provider}/${model}: ${e.message}`);
-            // 失敗時はエラーログを記録して次の候補へ
+            // 失敗ログを残して次へ
             await logRequest(supabaseClient, user.id, action, provider, model, 500, Date.now() - startTime, e.message);
         }
     }
 
     if (!winner) throw new Error(`All candidates exhausted. Logs: ${logs.join('|')}`);
 
+    // [Step 3] 結果の整形
     let parsedResult = finalResult;
-    // 特定のアクションの場合はJSONパースを試みる
     if (shouldParseJson(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
 
-    // 成功レスポンス
     return new Response(
       JSON.stringify({ success: true, result: parsedResult, provider: winner.provider, used_model: winner.model }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
-    // エラーレスポンス
+    // 致命的エラー時のレスポンス
     return new Response(JSON.stringify({ success: false, error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
 
 // --- 🔧 Helper Functions ---
 
-// JSONパースが必要なアクションかどうかを判定
+// JSON形式での出力を期待するアクションリスト
 function shouldParseJson(action: string): boolean {
-    return ['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof', 'draft_press_release'].includes(action);
+    return [
+        'hold_board_meeting',        // 役員会議
+        'suggest_next_meal',         // 食事提案
+        'proactive_intervention',    // AI介入
+        'analyze_image',             // 画像解析（リアル断捨離）
+        'audit_meal',                // 検食
+        'digital_danshari_chat',     // デジタル断捨離コーチ
+        'check_bedtime_permission',  // 就寝許可
+        'verify_mission_proof',      // 証拠写真検証
+        'draft_press_release'        // プレスリリース作成
+    ].includes(action);
 }
 
-// モデルのスコア計算（能力や適性に基づく優先度付け）
+// モデルのスコアリングロジック（ここが五賢帝の選定基準）
 function calculateModelScore(provider: string, modelId: string, isVision: boolean): number {
     let score = 0;
     const id = modelId.toLowerCase();
 
-    // 性能が低いモデルは除外 (-1)
+    // 禁止リスト: 能力不足の軽量モデルは除外 (-1)
     if (id.includes('gemma')) return -1; 
     if (id.includes('nano')) return -1;
     if (id.includes('lite')) return -1;
 
-    // 高性能モデルには高いスコアを付与
-    if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
+    // スコアリング: モデル名に含まれるキーワードで能力値を決定
+    // 2025年基準の次世代モデルを高く評価
+    if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200; // 最強
     else if (id.includes('gemini-3')) score = 1150;
     else if (id.includes('gpt-5')) score = 1140;
     else if (id.includes('claude-3-7')) score = 1120;
@@ -194,9 +220,9 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     else if (id.includes('gemini-2.0-flash')) score = 840;
     else if (id.includes('gpt-4o-mini')) score = 700; 
 
-    // 画像処理の場合、特定のモデル（DeepSeek, o1）は除外
+    // ビジョン（画像）対応のフィルタリング
     if (isVision) {
-        if (id.includes('deepseek')) score = -1; 
+        if (id.includes('deepseek')) score = -1; // 特定プロバイダの画像認識除外など
         if (id.includes('o1') || id.includes('o3')) score = -1; 
     }
 
