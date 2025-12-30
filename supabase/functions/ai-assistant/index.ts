@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Evidence Verification Mode)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Fixed Error Handling)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -30,7 +30,7 @@ interface AIRequest {
   recentMeals?: any[]
   multi_response?: boolean
   missionData?: any
-  missionName?: string // Added for evidence check
+  missionName?: string
 }
 
 serve(async (req) => {
@@ -107,7 +107,6 @@ serve(async (req) => {
         const { provider, model } = candidate;
         const startTime = Date.now();
         try {
-            console.log(` Attempting: ${provider} [${model}]`);
             if (provider === 'gemini') finalResult = await callGemini(model, KEYS.gemini!, requestData);
             else if (provider === 'anthropic') finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
             else finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
@@ -124,7 +123,6 @@ serve(async (req) => {
     if (!winner) throw new Error(`All candidates exhausted. Logs: ${logs.join('|')}`);
 
     let parsedResult = finalResult;
-    // Add 'verify_mission_proof' to JSON parse list
     if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action)) {
         parsedResult = parseJsonResult(finalResult);
     }
@@ -139,15 +137,13 @@ serve(async (req) => {
   }
 })
 
-// ---  Helper Functions ---
+// ---  Helper Functions (Fixed Error Checks) ---
 function calculateModelScore(provider: string, modelId: string, isVision: boolean): number {
     let score = 0;
     const id = modelId.toLowerCase();
-
     if (id.includes('gemma')) return -1; 
     if (id.includes('nano')) return -1;
     if (id.includes('lite')) return -1;
-
     if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
     else if (id.includes('gemini-3')) score = 1150;
     else if (id.includes('gpt-5')) score = 1140;
@@ -159,12 +155,10 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     else if (id.includes('gemini-1.5-pro')) score = 850;
     else if (id.includes('gemini-2.0-flash')) score = 840;
     else if (id.includes('gpt-4o-mini')) score = 700; 
-
     if (isVision) {
         if (id.includes('deepseek')) score = -1; 
         if (id.includes('o1') || id.includes('o3')) score = -1; 
     }
-
     return score;
 }
 
@@ -210,6 +204,7 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
     let messages: any[] = [{ role: "system", content: "You are an executive AI. Output in Japanese." }, { role: "user", content: prompt }];
     if (data.imageBase64) messages = [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${data.mimeType||'image/jpeg'};base64,${data.imageBase64}` } }] }];
     const resp = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages, response_format: {type: "json_object"} }) });
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`OpenAI Error: ${txt}`); }
     const json = await resp.json(); return json.choices[0].message.content;
 }
 
@@ -218,6 +213,7 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
     let messages: any[] = [{ role: "user", content: prompt }];
     if (data.imageBase64) messages = [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: data.mimeType||"image/jpeg", data: data.imageBase64 } }, { type: "text", text: prompt }] }];
     const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model, max_tokens: 4000, messages }) });
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Anthropic Error: ${txt}`); }
     const json = await resp.json(); return json.content[0].text;
 }
 
@@ -227,73 +223,30 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     if (data.imageBase64) body.contents.push({ parts: [{ text: prompt }, { inline_data: { mime_type: data.mimeType||'image/jpeg', data: data.imageBase64 } }] });
     else body.contents.push({ parts: [{ text: prompt }] });
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Gemini Error: ${txt}`); }
     const json = await resp.json(); return json.candidates[0].content.parts[0].text;
 }
 
-// ---  Prompts (Enhanced with Evidence Verification) ---
 function buildPrompt(data: AIRequest): string {
     const { action, content, boardData, currentTime, missionData, missionName, recentMeals } = data;
     const jsonPrefix = "Output purely valid JSON.";
 
-    //  EVIDENCE VERIFICATION (Strict Gatekeeper)
     if (action === 'verify_mission_proof') {
-        return `${jsonPrefix}
-        Role: Strict Task Inspector (Demon Coach).
-        Language: Japanese (日本語).
-        Task: Verify if the photo proves the mission "${missionName}" is COMPLETED perfectly.
-        Context: User claims they finished "${missionName}".
-        
-        Logic:
-        - If "Washing Dishes": Sink must be EMPTY and CLEAN. No bubbles, no food.
-        - If "Cleaning": Floor/Desk must be TIDY.
-        - If photo is irrelevant/dark/blurry: REJECT immediately.
-        - If photo shows mess: REJECT and scold.
-        - Only APPROVE if it looks pristine.
-
-        Output JSON:
-        {
-          "verified": boolean,
-          "comment": "String (Strict verdict in Japanese. e.g. '汚れが残っている。やり直し。' or 'よし、完璧だ。')",
-          "score": 80 (0-100)
-        }`;
+        return `${jsonPrefix} Role: Strict Task Inspector (Demon Coach). Language: Japanese. Verify photo for mission "${missionName}". Logic: If photo is irrelevant/messy -> REJECT. If pristine -> APPROVE. Output JSON: { "verified": boolean, "comment": "String (Japanese)", "score": 80 }`;
     }
-
     if (action === 'check_bedtime_permission') {
         const missions = missionData || {};
-        // Filter tasks that are NOT verified (false)
         const incomplete = Object.keys(missions).filter(k => !missions[k]);
-        const isPerfect = incomplete.length === 0;
-        return `${jsonPrefix}
-        Role: Gatekeeper of Sleep. Language: Japanese.
-        Mission Status (Verified by AI): ${JSON.stringify(missions)}.
-        Output JSON:
-        {
-          "permission_granted": ${isPerfect},
-          "title": "タイトル (Japanese)",
-          "message": "判定理由 (Japanese)",
-          "missing_tasks": ["未完了タスク"],
-          "punishment": "罰則指令 (Japanese)"
-        }`;
+        return `${jsonPrefix} Role: Gatekeeper of Sleep. Language: Japanese. Status: ${JSON.stringify(missions)}. Output JSON: { "permission_granted": ${incomplete.length === 0}, "title": "Title", "message": "Reason", "missing_tasks": ["Tasks"], "punishment": "Action" }`;
     }
-
     if (action === 'suggest_next_meal') {
-        const mealHistory = recentMeals ? recentMeals.map((m:any) => m.menu_name || 'Unspecified').join(', ') : 'None';
-        return `${jsonPrefix} Role: CHO. Language: Japanese. Context: ${currentTime}, History: ${mealHistory}. Suggest meal. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
+        const history = recentMeals ? recentMeals.map((m:any) => m.menu_name).join(',') : '';
+        return `${jsonPrefix} Role: CHO. Language: Japanese. Time: ${currentTime}. History: ${history}. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
     }
-    if (action === 'analyze_image') {
-        return `${jsonPrefix} Role: Toxic Decluttering Coach. Language: Japanese. Tone: Strict. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
-    }
-    if (action === 'digital_danshari_chat') {
-        return `${jsonPrefix} Role: Digital Demon. Language: Japanese. User: "${content}". JSON: { "message": "Scolding", "mission": "Delete X", "angry_score": 90 }`;
-    }
-    if (action === 'proactive_intervention') {
-        return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO"|"CSO", "message": "JP text", "action_label": "Button" }`;
-    }
-    if (action === 'hold_board_meeting') {
-        const d = boardData || {};
-        const notes = d.recentNotes?.map((n:any) => n.title).join(',') || 'None';
-        return `${jsonPrefix} Role: Chairman. Language: Japanese. Agenda: Activities(${notes}). JSON: { "agenda": "議題", "discussion": "議論", "decision": "決定", "stock_price_impact": "株価" }`;
-    }
+    if (action === 'analyze_image') return `${jsonPrefix} Role: Toxic Decluttering Coach. Language: Japanese. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
+    if (action === 'digital_danshari_chat') return `${jsonPrefix} Role: Digital Demon. Language: Japanese. User: "${content}". JSON: { "message": "Scolding", "mission": "Delete X", "angry_score": 90 }`;
+    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO", "message": "JP text", "action_label": "Button" }`;
+    if (action === 'hold_board_meeting') return `${jsonPrefix} Role: Chairman. Language: Japanese. JSON: { "agenda": "A", "discussion": "D", "decision": "Dec", "stock_price_impact": "S" }`;
     
     return content || '';
 }
