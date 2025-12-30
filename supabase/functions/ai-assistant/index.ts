@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Strict Vision Benchmarking)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Strict Vision Benchmarking & Dynamic Ranking)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -17,7 +17,6 @@ const KEYS = {
 
 /**
  * 検証済み: 32x32 純粋な赤 (#FF0000) PNG
- * RGB(255, 0, 0) であることを確認済み
  */
 const VERIFIED_RED_SQUARE = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NMQEAAAjDMMC/ZzDBvlRA01vZJvwHAAAAAAAAAAAAbx2jxAE/i2AjOgAAAABJRU5ErkJggg==";
 
@@ -47,23 +46,25 @@ serve(async (req) => {
         const requestData: AIRequest = await req.json()
         const { action, model: targetModel } = requestData
 
+        // --- 1. モデル一覧取得 (DBの実績からスコアを算出してソート) ---
         if (action === 'get_models') {
-            const models = await gatherAllCandidates(requestData);
+            const models = await gatherAllCandidates(supabaseClient);
             return new Response(JSON.stringify({ success: true, models }), { headers: corsHeaders });
         }
 
-        // --- 2. 死活監視・ベンチマークテスト (Vision & Data Logging) ---
+        // --- 2. 死活監視・ベンチマークテスト & DB保存 ---
         if (action === 'test_model') {
             if (!targetModel) throw new Error('Model name is required');
 
-            const candidates = await gatherAllCandidates(requestData);
+            // 候補リストを取得してプロバイダーを特定
+            const candidates = await gatherAllCandidates(supabaseClient);
             const fighter = candidates.find(c => c.model === targetModel);
             if (!fighter) throw new Error(`Model ${targetModel} not found`);
 
             // ベンチマーク実行
             const benchmark = await runStrictVisionBenchmark(fighter, KEYS);
 
-            // --- 🚀 データベースへの保存ロジックを追加 ---
+            // データベースへの保存
             const { error: dbError } = await supabaseClient
                 .from('ai_benchmark_results')
                 .insert({
@@ -86,13 +87,49 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({ success: false, error: "Action implementation pending" }), { headers: corsHeaders, status: 404 });
 
-    } catch (error) {
+    } catch (error: any) {
         return new Response(JSON.stringify({ success: false, error: error.message }), { headers: corsHeaders, status: 400 });
     }
 });
 
 /**
- * 外部要因を排除した画像認識単体テスト
+ * データベースの実績に基づいてモデルを収集・スコアリング・ソートする
+ */
+async function gatherAllCandidates(supabase: any): Promise<any[]> {
+    // 全モデルの最新のベンチマーク結果をDBから取得
+    const { data: latestResults } = await supabase
+        .from('ai_benchmark_results')
+        .select('model_name, vision_score, latency_ms')
+        .order('tested_at', { ascending: false });
+
+    const promises = Object.entries(KEYS).map(async ([provider, key]) => {
+        if (!key) return [];
+        try {
+            const models = await fetchDynamicModels(provider, key);
+            return models.map(m => {
+                // そのモデルの直近の実績を取得
+                const history = latestResults?.find((r: any) => r.model_name === m);
+                
+                // スコア計算ロジック:
+                // 実績がある場合: (正確性 0-100 * 10) - (速度ms / 100)
+                // 実績がない場合: 500点 (未評価のベースライン)
+                const score = history 
+                    ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
+                    : 500;
+
+                return { provider, model: m, score };
+            });
+        } catch { return []; }
+    });
+
+    const results = (await Promise.all(promises)).flat();
+    
+    // スコアの高い順にソート
+    return results.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * 画像認識単体テスト
  */
 async function runStrictVisionBenchmark(fighter: any, keys: any) {
     const start = Date.now();
@@ -117,9 +154,14 @@ async function runStrictVisionBenchmark(fighter: any, keys: any) {
             detail: text,
             type: 'vision_strict_v2'
         };
-    } catch (e) {
-        // 性能評価のため、エラーをフォールバックせずそのまま報告
-        throw new Error(`Vision API Error: ${e.message}`);
+    } catch (e: any) {
+        // エラー時はスコア0で記録し、例外を投げずに結果を返す
+        return {
+            score: 0,
+            latency: Date.now() - start,
+            detail: `Error: ${e.message}`,
+            type: 'vision_strict_error'
+        };
     }
 }
 
@@ -129,7 +171,7 @@ async function callAI(fighter: any, keys: any, data: AIRequest): Promise<string>
     return await callOpenAICompatible(fighter.provider, fighter.model, keys.openai!, data);
 }
 
-// --- Vision リクエストラッパー ---
+// --- API Wrappers ---
 
 async function callOpenAICompatible(provider: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
     const content = [
@@ -143,7 +185,7 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
         body: JSON.stringify({ model, messages: [{ role: "user", content }] })
     });
     const json = await resp.json();
-    if (!resp.ok) throw new Error(`OpenAI: ${json.error?.message}`);
+    if (!resp.ok) throw new Error(`OpenAI: ${json.error?.message || "Unknown error"}`);
     return json.choices[0].message.content;
 }
 
@@ -159,7 +201,7 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
         body: JSON.stringify({ model, max_tokens: 128, messages: [{ role: "user", content }] })
     });
     const json = await resp.json();
-    if (!resp.ok) throw new Error(`Anthropic: ${json.error?.message}`);
+    if (!resp.ok) throw new Error(`Anthropic: ${json.error?.message || "Unknown error"}`);
     return json.content[0].text;
 }
 
@@ -172,21 +214,8 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
         body: JSON.stringify({ contents: [{ parts }] })
     });
     const json = await resp.json();
-    if (!resp.ok) throw new Error(`Gemini: ${json.error?.message}`);
+    if (!resp.ok) throw new Error(`Gemini: ${json.error?.message || "Unknown error"}`);
     return json.candidates[0].content.parts[0].text;
-}
-
-// --- リスト・スコアリング ---
-
-async function gatherAllCandidates(data: AIRequest): Promise<any[]> {
-    const promises = Object.entries(KEYS).map(async ([provider, key]) => {
-        if (!key) return [];
-        try {
-            const models = await fetchDynamicModels(provider, key);
-            return models.map(m => ({ provider, model: m, score: 1000 }));
-        } catch { return []; }
-    });
-    return (await Promise.all(promises)).flat();
 }
 
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
@@ -200,8 +229,4 @@ async function fetchDynamicModels(provider: string, apiKey: string): Promise<str
     const json = await resp.json();
     if (provider === 'gemini') return (json.models || []).map((m: any) => m.name.replace('models/', ''));
     return (json.data || []).map((m: any) => m.id || m.name);
-}
-
-async function logRequest(supabase: any, userId: string, action: string, provider: string, model: string, status: number, duration: number, errorMsg: string = '') {
-    try { await supabase.from('ai_request_logs').insert({ user_id: userId, action, provider, model, status_code: status, duration_ms: duration, error_message: errorMsg }); } catch { }
 }

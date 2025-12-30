@@ -26,7 +26,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     _fetchAvailableModels();
   }
 
-  // モデル一覧の取得
+  // モデル一覧の取得 (サーバー側の実績スコアに基づいた初期ソート)
   Future<void> _fetchAvailableModels() async {
     try {
       setState(() => _isLoading = true);
@@ -43,8 +43,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
       setState(() {
         _models = List.from(data['models'] ?? []);
-        _models
-            .sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+        // 初期状態をスコア順にソート
+        _sortModels();
         _isLoading = false;
         _error = null;
       });
@@ -56,16 +56,22 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
+  // リストをスコア順に並び替える共通メソッド
+  void _sortModels() {
+    _models.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+  }
+
   // 全モデルの順次テスト実行
   Future<void> _runAllTests() async {
     for (var model in _models) {
       final String modelName = model['model'];
+      // 各モデルのテストを待機せずに並列気味に回す（UI更新を優先）
       _testSingleModel(modelName);
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 300));
     }
   }
 
-  // 単体モデルのテスト実行 (修正版)
+  // 単体モデルのテスト実行 (動的ソート対応版)
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
       _testResults[modelName] = 'testing';
@@ -79,24 +85,42 @@ class _AiStatusPageState extends State<AiStatusPage> {
         body: {'action': 'test_model', 'model': modelName},
       );
 
-      // ★ 修正ポイント: res.dataがStringの場合はJSONデコードする
       final data = res.data is String
           ? jsonDecode(res.data)
           : res.data as Map<String, dynamic>;
 
       setState(() {
-        // ★ 修正ポイント: statusではなくdataの中身で判定
         if (data['success'] == true) {
           _testResults[modelName] = 'success';
 
-          // ベンチマーク結果があれば保存
           final benchmark = data['benchmark'];
           if (benchmark != null) {
             _visionScores[modelName] = Map<String, dynamic>.from(benchmark);
+
+            // ★ 追加ロジック: ローカルのモデルリスト内のスコアも動的に更新する
+            final index = _models.indexWhere((m) => m['model'] == modelName);
+            if (index != -1) {
+              // サーバー側のロジックと同じ計算式でスコアを暫定計算
+              // (認識率 * 10) - (速度ms / 100)
+              final int newScore = ((benchmark['score'] as int) * 10) -
+                  ((benchmark['latency'] as num) ~/ 100);
+
+              _models[index]['score'] = newScore;
+
+              // ★ 順位が変わる可能性があるため再ソート
+              _sortModels();
+            }
           }
         } else {
           _testResults[modelName] = 'error';
           _testErrors[modelName] = data['error']?.toString() ?? 'Unknown Error';
+
+          // エラー時はスコアを0にして最下位へ
+          final index = _models.indexWhere((m) => m['model'] == modelName);
+          if (index != -1) {
+            _models[index]['score'] = 0;
+            _sortModels();
+          }
         }
       });
     } catch (e) {
@@ -150,6 +174,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     final status = _testResults[modelName];
 
                     return Card(
+                      key: ValueKey(modelName), // ソート時にアニメーションを安定させるため
                       elevation: 0,
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
@@ -186,14 +211,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
-
-                            // ベンチマーク結果の表示（より堅牢なnullチェック）
                             Builder(builder: (context) {
                               final benchmark = _visionScores[modelName];
                               if (benchmark == null)
                                 return const SizedBox.shrink();
 
-                              final score = benchmark['score'] as int? ?? 0;
+                              final scoreValue =
+                                  benchmark['score'] as int? ?? 0;
                               final latency = benchmark['latency'] as num? ?? 0;
                               final detail =
                                   benchmark['detail'] as String? ?? '回答なし';
@@ -209,16 +233,16 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                         WrapCrossAlignment.center,
                                     children: [
                                       Icon(
-                                        score == 100
+                                        scoreValue == 100
                                             ? Icons.visibility
                                             : Icons.visibility_off,
                                         size: 14,
-                                        color: score == 100
+                                        color: scoreValue == 100
                                             ? Colors.green
                                             : Colors.grey,
                                       ),
-                                      _buildScoreBadge(
-                                          "画像認識", "$score%", Colors.purple),
+                                      _buildScoreBadge("画像認識", "$scoreValue%",
+                                          Colors.purple),
                                       _buildScoreBadge(
                                           "速度",
                                           "${(latency / 1000).toStringAsFixed(2)}s",
@@ -244,8 +268,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                 ],
                               );
                             }),
-
-                            // エラー表示
                             if (_testErrors.containsKey(modelName))
                               Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
@@ -282,7 +304,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
-  // スコア・速度表示用のバッジ
   Widget _buildScoreBadge(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
