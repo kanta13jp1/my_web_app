@@ -180,28 +180,46 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
-                            // Visionベンチマークバッジの表示
-                            if (_visionScores.containsKey(modelName))
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    _buildScoreBadge(
-                                        "画像認識",
-                                        "${_visionScores[modelName]!['score']}%",
-                                        Colors.purple),
-                                    _buildScoreBadge(
-                                        "応答速度",
-                                        "${(_visionScores[modelName]!['latency'] / 1000).toStringAsFixed(1)}s",
-                                        Colors.teal),
-                                  ],
+
+                            // --- 追加: ベンチマーク結果の表示ロジックを強化 ---
+                            if (_visionScores.containsKey(modelName)) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  _buildScoreBadge(
+                                      "画像認識",
+                                      "${_visionScores[modelName]!['score']}%",
+                                      Colors.purple),
+                                  _buildScoreBadge(
+                                      "応答速度",
+                                      "${(_visionScores[modelName]!['latency'] / 1000).toStringAsFixed(2)}s",
+                                      Colors.teal),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              // 認識された内容のプレビューを表示
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  "認識結果: ${_visionScores[modelName]!['detail'] ?? 'No data'}",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade700,
+                                      fontStyle: FontStyle.italic),
                                 ),
                               ),
-                            // エラー詳細の表示
+                            ],
+
+                            // エラー表示
                             if (_testErrors.containsKey(modelName))
                               Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
+                                padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
                                   _testErrors[modelName]!,
                                   style: const TextStyle(
