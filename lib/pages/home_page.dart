@@ -25,7 +25,6 @@ class MissionItem {
   bool isVerified;
   bool isAnalyzing;
   String? aiComment;
-
   MissionItem(
       {required this.name,
       this.isVerified = false,
@@ -35,7 +34,6 @@ class MissionItem {
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -46,15 +44,12 @@ class _HomePageState extends State<HomePage> {
   int _healthScore = 0;
   int _fixedCost = 0;
   List<Note> _notes = [];
-
   int _todayDigitalCount = 0;
   int _todayRealCount = 0;
   int _dailyDigitalGoal = 5;
   int _dailyRealGoal = 1;
-
   bool _isLoading = true;
   bool _isMeeting = false;
-
   final ImagePicker _picker = ImagePicker();
 
   final List<MissionItem> _dailyMissions = [
@@ -506,17 +501,31 @@ class _HomePageState extends State<HomePage> {
         'context': isMorning ? 'morning_briefing' : 'emergency',
         'multi_response': true
       });
-      if (response.status != 200) throw Exception('AI Error');
+      if (response.status != 200)
+        throw Exception('AI Error: ${response.status}');
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
+
       if (mounted) {
-        if (data['is_multi'] == true)
+        //  FIX: Handle single result even if multi_response was requested (fallback for solo mode)
+        if (data['is_multi'] == true && (data['results'] as List).length >= 2) {
           _showBattleResult(data['results'], isMorning: isMorning);
-        else
+        } else if (data['is_multi'] == true &&
+            (data['results'] as List).isNotEmpty) {
+          // Solo fallback (1 fighter)
+          final solo = data['results'][0];
+          _showMeetingResult(solo['result'],
+              isMorning: isMorning, provider: solo['provider']);
+        } else {
+          // Normal single mode
           _showMeetingResult(data['result'],
               isMorning: isMorning, provider: data['provider']);
+        }
       }
-    } catch (_) {
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
     } finally {
       if (mounted) setState(() => _isMeeting = false);
     }
@@ -549,14 +558,31 @@ class _HomePageState extends State<HomePage> {
 
   void _showMeetingResult(Map<String, dynamic> result,
       {bool isMorning = false, String? provider}) {
+    // Robust display logic
+    String content = '';
+    if (result['agenda'] != null) content += '【議題】${result['agenda']}\n\n';
+    if (result['discussion'] != null)
+      content += '【議論】${result['discussion']}\n\n';
+    if (result['decision'] != null) content += '【決定】${result['decision']}\n\n';
+    if (result['stock_price_impact'] != null)
+      content += '【株価影響】${result['stock_price_impact']}';
+    if (content.isEmpty) content = result['message'] ?? 'No Data';
+
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
                 backgroundColor: _navy,
-                title: Text(isMorning ? 'Morning Briefing' : 'Board Meeting',
-                    style: const TextStyle(color: Colors.white)),
+                title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(isMorning ? 'Morning Briefing' : 'Board Meeting',
+                          style: const TextStyle(color: Colors.white)),
+                      if (provider != null)
+                        Text('議長: $provider',
+                            style: TextStyle(color: _gold, fontSize: 12))
+                    ]),
                 content: SingleChildScrollView(
-                    child: Text(result['discussion'] ?? result['message'] ?? '',
+                    child: Text(content,
                         style: const TextStyle(color: Colors.white70))),
                 actions: [
                   TextButton(
