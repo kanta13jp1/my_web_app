@@ -176,7 +176,11 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({ model, messages: [{ role: "user", content: buildPrompt(data) }] })
     });
+    
     const json = await resp.json();
+    if (!resp.ok) throw new Error(`${provider} Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
+    if (!json.choices || !json.choices[0]) throw new Error(`${provider} returned empty choices`);
+    
     return json.choices[0].message.content;
 }
 
@@ -186,7 +190,11 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
         headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
         body: JSON.stringify({ model, max_tokens: 1024, messages: [{ role: "user", content: buildPrompt(data) }] })
     });
+    
     const json = await resp.json();
+    if (!resp.ok) throw new Error(`Anthropic Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
+    if (!json.content || !json.content[0]) throw new Error(`Anthropic returned empty content`);
+    
     return json.content[0].text;
 }
 
@@ -196,7 +204,13 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ contents: [{ parts: [{ text: buildPrompt(data) }] }] })
     });
+    
     const json = await resp.json();
+    if (!resp.ok) throw new Error(`Gemini Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
+    if (!json.candidates || !json.candidates[0]?.content?.parts?.[0]?.text) {
+        throw new Error(`Gemini returned empty result. Check if model "${model}" is available.`);
+    }
+    
     return json.candidates[0].content.parts[0].text;
 }
 

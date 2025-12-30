@@ -16,6 +16,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
   String? _error;
   // テスト結果を保持するマップ (モデル名 -> 状態: 'testing', 'success', 'error')
   Map<String, String> _testResults = {};
+  Map<String, String> _testErrors = {}; // ← 追加：モデルごとのエラー文を保持
 
   @override
   void initState() {
@@ -66,20 +67,33 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
   // 単体モデルのテスト実行
   Future<void> _testSingleModel(String modelName) async {
-    setState(() => _testResults[modelName] = 'testing');
+    setState(() {
+      _testResults[modelName] = 'testing';
+      _testErrors.remove(modelName); // テスト開始時に以前のエラーを消去
+    });
+
     try {
       final res = await supabase.functions.invoke(
         'ai-assistant',
-        body: {
-          'action': 'test_model',
-          'model': modelName,
-        },
+        body: {'action': 'test_model', 'model': modelName},
       );
+
       setState(() {
-        _testResults[modelName] = res.status == 200 ? 'success' : 'error';
+        if (res.status == 200) {
+          _testResults[modelName] = 'success';
+        } else {
+          _testResults[modelName] = 'error';
+          // APIから返ってきたエラー文を取得（res.data['error']）
+          _testErrors[modelName] =
+              res.data['error']?.toString() ?? 'Unknown Error';
+        }
       });
     } catch (e) {
-      setState(() => _testResults[modelName] = 'error');
+      setState(() {
+        _testResults[modelName] = 'error';
+        // 通信レベルのエラー（400 Bad Requestなど）をキャッチ
+        _testErrors[modelName] = e.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 
@@ -158,7 +172,24 @@ class _AiStatusPageState extends State<AiStatusPage> {
                         title: Text(modelName,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text('Provider: ${provider.toUpperCase()}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Provider: ${provider.toUpperCase()}'),
+                            if (_testErrors
+                                .containsKey(modelName)) // エラーがある場合のみ表示
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  _testErrors[modelName]!,
+                                  style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                          ],
+                        ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
