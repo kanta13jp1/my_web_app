@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
@@ -31,8 +32,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
       if (response.status != 200)
         throw Exception('API Error: ${response.status}');
 
+      final data =
+          response.data is String ? jsonDecode(response.data) : response.data;
       setState(() {
-        _models = response.data['models'] ?? [];
+        final List<dynamic> modelList = data['models'] ?? [];
+        _models = List.from(modelList);
         _models
             .sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
         _isLoading = false;
