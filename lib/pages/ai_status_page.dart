@@ -51,13 +51,15 @@ class _AiStatusPageState extends State<AiStatusPage> {
     final Color navy = const Color(0xFF0F172A);
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      app_appBar: AppBar(
+      appBar: AppBar(
         title: const Text('AI稼働モニター'),
         backgroundColor: navy,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _fetchAvailableModels)
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchAvailableModels,
+          )
         ],
       ),
       body: _isLoading
@@ -66,7 +68,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
               ? Center(
                   child: Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: Text('エラー: $_error',
+                  child: Text('エラーが発生しました: $_error',
                       style: const TextStyle(color: Colors.red)),
                 ))
               : ListView.builder(
