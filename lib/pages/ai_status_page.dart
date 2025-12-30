@@ -181,55 +181,65 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
 
-                            // --- 修正点: Nullチェックを厳格化し、エラーを回避 ---
-                            if (_visionScores.containsKey(modelName) &&
-                                _visionScores[modelName] != null) ...[
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 4,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Icon(
-                                    _visionScores[modelName]!['score'] == 100
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    size: 14,
-                                    color: _visionScores[modelName]!['score'] ==
-                                            100
-                                        ? Colors.green
-                                        : Colors.grey,
-                                  ),
-                                  _buildScoreBadge(
-                                      "画像認識",
-                                      "${_visionScores[modelName]!['score']}%",
-                                      Colors.purple),
-                                  _buildScoreBadge(
-                                      "速度",
-                                      "${(_visionScores[modelName]!['latency'] / 1000).toStringAsFixed(2)}s",
-                                      Colors.teal),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              // 認識結果のテキストを表示
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  "認識結果: ${_visionScores[modelName]!['detail'] ?? '回答なし'}",
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade700,
-                                      fontStyle: FontStyle.italic),
-                                ),
-                              ),
-                            ],
+                            // ベンチマーク結果の表示（より堅牢なnullチェック）
+                            Builder(builder: (context) {
+                              final benchmark = _visionScores[modelName];
+                              if (benchmark == null)
+                                return const SizedBox.shrink();
 
-                            // エラー詳細の表示（クォータ制限など）
+                              final score = benchmark['score'] as int? ?? 0;
+                              final latency = benchmark['latency'] as num? ?? 0;
+                              final detail =
+                                  benchmark['detail'] as String? ?? '回答なし';
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      Icon(
+                                        score == 100
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        size: 14,
+                                        color: score == 100
+                                            ? Colors.green
+                                            : Colors.grey,
+                                      ),
+                                      _buildScoreBadge(
+                                          "画像認識", "$score%", Colors.purple),
+                                      _buildScoreBadge(
+                                          "速度",
+                                          "${(latency / 1000).toStringAsFixed(2)}s",
+                                          Colors.teal),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      "認識結果: $detail",
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey.shade700,
+                                          fontStyle: FontStyle.italic),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
+
+                            // エラー表示
                             if (_testErrors.containsKey(modelName))
                               Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
