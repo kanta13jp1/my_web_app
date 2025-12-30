@@ -23,7 +23,8 @@ class _DanshariPageState extends State<DanshariPage>
 
   // --- Memo Cleaner State ---
   List<Note> _notes = [];
-  final Set<String> _selectedNoteIds = {};
+  //  FIX 1: IDは int なので Set<int> に変更
+  final Set<int> _selectedNoteIds = {};
   bool _isLoadingNotes = true;
 
   // Colors
@@ -97,7 +98,6 @@ class _DanshariPageState extends State<DanshariPage>
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 古い順（放置されているもの）から取得
       final response = await supabase
           .from('notes')
           .select()
@@ -123,10 +123,11 @@ class _DanshariPageState extends State<DanshariPage>
 
     final count = _selectedNoteIds.length;
     try {
+      //  FIX 2: .in_() ではなく .inFilter() を使用 (Supabase v2対応)
       await supabase.from('notes').update({
         'is_archived': true,
         'updated_at': DateTime.now().toIso8601String()
-      }).in_('id', _selectedNoteIds.toList());
+      }).inFilter('id', _selectedNoteIds.toList());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -135,7 +136,6 @@ class _DanshariPageState extends State<DanshariPage>
           _selectedNoteIds.clear();
         });
         _fetchNotes();
-        // 褒めてもらう
         _addMessage('$count 件のメモを処分したぞ。どうだ。', true);
         Future.delayed(const Duration(seconds: 1),
             () => _addMessage('悪くない。だが、まだ残っているはずだ。手を止めるな。', false));
