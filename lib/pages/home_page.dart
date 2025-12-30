@@ -53,12 +53,12 @@ class _HomePageState extends State<HomePage> {
   final ImagePicker _picker = ImagePicker();
 
   final List<MissionItem> _dailyMissions = [
-    MissionItem(name: '洗い物 (Dishes)'),
-    MissionItem(name: '洗濯 (Laundry)'),
-    MissionItem(name: '自炊 (Cooking)'),
-    MissionItem(name: '入浴 (Bath)'),
-    MissionItem(name: '部屋の掃除 (Cleaning)'),
-    MissionItem(name: '机の片付け (Tidying)'),
+    MissionItem(name: '洗い物'),
+    MissionItem(name: '洗濯'),
+    MissionItem(name: '自炊'),
+    MissionItem(name: '入浴'),
+    MissionItem(name: '掃除'),
+    MissionItem(name: '片付け'),
   ];
 
   final Color _navy = const Color(0xFF0F172A);
@@ -73,16 +73,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _runExecutiveChecks() async {
     await _loadData();
-    _calculateDynamicGoals();
-    await _checkMorningBriefing();
+    _checkMorningBriefing();
     await _checkProactiveIntervention();
-  }
-
-  void _calculateDynamicGoals() {
-    setState(() {
-      _dailyDigitalGoal = 5 + (_taskCount / 20).floor();
-      _dailyRealGoal = 1 + (_totalPoints / 3000).floor();
-    });
   }
 
   Future<void> _loadData() async {
@@ -263,21 +255,17 @@ class _HomePageState extends State<HomePage> {
         'boardData': boardData,
         'currentTime': TimeOfDay.now().format(context)
       });
-      if (response.status == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final result = data['result'];
-          if (mounted && data['used_model'] != null)
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content:
-                    Text('AI介入: ${data['provider']} (${data['used_model']})'),
-                backgroundColor: Colors.blueGrey,
-                duration: const Duration(seconds: 2)));
-          if (result['should_intervene'] == true) {
-            await Future.delayed(const Duration(seconds: 3));
-            if (mounted) _showInterventionDialog(result);
-            await prefs.setInt('last_intervention_ts', nowTs);
-          }
+      if (response.status == 200 && response.data['success'] == true) {
+        final result = response.data['result'];
+        if (mounted && response.data['used_model'] != null)
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('AI介入: ${response.data['provider']}'),
+              backgroundColor: Colors.blueGrey,
+              duration: const Duration(seconds: 2)));
+        if (result['should_intervene'] == true) {
+          await Future.delayed(const Duration(seconds: 3));
+          if (mounted) _showInterventionDialog(result);
+          await prefs.setInt('last_intervention_ts', nowTs);
         }
       }
     } catch (_) {}
@@ -501,6 +489,7 @@ class _HomePageState extends State<HomePage> {
         'context': isMorning ? 'morning_briefing' : 'emergency',
         'multi_response': true
       });
+
       if (response.status != 200)
         throw Exception('AI Error: ${response.status}');
       final data = response.data;
@@ -849,7 +838,7 @@ class _HomePageState extends State<HomePage> {
           : CustomScrollView(slivers: [
               _buildSliverAppBar(),
 
-              // ---  MERGED OPERATIONS CARD (BEDTIME CONTROL) ---
+              // ---  MERGED OPERATIONS CARD ---
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -866,35 +855,33 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2))
-                          ],
-                          border: Border.all(
-                              color: isAllMet
-                                  ? Colors.green
-                                  : Colors.red.withOpacity(0.3),
-                              width: 2),
-                        ),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2))
+                            ],
+                            border: Border.all(
+                                color: isAllMet
+                                    ? Colors.green
+                                    : Colors.red.withOpacity(0.3),
+                                width: 2)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                    isAllMet
-                                        ? Icons.verified
-                                        : Icons.warning_amber,
-                                    color: isAllMet
-                                        ? Colors.green
-                                        : Colors.redAccent,
-                                    size: 28),
-                                const SizedBox(width: 12),
-                                Column(
+                            Row(children: [
+                              Icon(
+                                  isAllMet
+                                      ? Icons.verified
+                                      : Icons.warning_amber,
+                                  color: isAllMet
+                                      ? Colors.green
+                                      : Colors.redAccent,
+                                  size: 28),
+                              const SizedBox(width: 12),
+                              Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(isAllMet ? '就寝許可証: 発行済' : '就寝許可証: 未発行',
@@ -906,56 +893,53 @@ class _HomePageState extends State<HomePage> {
                                       Text('未達成の任務があります',
                                           style: TextStyle(
                                               color: Colors.redAccent,
-                                              fontSize: 12)),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                              fontSize: 12))
+                                  ])
+                            ]),
                             const Divider(height: 32),
                             const Text("必須ルーティン (証拠提出)",
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 14)),
                             const SizedBox(height: 8),
                             ListView.separated(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: _dailyMissions.length,
-                              separatorBuilder: (c, i) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final item = _dailyMissions[index];
-                                return ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  dense: true,
-                                  title: Text(item.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14)),
-                                  subtitle: item.aiComment != null
-                                      ? Text(item.aiComment!,
-                                          style: TextStyle(
-                                              color: item.isVerified
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              fontSize: 11))
-                                      : null,
-                                  trailing: item.isAnalyzing
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2))
-                                      : item.isVerified
-                                          ? const Icon(Icons.check_circle,
-                                              color: Colors.green, size: 20)
-                                          : IconButton(
-                                              icon: const Icon(Icons.camera_alt,
-                                                  color: Colors.blueGrey),
-                                              onPressed: () =>
-                                                  _verifyMission(index)),
-                                );
-                              },
-                            ),
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: _dailyMissions.length,
+                                separatorBuilder: (c, i) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final item = _dailyMissions[index];
+                                  return ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      dense: true,
+                                      title: Text(item.name,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14)),
+                                      subtitle: item.aiComment != null
+                                          ? Text(item.aiComment!,
+                                              style: TextStyle(
+                                                  color: item.isVerified
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                  fontSize: 11))
+                                          : null,
+                                      trailing: item.isAnalyzing
+                                          ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2))
+                                          : item.isVerified
+                                              ? const Icon(Icons.check_circle,
+                                                  color: Colors.green, size: 20)
+                                              : IconButton(
+                                                  icon: const Icon(
+                                                      Icons.camera_alt,
+                                                      color: Colors.blueGrey),
+                                                  onPressed: () =>
+                                                      _verifyMission(index)));
+                                }),
                             const SizedBox(height: 16),
                             const Text("自己研鑽ノルマ",
                                 style: TextStyle(
@@ -981,34 +965,33 @@ class _HomePageState extends State<HomePage> {
                             }),
                             const SizedBox(height: 24),
                             SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _isMeeting
-                                    ? null
-                                    : _requestBedtimePermission,
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        isAllMet ? Colors.green : _navy,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12))),
-                                icon: _isMeeting
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2))
-                                    : Icon(isAllMet ? Icons.bed : Icons.lock),
-                                label: const Text('就寝許可を申請する',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
-                              ),
-                            )
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                    onPressed: _isMeeting
+                                        ? null
+                                        : _requestBedtimePermission,
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            isAllMet ? Colors.green : _navy,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12))),
+                                    icon: _isMeeting
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2))
+                                        : Icon(
+                                            isAllMet ? Icons.bed : Icons.lock),
+                                    label: const Text('就寝許可を申請する',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16))))
                           ],
                         ),
                       ),
@@ -1049,7 +1032,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // --- DEPARTMENTS GRID ---
               SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid.count(
@@ -1080,7 +1062,6 @@ class _HomePageState extends State<HomePage> {
                             Colors.pink, const ChroPage())
                       ])),
 
-              // --- OPERATIONS (QUICK) & PROJECTS ---
               SliverToBoxAdapter(
                   child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -1112,7 +1093,6 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: 12)
                           ]))),
 
-              // --- PROJECTS LIST ---
               _notes.isEmpty
                   ? SliverToBoxAdapter(
                       child: Padding(

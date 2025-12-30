@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Fixed Error Handling)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Robust Error Handling Ver.)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -51,19 +51,29 @@ serve(async (req) => {
     const requestData: AIRequest = await req.json()
     const { action, multi_response } = requestData
 
-    // ---  Battle Mode ---
+    // ---  Battle Mode (Robust) ---
     if (multi_response) {
         let candidates = await gatherAllCandidates(requestData);
-        if (candidates.length === 0) throw new Error('No AI models available.');
+        // Fallback if no vision models are available but we need vision
+        if (candidates.length === 0 && !requestData.imageBase64) {
+             // Retry with stricter filter or default
+        }
+        
+        if (candidates.length === 0) throw new Error('No capable AI models available for this task.');
         candidates.sort((a, b) => b.score - a.score);
 
-        const providers = ['anthropic', 'gemini', 'openai'];
-        const champions = [];
-        for (const p of providers) {
-            const best = candidates.find(c => c.provider === p);
-            if (best) champions.push(best);
+        // Pick top 2 distinct providers
+        const fighters = [];
+        const seenProviders = new Set();
+        for (const c of candidates) {
+            if (!seenProviders.has(c.provider)) {
+                fighters.push(c);
+                seenProviders.add(c.provider);
+                if (fighters.length >= 2) break;
+            }
         }
-        const fighters = champions.slice(0, 2); 
+        // If we can't find 2 providers, just use the top 1
+        if (fighters.length === 0 && candidates.length > 0) fighters.push(candidates[0]);
         
         const results = await Promise.all(fighters.map(async (fighter) => {
             const start = Date.now();
@@ -76,17 +86,21 @@ serve(async (req) => {
                 await logRequest(supabaseClient, user.id, action, fighter.provider, fighter.model, 200, Date.now() - start);
                 
                 let parsed = text;
-                if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action)) {
-                    parsed = parseJsonResult(text);
-                }
+                if (shouldParseJson(action)) parsed = parseJsonResult(text);
                 return { success: true, provider: fighter.provider, model: fighter.model, result: parsed };
             } catch (e) {
+                console.error(`Fighter ${fighter.provider} failed: ${e.message}`);
                 return { success: false, provider: fighter.provider, error: e.message };
             }
         }));
 
         const successes = results.filter(r => r.success);
-        if (successes.length === 0) throw new Error('All models failed.');
+        
+        // If all failed, throw error
+        if (successes.length === 0) {
+             const errors = results.map(r => `${r.provider}: ${r.error}`).join(', ');
+             throw new Error(`All AI models failed. Details: ${errors}`);
+        }
 
         return new Response(
             JSON.stringify({ success: true, is_multi: true, results: successes }),
@@ -94,7 +108,7 @@ serve(async (req) => {
         )
     }
 
-    // ---  Single Mode ---
+    // ---  Single Mode (Robust) ---
     let candidates = await gatherAllCandidates(requestData);
     if (candidates.length === 0) throw new Error('No AI models available.');
     candidates.sort((a, b) => b.score - a.score);
@@ -107,6 +121,7 @@ serve(async (req) => {
         const { provider, model } = candidate;
         const startTime = Date.now();
         try {
+            console.log(` Attempting: ${provider} [${model}]`);
             if (provider === 'gemini') finalResult = await callGemini(model, KEYS.gemini!, requestData);
             else if (provider === 'anthropic') finalResult = await callAnthropic(model, KEYS.anthropic!, requestData);
             else finalResult = await callOpenAICompatible(provider, model, KEYS[provider as keyof typeof KEYS]!, requestData);
@@ -116,16 +131,15 @@ serve(async (req) => {
             break; 
         } catch (e) {
             logs.push(`${provider}/${model}: ${e.message}`);
-            await logRequest(supabaseClient, user.id, action, provider, model, 500, Date.now() - startTime, e.message);
+            console.error(`Candidate failed: ${e.message}`);
+            // Don't throw, try next candidate
         }
     }
 
-    if (!winner) throw new Error(`All candidates exhausted. Logs: ${logs.join('|')}`);
+    if (!winner) throw new Error(`All candidates exhausted. Errors: ${logs.join(' | ')}`);
 
     let parsedResult = finalResult;
-    if (['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action)) {
-        parsedResult = parseJsonResult(finalResult);
-    }
+    if (shouldParseJson(action)) parsedResult = parseJsonResult(finalResult);
 
     return new Response(
       JSON.stringify({ success: true, result: parsedResult, provider: winner.provider, used_model: winner.model }),
@@ -133,17 +147,30 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error("Fatal Error:", error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
 
-// ---  Helper Functions (Fixed Error Checks) ---
+// ---  Helper Functions ---
+function shouldParseJson(action: string): boolean {
+    return ['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof'].includes(action);
+}
+
 function calculateModelScore(provider: string, modelId: string, isVision: boolean): number {
     let score = 0;
     const id = modelId.toLowerCase();
-    if (id.includes('gemma')) return -1; 
-    if (id.includes('nano')) return -1;
-    if (id.includes('lite')) return -1;
+
+    //  Strict Bans for Vision
+    if (isVision) {
+        if (id.includes('deepseek')) return -1; // DeepSeek vision is often unstable via proxies
+        if (id.includes('o1')) return -1;
+    }
+    
+    // Low capability models ban
+    if (id.includes('gemma') || id.includes('nano') || id.includes('lite')) return -1;
+
+    // Scoring
     if (id.includes('claude-opus-4-5') || id.includes('claude-sonnet-4-5')) score = 1200;
     else if (id.includes('gemini-3')) score = 1150;
     else if (id.includes('gpt-5')) score = 1140;
@@ -155,10 +182,7 @@ function calculateModelScore(provider: string, modelId: string, isVision: boolea
     else if (id.includes('gemini-1.5-pro')) score = 850;
     else if (id.includes('gemini-2.0-flash')) score = 840;
     else if (id.includes('gpt-4o-mini')) score = 700; 
-    if (isVision) {
-        if (id.includes('deepseek')) score = -1; 
-        if (id.includes('o1') || id.includes('o3')) score = -1; 
-    }
+
     return score;
 }
 
@@ -193,6 +217,8 @@ async function fetchDynamicModels(provider: string, apiKey: string): Promise<str
         const resp = await fetch(url, { headers });
         if (!resp.ok) return [];
         const json = await resp.json();
+        
+        //  SAFE PARSING
         if (provider === 'gemini') return (json.models || []).map((m: any) => m.name.replace('models/', ''));
         if (provider === 'anthropic') return (json.data || []).map((m: any) => m.id);
         return (json.data || []).map((m: any) => m.id);
@@ -203,18 +229,38 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "system", content: "You are an executive AI. Output in Japanese." }, { role: "user", content: prompt }];
     if (data.imageBase64) messages = [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${data.mimeType||'image/jpeg'};base64,${data.imageBase64}` } }] }];
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model, messages, response_format: {type: "json_object"} }) });
-    if (!resp.ok) { const txt = await resp.text(); throw new Error(`OpenAI Error: ${txt}`); }
-    const json = await resp.json(); return json.choices[0].message.content;
+    
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, 
+        body: JSON.stringify({ model, messages, response_format: {type: "json_object"} }) 
+    });
+    
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`OpenAI API Error (${resp.status}): ${txt}`); }
+    const json = await resp.json();
+    
+    //  SAFE PARSING
+    if (!json.choices || json.choices.length === 0 || !json.choices[0].message) throw new Error(`OpenAI Invalid Response: ${JSON.stringify(json)}`);
+    return json.choices[0].message.content;
 }
 
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
     const prompt = buildPrompt(data);
     let messages: any[] = [{ role: "user", content: prompt }];
     if (data.imageBase64) messages = [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: data.mimeType||"image/jpeg", data: data.imageBase64 } }, { type: "text", text: prompt }] }];
-    const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model, max_tokens: 4000, messages }) });
-    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Anthropic Error: ${txt}`); }
-    const json = await resp.json(); return json.content[0].text;
+    
+    const resp = await fetch('https://api.anthropic.com/v1/messages', { 
+        method: 'POST', 
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, 
+        body: JSON.stringify({ model, max_tokens: 4000, messages }) 
+    });
+    
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Anthropic API Error (${resp.status}): ${txt}`); }
+    const json = await resp.json();
+    
+    //  SAFE PARSING
+    if (!json.content || json.content.length === 0) throw new Error(`Anthropic Invalid Response: ${JSON.stringify(json)}`);
+    return json.content[0].text;
 }
 
 async function callGemini(model: string, apiKey: string, data: AIRequest): Promise<string> {
@@ -222,9 +268,19 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     const body: any = { contents: [] };
     if (data.imageBase64) body.contents.push({ parts: [{ text: prompt }, { inline_data: { mime_type: data.mimeType||'image/jpeg', data: data.imageBase64 } }] });
     else body.contents.push({ parts: [{ text: prompt }] });
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Gemini Error: ${txt}`); }
-    const json = await resp.json(); return json.candidates[0].content.parts[0].text;
+    
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify(body) 
+    });
+    
+    if (!resp.ok) { const txt = await resp.text(); throw new Error(`Gemini API Error (${resp.status}): ${txt}`); }
+    const json = await resp.json();
+    
+    //  SAFE PARSING
+    if (!json.candidates || json.candidates.length === 0 || !json.candidates[0].content) throw new Error(`Gemini Invalid Response: ${JSON.stringify(json)}`);
+    return json.candidates[0].content.parts[0].text;
 }
 
 function buildPrompt(data: AIRequest): string {
@@ -232,21 +288,20 @@ function buildPrompt(data: AIRequest): string {
     const jsonPrefix = "Output purely valid JSON.";
 
     if (action === 'verify_mission_proof') {
-        return `${jsonPrefix} Role: Strict Task Inspector (Demon Coach). Language: Japanese. Verify photo for mission "${missionName}". Logic: If photo is irrelevant/messy -> REJECT. If pristine -> APPROVE. Output JSON: { "verified": boolean, "comment": "String (Japanese)", "score": 80 }`;
+        return `${jsonPrefix} Role: Strict Inspector. Language: Japanese. Task: Verify photo for "${missionName}". Logic: Messy->REJECT. Clean->APPROVE. Output: { "verified": boolean, "comment": "string", "score": number }`;
     }
     if (action === 'check_bedtime_permission') {
         const missions = missionData || {};
         const incomplete = Object.keys(missions).filter(k => !missions[k]);
-        return `${jsonPrefix} Role: Gatekeeper of Sleep. Language: Japanese. Status: ${JSON.stringify(missions)}. Output JSON: { "permission_granted": ${incomplete.length === 0}, "title": "Title", "message": "Reason", "missing_tasks": ["Tasks"], "punishment": "Action" }`;
+        return `${jsonPrefix} Role: Gatekeeper. Language: Japanese. Status: ${JSON.stringify(missions)}. Output: { "permission_granted": ${incomplete.length === 0}, "title": "string", "message": "string", "missing_tasks": [], "punishment": "string" }`;
     }
     if (action === 'suggest_next_meal') {
-        const history = recentMeals ? recentMeals.map((m:any) => m.menu_name).join(',') : '';
-        return `${jsonPrefix} Role: CHO. Language: Japanese. Time: ${currentTime}. History: ${history}. JSON: { "menu_name": "Name", "reason": "Reason", "ingredients": [], "recipe_steps": [], "calorie_estimate": 0, "nutrients": {} }`;
+        return `${jsonPrefix} Role: Chef. Language: Japanese. Context: ${currentTime}. Output: { "menu_name": "string", "reason": "string", "ingredients": [], "recipe_steps": [], "calorie_estimate": number, "nutrients": {} }`;
     }
-    if (action === 'analyze_image') return `${jsonPrefix} Role: Toxic Decluttering Coach. Language: Japanese. Analyze photo. JSON: { "result": "Verdict", "item_name": "Name", "keep_score": 10 }`;
-    if (action === 'digital_danshari_chat') return `${jsonPrefix} Role: Digital Demon. Language: Japanese. User: "${content}". JSON: { "message": "Scolding", "mission": "Delete X", "angry_score": 90 }`;
-    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. JSON: { "should_intervene": boolean, "role": "CFO"|"CHO", "message": "JP text", "action_label": "Button" }`;
-    if (action === 'hold_board_meeting') return `${jsonPrefix} Role: Chairman. Language: Japanese. JSON: { "agenda": "A", "discussion": "D", "decision": "Dec", "stock_price_impact": "S" }`;
+    if (action === 'analyze_image') return `${jsonPrefix} Role: Toxic Coach. Language: Japanese. Analyze photo. Output: { "result": "string", "item_name": "string", "keep_score": number }`;
+    if (action === 'digital_danshari_chat') return `${jsonPrefix} Role: Digital Demon. Language: Japanese. User: "${content}". Output: { "message": "string", "mission": "string", "angry_score": number }`;
+    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. Language: Japanese. Output: { "should_intervene": boolean, "role": "string", "message": "string", "action_label": "string" }`;
+    if (action === 'hold_board_meeting') return `${jsonPrefix} Role: Chairman. Language: Japanese. Output: { "agenda": "string", "discussion": "string", "decision": "string", "stock_price_impact": "string" }`;
     
     return content || '';
 }
