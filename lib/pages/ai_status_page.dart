@@ -181,13 +181,25 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
 
-                            // --- 追加: ベンチマーク結果の表示ロジックを強化 ---
+                            // ベンチマーク結果の表示
                             if (_visionScores.containsKey(modelName)) ...[
                               const SizedBox(height: 8),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
+                                  // 認識成否アイコン
+                                  Icon(
+                                    _visionScores[modelName]!['score'] == 100
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    size: 14,
+                                    color: _visionScores[modelName]!['score'] ==
+                                            100
+                                        ? Colors.green
+                                        : Colors.grey,
+                                  ),
                                   _buildScoreBadge(
                                       "画像認識",
                                       "${_visionScores[modelName]!['score']}%",
@@ -199,15 +211,16 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              // 認識された内容のプレビューを表示
+                              // AIの生の回答を表示
                               Container(
+                                width: double.infinity,
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  "認識結果: ${_visionScores[modelName]!['detail'] ?? 'No data'}",
+                                  "認識結果: ${_visionScores[modelName]!['detail'] ?? '回答なし'}",
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: Colors.grey.shade700,
@@ -216,7 +229,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                               ),
                             ],
 
-                            // エラー表示
+                            // エラー詳細の表示
                             if (_testErrors.containsKey(modelName))
                               Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
