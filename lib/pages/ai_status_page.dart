@@ -65,7 +65,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
-  // 単体モデルのテスト実行 (Visionベンチマーク対応)
+  // 単体モデルのテスト実行 (修正版)
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
       _testResults[modelName] = 'testing';
@@ -79,18 +79,24 @@ class _AiStatusPageState extends State<AiStatusPage> {
         body: {'action': 'test_model', 'model': modelName},
       );
 
+      // ★ 修正ポイント: res.dataがStringの場合はJSONデコードする
+      final data = res.data is String
+          ? jsonDecode(res.data)
+          : res.data as Map<String, dynamic>;
+
       setState(() {
-        if (res.status == 200) {
+        // ★ 修正ポイント: statusではなくdataの中身で判定
+        if (data['success'] == true) {
           _testResults[modelName] = 'success';
-          // ベンチマーク結果（スコアとレイテンシ）があれば保存
-          final benchmark = res.data['benchmark'];
+
+          // ベンチマーク結果があれば保存
+          final benchmark = data['benchmark'];
           if (benchmark != null) {
             _visionScores[modelName] = Map<String, dynamic>.from(benchmark);
           }
         } else {
           _testResults[modelName] = 'error';
-          _testErrors[modelName] =
-              res.data['error']?.toString() ?? 'Unknown Error';
+          _testErrors[modelName] = data['error']?.toString() ?? 'Unknown Error';
         }
       });
     } catch (e) {
