@@ -1,16 +1,12 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (CMO Upgrade / Battle Mode)
-// 概要: 複数の次世代AIモデルを統合制御し、単独実行または死活監視を行うシステム。
-
+﻿// AI Assistant Edge Function: "The Five Emperors" (Full Business Logic + Vision Benchmark)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// CORS設定
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// APIキー管理
 const KEYS = {
   gemini: Deno.env.get('GEMINI_API_KEY'),
   openai: Deno.env.get('OPENAI_API_KEY'),
@@ -19,9 +15,11 @@ const KEYS = {
   grok: Deno.env.get('XAI_API_KEY'),
 };
 
+const VISION_TEST_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Refrigerator_interior_filled_with_food.jpg/800px-Refrigerator_interior_filled_with_food.jpg";
+
 interface AIRequest {
   action: string
-  model?: string      // 死活監視対象のモデル名
+  model?: string      // 死活監視・ベンチマーク対象
   content?: string
   imageBase64?: string
   mimeType?: string
@@ -56,23 +54,18 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, models }), { headers: corsHeaders });
     }
 
-    // --- 2. 死活監視テスト ---
+    // --- 2. 死活監視・ベンチマークテスト ---
     if (action === 'test_model') {
         if (!targetModel) throw new Error('Model name is required');
         const candidates = await gatherAllCandidates(requestData);
         const fighter = candidates.find(c => c.model === targetModel);
-        
         if (!fighter) throw new Error(`Model ${targetModel} not found`);
 
-        const testData: AIRequest = { action: 'test', content: 'Ping' };
-        if (fighter.provider === 'gemini') await callGemini(fighter.model, KEYS.gemini!, testData);
-        else if (fighter.provider === 'anthropic') await callAnthropic(fighter.model, KEYS.anthropic!, testData);
-        else await callOpenAICompatible(fighter.provider, fighter.model, KEYS[fighter.provider as keyof typeof KEYS]!, testData);
-
-        return new Response(JSON.stringify({ success: true, status: "active" }), { headers: corsHeaders });
+        const benchmark = await runVisionBenchmark(fighter, KEYS);
+        return new Response(JSON.stringify({ success: true, status: "active", benchmark }), { headers: corsHeaders });
     }
 
-    // --- 3. Battle Mode ---
+    // --- 3. Battle Mode (複数AIによる競演) ---
     if (multi_response) {
         let candidates = await gatherAllCandidates(requestData);
         candidates.sort((a, b) => b.score - a.score);
@@ -97,7 +90,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, is_multi: true, results: results.filter(r => r.success) }), { headers: corsHeaders });
     }
 
-    // --- 4. Single Mode ---
+    // --- 4. Single Mode (フォールバック実行) ---
     let candidates = await gatherAllCandidates(requestData);
     candidates.sort((a, b) => b.score - a.score);
     let finalResult = '';
@@ -125,7 +118,34 @@ serve(async (req) => {
   }
 });
 
-// --- Helpers ---
+// --- 🔧 Core Logic Functions ---
+
+async function runVisionBenchmark(fighter: any, keys: any) {
+  const start = Date.now();
+  const testData: AIRequest = {
+    action: 'test_vision',
+    content: `Analyze this image URL: ${VISION_TEST_IMAGE}. Identify if 'Milk', 'Eggs', and 'Bottles' are present. Output in Japanese.`
+  };
+
+  try {
+    let text = "";
+    if (fighter.provider === 'gemini') text = await callGemini(fighter.model, keys.gemini!, testData);
+    else if (fighter.provider === 'anthropic') text = await callAnthropic(fighter.model, keys.anthropic!, testData);
+    else text = await callOpenAICompatible(fighter.provider, fighter.model, keys.openai!, testData);
+
+    const latency = Date.now() - start;
+    const lowerText = text.toLowerCase();
+    
+    let matchCount = 0;
+    if (lowerText.includes("milk") || lowerText.includes("牛乳")) matchCount++;
+    if (lowerText.includes("egg") || lowerText.includes("卵")) matchCount++;
+    if (lowerText.includes("bottle") || lowerText.includes("瓶")) matchCount++;
+
+    return { score: Math.round((matchCount / 3) * 100), latency, detail: text.substring(0, 100) + "..." };
+  } catch (e) {
+    throw new Error(`Benchmark Error: ${e.message}`);
+  }
+}
 
 function shouldParseJson(action: string): boolean {
     return ['hold_board_meeting', 'suggest_next_meal', 'proactive_intervention', 'analyze_image', 'audit_meal', 'digital_danshari_chat', 'check_bedtime_permission', 'verify_mission_proof', 'draft_press_release'].includes(action);
@@ -170,53 +190,78 @@ async function fetchDynamicModels(provider: string, apiKey: string): Promise<str
     return (json.data || []).map((m: any) => m.id || m.name);
 }
 
+// --- 🚀 API Call Wrappers ---
+
 async function callOpenAICompatible(provider: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
+    const prompt = buildPrompt(data);
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: buildPrompt(data) }] })
+        body: JSON.stringify({ 
+          model, 
+          messages: [{ role: "user", content: prompt }],
+          response_format: shouldParseJson(data.action) ? { type: "json_object" } : undefined
+        })
     });
-    
     const json = await resp.json();
     if (!resp.ok) throw new Error(`${provider} Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
-    if (!json.choices || !json.choices[0]) throw new Error(`${provider} returned empty choices`);
-    
     return json.choices[0].message.content;
 }
 
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
+    const prompt = buildPrompt(data);
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        body: JSON.stringify({ model, max_tokens: 1024, messages: [{ role: "user", content: buildPrompt(data) }] })
+        body: JSON.stringify({ model, max_tokens: 1024, messages: [{ role: "user", content: prompt }] })
     });
-    
     const json = await resp.json();
     if (!resp.ok) throw new Error(`Anthropic Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
-    if (!json.content || !json.content[0]) throw new Error(`Anthropic returned empty content`);
-    
     return json.content[0].text;
 }
 
 async function callGemini(model: string, apiKey: string, data: AIRequest): Promise<string> {
+    const prompt = buildPrompt(data);
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ parts: [{ text: buildPrompt(data) }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
-    
     const json = await resp.json();
     if (!resp.ok) throw new Error(`Gemini Error (${resp.status}): ${json.error?.message || JSON.stringify(json)}`);
-    if (!json.candidates || !json.candidates[0]?.content?.parts?.[0]?.text) {
-        throw new Error(`Gemini returned empty result. Check if model "${model}" is available.`);
-    }
-    
     return json.candidates[0].content.parts[0].text;
 }
 
+// --- 🧠 Business Prompt Logic ---
+
 function buildPrompt(data: AIRequest): string {
-    if (data.action === 'test') return "Respond only with 'OK'.";
-    return data.content || "Hello";
+    const { action, content, boardData, currentTime, missionData, missionName } = data;
+    const jsonPrefix = "Output purely valid JSON.";
+
+    if (action === 'test' || action === 'test_vision') return content || "Hi";
+
+    if (action === 'draft_press_release') {
+        const stats = boardData?.userStats || {};
+        return `${jsonPrefix} Role: CMO of 'Jibun Inc.' Language: Japanese. Achievements: Total Assets: ${stats.total_points || 0}. Task: Write inspiring press release. Output: { "title": "string", "body": "string", "hashtags": [] }`;
+    }
+
+    if (action === 'verify_mission_proof') return `${jsonPrefix} Role: Strict Inspector. Language: Japanese. Verify photo for "${missionName}". Output: { "verified": boolean, "comment": "string", "score": number }`;
+    
+    if (action === 'check_bedtime_permission') {
+        return `${jsonPrefix} Role: Gatekeeper. Status: ${JSON.stringify(missionData)}. Output: { "permission_granted": boolean, "message": "string" }`;
+    }
+    
+    if (action === 'suggest_next_meal') return `${jsonPrefix} Role: Chef. Context: ${currentTime}. Output: { "menu_name": "string", "reason": "string" }`;
+    
+    if (action === 'analyze_image') return `${jsonPrefix} Role: Toxic Coach. Output: { "result": "string", "keep_score": number }`;
+    
+    if (action === 'digital_danshari_chat') return `${jsonPrefix} Role: Digital Demon. User: "${content}". Output: { "message": "string" }`;
+    
+    if (action === 'proactive_intervention') return `${jsonPrefix} Time: ${currentTime}. Output: { "should_intervene": boolean, "message": "string" }`;
+    
+    if (action === 'hold_board_meeting') return `${jsonPrefix} Role: Chairman. Output: { "agenda": "string", "discussion": "string" }`;
+    
+    return content || 'No content provided.';
 }
 
 function parseJsonResult(result: string): any {

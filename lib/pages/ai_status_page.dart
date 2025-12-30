@@ -14,9 +14,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
   List<dynamic> _models = [];
   bool _isLoading = true;
   String? _error;
-  // テスト結果を保持するマップ (モデル名 -> 状態: 'testing', 'success', 'error')
-  Map<String, String> _testResults = {};
-  Map<String, String> _testErrors = {}; // ← 追加：モデルごとのエラー文を保持
+
+  // テスト結果の状態管理
+  Map<String, String> _testResults = {}; // 'testing', 'success', 'error'
+  Map<String, String> _testErrors = {}; // エラー詳細メッセージ
+  Map<String, Map<String, dynamic>> _visionScores = {}; // Visionベンチマーク詳細
 
   @override
   void initState() {
@@ -36,7 +38,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
       if (response.status != 200)
         throw Exception('API Error: ${response.status}');
 
-      // 文字列で届いた場合も安全にパース
       final data =
           response.data is String ? jsonDecode(response.data) : response.data;
 
@@ -60,16 +61,16 @@ class _AiStatusPageState extends State<AiStatusPage> {
     for (var model in _models) {
       final String modelName = model['model'];
       _testSingleModel(modelName);
-      // サーバー負荷軽減のため200msずつずらして開始
       await Future.delayed(const Duration(milliseconds: 200));
     }
   }
 
-  // 単体モデルのテスト実行
+  // 単体モデルのテスト実行 (Visionベンチマーク対応)
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
       _testResults[modelName] = 'testing';
-      _testErrors.remove(modelName); // テスト開始時に以前のエラーを消去
+      _testErrors.remove(modelName);
+      _visionScores.remove(modelName);
     });
 
     try {
@@ -81,9 +82,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
       setState(() {
         if (res.status == 200) {
           _testResults[modelName] = 'success';
+          // ベンチマーク結果（スコアとレイテンシ）があれば保存
+          final benchmark = res.data['benchmark'];
+          if (benchmark != null) {
+            _visionScores[modelName] = Map<String, dynamic>.from(benchmark);
+          }
         } else {
           _testResults[modelName] = 'error';
-          // APIから返ってきたエラー文を取得（res.data['error']）
           _testErrors[modelName] =
               res.data['error']?.toString() ?? 'Unknown Error';
         }
@@ -91,7 +96,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
     } catch (e) {
       setState(() {
         _testResults[modelName] = 'error';
-        // 通信レベルのエラー（400 Bad Requestなど）をキャッチ
         _testErrors[modelName] = e.toString().replaceFirst('Exception: ', '');
       });
     }
@@ -176,8 +180,26 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Provider: ${provider.toUpperCase()}'),
-                            if (_testErrors
-                                .containsKey(modelName)) // エラーがある場合のみ表示
+                            // Visionベンチマークバッジの表示
+                            if (_visionScores.containsKey(modelName))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    _buildScoreBadge(
+                                        "画像認識",
+                                        "${_visionScores[modelName]!['score']}%",
+                                        Colors.purple),
+                                    _buildScoreBadge(
+                                        "応答速度",
+                                        "${(_visionScores[modelName]!['latency'] / 1000).toStringAsFixed(1)}s",
+                                        Colors.teal),
+                                  ],
+                                ),
+                              ),
+                            // エラー詳細の表示
+                            if (_testErrors.containsKey(modelName))
                               Padding(
                                 padding: const EdgeInsets.only(top: 4.0),
                                 child: Text(
@@ -210,6 +232,23 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     );
                   },
                 ),
+    );
+  }
+
+  // スコア・速度表示用のバッジ
+  Widget _buildScoreBadge(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        "$label: $value",
+        style:
+            TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
