@@ -67,11 +67,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
       final String modelName = model['model'];
       // 各モデルのテストを待機せずに並列気味に回す（UI更新を優先）
       _testSingleModel(modelName);
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 500));
     }
   }
 
-  // 単体モデルのテスト実行 (動的ソート対応版)
+  // 単体モデルのテスト実行 (多段階ベンチマーク対応版)
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
       _testResults[modelName] = 'testing';
@@ -97,13 +97,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
           if (benchmark != null) {
             _visionScores[modelName] = Map<String, dynamic>.from(benchmark);
 
-            // ★ 追加ロジック: ローカルのモデルリスト内のスコアも動的に更新する
+            // ★ 多段階ベンチマーク対応: スコアを動的に更新
             final index = _models.indexWhere((m) => m['model'] == modelName);
             if (index != -1) {
-              // サーバー側のロジックと同じ計算式でスコアを暫定計算
               // (認識率 * 10) - (速度ms / 100)
-              final int newScore = ((benchmark['score'] as int) * 10) -
-                  ((benchmark['latency'] as num) ~/ 100);
+              final int visionScore = benchmark['score'] as int? ?? 0;
+              final int latencyMs =
+                  (benchmark['latency'] as num?)?.toInt() ?? 0;
+              final int newScore = (visionScore * 10) - (latencyMs ~/ 100);
 
               _models[index]['score'] = newScore;
 
@@ -174,128 +175,100 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     final status = _testResults[modelName];
 
                     return Card(
-                      key: ValueKey(modelName), // ソート時にアニメーションを安定させるため
+                      key: ValueKey(modelName),
                       elevation: 0,
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(color: Colors.grey.shade200),
                       ),
-                      child: ListTile(
+                      child: InkWell(
                         onTap: () => _testSingleModel(modelName),
-                        leading: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            _buildProviderBadge(provider),
-                            if (status != null)
-                              Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: status == 'testing'
-                                      ? Colors.orange
-                                      : (status == 'success'
-                                          ? Colors.green
-                                          : Colors.red),
-                                  shape: BoxShape.circle,
-                                  border:
-                                      Border.all(color: Colors.white, width: 2),
-                                ),
-                              ),
-                          ],
-                        ),
-                        title: Text(modelName,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Provider: ${provider.toUpperCase()}'),
-                            Builder(builder: (context) {
-                              final benchmark = _visionScores[modelName];
-                              if (benchmark == null)
-                                return const SizedBox.shrink();
-
-                              final scoreValue =
-                                  benchmark['score'] as int? ?? 0;
-                              final latency = benchmark['latency'] as num? ?? 0;
-                              final detail =
-                                  benchmark['detail'] as String? ?? '回答なし';
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ヘッダー行
+                              Row(
                                 children: [
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
+                                  Stack(
+                                    alignment: Alignment.bottomRight,
                                     children: [
-                                      Icon(
-                                        scoreValue == 100
-                                            ? Icons.visibility
-                                            : Icons.visibility_off,
-                                        size: 14,
-                                        color: scoreValue == 100
-                                            ? Colors.green
-                                            : Colors.grey,
-                                      ),
-                                      _buildScoreBadge("画像認識", "$scoreValue%",
-                                          Colors.purple),
-                                      _buildScoreBadge(
-                                          "速度",
-                                          "${(latency / 1000).toStringAsFixed(2)}s",
-                                          Colors.teal),
+                                      _buildProviderBadge(provider),
+                                      if (status != null)
+                                        Container(
+                                          width: 14,
+                                          height: 14,
+                                          decoration: BoxDecoration(
+                                            color: status == 'testing'
+                                                ? Colors.orange
+                                                : (status == 'success'
+                                                    ? Colors.green
+                                                    : Colors.red),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: Colors.white, width: 2),
+                                          ),
+                                        ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      "認識結果: $detail",
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey.shade700,
-                                          fontStyle: FontStyle.italic),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(modelName,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14)),
+                                        Text(
+                                            'Provider: ${provider.toUpperCase()}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600)),
+                                      ],
                                     ),
                                   ),
+                                  // スコア表示
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text('$score',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: score >= 900
+                                                  ? Colors.green
+                                                  : (score >= 500
+                                                      ? Colors.orange
+                                                      : Colors.grey))),
+                                      const Text('Score',
+                                          style: TextStyle(fontSize: 10)),
+                                    ],
+                                  ),
                                 ],
-                              );
-                            }),
-                            if (_testErrors.containsKey(modelName))
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(
-                                  _testErrors[modelName]!,
-                                  style: const TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500),
-                                ),
                               ),
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('$score',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: score >= 1100
-                                        ? Colors.blue
-                                        : (score >= 900
-                                            ? Colors.green
-                                            : Colors.grey))),
-                            const Text('Score', style: TextStyle(fontSize: 10)),
-                          ],
+
+                              // ベンチマーク結果の表示
+                              _buildBenchmarkResult(modelName),
+
+                              // エラー表示
+                              if (_testErrors.containsKey(modelName))
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    _testErrors[modelName]!,
+                                    style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -304,9 +277,192 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
+  /// ベンチマーク結果のWidget（多段階対応）
+  Widget _buildBenchmarkResult(String modelName) {
+    final benchmark = _visionScores[modelName];
+    if (benchmark == null) return const SizedBox.shrink();
+
+    final int totalScore = benchmark['score'] as int? ?? 0;
+    final num latency = benchmark['latency'] as num? ?? 0;
+    final String detail = benchmark['detail'] as String? ?? '';
+    final List<dynamic>? levels = benchmark['levels'] as List<dynamic>?;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        const Divider(height: 1),
+        const SizedBox(height: 12),
+
+        // 総合スコアのプログレスバー
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: totalScore / 100,
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade200,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    totalScore >= 80
+                        ? Colors.green
+                        : (totalScore >= 50 ? Colors.orange : Colors.red),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '$totalScore/100',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: totalScore >= 80
+                    ? Colors.green
+                    : (totalScore >= 50 ? Colors.orange : Colors.red),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // バッジ表示
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            _buildScoreBadge("総合", "$totalScore点", Colors.purple),
+            _buildScoreBadge(
+                "速度", "${(latency / 1000).toStringAsFixed(2)}s", Colors.teal),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // サマリーテキスト
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            detail,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+          ),
+        ),
+
+        // レベル別詳細（展開可能）
+        if (levels != null && levels.isNotEmpty)
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('レベル別詳細',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              children: levels.map<Widget>((level) {
+                final levelData = level as Map<String, dynamic>;
+                return _buildLevelDetail(levelData);
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// レベル別詳細のWidget
+  Widget _buildLevelDetail(Map<String, dynamic> levelData) {
+    final String levelName = levelData['level'] as String? ?? '';
+    final int levelScore = levelData['score'] as int? ?? 0;
+    final int maxPoints = levelData['maxPoints'] as int? ?? 0;
+    final bool passed = levelData['passed'] as bool? ?? false;
+    final String response = levelData['response'] as String? ?? '';
+    final num levelLatency = levelData['latency'] as num? ?? 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: passed
+            ? Colors.green.withOpacity(0.08)
+            : Colors.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: passed
+              ? Colors.green.withOpacity(0.3)
+              : Colors.red.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                passed ? Icons.check_circle : Icons.cancel,
+                size: 18,
+                color: passed ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getLevelLabel(levelName),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const Spacer(),
+              Text(
+                '$levelScore/$maxPoints',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: passed ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 12, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Text(
+                '${(levelLatency / 1000).toStringAsFixed(2)}s',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '回答: $response',
+            style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade700,
+                fontStyle: FontStyle.italic),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// レベル名のラベル変換
+  String _getLevelLabel(String levelName) {
+    switch (levelName) {
+      case 'level1':
+        return 'L1: 色認識';
+      case 'level2':
+        return 'L2: OCR（文字読取）';
+      case 'level3':
+        return 'L3: 複合認識';
+      default:
+        return levelName;
+    }
+  }
+
   Widget _buildScoreBadge(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4),
@@ -315,7 +471,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
       child: Text(
         "$label: $value",
         style:
-            TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
       ),
     );
   }

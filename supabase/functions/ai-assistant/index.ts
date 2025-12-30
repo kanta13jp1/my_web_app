@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Strict Vision Benchmarking & Dynamic Ranking)
+﻿// AI Assistant Edge Function: Multi-Level Vision Benchmark
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -16,9 +16,31 @@ const KEYS = {
 };
 
 /**
- * 検証済み: 32x32 純粋な赤 (#FF0000) PNG
+ * 多段階ベンチマーク用テスト画像
  */
-const VERIFIED_RED_SQUARE = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR4nO3NMQEAAAjDMMC/ZzDBvlRA01vZJvwHAAAAAAAAAAAAbx2jxAE/i2AjOgAAAABJRU5ErkJggg==";
+const TEST_IMAGES = {
+    // Level 1: 赤い正方形 (64x64) - 色認識テスト
+    level1: {
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAX0lEQVR4nO3PQQ0AIBDAMMC/50MEj4ZkVbDtWX87OuBVA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA1oDWgNaA9oFUoUBf3Xr7AgAAAAASUVORK5CYII=",
+        prompt: "この画像の色を日本語1文字で答えてください（例：青）",
+        answer: ["赤", "red"],
+        points: 30
+    },
+    // Level 2: 「AI」の文字 (128x64) - OCRテスト
+    level2: {
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAIAAABdtOgoAAADKUlEQVR4nO2az0oCURSHR2uRYItAgjaCYgszl0G0aBXt1Jahb+B7uPMhUlEoo1pEG7FFRatA3QgZRIoYKojlH0JypoUQceeaA83cX03n23XmzPHIN/fMbUaLoigSgcOKbuC/QwLAkAAwJAAMCQBDAsCQADAkAAwJAEMCwJAAMCQADAkAAxNQKpUs07m/v9dY5/j4mFuhWCwa2b5uwAQcHBx8czSRSIhqBAxGwPv7eyaT+SYhlUrJsiysHyAYARcXF61W65uEer2ez+eF9QMEI0DLhPknUwggoNPpnJ+fz0w7PT3t9XoC+sECEJDJZEajERO02WxMZDgcHh0diWoKBkAAd7bE43GNmSZDtIByuXx3d8cEvV5vNBp1uVxM/Obm5vHxUVRrGEQL4G7/w+GwJEn7+/tMXFEU0y8CoQLG43E6nVbHJwIikYj6UDKZNPcvl4QKyOVyjUaDCW5ubrrdbkmSfD6f3+9njj49PV1dXQnqD4FQAdz58/XCnywFLWeZB0UU3W53YWGB+fS5ublms/mZU61WLRYLk2O32/v9/rSy2WyW+70KhYKIb/VjxK2Aw8PDt7c3Jrizs7O8vPz5p9Pp3NraYnL6/f7JyYnh/YEQJ4C7n1HfeLlTyMx7ITELrVKpqD/aZrO9vr4yme12e35+nsm0Wq3VapVbmUaQJriXcCAQWFxcZIIOh2N3d5cJyrKcSqWMag6LAMmyLDudzh/2ubq6yi1OK2A2l5eXtVrth0UeHh5ub2916edXIUKAXrdQU96KDReg4yaSu5H96xguIJvNDgYDXUq9vLycnZ3pUur3YLiAaU//Z96dYrGYxmp/GmMFTHuUFgqFZp4bDAbVwVwu9/z8rENnvwZjBSQSCUX1MHltbc3j8cw8d319ffKU9Cvj8dhk/xAYKyCZTKqDe3t7Gk8PBALqoMmmkIECrq+vuS8UtcyfCdwpxH2p+XcxUAD3Ul1ZWdnY2NBYYXt7e2lpSR030xsCi3pGEyKhn6eDIQFgSAAYEgCGBIAhAWBIABgSAIYEgCEBYEgAGBIAhgSAIQFgSAAYEgCGBIAhAWBIABgSAOYD4n2nWK6QlrQAAAAASUVORK5CYII=",
+        prompt: "この画像に書かれている英字2文字を答えてください",
+        answer: ["AI", "ai", "Ai", "aI"],
+        points: 35
+    },
+    // Level 3: 青い円が3つ (128x64) - 複合認識テスト
+    level3: {
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAIAAABdtOgoAAABSUlEQVR4nO2aUQvCMAwGN/H//+X5qKDYNuk4SO4eB80Xd41lbOd1XYdwPOgGuqMAGAXAKABGATAKgFEAjAJgFACjABgFwCgARgEwCoBRAIwCYJ75Euf54+Ldr3nKhJ7hN2I/u/lm702pFxoRMNnQJ/k7UjV0+QwI9BRe1SF0TUDmJ4XX1g5dEJDcULEK5UNnBeR7CtTpEDolYFdPS9WahPogBjMWsHdTTNbsE+oEwCgAZiDgjqkcVu4TejgBOAqAUQCMAmAUAKMAmIGA+17y/ancJ/RwAnAUADMWcMdsDmv2CXUCYKYE7N0ak9WahM5OwK7Olup0CF34C8p3FqhQPnTtDMh0Fl5bO3T5EI51ltxThUP9NhQOjQt4l6jyoTISukGAZPBBDEYBMAqAUQCMAmAUAKMAGAXAKABGATAKgFEAjAJgFACjAJgX8zWEa6rF56QAAAAASUVORK5CYII=",
+        prompt: "この画像には何色の丸が何個ありますか？「○色の丸が○個」の形式で答えてください",
+        answer: ["青", "3", "三"],
+        points: 35
+    }
+};
 
 interface AIRequest {
     action: string;
@@ -46,23 +68,22 @@ serve(async (req) => {
         const requestData: AIRequest = await req.json()
         const { action, model: targetModel } = requestData
 
-        // --- 1. モデル一覧取得 (DBの実績からスコアを算出してソート) ---
+        // --- 1. モデル一覧取得 ---
         if (action === 'get_models') {
             const models = await gatherAllCandidates(supabaseClient);
             return new Response(JSON.stringify({ success: true, models }), { headers: corsHeaders });
         }
 
-        // --- 2. 死活監視・ベンチマークテスト & DB保存 ---
+        // --- 2. 多段階ベンチマークテスト ---
         if (action === 'test_model') {
             if (!targetModel) throw new Error('Model name is required');
 
-            // 候補リストを取得してプロバイダーを特定
             const candidates = await gatherAllCandidates(supabaseClient);
             const fighter = candidates.find(c => c.model === targetModel);
             if (!fighter) throw new Error(`Model ${targetModel} not found`);
 
-            // ベンチマーク実行
-            const benchmark = await runStrictVisionBenchmark(fighter, KEYS);
+            // 多段階ベンチマーク実行
+            const benchmark = await runMultiLevelBenchmark(fighter, KEYS);
 
             // データベースへの保存
             const { error: dbError } = await supabaseClient
@@ -71,9 +92,9 @@ serve(async (req) => {
                     user_id: user.id,
                     model_name: fighter.model,
                     provider: fighter.provider,
-                    vision_score: benchmark.score,
-                    latency_ms: benchmark.latency,
-                    detail: benchmark.detail
+                    vision_score: benchmark.totalScore,
+                    latency_ms: benchmark.totalLatency,
+                    detail: JSON.stringify(benchmark.levels)
                 });
 
             if (dbError) console.error("Database Insert Error:", dbError.message);
@@ -81,11 +102,17 @@ serve(async (req) => {
             return new Response(JSON.stringify({
                 success: true,
                 status: "active",
-                benchmark
+                benchmark: {
+                    score: benchmark.totalScore,
+                    latency: benchmark.totalLatency,
+                    detail: benchmark.summary,
+                    levels: benchmark.levels,
+                    type: 'multi_level_v1'
+                }
             }), { headers: corsHeaders });
         }
 
-        return new Response(JSON.stringify({ success: false, error: "Action implementation pending" }), { headers: corsHeaders, status: 404 });
+        return new Response(JSON.stringify({ success: false, error: "Action not found" }), { headers: corsHeaders, status: 404 });
 
     } catch (error: any) {
         return new Response(JSON.stringify({ success: false, error: error.message }), { headers: corsHeaders, status: 400 });
@@ -93,76 +120,70 @@ serve(async (req) => {
 });
 
 /**
- * データベースの実績に基づいてモデルを収集・スコアリング・ソートする
+ * 多段階ベンチマーク実行
  */
-async function gatherAllCandidates(supabase: any): Promise<any[]> {
-    // 全モデルの最新のベンチマーク結果をDBから取得
-    const { data: latestResults } = await supabase
-        .from('ai_benchmark_results')
-        .select('model_name, vision_score, latency_ms')
-        .order('tested_at', { ascending: false });
+async function runMultiLevelBenchmark(fighter: any, keys: any) {
+    const levels: any[] = [];
+    let totalScore = 0;
+    let totalLatency = 0;
 
-    const promises = Object.entries(KEYS).map(async ([provider, key]) => {
-        if (!key) return [];
+    for (const [levelName, test] of Object.entries(TEST_IMAGES)) {
+        const start = Date.now();
+        
+        const visionData: AIRequest = {
+            action: 'test_vision',
+            content: test.prompt,
+            imageBase64: test.base64,
+            mimeType: "image/png"
+        };
+
         try {
-            const models = await fetchDynamicModels(provider, key);
-            return models.map(m => {
-                // そのモデルの直近の実績を取得
-                const history = latestResults?.find((r: any) => r.model_name === m);
-                
-                // スコア計算ロジック:
-                // 実績がある場合: (正確性 0-100 * 10) - (速度ms / 100)
-                // 実績がない場合: 500点 (未評価のベースライン)
-                const score = history 
-                    ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
-                    : 500;
+            const response = await callAI(fighter, keys, visionData);
+            const latency = Date.now() - start;
+            
+            // スコア判定: 回答に正解キーワードが含まれているか
+            const isCorrect = test.answer.some(ans => 
+                response.toLowerCase().includes(ans.toLowerCase())
+            );
+            
+            const score = isCorrect ? test.points : 0;
+            totalScore += score;
+            totalLatency += latency;
 
-                return { provider, model: m, score };
+            levels.push({
+                level: levelName,
+                score,
+                maxPoints: test.points,
+                latency,
+                response: response.substring(0, 100),
+                passed: isCorrect
             });
-        } catch { return []; }
-    });
 
-    const results = (await Promise.all(promises)).flat();
-    
-    // スコアの高い順にソート
-    return results.sort((a, b) => b.score - a.score);
-}
-
-/**
- * 画像認識単体テスト
- */
-async function runStrictVisionBenchmark(fighter: any, keys: any) {
-    const start = Date.now();
-
-    const visionData: AIRequest = {
-        action: 'test_vision',
-        content: "この画像の中央にある色を日本語1文字（例：青）で答えてください。",
-        imageBase64: VERIFIED_RED_SQUARE,
-        mimeType: "image/png"
-    };
-
-    try {
-        const text = await callAI(fighter, keys, visionData);
-        const latency = Date.now() - start;
-
-        // 評価ロジック
-        const isCorrect = text.includes("赤") || text.toLowerCase().includes("red");
-
-        return {
-            score: isCorrect ? 100 : 0,
-            latency,
-            detail: text,
-            type: 'vision_strict_v2'
-        };
-    } catch (e: any) {
-        // エラー時はスコア0で記録し、例外を投げずに結果を返す
-        return {
-            score: 0,
-            latency: Date.now() - start,
-            detail: `Error: ${e.message}`,
-            type: 'vision_strict_error'
-        };
+        } catch (e: any) {
+            const latency = Date.now() - start;
+            totalLatency += latency;
+            
+            levels.push({
+                level: levelName,
+                score: 0,
+                maxPoints: test.points,
+                latency,
+                response: `Error: ${e.message}`,
+                passed: false
+            });
+        }
     }
+
+    // サマリー生成
+    const passedCount = levels.filter(l => l.passed).length;
+    const summary = `${passedCount}/3テスト通過 (L1:${levels[0]?.passed ? '✓' : '✗'} L2:${levels[1]?.passed ? '✓' : '✗'} L3:${levels[2]?.passed ? '✓' : '✗'})`;
+
+    return {
+        totalScore,
+        totalLatency,
+        levels,
+        summary
+    };
 }
 
 async function callAI(fighter: any, keys: any, data: AIRequest): Promise<string> {
@@ -198,7 +219,7 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        body: JSON.stringify({ model, max_tokens: 128, messages: [{ role: "user", content }] })
+        body: JSON.stringify({ model, max_tokens: 256, messages: [{ role: "user", content }] })
     });
     const json = await resp.json();
     if (!resp.ok) throw new Error(`Anthropic: ${json.error?.message || "Unknown error"}`);
@@ -216,6 +237,32 @@ async function callGemini(model: string, apiKey: string, data: AIRequest): Promi
     const json = await resp.json();
     if (!resp.ok) throw new Error(`Gemini: ${json.error?.message || "Unknown error"}`);
     return json.candidates[0].content.parts[0].text;
+}
+
+// --- Model List ---
+
+async function gatherAllCandidates(supabase: any): Promise<any[]> {
+    const { data: latestResults } = await supabase
+        .from('ai_benchmark_results')
+        .select('model_name, vision_score, latency_ms')
+        .order('tested_at', { ascending: false });
+
+    const promises = Object.entries(KEYS).map(async ([provider, key]) => {
+        if (!key) return [];
+        try {
+            const models = await fetchDynamicModels(provider, key);
+            return models.map(m => {
+                const history = latestResults?.find((r: any) => r.model_name === m);
+                const score = history 
+                    ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
+                    : 500;
+                return { provider, model: m, score };
+            });
+        } catch { return []; }
+    });
+
+    const results = (await Promise.all(promises)).flat();
+    return results.sort((a, b) => b.score - a.score);
 }
 
 async function fetchDynamicModels(provider: string, apiKey: string): Promise<string[]> {
