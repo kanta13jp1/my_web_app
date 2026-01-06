@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Robust Fallback Edition)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Benchmark + Board Meeting + Fallback)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -15,16 +15,15 @@ const KEYS = {
     grok: Deno.env.get('XAI_API_KEY'),
 };
 
-// ★ フォールバックチェーン（GeminiがダメならOpenAI、それもダメならAnthropic）
-// 高速かつ安価なモデル順に並べています
+// フォールバックチェーン (Gemini -> OpenAI -> Anthropic)
 const FALLBACK_MODELS = [
-    { provider: 'gemini', model: 'gemini-2.0-flash' },       // 第1候補: 最速・無料枠あり
-    { provider: 'openai', model: 'gpt-4o-mini' },            // 第2候補: 非常に安価・安定
-    { provider: 'anthropic', model: 'claude-3-haiku-20240307' } // 第3候補: 高速
+    { provider: 'gemini', model: 'gemini-2.0-flash' },
+    { provider: 'openai', model: 'gpt-4o-mini' },
+    { provider: 'anthropic', model: 'claude-3-haiku-20240307' }
 ];
 
 /**
- * 6段階難易度別テスト画像
+ * ベンチマーク用テスト画像（省略せず記述）
  */
 const TEST_IMAGES = {
     level1: {
@@ -35,7 +34,7 @@ const TEST_IMAGES = {
         description: "色認識"
     },
     level2: {
-        base64: "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAACxUlEQVR4nO3bMUorURSA4RshkCKNjUVgIGAUhICNoK1VJDtwAbZpBF2Eop0rcAUprNMJCiIpElJIMJWdhGAhKPO6YUjnw3n/fZP/67zV8fw5KQQraZoGcdboAVadAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkABgdotVqVHzo6OmJn/l1eAMwAsP8vQKPRoEf4TZWY/1E7TdOdnZ3JZJJ/fH5+3t3dpUb6dVFfQL/fX9p+p9Mp0/ZD5AEuLy+XXs7Pz5FJihPvV9DDw8P+/n7+ZW9v7/HxkZqnIPFewMXFxdLL2dkZMkmhIr2A6XS6tbX1/f2dvbRarclksrYW7yfm70T6+1xdXeW3H0I4PT0t3/ZDnBfw/v6eJMnHx0f2srGx8fr6WqvVwKkKEuNn6ubmJr/9EEKv1yvl9kOEF/D5+dlsNt/e3rKXer0+m83W19fBqYoT3QXc3t7mtx9CODk5Kev2Q2wXkKZpu90ejUbZS7VafXl5SZIEnKpQcV3A3d1dfvshhOPj4xJvP8R2AYeHh4PBIPuxUqkMh8N2u81NVLiILuDp6Sm//RBCt9st9/ZDVAFW5G8PS2L5CprNZpubm19fX9nLwcHB/f09ONK/EcsFXF9f57cfVuPjHyK5gPl8niTJYrHIXra3t8fjcSn/+LMkigCrrPwfscgZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYA2B9eJKHHJvW42wAAAABJRU5ErkJggg==",
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAACxUlEQVR4nO3bMUorURSA4RshkCKNjUVgIGAUhICNoK1VJDtwAbZpBF2Eop0rcAUprNMJCiIpElJIMJWdhGAhKPO6YUjnw3n/fZP/67zV8fw5KQQraZoGcdboAVadAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkAZgCYAWAGgBkABgdotVqVHzo6OmJn/l1eAMwAsP8vQKPRoEf4TZWY/1E7TdOdnZ3JZJJ/fH5+3t3dpUb6dVFfQL/fX9p+p9Mp0/ZD5AEuLy+XXs7Pz5FJihPvV9DDw8P+/n7+ZW9v7/HxkZqnIPFewMXFxdLL2dkZMkmhIr2A6XS6tbX1/f2dvbRarclksrYW7yfm70T6+1xdXeW3H0I4PT0t3/ZDnBfw/v6eJMnHx0f2srGx8fr6WqvVwKkKEuNn6ubmJr/9EEKv1yvl9kOEF/D5+dlsNt/e3rKXer0+m83W19fBqYoT3QXc3t7mtx9CODk5Kev2Q2wXkKZpu90ejUbZS7VafXl5SZIEnKpQcV3A3d1dfvshhOPj4xJvP8R2AYeHh4PBIPuxUqkMh8N2u81NVLiILuDp6Sm//RBCt9st9/ZDVAFW5G8PS2L5CprNZpubm19fX9nLwcHB/f09ONK/EcsFXF9f57cfVuPjHyK5gPl8niTJYrHIXra3t8fjcSn/+LMkigCrrPwfscgZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYAmAFgBoAZAGYA2B9eJKHHJvW42wAAAABJRU5ErkJggg==",
         prompt: "この画像に書かれている数字を1文字で答えてください",
         answers: ["7"],
         points: 10,
@@ -49,7 +48,7 @@ const TEST_IMAGES = {
         description: "複雑カウント"
     },
     level4: {
-        base64: "iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAADOklEQVR4nO3dMW7bQBCF4WHgE6nhcVTpVK58HDa5ElMwFhBLWkTkvNnZ4f/ViW0kPx7XGwae1nU1wNuv3l8AaiIsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxIEBYkCAsShAUJwoIEYUGCsCBBWJAgLEgQFiQIa3jTber9JTxBWGPLWZURVgWXjHkR1sCm22SX3l/EC4RVQr7RShrW8pXrjymhzHNlacPC25KNVsawlq9pnhmtluRzZTnDwk6ZRitdWNtcoSH/XFnCsO54Gu6RZrTyhoWnhpgryxYWz0EHOUYrV1hoG2WuLHlYHLN2SjBaicLiOdg20FxZqrDgqfdoZQnr1VzxNNyMNVeWJyz46zpahDWA4ebKkoTVPrbzNNyv32h9RH6yI300fu98rfwzEEacKzObfH8yRTsd0W3Csrz+jOM35xDWb1s/o/8cnMOyNNdRy0JV32qEZd+71SuvbcAKVGWOz8HwtiRnrO0vtct01RiqzaCnq43wu8L5ujZOPwqVqnIW/u2h9rohrK1lqVbV0HNlojPWD+ojV7GkNpKwAk9aERek83XVTRdV5RR3865oq2RVQoEnrdCb9/m6ej0WK90p/FBgrizmjPXo4E1E7aGShxVy0urzj9BHHotUNYQUbzcgVMhJq09YRx6Fhd+iKTNXxmKdlH60CCuLSnNlhHVe4tHqENbxtx7qHbOKzZWlXazg1yJOSjlaoTfv/+N+pd73bcFI9ebK4m/e28/Bx8vPxq8vc1PaOSzNRXyWR+GrF6ri3xYMVnKuLMmjsL09p3osdnCx6Ta5j1boo/DxufbWSwpPf/vQT8MscyV4GvZcrHezYLpUBKPVJ6zdb1N1/P8/7rLMlUaPC9Ll78vKuz9C+RN9B953WnFnrPtdudepyP0DRso4V64nrehXk90/WrF/2+nJ9aTV59Xkk8s4Vxu/0cpyQYoU/E5ahBUt71y5Iiz8y2m0CCvUSebKCAtPeIwWYcU5z1wZYeG5w6NFWEFONVfGBWmY7j+Oa5/d96WEBQkehZAgLEgQFiQICxKEBQnCggRhQYKwIEFYkCAsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxI/AEsZyQ54ZDj3gAAAABJRU5ErkJggg==",
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAADOklEQVR4nO3dMW7bQBCF4WHgE6nhcVTpVK58HDa5ElMwFhBLWkTkvNnZ4f/ViW0kPx7XGwae1nU1wNuv3l8AaiIsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxIEBYkCAsShAUJwoIEYUGCsCBBWJAgLEgQFiQIa3jTber9JTxBWGPLWZURVgWXjHkR1sCm22SX3l/EC4RVQr7RShrW8pXrjymhzHNlacPC25KNVsawlq9pnhmtluRzZTnDwk6ZRitdWNtcoSH/XFnCsO54Gu6RZrTyhoWnhpgryxYWz0EHOUYrV1hoG2WuLHlYHLN2SjBaicLiOdg20FxZqrDgqfdoZQnr1VzxNNyMNVeWJyz46zpahDWA4ebKkoTVPrbzNNyv32h9RH6yI300fu98rfwzEEacKzObfH8yRTsd0W3Csrz+jOM35xDWb1s/o/8cnMOyNNdRy0JV32qEZd+71SuvbcAKVGWOz8HwtiRnrO0vtct01RiqzaCnq43wu8L5ujZOPwqVqnIW/u2h9rohrK1lqVbV0HNlojPWD+ojV7GkNpKwAk9aERek83XVTRdV5RR3865oq2RVQoEnrdCb9/m6ej0WK90p/FBgrizmjPXo4E1E7aGShxVy0urzj9BHHotUNYQUbzcgVMhJq09YRx6Fhd+iKTNXxmKdlH60CCuLSnNlhHVe4tHqENbxtx7qHbOKzZWlXazg1yJOSjlaoTfv/+N+pd73bcFI9ebK4m/e28/Bx8vPxq8vc1PaOSzNRXyWR+GrF6ri3xYMVnKuLMmjsL09p3osdnCx6Ta5j1boo/DxufbWSwpPf/vQT8MscyV4GvZcrHezYLpUBKPVJ6zdb1N1/P8/7rLMlUaPC9Ll78vKuz9C+RN9B953WnFnrPtdudepyPDRso4V64nrehXk90/WrF/2+nJ9aTV59Xkk8s4Vxu/0cpyQYoU/E5ahBUt71y5Iiz8y2m0CCvUSebKCAtPeIwWYcU5z1wZYeG5w6NFWEFONVfGBWmY7j+Oa5/d96WEBQkehZAgLEgQFiQICxKEBQnCggRhQYKwIEFYkCAsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxI/AEsZyQ54ZDj3gAAAABJRU5ErkJggg==",
         prompt: "この画像には黄色い星と緑の三角形があります。星は三角形の左と右、どちらにありますか？「左」か「右」で答えてください",
         answers: ["左"],
         points: 20,
@@ -81,6 +80,7 @@ interface AIRequest {
     userId?: string;
     recentNotes?: any[];
     userStats?: any;
+    participants?: string[]; // 取締役会用
 }
 
 serve(async (req) => {
@@ -102,7 +102,7 @@ serve(async (req) => {
         const { action, model: targetModel } = requestData
 
         // ==========================================
-        // 1. ベンチマーク機能 (稼働モニター用)
+        // 1. ベンチマーク機能
         // ==========================================
 
         if (action === 'get_models') {
@@ -143,15 +143,13 @@ serve(async (req) => {
         // 2. AIアシスタント機能 (フォールバック対応)
         // ==========================================
 
-        // ★ 自動再試行ラッパー：指定モデルがダメならフォールバックする
+        // ★ 自動再試行ラッパー
         const tryAIChain = async (originalPrompt: string) => {
-            // ユーザーがモデルを指定している場合は、そのモデルだけを試す（フォールバックしない）
             if (targetModel) {
                 const fighter = { provider: inferProvider(targetModel), model: targetModel };
                 return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt });
             }
-
-            // モデル指定がない場合、FALLBACK_MODELS順に試す
+            // 指定がなければFALLBACK_MODELS順に試す
             let lastError;
             for (const model of FALLBACK_MODELS) {
                 try {
@@ -159,11 +157,42 @@ serve(async (req) => {
                 } catch (e: any) {
                     console.error(`Model ${model.model} failed:`, e.message);
                     lastError = e;
-                    // 次のモデルへ
                 }
             }
             throw lastError || new Error("All AI models failed.");
         };
+
+        // --- ★ 追加: 取締役会機能 ---
+        if (action === 'hold_board_meeting') {
+            const topic = requestData.content;
+            const prompt = `
+            あなたは「自分株式会社」の取締役会シミュレーターです。
+            以下の議題について、4人の取締役（CEO, CTO, CMO, CFO）が議論し、結論を出す様子を出力してください。
+
+            議題: ${topic}
+
+            役割設定:
+            1. CEO (Steve): ビジョナリー、情熱的、シンプルさを追求。
+            2. CTO (Linus): 技術的実現性、コード品質、オープンソース精神。
+            3. CMO (Gary): マーケティング、ユーザー獲得、SNS戦略、成長ハック。
+            4. CFO (Warren): コスト対効果、リスク管理、持続可能性。
+
+            以下のJSONフォーマットのみで出力してください（Markdown記法は不要）:
+            {
+                "meeting_minutes": [
+                    { "role": "CEO", "name": "Steve", "text": "..." },
+                    { "role": "CTO", "name": "Linus", "text": "..." },
+                    ... (議論の応酬)
+                ],
+                "conclusion": "取締役会としての最終決定事項"
+            }
+            `;
+
+            const resultStr = await tryAIChain(prompt);
+            const cleanJson = resultStr.replace(/```json|```/g, '').trim();
+            const result = JSON.parse(cleanJson);
+            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+        }
 
         // ノート分析
         if (action === 'analyze_note_text') {
@@ -194,42 +223,19 @@ serve(async (req) => {
             const resultStr = await tryAIChain(prompt);
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
-
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
-        // 文章改善
-        if (action === 'improve') {
-            const prompt = `以下のテキストを、よりプロフェッショナルで明確な日本語に書き直してください。元の意味を保ちつつ、誤字脱字を修正し、読みやすくしてください。\n\nテキスト:\n${requestData.content}`;
-            const result = await tryAIChain(prompt);
-            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
-        }
+        // 基本機能群 (improve, summarize, expand, translate, suggest_title)
+        if (['improve', 'summarize', 'expand', 'translate', 'suggest_title'].includes(action)) {
+            let instruction = "";
+            if (action === 'improve') instruction = "以下のテキストを、よりプロフェッショナルで明確な日本語に書き直してください。";
+            if (action === 'summarize') instruction = "以下のテキストを簡潔に要約し、要点を3つ箇条書きにしてください。";
+            if (action === 'expand') instruction = "以下のテキストの続きを書いて、内容を膨らませてください。";
+            if (action === 'translate') instruction = `以下のテキストを${requestData.targetLanguage || 'English'}に翻訳してください。`;
+            if (action === 'suggest_title') instruction = "以下のテキストの内容を表す魅力的なタイトル案を5つ提案してください。";
 
-        // 要約
-        if (action === 'summarize') {
-            const prompt = `以下のテキストを簡潔に要約してください。重要なポイントを箇条書きで3つ程度にまとめてください。\n\nテキスト:\n${requestData.content}`;
-            const result = await tryAIChain(prompt);
-            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
-        }
-
-        // 文章展開
-        if (action === 'expand') {
-            const prompt = `以下のテキストの続きを書いて、内容を膨らませてください。文脈を維持し、創造的かつ論理的に展開してください。\n\nテキスト:\n${requestData.content}`;
-            const result = await tryAIChain(prompt);
-            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
-        }
-
-        // 翻訳
-        if (action === 'translate') {
-            const targetLang = requestData.targetLanguage || 'English';
-            const prompt = `以下のテキストを${targetLang}に翻訳してください。自然な表現を使用してください。\n\nテキスト:\n${requestData.content}`;
-            const result = await tryAIChain(prompt);
-            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
-        }
-
-        // タイトル提案
-        if (action === 'suggest_title') {
-            const prompt = `以下のテキストの内容を表す魅力的なタイトル案を5つ提案してください。箇条書きで出力してください。\n\nテキスト:\n${requestData.content}`;
+            const prompt = `${instruction}\n\nテキスト:\n${requestData.content}`;
             const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
@@ -238,33 +244,26 @@ serve(async (req) => {
         if (action === 'task_recommendations') {
             const recentNotes = requestData.recentNotes || [];
             const userStats = requestData.userStats || {};
-
-            const context = `
-            ユーザーの直近のメモ: ${JSON.stringify(recentNotes.map((n: any) => n.title).join(', '))}
-            現在のレベル: ${userStats.current_level || 1}
-            継続日数: ${userStats.current_streak || 0}日
-            `;
+            const context = `ユーザーの直近メモ: ${JSON.stringify(recentNotes.map((n: any) => n.title).join(', '))}\n現在レベル: ${userStats.current_level || 1}`;
 
             const prompt = `
-            あなたは優秀な「自分株式会社」の専属秘書AIです。
-            ユーザーの状況に基づいて、今日・今週・今月・今年やるべきタスクと、全体的なインサイトを提案してください。
-            
+            あなたは「自分株式会社」の専属秘書AIです。
             ユーザー状況: ${context}
+            今日・今週・今月・今年やるべきタスクとインサイトを提案してください。
             
-            以下のJSONフォーマットのみで出力してください（Markdown記法は不要）:
+            以下のJSONフォーマットのみで出力:
             {
                 "daily": ["タスク1", "タスク2"],
-                "weekly": ["タスク1", "タスク2"],
+                "weekly": ["タスク1"],
                 "monthly": ["タスク1"],
                 "yearly": ["目標1"],
-                "insights": "励ましや分析のメッセージ"
+                "insights": "メッセージ"
             }
             `;
 
             const resultStr = await tryAIChain(prompt);
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
-
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
@@ -283,8 +282,6 @@ function inferProvider(modelName: string): string {
     if (modelName.startsWith('gemini')) return 'gemini';
     return 'openai';
 }
-
-// --- ベンチマーク・リスト収集ロジック ---
 
 async function gatherAllCandidates(supabase: any, includeAll: boolean = false): Promise<any[]> {
     const { data: latestResults } = await supabase
@@ -316,8 +313,6 @@ async function gatherAllCandidates(supabase: any, includeAll: boolean = false): 
     const results = (await Promise.all(promises)).flat();
     return results.sort((a, b) => b.score - a.score);
 }
-
-// --- 6段階ベンチマーク実行関数 ---
 
 async function runAdvancedBenchmark(fighter: any, keys: any) {
     const levels: any[] = [];
@@ -368,15 +363,11 @@ async function runAdvancedBenchmark(fighter: any, keys: any) {
             });
         }
     }
-
     const totalTests = Object.keys(TEST_IMAGES).length;
     const levelResults = levels.map(l => l.passed ? '✓' : '✗').join('');
     const summary = `${passedCount}/${totalTests}通過 [${levelResults}] 合計${totalScore}/100点`;
-
     return { totalScore, totalLatency, levels, summary };
 }
-
-// --- AI API呼び出し ---
 
 async function callAI(fighter: any, keys: any, data: AIRequest): Promise<string> {
     if (fighter.provider === 'gemini') return await callGemini(fighter.model, keys.gemini!, data);
