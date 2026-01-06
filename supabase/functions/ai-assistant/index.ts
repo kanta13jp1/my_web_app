@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Benchmark + All Utilities)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Robust Fallback Edition)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -15,11 +15,13 @@ const KEYS = {
     grok: Deno.env.get('XAI_API_KEY'),
 };
 
-// デフォルトモデル
-const DEFAULT_MODEL = {
-    provider: 'gemini',
-    model: 'gemini-2.0-flash'
-};
+// ★ フォールバックチェーン（GeminiがダメならOpenAI、それもダメならAnthropic）
+// 高速かつ安価なモデル順に並べています
+const FALLBACK_MODELS = [
+    { provider: 'gemini', model: 'gemini-2.0-flash' },       // 第1候補: 最速・無料枠あり
+    { provider: 'openai', model: 'gpt-4o-mini' },            // 第2候補: 非常に安価・安定
+    { provider: 'anthropic', model: 'claude-3-haiku-20240307' } // 第3候補: 高速
+];
 
 /**
  * 6段階難易度別テスト画像
@@ -138,15 +140,32 @@ serve(async (req) => {
         }
 
         // ==========================================
-        // 2. AIアシスタント機能 (アプリ実用機能)
+        // 2. AIアシスタント機能 (フォールバック対応)
         // ==========================================
 
-        // 汎用タスク実行のためのモデル決定
-        const workerModel = targetModel
-            ? { provider: inferProvider(targetModel), model: targetModel }
-            : DEFAULT_MODEL;
+        // ★ 自動再試行ラッパー：指定モデルがダメならフォールバックする
+        const tryAIChain = async (originalPrompt: string) => {
+            // ユーザーがモデルを指定している場合は、そのモデルだけを試す（フォールバックしない）
+            if (targetModel) {
+                const fighter = { provider: inferProvider(targetModel), model: targetModel };
+                return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt });
+            }
 
-        // ★ 追加: ノート分析 (感情、タグ、アクションアイテム抽出など)
+            // モデル指定がない場合、FALLBACK_MODELS順に試す
+            let lastError;
+            for (const model of FALLBACK_MODELS) {
+                try {
+                    return await callAI(model, KEYS, { ...requestData, content: originalPrompt });
+                } catch (e: any) {
+                    console.error(`Model ${model.model} failed:`, e.message);
+                    lastError = e;
+                    // 次のモデルへ
+                }
+            }
+            throw lastError || new Error("All AI models failed.");
+        };
+
+        // ノート分析
         if (action === 'analyze_note_text') {
             const prompt = `
             あなたは優秀な「自分株式会社」の分析AIです。
@@ -171,8 +190,8 @@ serve(async (req) => {
                 "key_entities": ["キーワード1"]
             }
             `;
-            const resultStr = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
-            // JSONパース (Markdown記法が含まれる場合の除去処理付き)
+
+            const resultStr = await tryAIChain(prompt);
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
 
@@ -182,21 +201,21 @@ serve(async (req) => {
         // 文章改善
         if (action === 'improve') {
             const prompt = `以下のテキストを、よりプロフェッショナルで明確な日本語に書き直してください。元の意味を保ちつつ、誤字脱字を修正し、読みやすくしてください。\n\nテキスト:\n${requestData.content}`;
-            const result = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
         // 要約
         if (action === 'summarize') {
             const prompt = `以下のテキストを簡潔に要約してください。重要なポイントを箇条書きで3つ程度にまとめてください。\n\nテキスト:\n${requestData.content}`;
-            const result = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
         // 文章展開
         if (action === 'expand') {
             const prompt = `以下のテキストの続きを書いて、内容を膨らませてください。文脈を維持し、創造的かつ論理的に展開してください。\n\nテキスト:\n${requestData.content}`;
-            const result = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
@@ -204,14 +223,14 @@ serve(async (req) => {
         if (action === 'translate') {
             const targetLang = requestData.targetLanguage || 'English';
             const prompt = `以下のテキストを${targetLang}に翻訳してください。自然な表現を使用してください。\n\nテキスト:\n${requestData.content}`;
-            const result = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
         // タイトル提案
         if (action === 'suggest_title') {
             const prompt = `以下のテキストの内容を表す魅力的なタイトル案を5つ提案してください。箇条書きで出力してください。\n\nテキスト:\n${requestData.content}`;
-            const result = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const result = await tryAIChain(prompt);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
@@ -242,7 +261,7 @@ serve(async (req) => {
             }
             `;
 
-            const resultStr = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            const resultStr = await tryAIChain(prompt);
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
 
@@ -280,14 +299,12 @@ async function gatherAllCandidates(supabase: any, includeAll: boolean = false): 
             return models
                 .filter(m => {
                     if (includeAll) return true;
-                    // 過去にテスト済みで100点未満（Vision失敗）のモデルを除外
                     const history = latestResults?.find((r: any) => r.model_name === m);
                     if (history && history.vision_score < 100) return false;
                     return true;
                 })
                 .map(m => {
                     const history = latestResults?.find((r: any) => r.model_name === m);
-                    // スコア計算
                     const score = history
                         ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
                         : 500;
@@ -320,8 +337,6 @@ async function runAdvancedBenchmark(fighter: any, keys: any) {
         try {
             const response = await callAI(fighter, keys, visionData);
             const latency = Date.now() - start;
-
-            // スコア判定
             const normalizedResponse = response.toLowerCase().trim();
             const isCorrect = test.answers.some(ans => normalizedResponse.includes(ans.toLowerCase()));
 
