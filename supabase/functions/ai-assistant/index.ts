@@ -1,4 +1,4 @@
-﻿// AI Assistant Edge Function: "The Five Emperors" (Advanced Benchmark + Utilities)
+﻿// AI Assistant Edge Function: "The Five Emperors" (Benchmark + All Utilities)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -15,7 +15,7 @@ const KEYS = {
     grok: Deno.env.get('XAI_API_KEY'),
 };
 
-// アプリ機能でモデル指定がない場合のデフォルト
+// デフォルトモデル
 const DEFAULT_MODEL = {
     provider: 'gemini',
     model: 'gemini-2.0-flash'
@@ -110,20 +110,18 @@ serve(async (req) => {
 
         if (action === 'test_model') {
             if (!targetModel) throw new Error('Model name is required');
-            const candidates = await gatherAllCandidates(supabaseClient, true); // 全モデルから探す
+            const candidates = await gatherAllCandidates(supabaseClient, true);
             const fighter = candidates.find(c => c.model === targetModel) || { provider: inferProvider(targetModel), model: targetModel };
 
-            // 6段階の高度なベンチマークを実行
             const benchmark = await runAdvancedBenchmark(fighter, KEYS);
 
-            // データベースへの保存
             await supabaseClient.from('ai_benchmark_results').insert({
                 user_id: user.id,
                 model_name: fighter.model,
                 provider: fighter.provider,
                 vision_score: benchmark.totalScore,
                 latency_ms: benchmark.totalLatency,
-                detail: JSON.stringify(benchmark.levels) // 詳細結果をJSONで保存
+                detail: JSON.stringify(benchmark.levels)
             });
 
             return new Response(JSON.stringify({
@@ -147,6 +145,39 @@ serve(async (req) => {
         const workerModel = targetModel
             ? { provider: inferProvider(targetModel), model: targetModel }
             : DEFAULT_MODEL;
+
+        // ★ 追加: ノート分析 (感情、タグ、アクションアイテム抽出など)
+        if (action === 'analyze_note_text') {
+            const prompt = `
+            あなたは優秀な「自分株式会社」の分析AIです。
+            以下のメモの内容を分析し、JSON形式で結果を出力してください。
+            
+            分析項目:
+            1. sentiment: 感情分析 ('positive', 'neutral', 'negative')
+            2. tags: 関連するタグ (日本語, 3-5個)
+            3. summary: 100文字以内の要約
+            4. action_items: 具体的なアクションアイテムのリスト (なければ空配列)
+            5. key_entities: 重要なキーワードや固有名詞 (3つ)
+
+            メモ内容:
+            ${requestData.content}
+
+            出力フォーマット (Markdown不要、JSONのみ):
+            {
+                "sentiment": "neutral",
+                "tags": ["タグ1", "タグ2"],
+                "summary": "要約...",
+                "action_items": ["タスク1"],
+                "key_entities": ["キーワード1"]
+            }
+            `;
+            const resultStr = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
+            // JSONパース (Markdown記法が含まれる場合の除去処理付き)
+            const cleanJson = resultStr.replace(/```json|```/g, '').trim();
+            const result = JSON.parse(cleanJson);
+
+            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+        }
 
         // 文章改善
         if (action === 'improve') {
@@ -212,8 +243,6 @@ serve(async (req) => {
             `;
 
             const resultStr = await callAI(workerModel, KEYS, { ...requestData, content: prompt });
-
-            // JSONパース処理
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
 
