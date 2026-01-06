@@ -46,8 +46,7 @@ const TEST_IMAGES = {
     },
     // Level 4: 空間認識（難しい）- 位置関係の理解
     level4: {
-        base64: "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",
-        prompt: "この画像には黄色い星と緑の三角形があります。星は三角形の左と右、どちらにありますか？「左」か「右」で答えてください",
+        base64: "iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAADOklEQVR4nO3dMW7bQBCF4WHgE6nhcVTpVK58HDa5ElMwFhBLWkTkvNnZ4f/ViW0kPx7XGwae1nU1wNuv3l8AaiIsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxIEBYkCAsShAUJwoIEYUGCsCBBWJAgLEgQFiQIa3jTber9JTxBWGPLWZURVgWXjHkR1sCm22SX3l/EC4RVQr7RShrW8pXrjymhzHNlacPC25KNVsawlq9pnhmtluRzZTnDwk6ZRitdWNtcoSH/XFnCsO54Gu6RZrTyhoWnhpgryxYWz0EHOUYrV1hoG2WuLHlYHLN2SjBaicLiOdg20FxZqrDgqfdoZQnr1VzxNNyMNVeWJyz46zpahDWA4ebKkoTVPrbzNNyv32h9RH6yI300fu98rfwzEEacKzObfH8yRTsd0W3Csrz+jOM35xDWb1s/o/8cnMOyNNdRy0JV32qEZd+71SuvbcAKVGWOz8HwtiRnrO0vtct01RiqzaCnq43wu8L5ujZOPwqVqnIW/u2h9rohrK1lqVbV0HNlojPWD+ojV7GkNpKwAk9aERek83XVTRdV5RR3865oq2RVQoEnrdCb9/m6ej0WK90p/FBgrizmjPXo4E1E7aGShxVy0urzj9BHHotUNYQUbzcgVMhJq09YRx6Fhd+iKTNXxmKdlH60CCuLSnNlhHVe4tHqENbxtx7qHbOKzZWlXazg1yJOSjlaoTfv/+N+pd73bcFI9ebK4m/e28/Bx8vPxq8vc1PaOSzNRXyWR+GrF6ri3xYMVnKuLMmjsL09p3osdnCx6Ta5j1boo/DxufbWSwpPf/vQT8MscyV4GvZcrHezYLpUBKPVJ6zdb1N1/P8/7rLMlUaPC9Ll78vKuz9C+RN9B953WnFnrPtdudepyP0DRso4V64nrehXk90/WrF/2+nJ9aTV59Xkk8s4Vxu/0cpyQYoU/E5ahBUt71y5Iiz8y2m0CCvUSebKCAtPeIwWYcU5z1wZYeG5w6NFWEFONVfGBWmY7j+Oa5/d96WEBQkehZAgLEgQFiQICxKEBQnCggRhQYKwIEFYkCAsSBAWJAgLEoQFCcKCBGFBgrAgQViQICxI/AEsZyQ54ZDj3gAAAABJRU5ErkJggg==", prompt: "この画像には黄色い星と緑の三角形があります。星は三角形の左と右、どちらにありますか？「左」か「右」で答えてください",
         answers: ["左"],
         points: 20,
         description: "空間認識"
@@ -62,7 +61,7 @@ const TEST_IMAGES = {
     },
     // Level 6: 微細な違い識別（エキスパート）
     level6: {
-        base64: "iVBORw0KGgoAAAANSUhEUgAAAPoAAABQCAIAAAC/Cf/iAAAF6ElEQVR4nO2d3yv7XxzHz9DWarUQGWWTFXEhl36uhJYoUtTajSuZZLdyIf4EP2K4cLXcmN1ol0LZzYyUC0WawoUfJUpK8714C9+xfd7b+5z3ec95Pq7W7Jzz3GuPnfc5e9t7uvf3dwKAGOTwDgCAekB3IBDQHQgEdAcCAd2BQEB3IBDQHQgEdAcCAd2BQEB3IBDQHQgEdAcCAd2BQEB3IBB5vAOA7ECn0/16f3b9A7kuu+ICNUmmeDK07xJ0B7/wU/Rknsh/pBaA7iCR7wbL1yOzVioD3cEXn8oqsYJKJ4xQVfcUa0GOpUGqhBGV96+y8fJrpYbuae14VDMMqX6OS/dpsujzZ/8ykWKw1T0hUIqx5D9SOUj1a4csnh2jnjOuFSvdM964MN3xIFWyTljPwbT6V1grJrorX7qxWPwhVbK2rJdqtEZRXiv6/0RAxYnPtume6UgGUmU7dD410vjuhEqHSKVOAHZj0YpKc3ZnUb6PDbWCeQupVAuQAiUVoxiVmu7syqeRSiXw91JpE7q1oqO7OvVNdxSkSv1XlU+iZfBWpF4rmosZduWjspOjzt9LpU0oPiMKuqszVaQ7NyBVti9pWNQK32YSDi4rGQnu70OluqtZO/nFQiruYimEUa0wuwOBgO5iwXElI8H3sKNId/VrJ6dYSCWRvesZdrXC7A4EAroDgYDuQCCgOxAI6A4EAroDgYDuQCCgOxAIRbqrfyJDzgkIpJLgfgI1Y9jVCrO7WHA/1cr3TQjdgUAo1V3N2UL+xIBU2buSkWBUK8zuwsFxPcP9TUhBd3XKl26lkCp7p3YJFrWif50ZFii/ogsL/l4qbULxGdHRXc0vpLF7fGZkYyou65kMjjna/fIeuwoqOTQjVbZDt1b0rzND91VU/vohlWoBUqCR2YH+Ba9pXRWa7tWlkSpFw6y44DWVWtH/IJLK9ZfpWkWQKvuhUytGNfqeKa0hMm7ItPM/nIr1BE+3f4W1wm8zIRVD4xn1nHGt8Mt7svjzqVh4qc5xQyYf+101F3wp8nFcdyJVwoi0DhdUukpruJ8kBMCvZoMvqGiq5a0zdAeJZLYdZLqbpwV0B7/wc3mQzBP5j9QC0B0kJd1PuLXvElvdFxYWjo6OCCEOh8PtdrMbKC0ODw9DodD19XVRUVFvb29dXR3vRIQQEovFAoHA+fm52Wx2Op0tLS28E5H7+/upqSm73e71epOpz0Xxubm54+Nj6bbRaJydnZXZMI9ZJEIIGR0dJYT4/f54PM50IPm8vLyEw2GXy2WxWKLR6NLS0vT0dHFxMe9cZG9vr6ury2azXVxczM/PWywWu93ON5Lf76+oqJBua23mHhoaamxsTLeVcN9mMhqNHo/HZrMZDIaGhoaCgoJYLMY7FCGEuN3uqqoqg8FQXV1ttVovLy/55olEInq9vqamhm8Mugin+3ceHx/v7u7Kysp4B/kiHo+fnZ3d3NxUV1dzjPHy8rK5uTkwMMAxQ2rW19c9Hs/MzIy0WpYJ28WMlnl7e1tdXW1ubi4tLeWd5QO/37+9va3T6fr6+vim2tjYaG1tzc/P55ghBWNjY4SQ19fXSCTi8/kmJibKy8vlNBR0do/H48vLy3q93uVy8c7yhcvl8vl8k5OTu7u7+/v7vGJcXFycnZ11dHTwCiATg8HQ1NRUW1srf4IXcXaPx+MrKyuvr69jY2O5ubm84/yPnJwcq9VaX19/enqawVaMCpeXl1dXV4eHhz/vjIyMLC4ucglDF+F0f39/X1tbe3p6Gh8fz8vTytN/fn4OBoOdnZ35+fmxWOzg4KC7u5tXGIfD4XA4pNuhUOj09NTr9fIK85Pn5+dAIOB0Os1mczQaPTk56enpkdmW7esdDAa3trak2zs7O06ns7+/n+mI/+Th4SEcDhNCPB6PdM/g4GB7ezvXUMRkMlVWVi4sLNze3hYWFra1tWnhc3dtYjKZ7Hb7/Pz8w8NDSUnJ8PCw1WqV2RZnVYFACLpVBWIC3YFAQHcgENAdCAR0BwLxHyzGyv/gynfIAAAAAElFTkSuQmCC",
+        base64: "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",
         prompt: "この画像には5つの図形が並んでいます。1つだけ他と形が違うものがあります。それは何番目ですか？数字のみで答えてください",
         answers: ["4"],
         points: 20,
@@ -158,7 +157,7 @@ async function runAdvancedBenchmark(fighter: any, keys: any) {
 
     for (const [levelName, test] of Object.entries(TEST_IMAGES)) {
         const start = Date.now();
-        
+
         const visionData: AIRequest = {
             action: 'test_vision',
             content: test.prompt,
@@ -169,13 +168,13 @@ async function runAdvancedBenchmark(fighter: any, keys: any) {
         try {
             const response = await callAI(fighter, keys, visionData);
             const latency = Date.now() - start;
-            
+
             // スコア判定: 回答に正解キーワードが含まれているか
             const normalizedResponse = response.toLowerCase().trim();
-            const isCorrect = test.answers.some(ans => 
+            const isCorrect = test.answers.some(ans =>
                 normalizedResponse.includes(ans.toLowerCase())
             );
-            
+
             const score = isCorrect ? test.points : 0;
             totalScore += score;
             totalLatency += latency;
@@ -194,7 +193,7 @@ async function runAdvancedBenchmark(fighter: any, keys: any) {
         } catch (e: any) {
             const latency = Date.now() - start;
             totalLatency += latency;
-            
+
             levels.push({
                 level: levelName,
                 description: test.description,
@@ -285,14 +284,21 @@ async function gatherAllCandidates(supabase: any): Promise<any[]> {
         if (!key) return [];
         try {
             const models = await fetchDynamicModels(provider, key);
-            return models.map(m => {
-                const history = latestResults?.find((r: any) => r.model_name === m);
-                // スコア計算: (認識率 * 10) - (速度ms / 100)
-                const score = history 
-                    ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
-                    : 500;
-                return { provider, model: m, score };
-            });
+            return models
+                .filter(m => {
+                    const history = latestResults?.find((r: any) => r.model_name === m);
+                    // テスト済みで100点未満のモデルは除外
+                    if (history && history.vision_score < 100) return false;
+                    return true;
+                })
+                .map(m => {
+                    const history = latestResults?.find((r: any) => r.model_name === m);
+                    // スコア計算: (認識率 * 10) - (速度ms / 100)
+                    const score = history
+                        ? (history.vision_score * 10) - Math.floor(history.latency_ms / 100)
+                        : 500;
+                    return { provider, model: m, score };
+                });
         } catch { return []; }
     });
 
