@@ -8,7 +8,7 @@
 ## 2. 組織構造 (AI Agents) & 機能マップ
 ユーザー（CEO）を支えるAI役員たちの構造図については、以下のファイルを参照してください。
 
-- **[組織図機能マップ (Mermaid)](docs/organization_chart.md)**
+- **[組織図機能マップ (Mermaid)](organization_chart.md)**
 
 ## 3. コアアーキテクチャ: "The Five Emperors"
 `supabase/functions/ai-assistant/index.ts` に実装された統合AI機能。
@@ -26,7 +26,7 @@
     * 経営コックピット(HomePage)の実装。
     * 断捨離クエストの復旧。
     * AIアシスタントメニュー(`NoteEditorPage`)の実装。
-    * 組織図のMermaid化と設計への反映。
+    * 組織図のMermaid化（ルートディレクトリへ配置）。
 * **次のタスク**:
     * **緊急役員会議の実装**: `NoteEditorPage` ではなく、チャットUIで複数のAI役員と対話できる専用画面の作成。
     * **未実装Officeの機能追加**: CMO（分析画面）、CFO（コスト入力）などの中身の実装。
