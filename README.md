@@ -50,7 +50,7 @@
 
     * **2026-01-08**:
     * **Feature**: リアル断捨離クエスト (Real World Danshari) の実装。
-        * Backend: nalyze_danshari_item アクションをEdge Functionに追加。
+        * Backend: analyze_danshari_item アクションをEdge Functionに追加。
         * UI: RealWorldDanshariPage を実装。カメラ撮影とAI判定フローを構築。
 
 ---

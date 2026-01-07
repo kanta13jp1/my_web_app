@@ -10,267 +10,67 @@ class SettingsPage extends StatelessWidget {
     final themeService = Provider.of<ThemeService>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('設定'),
-      ),
+      appBar: AppBar(title: const Text('設定')),
       body: ListView(
         children: [
-          // 外観セクション
-          _buildSectionHeader('外観', Icons.palette),
-
-          // テーマモード設定
           ListTile(
-            leading: Icon(
-              themeService.themeMode == AppThemeMode.light // 更新
-                  ? Icons.light_mode
-                  : themeService.themeMode == AppThemeMode.dark // 更新
-                      ? Icons.dark_mode
-                      : Icons.brightness_auto,
-            ),
-            title: const Text('テーマ'),
-            subtitle: Text(_getThemeModeLabel(themeService.themeMode)),
-            onTap: () => _showThemeModeDialog(context, themeService),
+            title: const Text('テーマ設定'),
+            subtitle: Text(_getThemeText(themeService.themeMode)),
+            trailing: const Icon(Icons.brightness_6),
+            onTap: () => _showThemeDialog(context, themeService),
           ),
-
-          // テーマカラー選択
-          ListTile(
-            leading: Icon(Icons.color_lens, color: themeService.primaryColor),
-            title: const Text('テーマカラー'),
-            subtitle: const Text('アプリのメインカラーを変更'),
-            onTap: () => _showColorPickerDialog(context, themeService),
-          ),
-
-          const Divider(),
-
-          // プレビュー
-          _buildSectionHeader('プレビュー', Icons.visibility),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: themeService.primaryColor,
-                      child: const Icon(Icons.note, color: Colors.white),
-                    ),
-                    title: const Text('サンプルメモ'),
-                    subtitle: const Text('これはプレビューです'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.star_border),
-                      onPressed: () {},
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('ボタンのプレビュー'),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(),
-
-          // アプリ情報
-          _buildSectionHeader('アプリ情報', Icons.info),
-
-          ListTile(
-            leading: const Icon(Icons.description),
-            title: const Text('ドキュメント'),
-            subtitle: const Text('ロードマップ、技術ドキュメント、サマリーなど'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              Navigator.pushNamed(context, '/documents');
-            },
-          ),
-
-          const ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('バージョン'),
-            subtitle: Text('1.0.0'),
-          ),
+          // 他の設定項目...
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getThemeModeLabel(AppThemeMode mode) {
-    // 更新
+  String _getThemeText(ThemeMode mode) {
     switch (mode) {
-      case AppThemeMode.light:
+      case ThemeMode.system:
+        return 'システムに合わせる';
+      case ThemeMode.light:
         return 'ライトモード';
-      case AppThemeMode.dark:
+      case ThemeMode.dark:
         return 'ダークモード';
-      case AppThemeMode.system:
-        return 'システム設定に従う';
     }
   }
 
-  void _showThemeModeDialog(BuildContext context, ThemeService themeService) {
+  void _showThemeDialog(BuildContext context, ThemeService service) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => SimpleDialog(
         title: const Text('テーマを選択'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 修正 1: ライトモード (RadioListTileに戻し、警告を抑制)
-            RadioListTile<AppThemeMode>(
-              title: const Text('ライトモード'),
-              secondary: const Icon(Icons.light_mode),
-              value: AppThemeMode.light,
-              // 警告を抑制: groupValue, onChangedの使用を許可
-              // ignore: deprecated_member_use
-              groupValue: themeService.themeMode,
-              // ignore: deprecated_member_use
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-
-            // 修正 2: ダークモード (RadioListTileに戻し、警告を抑制)
-            RadioListTile<AppThemeMode>(
-              title: const Text('ダークモード'),
-              secondary: const Icon(Icons.dark_mode),
-              value: AppThemeMode.dark,
-              // 警告を抑制
-              // ignore: deprecated_member_use
-              groupValue: themeService.themeMode,
-              // ignore: deprecated_member_use
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-
-            // 修正 3: システム設定に従う (RadioListTileに戻し、警告を抑制)
-            RadioListTile<AppThemeMode>(
-              title: const Text('システム設定に従う'),
-              secondary: const Icon(Icons.brightness_auto),
-              value: AppThemeMode.system,
-              // 警告を抑制
-              // ignore: deprecated_member_use
-              groupValue: themeService.themeMode,
-              // ignore: deprecated_member_use
-              onChanged: (value) {
-                if (value != null) {
-                  themeService.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
+        children: [
+          _buildOption(context, service, ThemeMode.system, 'システムに合わせる'),
+          _buildOption(context, service, ThemeMode.light, 'ライトモード'),
+          _buildOption(context, service, ThemeMode.dark, 'ダークモード'),
         ],
       ),
     );
   }
 
-  void _showColorPickerDialog(BuildContext context, ThemeService themeService) {
-    final colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.purple,
-      Colors.orange,
-      Colors.teal,
-      Colors.pink,
-      Colors.indigo,
-      Colors.amber,
-      Colors.cyan,
-      Colors.lime,
-      Colors.deepOrange,
-    ];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('テーマカラーを選択'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: GridView.builder(
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+  Widget _buildOption(
+      BuildContext context, ThemeService service, ThemeMode mode, String text) {
+    return SimpleDialogOption(
+      onPressed: () {
+        service.setThemeMode(mode);
+        Navigator.pop(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Icon(
+              service.themeMode == mode
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: service.themeMode == mode ? Colors.blue : Colors.grey,
             ),
-            itemCount: colors.length,
-            itemBuilder: (context, index) {
-              final color = colors[index];
-              final isSelected = color == themeService.primaryColor;
-
-              return InkWell(
-                onTap: () {
-                  themeService.setPrimaryColor(color);
-                  Navigator.pop(context);
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(12),
-                    border: isSelected
-                        ? Border.all(color: Colors.white, width: 3)
-                        : null,
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 32)
-                      : null,
-                ),
-              );
-            },
-          ),
+            const SizedBox(width: 12),
+            Text(text),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
-        ],
       ),
     );
   }
