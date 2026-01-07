@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/note.dart';
+import '../widgets/note_editor/ai_assistant_menu.dart'; // 追加
 
 class NoteEditorPage extends StatefulWidget {
   final Note? note;
@@ -14,7 +15,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   bool _isLoading = false;
-  bool _isAiLoading = false;
 
   @override
   void initState() {
@@ -81,121 +81,29 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  //  AI機能: 文章校正要約など
-  Future<void> _callAiAssistant(String action) async {
+  // ★ AIアシスタントメニューを表示するメソッド
+  void _showAiAssistant() {
     final content = _contentController.text;
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('起案内容（テキスト）を入力してください')),
+        const SnackBar(content: Text('AIに依頼するには、本文を入力してください')),
       );
       return;
     }
 
-    setState(() => _isAiLoading = true);
-
-    try {
-      final response = await supabase.functions.invoke(
-        'ai-assistant',
-        body: {
-          'action': action,
-          'content': content,
-          'language': 'ja', // 日本語指定
-        },
-      );
-
-      if (response.status != 200)
-        throw Exception('AI Server Error: ${response.status}');
-
-      final data = response.data;
-      if (data['success'] != true)
-        throw Exception(data['error'] ?? 'Unknown Error');
-
-      final result = data['result'] as String;
-
-      if (mounted) {
-        // 結果をダイアログで表示し、採用するか選ばせる
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Row(children: [
-              Icon(Icons.auto_awesome, color: Colors.indigo),
-              SizedBox(width: 8),
-              Text('CKOからの修正案')
-            ]),
-            content: SingleChildScrollView(child: Text(result)),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('却下')),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // 提案を採用（上書きまたは追記）
-                  if (action == 'improve') {
-                    _contentController.text = result; // 校正なら置き換え
-                  } else {
-                    _contentController.text =
-                        '$content\n\n--- CKO追記事項 ---\n$result'; // その他は追記
-                  }
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('採用する'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('CKO接続エラー: $e'), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isAiLoading = false);
-    }
-  }
-
-  void _showAiMenu() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.cleaning_services),
-              title: const Text('起案書の校正ブラッシュアップ'),
-              onTap: () {
-                Navigator.pop(context);
-                _callAiAssistant('improve');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.summarize),
-              title: const Text('要約（エグゼクティブサマリー作成）'),
-              onTap: () {
-                Navigator.pop(context);
-                _callAiAssistant('summarize');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.lightbulb),
-              title: const Text('事業アイデアの拡張'),
-              onTap: () {
-                Navigator.pop(context);
-                _callAiAssistant('expand');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.title),
-              title: const Text('プロジェクト名（タイトル）案出し'),
-              onTap: () {
-                Navigator.pop(context);
-                _callAiAssistant('suggest_title');
-              },
-            ),
-          ],
-        ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true, // コンテンツ量に応じて高さを調整
+      builder: (context) => AIAssistantMenu(
+        content: content,
+        onUpdateContent: (newText) {
+          // テキストの更新処理 (追記か置換かを選べるようにしても良いが、一旦は追記/置換)
+          // 既存のコードでは追記形式が多かったので、単純なsetTextで対応
+          setState(() {
+            _contentController.text = newText;
+          });
+        },
       ),
     );
   }
@@ -209,16 +117,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         foregroundColor: const Color(0xFF0F172A), // Navy
         elevation: 1,
         actions: [
-          // AIボタン
+          // ★ AIアシスタントボタン
           IconButton(
-            icon: _isAiLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.psychology, color: Colors.indigo),
-            onPressed: _isAiLoading ? null : _showAiMenu,
-            tooltip: 'CKOに相談',
+            icon: const Icon(Icons.auto_awesome, color: Colors.purple),
+            onPressed: _showAiAssistant,
+            tooltip: 'AIアシスタント (分析・取締役会)',
           ),
           // 保存ボタン
           Container(
