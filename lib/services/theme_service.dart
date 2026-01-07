@@ -27,6 +27,9 @@ class ThemeService extends ChangeNotifier {
 
   ThemeMode getFlutterThemeMode() => _themeMode;
 
+  // 追加: HomePageなどで参照されているゲッター
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
   void toggleTheme() async {
     _themeMode =
         _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
@@ -72,7 +75,6 @@ class ThemeService extends ChangeNotifier {
         ),
       ),
       cardTheme: CardThemeData(
-        // Changed from CardTheme to CardThemeData
         color: Colors.white,
         elevation: 2,
         shadowColor: _corpNavy.withOpacity(0.1),
@@ -117,7 +119,7 @@ class ThemeService extends ChangeNotifier {
       colorScheme: ColorScheme.fromSeed(
         seedColor: _corpNavy,
         brightness: Brightness.dark,
-        primary: Colors.white, // Dark mode headings
+        primary: Colors.white,
         secondary: _corpGold,
         surface: _corpBlueGrey.withOpacity(0.2),
         background: _bgDark,
@@ -125,7 +127,7 @@ class ThemeService extends ChangeNotifier {
       ),
       scaffoldBackgroundColor: _bgDark,
       appBarTheme: const AppBarTheme(
-        backgroundColor: _bgDark, // Darker
+        backgroundColor: _bgDark,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -137,7 +139,6 @@ class ThemeService extends ChangeNotifier {
         ),
       ),
       cardTheme: CardThemeData(
-        // Changed from CardTheme to CardThemeData
         color: _corpBlueGrey.withOpacity(0.3),
         elevation: 0,
         shape: RoundedRectangleBorder(
