@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'dart:typed_data'; // Required for Uint8List
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:my_web_app/services/theme_service.dart';
+import 'package:provider/provider.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
   const RealWorldDanshariPage({super.key});
@@ -12,355 +14,275 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  //  CHANGED: Use Uint8List instead of File for Web compatibility
-  Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
-  bool _isAnalyzing = false;
-
-  // Analysis Results
-  String? _itemName;
-  int? _keepScore;
-  String? _analysisResult;
-  String? _usedModel;
-
-  final Color _navy = const Color(0xFF0F172A);
-  final Color _gold = const Color(0xFFD4AF37);
+  Uint8List? _imageBytes;
+  bool _isLoading = false;
+  Map<String, dynamic>? _result;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
+      final XFile? image = await _picker.pickImage(
         source: source,
-        maxWidth: 800,
-        maxHeight: 800,
+        maxWidth: 800, // Resize to reduce payload
         imageQuality: 80,
       );
 
-      if (pickedFile != null) {
-        //  CHANGED: Read as bytes immediately (works on Web & Mobile)
-        final bytes = await pickedFile.readAsBytes();
-
+      if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
           _imageBytes = bytes;
-          _analysisResult = null; // Reset previous result
-          _itemName = null;
-          _keepScore = null;
+          _result = null; // Reset previous result
         });
-
-        // Auto-start analysis
-        _analyzeImage();
+        _analyzeImage(bytes);
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('画像の取得に失敗しました: $e')),
+      );
     }
   }
 
-  Future<void> _analyzeImage() async {
-    if (_imageBytes == null) return;
-
-    setState(() => _isAnalyzing = true);
+  Future<void> _analyzeImage(Uint8List bytes) async {
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      // Convert memory bytes to Base64
-      final base64Image = base64Encode(_imageBytes!);
+      final base64Image = base64Encode(bytes);
+      final supabase = Supabase.instance.client;
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
-          'action': 'analyze_image',
-          'imageBase64': base64Image, // Sending base64 string
+          'action': 'analyze_danshari_item',
+          'imageBase64': base64Image,
           'mimeType': 'image/jpeg',
         },
       );
 
-      if (response.status != 200) {
-        throw Exception('API Error: ${response.status}');
-      }
-
       final data = response.data;
-      if (data['success'] == true) {
-        final resultData = data['result']; // This is a Map
-
+      if (data != null && data['success'] == true) {
         setState(() {
-          if (resultData is String) {
-            _analysisResult = resultData;
-          } else {
-            _analysisResult = resultData['result'] ?? 'No advice returned.';
-            _itemName = resultData['item_name'];
-            _keepScore = resultData['keep_score'];
-          }
-          _usedModel = data['used_model'];
+          _result = data['result'];
         });
       } else {
-        throw Exception(data['error'] ?? 'Unknown error');
+        throw Exception(data?['error'] ?? 'Unknown error');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('解析エラー: $e')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AI分析エラー: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeService = Provider.of<ThemeService>(context);
+    final isDark = themeService.isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('リアル断捨離判定'),
-        backgroundColor: _navy,
-        foregroundColor: Colors.white,
+        title: const Text('リアル断捨離クエスト'),
+        backgroundColor: Colors.orange,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '捨てられないモノを撮影してください。\nOpenAI, Gemini, Claudeなど最新のAIが、あなたの代わりに断捨離を即決します。',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-
-            //  CHANGED: Use Image.memory instead of Image.file
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: _imageBytes == null
-                  ? Icon(Icons.camera_alt, size: 60, color: Colors.grey[400])
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.memory(
-                        _imageBytes!,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 24),
-
-            // Control Buttons
-            if (!_isAnalyzing && _analysisResult == null) ...[
-              ElevatedButton.icon(
-                onPressed: () => _pickImage(ImageSource.camera),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _navy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.camera_alt),
-                label: const Text(
-                  'カメラで撮影',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _pickImage(ImageSource.gallery),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  side: BorderSide(color: _navy),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: Icon(Icons.photo_library, color: _navy),
-                label: Text(
-                  'アルバムから選択',
-                  style: TextStyle(color: _navy, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-
-            // Loading Indicator
-            if (_isAnalyzing)
-              Column(
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    '鬼コーチが画像を解析中...\n(Claude 4.5 Opus / Gemini 3.0)',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: _navy),
-                  ),
-                ],
-              ),
-
-            // Results Area
-            if (_analysisResult != null) ...[
-              const SizedBox(height: 20),
-
-              // Score Card
-              if (_keepScore != null)
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_navy, const Color(0xFF1E293B)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _navy.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _itemName ?? '不明なアイテム',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              '未練スコア (Keep Score)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                        child: Text(
-                          '$_keepScore',
-                          style: TextStyle(
-                            color: (_keepScore ?? 0) < 30
-                                ? Colors.redAccent
-                                : _gold,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 16),
-
-              // The Verdict (Coach's Comment)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.redAccent.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
+            // Instructions
+            Card(
+              color: isDark ? Colors.grey[800] : Colors.orange[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.gavel, color: Colors.redAccent),
-                        SizedBox(width: 8),
-                        Text(
-                          '鬼コーチの判定',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ],
+                    const Icon(Icons.camera_alt,
+                        size: 48, color: Colors.orange),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'あなたの部屋にある「捨てるか迷っているモノ」を撮影してください。\nCSOが容赦なく判定します。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
                     ),
-                    const Divider(height: 24),
-                    Text(
-                      _analysisResult!,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.6,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    if (_usedModel != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Text(
-                          'Judge: $_usedModel',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('素晴らしい決断です！ +50pt')),
-                        );
-                        setState(() {
-                          _imageBytes = null;
-                          _analysisResult = null;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      icon: const Icon(Icons.delete_forever),
-                      label: const Text('今すぐ捨てる'),
-                    ),
+            // Image Preview Area
+            if (_imageBytes != null)
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.orange),
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(
+                    image: MemoryImage(_imageBytes!),
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _imageBytes = null;
-                          _analysisResult = null;
-                        });
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text('次のモノへ'),
-                    ),
+                ),
+              )
+            else
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[900] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: Center(
+                  child: Text(
+                    'ここに写真が表示されます',
+                    style: TextStyle(color: Colors.grey[500]),
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 40),
-            ],
+
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed:
+                      _isLoading ? null : () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera),
+                  label: const Text('カメラで撮影'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed:
+                      _isLoading ? null : () => _pickImage(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('アルバムから選択'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orangeAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // Result Area
+            if (_isLoading)
+              const Center(
+                  child: CircularProgressIndicator(color: Colors.orange))
+            else if (_result != null)
+              _buildResultCard(isDark),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildResultCard(bool isDark) {
+    final decision = _result!['decision'] as String;
+    final isDiscard = decision == 'DISCARD';
+    final color = isDiscard
+        ? Colors.blue
+        : Colors.green; // Discard=Blue(Cool), Keep=Green(Safe)
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Text(
+              isDiscard ? ' 廃棄推奨 (DISCARD)' : ' 維持 (KEEP)',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _result!['item_name'] ?? '不明なアイテム',
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Text('ときめきスコア: ',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '${_result!['spark_joy_score']} / 100',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: (_result!['spark_joy_score'] as int) < 50
+                            ? Colors.blue
+                            : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(' 判定理由:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(_result!['reason'] ?? '',
+                    style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[800] : Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.format_quote, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _result!['witty_comment'] ?? '',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: isDark ? Colors.grey[300] : Colors.grey[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
