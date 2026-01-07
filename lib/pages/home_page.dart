@@ -5,7 +5,8 @@ import 'note_editor_page.dart'; // CKO: メモ機能
 import 'ai_status_page.dart'; // CSO: AI稼働モニター
 import 'danshari_page.dart'; // CSO: 断捨離クエスト
 import 'gemini_university_page.dart'; // CKO: Gemini大学
-// 他のページは順次実装・紐付け
+import 'emergency_meeting_page.dart'; // CEO: 緊急役員会議
+// 他のページは順次実装紐付け
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -89,7 +90,7 @@ class HomePage extends StatelessWidget {
             ]),
             const SizedBox(height: 24),
             _buildSectionHeader(
-              'CMO OFFICE (広報・マーケティング)',
+              'CMO OFFICE (広報マーケティング)',
               Icons.campaign,
               Colors.purple,
             ),
@@ -161,12 +162,11 @@ class HomePage extends StatelessWidget {
         subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // TODO: 役員会議モードのチャット画面へ遷移
-          // _nav(context, BoardMeetingPage());
-          // とりあえずNoteEditorで代用し、テンプレートを渡すなどの処理
+          // 修正: 実際の緊急役員会議ページへ遷移
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const NoteEditorPage()),
+            MaterialPageRoute(
+                builder: (context) => const EmergencyMeetingPage()),
           );
         },
       ),
