@@ -33,7 +33,7 @@
     * 緊急役員会議(`EmergencyMeetingPage`)の実装とDB連携。
 * **次のタスク**:
     * **未実装Officeの機能追加**: CMO（分析画面）、CFO（コスト入力）などの中身の実装。
-    * **リアル断捨離クエスト**: 物理的なモノの写真を撮ってAIに判定させる機能の実装。
+    ~~* **リアル断捨離クエスト**: 物理的なモノの写真を撮ってAIに判定させる機能の実装。~~ (完了)
 
 ## 6. 変更履歴 (Change Log)
 **運用ルール**:
@@ -46,6 +46,12 @@
         * DB: `board_meetings`, `board_messages` テーブル追加。
         * UI: `EmergencyMeetingPage` 追加。AI役員によるチャット形式の議論とDB保存。
     * **Fix**: `lib/pages/home_page.dart` のCEOカード遷移先を `EmergencyMeetingPage` に接続。
+
+
+    * **2026-01-08**:
+    * **Feature**: リアル断捨離クエスト (Real World Danshari) の実装。
+        * Backend: nalyze_danshari_item アクションをEdge Functionに追加。
+        * UI: RealWorldDanshariPage を実装。カメラ撮影とAI判定フローを構築。
 
 ---
 
