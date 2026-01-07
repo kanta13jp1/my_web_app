@@ -11,6 +11,7 @@
 - **[組織図機能マップ (Mermaid)](organization_chart.md)**
 - **[データベース設計書 (ERD)](schema.md)**
 - **[プロジェクトファイル一覧](project_tree.txt)**
+- **[テスト仕様書カバレッジ](TEST_COVERAGE.md)**
 
 ## 3. コアアーキテクチャ: "The Five Emperors"
 `supabase/functions/ai-assistant/index.ts` に実装された統合AI機能。
