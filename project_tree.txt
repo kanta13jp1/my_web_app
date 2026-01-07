@@ -258,3 +258,4 @@ supabase/migrations/20251111140000_add_user_names_to_leaderboard.sql
 supabase_migration.sql
 test/widget_test.dart
 test-cicd.md
+BUILD_LOG.md
