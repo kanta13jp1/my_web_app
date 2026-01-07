@@ -53,6 +53,12 @@
         * Backend: analyze_danshari_item アクションをEdge Functionに追加。
         * UI: RealWorldDanshariPage を実装。カメラ撮影とAI判定フローを構築。
 
+
+    * **Refactor**: GamificationServiceの再設計とビルドエラーの完全修正。
+        * GamificationService: 名前付き引数と位置引数の不整合を修正し、インターフェースを統一。
+        * StatsPage, ImportService 等の呼び出し元コードを修正。
+        * Achievement モデルの定義を拡張。
+
 ---
 
 ##  次回Geminiへのプロンプト（Start Prompt）
@@ -71,10 +77,12 @@
 > まずは現状のコードベースについて不明点があれば質問してください。なければ、具体的な実装タスクを指示します。
 ## 7. 開発時の必須インプット (Required Inputs)
 **Geminiへのコンテキスト提供ルール**:
-開発を開始する際は、**必ず以下の5つのファイルの内容**をプロンプトに含めてください。これにより、プロジェクトの全体像、DB構造、テスト状況を正確に把握できます。
+開発を開始する際は、**必ず以下の7つのファイルの内容**をプロンプトに含めてください。これにより、プロジェクトの全体像、DB構造、テスト状況、およびコード品質を正確に把握できます。
 
 1. **README.md** (本書: プロジェクト概要、進捗、運用ルール)
 2. **organization_chart.md** (組織図: AI役員の役割と機能マップ)
 3. **schema.md** (データベース設計書: ER図)
 4. **project_tree.txt** (プロジェクト構成図: ファイル一覧)
 5. **TEST_COVERAGE.md** (テスト仕様書: 機能検証状況)
+6. **pubspec.yaml** (パッケージ依存関係定義)
+7. **LINT_REPORT.md** (Linter解析レポート: コード品質状況)
