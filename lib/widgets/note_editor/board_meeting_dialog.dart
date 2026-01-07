@@ -28,11 +28,14 @@ class BoardMeetingDialog extends StatelessWidget {
                 children: [
                   Icon(Icons.meeting_room, color: Colors.white),
                   SizedBox(width: 8),
-                  Text('自分株式会社 取締役会',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    '自分株式会社 取締役会',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -52,19 +55,24 @@ class BoardMeetingDialog extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           backgroundColor: _getRoleColor(role),
-                          child: Text(role.substring(0, 1),
-                              style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            role.substring(0, 1),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('$role ($name)',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: Colors.grey)),
+                              Text(
+                                '$role ($name)',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Container(
                                 padding: const EdgeInsets.all(10),
@@ -89,12 +97,18 @@ class BoardMeetingDialog extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('【決定事項】',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.green)),
+                  const Text(
+                    '【決定事項】',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(conclusion,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    conclusion,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),

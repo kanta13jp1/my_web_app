@@ -42,7 +42,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalViews = 0;
     int totalConversions = 0;
     int totalShares = 0;
-    Map<String, int> sourceBreakdown = {};
+    final Map<String, int> sourceBreakdown = {};
 
     for (var stat in _dailyStats) {
       totalViews += (stat['landing_views'] as int? ?? 0);
@@ -59,7 +59,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     }
 
-    double totalCvr =
+    final double totalCvr =
         totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
 
     return Scaffold(
@@ -91,9 +91,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
-                          const Text('現在のコンバージョン率 (CVR)',
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.grey)),
+                          const Text(
+                            '現在のコンバージョン率 (CVR)',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             '${totalCvr.toStringAsFixed(1)}%',
@@ -112,13 +113,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _buildStatItem(
-                                  '訪問数', '$totalViews', Icons.visibility),
+                                '訪問数',
+                                '$totalViews',
+                                Icons.visibility,
+                              ),
                               _buildStatItem(
-                                  '登録数', '$totalConversions', Icons.person_add),
+                                '登録数',
+                                '$totalConversions',
+                                Icons.person_add,
+                              ),
                               _buildStatItem(
-                                  'シェア数', '$totalShares', Icons.share),
+                                'シェア数',
+                                '$totalShares',
+                                Icons.share,
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -127,34 +137,44 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(height: 24),
 
                   // 流入元レポート
-                  const Text('流入元 (どこから来た？)',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    '流入元 (どこから来た？)',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   if (sourceBreakdown.isEmpty)
                     const Text('データなし', style: TextStyle(color: Colors.grey))
                   else
-                    ...sourceBreakdown.entries.map((e) => Card(
-                          child: ListTile(
-                            leading: Icon(
-                              e.key.contains('x_share')
-                                  ? Icons.close
-                                  : Icons.link,
-                              color: Colors.black,
-                            ),
-                            title: Text(e.key == 'direct'
-                                ? '直接アクセス / その他'
-                                : (e.key == 'x_share' ? 'X (Twitter)' : e.key)),
-                            trailing: Text('${e.value} 人',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                    ...sourceBreakdown.entries.map(
+                      (e) => Card(
+                        child: ListTile(
+                          leading: Icon(
+                            e.key.contains('x_share')
+                                ? Icons.close
+                                : Icons.link,
+                            color: Colors.black,
                           ),
-                        )),
+                          title: Text(
+                            e.key == 'direct'
+                                ? '直接アクセス / その他'
+                                : (e.key == 'x_share' ? 'X (Twitter)' : e.key),
+                          ),
+                          trailing: Text(
+                            '${e.value} 人',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 24),
-                  const Text('日別レポート',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    '日別レポート',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
 
                   ListView.builder(
@@ -175,10 +195,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           trailing: Text(
                             '${cvr.toStringAsFixed(1)}%',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           subtitle: Text(
-                              'View: $views / Conv: $conv / Share: $shares'),
+                            'View: $views / Conv: $conv / Share: $shares',
+                          ),
                         ),
                       );
                     },
@@ -194,8 +217,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       children: [
         Icon(icon, size: 24, color: Colors.indigo.shade300),
         const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );

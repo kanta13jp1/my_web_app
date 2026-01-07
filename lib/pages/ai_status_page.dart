@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class AiStatusPage extends StatefulWidget {
@@ -16,9 +15,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
   String? _error;
 
   // テスト結果の状態管理
-  Map<String, String> _testResults = {}; // 'testing', 'success', 'error'
-  Map<String, String> _testErrors = {}; // エラー詳細メッセージ
-  Map<String, Map<String, dynamic>> _visionScores = {}; // Visionベンチマーク詳細
+  final Map<String, String> _testResults = {}; // 'testing', 'success', 'error'
+  final Map<String, String> _testErrors = {}; // エラー詳細メッセージ
+  final Map<String, Map<String, dynamic>> _visionScores = {}; // Visionベンチマーク詳細
 
   @override
   void initState() {
@@ -35,8 +34,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
         body: {'action': 'get_models'},
       );
 
-      if (response.status != 200)
+      if (response.status != 200) {
         throw Exception('API Error: ${response.status}');
+      }
 
       final data =
           response.data is String ? jsonDecode(response.data) : response.data;
@@ -134,7 +134,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Color navy = const Color(0xFF0F172A);
+    const Color navy = Color(0xFF0F172A);
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -151,7 +151,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
             icon: const Icon(Icons.refresh),
             onPressed: _fetchAvailableModels,
             tooltip: '一覧を更新',
-          )
+          ),
         ],
       ),
       body: _isLoading
@@ -160,8 +160,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
-                    child: Text('エラー: $_error',
-                        style: const TextStyle(color: Colors.red)),
+                    child: Text(
+                      'エラー: $_error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -209,7 +211,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                                     : Colors.red),
                                             shape: BoxShape.circle,
                                             border: Border.all(
-                                                color: Colors.white, width: 2),
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
                                           ),
                                         ),
                                     ],
@@ -220,15 +224,20 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(modelName,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
                                         Text(
-                                            'Provider: ${provider.toUpperCase()}',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600)),
+                                          modelName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Provider: ${provider.toUpperCase()}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -236,17 +245,22 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text('$score',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: score >= 900
-                                                  ? Colors.green
-                                                  : (score >= 500
-                                                      ? Colors.orange
-                                                      : Colors.grey))),
-                                      const Text('Score',
-                                          style: TextStyle(fontSize: 10)),
+                                      Text(
+                                        '$score',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: score >= 900
+                                              ? Colors.green
+                                              : (score >= 500
+                                                  ? Colors.orange
+                                                  : Colors.grey),
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Score',
+                                        style: TextStyle(fontSize: 10),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -262,9 +276,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                   child: Text(
                                     _testErrors[modelName]!,
                                     style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500),
+                                      color: Colors.red,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -331,9 +346,12 @@ class _AiStatusPageState extends State<AiStatusPage> {
           spacing: 8,
           runSpacing: 4,
           children: [
-            _buildScoreBadge("総合", "$totalScore点", Colors.purple),
+            _buildScoreBadge('総合', '$totalScore点', Colors.purple),
             _buildScoreBadge(
-                "速度", "${(latency / 1000).toStringAsFixed(2)}s", Colors.teal),
+              '速度',
+              '${(latency / 1000).toStringAsFixed(2)}s',
+              Colors.teal,
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -358,8 +376,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: const Text('レベル別詳細',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              title: const Text(
+                'レベル別詳細',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
               children: levels.map<Widget>((level) {
                 final levelData = level as Map<String, dynamic>;
                 return _buildLevelDetail(levelData);
@@ -409,7 +429,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 child: Text(
                   _getLevelLabel(levelName, description),
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
               ),
               Text(
@@ -437,9 +459,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
           Text(
             '回答: $response',
             style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade700,
-                fontStyle: FontStyle.italic),
+              fontSize: 11,
+              color: Colors.grey.shade700,
+              fontStyle: FontStyle.italic,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -483,7 +506,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
-        "$label: $value",
+        '$label: $value',
         style:
             TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
       ),
@@ -511,7 +534,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
         icon = Icons.help_outline;
     }
     return CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
-        child: Icon(icon, color: color, size: 20));
+      backgroundColor: color.withOpacity(0.1),
+      child: Icon(icon, color: color, size: 20),
+    );
   }
 }

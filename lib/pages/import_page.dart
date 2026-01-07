@@ -209,7 +209,8 @@ class _ImportPageState extends State<ImportPage> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF0F172A)))
+              child: CircularProgressIndicator(color: Color(0xFF0F172A)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -221,8 +222,8 @@ class _ImportPageState extends State<ImportPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                          color: const Color(0xFFD4AF37)
-                              .withValues(alpha: 0.3)), // Gold hint
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                      ), // Gold hint
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -259,9 +260,10 @@ class _ImportPageState extends State<ImportPage> {
                   Text(
                     '買収対象企業の選定',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800]),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -302,17 +304,19 @@ class _ImportPageState extends State<ImportPage> {
                     Text(
                       'デューデリジェンス (資産査定)',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800]),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Card(
                       elevation: 0,
                       color: Colors.grey[100],
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade300)),
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -337,10 +341,13 @@ class _ImportPageState extends State<ImportPage> {
                             ),
                             if (_parsedNotes != null) ...[
                               const SizedBox(height: 12),
-                              Text('検出された資産: ${_parsedNotes!.length} 件',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.teal)),
+                              Text(
+                                '検出された資産: ${_parsedNotes!.length} 件',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal,
+                                ),
+                              ),
                               const SizedBox(height: 16),
 
                               // カテゴリ選択
@@ -390,8 +397,9 @@ class _ImportPageState extends State<ImportPage> {
                                         ? '統合プロセス実行中...'
                                         : '買収を執行する (インポート)',
                                     style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:

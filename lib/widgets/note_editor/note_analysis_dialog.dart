@@ -28,13 +28,18 @@ class NoteAnalysisDialog extends StatelessWidget {
             _buildSectionHeader('感情分析'),
             Row(
               children: [
-                Icon(_getSentimentIcon(sentiment),
-                    color: _getSentimentColor(sentiment)),
+                Icon(
+                  _getSentimentIcon(sentiment),
+                  color: _getSentimentColor(sentiment),
+                ),
                 const SizedBox(width: 8),
-                Text(sentiment.toUpperCase(),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _getSentimentColor(sentiment))),
+                Text(
+                  sentiment.toUpperCase(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _getSentimentColor(sentiment),
+                  ),
+                ),
               ],
             ),
             const Divider(height: 24),
@@ -42,11 +47,13 @@ class NoteAnalysisDialog extends StatelessWidget {
             Wrap(
               spacing: 8,
               children: tags
-                  .map((tag) => Chip(
-                        label: Text(tag),
-                        backgroundColor: Colors.purple.shade50,
-                        labelStyle: const TextStyle(color: Colors.purple),
-                      ))
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag),
+                      backgroundColor: Colors.purple.shade50,
+                      labelStyle: const TextStyle(color: Colors.purple),
+                    ),
+                  )
                   .toList(),
             ),
             const Divider(height: 24),
@@ -55,27 +62,36 @@ class NoteAnalysisDialog extends StatelessWidget {
             const Divider(height: 24),
             _buildSectionHeader('アクションアイテム'),
             if (actionItems.isEmpty)
-              const Text('検出されたアクションはありません',
-                  style: TextStyle(color: Colors.grey))
+              const Text(
+                '検出されたアクションはありません',
+                style: TextStyle(color: Colors.grey),
+              )
             else
-              ...actionItems.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.check_box_outline_blank,
-                            size: 20, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(item)),
-                      ],
-                    ),
-                  )),
+              ...actionItems.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.check_box_outline_blank,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(item)),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context), child: const Text('閉じる')),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('閉じる'),
+        ),
       ],
     );
   }
@@ -83,16 +99,22 @@ class NoteAnalysisDialog extends StatelessWidget {
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title,
-          style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
+      ),
     );
   }
 
   IconData _getSentimentIcon(String sentiment) {
     if (sentiment.contains('positive')) return Icons.sentiment_very_satisfied;
-    if (sentiment.contains('negative'))
+    if (sentiment.contains('negative')) {
       return Icons.sentiment_very_dissatisfied;
+    }
     return Icons.sentiment_neutral;
   }
 

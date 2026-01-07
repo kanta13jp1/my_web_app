@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -46,15 +45,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
       });
 
       // 2. オンボーディング完了フラグを更新
-      await supabase.from('user_stats').upsert({
-        'user_id': user.id,
-        'metadata': {'onboarding_completed': true},
-        'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'user_id'); // 既存データがあればマージ更新される想定
+      await supabase.from('user_stats').upsert(
+        {
+          'user_id': user.id,
+          'metadata': {'onboarding_completed': true},
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        onConflict: 'user_id',
+      ); // 既存データがあればマージ更新される想定
 
       try {
         await supabase.from('user_stats').update({
-          'metadata': {'onboarding_completed': true}
+          'metadata': {'onboarding_completed': true},
         }).eq('user_id', user.id);
       } catch (_) {}
 
@@ -156,7 +158,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
               _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
               _buildRoleIcon(Icons.attach_money, 'CFO', '財務', Colors.teal),
               _buildRoleIcon(
-                  Icons.health_and_safety, 'CHO', '健康', Colors.teal.shade800),
+                Icons.health_and_safety,
+                'CHO',
+                '健康',
+                Colors.teal.shade800,
+              ),
               _buildRoleIcon(Icons.diversity_3, 'CHRO', '人事', Colors.pink),
               _buildRoleIcon(Icons.campaign, 'CMO', '広報', Colors.purple),
               _buildRoleIcon(Icons.school, 'CKO', '知財', Colors.indigo),
@@ -194,7 +200,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const Text(
             '代表取締役 就任承諾書',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Serif'),
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Serif',
+            ),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -209,9 +218,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('1. 昨日の自分より成長すること'),
                 SizedBox(height: 8),
                 Text('2. 不要なもの（負債）を断捨離すること'),
@@ -230,8 +239,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text('この名前はAI役員からの報告書に使用されます',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text(
+            'この名前はAI役員からの報告書に使用されます',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -284,7 +295,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
                   : const Icon(Icons.verified_user),
               label: const Text('就任を承諾して開始'),
             ),

@@ -67,7 +67,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('案件が決裁（保存）されました'), backgroundColor: Colors.green),
+            content: Text('案件が決裁（保存）されました'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -149,14 +151,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 hintText: '案件名 (Project Title)',
                 border: InputBorder.none,
                 hintStyle: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black26),
-              ),
-              style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A)),
+                  color: Colors.black26,
+                ),
+              ),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
             ),
             const Divider(),
             Expanded(

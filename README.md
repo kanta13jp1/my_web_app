@@ -1,85 +1,50 @@
-# AI開発コンテキスト・設計書 (AI_DEV_HANDOVER)
+﻿# AI開発コンテキスト設計書 (AI_DEV_HANDOVER)
 
 ## 1. プロジェクト概要
-* **プロジェクト名**: 自分株式会社 (My Web App)
-* **技術スタック**:
-    * **Frontend**: Flutter (Web)
-    * **Backend**: Supabase (Database, Auth, Edge Functions)
-    * **AI**: Gemini, OpenAI, Anthropic (Multi-provider)
-* **現状のフェーズ**: UI連携フェーズ。バックエンドの全AI機能（"The Five Emperors"）をFlutterアプリのUIから呼び出して利用可能な状態。
+* **プロジェクト名**: 自分株式会社 (Me Inc.)
+* **コンセプト**: ユーザーはCEO。実務は全てAI（CXO）が担当する経営シミュレーション型生産性アプリ。
+* **技術スタック**: Flutter (Web), Supabase (Auth, DB, Edge Functions), AI (Gemini/OpenAI/Anthropic).
 
-## 2. コア・アーキテクチャ: "The Five Emperors" (Edge Function)
-`supabase/functions/ai-assistant/index.ts` が全てのAI処理の中核です。
+## 2. 組織構造 (AI Agents) & 機能マップ
+ユーザー（CEO）を支えるAI役員たちの構造図については、以下のファイルを参照してください。
 
-### 2.1 機能構成 (Hybrid Design)
-この関数は以下の2つの異なる役割を兼務しています。
-1.  **AI稼働モニター (Benchmark)**:
-    * **アクション**: `get_models`, `test_model`
-    * **機能**: Vision API（画像認識）を用いた6段階の難易度別ベンチマークテスト。
-    * **ランキング**: テスト結果（スコアとレイテンシ）をDBに保存し、Vision非対応や低品質なモデルを自動除外（Self-Cleaning）。
-2.  **AI実用機能 (Utilities)**:
-    * **アクション**: `improve` (校正), `summarize` (要約), `expand` (展開), `translate` (翻訳), `suggest_title` (タイトル提案)
-    * **高度なアクション**:
-        * `analyze_note_text`: メモの感情分析、タグ抽出、アクションアイテム抽出。
-        * `task_recommendations`: ユーザー統計に基づくタスク推奨（AI秘書）。
-        * `hold_board_meeting`: CEO, CTO, CMO, CFOによる模擬取締役会。
-        * `proactive_intervention`: ユーザーへの自発的な励まし・警告メッセージ生成。
+- **[組織図機能マップ (Mermaid)](docs/organization_chart.md)**
 
-### 2.2 耐障害性 (Fallback Mechanism)
-APIレート制限（特にGemini Free Tier）やダウンタイムに備え、以下の優先順位でモデルを自動切替するチェーンを実装済み。
-1.  `gemini-2.0-flash` (第1候補: 最速・無料)
-2.  `gpt-4o-mini` (第2候補: 安定・安価)
-3.  `claude-3-haiku-20240307` (第3候補)
+## 3. コアアーキテクチャ: "The Five Emperors"
+`supabase/functions/ai-assistant/index.ts` に実装された統合AI機能。
+* **Board Meeting**: `hold_board_meeting` で各CXO（Steve, Linus, Gary, Warren）が議論を行う。
+* **Analysis**: `analyze_note_text` でメモ（案件）を分析。
+* **Benchmark**: 6段階のVisionテストでモデル性能を監視。
 
-## 3. 重要なファイル構成
+## 4. UI/UXの変更点
+* **HomePage**: 従来のリスト形式から、各Office（役職）へのアクセスを行う「経営コックピット」へ刷新。
+* **DanshariPage**: CSOが古いメモを提示し、CEOが即座に「維持/廃棄」を決定するTinderライクなUIへ復旧。
+* **NoteEditorPage**: AIアシスタントメニューを実装し、取締役会や分析機能を呼び出し可能に。
 
-| パス | 説明 |
-| :--- | :--- |
-| `supabase/functions/ai-assistant/index.ts` | **最重要**。全AIロジック、ベンチマーク、フォールバックチェーンが集約されたファイル。 |
-| `lib/services/ai_service.dart` | Flutter側のインターフェース。`_retryWithBackoff` によるリトライ処理と、各アクションの呼び出しメソッドを持つ。 |
-| `lib/pages/ai_status_page.dart` | AIモデルのランキング表示と手動テスト実行UI。リアルタイムソート機能付き。 |
-| `lib/widgets/note_editor/ai_assistant_menu.dart` | ノート編集画面から呼び出すAI機能メニュー（ボトムシート）。 |
-| `lib/widgets/note_editor/board_meeting_dialog.dart` | 模擬取締役会の議事録を表示するリッチUI。 |
-| `lib/widgets/note_editor/note_analysis_dialog.dart` | AI分析結果（感情、タグ、アクション）を表示するUI。 |
-| `lib/pages/note_editor_page.dart` | AIアシスタント呼び出しボタンを追加済みのノート編集画面。 |
-
-## 4. データベース設計 (Supabase)
-
-### `ai_benchmark_results` テーブル
-AIモデルの性能評価を記録。
-* `user_id`: 実行者
-* `model_name`: モデル識別子 (例: `gemini-2.0-flash`)
-* `provider`: `gemini` | `openai` | `anthropic`
-* `vision_score`: 0-100のスコア
-* `latency_ms`: 応答速度
-* `detail`: テスト詳細のJSON
-
-### その他の関連テーブル
-* `user_stats`: ユーザーのレベル、ポイント、継続日数（AI秘書が参照）。
-* `notes`: ユーザーのメモデータ（分析対象）。
-
-## 5. 次回セッションへの引継ぎ事項
-* **完了したタスク**:
-    * Edge Functionへの全アクション実装（ベンチマーク、取締役会、分析、介入）。
-    * Gemini API制限時の自動フォールバック実装。
-    * UI連携: `AIAssistantMenu` 等のWidget作成と `NoteEditorPage` への組み込み。
-* **次のステップ案**:
-    * **データ連携**: AI分析結果（タグやアクションアイテム）を単に表示するだけでなく、実際にノートのプロパティやタスクリストに保存・反映する処理の実装。
-    * **定期実行**: `proactive_intervention` をCronで定期実行し、プッシュ通知を送る仕組み。
+## 5. 次回セッションへの引継ぎ
+* **完了**:
+    * 経営コックピット(HomePage)の実装。
+    * 断捨離クエストの復旧。
+    * AIアシスタントメニュー(`NoteEditorPage`)の実装。
+    * 組織図のMermaid化と設計への反映。
+* **次のタスク**:
+    * **緊急役員会議の実装**: `NoteEditorPage` ではなく、チャットUIで複数のAI役員と対話できる専用画面の作成。
+    * **未実装Officeの機能追加**: CMO（分析画面）、CFO（コスト入力）などの中身の実装。
+    * **リアル断捨離クエスト**: 物理的なモノの写真を撮ってAIに判定させる機能の実装。
 
 ---
 
-## 🤖 次回Geminiへのプロンプト（Start Prompt）
+##  次回Geminiへのプロンプト（Start Prompt）
 次回の開発を始める際は、以下のプロンプトを使用してください。
 
 > あなたは「自分株式会社」プロジェクトの専属シニアエンジニアです。
 > 現在の開発状況は以下の通りです。
 >
 > **プロジェクト状況**:
-> Flutter(Web) + Supabase構成で、AI機能を統合した生産性向上アプリを開発中。
-> バックエンドには「The Five Emperors」アーキテクチャ（ベンチマーク＋実用AI機能＋フォールバック）を実装済みです。
-> UI側では `NoteEditorPage` に「取締役会」や「AI分析」を呼び出すためのメニューを実装し、基本的な連携が完了しています。
+> Flutter(Web) + Supabase構成で、ユーザーをCEOとした経営シミュレーション型生産性アプリを開発中。
+> 直近のセッションで、組織構造（CEO, CSO, CKOなど）に基づいた「経営コックピット」へのUI刷新を行いました。
+> プロジェクトルートの `README.md` および `organization_chart.md` に最新の設計情報が記載されています。
 >
 > **タスク**:
-> 前回の開発内容を踏まえ、次のステップ（AI分析結果のDB保存や、定期的なAI介入機能など）に進みたいと思います。
+> 前回の開発内容を踏まえ、次のステップ（緊急役員会議の実装や、未実装オフィスの開発）に進みたいと思います。
 > まずは現状のコードベースについて不明点があれば質問してください。なければ、具体的な実装タスクを指示します。

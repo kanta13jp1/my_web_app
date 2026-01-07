@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class CmoPage extends StatefulWidget {
@@ -51,8 +50,9 @@ class _CmoPageState extends State<CmoPage> {
         },
       );
 
-      if (response.status != 200)
+      if (response.status != 200) {
         throw Exception('AI Error: ${response.status}');
+      }
       final data = response.data;
       if (data['success'] != true) throw Exception(data['error']);
 
@@ -119,7 +119,8 @@ class _CmoPageState extends State<CmoPage> {
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
@@ -127,21 +128,29 @@ class _CmoPageState extends State<CmoPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(4)),
-                        child: const Text('PRESS RELEASE',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRESS RELEASE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _pressRelease!['title'] ?? '',
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const Divider(height: 32),
                       Text(
@@ -152,7 +161,9 @@ class _CmoPageState extends State<CmoPage> {
                       Text(
                         (_pressRelease!['hashtags'] as List).join(' '),
                         style: TextStyle(
-                            color: _purple, fontWeight: FontWeight.bold),
+                          color: _purple,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -165,7 +176,8 @@ class _CmoPageState extends State<CmoPage> {
                     child: OutlinedButton(
                       onPressed: _generatePressRelease, // Retry
                       style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.all(16)),
+                        padding: const EdgeInsets.all(16),
+                      ),
                       child: const Text('再生成'),
                     ),
                   ),

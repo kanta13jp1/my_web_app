@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class ChroPage extends StatefulWidget {
@@ -19,7 +18,7 @@ class _ChroPageState extends State<ChroPage>
 
   // メンタルケア用
   final TextEditingController _chatController = TextEditingController();
-  List<Map<String, String>> _chatHistory = [];
+  final List<Map<String, String>> _chatHistory = [];
   bool _isChatting = false;
 
   // 評価用
@@ -128,7 +127,7 @@ class _ChroPageState extends State<ChroPage>
         'user_id': userId,
         'target_month': DateTime.now().toString().substring(0, 7),
         'rank': data['rank'],
-        'report_content': data['report_content']
+        'report_content': data['report_content'],
       });
 
       _fetchData();
@@ -212,26 +211,36 @@ class _ChroPageState extends State<ChroPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('保有ポイント',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              Text('$_myPoints pt',
-                  style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pink.shade700)),
+              const Text(
+                '保有ポイント',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '$_myPoints pt',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.pink.shade700,
+                ),
+              ),
             ],
           ),
         ),
         const Padding(
-            padding: EdgeInsets.all(8),
-            child: Text('所有アイテム',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey))),
+          padding: EdgeInsets.all(8),
+          child: Text(
+            '所有アイテム',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ),
         if (_inventory.isEmpty)
           const Padding(
-              padding: EdgeInsets.all(8.0),
-              child:
-                  Text('アイテムを持っていません', style: TextStyle(color: Colors.grey))),
+            padding: EdgeInsets.all(8.0),
+            child: Text('アイテムを持っていません', style: TextStyle(color: Colors.grey)),
+          ),
         SizedBox(
           height: 80,
           child: ListView.builder(
@@ -243,16 +252,20 @@ class _ChroPageState extends State<ChroPage>
                 margin: const EdgeInsets.symmetric(horizontal: 8),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.pink.shade200),
-                    borderRadius: BorderRadius.circular(8)),
+                  color: Colors.white,
+                  border: Border.all(color: Colors.pink.shade200),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                        IconData(item['icon_code'] ?? 58746,
-                            fontFamily: 'MaterialIcons'),
-                        color: Colors.pink),
+                      IconData(
+                        item['icon_code'] ?? 58746,
+                        fontFamily: 'MaterialIcons',
+                      ),
+                      color: Colors.pink,
+                    ),
                     Text(item['name'], style: const TextStyle(fontSize: 10)),
                   ],
                 ),
@@ -273,17 +286,21 @@ class _ChroPageState extends State<ChroPage>
                   leading: CircleAvatar(
                     backgroundColor: Colors.pink.shade100,
                     child: Icon(
-                        IconData(item['icon_code'] ?? 58746,
-                            fontFamily: 'MaterialIcons'),
-                        color: Colors.pink),
+                      IconData(
+                        item['icon_code'] ?? 58746,
+                        fontFamily: 'MaterialIcons',
+                      ),
+                      color: Colors.pink,
+                    ),
                   ),
                   title: Text(item['name']),
                   subtitle: Text(item['description']),
                   trailing: ElevatedButton(
                     onPressed: canBuy ? () => _purchaseItem(item) : null,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink,
-                        foregroundColor: Colors.white),
+                      backgroundColor: Colors.pink,
+                      foregroundColor: Colors.white,
+                    ),
                     child: Text('${item['cost']} pt'),
                   ),
                 ),
@@ -311,7 +328,7 @@ class _ChroPageState extends State<ChroPage>
                   ? const CircularProgressIndicator()
                   : const Icon(Icons.play_arrow),
               label: const Text('定例株主総会を開催する'),
-            )
+            ),
           ],
         ),
       );
@@ -322,35 +339,44 @@ class _ChroPageState extends State<ChroPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('定例株主総会 決議通知',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            '定例株主総会 決議通知',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
           Center(
             child: Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.pink, width: 4)),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.pink, width: 4),
+              ),
               child: Column(
                 children: [
                   const Text('CEO RANK', style: TextStyle(color: Colors.grey)),
-                  Text(ev['rank'],
-                      style: const TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink)),
+                  Text(
+                    ev['rank'],
+                    style: const TextStyle(
+                      fontSize: 64,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.pink,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 32),
-          Text(ev['report_content'] ?? '',
-              style: const TextStyle(fontSize: 16, height: 1.6)),
+          Text(
+            ev['report_content'] ?? '',
+            style: const TextStyle(fontSize: 16, height: 1.6),
+          ),
           const SizedBox(height: 40),
           ElevatedButton(
-              onPressed: _isEvaluating ? null : _runEvaluation,
-              child: const Text('最新の評価を取得する')),
+            onPressed: _isEvaluating ? null : _runEvaluation,
+            child: const Text('最新の評価を取得する'),
+          ),
         ],
       ),
     );
@@ -376,7 +402,9 @@ class _ChroPageState extends State<ChroPage>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.grey.withOpacity(0.1), blurRadius: 4)
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                      ),
                     ],
                   ),
                   child: Text(chat['content']!),
@@ -394,7 +422,9 @@ class _ChroPageState extends State<ChroPage>
                 child: TextField(
                   controller: _chatController,
                   decoration: const InputDecoration(
-                      hintText: '愚痴をこぼしてください...', border: OutlineInputBorder()),
+                    hintText: '愚痴をこぼしてください...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
               IconButton(

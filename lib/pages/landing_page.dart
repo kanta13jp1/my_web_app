@@ -30,9 +30,12 @@ class _LandingPageState extends State<LandingPage> {
       final uri = Uri.base;
       final source = uri.queryParameters['ref'] ?? 'direct';
 
-      await Supabase.instance.client.rpc('increment_landing_view', params: {
-        'source_name': source,
-      });
+      await Supabase.instance.client.rpc(
+        'increment_landing_view',
+        params: {
+          'source_name': source,
+        },
+      );
     } catch (e) {
       debugPrint('Analytics error: $e');
     }
@@ -74,7 +77,9 @@ class _LandingPageState extends State<LandingPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('ゲストログインエラー: $e'), backgroundColor: Colors.red),
+            content: Text('ゲストログインエラー: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -83,7 +88,9 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> _handleEmailAuth(
-      AuthMode mode, StateSetter modalSetState) async {
+    AuthMode mode,
+    StateSetter modalSetState,
+  ) async {
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,8 +114,9 @@ class _LandingPageState extends State<LandingPage> {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('確認メールを送信しました。'),
-                  backgroundColor: Colors.green),
+                content: Text('確認メールを送信しました。'),
+                backgroundColor: Colors.green,
+              ),
             );
           }
           return;
@@ -170,27 +178,38 @@ class _LandingPageState extends State<LandingPage> {
                 child: Container(
                   color: Colors.white.withOpacity(0.9),
                   padding: EdgeInsets.only(
-                      top: 24, left: 24, right: 24, bottom: bottomPadding + 24),
+                    top: 24,
+                    left: 24,
+                    right: 24,
+                    bottom: bottomPadding + 24,
+                  ),
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(isSignUp ? 'アカウント作成' : 'ログイン',
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(
+                          isSignUp ? 'アカウント作成' : 'ログイン',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 24),
                         TextField(
                           controller: _emailController,
                           decoration: const InputDecoration(
-                              labelText: 'メールアドレス',
-                              border: OutlineInputBorder()),
+                            labelText: 'メールアドレス',
+                            border: OutlineInputBorder(),
+                          ),
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passwordController,
                           decoration: const InputDecoration(
-                              labelText: 'パスワード', border: OutlineInputBorder()),
+                            labelText: 'パスワード',
+                            border: OutlineInputBorder(),
+                          ),
                           obscureText: true,
                         ),
                         const SizedBox(height: 24),
@@ -201,15 +220,19 @@ class _LandingPageState extends State<LandingPage> {
                             onPressed: _isLoading
                                 ? null
                                 : () => _handleEmailAuth(
-                                    currentMode, setModalState),
+                                      currentMode,
+                                      setModalState,
+                                    ),
                             child: _isLoading
                                 ? const CircularProgressIndicator()
                                 : Text(isSignUp ? '登録' : 'ログイン'),
                           ),
                         ),
                         TextButton(
-                          onPressed: () => setModalState(() => currentMode =
-                              isSignUp ? AuthMode.signIn : AuthMode.signUp),
+                          onPressed: () => setModalState(
+                            () => currentMode =
+                                isSignUp ? AuthMode.signIn : AuthMode.signUp,
+                          ),
                           child: Text(isSignUp ? 'ログインへ切り替え' : '新規登録へ切り替え'),
                         ),
                       ],
@@ -245,19 +268,26 @@ class _LandingPageState extends State<LandingPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.business_center, // アイコンもビジネス仕様に変更
-                      size: 80,
-                      color: Color(0xFFD4AF37)), // ゴールド
+                  const Icon(
+                    Icons.business_center, // アイコンもビジネス仕様に変更
+                    size: 80,
+                    color: Color(0xFFD4AF37),
+                  ), // ゴールド
                   const SizedBox(height: 24),
-                  const Text('自分株式会社', //  My Memo -> 自分株式会社
-                      style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 2.0)),
+                  const Text(
+                    '自分株式会社', //  My Memo -> 自分株式会社
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  const Text('人生を経営する、最強のOS。', //  サブタイトル刷新
-                      style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text(
+                    '人生を経営する、最強のOS。', //  サブタイトル刷新
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
                   const SizedBox(height: 60),
                   SizedBox(
                     width: double.infinity,
@@ -265,19 +295,26 @@ class _LandingPageState extends State<LandingPage> {
                     child: ElevatedButton(
                       onPressed: _signInAnonymously,
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD4AF37), // ゴールド
-                          foregroundColor: const Color(0xFF0F172A)), // ネイビー
-                      child: const Text('経営を開始する (登録不要)',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                        backgroundColor: const Color(0xFFD4AF37), // ゴールド
+                        foregroundColor: const Color(0xFF0F172A),
+                      ), // ネイビー
+                      child: const Text(
+                        '経営を開始する (登録不要)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () =>
                         _showAuthBottomSheet(context, AuthMode.signIn),
-                    child: const Text('ログイン / 登録',
-                        style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'ログイン / 登録',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),

@@ -80,8 +80,11 @@ class _RewardsPageState extends State<RewardsPage> {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.emoji_events,
-                            size: 60, color: Colors.white),
+                        const Icon(
+                          Icons.emoji_events,
+                          size: 60,
+                          color: Colors.white,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Level $_currentLevel',
@@ -116,9 +119,11 @@ class _RewardsPageState extends State<RewardsPage> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text('まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey)),
+                        child: Text(
+                          'まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     )
                   else
@@ -128,16 +133,31 @@ class _RewardsPageState extends State<RewardsPage> {
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
                         _buildBadge(
-                            '初めの一歩', Icons.directions_walk, _totalPoints >= 10),
-                        _buildBadge('断捨離見習い', Icons.cleaning_services,
-                            _totalPoints >= 100),
+                          '初めの一歩',
+                          Icons.directions_walk,
+                          _totalPoints >= 10,
+                        ),
                         _buildBadge(
-                            'メモの達人', Icons.edit_note, _totalPoints >= 500),
+                          '断捨離見習い',
+                          Icons.cleaning_services,
+                          _totalPoints >= 100,
+                        ),
                         _buildBadge(
-                            '継続の力', Icons.calendar_month, _totalPoints >= 1000),
+                          'メモの達人',
+                          Icons.edit_note,
+                          _totalPoints >= 500,
+                        ),
+                        _buildBadge(
+                          '継続の力',
+                          Icons.calendar_month,
+                          _totalPoints >= 1000,
+                        ),
                         _buildBadge('ミニマリスト', Icons.home, _totalPoints >= 2000),
                         _buildBadge(
-                            '伝説', Icons.auto_awesome, _totalPoints >= 5000),
+                          '伝説',
+                          Icons.auto_awesome,
+                          _totalPoints >= 5000,
+                        ),
                       ],
                     ),
                 ],

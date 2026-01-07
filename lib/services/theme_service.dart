@@ -65,10 +65,11 @@ class ThemeService extends ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            color: Colors.white),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          color: Colors.white,
+        ),
       ),
       cardTheme: CardThemeData(
         // Changed from CardTheme to CardThemeData
@@ -129,10 +130,11 @@ class ThemeService extends ChangeNotifier {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            color: Colors.white),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          color: Colors.white,
+        ),
       ),
       cardTheme: CardThemeData(
         // Changed from CardTheme to CardThemeData

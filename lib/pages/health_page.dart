@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data'; // Web対応: 画像をバイトデータとして扱う
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../main.dart';
 
@@ -107,7 +106,9 @@ class _HealthPageState extends State<HealthPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('検食エラー: $e'), backgroundColor: Colors.redAccent),
+            content: Text('検食エラー: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -140,27 +141,40 @@ class _HealthPageState extends State<HealthPage> {
               Center(
                 child: Column(
                   children: [
-                    Text('$score点',
-                        style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: scoreColor)),
-                    Text(result['menu_name'] ?? '',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('${result['calorie_estimate']} kcal',
-                        style: const TextStyle(color: Colors.grey)),
+                    Text(
+                      '$score点',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: scoreColor,
+                      ),
+                    ),
+                    Text(
+                      result['menu_name'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${result['calorie_estimate']} kcal',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
               const Divider(height: 32),
               const Text('判定:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(result['audit_result'] ?? '',
-                  style: const TextStyle(height: 1.5)),
+              Text(
+                result['audit_result'] ?? '',
+                style: const TextStyle(height: 1.5),
+              ),
               const SizedBox(height: 12),
               const Text('助言:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(result['advice'] ?? '',
-                  style: const TextStyle(height: 1.5, color: Colors.blueGrey)),
+              Text(
+                result['advice'] ?? '',
+                style: const TextStyle(height: 1.5, color: Colors.blueGrey),
+              ),
             ],
           ),
         ),
@@ -168,7 +182,9 @@ class _HealthPageState extends State<HealthPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-                backgroundColor: _green, foregroundColor: Colors.white),
+              backgroundColor: _green,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('ごちそうさまでした'),
           ),
         ],
@@ -214,29 +230,33 @@ class _HealthPageState extends State<HealthPage> {
                   elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.grey.shade200)),
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: (score >= 80
                               ? Colors.green
                               : (score >= 50 ? Colors.orange : Colors.red))
                           .withOpacity(0.2),
-                      child: Text('$score',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: (score >= 80
-                                  ? Colors.green
-                                  : (score >= 50
-                                      ? Colors.orange
-                                      : Colors.red)))),
+                      child: Text(
+                        '$score',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: (score >= 80
+                              ? Colors.green
+                              : (score >= 50 ? Colors.orange : Colors.red)),
+                        ),
+                      ),
                     ),
-                    title: Text(meal['menu_name'] ?? 'No Name',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      meal['menu_name'] ?? 'No Name',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
-                        DateFormat('MM/dd HH:mm').format(date) +
-                            '  ${meal['calories']} kcal',
-                        style: const TextStyle(fontSize: 12)),
+                      '${DateFormat('MM/dd HH:mm').format(date)}  ${meal['calories']} kcal',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     trailing:
                         const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () {

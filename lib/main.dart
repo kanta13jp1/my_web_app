@@ -59,7 +59,8 @@ class _AuthenticatedHomePage extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         return (snapshot.data ?? false)
             ? const OnboardingPage()
@@ -104,7 +105,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/gemini-university':
             return MaterialPageRoute(
-                builder: (_) => const GeminiUniversityPage());
+              builder: (_) => const GeminiUniversityPage(),
+            );
           case '/danshari':
             return MaterialPageRoute(builder: (_) => const DanshariPage());
           default:

@@ -131,8 +131,10 @@ class _AIAssistantMenuState extends State<AIAssistantMenu> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('AIアシスタント',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'AIアシスタント',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
@@ -140,17 +142,41 @@ class _AIAssistantMenuState extends State<AIAssistantMenu> {
             alignment: WrapAlignment.spaceEvenly,
             children: [
               _buildActionButton(
-                  Icons.psychology, '分析', 'analyze_note_text', Colors.purple),
+                Icons.psychology,
+                '分析',
+                'analyze_note_text',
+                Colors.purple,
+              ),
               _buildActionButton(
-                  Icons.people, '取締役会', 'hold_board_meeting', Colors.indigo),
+                Icons.people,
+                '取締役会',
+                'hold_board_meeting',
+                Colors.indigo,
+              ),
               _buildActionButton(
-                  Icons.auto_fix_high, '校正', 'improve', Colors.blue),
+                Icons.auto_fix_high,
+                '校正',
+                'improve',
+                Colors.blue,
+              ),
               _buildActionButton(
-                  Icons.summarize, '要約', 'summarize', Colors.orange),
+                Icons.summarize,
+                '要約',
+                'summarize',
+                Colors.orange,
+              ),
               _buildActionButton(
-                  Icons.translate, '翻訳', 'translate', Colors.green),
+                Icons.translate,
+                '翻訳',
+                'translate',
+                Colors.green,
+              ),
               _buildActionButton(
-                  Icons.title, 'タイトル案', 'suggest_title', Colors.teal),
+                Icons.title,
+                'タイトル案',
+                'suggest_title',
+                Colors.teal,
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -160,7 +186,11 @@ class _AIAssistantMenuState extends State<AIAssistantMenu> {
   }
 
   Widget _buildActionButton(
-      IconData icon, String label, String action, Color color) {
+    IconData icon,
+    String label,
+    String action,
+    Color color,
+  ) {
     return InkWell(
       onTap: () => _handleAction(action, label),
       borderRadius: BorderRadius.circular(12),
@@ -176,9 +206,14 @@ class _AIAssistantMenuState extends State<AIAssistantMenu> {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12, color: color, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -189,7 +224,9 @@ class _AIAssistantMenuState extends State<AIAssistantMenu> {
 // 補足: AIServiceにinvokeFunctionが無い場合のための拡張
 extension AIServiceExt on AIService {
   Future<Map<String, dynamic>> invokeFunction(
-      String name, Map<String, dynamic> body) async {
+    String name,
+    Map<String, dynamic> body,
+  ) async {
     // main.dartからインポートしたグローバル変数 supabase を使用
     final res = await supabase.functions.invoke(name, body: body);
     return res.data;

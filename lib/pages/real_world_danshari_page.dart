@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data'; // Required for Uint8List
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
@@ -30,7 +29,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
-          source: source, maxWidth: 800, maxHeight: 800, imageQuality: 80);
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
 
       if (pickedFile != null) {
         //  CHANGED: Read as bytes immediately (works on Web & Mobile)
@@ -69,8 +72,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         },
       );
 
-      if (response.status != 200)
+      if (response.status != 200) {
         throw Exception('API Error: ${response.status}');
+      }
 
       final data = response.data;
       if (data['success'] == true) {
@@ -149,11 +153,14 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 icon: const Icon(Icons.camera_alt),
-                label: const Text('カメラで撮影',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'カメラで撮影',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -162,12 +169,14 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   padding: const EdgeInsets.all(16),
                   side: BorderSide(color: _navy),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 icon: Icon(Icons.photo_library, color: _navy),
-                label: Text('アルバムから選択',
-                    style:
-                        TextStyle(color: _navy, fontWeight: FontWeight.bold)),
+                label: Text(
+                  'アルバムから選択',
+                  style: TextStyle(color: _navy, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
 
@@ -177,9 +186,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text('鬼コーチが画像を解析中...\n(Claude 4.5 Opus / Gemini 3.0)',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: _navy)),
+                  Text(
+                    '鬼コーチが画像を解析中...\n(Claude 4.5 Opus / Gemini 3.0)',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: _navy),
+                  ),
                 ],
               ),
 
@@ -193,13 +204,15 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                        colors: [_navy, const Color(0xFF1E293B)]),
+                      colors: [_navy, const Color(0xFF1E293B)],
+                    ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: _navy.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5))
+                        color: _navy.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
                     ],
                   ),
                   child: Row(
@@ -209,22 +222,30 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_itemName ?? '不明なアイテム',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 14)),
+                            Text(
+                              _itemName ?? '不明なアイテム',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            const Text('未練スコア (Keep Score)',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                            const Text(
+                              '未練スコア (Keep Score)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1)),
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
                         child: Text(
                           '$_keepScore',
                           style: TextStyle(
@@ -249,34 +270,46 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                      color: Colors.redAccent.withOpacity(0.3), width: 2),
+                    color: Colors.redAccent.withOpacity(0.3),
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.gavel, color: Colors.redAccent),
-                        const SizedBox(width: 8),
-                        const Text('鬼コーチの判定',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.redAccent)),
+                        Icon(Icons.gavel, color: Colors.redAccent),
+                        SizedBox(width: 8),
+                        Text(
+                          '鬼コーチの判定',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.redAccent,
+                          ),
+                        ),
                       ],
                     ),
                     const Divider(height: 24),
                     Text(
                       _analysisResult!,
                       style: const TextStyle(
-                          fontSize: 15, height: 1.6, color: Colors.black87),
+                        fontSize: 15,
+                        height: 1.6,
+                        color: Colors.black87,
+                      ),
                     ),
                     if (_usedModel != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
-                        child: Text('Judge: $_usedModel',
-                            style: const TextStyle(
-                                fontSize: 10, color: Colors.grey)),
+                        child: Text(
+                          'Judge: $_usedModel',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -291,16 +324,18 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('素晴らしい決断です！ +50pt')));
+                          const SnackBar(content: Text('素晴らしい決断です！ +50pt')),
+                        );
                         setState(() {
                           _imageBytes = null;
                           _analysisResult = null;
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       icon: const Icon(Icons.delete_forever),
                       label: const Text('今すぐ捨てる'),
                     ),
@@ -315,7 +350,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                         });
                       },
                       style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: const Text('次のモノへ'),
                     ),
                   ),

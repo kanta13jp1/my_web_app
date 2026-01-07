@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/note.dart';
@@ -45,9 +44,12 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
           .eq('user_id', userId)
           .order('updated_at', ascending: false)
           .limit(50);
-      if (mounted)
-        setState(() => _myNotes =
-            (response as List).map((n) => Note.fromJson(n)).toList());
+      if (mounted) {
+        setState(
+          () => _myNotes =
+              (response as List).map((n) => Note.fromJson(n)).toList(),
+        );
+      }
     } catch (e) {}
   }
 
@@ -95,7 +97,7 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
           'action': 'generate_content_draft',
           'title': _selectedNote!.title,
           'content': _selectedNote!.content,
-          'targetFormat': _targetFormat
+          'targetFormat': _targetFormat,
         },
       );
 
@@ -150,8 +152,10 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
           children: [
             const Icon(Icons.lightbulb_outline, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text('あなたのメモから「知的資産」を分析します',
-                style: TextStyle(color: Colors.grey)),
+            const Text(
+              'あなたのメモから「知的資産」を分析します',
+              style: TextStyle(color: Colors.grey),
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _isLoading ? null : _analyzeKnowledge,
@@ -160,8 +164,9 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                   : const Icon(Icons.auto_awesome),
               label: const Text('知的資産レポートを作成'),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white),
+                backgroundColor: Colors.indigo,
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         ),
@@ -178,52 +183,78 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
         children: [
           if (_analysisModel != null)
             Align(
-                alignment: Alignment.centerRight,
-                child: Text('Analyst: $_analysisModel',
-                    style: TextStyle(
-                        fontSize: 10, color: Colors.indigo.shade300))),
-          const Text('現在の関心領域 (Core Interests)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Analyst: $_analysisModel',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.indigo.shade300,
+                ),
+              ),
+            ),
+          const Text(
+            '現在の関心領域 (Core Interests)',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: interests
-                .map((tag) => Chip(
-                    label: Text(tag), backgroundColor: Colors.indigo.shade50))
+                .map(
+                  (tag) => Chip(
+                    label: Text(tag),
+                    backgroundColor: Colors.indigo.shade50,
+                  ),
+                )
                 .toList(),
           ),
           const Divider(height: 32),
-          const Text('CKOの分析コメント',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            'CKOの分析コメント',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
-          Text(_knowledgeReport!['analysis_comment'] ?? '',
-              style: const TextStyle(fontSize: 15, height: 1.6)),
+          Text(
+            _knowledgeReport!['analysis_comment'] ?? '',
+            style: const TextStyle(fontSize: 15, height: 1.6),
+          ),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.shade200)),
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Icon(Icons.school, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  const Text('学習のススメ',
+                const Row(
+                  children: [
+                    Icon(Icons.school, color: Colors.amber),
+                    SizedBox(width: 8),
+                    Text(
+                      '学習のススメ',
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.amber))
-                ]),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 8),
-                Text(_knowledgeReport!['next_learning_suggestion'] ?? '',
-                    style: TextStyle(color: Colors.amber.shade900)),
+                Text(
+                  _knowledgeReport!['next_learning_suggestion'] ?? '',
+                  style: TextStyle(color: Colors.amber.shade900),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 32),
           OutlinedButton(
-              onPressed: _analyzeKnowledge, child: const Text('再分析する')),
+            onPressed: _analyzeKnowledge,
+            child: const Text('再分析する'),
+          ),
         ],
       ),
     );
@@ -244,8 +275,9 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                 isExpanded: true,
                 items: _myNotes.map((note) {
                   return DropdownMenuItem(
-                      value: note,
-                      child: Text(note.title, overflow: TextOverflow.ellipsis));
+                    value: note,
+                    child: Text(note.title, overflow: TextOverflow.ellipsis),
+                  );
                 }).toList(),
                 onChanged: (val) => setState(() => _selectedNote = val),
               ),
@@ -274,12 +306,14 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                             width: 16,
                             height: 16,
                             child:
-                                CircularProgressIndicator(color: Colors.white))
+                                CircularProgressIndicator(color: Colors.white),
+                          )
                         : const Icon(Icons.edit_note),
                     label: const Text('執筆開始'),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        foregroundColor: Colors.white),
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -291,9 +325,12 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
         Expanded(
           child: _generatedContent == null
               ? const Center(
-                  child: Text('メモを選んで「執筆開始」を押してください。\nAIがプロ級のコンテンツに仕上げます。',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey)))
+                  child: Text(
+                    'メモを選んで「執筆開始」を押してください。\nAIがプロ級のコンテンツに仕上げます。',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -303,10 +340,13 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           if (_writerModel != null)
-                            Text('Ghost Writer: $_writerModel',
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.indigo.shade300)),
+                            Text(
+                              'Ghost Writer: $_writerModel',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.indigo.shade300,
+                              ),
+                            ),
                           IconButton(
                             icon: const Icon(Icons.share, color: Colors.indigo),
                             onPressed: () {
