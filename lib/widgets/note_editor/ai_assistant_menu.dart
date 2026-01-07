@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+// import 'package:supabase_flutter/supabase_flutter.dart'; // 未使用のため削除
 
 class AiAssistantMenu extends StatefulWidget {
   final TextEditingController contentController;
@@ -59,12 +59,14 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
   }
 
   Future<void> _handleAiAction(String action) async {
-    // 簡易実装: 実際のAI呼び出しは省略し、UIの動作確認を優先
     setState(() => _isLoading = true);
+    // TODO: Supabase Edge Function連携の実装
     await Future.delayed(const Duration(seconds: 1));
+
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('AI機能は現在準備中です')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI機能は現在準備中です（スタブ）')),
+      );
       setState(() => _isLoading = false);
     }
   }
