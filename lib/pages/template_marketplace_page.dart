@@ -22,11 +22,9 @@ class TemplateMarketplacePage extends StatelessWidget {
   }
 
   void _useTemplate(BuildContext context, String title, String content) {
-    // ポイント付与
     Provider.of<GamificationService>(context, listen: false)
         .awardPoints(10, reason: "Used Template: $title");
 
-    // エディタへ遷移
     Navigator.push(
       context,
       MaterialPageRoute(

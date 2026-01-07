@@ -5,6 +5,7 @@ import '../models/user_stats.dart';
 class GamificationService extends ChangeNotifier {
   GamificationService([dynamic _]);
 
+  // --- カテゴリデータ (スタブ) ---
   final AchievementCategory _general =
       AchievementCategory(id: 'general', name: '一般', achievements: []);
   final AchievementCategory _notes =
@@ -35,7 +36,7 @@ class GamificationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 正しい定義: ポイントは必須、理由はオプションの名前付き引数
+  // 修正: ポイント付与は「名前付き引数 reason」を使用
   Future<void> awardPoints(int points, {String? reason}) async {
     debugPrint('Awarded $points points. Reason: $reason');
     notifyListeners();

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../services/note_operations_service.dart';
-import '../widgets/note_editor/ai_assistant_menu.dart'; // AI機能
+import '../widgets/note_editor/ai_assistant_menu.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
-  final String? initialTitle; // 追加
-  final String? initialContent; // 追加
+  final String? initialTitle;
+  final String? initialContent;
 
   const NoteEditorPage({
     super.key,
@@ -21,7 +20,6 @@ class NoteEditorPage extends StatefulWidget {
 class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,13 +27,6 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.initialContent ?? '');
-    if (widget.noteId != null) {
-      _loadNote();
-    }
-  }
-
-  Future<void> _loadNote() async {
-    // 既存ノート読み込みロジック (スタブ)
   }
 
   @override
@@ -45,22 +36,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     super.dispose();
   }
 
-  Future<void> _saveNote() async {
-    // 保存ロジック (スタブ)
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('保存しました')));
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('メモ作成'),
-        actions: [
-          IconButton(onPressed: _saveNote, icon: const Icon(Icons.save)),
-        ],
-      ),
+      appBar: AppBar(title: const Text('メモ作成')),
       body: Stack(
         children: [
           Padding(
@@ -69,12 +48,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               children: [
                 TextField(
                   controller: _titleController,
-                  decoration: const InputDecoration(
-                    hintText: 'タイトル',
-                    border: InputBorder.none,
-                    hintStyle:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  decoration: const InputDecoration(hintText: 'タイトル'),
                   style: const TextStyle(
                       fontSize: 24, fontWeight: FontWeight.bold),
                 ),
@@ -83,9 +57,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   child: TextField(
                     controller: _contentController,
                     decoration: const InputDecoration(
-                      hintText: '内容を入力...',
-                      border: InputBorder.none,
-                    ),
+                        hintText: '内容を入力...', border: InputBorder.none),
                     maxLines: null,
                     expands: true,
                   ),
@@ -93,17 +65,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               ],
             ),
           ),
-          // AIアシスタントメニュー (右下に配置)
           Positioned(
             bottom: 16,
             right: 16,
             child: AiAssistantMenu(
               contentController: _contentController,
-              onApply: (newText) {
-                setState(() {
-                  _contentController.text = newText;
-                });
-              },
+              onApply: (text) => setState(() => _contentController.text = text),
             ),
           ),
         ],
