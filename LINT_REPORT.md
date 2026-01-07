@@ -131,6 +131,12 @@ warning - The value of the field '_isLoading' isn't used - lib\pages\chro_page.d
    info - Don't use 'BuildContext's across async gaps - lib\pages\landing_page.dart:134:23 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps - lib\pages\landing_page.dart:135:22 - use_build_context_synchronously
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\landing_page.dart:179:39 - deprecated_member_use
+  error - Unused import: '../services/note_operations_service.dart' - lib\pages\note_editor_page.dart:2:8 - unused_import
+  error - Unused import: '../widgets/note_editor/ai_assistant_menu.dart' - lib\pages\note_editor_page.dart:3:8 - unused_import
+   info - The private field _isLoading could be 'final' - lib\pages\note_editor_page.dart:24:8 - prefer_final_fields
+warning - The value of the field '_isLoading' isn't used - lib\pages\note_editor_page.dart:24:8 - unused_field
+   info - Missing a required trailing comma - lib\pages\note_editor_page.dart:79:64 - require_trailing_commas
+  error - The method 'AiAssistantMenu' isn't defined for the type '_NoteEditorPageState' - lib\pages\note_editor_page.dart:100:20 - undefined_method
    info - Don't use 'BuildContext's across async gaps - lib\pages\onboarding_page.dart:68:28 - use_build_context_synchronously
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\onboarding_page.dart:181:34 - deprecated_member_use
    info - Don't use 'BuildContext's across async gaps - lib\pages\real_world_danshari_page.dart:39:28 - use_build_context_synchronously
@@ -184,31 +190,20 @@ warning - The value of the field '_isScanning' isn't used - lib\pages\subscripti
    info - Don't use 'BuildContext's across async gaps - lib\pages\subscription_page.dart:386:28 - use_build_context_synchronously
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\pages\subscription_page.dart:505:15 - deprecated_member_use
    info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\pages\subscription_page.dart:505:21 - deprecated_member_use
-  error - Too many positional arguments: 0 expected, but 1 found - lib\pages\template_marketplace_page.dart:38:48 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\pages\template_marketplace_page.dart:79:11 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\pages\template_marketplace_page.dart:80:11 - extra_positional_arguments
-  error - The named parameter 'initialTitle' isn't defined - lib\pages\template_marketplace_page.dart:91:15 - undefined_named_parameter
-  error - The named parameter 'initialContent' isn't defined - lib\pages\template_marketplace_page.dart:92:15 - undefined_named_parameter
+  error - The named parameter 'reason' isn't defined - lib\pages\template_marketplace_page.dart:81:11 - undefined_named_parameter
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\services\app_share_service.dart:375:13 - deprecated_member_use
    info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\services\app_share_service.dart:375:19 - deprecated_member_use
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:32:31 - avoid_dynamic_calls
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:33:27 - avoid_dynamic_calls
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:34:29 - avoid_dynamic_calls
-  error - Too many positional arguments: 0 expected, but 1 found - lib\services\import_service.dart:11:52 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\services\import_service.dart:243:9 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\services\import_service.dart:244:9 - extra_positional_arguments
+  error - The named parameter 'reason' isn't defined - lib\services\import_service.dart:245:9 - undefined_named_parameter
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\services\note_card_service.dart:226:13 - deprecated_member_use
    info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\services\note_card_service.dart:226:19 - deprecated_member_use
    info - Missing a required trailing comma - lib\services\theme_service.dart:29:73 - require_trailing_commas
-  error - Too many positional arguments: 0 expected, but 1 found - lib\services\viral_growth_service.dart:11:52 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\services\viral_growth_service.dart:25:9 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\services\viral_growth_service.dart:26:9 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\services\viral_growth_service.dart:71:9 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\services\viral_growth_service.dart:72:9 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\services\viral_growth_service.dart:78:9 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\services\viral_growth_service.dart:79:9 - extra_positional_arguments
-  error - The argument type 'String' can't be assigned to the parameter type 'int'.  - lib\services\viral_growth_service.dart:209:11 - argument_type_not_assignable
-  error - Too many positional arguments: 1 expected, but 2 found - lib\services\viral_growth_service.dart:210:11 - extra_positional_arguments
+  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:27:9 - undefined_named_parameter
+  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:73:9 - undefined_named_parameter
+  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:80:9 - undefined_named_parameter
+  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:211:11 - undefined_named_parameter
 warning - The value of the field '_isLoading' isn't used - lib\widgets\note_editor\ai_assistant_menu.dart:24:8 - unused_field
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\note_editor\ai_assistant_menu.dart:201:24 - deprecated_member_use
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\note_editor\ai_assistant_menu.dart:203:43 - deprecated_member_use
@@ -219,4 +214,4 @@ warning - The value of the field '_isLoading' isn't used - lib\widgets\note_edit
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\widgets\share_note_card_dialog.dart:821:13 - deprecated_member_use
    info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\widgets\share_note_card_dialog.dart:821:19 - deprecated_member_use
 
-218 issues found. (ran in 6.2s)
+213 issues found. (ran in 9.0s)

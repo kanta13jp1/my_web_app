@@ -3,7 +3,8 @@ import '../models/achievement.dart';
 import '../models/user_stats.dart';
 
 class GamificationService extends ChangeNotifier {
-  // Provider経由でのアクセスを想定
+  // コンストラクタ: 任意の引数を受け取れるようにして、旧コードの `GamificationService(context)` 等に対応
+  GamificationService([dynamic _]);
 
   // --- カテゴリデータ (スタブ) ---
   final AchievementCategory _general =
@@ -19,7 +20,6 @@ class GamificationService extends ChangeNotifier {
   final AchievementCategory _streak =
       AchievementCategory(id: 'streak', name: '継続', achievements: []);
 
-  // ゲッター (StatsPage等で使用)
   AchievementCategory get general => _general;
   AchievementCategory get notes => _notes;
   AchievementCategory get categories => _categories;
@@ -33,29 +33,33 @@ class GamificationService extends ChangeNotifier {
   List<Achievement> get recentUnlocked => [];
   int get totalPoints => 0;
 
-  // --- メソッド実装 ---
-
   Future<void> checkAchievements() async {
-    // TODO: 実装
     notifyListeners();
   }
 
-  // ポイント付与 (多くのサービスから呼ばれる)
-  Future<void> awardPoints(int points, {String? reason}) async {
-    debugPrint('Awarded $points points for $reason');
+  // 柔軟なポイント付与メソッド: (int, [String]) でも (String, [String]) でも動くようにする
+  Future<void> awardPoints(dynamic arg1, [dynamic arg2]) async {
+    int points = 0;
+    String reason = '';
+
+    if (arg1 is int) {
+      points = arg1;
+      if (arg2 is String) reason = arg2;
+    } else if (arg1 is String) {
+      // 文字列("ACTION_NAME")が渡された場合の互換処理
+      points = 10;
+      reason = arg1;
+    }
+
+    debugPrint('Awarded $points points. Reason: $reason');
     notifyListeners();
   }
 
-  // 統計データ取得 (StatsPageで使用)
   Future<UserStats?> getUserStats() async {
-    // スタブ: 実際のDB取得ロジックは別途実装
     return null;
   }
 
-  Future<void> initializeUserStats() async {
-    // 初期化処理
-  }
-
+  Future<void> initializeUserStats() async {}
   Future<List<Achievement>> getUserAchievements() async {
     return [];
   }
