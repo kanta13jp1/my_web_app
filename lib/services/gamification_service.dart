@@ -3,10 +3,8 @@ import '../models/achievement.dart';
 import '../models/user_stats.dart';
 
 class GamificationService extends ChangeNotifier {
-  // コンストラクタ: 任意の引数を受け取れるようにして、旧コードの `GamificationService(context)` 等に対応
   GamificationService([dynamic _]);
 
-  // --- カテゴリデータ (スタブ) ---
   final AchievementCategory _general =
       AchievementCategory(id: 'general', name: '一般', achievements: []);
   final AchievementCategory _notes =
@@ -37,20 +35,8 @@ class GamificationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 柔軟なポイント付与メソッド: (int, [String]) でも (String, [String]) でも動くようにする
-  Future<void> awardPoints(dynamic arg1, [dynamic arg2]) async {
-    int points = 0;
-    String reason = '';
-
-    if (arg1 is int) {
-      points = arg1;
-      if (arg2 is String) reason = arg2;
-    } else if (arg1 is String) {
-      // 文字列("ACTION_NAME")が渡された場合の互換処理
-      points = 10;
-      reason = arg1;
-    }
-
+  // 正しい定義: ポイントは必須、理由はオプションの名前付き引数
+  Future<void> awardPoints(int points, {String? reason}) async {
     debugPrint('Awarded $points points. Reason: $reason');
     notifyListeners();
   }

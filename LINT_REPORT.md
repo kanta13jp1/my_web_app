@@ -128,6 +128,11 @@ warning - The value of the field '_isLoading' isn't used - lib\pages\chro_page.d
    info - Missing a required trailing comma - lib\pages\home_page.dart:141:72 - require_trailing_commas
    info - Missing a required trailing comma - lib\pages\home_page.dart:143:58 - require_trailing_commas
    info - Missing a required trailing comma - lib\pages\home_page.dart:143:59 - require_trailing_commas
+  error - The argument type 'SupabaseClient' can't be assigned to the parameter type 'GamificationService'.  - lib\pages\import_page.dart:31:36 - argument_type_not_assignable
+  error - The method 'parseNotionCsv' isn't defined for the type 'ImportService' - lib\pages\import_page.dart:116:40 - undefined_method
+  error - The method 'parseEvernoteEnex' isn't defined for the type 'ImportService' - lib\pages\import_page.dart:119:40 - undefined_method
+  error - The method 'parseMarkdown' isn't defined for the type 'ImportService' - lib\pages\import_page.dart:122:40 - undefined_method
+  error - The method 'importNotes' isn't defined for the type 'ImportService' - lib\pages\import_page.dart:162:50 - undefined_method
    info - Don't use 'BuildContext's across async gaps - lib\pages\landing_page.dart:134:23 - use_build_context_synchronously
    info - Don't use 'BuildContext's across async gaps - lib\pages\landing_page.dart:135:22 - use_build_context_synchronously
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\landing_page.dart:179:39 - deprecated_member_use
@@ -190,20 +195,25 @@ warning - The value of the field '_isScanning' isn't used - lib\pages\subscripti
    info - Don't use 'BuildContext's across async gaps - lib\pages\subscription_page.dart:386:28 - use_build_context_synchronously
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\pages\subscription_page.dart:505:15 - deprecated_member_use
    info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\pages\subscription_page.dart:505:21 - deprecated_member_use
-  error - The named parameter 'reason' isn't defined - lib\pages\template_marketplace_page.dart:81:11 - undefined_named_parameter
+   info - Unnecessary use of double quotes - lib\pages\template_marketplace_page.dart:27:34 - prefer_single_quotes
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\services\app_share_service.dart:375:13 - deprecated_member_use
    info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\services\app_share_service.dart:375:19 - deprecated_member_use
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:32:31 - avoid_dynamic_calls
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:33:27 - avoid_dynamic_calls
    info - Method invocation or property access on a 'dynamic' target - lib\services\daily_challenge_service.dart:34:29 - avoid_dynamic_calls
-  error - The named parameter 'reason' isn't defined - lib\services\import_service.dart:245:9 - undefined_named_parameter
+  error - Unused import: 'package:flutter/foundation.dart' - lib\services\import_service.dart:1:8 - unused_import
+  error - Unused import: 'package:file_picker/file_picker.dart' - lib\services\import_service.dart:2:8 - unused_import
+  error - Unused import: 'dart:convert' - lib\services\import_service.dart:3:8 - unused_import
+   info - Unnecessary use of double quotes - lib\services\import_service.dart:14:56 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\services\import_service.dart:20:57 - prefer_single_quotes
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\services\note_card_service.dart:226:13 - deprecated_member_use
    info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\services\note_card_service.dart:226:19 - deprecated_member_use
    info - Missing a required trailing comma - lib\services\theme_service.dart:29:73 - require_trailing_commas
-  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:27:9 - undefined_named_parameter
-  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:73:9 - undefined_named_parameter
-  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:80:9 - undefined_named_parameter
-  error - The named parameter 'reason' isn't defined - lib\services\viral_growth_service.dart:211:11 - undefined_named_parameter
+  error - Unused import: 'package:flutter/foundation.dart' - lib\services\viral_growth_service.dart:1:8 - unused_import
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\services\viral_growth_service.dart:11:11 - deprecated_member_use
+   info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\services\viral_growth_service.dart:11:17 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\services\viral_growth_service.dart:12:56 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\services\viral_growth_service.dart:16:57 - prefer_single_quotes
 warning - The value of the field '_isLoading' isn't used - lib\widgets\note_editor\ai_assistant_menu.dart:24:8 - unused_field
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\note_editor\ai_assistant_menu.dart:201:24 - deprecated_member_use
    info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\note_editor\ai_assistant_menu.dart:203:43 - deprecated_member_use
@@ -214,4 +224,4 @@ warning - The value of the field '_isLoading' isn't used - lib\widgets\note_edit
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\widgets\share_note_card_dialog.dart:821:13 - deprecated_member_use
    info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\widgets\share_note_card_dialog.dart:821:19 - deprecated_member_use
 
-213 issues found. (ran in 9.0s)
+223 issues found. (ran in 63.5s)
