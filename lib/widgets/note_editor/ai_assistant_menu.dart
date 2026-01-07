@@ -1,234 +1,168 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../services/ai_service.dart';
-import '../../main.dart'; // ★ ここを追加（supabase変数を利用するため）
-import 'board_meeting_dialog.dart';
-import 'note_analysis_dialog.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/theme_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AIAssistantMenu extends StatefulWidget {
-  final String content;
-  final Function(String) onUpdateContent;
+class AiAssistantMenu extends StatefulWidget {
+  final TextEditingController contentController;
+  final Function(String) onApply;
 
-  const AIAssistantMenu({
+  const AiAssistantMenu({
     super.key,
-    required this.content,
-    required this.onUpdateContent,
+    required this.contentController,
+    required this.onApply,
   });
 
   @override
-  State<AIAssistantMenu> createState() => _AIAssistantMenuState();
+  State<AiAssistantMenu> createState() => _AiAssistantMenuState();
 }
 
-class _AIAssistantMenuState extends State<AIAssistantMenu> {
-  final AIService _aiService = AIService();
+class _AiAssistantMenuState extends State<AiAssistantMenu> {
   bool _isLoading = false;
-
-  void _handleAction(String action, String label) async {
-    Navigator.pop(context); // メニューを閉じる
-    setState(() => _isLoading = true);
-
-    // 処理中ダイアログを表示
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      if (action == 'hold_board_meeting') {
-        // 取締役会
-        final result = await _aiService.invokeFunction(
-          'ai-assistant',
-          {'action': 'hold_board_meeting', 'content': widget.content},
-        );
-        if (!mounted) return;
-        Navigator.pop(context); // ローディング消去
-        _showBoardMeetingResult(result['result']);
-      } else if (action == 'analyze_note_text') {
-        // 分析
-        final result = await _aiService.invokeFunction(
-          'ai-assistant',
-          {'action': 'analyze_note_text', 'content': widget.content},
-        );
-        if (!mounted) return;
-        Navigator.pop(context); // ローディング消去
-        _showAnalysisResult(result['result']);
-      } else {
-        // テキスト加工系 (improve, summarize, etc)
-        final result = await _aiService.invokeFunction(
-          'ai-assistant',
-          {'action': action, 'content': widget.content},
-        );
-        if (!mounted) return;
-        Navigator.pop(context); // ローディング消去
-        _showTextResult(label, result['result'] as String);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context); // ローディング消去
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラーが発生しました: $e'), backgroundColor: Colors.red),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  // テキスト結果の表示
-  void _showTextResult(String title, String resultText) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('$title結果'),
-        content: SingleChildScrollView(child: Text(resultText)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: resultText));
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('コピーしました')));
-            },
-            child: const Text('コピー'),
-          ),
-          FilledButton(
-            onPressed: () {
-              widget.onUpdateContent(resultText); // 内容を置換または追記するロジックへ
-              Navigator.pop(ctx);
-            },
-            child: const Text('反映する'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 取締役会結果の表示
-  void _showBoardMeetingResult(Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (ctx) => BoardMeetingDialog(data: data),
-    );
-  }
-
-  // 分析結果の表示
-  void _showAnalysisResult(Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (ctx) => NoteAnalysisDialog(data: data),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    final themeService = Provider.of<ThemeService>(context);
+    final isDark = themeService.isDarkMode;
+
+    return PopupMenuButton<String>(
+      icon: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: themeService.primaryColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+            : const Icon(Icons.auto_awesome, color: Colors.white),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      offset: const Offset(0, -60),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onSelected: (value) => _handleAiAction(value),
+      itemBuilder: (context) => [
+        _buildMenuItem('improve', '文章を洗練させる', Icons.brush),
+        _buildMenuItem('summarize', '要約する', Icons.short_text),
+        _buildMenuItem('expand', '内容を膨らませる', Icons.aspect_ratio),
+        _buildMenuItem('translate', '英語に翻訳', Icons.translate),
+        _buildMenuItem('suggest_title', 'タイトル案を生成', Icons.title),
+        const PopupMenuDivider(),
+        _buildMenuItem('analyze_note_text', 'CSOによる分析', Icons.analytics, color: Colors.orange),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _buildMenuItem(String value, String label, IconData icon, {Color? color}) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
         children: [
-          const Text(
-            'AIアシスタント',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.spaceEvenly,
-            children: [
-              _buildActionButton(
-                Icons.psychology,
-                '分析',
-                'analyze_note_text',
-                Colors.purple,
-              ),
-              _buildActionButton(
-                Icons.people,
-                '取締役会',
-                'hold_board_meeting',
-                Colors.indigo,
-              ),
-              _buildActionButton(
-                Icons.auto_fix_high,
-                '校正',
-                'improve',
-                Colors.blue,
-              ),
-              _buildActionButton(
-                Icons.summarize,
-                '要約',
-                'summarize',
-                Colors.orange,
-              ),
-              _buildActionButton(
-                Icons.translate,
-                '翻訳',
-                'translate',
-                Colors.green,
-              ),
-              _buildActionButton(
-                Icons.title,
-                'タイトル案',
-                'suggest_title',
-                Colors.teal,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+          Icon(icon, color: color ?? Colors.grey[700], size: 20),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(color: color)),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(
-    IconData icon,
-    String label,
-    String action,
-    Color color,
-  ) {
-    return InkWell(
-      onTap: () => _handleAction(action, label),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+  Future<void> _handleAiAction(String action) async {
+    final text = widget.contentController.text;
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('テキストを入力してください')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': action,
+          'content': text,
+        },
+      );
+
+      final data = response.data;
+      if (data != null && data['success'] == true) {
+        if (action == 'analyze_note_text') {
+          _showAnalysisResult(data['result']);
+        } else {
+          // テキスト置換/追記系のアクション
+          final resultText = data['result'] as String;
+          // 結果をダイアログで確認してから適用
+          if (mounted) _showResultDialog(resultText);
+        }
+      } else {
+        throw Exception(data?['error'] ?? 'Unknown error');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('AIエラー: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showResultDialog(String newText) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('AI生成結果'),
+        content: SingleChildScrollView(child: Text(newText)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('キャンセル')),
+          FilledButton(
+            onPressed: () {
+              widget.onApply(newText);
+              Navigator.pop(context);
+            },
+            child: const Text('適用する'),
+          ),
+        ],
       ),
     );
   }
-}
 
-// 補足: AIServiceにinvokeFunctionが無い場合のための拡張
-extension AIServiceExt on AIService {
-  Future<Map<String, dynamic>> invokeFunction(
-    String name,
-    Map<String, dynamic> body,
-  ) async {
-    // main.dartからインポートしたグローバル変数 supabase を使用
-    final res = await supabase.functions.invoke(name, body: body);
-    return res.data;
+  void _showAnalysisResult(dynamic result) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('CSO分析レポート'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('感情: ${result['sentiment']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('要約:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(result['summary'] ?? ''),
+              const SizedBox(height: 8),
+              const Text('タグ:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Wrap(
+                spacing: 8,
+                children: (result['tags'] as List? ?? []).map((t) => Chip(label: Text(t.toString()))).toList(),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる')),
+        ],
+      ),
+    );
   }
 }
