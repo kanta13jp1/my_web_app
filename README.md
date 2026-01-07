@@ -9,6 +9,7 @@
 ユーザー（CEO）を支えるAI役員たちの構造図については、以下のファイルを参照してください。
 
 - **[組織図機能マップ (Mermaid)](organization_chart.md)**
+- **[データベース設計書 (ERD)](schema.md)**
 
 ## 3. コアアーキテクチャ: "The Five Emperors"
 `supabase/functions/ai-assistant/index.ts` に実装された統合AI機能。
