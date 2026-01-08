@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
 import 'note_editor_page.dart';
-import 'note_list_page.dart'; // 追加
+import 'note_list_page.dart';
 import 'ai_status_page.dart';
 import 'danshari_page.dart';
 import 'gemini_university_page.dart';
@@ -16,6 +16,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
+    // ThemeServiceから取得するか、直接定義
     final primaryColor = themeService.primaryColor;
 
     return Scaffold(
@@ -54,7 +55,7 @@ class HomePage extends StatelessWidget {
             _buildSectionHeader('CKO OFFICE', Icons.school, Colors.blue),
             _buildGridMenu(context, [
               _MenuData('メモ一覧', Icons.list_alt, Colors.blue,
-                  () => _nav(context, const NoteListPage())), // 追加
+                  () => _nav(context, const NoteListPage())),
               _MenuData('新規事業起案', Icons.edit_note, Colors.blue,
                   () => _nav(context, const NoteEditorPage())),
               _MenuData('Gemini大学', Icons.menu_book, Colors.blue,

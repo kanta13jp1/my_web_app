@@ -48,11 +48,13 @@
     * **Fix**: `lib/pages/home_page.dart` のCEOカード遷移先を `EmergencyMeetingPage` に接続。
 
 
-    * **2026-01-08**:
+* **2026-01-08**:
     * **Feature**: リアル断捨離クエスト (Real World Danshari) の実装。
         * Backend: analyze_danshari_item アクションをEdge Functionに追加。
         * UI: RealWorldDanshariPage を実装。カメラ撮影とAI判定フローを構築。
-
+    * **Feature**: メモ一覧機能 (Note List) の実装。
+        * UI: NoteListPage 追加。CKOオフィスからアクセス可能に。
+        * Backend: Supabase `notes` テーブルからのデータ取得とリスト表示。
 
     * **Refactor**: GamificationServiceの再設計とビルドエラーの完全修正。
         * GamificationService: 名前付き引数と位置引数の不整合を修正し、インターフェースを統一。

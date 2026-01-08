@@ -24,15 +24,19 @@ class _NoteListPageState extends State<NoteListPage> {
   Future<void> _fetchNotes() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
+      // ノート取得: アーカイブされていないものを新しい順に
       final data = await _supabase
           .from('notes')
           .select('id, title, content, created_at, is_pinned')
           .eq('user_id', userId)
-          .eq('is_archived', false) // アーカイブ済みは除外
-          .order('is_pinned', ascending: false) // ピン留め優先
-          .order('created_at', ascending: false); // 新しい順
+          .eq('is_archived', false)
+          .order('is_pinned', ascending: false)
+          .order('created_at', ascending: false);
 
       if (mounted) {
         setState(() {
@@ -42,8 +46,9 @@ class _NoteListPageState extends State<NoteListPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('エラー: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラーが発生しました: $e')),
+        );
         setState(() => _isLoading = false);
       }
     }
@@ -56,6 +61,12 @@ class _NoteListPageState extends State<NoteListPage> {
         title: const Text('ナレッジベース (メモ一覧)'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchNotes,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -73,6 +84,10 @@ class _NoteListPageState extends State<NoteListPage> {
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add),
                         label: const Text('新しいメモを作成'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
                         onPressed: () => _navigateToEditor(context),
                       ),
                     ],
@@ -87,19 +102,29 @@ class _NoteListPageState extends State<NoteListPage> {
                     final dateStr =
                         DateFormat('yyyy/MM/dd HH:mm').format(created);
                     final isPinned = note['is_pinned'] as bool? ?? false;
+                    final title = (note['title'] as String?)?.isNotEmpty == true
+                        ? note['title']
+                        : '無題のメモ';
+                    final content = note['content'] as String? ?? '';
 
                     return Card(
                       elevation: 2,
                       margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
-                        leading: Icon(
-                          isPinned ? Icons.push_pin : Icons.description,
-                          color: isPinned ? Colors.orange : Colors.blue,
+                        leading: CircleAvatar(
+                          backgroundColor: isPinned
+                              ? Colors.orange.withValues(alpha: 0.1)
+                              : Colors.blue.withValues(alpha: 0.1),
+                          child: Icon(
+                            isPinned ? Icons.push_pin : Icons.description,
+                            color: isPinned ? Colors.orange : Colors.blue,
+                            size: 20,
+                          ),
                         ),
                         title: Text(
-                          (note['title'] as String?)?.isNotEmpty == true
-                              ? note['title']
-                              : '無題のメモ',
+                          title,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -107,13 +132,14 @@ class _NoteListPageState extends State<NoteListPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              note['content'] ?? '',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 12),
-                            ),
+                            if (content.isNotEmpty)
+                              Text(
+                                content,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: Colors.grey[600], fontSize: 12),
+                              ),
                             const SizedBox(height: 4),
                             Text(dateStr,
                                 style: TextStyle(

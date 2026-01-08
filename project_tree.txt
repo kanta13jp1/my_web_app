@@ -18,6 +18,7 @@
 ai_prompt_draft.md
 analysis_options.yaml
 apply_user_stats_fix.sql
+BUILD_LOG.md
 docs/archive/FINAL_DEPLOYMENT_STEPS.md
 docs/archive/FINAL_STEP_SUPABASE_SECRETS.md
 docs/archive/FIX_GEMINI_404_ENABLE_API.md
@@ -147,6 +148,7 @@ lib/pages/home_page.dart
 lib/pages/import_page.dart
 lib/pages/landing_page.dart
 lib/pages/note_editor_page.dart
+lib/pages/note_list_page.dart
 lib/pages/onboarding_page.dart
 lib/pages/personality_test_questions_page.dart
 lib/pages/personality_test_result_page.dart
@@ -256,6 +258,6 @@ supabase/migrations/20251111120001_fix_referral_code_column_name.sql
 supabase/migrations/20251111130000_add_personality_scores_update_policy.sql
 supabase/migrations/20251111140000_add_user_names_to_leaderboard.sql
 supabase_migration.sql
+test/pages/note_list_page_test.dart
 test/widget_test.dart
 test-cicd.md
-BUILD_LOG.md
