@@ -10,47 +10,95 @@ class EmergencyMeetingPage extends StatefulWidget {
 }
 
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
-  final TextEditingController _topicController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   BoardMeetingLog? _currentLog;
   bool _isLoading = false;
+  String _loadingStatus = '';
 
-  Future<void> _startMeeting() async {
-    final topic = _topicController.text.trim();
-    if (topic.isEmpty) return;
-
-    setState(() => _isLoading = true);
-    FocusScope.of(context).unfocus();
+  // 各部門のデータを収集してAIへのプロンプトを作成する
+  Future<void> _conveneBoard() async {
+    setState(() {
+      _isLoading = true;
+      _loadingStatus = '各部門からデータを収集中...';
+    });
 
     try {
       final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 1. データ収集 (並列実行で高速化)
+      final results = await Future.wait([
+        // CKO: メモ数
+        supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
+        // CFO: サブスク数 (テーブルがなければ0扱い)
+        supabase
+            .from('subscriptions')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .catchError((_) => 0),
+        // CHRO: ポイント、レベル
+        supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
+        // CSO: 断捨離アイテム数 (未実装テーブルは安全に処理)
+        // supabase.from('real_world_danshari').count()... の代わり
+        Future.value(0),
+      ]);
+
+      final noteCount = results[0] as int;
+      final subCount = results[1] as int;
+      final userStats = results[2] as Map<String, dynamic>?;
+      final danshariCount = results[3] as int;
+
+      final points = userStats?['total_points'] ?? 0;
+      final level = userStats?['current_level'] ?? 1;
+
+      // 2. プロンプトの構築
+      // AIに対して、チャットではなく「現状報告と提案」を求める
+      final contextPrompt = """
+緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
+最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
+
+【現状データ】
+[CEO] ユーザーID: $userId
+[CKO/知識] 蓄積メモ数: $noteCount 件
+[CFO/財務] 登録サブスク数: $subCount 件
+[CHRO/人事] 獲得ポイント: $points pt (Lv.$level)
+[CSO/戦略] 断捨離実行数: $danshariCount 件
+[CHO/健康] (データ未連携のため「運動不足の可能性」と仮定して報告)
+[CMO/市場] (データ未連携のため「アプリ利用頻度」から分析)
+[M&A/連携] インポート機能利用: 未確認
+
+【発言ルール】
+- 各役員は自分の専門分野のデータのみに言及すること。
+- 数字が少ない場合は「怠慢である」と厳しく指摘すること。
+- 数字が多い場合は「リソース過多」のリスクを指摘すること。
+- 馴れ合いは不要。ビジネスライクかつ辛口に。
+""";
+
+      setState(() => _loadingStatus = 'AI役員が分析中...');
+
+      // 3. AI呼び出し
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'hold_board_meeting',
-          'topic': topic,
+          'topic': contextPrompt, // 議題ではなく「コンテキスト」を渡す
         },
       );
 
-      // 修正: レスポンスデータの型を安全にキャスト
       final dynamic rawData = response.data;
 
-      if (rawData is Map<String, dynamic>) {
-        if (rawData['success'] == true) {
-          final result = rawData['result'] as Map<String, dynamic>;
-          final log = BoardMeetingLog.fromMap(result);
+      if (rawData is Map<String, dynamic> && rawData['success'] == true) {
+        final result = rawData['result'] as Map<String, dynamic>;
+        final log = BoardMeetingLog.fromMap(result);
 
-          setState(() {
-            _currentLog = log;
-          });
+        setState(() {
+          _currentLog = log;
+        });
 
-          await _saveMeetingToDb(log);
-        } else {
-          throw Exception(rawData['error'] ?? 'Unknown API error');
-        }
+        await _saveMeetingToDb(log, contextPrompt);
       } else {
-        // マップ型でない場合（エラー文字列などが返ってきた場合）
-        throw Exception('Unexpected response format: $rawData');
+        throw Exception(rawData['error'] ?? 'AI応答エラー');
       }
     } catch (e) {
       if (mounted) {
@@ -62,17 +110,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     }
   }
 
-  Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
+  Future<void> _saveMeetingToDb(BoardMeetingLog log, String prompt) async {
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
-    // 1. 会議本体の保存
     final meetingRes = await supabase
         .from('board_meetings')
         .insert({
           'user_id': userId,
-          'topic': log.topic,
+          'topic': '定期現状分析報告会', // 自動生成なので固定タイトル
           'conclusion': log.conclusion,
           'created_at': DateTime.now().toIso8601String(),
         })
@@ -81,7 +128,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
     final meetingId = meetingRes['id'];
 
-    // 2. 発言ログの保存
     final messagesToInsert = log.messages.map((msg) {
       return {
         'meeting_id': meetingId,
@@ -98,61 +144,105 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('緊急役員会議')),
+      appBar: AppBar(
+        title: const Text('緊急役員会議 (経営分析)'),
+        backgroundColor: Colors.red[900],
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _topicController,
-                    decoration: const InputDecoration(
-                      labelText: '議題 (Topic)',
-                      hintText: '例: 売上が伸び悩んでいる...',
-                      border: OutlineInputBorder(),
-                    ),
+          if (_currentLog == null && !_isLoading)
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.emergency_share,
+                          size: 80, color: Colors.red),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '各部門からの報告を受理しますか？',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '「招集」ボタンを押すと、CFO, CKO, CSOなどの全AI役員がデータベース内の最新情報を分析し、CEOであるあなたに現状報告と次の一手を提案します。',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: _conveneBoard,
+                          icon: const Icon(Icons.notifications_active),
+                          label: const Text('緊急招集する',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _startMeeting,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white))
-                      : const Text('招集'),
+              ),
+            )
+          else if (_isLoading)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.red),
+                    const SizedBox(height: 24),
+                    Text(_loadingStatus,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text('各部門のデータを集計しています...',
+                        style: TextStyle(color: Colors.grey)),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: _currentLog!.messages.length +
+                    2, // +2 for header and footer
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Center(
+                        child: Text(
+                          '${DateTime.now().year}年${DateTime.now().month}月${DateTime.now().day}日 臨時取締役会',
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    );
+                  }
+                  if (index == _currentLog!.messages.length + 1) {
+                    return _buildConclusionCard();
+                  }
+                  final msg = _currentLog!.messages[index - 1];
+                  return _buildMessageCard(msg);
+                },
+              ),
             ),
-          ),
-          const Divider(),
-          Expanded(
-            child: _currentLog == null
-                ? const Center(
-                    child: Text('議題を入力して「招集」ボタンを押してください。\nAI役員たちが議論を開始します。',
-                        textAlign: TextAlign.center))
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _currentLog!.messages.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == _currentLog!.messages.length) {
-                        return _buildConclusionCard();
-                      }
-                      final msg = _currentLog!.messages[index];
-                      return _buildMessageCard(msg);
-                    },
-                  ),
-          ),
         ],
       ),
     );
@@ -160,11 +250,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Widget _buildMessageCard(BoardMessage msg) {
     final isCeo = msg.role == 'CEO';
+    final isCso = msg.role == 'CSO';
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: isCso ? 4 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isCso
+            ? const BorderSide(color: Colors.orange, width: 2)
+            : BorderSide.none,
+      ),
       color: isCeo ? Colors.blue[50] : Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -172,19 +271,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               children: [
                 CircleAvatar(
                   backgroundColor: _getRoleColor(msg.role),
-                  child: Text(
-                    msg.speakerName.isNotEmpty
-                        ? msg.speakerName.substring(0, 1)
-                        : '?',
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  child: Icon(_getRoleIcon(msg.role),
+                      color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(msg.speakerName,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     Text(msg.role,
                         style:
                             TextStyle(color: Colors.grey[600], fontSize: 12)),
@@ -192,8 +288,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(msg.content),
+            const SizedBox(height: 12),
+            Text(msg.content,
+                style: const TextStyle(fontSize: 15, height: 1.5)),
           ],
         ),
       ),
@@ -202,30 +299,39 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Widget _buildConclusionCard() {
     if (_currentLog?.conclusion == null) return const SizedBox.shrink();
-    return Card(
-      color: Colors.red[50],
-      margin: const EdgeInsets.only(top: 16, bottom: 32),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.gavel, color: Colors.red),
-                SizedBox(width: 8),
-                Text('結論 (Conclusion)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.red)),
-              ],
-            ),
-            const Divider(color: Colors.redAccent),
-            Text(_currentLog!.conclusion ?? '結論なし',
-                style: const TextStyle(fontSize: 16)),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(top: 16, bottom: 40),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black87,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.rocket_launch, color: Colors.yellowAccent),
+              SizedBox(width: 12),
+              Text('STRATEGIC DECISION',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
+                      letterSpacing: 1.2)),
+            ],
+          ),
+          const Divider(color: Colors.white24, height: 30),
+          Text(_currentLog!.conclusion ?? '',
+              style: const TextStyle(
+                  fontSize: 16, color: Colors.white, height: 1.6)),
+        ],
       ),
     );
   }
@@ -235,15 +341,40 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case 'CEO':
         return Colors.blue;
       case 'CSO':
-        return Colors.orange;
+        return Colors.orange[800]!;
       case 'CFO':
-        return Colors.green;
+        return Colors.green[700]!;
       case 'CKO':
         return Colors.purple;
       case 'CMO':
         return Colors.pink;
+      case 'CHO':
+        return Colors.teal;
+      case 'CHRO':
+        return Colors.indigo;
       default:
         return Colors.grey;
+    }
+  }
+
+  IconData _getRoleIcon(String role) {
+    switch (role) {
+      case 'CEO':
+        return Icons.person;
+      case 'CSO':
+        return Icons.flag; // Strategy
+      case 'CFO':
+        return Icons.attach_money; // Finance
+      case 'CKO':
+        return Icons.school; // Knowledge
+      case 'CMO':
+        return Icons.analytics; // Marketing
+      case 'CHO':
+        return Icons.favorite; // Health
+      case 'CHRO':
+        return Icons.diversity_3; // HR
+      default:
+        return Icons.smart_toy;
     }
   }
 }
