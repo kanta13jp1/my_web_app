@@ -19,6 +19,7 @@ ai_prompt_draft.md
 analysis_options.yaml
 apply_user_stats_fix.sql
 BUILD_LOG.md
+DETAILED_DESIGN.md
 docs/archive/FINAL_DEPLOYMENT_STEPS.md
 docs/archive/FINAL_STEP_SUPABASE_SECRETS.md
 docs/archive/FIX_GEMINI_404_ENABLE_API.md
