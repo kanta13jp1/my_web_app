@@ -11,7 +11,8 @@ import 'emergency_meeting_page.dart';
 import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
 import 'cfo_office_page.dart';
-import 'cho_office_page.dart'; // Added
+import 'cho_office_page.dart';
+import 'cmo_office_page.dart'; // Added
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -71,21 +72,19 @@ class HomePage extends StatelessWidget {
                   () => _nav(context, const AiStatusPage())),
             ]),
             const SizedBox(height: 24),
-            _buildSectionHeader('CFO OFFICE', Icons.attach_money, Colors.green),
+            _buildSectionHeader('CFO/CHO OFFICE', Icons.balance, Colors.teal),
             _buildGridMenu(context, [
-              _MenuData('財務管理', Icons.account_balance_wallet, Colors.green,
-                  () => _nav(context, const CfoOfficePage())),
-            ]),
-            const SizedBox(height: 24),
-            _buildSectionHeader('CHO OFFICE', Icons.favorite, Colors.teal),
-            _buildGridMenu(context, [
-              _MenuData('健康管理', Icons.medical_services, Colors.teal,
+              _MenuData('財務管理 (CFO)', Icons.account_balance_wallet,
+                  Colors.green, () => _nav(context, const CfoOfficePage())),
+              _MenuData('健康管理 (CHO)', Icons.medical_services, Colors.teal,
                   () => _nav(context, const ChoOfficePage())),
             ]),
             const SizedBox(height: 24),
-            _buildSectionHeader('CKO OFFICE', Icons.school, Colors.blue),
+            _buildSectionHeader('CMO/CKO OFFICE', Icons.analytics, Colors.blue),
             _buildGridMenu(context, [
-              _MenuData('メモ一覧', Icons.list_alt, Colors.blue,
+              _MenuData('市場分析 (CMO)', Icons.trending_up, Colors.pink,
+                  () => _nav(context, const CmoOfficePage())),
+              _MenuData('メモ一覧 (CKO)', Icons.list_alt, Colors.blue,
                   () => _nav(context, const NoteListPage())),
               _MenuData('新規事業起案', Icons.edit_note, Colors.blue,
                   () => _nav(context, const NoteEditorPage())),

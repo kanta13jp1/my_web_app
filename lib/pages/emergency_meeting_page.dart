@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/board_meeting_model.dart';
 
@@ -18,7 +18,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Future<void> _conveneBoard() async {
     setState(() {
       _isLoading = true;
-      _loadingStatus = '各部門からデータを収集中...';
+      _loadingStatus = '全部署からデータを収集中...';
     });
 
     try {
@@ -26,52 +26,47 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 修正: Future.wait<dynamic> とすることで、異なる戻り値(int, Map)の混在を許容
       final results = await Future.wait<dynamic>([
         // CKO: メモ数 (int)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
         // CFO: サブスク数 (int)
-        supabase
-            .from('subscriptions')
-            .count(CountOption.exact)
-            .eq('user_id', userId)
-            .catchError((_) => 0),
-        // CHRO: ポイント、レベル (Map?)
+        supabase.from('subscriptions').count(CountOption.exact).eq('user_id', userId).catchError((_) => 0),
+        // CHRO/CMO: ユーザー統計 (Map)
         supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
-        // CSO: 断捨離 (int)
-        Future.value(0),
+        // CHO: 健康ログ数 (int)
+        supabase.from('notes').count(CountOption.exact).eq('user_id', userId).ilike('title', '[Health]%'),
       ]);
 
       final noteCount = results[0] as int;
       final subCount = results[1] as int;
       final userStats = results[2] as Map<String, dynamic>?;
-      final danshariCount = results[3] as int;
-
+      final healthCount = results[3] as int;
+      
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
+      final streak = userStats?['current_streak'] ?? 0;
 
-      final contextPrompt = """
-緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
+      final contextPrompt = ""
+緊急役員会議を開催します。以下の【全部署の現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
 
 【現状データ】
-[CEO] ユーザーID: $userId
-[CKO/知識] 蓄積メモ数: $noteCount 件
-[CFO/財務] 登録サブスク数: $subCount 件
-[CHRO/人事] 獲得ポイント: $points pt (Lv.$level)
-[CSO/戦略] 断捨離実行数: $danshariCount 件
-[CHO/健康] (データ未連携のため「運動不足の可能性」と仮定して報告)
-[CMO/市場] (データ未連携のため「アプリ利用頻度」から分析)
-[M&A/連携] インポート機能利用: 未確認
+[CEO] ユーザーID: userId
+[CKO/知識] 蓄積メモ数: noteCount 件
+[CFO/財務] 登録サブスク数: subCount 件 (コスト意識の確認)
+[CHRO/人事] 獲得ポイント: points pt (Lv.level)
+[CMO/市場] エンゲージメント(継続日数): streak 日
+[CHO/健康] 健康ログ記録数: healthCount 件
+[CSO/戦略] (断捨離データは別途確認)
 
 【発言ルール】
 - 各役員は自分の専門分野のデータのみに言及すること。
 - 数字が少ない場合は「怠慢である」と厳しく指摘すること。
 - 数字が多い場合は「リソース過多」のリスクを指摘すること。
 - 馴れ合いは不要。ビジネスライクかつ辛口に。
-""";
+"";
 
-      setState(() => _loadingStatus = 'AI役員が分析中...');
+      setState(() => _loadingStatus = 'AI役員が議論中...');
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
@@ -82,23 +77,23 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       );
 
       final dynamic rawData = response.data;
-
+      
       if (rawData is Map<String, dynamic> && rawData['success'] == true) {
         final result = rawData['result'] as Map<String, dynamic>;
         final log = BoardMeetingLog.fromMap(result);
-
+        
         setState(() {
           _currentLog = log;
         });
-
+        
         await _saveMeetingToDb(log, contextPrompt);
       } else {
         throw Exception(rawData['error'] ?? 'AI応答エラー');
       }
+
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('会議エラー: e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -110,16 +105,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
 
-    final meetingRes = await supabase
-        .from('board_meetings')
-        .insert({
-          'user_id': userId,
-          'topic': '定期現状分析報告会',
-          'conclusion': log.conclusion,
-          'created_at': DateTime.now().toIso8601String(),
-        })
-        .select()
-        .single();
+    final meetingRes = await supabase.from('board_meetings').insert({
+      'user_id': userId,
+      'topic': '全社経営分析報告会',
+      'conclusion': log.conclusion,
+      'created_at': DateTime.now().toIso8601String(),
+    }).select().single();
 
     final meetingId = meetingRes['id'];
 
@@ -155,17 +146,15 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.emergency_share,
-                          size: 80, color: Colors.red),
+                      const Icon(Icons.emergency_share, size: 80, color: Colors.red),
                       const SizedBox(height: 24),
                       const Text(
-                        '各部門からの報告を受理しますか？',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                        '全部署からの報告を受理しますか？',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        '「招集」ボタンを押すと、CFO, CKO, CSOなどの全AI役員がデータベース内の最新情報を分析し、CEOであるあなたに現状報告と次の一手を提案します。',
+                        '「招集」ボタンを押すと、CFO, CKO, CHO, CMOなど全AI役員がデータベースを分析し、CEOであるあなたに現状報告と次の一手を提案します。',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
                       ),
@@ -176,9 +165,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: ElevatedButton.icon(
                           onPressed: _conveneBoard,
                           icon: const Icon(Icons.notifications_active),
-                          label: const Text('緊急招集する',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          label: const Text('緊急招集する', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent,
                             foregroundColor: Colors.white,
@@ -199,12 +186,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   children: [
                     const CircularProgressIndicator(color: Colors.red),
                     const SizedBox(height: 24),
-                    Text(_loadingStatus,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(_loadingStatus, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    const Text('各部門のデータを集計しています...',
-                        style: TextStyle(color: Colors.grey)),
+                    const Text('財務健康知識市場データを集計中...', style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),
@@ -221,10 +205,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Center(
                         child: Text(
-                          '${DateTime.now().year}年${DateTime.now().month}月${DateTime.now().day}日 臨時取締役会',
-                          style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.bold),
+                          '{DateTime.now().year}年{DateTime.now().month}月{DateTime.now().day}日 臨時取締役会',
+                          style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
                         ),
                       ),
                     );
@@ -245,15 +227,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Widget _buildMessageCard(BoardMessage msg) {
     final isCeo = msg.role == 'CEO';
     final isCso = msg.role == 'CSO';
-
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: isCso ? 4 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isCso
-            ? const BorderSide(color: Colors.orange, width: 2)
-            : BorderSide.none,
+        side: isCso ? const BorderSide(color: Colors.orange, width: 2) : BorderSide.none,
       ),
       color: isCeo ? Colors.blue[50] : Colors.white,
       child: Padding(
@@ -265,26 +245,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               children: [
                 CircleAvatar(
                   backgroundColor: _getRoleColor(msg.role),
-                  child: Icon(_getRoleIcon(msg.role),
-                      color: Colors.white, size: 20),
+                  child: Icon(_getRoleIcon(msg.role), color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(msg.speakerName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(msg.role,
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    Text(msg.speakerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(msg.role, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(msg.content,
-                style: const TextStyle(fontSize: 15, height: 1.5)),
+            Text(msg.content, style: const TextStyle(fontSize: 15, height: 1.5)),
           ],
         ),
       ),
@@ -300,10 +274,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         color: Colors.black87,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -313,18 +284,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             children: [
               Icon(Icons.rocket_launch, color: Colors.yellowAccent),
               SizedBox(width: 12),
-              Text('STRATEGIC DECISION',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                      letterSpacing: 1.2)),
+              Text('STRATEGIC DECISION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white, letterSpacing: 1.2)),
             ],
           ),
           const Divider(color: Colors.white24, height: 30),
-          Text(_currentLog!.conclusion ?? '',
-              style: const TextStyle(
-                  fontSize: 16, color: Colors.white, height: 1.6)),
+          Text(_currentLog!.conclusion ?? '', style: const TextStyle(fontSize: 16, color: Colors.white, height: 1.6)),
         ],
       ),
     );
@@ -332,43 +296,27 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Color _getRoleColor(String role) {
     switch (role) {
-      case 'CEO':
-        return Colors.blue;
-      case 'CSO':
-        return Colors.orange[800]!;
-      case 'CFO':
-        return Colors.green[700]!;
-      case 'CKO':
-        return Colors.purple;
-      case 'CMO':
-        return Colors.pink;
-      case 'CHO':
-        return Colors.teal;
-      case 'CHRO':
-        return Colors.indigo;
-      default:
-        return Colors.grey;
+      case 'CEO': return Colors.blue;
+      case 'CSO': return Colors.orange[800]!;
+      case 'CFO': return Colors.green[700]!;
+      case 'CKO': return Colors.purple;
+      case 'CMO': return Colors.pink;
+      case 'CHO': return Colors.teal;
+      case 'CHRO': return Colors.indigo;
+      default: return Colors.grey;
     }
   }
 
   IconData _getRoleIcon(String role) {
     switch (role) {
-      case 'CEO':
-        return Icons.person;
-      case 'CSO':
-        return Icons.flag;
-      case 'CFO':
-        return Icons.attach_money;
-      case 'CKO':
-        return Icons.school;
-      case 'CMO':
-        return Icons.analytics;
-      case 'CHO':
-        return Icons.favorite;
-      case 'CHRO':
-        return Icons.diversity_3;
-      default:
-        return Icons.smart_toy;
+      case 'CEO': return Icons.person;
+      case 'CSO': return Icons.flag;
+      case 'CFO': return Icons.attach_money;
+      case 'CKO': return Icons.school;
+      case 'CMO': return Icons.analytics;
+      case 'CHO': return Icons.favorite;
+      case 'CHRO': return Icons.diversity_3;
+      default: return Icons.smart_toy;
     }
   }
 }

@@ -12,7 +12,8 @@ AIエージェントはこのリストを参照し、改修時に既存機能へ
 | **CSO** | **断捨離クエスト** |
 | **CSO** | **リアル断捨離クエスト** |
 | **CFO** | **固定費削減室** |
-| **CHO** | **健康管理室** | lib/pages/health_page.dart | 健康ログ一覧表示<br>ログ追加(Notes連携) |  Implemented | lib/pages/subscription_page.dart | サブスク一覧表示<br>追加削除<br>合計金額計算 |  Implemented | lib/pages/real_world_danshari_page.dart | カメラ/画像選択の起動<br>AI分析結果の表示 | 🚧 Pending | `lib/pages/danshari_page.dart` | カードスワイプUIの表示<br>Supabaseからのデータ取得(Mock) |  Pending (Requires Supabase Mock) |
+| **CHO** | **健康管理室** |
+| **CMO** | **マーケティング室** | lib/pages/cmo_office_page.dart | ユーザー統計表示(Streak, Points)<br>SNSシェア(Simulation) |  Implemented | lib/pages/health_page.dart | 健康ログ一覧表示<br>ログ追加(Notes連携) |  Implemented | lib/pages/subscription_page.dart | サブスク一覧表示<br>追加削除<br>合計金額計算 |  Implemented | lib/pages/real_world_danshari_page.dart | カメラ/画像選択の起動<br>AI分析結果の表示 | 🚧 Pending | `lib/pages/danshari_page.dart` | カードスワイプUIの表示<br>Supabaseからのデータ取得(Mock) |  Pending (Requires Supabase Mock) |
 | **CKO** | **AIアシスタントメニュー** |
 | **CKO** | **メモ一覧** | lib/pages/note_list_page.dart | リスト表示<br>新規作成遷移 |  Implemented | `lib/pages/note_editor_page.dart` | メモ作成画面の起動<br>AIメニューの展開 |  Pending |
 | **Core** | **テーマ管理** |

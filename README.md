@@ -69,6 +69,9 @@
         * UI: ChoOfficePage および HealthPage を追加。
         * Logic: 健康ログを 
 otes テーブルの特定タイトル形式([Health])で管理する簡易実装。
+    * **Feature**: CMO (最高マーケティング責任者) 機能の実装。
+        * UI: CmoOfficePage を追加。ユーザーのエンゲージメント（継続日数）やLTV（ポイント）を可視化。
+    * **Update**: 緊急役員会議の分析ロジックを強化。CHO（健康）やCMO（継続率）のデータを実データとしてAIに提供するように変更。
 
 ---
 

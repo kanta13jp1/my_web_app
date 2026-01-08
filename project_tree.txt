@@ -138,6 +138,7 @@ lib/pages/categories_page.dart
 lib/pages/cfo_office_page.dart
 lib/pages/cho_office_page.dart
 lib/pages/chro_page.dart
+lib/pages/cmo_office_page.dart
 lib/pages/cmo_page.dart
 lib/pages/compatibility_check_page.dart
 lib/pages/compatibility_result_page.dart
