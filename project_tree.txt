@@ -135,6 +135,7 @@ lib/pages/admin_analytics_page.dart
 lib/pages/ai_secretary_page.dart
 lib/pages/ai_status_page.dart
 lib/pages/categories_page.dart
+lib/pages/cfo_office_page.dart
 lib/pages/chro_page.dart
 lib/pages/cmo_page.dart
 lib/pages/compatibility_check_page.dart

@@ -15,7 +15,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _isLoading = false;
   String _loadingStatus = '';
 
-  // 各部門のデータを収集してAIへのプロンプトを作成する
   Future<void> _conveneBoard() async {
     setState(() {
       _isLoading = true;
@@ -27,20 +26,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 1. データ収集 (並列実行で高速化)
-      final results = await Future.wait([
-        // CKO: メモ数
+      // 修正: Future.wait<dynamic> とすることで、異なる戻り値(int, Map)の混在を許容
+      final results = await Future.wait<dynamic>([
+        // CKO: メモ数 (int)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
-        // CFO: サブスク数 (テーブルがなければ0扱い)
+        // CFO: サブスク数 (int)
         supabase
             .from('subscriptions')
             .count(CountOption.exact)
             .eq('user_id', userId)
             .catchError((_) => 0),
-        // CHRO: ポイント、レベル
+        // CHRO: ポイント、レベル (Map?)
         supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
-        // CSO: 断捨離アイテム数 (未実装テーブルは安全に処理)
-        // supabase.from('real_world_danshari').count()... の代わり
+        // CSO: 断捨離 (int)
         Future.value(0),
       ]);
 
@@ -52,8 +50,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
 
-      // 2. プロンプトの構築
-      // AIに対して、チャットではなく「現状報告と提案」を求める
       final contextPrompt = """
 緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
@@ -77,12 +73,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
-      // 3. AI呼び出し
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'hold_board_meeting',
-          'topic': contextPrompt, // 議題ではなく「コンテキスト」を渡す
+          'topic': contextPrompt,
         },
       );
 
@@ -119,7 +114,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         .from('board_meetings')
         .insert({
           'user_id': userId,
-          'topic': '定期現状分析報告会', // 自動生成なので固定タイトル
+          'topic': '定期現状分析報告会',
           'conclusion': log.conclusion,
           'created_at': DateTime.now().toIso8601String(),
         })
@@ -219,8 +214,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
-                itemCount: _currentLog!.messages.length +
-                    2, // +2 for header and footer
+                itemCount: _currentLog!.messages.length + 2,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Padding(
@@ -362,17 +356,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case 'CEO':
         return Icons.person;
       case 'CSO':
-        return Icons.flag; // Strategy
+        return Icons.flag;
       case 'CFO':
-        return Icons.attach_money; // Finance
+        return Icons.attach_money;
       case 'CKO':
-        return Icons.school; // Knowledge
+        return Icons.school;
       case 'CMO':
-        return Icons.analytics; // Marketing
+        return Icons.analytics;
       case 'CHO':
-        return Icons.favorite; // Health
+        return Icons.favorite;
       case 'CHRO':
-        return Icons.diversity_3; // HR
+        return Icons.diversity_3;
       default:
         return Icons.smart_toy;
     }

@@ -10,6 +10,7 @@ import 'gemini_university_page.dart';
 import 'emergency_meeting_page.dart';
 import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
+import 'cfo_office_page.dart'; // Added
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -67,6 +68,12 @@ class HomePage extends StatelessWidget {
                   () => _nav(context, const RealWorldDanshariPage())),
               _MenuData('AI稼働モニター', Icons.monitor_heart, Colors.orange,
                   () => _nav(context, const AiStatusPage())),
+            ]),
+            const SizedBox(height: 24),
+            _buildSectionHeader('CFO OFFICE', Icons.attach_money, Colors.green),
+            _buildGridMenu(context, [
+              _MenuData('財務管理', Icons.account_balance_wallet, Colors.green,
+                  () => _nav(context, const CfoOfficePage())),
             ]),
             const SizedBox(height: 24),
             _buildSectionHeader('CKO OFFICE', Icons.school, Colors.blue),
