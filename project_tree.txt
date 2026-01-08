@@ -263,3 +263,4 @@ test/pages/note_list_page_test.dart
 test/services/import_service_test.dart
 test/widget_test.dart
 test-cicd.md
+USER_MANUAL.md
