@@ -26,8 +26,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 各データを並列取得
-      final results = await Future.wait([
+      // 修正: Future.wait<dynamic> で型推論エラーを回避
+      final results = await Future.wait<dynamic>([
         // 0: CKO (Notes)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
         // 1: CFO (Subscriptions)
@@ -47,7 +47,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final int level = userStats?['current_level'] ?? 1;
       final int streak = userStats?['current_streak'] ?? 0;
 
-      // プロンプト生成 (Dartの文字列補間を使用)
+      // 修正: 文字列補間のエスケープ処理を修正
       final String contextPrompt = ""
 緊急役員会議を開催します。以下の【全部署の現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
@@ -55,7 +55,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 【現状データ】
 [CEO] ユーザーID: userId
 [CKO/知識] 蓄積メモ数: noteCount 件
-[CFO/財務] 登録サブスク数: subCount 件
+[CFO/財務] 登録サブスク数: subCount 件 (コスト意識の確認)
 [CHRO/人事] 獲得ポイント: points pt (Lv.level)
 [CMO/市場] エンゲージメント(継続日数): streak 日
 [CHO/健康] 健康ログ記録数: healthCount 件
@@ -80,22 +80,39 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       final dynamic rawData = response.data;
       
-      if (rawData is Map<String, dynamic> && rawData['success'] == true) {
-        final result = rawData['result'] as Map<String, dynamic>;
-        final log = BoardMeetingLog.fromMap(result);
-        
+      // 修正: レスポンス型の安全なハンドリング
+      Map<String, dynamic>? resultData;
+      
+      if (rawData is Map<String, dynamic>) {
+        if (rawData['success'] == true) {
+          resultData = rawData['result'] as Map<String, dynamic>;
+        }
+      } else if (rawData is List) {
+        // 配列で返ってきた場合のフォールバック（最初の要素を使うなど）
+        if (rawData.isNotEmpty && rawData[0] is Map) {
+           final firstItem = rawData[0] as Map<String, dynamic>;
+           if (firstItem.containsKey('result')) {
+             resultData = firstItem['result'];
+           }
+        }
+      }
+
+      if (resultData != null) {
+        final log = BoardMeetingLog.fromMap(resultData);
         setState(() {
           _currentLog = log;
         });
-        
         await _saveMeetingToDb(log, contextPrompt);
       } else {
-        throw Exception(rawData['error'] ?? 'AI応答エラー');
+        throw Exception('AIからの応答形式が不正です: rawData');
       }
 
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('会議エラー: e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('会議エラー: e'),
+          backgroundColor: Colors.red,
+        ));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -1,5 +1,5 @@
 ﻿# Build Log
-**Generated at:** 2026-01-09 03:22:02
+**Generated at:** 2026-01-09 03:26:13
 **Command:** \lutter build web --release --no-tree-shake-icons\
 
 ## Execution Result
@@ -367,44 +367,76 @@ Error: The non-ASCII character '莉ｶ' (U+4EF6) can't be used in identifiers, o
                           ^
 lib/pages/emergency_meeting_page.dart:58:6:
 Error: The non-ASCII character '雋｡' (U+8CA1) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
      ^
 lib/pages/emergency_meeting_page.dart:58:7:
 Error: The non-ASCII character '蜍・ (U+52D9) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
       ^
 lib/pages/emergency_meeting_page.dart:58:10:
 Error: The non-ASCII character '逋ｻ' (U+767B) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
          ^
 lib/pages/emergency_meeting_page.dart:58:11:
 Error: The non-ASCII character '骭ｲ' (U+9332) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
           ^
 lib/pages/emergency_meeting_page.dart:58:12:
 Error: The non-ASCII character '繧ｵ' (U+30B5) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
            ^
 lib/pages/emergency_meeting_page.dart:58:13:
 Error: The non-ASCII character '繝・ (U+30D6) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
             ^
 lib/pages/emergency_meeting_page.dart:58:14:
 Error: The non-ASCII character '繧ｹ' (U+30B9) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
              ^
 lib/pages/emergency_meeting_page.dart:58:15:
 Error: The non-ASCII character '繧ｯ' (U+30AF) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
               ^
 lib/pages/emergency_meeting_page.dart:58:16:
 Error: The non-ASCII character '謨ｰ' (U+6570) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
                ^
 lib/pages/emergency_meeting_page.dart:58:28:
 Error: The non-ASCII character '莉ｶ' (U+4EF6) can't be used in identifiers, only in strings and comments.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
                            ^
+lib/pages/emergency_meeting_page.dart:58:31:
+Error: The non-ASCII character '繧ｳ' (U+30B3) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                              ^
+lib/pages/emergency_meeting_page.dart:58:32:
+Error: The non-ASCII character '繧ｹ' (U+30B9) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                               ^
+lib/pages/emergency_meeting_page.dart:58:33:
+Error: The non-ASCII character '繝・ (U+30C8) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                ^
+lib/pages/emergency_meeting_page.dart:58:34:
+Error: The non-ASCII character '諢・ (U+610F) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                 ^
+lib/pages/emergency_meeting_page.dart:58:35:
+Error: The non-ASCII character '隴・ (U+8B58) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                  ^
+lib/pages/emergency_meeting_page.dart:58:36:
+Error: The non-ASCII character '縺ｮ' (U+306E) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                   ^
+lib/pages/emergency_meeting_page.dart:58:37:
+Error: The non-ASCII character '遒ｺ' (U+78BA) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                    ^
+lib/pages/emergency_meeting_page.dart:58:38:
+Error: The non-ASCII character '隱・ (U+8A8D) can't be used in identifiers, only in strings and comments.
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                                     ^
 lib/pages/emergency_meeting_page.dart:59:7:
 Error: The non-ASCII character '莠ｺ' (U+4EBA) can't be used in identifiers, only in strings and comments.
 [CHRO/莠ｺ莠犠 迯ｲ蠕励・繧､繝ｳ繝・ points pt (Lv.level)
@@ -950,15 +982,15 @@ Error: Expected ';' after this.
                           ^
 lib/pages/emergency_meeting_page.dart:58:8:
 Error: Expected ';' after this.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
        ^
 lib/pages/emergency_meeting_page.dart:58:19:
 Error: 'subCount' isn't a type.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
                   ^^^^^^^^
 lib/pages/emergency_meeting_page.dart:58:28:
 Error: '莉ｶ' is already declared in this scope.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
                            ^
 lib/pages/emergency_meeting_page.dart:57:27:
 Info: Previous declaration of '莉ｶ'.
@@ -966,7 +998,7 @@ Info: Previous declaration of '莉ｶ'.
                           ^
 lib/pages/emergency_meeting_page.dart:58:28:
 Error: Expected ';' after this.
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
                            ^
 lib/pages/emergency_meeting_page.dart:59:9:
 Error: Expected ';' after this.
@@ -1031,14 +1063,6 @@ Error: Expected ';' after this.
 lib/pages/emergency_meeting_page.dart:68:3:
 Error: Expected ';' after this.
 - 鬥ｴ繧悟粋縺・・荳崎ｦ√ゅン繧ｸ繝阪せ繝ｩ繧､繧ｯ縺九▽霎帛哨縺ｫ縲・  ^^^^^^^^^^^^^^^^^^^^^
-lib/pages/emergency_meeting_page.dart:30:41:
-Error: The argument type 'List<Object>' can't be assigned to the parameter type 'Iterable<Future<dynamic>>'.
- - 'List' is from 'dart:core'.
- - 'Object' is from 'dart:core'.
- - 'Iterable' is from 'dart:core'.
- - 'Future' is from 'dart:async'.
-      final results = await Future.wait([
-                                        ^
 lib/pages/emergency_meeting_page.dart:53:20:
 Error: The getter '繝ｦ繝ｼ繧ｶ繝ｼ' isn't defined for the type '_EmergencyMeetingPageState'.
  - '_EmergencyMeetingPageState' is from 'package:my_web_app/pages/emergency_meeting_page.dart' ('lib/pages/emergency_meeting_page.dart').
@@ -1061,13 +1085,18 @@ Error: The getter '遏･隴・ isn't defined for the type '_EmergencyMeetingPag
 lib/pages/emergency_meeting_page.dart:58:2:
 Error: The getter 'CFO' isn't defined for the type '_EmergencyMeetingPageState'.
  - '_EmergencyMeetingPageState' is from 'package:my_web_app/pages/emergency_meeting_page.dart' ('lib/pages/emergency_meeting_page.dart').
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
  ^^^
 lib/pages/emergency_meeting_page.dart:58:6:
 Error: The getter '雋｡蜍・ isn't defined for the type '_EmergencyMeetingPageState'.
  - '_EmergencyMeetingPageState' is from 'package:my_web_app/pages/emergency_meeting_page.dart' ('lib/pages/emergency_meeting_page.dart').
-[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
      ^^
+lib/pages/emergency_meeting_page.dart:58:31:
+Error: The getter '繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・ isn't defined for the type '_EmergencyMeetingPageState'.
+ - '_EmergencyMeetingPageState' is from 'package:my_web_app/pages/emergency_meeting_page.dart' ('lib/pages/emergency_meeting_page.dart').
+[CFO/雋｡蜍兢 逋ｻ骭ｲ繧ｵ繝悶せ繧ｯ謨ｰ: subCount 莉ｶ (繧ｳ繧ｹ繝域э隴倥・遒ｺ隱・
+                              ^^^^^^^^
 lib/pages/emergency_meeting_page.dart:59:2:
 Error: The getter 'CHRO' isn't defined for the type '_EmergencyMeetingPageState'.
  - '_EmergencyMeetingPageState' is from 'package:my_web_app/pages/emergency_meeting_page.dart' ('lib/pages/emergency_meeting_page.dart').
@@ -1195,6 +1224,6 @@ Error: Compilation failed.
 #19     main (package:flutter_tools/executable.dart:103:3)
 <asynchronous suspension>
 
-Compiling lib\main.dart for the Web...                             35.4s
+Compiling lib\main.dart for the Web...                             37.0s
 Error: Failed to compile application for the Web.
 ```

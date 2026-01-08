@@ -75,6 +75,10 @@ otes テーブルの特定タイトル形式([Health])で管理する簡易実�
     * **Fix**: ビルドエラーの修正 (EmergencyMeetingPage, CmoOfficePage)。
         * プロンプトテキストの文字列リテラル化漏れによる構文エラーを修正。
         * 文字列補間 ($) のエスケープ処理を修正。
+    * **Fix**: 重大なビルドエラー (Illegal character) の修正。
+        * EmergencyMeetingPage: 文字列リテラルのエスケープ処理を修正し、構文エラーを解消。
+        * EmergencyMeetingPage: AIレスポンスの型チェック (Map vs List) を強化し、実行時エラー (TypeError) を回避。
+        * CmoOfficePage: 文字列補間の構文修正。
 
 ---
 

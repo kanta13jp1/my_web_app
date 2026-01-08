@@ -1,5 +1,5 @@
 ﻿# Linter Error Report (Static Analysis)
-**Generated at:** 2026-01-09 03:22:12
+**Generated at:** 2026-01-09 03:26:23
 
 このファイルは \lutter analyze\ の実行結果です。
 **Status**: Latest analysis result.
@@ -63,23 +63,6 @@ warning - The value of the field '_isLoading' isn't used - lib\pages\chro_page.d
    info - Method invocation or property access on a 'dynamic' target - lib\pages\cmo_page.dart:61:27 - avoid_dynamic_calls
    info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\pages\cmo_page.dart:80:5 - deprecated_member_use
    info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\pages\cmo_page.dart:80:11 - deprecated_member_use
-  error - Couldn't infer type parameter 'E'.
-
-Tried to infer 'Object' for 'E' which doesn't work:
-  Return type declared as 'List<E>'
-              used where  'Iterable<Future<_>>' is required.
-The type 'Object' was inferred from:
-  Parameter 'element' declared as     'E'
-                      but argument is 'PostgrestFilterBuilder<int>'.
-  Parameter 'element' declared as     'E'
-                      but argument is 'Future<int>'.
-  Parameter 'element' declared as     'E'
-                      but argument is 'PostgrestTransformBuilder<Map<String, dynamic>?>'.
-
-Consider passing explicit type argument(s) to the generic.
-
- - lib\pages\emergency_meeting_page.dart:30:41 - could_not_infer
-  error - The argument type 'List<Object>' can't be assigned to the parameter type 'Iterable<Future<dynamic>>'.  - lib\pages\emergency_meeting_page.dart:30:41 - argument_type_not_assignable
   error - The value of the local variable 'level' isn't used - lib\pages\emergency_meeting_page.dart:47:17 - unused_local_variable
    info - Use 'const' for final variables initialized to a constant value - lib\pages\emergency_meeting_page.dart:51:7 - prefer_const_declarations
    info - Unnecessary use of double quotes - lib\pages\emergency_meeting_page.dart:51:36 - prefer_single_quotes
@@ -238,6 +221,15 @@ warning - The label '登録サブスク数' isn't used - lib\pages\emergency_mee
   error - Expected to find ';' - lib\pages\emergency_meeting_page.dart:58:28 - expected_token
   error - Illegal character '20214' - lib\pages\emergency_meeting_page.dart:58:28 - illegal_character
   error - The value of the local variable '件' isn't used - lib\pages\emergency_meeting_page.dart:58:28 - unused_local_variable
+  error - Illegal character '12467' - lib\pages\emergency_meeting_page.dart:58:31 - illegal_character
+  error - Undefined name 'コスト意識の確認' - lib\pages\emergency_meeting_page.dart:58:31 - undefined_identifier
+  error - Illegal character '12473' - lib\pages\emergency_meeting_page.dart:58:32 - illegal_character
+  error - Illegal character '12488' - lib\pages\emergency_meeting_page.dart:58:33 - illegal_character
+  error - Illegal character '24847' - lib\pages\emergency_meeting_page.dart:58:34 - illegal_character
+  error - Illegal character '35672' - lib\pages\emergency_meeting_page.dart:58:35 - illegal_character
+  error - Illegal character '12398' - lib\pages\emergency_meeting_page.dart:58:36 - illegal_character
+  error - Illegal character '30906' - lib\pages\emergency_meeting_page.dart:58:37 - illegal_character
+  error - Illegal character '35469' - lib\pages\emergency_meeting_page.dart:58:38 - illegal_character
   error - Undefined name 'CHRO' - lib\pages\emergency_meeting_page.dart:59:2 - undefined_identifier
   error - Illegal character '20154' - lib\pages\emergency_meeting_page.dart:59:7 - illegal_character
   error - Undefined name '人事' - lib\pages\emergency_meeting_page.dart:59:7 - undefined_identifier
@@ -432,9 +424,9 @@ warning - The label '健康ログ記録数' isn't used - lib\pages\emergency_mee
   error - Illegal character '12395' - lib\pages\emergency_meeting_page.dart:68:22 - illegal_character
   error - Illegal character '12290' - lib\pages\emergency_meeting_page.dart:68:23 - illegal_character
    info - Unnecessary use of double quotes - lib\pages\emergency_meeting_page.dart:69:1 - prefer_single_quotes
-   info - Method invocation or property access on a 'dynamic' target - lib\pages\emergency_meeting_page.dart:93:25 - avoid_dynamic_calls
-   info - Use 'const' with the constructor to improve performance - lib\pages\emergency_meeting_page.dart:98:52 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\pages\emergency_meeting_page.dart:98:70 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\pages\emergency_meeting_page.dart:112:52 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\pages\emergency_meeting_page.dart:113:20 - prefer_const_constructors
+   info - Missing a required trailing comma - lib\pages\emergency_meeting_page.dart:115:10 - require_trailing_commas
    info - Empty catch block - lib\pages\gemini_university_page.dart:53:17 - empty_catches
    info - Method invocation or property access on a 'dynamic' target - lib\pages\gemini_university_page.dart:78:28 - avoid_dynamic_calls
    info - Method invocation or property access on a 'dynamic' target - lib\pages\gemini_university_page.dart:79:26 - avoid_dynamic_calls
@@ -521,11 +513,11 @@ warning - The label '健康ログ記録数' isn't used - lib\pages\emergency_mee
    info - Missing a required trailing comma - test\models\board_meeting_model_test.dart:37:11 - require_trailing_commas
    info - Missing a required trailing comma - test\models\board_meeting_model_test.dart:39:7 - require_trailing_commas
 
-flutter : 498 issues found. (ran in 6.3s)
+flutter : 505 issues found. (ran in 6.2s)
 発生場所 行:1 文字:19
 + $analysisOutput = flutter analyze 2>&1 | Out-String
 +                   ~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (498 issues found. (ran in 6.3s):String) [], RemoteException
+    + CategoryInfo          : NotSpecified: (505 issues found. (ran in 6.2s):String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 
