@@ -258,6 +258,8 @@ supabase/migrations/20251111120001_fix_referral_code_column_name.sql
 supabase/migrations/20251111130000_add_personality_scores_update_policy.sql
 supabase/migrations/20251111140000_add_user_names_to_leaderboard.sql
 supabase_migration.sql
+test/models/board_meeting_model_test.dart
 test/pages/note_list_page_test.dart
+test/services/import_service_test.dart
 test/widget_test.dart
 test-cicd.md

@@ -13,7 +13,9 @@ AIエージェントはこのリストを参照し、改修時に既存機能へ
 | **CSO** | **リアル断捨離クエスト** | lib/pages/real_world_danshari_page.dart | カメラ/画像選択の起動<br>AI分析結果の表示 | 🚧 Pending | `lib/pages/danshari_page.dart` | カードスワイプUIの表示<br>Supabaseからのデータ取得(Mock) |  Pending (Requires Supabase Mock) |
 | **CKO** | **AIアシスタントメニュー** |
 | **CKO** | **メモ一覧** | lib/pages/note_list_page.dart | リスト表示<br>新規作成遷移 |  Implemented | `lib/pages/note_editor_page.dart` | メモ作成画面の起動<br>AIメニューの展開 |  Pending |
-| **Core** | **テーマ管理** | `lib/services/theme_service.dart` | Dark/Lightモード切替<br>SharedPreferencesへの保存 |  Verified (Manual) |
+| **Core** | **テーマ管理** |
+| **Core** | **インポート機能** | lib/services/import_service.dart | ポイント付与ロジック<br>ノート数計算 |  Implemented |
+| **Model** | **役員会議モデル** | lib/models/board_meeting_model.dart | JSONパース(fromMap) |  Implemented | `lib/services/theme_service.dart` | Dark/Lightモード切替<br>SharedPreferencesへの保存 |  Verified (Manual) |
 
 ##  実行コマンド
 
