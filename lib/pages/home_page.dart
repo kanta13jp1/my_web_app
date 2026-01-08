@@ -60,40 +60,86 @@ class HomePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader(
-                'CEO OFFICE', Icons.business_center, Colors.redAccent),
+              'CEO OFFICE',
+              Icons.business_center,
+              Colors.redAccent,
+            ),
             _buildCeoCard(context),
             const SizedBox(height: 24),
             _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
             _buildGridMenu(context, [
-              _MenuData('断捨離 (デジタル)', Icons.cleaning_services, Colors.orange,
-                  () => _nav(context, const DanshariPage())),
-              _MenuData('断捨離 (リアル)', Icons.camera_alt, Colors.deepOrange,
-                  () => _nav(context, const RealWorldDanshariPage())),
-              _MenuData('AI稼働モニター', Icons.monitor_heart, Colors.orange,
-                  () => _nav(context, const AiStatusPage())),
+              _MenuData(
+                '断捨離 (デジタル)',
+                Icons.cleaning_services,
+                Colors.orange,
+                () => _nav(context, const DanshariPage()),
+              ),
+              _MenuData(
+                '断捨離 (リアル)',
+                Icons.camera_alt,
+                Colors.deepOrange,
+                () => _nav(context, const RealWorldDanshariPage()),
+              ),
+              _MenuData(
+                'AI稼働モニター',
+                Icons.monitor_heart,
+                Colors.orange,
+                () => _nav(context, const AiStatusPage()),
+              ),
             ]),
             const SizedBox(height: 24),
             _buildSectionHeader(
-                'CFO/CHO/CHRO OFFICE', Icons.balance, Colors.teal),
+              'CFO/CHO/CHRO OFFICE',
+              Icons.balance,
+              Colors.teal,
+            ),
             _buildGridMenu(context, [
-              _MenuData('財務管理 (CFO)', Icons.account_balance_wallet,
-                  Colors.green, () => _nav(context, const CfoOfficePage())),
-              _MenuData('健康管理 (CHO)', Icons.medical_services, Colors.teal,
-                  () => _nav(context, const ChoOfficePage())),
-              _MenuData('人事厚生 (CHRO)', Icons.diversity_3, Colors.indigo,
-                  () => _nav(context, const ChroOfficePage())),
+              _MenuData(
+                '財務管理 (CFO)',
+                Icons.account_balance_wallet,
+                Colors.green,
+                () => _nav(context, const CfoOfficePage()),
+              ),
+              _MenuData(
+                '健康管理 (CHO)',
+                Icons.medical_services,
+                Colors.teal,
+                () => _nav(context, const ChoOfficePage()),
+              ),
+              _MenuData(
+                '人事厚生 (CHRO)',
+                Icons.diversity_3,
+                Colors.indigo,
+                () => _nav(context, const ChroOfficePage()),
+              ),
             ]),
             const SizedBox(height: 24),
             _buildSectionHeader('CMO/CKO OFFICE', Icons.analytics, Colors.blue),
             _buildGridMenu(context, [
-              _MenuData('市場分析 (CMO)', Icons.trending_up, Colors.pink,
-                  () => _nav(context, const CmoOfficePage())),
-              _MenuData('メモ一覧 (CKO)', Icons.list_alt, Colors.blue,
-                  () => _nav(context, const NoteListPage())),
-              _MenuData('新規事業起案', Icons.edit_note, Colors.blue,
-                  () => _nav(context, const NoteEditorPage())),
-              _MenuData('Gemini大学', Icons.menu_book, Colors.blue,
-                  () => _nav(context, const GeminiUniversityPage())),
+              _MenuData(
+                '市場分析 (CMO)',
+                Icons.trending_up,
+                Colors.pink,
+                () => _nav(context, const CmoOfficePage()),
+              ),
+              _MenuData(
+                'メモ一覧 (CKO)',
+                Icons.list_alt,
+                Colors.blue,
+                () => _nav(context, const NoteListPage()),
+              ),
+              _MenuData(
+                '新規事業起案',
+                Icons.edit_note,
+                Colors.blue,
+                () => _nav(context, const NoteEditorPage()),
+              ),
+              _MenuData(
+                'Gemini大学',
+                Icons.menu_book,
+                Colors.blue,
+                () => _nav(context, const GeminiUniversityPage()),
+              ),
             ]),
           ],
         ),
@@ -112,9 +158,14 @@ class HomePage extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(width: 8),
-          Text(title,
-              style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -128,17 +179,22 @@ class HomePage extends StatelessWidget {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         leading: const CircleAvatar(
-            backgroundColor: Colors.redAccent,
-            radius: 28,
-            child: Icon(Icons.emergency, color: Colors.white, size: 30)),
-        title: const Text('緊急役員会議',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          backgroundColor: Colors.redAccent,
+          radius: 28,
+          child: Icon(Icons.emergency, color: Colors.white, size: 30),
+        ),
+        title: const Text(
+          '緊急役員会議',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const EmergencyMeetingPage())),
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EmergencyMeetingPage(),
+          ),
+        ),
       ),
     );
   }
@@ -148,10 +204,11 @@ class HomePage extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 2.5),
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 2.5,
+      ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -167,18 +224,25 @@ class HomePage extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: 0.1),
-                          shape: BoxShape.circle),
-                      child: Icon(item.icon, color: item.color, size: 20)),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: item.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(item.icon, color: item.color, size: 20),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
-                      child: Text(item.title,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 13),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis)),
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),

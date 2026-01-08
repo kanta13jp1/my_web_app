@@ -136,7 +136,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             )
@@ -163,7 +165,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           border: InputBorder.none,
                         ),
                         style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const Divider(),
                       Expanded(

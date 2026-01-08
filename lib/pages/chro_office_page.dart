@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'rewards_page.dart'; // 福利厚生
 import 'stats_page.dart'; // 人事評価
 
@@ -43,8 +42,13 @@ class ChroOfficePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, String subtitle,
-      IconData icon, Widget? page) {
+  Widget _buildMenuCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Widget? page,
+  ) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),

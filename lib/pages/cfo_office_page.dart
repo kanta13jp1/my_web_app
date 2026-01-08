@@ -41,8 +41,13 @@ class CfoOfficePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, String subtitle,
-      IconData icon, Widget? page) {
+  Widget _buildMenuCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Widget? page,
+  ) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),

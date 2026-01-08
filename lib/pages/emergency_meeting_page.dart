@@ -51,7 +51,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final level = userStats?['current_level'] ?? 1;
 
       // 修正: 文字列リテラルを正しく修正し、変数を ${} で囲む
-      final contextPrompt = """
+      final contextPrompt = '''
 緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
 
@@ -70,7 +70,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 - 数字が少ない場合は「怠慢である」と厳しく指摘すること。
 - 数字が多い場合は「リソース過多」のリスクを指摘すること。
 - 馴れ合いは不要。ビジネスライクかつ辛口に。
-""";
+''';
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
@@ -308,8 +308,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(msg.content,
-                style: const TextStyle(fontSize: 15, height: 1.5)),
+            Text(
+              msg.content,
+              style: const TextStyle(fontSize: 15, height: 1.5),
+            ),
           ],
         ),
       ),

@@ -21,7 +21,8 @@ class _LandingPageState extends State<LandingPage> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メールアドレスとパスワードを入力してください')));
+        const SnackBar(content: Text('メールアドレスとパスワードを入力してください')),
+      );
       return;
     }
 
@@ -30,20 +31,26 @@ class _LandingPageState extends State<LandingPage> {
       if (_isSignUp) {
         await Supabase.instance.client.auth
             .signUp(email: email, password: password);
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('登録完了。確認メールを送信しました。')));
+            const SnackBar(content: Text('登録完了。確認メールを送信しました。')),
+          );
+        }
       } else {
         await Supabase.instance.client.auth
             .signInWithPassword(email: email, password: password);
-        if (mounted)
+        if (mounted) {
           Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (_) => const HomePage()));
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('認証エラー: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -61,10 +68,14 @@ class _LandingPageState extends State<LandingPage> {
             children: [
               const Icon(Icons.business, size: 80, color: Colors.blue),
               const SizedBox(height: 24),
-              const Text('自分株式会社',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-              const Text('Me Inc.',
-                  style: TextStyle(fontSize: 20, color: Colors.grey)),
+              const Text(
+                '自分株式会社',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const Text(
+                'Me Inc.',
+                style: TextStyle(fontSize: 20, color: Colors.grey),
+              ),
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
@@ -97,15 +108,18 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(_isSignUp ? '新規登録 (Sign Up)' : 'ログイン (Login)',
-                          style: const TextStyle(fontSize: 18)),
+                      : Text(
+                          _isSignUp ? '新規登録 (Sign Up)' : 'ログイン (Login)',
+                          style: const TextStyle(fontSize: 18),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => setState(() => _isSignUp = !_isSignUp),
                 child: Text(
-                    _isSignUp ? 'すでにアカウントをお持ちの方はログイン' : 'アカウントをお持ちでない方は新規登録'),
+                  _isSignUp ? 'すでにアカウントをお持ちの方はログイン' : 'アカウントをお持ちでない方は新規登録',
+                ),
               ),
             ],
           ),

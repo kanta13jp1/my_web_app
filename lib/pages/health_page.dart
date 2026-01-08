@@ -118,8 +118,11 @@ class _HealthPageState extends State<HealthPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : _logs.isEmpty
                     ? const Center(
-                        child: Text('健康ログはまだありません',
-                            style: TextStyle(color: Colors.grey)))
+                        child: Text(
+                          '健康ログはまだありません',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _logs.length,
@@ -133,12 +136,18 @@ class _HealthPageState extends State<HealthPage> {
                             elevation: 1,
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
-                              leading: const Icon(Icons.directions_run,
-                                  color: Colors.teal),
+                              leading: const Icon(
+                                Icons.directions_run,
+                                color: Colors.teal,
+                              ),
                               title: Text(item['content'] ?? ''),
-                              trailing: Text(dateStr,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.grey)),
+                              trailing: Text(
+                                dateStr,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ),
                           );
                         },

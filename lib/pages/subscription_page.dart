@@ -74,8 +74,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
@@ -127,14 +128,19 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   width: double.infinity,
                   child: Column(
                     children: [
-                      const Text('月額固定費 合計',
-                          style: TextStyle(fontSize: 16, color: Colors.grey)),
+                      const Text(
+                        '月額固定費 合計',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
                       Text(
-                        '${totalCost.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                        totalCost.toString().replaceAllMapped(
+                            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                            (Match m) => '${m[1]},'),
                         style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[800]),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
                       ),
                     ],
                   ),
@@ -147,18 +153,25 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           itemBuilder: (context, index) {
                             final item = _subscriptions[index];
                             return ListTile(
-                              leading: const Icon(Icons.payment,
-                                  color: Colors.green),
+                              leading: const Icon(
+                                Icons.payment,
+                                color: Colors.green,
+                              ),
                               title: Text(item['service_name'] ?? ''),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('${item['price']}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                    '${item['price']}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.grey),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.grey,
+                                    ),
                                     onPressed: () =>
                                         _deleteSubscription(item['id']),
                                   ),

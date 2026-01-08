@@ -65,12 +65,24 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildKpiCard('顧客エンゲージメント (継続日数)', '{streak}日',
-                    Icons.local_fire_department, Colors.orange),
-                _buildKpiCard('顧客LTV (総獲得ポイント)', '{points} pt',
-                    Icons.monetization_on, Colors.yellow[800]!),
                 _buildKpiCard(
-                    'ブランドランク (レベル)', 'Lv.{level}', Icons.stars, Colors.blue),
+                  '顧客エンゲージメント (継続日数)',
+                  '{streak}日',
+                  Icons.local_fire_department,
+                  Colors.orange,
+                ),
+                _buildKpiCard(
+                  '顧客LTV (総獲得ポイント)',
+                  '{points} pt',
+                  Icons.monetization_on,
+                  Colors.yellow[800]!,
+                ),
+                _buildKpiCard(
+                  'ブランドランク (レベル)',
+                  'Lv.{level}',
+                  Icons.stars,
+                  Colors.blue,
+                ),
                 const SizedBox(height: 24),
                 _buildActionCard(
                   context,
@@ -87,7 +99,8 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   Icons.feedback,
                   Colors.green,
                   () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('フィードバック機能は準備中です'))),
+                    const SnackBar(content: Text('フィードバック機能は準備中です')),
+                  ),
                 ),
               ],
             ),
@@ -110,11 +123,17 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                Text(value,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 24)),
+                Text(
+                  title,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
               ],
             ),
           ],
@@ -123,8 +142,14 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
     );
   }
 
-  Widget _buildActionCard(BuildContext context, String title, String subtitle,
-      IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Card(
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 12),

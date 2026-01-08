@@ -33,9 +33,9 @@ void main() {
             'speaker_name': 'A',
             'role': 'r',
             'content': 'c',
-            'created_at': '2025-01-01T10:00:00Z'
+            'created_at': '2025-01-01T10:00:00Z',
           }
-        ]
+        ],
       };
 
       final log = BoardMeetingLog.fromMap(map);
