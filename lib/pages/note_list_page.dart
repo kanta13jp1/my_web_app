@@ -58,7 +58,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ナレッジベース (メモ一覧)'),
+        title: const Text('CKO OFFICE (知識)'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [

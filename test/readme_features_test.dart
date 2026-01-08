@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:provider/provider.dart';
@@ -50,7 +50,8 @@ void main() {
       expect(find.text('CSO OFFICE'), findsOneWidget);
     });
 
-    testWidgets('Feature: EmergencyMeetingPage renders correctly', (WidgetTester tester) async {
+    testWidgets('Feature: EmergencyMeetingPage renders correctly',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: EmergencyMeetingPage()));
       await tester.pumpAndSettle();
 
@@ -60,11 +61,12 @@ void main() {
       expect(find.text('緊急招集する'), findsOneWidget);
     });
 
-    testWidgets('Feature: NoteListPage renders correctly', (WidgetTester tester) async {
+    testWidgets('Feature: NoteListPage renders correctly',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: NoteListPage()));
       // データの読み込み待ち（エラーになってもUIが出ればOK）
       await tester.pumpAndSettle();
-      
+
       expect(find.text('CKO OFFICE (知識)'), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
