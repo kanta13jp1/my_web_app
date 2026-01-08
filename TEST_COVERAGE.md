@@ -8,7 +8,7 @@ AIエージェントはこのリストを参照し、改修時に既存機能へ
 | カテゴリ | 機能名 (Feature) | 対象ファイル (File) | テスト確認事項 (Test Case) | 状態 |
 | :--- | :--- | :--- | :--- | :--- |
 | **CEO** | **経営コックピット** | `lib/pages/home_page.dart` | 各Officeセクションの表示<br>CEOカードのレンダリング |  Implemented |
-| **CEO** | **緊急役員会議** | `lib/pages/emergency_meeting_page.dart`<br>`lib/models/board_meeting_model.dart` | 画面起動<br>テキスト入力欄の存在<br>「招集」ボタンの存在 |  Implemented |
+| **CEO** | **緊急役員会議 (BI版)** | lib/pages/emergency_meeting_page.dart | データ集計ロジック<br>AIプロンプト生成<br>レポート表示UI |  Implemented |
 | **CSO** | **断捨離クエスト** |
 | **CSO** | **リアル断捨離クエスト** | lib/pages/real_world_danshari_page.dart | カメラ/画像選択の起動<br>AI分析結果の表示 | 🚧 Pending | `lib/pages/danshari_page.dart` | カードスワイプUIの表示<br>Supabaseからのデータ取得(Mock) |  Pending (Requires Supabase Mock) |
 | **CKO** | **AIアシスタントメニュー** |
