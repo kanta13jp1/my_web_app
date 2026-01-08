@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,10 +40,10 @@ void main() {
 
       // UI要素の確認: テキスト入力欄があること
       expect(find.byType(TextField), findsOneWidget);
-      
+
       // '招集'ボタンの確認 (アイコンボタンではなくテキストで探す)
       // ボタン内のテキスト、あるいはツールチップなどを探す
-      expect(find.text('招集'), findsOneWidget); 
+      expect(find.text('招集'), findsOneWidget);
     });
   });
 }

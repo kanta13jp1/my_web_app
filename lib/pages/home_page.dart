@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/theme_service.dart';
-import 'note_editor_page.dart'; // CKO
-import 'ai_status_page.dart'; // CSO
-import 'danshari_page.dart'; // CSO (Tinder-style)
-import 'gemini_university_page.dart'; // CKO
-import 'emergency_meeting_page.dart'; // CEO
-import 'real_world_danshari_page.dart'; // CSO (Real)
+import 'note_editor_page.dart';
+import 'note_list_page.dart'; // 追加
+import 'ai_status_page.dart';
+import 'danshari_page.dart';
+import 'gemini_university_page.dart';
+import 'emergency_meeting_page.dart';
+import 'real_world_danshari_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -15,7 +16,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
-    const Color primaryColor = Color(0xFF0F172A);
+    final primaryColor = themeService.primaryColor;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.black87 : const Color(0xFFF1F5F9),
@@ -52,6 +53,8 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSectionHeader('CKO OFFICE', Icons.school, Colors.blue),
             _buildGridMenu(context, [
+              _MenuData('メモ一覧', Icons.list_alt, Colors.blue,
+                  () => _nav(context, const NoteListPage())), // 追加
               _MenuData('新規事業起案', Icons.edit_note, Colors.blue,
                   () => _nav(context, const NoteEditorPage())),
               _MenuData('Gemini大学', Icons.menu_book, Colors.blue,
@@ -131,7 +134,7 @@ class HomePage extends StatelessWidget {
                   Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                          color: item.color.withOpacity(0.1),
+                          color: item.color.withValues(alpha: 0.1),
                           shape: BoxShape.circle),
                       child: Icon(item.icon, color: item.color, size: 20)),
                   const SizedBox(width: 12),
