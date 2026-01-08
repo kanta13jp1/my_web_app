@@ -18,7 +18,6 @@
 ai_prompt_draft.md
 analysis_options.yaml
 apply_user_stats_fix.sql
-BUILD_LOG.md
 DETAILED_DESIGN.md
 docs/archive/FINAL_DEPLOYMENT_STEPS.md
 docs/archive/FINAL_STEP_SUPABASE_SECRETS.md
@@ -215,13 +214,11 @@ netlify.toml
 netlify/functions/generate-quote-image.js
 netlify/functions/quotes.js
 netlify/functions/share-quote.js
-organization_chart.md
 public/index.html
 pubspec.lock
 pubspec.yaml
 README.md
 replay_pid16188.log
-schema.md
 supabase/.temp/cli-latest
 supabase/.temp/gotrue-version
 supabase/.temp/pooler-url
