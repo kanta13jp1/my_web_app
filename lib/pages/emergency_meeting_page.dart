@@ -32,19 +32,25 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         },
       );
 
-      final data = response.data;
-      if (data != null && data['success'] == true) {
-        final result = data['result'] as Map<String, dynamic>;
-        // 修正: fromJson -> fromMap
-        final log = BoardMeetingLog.fromMap(result);
+      // 修正: レスポンスデータの型を安全にキャスト
+      final dynamic rawData = response.data;
 
-        setState(() {
-          _currentLog = log;
-        });
+      if (rawData is Map<String, dynamic>) {
+        if (rawData['success'] == true) {
+          final result = rawData['result'] as Map<String, dynamic>;
+          final log = BoardMeetingLog.fromMap(result);
 
-        await _saveMeetingToDb(log);
+          setState(() {
+            _currentLog = log;
+          });
+
+          await _saveMeetingToDb(log);
+        } else {
+          throw Exception(rawData['error'] ?? 'Unknown API error');
+        }
       } else {
-        throw Exception(data?['error'] ?? 'Unknown error');
+        // マップ型でない場合（エラー文字列などが返ってきた場合）
+        throw Exception('Unexpected response format: $rawData');
       }
     } catch (e) {
       if (mounted) {
@@ -79,9 +85,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final messagesToInsert = log.messages.map((msg) {
       return {
         'meeting_id': meetingId,
-        'speaker_name': msg.speakerName, // 修正: name -> speakerName
+        'speaker_name': msg.speakerName,
         'role': msg.role,
-        'content': msg.content, // 修正: text -> content
+        'content': msg.content,
         'created_at': DateTime.now().toIso8601String(),
       };
     }).toList();
@@ -167,7 +173,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 CircleAvatar(
                   backgroundColor: _getRoleColor(msg.role),
                   child: Text(
-                    msg.speakerName.substring(0, 1), // 修正: name -> speakerName
+                    msg.speakerName.isNotEmpty
+                        ? msg.speakerName.substring(0, 1)
+                        : '?',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -176,9 +184,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(msg.speakerName,
-                        style: const TextStyle(
-                            fontWeight:
-                                FontWeight.bold)), // 修正: name -> speakerName
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     Text(msg.role,
                         style:
                             TextStyle(color: Colors.grey[600], fontSize: 12)),
@@ -187,7 +193,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(msg.content), // 修正: text -> content
+            Text(msg.content),
           ],
         ),
       ),
