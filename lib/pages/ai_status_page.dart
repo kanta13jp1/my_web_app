@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../main.dart';
 
@@ -361,7 +361,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.05),
+            color: Colors.grey.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -405,13 +405,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: passed
-            ? Colors.green.withOpacity(0.08)
-            : Colors.red.withOpacity(0.08),
+            ? Colors.green.withValues(alpha: 0.08)
+            : Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: passed
-              ? Colors.green.withOpacity(0.3)
-              : Colors.red.withOpacity(0.3),
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.red.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -501,9 +501,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         '$label: $value',
@@ -534,7 +534,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         icon = Icons.help_outline;
     }
     return CircleAvatar(
-      backgroundColor: color.withOpacity(0.1),
+      backgroundColor: color.withValues(alpha: 0.1),
       child: Icon(icon, color: color, size: 20),
     );
   }

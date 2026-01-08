@@ -43,7 +43,9 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               )
             : const Icon(Icons.auto_awesome, color: Colors.white),
       ),

@@ -1,4 +1,4 @@
-// lib/pages/admin/feedback_list_page.dart
+﻿// lib/pages/admin/feedback_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../main.dart';
@@ -127,7 +127,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                       child: ExpansionTile(
                         leading: CircleAvatar(
                           backgroundColor:
-                              _getStatusColor(status).withOpacity(0.2),
+                              _getStatusColor(status).withValues(alpha: 0.2),
                           child: Icon(
                             _getCategoryIcon(fb['category']),
                             color: _getStatusColor(status),

@@ -1,4 +1,4 @@
-// lib/pages/feedback_page.dart
+﻿// lib/pages/feedback_page.dart
 import 'package:flutter/material.dart';
 import '../main.dart'; // supabaseクライアントへのアクセス
 import '../utils/app_logger.dart';
@@ -98,9 +98,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [

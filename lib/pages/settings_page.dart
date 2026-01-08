@@ -51,7 +51,11 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _buildOption(
-      BuildContext context, ThemeService service, ThemeMode mode, String text) {
+    BuildContext context,
+    ThemeService service,
+    ThemeMode mode,
+    String text,
+  ) {
     return SimpleDialogOption(
       onPressed: () {
         service.setThemeMode(mode);

@@ -10,8 +10,8 @@ class BoardMeetingLog {
   });
 
   factory BoardMeetingLog.fromJson(Map<String, dynamic> json) {
-    var list = json['meeting_minutes'] as List;
-    List<BoardMessage> messagesList =
+    final list = json['meeting_minutes'] as List;
+    final List<BoardMessage> messagesList =
         list.map((i) => BoardMessage.fromJson(i)).toList();
 
     return BoardMeetingLog(

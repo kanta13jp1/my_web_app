@@ -36,10 +36,10 @@ class _ImportPageState extends State<ImportPage> {
   Future<void> _pickAndImport(String type) async {
     setState(() => _isLoading = true);
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+      final FilePickerResult? result = await FilePicker.platform.pickFiles();
 
       if (result != null) {
-        File file = File(result.files.single.path!);
+        final File file = File(result.files.single.path!);
 
         if (type == 'notion') await _importService.parseNotionCsv(file);
         if (type == 'evernote') await _importService.parseEvernoteEnex(file);

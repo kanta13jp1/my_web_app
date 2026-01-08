@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:share_plus/share_plus.dart';
 import '../main.dart';
@@ -350,7 +350,7 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                           IconButton(
                             icon: const Icon(Icons.share, color: Colors.indigo),
                             onPressed: () {
-                              Share.share(_generatedContent!);
+                              SharePlus.share(_generatedContent!);
                             },
                           ),
                         ],

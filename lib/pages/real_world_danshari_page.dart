@@ -97,14 +97,17 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             // Instructions
             Card(
               color: isDark ? Colors.grey[800] : Colors.orange[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+              child: const Padding(
+                padding: EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    const Icon(Icons.camera_alt,
-                        size: 48, color: Colors.orange),
-                    const SizedBox(height: 12),
-                    const Text(
+                    Icon(
+                      Icons.camera_alt,
+                      size: 48,
+                      color: Colors.orange,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
                       'あなたの部屋にある「捨てるか迷っているモノ」を撮影してください。\nCSOが容赦なく判定します。',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16),
@@ -159,7 +162,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -171,7 +176,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     backgroundColor: Colors.orangeAccent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ],
@@ -182,7 +189,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             // Result Area
             if (_isLoading)
               const Center(
-                  child: CircularProgressIndicator(color: Colors.orange))
+                child: CircularProgressIndicator(color: Colors.orange),
+              )
             else if (_result != null)
               _buildResultCard(isDark),
           ],
@@ -229,14 +237,18 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 Text(
                   _result!['item_name'] ?? '不明なアイテム',
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Divider(),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Text('ときめきスコア: ',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      'ときめきスコア: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     Text(
                       '${_result!['spark_joy_score']} / 100',
                       style: TextStyle(
@@ -250,17 +262,22 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(' 判定理由:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(_result!['reason'] ?? '',
-                    style: const TextStyle(fontSize: 16)),
+                const Text(
+                  ' 判定理由:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  _result!['reason'] ?? '',
+                  style: const TextStyle(fontSize: 16),
+                ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark ? Colors.grey[800] : Colors.orange[50],
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border:
+                        Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

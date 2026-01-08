@@ -23,7 +23,7 @@ class TemplateMarketplacePage extends StatelessWidget {
 
   void _useTemplate(BuildContext context, String title, String content) {
     Provider.of<GamificationService>(context, listen: false)
-        .awardPoints(10, reason: "Used Template: $title");
+        .awardPoints(10, reason: 'Used Template: $title');
 
     Navigator.push(
       context,

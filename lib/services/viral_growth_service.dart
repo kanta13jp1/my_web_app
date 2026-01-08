@@ -1,4 +1,4 @@
-import 'package:share_plus/share_plus.dart';
+﻿import 'package:share_plus/share_plus.dart';
 import 'gamification_service.dart';
 
 class ViralGrowthService {
@@ -7,11 +7,11 @@ class ViralGrowthService {
   ViralGrowthService(this._gamificationService);
 
   Future<void> shareApp() async {
-    await Share.share('Check out Me Inc. app!');
-    await _gamificationService.awardPoints(30, reason: "App Share");
+    await SharePlus.share('Check out Me Inc. app!');
+    await _gamificationService.awardPoints(30, reason: 'App Share');
   }
 
   Future<void> handleReferral(String code) async {
-    await _gamificationService.awardPoints(500, reason: "Referral Bonus");
+    await _gamificationService.awardPoints(500, reason: 'Referral Bonus');
   }
 }

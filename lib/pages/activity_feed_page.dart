@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
@@ -209,7 +209,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 1, // わずかな影をつけて、App Barを分離
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -279,7 +279,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
           width: 40, // アイコンコンテナの幅を固定
           height: 40, // アイコンコンテナの高さを固定
           decoration: BoxDecoration(
-            color: (style['color'] as Color).withOpacity(0.15), // 透明度を調整
+            color: (style['color'] as Color).withValues(alpha: 0.15), // 透明度を調整
             borderRadius: BorderRadius.circular(10), // 角を丸く
           ),
           child: Icon(

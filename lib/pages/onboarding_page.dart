@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../main.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -178,7 +178,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       children: [
         CircleAvatar(
           radius: 24,
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color),
         ),
         const SizedBox(height: 4),

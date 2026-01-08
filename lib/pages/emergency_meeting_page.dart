@@ -157,14 +157,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.groups),
                   label: const Text('招集'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade800,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ],
@@ -176,9 +181,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             child: _currentLog == null
                 ? Center(
                     child: _isLoading
-                        ? Column(
+                        ? const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               CircularProgressIndicator(),
                               SizedBox(height: 20),
                               Text('役員を招集し、議論を行っています...'),
@@ -187,8 +192,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.meeting_room_outlined,
-                                  size: 64, color: Colors.grey),
+                              const Icon(
+                                Icons.meeting_room_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 '議題を入力して「招集」ボタンを押してください',
@@ -208,11 +216,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         return Card(
                           margin: const EdgeInsets.only(top: 24, bottom: 24),
                           color: isDark
-                              ? Colors.green[900]!.withOpacity(0.3)
+                              ? Colors.green[900]!.withValues(alpha: 0.3)
                               : Colors.green[50],
                           shape: RoundedRectangleBorder(
-                              side: BorderSide(color: Colors.green.shade800),
-                              borderRadius: BorderRadius.circular(12)),
+                            side: BorderSide(color: Colors.green.shade800),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
@@ -220,21 +229,28 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.check_circle,
-                                        color: Colors.green.shade700),
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green.shade700,
+                                    ),
                                     const SizedBox(width: 8),
-                                    Text('BOARD DECISION',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade800,
-                                            letterSpacing: 1.2)),
+                                    Text(
+                                      'BOARD DECISION',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade800,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const Divider(),
                                 Text(
                                   _currentLog!.conclusion ?? '結論なし',
                                   style: const TextStyle(
-                                      fontSize: 16, height: 1.5),
+                                    fontSize: 16,
+                                    height: 1.5,
+                                  ),
                                 ),
                               ],
                             ),
@@ -272,15 +288,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: _getRoleColor(msg.role)
-                                              .withOpacity(0.1),
+                                              .withValues(alpha: 0.1),
                                           borderRadius:
                                               BorderRadius.circular(4),
                                           border: Border.all(
-                                              color: _getRoleColor(msg.role),
-                                              width: 0.5),
+                                            color: _getRoleColor(msg.role),
+                                            width: 0.5,
+                                          ),
                                         ),
                                         child: Text(
                                           msg.role,
@@ -307,18 +326,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.05),
                                           blurRadius: 2,
                                           offset: const Offset(0, 1),
-                                        )
+                                        ),
                                       ],
                                     ),
                                     child: Text(
                                       msg.text,
                                       style: TextStyle(
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black87),
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
                                     ),
                                   ),
                                 ],

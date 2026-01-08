@@ -7,11 +7,11 @@ class ImportService {
   ImportService(this._gamificationService);
 
   Future<void> importData() async {
-    await _gamificationService.awardPoints(50, reason: "Import Data");
+    await _gamificationService.awardPoints(50, reason: 'Import Data');
   }
 
   Future<void> processImport(File file) async {
-    await _gamificationService.awardPoints(100, reason: "Data Import Success");
+    await _gamificationService.awardPoints(100, reason: 'Data Import Success');
   }
 
   // スタブメソッド (エラー回避用)
@@ -26,7 +26,9 @@ class ImportService {
     required String categoryId,
   }) async {
     // インポート処理ロジック (スタブ)
-    await _gamificationService.awardPoints(10 * notes.length,
-        reason: "Imported ${notes.length} notes");
+    await _gamificationService.awardPoints(
+      10 * notes.length,
+      reason: 'Imported ${notes.length} notes',
+    );
   }
 }

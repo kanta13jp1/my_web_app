@@ -111,14 +111,21 @@ class _DanshariPageState extends State<DanshariPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_outline,
-              size: 80, color: Colors.orange),
+          const Icon(
+            Icons.check_circle_outline,
+            size: 80,
+            color: Colors.orange,
+          ),
           const SizedBox(height: 16),
-          const Text('本日の断捨離完了！',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text(
+            '本日の断捨離完了！',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text('CSO: 「素晴らしい意思決定でした、CEO。」',
-              style: TextStyle(color: Colors.grey)),
+          const Text(
+            'CSO: 「素晴らしい意思決定でした、CEO。」',
+            style: TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -142,7 +149,9 @@ class _DanshariPageState extends State<DanshariPage> {
             '残り案件: ${_staleNotes.length - _currentIndex}件',
             textAlign: TextAlign.center,
             style: const TextStyle(
-                color: Colors.grey, fontWeight: FontWeight.bold),
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
           // カード表示
@@ -150,7 +159,8 @@ class _DanshariPageState extends State<DanshariPage> {
             child: Card(
               elevation: 8,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -160,16 +170,22 @@ class _DanshariPageState extends State<DanshariPage> {
                       children: [
                         const Icon(Icons.history, color: Colors.grey, size: 16),
                         const SizedBox(width: 4),
-                        Text('最終更新: $dateStr',
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12)),
+                        Text(
+                          '最終更新: $dateStr',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Text(
                       note.title,
                       style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Divider(height: 32),
                     Expanded(
@@ -177,7 +193,10 @@ class _DanshariPageState extends State<DanshariPage> {
                         child: Text(
                           note.content,
                           style: const TextStyle(
-                              fontSize: 16, height: 1.6, color: Colors.black87),
+                            fontSize: 16,
+                            height: 1.6,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),

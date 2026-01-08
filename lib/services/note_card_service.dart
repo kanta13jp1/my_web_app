@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -223,7 +223,7 @@ class NoteCardService {
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
+      await SharePlus.shareXFiles(
         [XFile(file.path)],
         text: '📝 $noteTitle\n\n#マイメモ #メモ習慣',
       );

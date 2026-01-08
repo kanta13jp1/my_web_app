@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'dart:typed_data';
@@ -818,7 +818,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       }
 
       // 共有
-      await Share.shareXFiles(
+      await SharePlus.shareXFiles(
         files,
         text:
             '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',

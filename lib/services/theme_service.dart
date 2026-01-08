@@ -26,7 +26,8 @@ class ThemeService extends ChangeNotifier {
   // Methods
   void toggleTheme() async {
     setThemeMode(
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
+      _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
+    );
   }
 
   void setThemeMode(ThemeMode mode) async {

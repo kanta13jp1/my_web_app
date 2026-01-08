@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:typed_data'; // Web対応: 画像をバイトデータとして扱う
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -238,7 +238,7 @@ class _HealthPageState extends State<HealthPage> {
                       backgroundColor: (score >= 80
                               ? Colors.green
                               : (score >= 50 ? Colors.orange : Colors.red))
-                          .withOpacity(0.2),
+                          .withValues(alpha: 0.2),
                       child: Text(
                         '$score',
                         style: TextStyle(

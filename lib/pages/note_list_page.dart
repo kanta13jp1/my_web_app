@@ -75,11 +75,16 @@ class _NoteListPageState extends State<NoteListPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.note_alt_outlined,
-                          size: 64, color: Colors.grey),
+                      const Icon(
+                        Icons.note_alt_outlined,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(height: 16),
-                      const Text('まだメモがありません',
-                          style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      const Text(
+                        'まだメモがありません',
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add),
@@ -111,7 +116,8 @@ class _NoteListPageState extends State<NoteListPage> {
                       elevation: 2,
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: isPinned
@@ -138,12 +144,18 @@ class _NoteListPageState extends State<NoteListPage> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                    color: Colors.grey[600], fontSize: 12),
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
                               ),
                             const SizedBox(height: 4),
-                            Text(dateStr,
-                                style: TextStyle(
-                                    color: Colors.grey[400], fontSize: 10)),
+                            Text(
+                              dateStr,
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 10,
+                              ),
+                            ),
                           ],
                         ),
                         onTap: () => _navigateToEditor(context, note['id']),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 
@@ -28,7 +28,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
-    _contentController = TextEditingController(text: widget.initialContent ?? '');
+    _contentController =
+        TextEditingController(text: widget.initialContent ?? '');
 
     if (widget.noteId != null) {
       _loadNote(widget.noteId!);
@@ -134,7 +135,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
                 ),
               ),
             )
@@ -160,7 +162,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           hintText: 'タイトル',
                           border: InputBorder.none,
                         ),
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
                       Expanded(
@@ -182,7 +185,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   right: 16,
                   child: AiAssistantMenu(
                     contentController: _contentController,
-                    onApply: (text) => setState(() => _contentController.text = text),
+                    onApply: (text) =>
+                        setState(() => _contentController.text = text),
                   ),
                 ),
               ],

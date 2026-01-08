@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 // ✅ 修正: このインポートした機能を、以下のコード内で実際に使用するように書き換えました
@@ -372,7 +372,7 @@ $appUrl
     final message = customMessage ?? getRandomShareMessage();
 
     try {
-      await Share.share(
+      await SharePlus.share(
         message,
         subject: '$appName - ゲーミフィケーションで楽しくメモ習慣を！',
       );

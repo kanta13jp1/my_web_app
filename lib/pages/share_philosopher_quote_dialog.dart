@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:typed_data';
 import 'dart:io';
@@ -598,7 +598,7 @@ class _SharePhilosopherQuoteDialogState
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
+      await SharePlus.shareXFiles(
         [XFile(file.path)],
         text: _getShareMessage(),
       );
