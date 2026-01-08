@@ -12,7 +12,8 @@ import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
 import 'cfo_office_page.dart';
 import 'cho_office_page.dart';
-import 'cmo_office_page.dart'; // Added
+import 'cmo_office_page.dart';
+import 'chro_office_page.dart'; // Added
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -72,12 +73,15 @@ class HomePage extends StatelessWidget {
                   () => _nav(context, const AiStatusPage())),
             ]),
             const SizedBox(height: 24),
-            _buildSectionHeader('CFO/CHO OFFICE', Icons.balance, Colors.teal),
+            _buildSectionHeader(
+                'CFO/CHO/CHRO OFFICE', Icons.balance, Colors.teal),
             _buildGridMenu(context, [
               _MenuData('財務管理 (CFO)', Icons.account_balance_wallet,
                   Colors.green, () => _nav(context, const CfoOfficePage())),
               _MenuData('健康管理 (CHO)', Icons.medical_services, Colors.teal,
                   () => _nav(context, const ChoOfficePage())),
+              _MenuData('人事厚生 (CHRO)', Icons.diversity_3, Colors.indigo,
+                  () => _nav(context, const ChroOfficePage())),
             ]),
             const SizedBox(height: 24),
             _buildSectionHeader('CMO/CKO OFFICE', Icons.analytics, Colors.blue),

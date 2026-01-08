@@ -26,15 +26,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 修正: Future.wait<dynamic> で型推論エラーを回避
-      final results = await Future.wait<dynamic>([
-        // 0: CKO (Notes)
+      final results = await Future.wait([
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
-        // 1: CFO (Subscriptions)
         supabase.from('subscriptions').count(CountOption.exact).eq('user_id', userId).catchError((_) => 0),
-        // 2: CHRO (UserStats)
         supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
-        // 3: CHO (Health Logs)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId).ilike('title', '[Health]%'),
       ]);
 
@@ -47,7 +42,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final int level = userStats?['current_level'] ?? 1;
       final int streak = userStats?['current_streak'] ?? 0;
 
-      // 修正: 文字列補間のエスケープ処理を修正
+      // 修正: 文字列リテラルを正しく定義
       final String contextPrompt = ""
 緊急役員会議を開催します。以下の【全部署の現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
@@ -55,7 +50,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 【現状データ】
 [CEO] ユーザーID: userId
 [CKO/知識] 蓄積メモ数: noteCount 件
-[CFO/財務] 登録サブスク数: subCount 件 (コスト意識の確認)
+[CFO/財務] 登録サブスク数: subCount 件
 [CHRO/人事] 獲得ポイント: points pt (Lv.level)
 [CMO/市場] エンゲージメント(継続日数): streak 日
 [CHO/健康] 健康ログ記録数: healthCount 件
@@ -79,22 +74,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       );
 
       final dynamic rawData = response.data;
-      
-      // 修正: レスポンス型の安全なハンドリング
       Map<String, dynamic>? resultData;
-      
+
       if (rawData is Map<String, dynamic>) {
         if (rawData['success'] == true) {
           resultData = rawData['result'] as Map<String, dynamic>;
         }
-      } else if (rawData is List) {
-        // 配列で返ってきた場合のフォールバック（最初の要素を使うなど）
-        if (rawData.isNotEmpty && rawData[0] is Map) {
+      } else if (rawData is List && rawData.isNotEmpty) {
+         if (rawData[0] is Map) {
            final firstItem = rawData[0] as Map<String, dynamic>;
            if (firstItem.containsKey('result')) {
              resultData = firstItem['result'];
            }
-        }
+         }
       }
 
       if (resultData != null) {
@@ -104,15 +96,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         });
         await _saveMeetingToDb(log, contextPrompt);
       } else {
-        throw Exception('AIからの応答形式が不正です: rawData');
+        throw Exception('AI応答エラー: データ形式が不正です');
       }
 
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('会議エラー: e'),
-          backgroundColor: Colors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('会議エラー: e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
