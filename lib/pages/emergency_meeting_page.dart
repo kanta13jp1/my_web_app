@@ -26,34 +26,36 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final results = await Future.wait<dynamic>([
-        // CKO: メモ数 (int)
+      // 各データを並列取得
+      final results = await Future.wait([
+        // 0: CKO (Notes)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
-        // CFO: サブスク数 (int)
+        // 1: CFO (Subscriptions)
         supabase.from('subscriptions').count(CountOption.exact).eq('user_id', userId).catchError((_) => 0),
-        // CHRO/CMO: ユーザー統計 (Map)
+        // 2: CHRO (UserStats)
         supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
-        // CHO: 健康ログ数 (int)
+        // 3: CHO (Health Logs)
         supabase.from('notes').count(CountOption.exact).eq('user_id', userId).ilike('title', '[Health]%'),
       ]);
 
-      final noteCount = results[0] as int;
-      final subCount = results[1] as int;
-      final userStats = results[2] as Map<String, dynamic>?;
-      final healthCount = results[3] as int;
+      final int noteCount = results[0] as int;
+      final int subCount = results[1] as int;
+      final Map<String, dynamic>? userStats = results[2] as Map<String, dynamic>?;
+      final int healthCount = results[3] as int;
       
-      final points = userStats?['total_points'] ?? 0;
-      final level = userStats?['current_level'] ?? 1;
-      final streak = userStats?['current_streak'] ?? 0;
+      final int points = userStats?['total_points'] ?? 0;
+      final int level = userStats?['current_level'] ?? 1;
+      final int streak = userStats?['current_streak'] ?? 0;
 
-      final contextPrompt = ""
+      // プロンプト生成 (Dartの文字列補間を使用)
+      final String contextPrompt = ""
 緊急役員会議を開催します。以下の【全部署の現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
 
 【現状データ】
 [CEO] ユーザーID: userId
 [CKO/知識] 蓄積メモ数: noteCount 件
-[CFO/財務] 登録サブスク数: subCount 件 (コスト意識の確認)
+[CFO/財務] 登録サブスク数: subCount 件
 [CHRO/人事] 獲得ポイント: points pt (Lv.level)
 [CMO/市場] エンゲージメント(継続日数): streak 日
 [CHO/健康] 健康ログ記録数: healthCount 件
