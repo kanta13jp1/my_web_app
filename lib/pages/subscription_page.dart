@@ -502,7 +502,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         actions: [
           TextButton.icon(
             onPressed: () {
-              SharePlus.share(
+              Share.share(
                 '【自分株式会社 財務監査報告】\nCFOによる厳格な監査の結果、以下の固定費是正勧告を受けました。\n\n${_auditResult?.substring(0, 50)}...\n\n ダウンロード: https://my-web-app-b67f4.web.app/\n#自分株式会社 #CFO',
                 subject: 'CFO監査結果',
               );

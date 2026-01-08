@@ -818,7 +818,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       }
 
       // 共有
-      await SharePlus.shareXFiles(
+      await Share.shareXFiles(
         files,
         text:
             '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',

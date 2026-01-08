@@ -372,7 +372,7 @@ $appUrl
     final message = customMessage ?? getRandomShareMessage();
 
     try {
-      await SharePlus.share(
+      await Share.share(
         message,
         subject: '$appName - ゲーミフィケーションで楽しくメモ習慣を！',
       );
