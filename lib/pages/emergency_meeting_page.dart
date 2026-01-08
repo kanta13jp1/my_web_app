@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:my_web_app/models/board_meeting_model.dart';
-import 'package:my_web_app/services/theme_service.dart';
-import 'package:provider/provider.dart';
+import '../models/board_meeting_model.dart';
 
 class EmergencyMeetingPage extends StatefulWidget {
   const EmergencyMeetingPage({super.key});
@@ -13,43 +11,19 @@ class EmergencyMeetingPage extends StatefulWidget {
 
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   final TextEditingController _topicController = TextEditingController();
-  bool _isLoading = false;
-  BoardMeetingLog? _currentLog;
   final ScrollController _scrollController = ScrollController();
-
-  // 役員ごとのアイコン色定義
-  Color _getRoleColor(String role) {
-    switch (role.toUpperCase()) {
-      case 'CEO':
-        return const Color(0xFF0F172A); // Navy
-      case 'CSO':
-        return ThemeService.roleCso;
-      case 'CFO':
-        return ThemeService.roleCfo;
-      case 'CKO':
-        return ThemeService.roleCko;
-      case 'CMO':
-        return ThemeService.roleCmo;
-      case 'CTO':
-        return Colors.orange.shade800; // CTO (Tech)
-      default:
-        return Colors.grey;
-    }
-  }
+  BoardMeetingLog? _currentLog;
+  bool _isLoading = false;
 
   Future<void> _startMeeting() async {
-    if (_topicController.text.trim().isEmpty) return;
+    final topic = _topicController.text.trim();
+    if (topic.isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-      _currentLog = null;
-    });
+    setState(() => _isLoading = true);
+    FocusScope.of(context).unfocus();
 
     try {
       final supabase = Supabase.instance.client;
-      final topic = _topicController.text.trim();
-
-      // 1. Edge Function 呼び出し
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
@@ -60,299 +34,210 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       final data = response.data;
       if (data != null && data['success'] == true) {
-        final result = data['result'];
-        final log = BoardMeetingLog.fromJson(result);
+        final result = data['result'] as Map<String, dynamic>;
+        // 修正: fromJson -> fromMap
+        final log = BoardMeetingLog.fromMap(result);
 
         setState(() {
           _currentLog = log;
         });
 
-        // 2. DBへの保存 (永続化)
-        await _saveToDatabase(topic, log);
+        await _saveMeetingToDb(log);
       } else {
-        throw Exception('Meeting failed: ${data?['error']}');
+        throw Exception(data?['error'] ?? 'Unknown error');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラーが発生しました: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
       }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _saveToDatabase(String topic, BoardMeetingLog log) async {
+  Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
     final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
 
-    try {
-      // Meetings テーブルへ保存
-      final meetingRes = await supabase
-          .from('board_meetings')
-          .insert({
-            'user_id': user.id,
-            'topic': topic,
-            'conclusion': log.conclusion,
-          })
-          .select()
-          .single();
+    // 1. 会議本体の保存
+    final meetingRes = await supabase
+        .from('board_meetings')
+        .insert({
+          'user_id': userId,
+          'topic': log.topic,
+          'conclusion': log.conclusion,
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .select()
+        .single();
 
-      final meetingId = meetingRes['id'];
+    final meetingId = meetingRes['id'];
 
-      // Messages テーブルへ保存
-      final messagesData = log.messages.map((msg) {
-        return {
-          'meeting_id': meetingId,
-          'speaker_name': msg.name,
-          'role': msg.role,
-          'content': msg.text,
-        };
-      }).toList();
+    // 2. 発言ログの保存
+    final messagesToInsert = log.messages.map((msg) {
+      return {
+        'meeting_id': meetingId,
+        'speaker_name': msg.speakerName, // 修正: name -> speakerName
+        'role': msg.role,
+        'content': msg.content, // 修正: text -> content
+        'created_at': DateTime.now().toIso8601String(),
+      };
+    }).toList();
 
-      await supabase.from('board_messages').insert(messagesData);
-    } catch (e) {
-      debugPrint('DB保存エラー: $e');
-    }
+    await supabase.from('board_messages').insert(messagesToInsert);
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeService = Provider.of<ThemeService>(context);
-    final isDark = themeService.isDarkMode;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('緊急役員会議 (Emergency Board)'),
-        backgroundColor: Colors.red.shade900, // 緊急事態感
-      ),
+      appBar: AppBar(title: const Text('緊急役員会議')),
       body: Column(
         children: [
-          // 上部: 議題入力エリア
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: isDark ? Colors.black26 : Colors.red.shade50,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _topicController,
-                    decoration: InputDecoration(
-                      labelText: '議題を入力 (例: 新規事業の方向性について)',
-                      border: const OutlineInputBorder(),
-                      filled: true,
-                      fillColor: isDark ? Colors.grey[800] : Colors.white,
+                    decoration: const InputDecoration(
+                      labelText: '議題 (Topic)',
+                      hintText: '例: 売上が伸び悩んでいる...',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
+                const SizedBox(width: 16),
+                ElevatedButton(
                   onPressed: _isLoading ? null : _startMeeting,
-                  icon: _isLoading
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
+                  ),
+                  child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.groups),
-                  label: const Text('招集'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade800,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
+                          child: CircularProgressIndicator(color: Colors.white))
+                      : const Text('招集'),
                 ),
               ],
             ),
           ),
-
-          // 中央: 会議ログ表示エリア
+          const Divider(),
           Expanded(
             child: _currentLog == null
-                ? Center(
-                    child: _isLoading
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 20),
-                              Text('役員を招集し、議論を行っています...'),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.meeting_room_outlined,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                '議題を入力して「招集」ボタンを押してください',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                  )
+                ? const Center(
+                    child: Text('議題を入力して「招集」ボタンを押してください。\nAI役員たちが議論を開始します。',
+                        textAlign: TextAlign.center))
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount:
-                        _currentLog!.messages.length + 1, // +1 for conclusion
+                    itemCount: _currentLog!.messages.length + 1,
                     itemBuilder: (context, index) {
                       if (index == _currentLog!.messages.length) {
-                        // 結論カード
-                        return Card(
-                          margin: const EdgeInsets.only(top: 24, bottom: 24),
-                          color: isDark
-                              ? Colors.green[900]!.withValues(alpha: 0.3)
-                              : Colors.green[50],
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.green.shade800),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green.shade700,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'BOARD DECISION',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green.shade800,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Divider(),
-                                Text(
-                                  _currentLog!.conclusion ?? '結論なし',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                        return _buildConclusionCard();
                       }
-
                       final msg = _currentLog!.messages[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: _getRoleColor(msg.role),
-                              child: Text(
-                                msg.name.substring(0, 1),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        msg.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getRoleColor(msg.role)
-                                              .withValues(alpha: 0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          border: Border.all(
-                                            color: _getRoleColor(msg.role),
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          msg.role,
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: _getRoleColor(msg.role),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.grey[800]
-                                          : Colors.white,
-                                      borderRadius: const BorderRadius.only(
-                                        topRight: Radius.circular(12),
-                                        bottomLeft: Radius.circular(12),
-                                        bottomRight: Radius.circular(12),
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.05),
-                                          blurRadius: 2,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      msg.text,
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.black87,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      return _buildMessageCard(msg);
                     },
                   ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildMessageCard(BoardMessage msg) {
+    final isCeo = msg.role == 'CEO';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: isCeo ? Colors.blue[50] : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: _getRoleColor(msg.role),
+                  child: Text(
+                    msg.speakerName.substring(0, 1), // 修正: name -> speakerName
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(msg.speakerName,
+                        style: const TextStyle(
+                            fontWeight:
+                                FontWeight.bold)), // 修正: name -> speakerName
+                    Text(msg.role,
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(msg.content), // 修正: text -> content
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConclusionCard() {
+    if (_currentLog?.conclusion == null) return const SizedBox.shrink();
+    return Card(
+      color: Colors.red[50],
+      margin: const EdgeInsets.only(top: 16, bottom: 32),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.gavel, color: Colors.red),
+                SizedBox(width: 8),
+                Text('結論 (Conclusion)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.red)),
+              ],
+            ),
+            const Divider(color: Colors.redAccent),
+            Text(_currentLog!.conclusion ?? '結論なし',
+                style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getRoleColor(String role) {
+    switch (role) {
+      case 'CEO':
+        return Colors.blue;
+      case 'CSO':
+        return Colors.orange;
+      case 'CFO':
+        return Colors.green;
+      case 'CKO':
+        return Colors.purple;
+      case 'CMO':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
   }
 }
