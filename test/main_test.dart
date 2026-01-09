@@ -11,6 +11,8 @@ import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
+import 'package:my_web_app/pages/gemini_university_page.dart';
+import 'package:my_web_app/pages/danshari_page.dart';
 
 // モック生成
 @GenerateMocks([
@@ -33,7 +35,8 @@ class FakePostgrestTransformBuilder<T> extends Fake
   FakePostgrestTransformBuilder(this._value);
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue, {Function? onError}) async {
+  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
+      {Function? onError}) async {
     return onValue(_value);
   }
 }
@@ -100,14 +103,18 @@ void main() {
       // DB呼び出しのモック: user_stats が存在しない (null) -> オンボーディング表示
       final mockQueryBuilder = MockSupabaseQueryBuilder();
       // select() は List<Map<String, dynamic>> を扱う FilterBuilder を返すため型を指定
-      final mockFilterBuilder = MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
+      final mockFilterBuilder =
+          MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
 
-      when(mockSupabaseClient.from('user_stats')).thenAnswer((_) => mockQueryBuilder);
-      when(mockQueryBuilder.select('metadata')).thenAnswer((_) => mockFilterBuilder);
+      when(mockSupabaseClient.from('user_stats'))
+          .thenAnswer((_) => mockQueryBuilder);
+      when(mockQueryBuilder.select('metadata'))
+          .thenAnswer((_) => mockFilterBuilder);
       when(mockFilterBuilder.eq('user_id', 'test-user-id'))
           .thenAnswer((_) => mockFilterBuilder);
       // maybeSingle が null を持つ FakeBuilder を返すように設定
-      when(mockFilterBuilder.maybeSingle()).thenAnswer((_) => FakePostgrestTransformBuilder(null));
+      when(mockFilterBuilder.maybeSingle())
+          .thenAnswer((_) => FakePostgrestTransformBuilder(null));
 
       // Act
       await tester.pumpWidget(
@@ -137,16 +144,21 @@ void main() {
 
       // DB呼び出しのモック: user_stats があり、onboarding_completed が true
       final mockQueryBuilder = MockSupabaseQueryBuilder();
-      final mockFilterBuilder = MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
+      final mockFilterBuilder =
+          MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
 
-      when(mockSupabaseClient.from('user_stats')).thenAnswer((_) => mockQueryBuilder);
-      when(mockQueryBuilder.select('metadata')).thenAnswer((_) => mockFilterBuilder);
+      when(mockSupabaseClient.from('user_stats'))
+          .thenAnswer((_) => mockQueryBuilder);
+      when(mockQueryBuilder.select('metadata'))
+          .thenAnswer((_) => mockFilterBuilder);
       when(mockFilterBuilder.eq('user_id', 'test-user-id'))
           .thenAnswer((_) => mockFilterBuilder);
       // maybeSingle がデータを持つ FakeBuilder を返すように設定
-      when(mockFilterBuilder.maybeSingle()).thenAnswer((_) => FakePostgrestTransformBuilder({
-        'metadata': {'onboarding_completed': true},
-      }));
+      when(mockFilterBuilder.maybeSingle()).thenAnswer(
+        (_) => FakePostgrestTransformBuilder({
+          'metadata': {'onboarding_completed': true},
+        }),
+      );
 
       // Act
       await tester.pumpWidget(
@@ -180,6 +192,128 @@ void main() {
       // Assert
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(materialApp.themeMode, ThemeMode.dark);
+    });
+
+    testWidgets('ルーティング: /gemini-university へ遷移できること',
+        (WidgetTester tester) async {
+      // Arrange
+      when(mockGoTrueClient.currentSession).thenReturn(null);
+
+      // GeminiUniversityPage 用のモック
+      final mockQueryBuilder = MockSupabaseQueryBuilder();
+      final mockFilterBuilder =
+          MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
+
+      when(mockSupabaseClient.from('gemini_lectures'))
+          .thenAnswer((_) => mockQueryBuilder);
+      when(mockQueryBuilder.select(any)).thenAnswer((_) => mockFilterBuilder);
+      when(mockFilterBuilder.order(any, ascending: anyNamed('ascending')))
+          .thenAnswer((_) => FakePostgrestTransformBuilder([]));
+
+      // Act
+      await tester.pumpWidget(
+        ChangeNotifierProvider<ThemeService>.value(
+          value: mockThemeService,
+          child: const MyApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(find.byType(LandingPage));
+      Navigator.of(context).pushNamed('/gemini-university');
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(GeminiUniversityPage), findsOneWidget);
+    });
+
+    testWidgets('ルーティング: /danshari へ遷移できること', (WidgetTester tester) async {
+      // Arrange
+      when(mockGoTrueClient.currentSession).thenReturn(null);
+
+      // DanshariPage 用のモック
+      final mockQueryBuilder = MockSupabaseQueryBuilder();
+      final mockFilterBuilder =
+          MockPostgrestFilterBuilder<List<Map<String, dynamic>>>();
+      final mockUser = MockUser();
+
+      // DanshariPage は currentUser.id を参照するためモック化
+      when(mockGoTrueClient.currentUser).thenReturn(mockUser);
+      when(mockUser.id).thenReturn('test-user-id');
+
+      when(mockSupabaseClient.from('danshari_items'))
+          .thenAnswer((_) => mockQueryBuilder);
+      when(mockQueryBuilder.select(any)).thenAnswer((_) => mockFilterBuilder);
+      when(mockFilterBuilder.eq(any, any)).thenAnswer((_) => mockFilterBuilder);
+      when(mockFilterBuilder.order(any, ascending: anyNamed('ascending')))
+          .thenAnswer((_) => FakePostgrestTransformBuilder([]));
+
+      // Act
+      await tester.pumpWidget(
+        ChangeNotifierProvider<ThemeService>.value(
+          value: mockThemeService,
+          child: const MyApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(find.byType(LandingPage));
+      Navigator.of(context).pushNamed('/danshari');
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(DanshariPage), findsOneWidget);
+    });
+
+    testWidgets('ルーティング: 不明なパスは LandingPage へ遷移すること',
+        (WidgetTester tester) async {
+      // Arrange
+      when(mockGoTrueClient.currentSession).thenReturn(null);
+
+      // Act
+      await tester.pumpWidget(
+        ChangeNotifierProvider<ThemeService>.value(
+          value: mockThemeService,
+          child: const MyApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(find.byType(LandingPage));
+      Navigator.of(context).pushNamed('/unknown-route-xyz');
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(LandingPage), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('オンボーディング判定: DBエラー時は HomePage (false) となること',
+        (WidgetTester tester) async {
+      // Arrange
+      final mockSession = MockSession();
+      final mockUser = MockUser();
+      when(mockGoTrueClient.currentSession).thenReturn(mockSession);
+      when(mockGoTrueClient.currentUser).thenReturn(mockUser);
+      when(mockUser.id).thenReturn('test-user-id');
+
+      // DB呼び出しで例外
+      when(mockSupabaseClient.from('user_stats'))
+          .thenThrow(Exception('DB Error'));
+
+      // Act
+      await tester.pumpWidget(
+        ChangeNotifierProvider<ThemeService>.value(
+          value: mockThemeService,
+          child: const MyApp(),
+        ),
+      );
+      // FutureBuilder の完了を待つ
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(HomePage), findsOneWidget);
     });
   });
 }

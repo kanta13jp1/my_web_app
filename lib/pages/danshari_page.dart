@@ -18,7 +18,9 @@ class _DanshariPageState extends State<DanshariPage> {
   @override
   void initState() {
     super.initState();
-    _fetchStaleNotes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchStaleNotes();
+    });
   }
 
   // CSOが30日以上更新のない「陳腐化案件」を抽出する
