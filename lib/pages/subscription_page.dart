@@ -134,8 +134,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       ),
                       Text(
                         totalCost.toString().replaceAllMapped(
-                            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                            (Match m) => '${m[1]},',),
+                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                              (Match m) => '${m[1]},',
+                            ),
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,

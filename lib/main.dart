@@ -11,7 +11,13 @@ import 'pages/danshari_page.dart';
 
 import 'services/theme_service.dart';
 
-SupabaseClient get supabase => Supabase.instance.client;
+SupabaseClient? _testSupabaseClient;
+
+@visibleForTesting
+set supabaseClientForTesting(SupabaseClient client) =>
+    _testSupabaseClient = client;
+
+SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

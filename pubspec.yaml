@@ -1,4 +1,4 @@
-﻿name: my_web_app
+name: my_web_app
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -45,7 +45,10 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   test: ^1.25.8  # <--- Change to this
+  mockito: ^5.6.1
+  build_runner: ^2.10.4
 
+  supabase: any
 flutter:
   uses-material-design: true
 
