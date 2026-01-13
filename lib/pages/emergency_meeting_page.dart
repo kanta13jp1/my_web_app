@@ -3,7 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/board_meeting_model.dart';
 
 class EmergencyMeetingPage extends StatefulWidget {
-  const EmergencyMeetingPage({super.key});
+  // テスト用にSupabaseClientを注入できるようにする
+  final SupabaseClient? supabaseClient;
+
+  const EmergencyMeetingPage({super.key, this.supabaseClient});
 
   @override
   State<EmergencyMeetingPage> createState() => _EmergencyMeetingPageState();
@@ -15,6 +18,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _isLoading = false;
   String _loadingStatus = '';
 
+  // テスト時は注入されたクライアントを使い、通常時はシングルトンを使う
+  SupabaseClient get _supabase =>
+      widget.supabaseClient ?? Supabase.instance.client;
+
   Future<void> _conveneBoard() async {
     setState(() {
       _isLoading = true;
@@ -22,23 +29,23 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     });
 
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
+      // _supabase クライアントを使用
+      final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
       // 修正: 型推論エラーを防ぐため <dynamic> を指定
       final results = await Future.wait<dynamic>([
         // CKO: メモ数 (int)
-        supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
+        _supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
         // CFO: サブスク数 (int)
-        supabase
+        _supabase
             .from('subscriptions')
             .count(CountOption.exact)
             .eq('user_id', userId)
             .catchError((_) => 0),
         // CHRO: ポイント、レベル (Map?)
-        // 【修正】id -> user_id に変更
-        supabase
+        // 【修正】id -> user_id に変更して型エラー回避
+        _supabase
             .from('user_stats')
             .select()
             .eq('user_id', userId)
@@ -55,7 +62,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
 
-      // 修正: 文字列リテラルを正しく修正し、変数を ${} で囲む
       final contextPrompt = '''
 緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
@@ -79,7 +85,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
-      final response = await supabase.functions.invoke(
+      final response = await _supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'hold_board_meeting',
@@ -112,11 +118,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _saveMeetingToDb(BoardMeetingLog log, String prompt) async {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
+    final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
 
-    final meetingRes = await supabase
+    final meetingRes = await _supabase
         .from('board_meetings')
         .insert({
           'user_id': userId,
@@ -139,7 +144,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       };
     }).toList();
 
-    await supabase.from('board_messages').insert(messagesToInsert);
+    await _supabase.from('board_messages').insert(messagesToInsert);
   }
 
   @override

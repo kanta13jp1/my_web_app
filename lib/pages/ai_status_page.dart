@@ -1,10 +1,12 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
 
 class AiStatusPage extends StatefulWidget {
-  const AiStatusPage({super.key});
+  // テスト用にSupabaseClientを注入できるようにする
+  final SupabaseClient? supabaseClient;
+
+  const AiStatusPage({super.key, this.supabaseClient});
 
   @override
   State<AiStatusPage> createState() => _AiStatusPageState();
@@ -20,20 +22,23 @@ class _AiStatusPageState extends State<AiStatusPage> {
   final Map<String, String> _testErrors = {}; // エラー詳細メッセージ
   final Map<String, Map<String, dynamic>> _visionScores = {}; // Visionベンチマーク詳細
 
+  // テスト時は注入されたクライアントを使い、通常時はシングルトンを使う
+  SupabaseClient get _supabase =>
+      widget.supabaseClient ?? Supabase.instance.client;
+
   @override
   void initState() {
     super.initState();
     _fetchAvailableModels();
   }
 
-// モデル一覧の取得 (APIレスポンスをUI用に整形)
+  // モデル一覧の取得 (APIレスポンスをUI用に整形)
   Future<void> _fetchAvailableModels() async {
     try {
       setState(() => _isLoading = true);
 
-      // main.dart で定義されている supabase クライアントを使用
-      // もし未定義エラーが出る場合は Supabase.instance.client に書き換えてください
-      final response = await Supabase.instance.client.functions.invoke(
+      // _supabase クライアントを使用
+      final response = await _supabase.functions.invoke(
         'ai-assistant',
         body: {'action': 'get_models'},
       );
@@ -80,7 +85,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
-// リストをスコア順に並び替える共通メソッド (Null安全対応)
+  // リストをスコア順に並び替える共通メソッド (Null安全対応)
   void _sortModels() {
     _models.sort((a, b) {
       final scoreA = a['score'] as int? ?? 0;
@@ -108,7 +113,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     });
 
     try {
-      final res = await supabase.functions.invoke(
+      final res = await _supabase.functions.invoke(
         'ai-assistant',
         body: {'action': 'test_model', 'model': modelName},
       );
