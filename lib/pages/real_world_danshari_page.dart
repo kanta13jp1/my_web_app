@@ -7,7 +7,11 @@ import 'package:my_web_app/services/theme_service.dart';
 import 'package:provider/provider.dart';
 
 class RealWorldDanshariPage extends StatefulWidget {
-  const RealWorldDanshariPage({super.key});
+  // テスト用にSupabaseClientを注入できるようにする
+  final SupabaseClient? supabaseClient;
+  // テスト用にImagePickerを注入できるようにする（任意ですが、今回はPlatformInterfaceで対応するため不要）
+
+  const RealWorldDanshariPage({super.key, this.supabaseClient});
 
   @override
   State<RealWorldDanshariPage> createState() => _RealWorldDanshariPageState();
@@ -19,11 +23,15 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   bool _isLoading = false;
   Map<String, dynamic>? _result;
 
+  // テスト時は注入されたクライアントを使い、通常時はシングルトンを使う
+  SupabaseClient get _supabase =>
+      widget.supabaseClient ?? Supabase.instance.client;
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        maxWidth: 800, // Resize to reduce payload
+        maxWidth: 800,
         imageQuality: 80,
       );
 
@@ -31,14 +39,17 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         final bytes = await image.readAsBytes();
         setState(() {
           _imageBytes = bytes;
-          _result = null; // Reset previous result
+          _result = null;
         });
+        // bytesを直接渡す形に変更なし
         _analyzeImage(bytes);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('画像の取得に失敗しました: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('画像の取得に失敗しました: $e')),
+        );
+      }
     }
   }
 
@@ -49,9 +60,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
 
     try {
       final base64Image = base64Encode(bytes);
-      final supabase = Supabase.instance.client;
 
-      final response = await supabase.functions.invoke(
+      // ここでゲッター(_supabase)経由でアクセスする
+      final response = await _supabase.functions.invoke(
         'ai-assistant',
         body: {
           'action': 'analyze_danshari_item',
@@ -60,27 +71,37 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
         },
       );
 
-      final data = response.data;
-      if (data != null && data['success'] == true) {
+      final dynamic rawData = response.data;
+      final Map<String, dynamic> data = rawData is String
+          ? jsonDecode(rawData) as Map<String, dynamic>
+          : rawData as Map<String, dynamic>;
+
+      if (data['success'] == true) {
         setState(() {
           _result = data['result'];
         });
       } else {
-        throw Exception(data?['error'] ?? 'Unknown error');
+        throw Exception(data['error'] ?? 'Unknown error');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI分析エラー: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI分析エラー: $e')),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
+// ... 以下、buildメソッド等は変更なし ...
   @override
   Widget build(BuildContext context) {
+    // ... (元のコードのまま) ...
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
 
@@ -200,6 +221,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   }
 
   Widget _buildResultCard(bool isDark) {
+    // ... (元のコードのまま) ...
     final decision = _result!['decision'] as String;
     final isDiscard = decision == 'DISCARD';
     final color = isDiscard

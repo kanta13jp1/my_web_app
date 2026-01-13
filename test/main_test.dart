@@ -35,8 +35,10 @@ class FakePostgrestTransformBuilder<T> extends Fake
   FakePostgrestTransformBuilder(this._value);
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-      {Function? onError}) async {
+  Future<U> then<U>(
+    FutureOr<U> Function(T value) onValue, {
+    Function? onError,
+  }) async {
     return onValue(_value);
   }
 }
