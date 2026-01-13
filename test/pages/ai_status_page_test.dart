@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -35,16 +34,19 @@ void main() {
       'models': [
         {'name': 'gemini-pro', 'provider': 'Google', 'score': 80},
         {'model': 'gpt-4', 'provider': 'openai'},
-      ]
+      ],
     };
     final mockResponse = MockFunctionResponse();
     when(mockResponse.data).thenReturn(modelsResponse);
     when(mockResponse.status).thenReturn(200);
 
     // 引数を具体的に指定
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'get_models'}))
-        .thenAnswer((_) async => mockResponse);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockResponse);
 
     await tester.pumpWidget(createTestWidget());
     await tester.pump();
@@ -61,15 +63,18 @@ void main() {
     final modelsResponse = {
       'success': true,
       'models': [
-        {'model': 'test-model', 'provider': 'test', 'score': 50}
-      ]
+        {'model': 'test-model', 'provider': 'test', 'score': 50},
+      ],
     };
     final mockListResp = MockFunctionResponse();
     when(mockListResp.data).thenReturn(modelsResponse);
     when(mockListResp.status).thenReturn(200);
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'get_models'}))
-        .thenAnswer((_) async => mockListResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockListResp);
 
     final testResultResponse = {
       'success': true,
@@ -78,16 +83,19 @@ void main() {
         'latency': 500,
         'detail': 'Great performance',
         'levels': [
-          {'level': 'level1', 'passed': true, 'score': 10, 'maxPoints': 10}
-        ]
-      }
+          {'level': 'level1', 'passed': true, 'score': 10, 'maxPoints': 10},
+        ],
+      },
     };
     final mockTestResp = MockFunctionResponse();
     when(mockTestResp.data).thenReturn(testResultResponse);
 
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'test_model', 'model': 'test-model'}))
-        .thenAnswer((_) async => mockTestResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'test-model'},
+      ),
+    ).thenAnswer((_) async => mockTestResp);
 
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
@@ -106,25 +114,37 @@ void main() {
       'models': [
         {'model': 'model-A', 'score': 10},
         {'model': 'model-B', 'score': 20},
-      ]
+      ],
     };
     final mockListResp = MockFunctionResponse();
     when(mockListResp.data).thenReturn(modelsResponse);
     when(mockListResp.status).thenReturn(200);
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'get_models'}))
-        .thenAnswer((_) async => mockListResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockListResp);
 
     final mockTestResp = MockFunctionResponse();
-    when(mockTestResp.data).thenReturn({'success': true, 'benchmark': {'score': 50}});
+    when(mockTestResp.data).thenReturn({
+      'success': true,
+      'benchmark': {'score': 50}
+    });
 
     // argThatを使わず、個別に定義
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'test_model', 'model': 'model-A'}))
-        .thenAnswer((_) async => mockTestResp);
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'test_model', 'model': 'model-B'}))
-        .thenAnswer((_) async => mockTestResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'model-A'},
+      ),
+    ).thenAnswer((_) async => mockTestResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'model-B'},
+      ),
+    ).thenAnswer((_) async => mockTestResp);
 
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
@@ -133,19 +153,30 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
-    verify(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'test_model', 'model': 'model-A'})).called(1);
-    verify(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'test_model', 'model': 'model-B'})).called(1);
+    verify(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'model-A'},
+      ),
+    ).called(1);
+    verify(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'test_model', 'model': 'model-B'},
+      ),
+    ).called(1);
   });
 
   testWidgets('エラー系: APIエラー時にエラーメッセージが表示されること', (WidgetTester tester) async {
     final mockErrResp = MockFunctionResponse();
     when(mockErrResp.status).thenReturn(500);
 
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'get_models'}))
-        .thenAnswer((_) async => mockErrResp);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockErrResp);
 
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
