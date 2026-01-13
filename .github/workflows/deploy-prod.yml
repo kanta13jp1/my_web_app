@@ -176,64 +176,80 @@ jobs:
       contents: write
 
     steps:
+      # 1. JSONファイルを生成するステップを追加 (Success用)
+      - name: Generate Slack Payload (Success)
+        if: needs.deploy.result == 'success'
+        run: |
+          cat <<EOF > payload-success.json
+          {
+            "text": "Production deployment successful!",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Production Deployment Successful!"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Environment:* Production\n*Version:* \`${{ needs.deploy.outputs.tag }}\`\n*Branch:* \`${{ github.ref_name }}\`\n*Author:* ${{ github.actor }}\n*URL:* https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+                }
+              }
+            ]
+          }
+          EOF
+
+      # 1. JSONファイルを生成するステップを追加 (Failure用)
+      - name: Generate Slack Payload (Failure)
+        if: needs.deploy.result == 'failure'
+        run: |
+          cat <<EOF > payload-failure.json
+          {
+            "text": "Production deployment failed!",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Production Deployment Failed!"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Environment:* Production\n*Branch:* \`${{ github.ref_name }}\`\n*Commit:* \`${{ github.sha }}\`\n*Author:* ${{ github.actor }}\n\n *URGENT*: Production deployment has failed. Please investigate immediately!"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Logs>"
+                }
+              }
+            ]
+          }
+          EOF
+
+      # 2. ファイルパスを指定して通知 (Success)
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         uses: slackapi/slack-github-action@v1
         with:
-          payload: |
-            {
-              "text": " Production deployment successful!",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": " Production Deployment Successful!"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Version:* `${{ needs.deploy.outputs.tag }}`\n*Branch:* `${{ github.ref_name }}`\n*Author:* ${{ github.actor }}\n*URL:* https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
-                  }
-                }
-              ]
-            }
+          payload-file-path: "./payload-success.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+      # 2. ファイルパスを指定して通知 (Failure)
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         uses: slackapi/slack-github-action@v1
         with:
-          payload: |
-            {
-              "text": " Production deployment failed!",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": " Production Deployment Failed!"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n\n *URGENT*: Production deployment has failed. Please investigate immediately!"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Logs>"
-                  }
-                }
-              ]
-            }
+          payload-file-path: "./payload-failure.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
