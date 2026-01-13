@@ -37,7 +37,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             .eq('user_id', userId)
             .catchError((_) => 0),
         // CHRO: ポイント、レベル (Map?)
-        supabase.from('user_stats').select().eq('id', userId).maybeSingle(),
+        // 【修正】id -> user_id に変更
+        supabase
+            .from('user_stats')
+            .select()
+            .eq('user_id', userId)
+            .maybeSingle(),
         // CSO: 断捨離 (int) - 仮置き
         Future.value(0),
       ]);
