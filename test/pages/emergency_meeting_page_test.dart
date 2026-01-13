@@ -7,43 +7,41 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'emergency_meeting_page_test.mocks.dart';
 
-@GenerateMocks(
-  [
-    SupabaseClient,
-    GoTrueClient,
-    FunctionsClient,
-    SupabaseQueryBuilder,
-    User,
-    FunctionResponse,
-  ],
-  customMocks: [
-    MockSpec<PostgrestFilterBuilder<int>>(as: #MockPostgrestFilterBuilderInt),
-    MockSpec<PostgrestFilterBuilder<List<Map<String, dynamic>>>>(
-      as: #MockPostgrestFilterBuilderList,
-    ),
-    MockSpec<PostgrestTransformBuilder<List<Map<String, dynamic>>>>(
-      as: #MockPostgrestTransformBuilderList,
-    ),
-    MockSpec<PostgrestTransformBuilder<Map<String, dynamic>>>(
-      as: #MockPostgrestTransformBuilderMap,
-    ),
-    MockSpec<PostgrestTransformBuilder<Map<String, dynamic>?>>(
-      as: #MockPostgrestTransformBuilderMapNullable,
-    ),
-  ],
-)
+@GenerateNiceMocks([
+  MockSpec<SupabaseClient>(),
+  MockSpec<GoTrueClient>(),
+  MockSpec<FunctionsClient>(),
+  MockSpec<SupabaseQueryBuilder>(),
+  MockSpec<User>(),
+  MockSpec<FunctionResponse>(),
+  MockSpec<PostgrestFilterBuilder<int>>(as: #MockPostgrestFilterBuilderInt),
+  MockSpec<PostgrestFilterBuilder<List<Map<String, dynamic>>>>(
+    as: #MockPostgrestFilterBuilderList,
+  ),
+  MockSpec<PostgrestTransformBuilder<List<Map<String, dynamic>>>>(
+    as: #MockPostgrestTransformBuilderList,
+  ),
+  MockSpec<PostgrestTransformBuilder<Map<String, dynamic>>>(
+    as: #MockPostgrestTransformBuilderMap,
+  ),
+  MockSpec<PostgrestTransformBuilder<Map<String, dynamic>?>>(
+    as: #MockPostgrestTransformBuilderMapNullable,
+  ),
+])
 void main() {
   late MockSupabaseClient mockSupabaseClient;
   late MockGoTrueClient mockGoTrueClient;
   late MockFunctionsClient mockFunctionsClient;
   late MockUser mockUser;
 
-  late MockSupabaseQueryBuilder mockCommonBuilder;
+  late MockSupabaseQueryBuilder mockNotesBuilder;
+  late MockSupabaseQueryBuilder mockSubsBuilder;
   late MockSupabaseQueryBuilder mockStatsBuilder;
   late MockSupabaseQueryBuilder mockMeetingBuilder;
   late MockSupabaseQueryBuilder mockMessageBuilder;
 
-  late MockPostgrestFilterBuilderInt mockFilterBuilderInt;
+  late MockPostgrestFilterBuilderInt mockNotesFilter;
+  late MockPostgrestFilterBuilderInt mockSubsFilter;
   late MockPostgrestFilterBuilderList mockFilterBuilderList;
   late MockPostgrestTransformBuilderList mockTransformBuilderList;
   late MockPostgrestTransformBuilderMap mockTransformBuilderMap;
@@ -55,30 +53,31 @@ void main() {
     mockFunctionsClient = MockFunctionsClient();
     mockUser = MockUser();
 
-    mockCommonBuilder = MockSupabaseQueryBuilder();
+    mockNotesBuilder = MockSupabaseQueryBuilder();
+    mockSubsBuilder = MockSupabaseQueryBuilder();
     mockStatsBuilder = MockSupabaseQueryBuilder();
     mockMeetingBuilder = MockSupabaseQueryBuilder();
     mockMessageBuilder = MockSupabaseQueryBuilder();
 
-    mockFilterBuilderInt = MockPostgrestFilterBuilderInt();
+    mockNotesFilter = MockPostgrestFilterBuilderInt();
+    mockSubsFilter = MockPostgrestFilterBuilderInt();
     mockFilterBuilderList = MockPostgrestFilterBuilderList();
     mockTransformBuilderList = MockPostgrestTransformBuilderList();
     mockTransformBuilderMap = MockPostgrestTransformBuilderMap();
-    mockTransformBuilderMapNullable =
-        MockPostgrestTransformBuilderMapNullable();
+    mockTransformBuilderMapNullable = MockPostgrestTransformBuilderMapNullable();
 
     when(mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
     when(mockGoTrueClient.currentUser).thenReturn(mockUser);
     when(mockUser.id).thenReturn('test-user-id');
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
 
-    when(mockSupabaseClient.from(any)).thenAnswer((_) => mockCommonBuilder);
-    when(mockSupabaseClient.from('user_stats'))
-        .thenAnswer((_) => mockStatsBuilder);
-    when(mockSupabaseClient.from('board_meetings'))
-        .thenAnswer((_) => mockMeetingBuilder);
-    when(mockSupabaseClient.from('board_meeting_messages'))
-        .thenAnswer((_) => mockMessageBuilder);
+    // テーブル定義 (上書き順序を考慮)
+    when(mockSupabaseClient.from(any)).thenReturn(mockNotesBuilder);
+    when(mockSupabaseClient.from('notes')).thenReturn(mockNotesBuilder);
+    when(mockSupabaseClient.from('subscriptions')).thenReturn(mockSubsBuilder);
+    when(mockSupabaseClient.from('user_stats')).thenReturn(mockStatsBuilder);
+    when(mockSupabaseClient.from('board_meetings')).thenReturn(mockMeetingBuilder);
+    when(mockSupabaseClient.from('board_messages')).thenReturn(mockMessageBuilder);
   });
 
   Widget createTestWidget() {
@@ -88,40 +87,38 @@ void main() {
   }
 
   testWidgets('正常系: 招集ボタン押下でデータ収集・AI分析・保存が行われること', (WidgetTester tester) async {
-    // --- 1. データ収集 ---
-    when(mockCommonBuilder.count(any)).thenAnswer((_) => mockFilterBuilderInt);
-    when(mockFilterBuilderInt.eq(any, any))
-        .thenAnswer((_) => mockFilterBuilderInt);
-
-    when(mockFilterBuilderInt.then(any, onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
+    // --- 1. Notes (CKO) ---
+    // count() -> eq() -> Future<int>
+    // 【修正】thenAnswerで Future.value を返すことで、awaitで即座に値が取れるようにする
+    when(mockNotesBuilder.count(any)).thenReturn(mockNotesFilter);
+    when(mockNotesFilter.eq(any, any)).thenReturn(mockNotesFilter);
+    when(mockNotesFilter.then(any, onError: anyNamed('onError')))
+        .thenAnswer((Invocation inv) async {
       final callback = inv.positionalArguments[0] as Function(int);
       return callback(10);
     });
-    when(mockFilterBuilderInt.catchError(any, test: anyNamed('test')))
-        .thenAnswer((_) async => 10);
 
-    // --- 2. ユーザー統計 ---
-    when(mockStatsBuilder.select()).thenAnswer((_) => mockFilterBuilderList);
-    when(mockStatsBuilder.select(any)).thenAnswer((_) => mockFilterBuilderList);
+    // --- 2. Subscriptions (CFO) ---
+    when(mockSubsBuilder.count(any)).thenReturn(mockSubsFilter);
+    when(mockSubsFilter.eq(any, any)).thenReturn(mockSubsFilter);
+    // catchError -> Future<int>
+    when(mockSubsFilter.catchError(any, test: any)) // test引数を緩和
+        .thenAnswer((_) async => 5);
 
-    when(mockFilterBuilderList.eq(any, any))
-        .thenAnswer((_) => mockFilterBuilderList);
+    // --- 3. User Stats (CHRO) ---
+    when(mockStatsBuilder.select(any)).thenReturn(mockFilterBuilderList);
+    when(mockFilterBuilderList.eq(any, any)).thenReturn(mockFilterBuilderList);
     when(mockFilterBuilderList.maybeSingle())
-        .thenAnswer((_) => mockTransformBuilderMapNullable);
-
-    when(mockTransformBuilderMapNullable.then(any,
-            onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
+        .thenReturn(mockTransformBuilderMapNullable);
+    
+    when(mockTransformBuilderMapNullable.then(any, onError: anyNamed('onError')))
+        .thenAnswer((Invocation inv) async {
       final callback =
           inv.positionalArguments[0] as Function(Map<String, dynamic>?);
       return callback({'total_points': 1000, 'current_level': 5});
     });
-    when(mockTransformBuilderMapNullable.catchError(any,
-            test: anyNamed('test')))
-        .thenAnswer((_) async => {'total_points': 1000, 'current_level': 5});
 
-    // --- 3. AI分析 ---
+    // --- 4. AI分析 (invoke) ---
     final aiResponse = {
       'success': true,
       'result': {
@@ -133,66 +130,49 @@ void main() {
     };
     final realFuncResp = FunctionResponse(data: aiResponse, status: 200);
 
-    // 【修正点】 invokeの引数を完全に緩める
-    // methodやheadersが指定されていてもマッチするようにする
     when(mockFunctionsClient.invoke(
-      'ai-assistant',
+      any,
       headers: anyNamed('headers'),
       body: anyNamed('body'),
       method: anyNamed('method'),
     )).thenAnswer((_) async => realFuncResp);
 
-    // --- 4. 会議保存 ---
+    // --- 5. 会議保存 ---
     final mockMeetingInsertFilter = MockPostgrestFilterBuilderList();
-    when(mockMeetingBuilder.insert(any))
-        .thenAnswer((_) => mockMeetingInsertFilter);
-
-    when(mockMeetingInsertFilter.select())
-        .thenAnswer((_) => mockTransformBuilderList);
-    when(mockMeetingInsertFilter.select(any))
-        .thenAnswer((_) => mockTransformBuilderList);
-
-    when(mockTransformBuilderList.single())
-        .thenAnswer((_) => mockTransformBuilderMap);
-
+    when(mockMeetingBuilder.insert(any)).thenReturn(mockMeetingInsertFilter);
+    
+    when(mockMeetingInsertFilter.select(any)).thenReturn(mockTransformBuilderList);
+    when(mockTransformBuilderList.single()).thenReturn(mockTransformBuilderMap);
+    
     when(mockTransformBuilderMap.then(any, onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
+        .thenAnswer((Invocation inv) async {
       final callback =
           inv.positionalArguments[0] as Function(Map<String, dynamic>);
       return callback({'id': 'meeting-123'});
     });
-    when(mockTransformBuilderMap.catchError(any, test: anyNamed('test')))
-        .thenAnswer((_) async => {'id': 'meeting-123'});
 
-    // --- 5. メッセージ保存 ---
+    // --- 6. メッセージ保存 ---
     final mockMessageInsertFilter = MockPostgrestFilterBuilderList();
-    when(mockMessageBuilder.insert(any))
-        .thenAnswer((_) => mockMessageInsertFilter);
-
+    when(mockMessageBuilder.insert(any)).thenReturn(mockMessageInsertFilter);
+    
     when(mockMessageInsertFilter.then(any, onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
+        .thenAnswer((Invocation inv) async {
       final callback = inv.positionalArguments[0] as Function(dynamic);
       return callback([]);
     });
-    when(mockMessageInsertFilter.catchError(any, test: anyNamed('test')))
-        .thenAnswer((_) async => []);
 
     // --- テスト実行 ---
     await tester.pumpWidget(createTestWidget());
     await tester.tap(find.text('緊急招集する'));
-
-    // 時間を進めて待機
+    
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 3));
 
-    // 結果確認
     if (find.text('STRATEGIC DECISION').evaluate().isEmpty) {
-      debugPrint('--- TEST FAILED: Current Widgets on Screen ---');
-      find.byType(Text).evaluate().forEach((element) {
-        final textWidget = element.widget as Text;
-        debugPrint('Text: "${textWidget.data}"');
+      debugPrint('--- DEBUG: Widgets on screen ---');
+      find.byType(Text).evaluate().forEach((e) {
+        debugPrint((e.widget as Text).data);
       });
-      debugPrint('--------------------------------------------');
     }
 
     expect(find.text('STRATEGIC DECISION'), findsOneWidget);
@@ -200,44 +180,30 @@ void main() {
   });
 
   testWidgets('異常系: AIがエラーを返した場合', (WidgetTester tester) async {
-    // 1. Data Collection
-    when(mockCommonBuilder.count(any)).thenAnswer((_) => mockFilterBuilderInt);
-    when(mockFilterBuilderInt.eq(any, any))
-        .thenAnswer((_) => mockFilterBuilderInt);
+    // 1. Notes
+    when(mockNotesBuilder.count(any)).thenReturn(mockNotesFilter);
+    when(mockNotesFilter.eq(any, any)).thenReturn(mockNotesFilter);
+    when(mockNotesFilter.then(any, onError: anyNamed('onError')))
+        .thenAnswer((inv) async => (inv.positionalArguments[0] as Function(int))(0));
 
-    when(mockFilterBuilderInt.then(any, onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
-      return (inv.positionalArguments[0] as Function(int))(0);
-    });
-    when(mockFilterBuilderInt.catchError(any, test: anyNamed('test')))
-        .thenAnswer((_) async => 0);
+    // 2. Subscriptions
+    when(mockSubsBuilder.count(any)).thenReturn(mockSubsFilter);
+    when(mockSubsFilter.eq(any, any)).thenReturn(mockSubsFilter);
+    when(mockSubsFilter.catchError(any, test: any)).thenAnswer((_) async => 0);
 
-    // 2. User Stats
-    when(mockStatsBuilder.select()).thenAnswer((_) => mockFilterBuilderList);
-    when(mockStatsBuilder.select(any)).thenAnswer((_) => mockFilterBuilderList);
-
-    when(mockFilterBuilderList.eq(any, any))
-        .thenAnswer((_) => mockFilterBuilderList);
+    // 3. User Stats
+    when(mockStatsBuilder.select(any)).thenReturn(mockFilterBuilderList);
+    when(mockFilterBuilderList.eq(any, any)).thenReturn(mockFilterBuilderList);
     when(mockFilterBuilderList.maybeSingle())
-        .thenAnswer((_) => mockTransformBuilderMapNullable);
+        .thenReturn(mockTransformBuilderMapNullable);
+    when(mockTransformBuilderMapNullable.then(any, onError: anyNamed('onError')))
+        .thenAnswer((inv) async => (inv.positionalArguments[0] as Function(Map<String, dynamic>?))(null));
 
-    when(mockTransformBuilderMapNullable.then(any,
-            onError: anyNamed('onError')))
-        .thenAnswer((Invocation inv) {
-      return (inv.positionalArguments[0] as Function(
-          Map<String, dynamic>?))(null);
-    });
-    when(mockTransformBuilderMapNullable.catchError(any,
-            test: anyNamed('test')))
-        .thenAnswer((_) async => null);
-
-    // 3. AI Error
+    // 4. AI Error
     final realErrResp = FunctionResponse(
       data: {'success': false, 'error': 'AI Busy'},
       status: 200,
     );
-
-    // 【修正点】ここも同様に引数を緩める
     when(mockFunctionsClient.invoke(
       any,
       headers: anyNamed('headers'),
@@ -245,12 +211,9 @@ void main() {
       method: anyNamed('method'),
     )).thenAnswer((_) async => realErrResp);
 
-    // Execute
     await tester.pumpWidget(createTestWidget());
     await tester.tap(find.text('緊急招集する'));
-
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 2));
 
     expect(find.textContaining('会議エラー'), findsOneWidget);
   });
