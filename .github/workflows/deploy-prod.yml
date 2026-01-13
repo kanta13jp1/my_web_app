@@ -13,7 +13,7 @@ permissions:
 
 env:
   ENVIRONMENT: production
-  FLUTTER_VERSION: '3.38.x'
+  FLUTTER_VERSION: "3.38.x"
 
 jobs:
   ci:
@@ -29,8 +29,8 @@ jobs:
     needs: ci
     environment:
       name: production
-      # url: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app  <-- 削除: secretsはここで使えません
-    
+      # url: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
+
     # 次のジョブ(notify)へバージョン情報を渡す設定
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -43,13 +43,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 全履歴を取得（タグベースのバージョニングに必須）
+          fetch-depth: 0
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
+          channel: "stable"
           cache: true
 
       - name: Install dependencies
@@ -59,22 +59,18 @@ jobs:
       - name: Generate version
         id: version
         run: |
-          # タグがない場合は v1.0.0 を開始点とする
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
-          # 先頭の 'v' を削除
           VERSION=${LATEST_TAG#v}
-          # パッチバージョンをインクリメント
           IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
           MAJOR=${VERSION_PARTS[0]}
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
           NEW_PATCH=$((PATCH + 1))
           NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-          
-          # Output設定
+
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-          
+
           echo "Previous version: $VERSION"
           echo "New version: $NEW_VERSION"
 
@@ -94,17 +90,13 @@ jobs:
       - name: Run Supabase migrations
         run: |
           echo "Running Supabase migrations for production..."
-          # プロジェクトリンク（パスワードは非対話式のため環境変数で渡すことを推奨）
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
-          # 本番環境への適用 (db push は破壊的変更のリスクがあるため注意。安定運用なら migration up 推奨)
           supabase db push
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          # linkコマンドの引数で渡せない場合のための予備
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
       # Build Flutter Web (Production)
-      #  修正: --no-tree-shake-icons を追加してアイコン削除エラーを回避
       - name: Build Flutter Web (Production)
         run: |
           flutter build web \
@@ -132,16 +124,14 @@ jobs:
       - name: Deploy to Firebase Hosting (Production)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}'
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}"
           projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
           channelId: live
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
       # Create Release Tag
-      # 注: release作成アクションがタグ作成も兼ねるため、手動プッシュは省略可能です
-      # もし手動で確実に打ちたい場合はこのステップを残してください
       - name: Push Release Tag
         id: push_tag
         run: |
@@ -150,24 +140,24 @@ jobs:
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           git push origin ${{ steps.version.outputs.tag }}
 
-      # Create GitHub Release (推奨アクションへの変更)
+      # Create GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.version }}
           body: |
-            ##  Release ${{ steps.version.outputs.version }}
-            
+            ## Release ${{ steps.version.outputs.version }}
+
             ### Deployment Information
             - **Environment**: Production
             - **Deployed at**: ${{ github.event.head_commit.timestamp }}
             - **Commit**: ${{ github.sha }}
             - **Author**: ${{ github.actor }}
-            
+
             ### Changes
             ${{ github.event.head_commit.message }}
-            
+
             ### URLs
             - **Production**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
           draft: false
@@ -180,7 +170,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
-    # 環境変数を読み込むためにenvironmentを指定
     environment: production
 
     permissions:
