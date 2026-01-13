@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/board_meeting_model.dart';
@@ -93,7 +94,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         },
       );
 
-      final dynamic rawData = response.data;
+      dynamic rawData = response.data;
+
+      // レスポンスがStringの場合はJSONパースを試みる
+      if (rawData is String) {
+        try {
+          rawData = jsonDecode(rawData);
+        } catch (e) {
+          // パース失敗時はそのまま
+        }
+      }
 
       if (rawData is Map<String, dynamic> && rawData['success'] == true) {
         final result = rawData['result'] as Map<String, dynamic>;
@@ -105,7 +115,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
         await _saveMeetingToDb(log, contextPrompt);
       } else {
-        throw Exception(rawData['error'] ?? 'AI応答エラー');
+        String errorMessage = 'AI応答エラー';
+        if (rawData is Map<String, dynamic>) {
+          errorMessage = rawData['error']?.toString() ?? errorMessage;
+        } else if (rawData is String) {
+          errorMessage = rawData;
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
       if (mounted) {
