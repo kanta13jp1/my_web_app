@@ -195,7 +195,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Version:* \`${{ needs.deploy.outputs.tag }}\`\n*Branch:* \`${{ github.ref_name }}\`\n*Author:* ${{ github.actor }}\n*URL:* https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+                  "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n\n *URGENT*: Production deployment has failed. Please investigate immediately!"
                   }
                 }
               ]
