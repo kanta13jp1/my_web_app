@@ -25,11 +25,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
     _fetchAvailableModels();
   }
 
-  // モデル一覧の取得 (サーバー側の実績スコアに基づいた初期ソート)
+// モデル一覧の取得 (APIレスポンスをUI用に整形)
   Future<void> _fetchAvailableModels() async {
     try {
       setState(() => _isLoading = true);
-      final response = await supabase.functions.invoke(
+
+      // main.dart で定義されている supabase クライアントを使用
+      // もし未定義エラーが出る場合は Supabase.instance.client に書き換えてください
+      final response = await Supabase.instance.client.functions.invoke(
         'ai-assistant',
         body: {'action': 'get_models'},
       );
@@ -42,8 +45,28 @@ class _AiStatusPageState extends State<AiStatusPage> {
           response.data is String ? jsonDecode(response.data) : response.data;
 
       setState(() {
-        _models = List.from(data['models'] ?? []);
-        // 初期状態をスコア順にソート
+        final List<dynamic> rawList = data['models'] ?? [];
+
+        // 【重要】ここでデータを正規化します
+        _models = rawList.map((m) {
+          // APIの 'name' をUIの 'model' にマッピング
+          final String name = m['model'] ?? m['name'] ?? 'Unknown';
+
+          // プロバイダー名の表記ゆれ吸収 (Google -> gemini)
+          String provider = m['provider'] ?? 'Unknown';
+          if (provider.toLowerCase() == 'google') {
+            provider = 'gemini';
+          }
+
+          return {
+            'model': name,
+            'provider': provider,
+            // scoreがAPIにない場合は 0 で初期化してエラーを防ぐ
+            'score': m['score'] ?? 0,
+            'description': m['description'],
+          };
+        }).toList();
+
         _sortModels();
         _isLoading = false;
         _error = null;
@@ -56,9 +79,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
-  // リストをスコア順に並び替える共通メソッド
+// リストをスコア順に並び替える共通メソッド (Null安全対応)
   void _sortModels() {
-    _models.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+    _models.sort((a, b) {
+      final scoreA = a['score'] as int? ?? 0;
+      final scoreB = b['score'] as int? ?? 0;
+      return scoreB.compareTo(scoreA);
+    });
   }
 
   // 全モデルの順次テスト実行
@@ -171,9 +198,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   itemCount: _models.length,
                   itemBuilder: (context, index) {
                     final model = _models[index];
-                    final provider = model['provider'] as String;
-                    final score = model['score'] as int;
-                    final modelName = model['model'] as String;
+                    final provider = model['provider'] as String? ?? 'Unknown';
+                    // scoreがnullでも0として扱う
+                    final score = model['score'] as int? ?? 0;
+                    final modelName = model['model'] as String? ?? 'Unknown';
                     final status = _testResults[modelName];
 
                     return Card(

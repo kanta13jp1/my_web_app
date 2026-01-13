@@ -50,6 +50,7 @@ dev_dependencies:
 
   supabase: any
   image_picker_platform_interface: any
+  http: any
 flutter:
   uses-material-design: true
 

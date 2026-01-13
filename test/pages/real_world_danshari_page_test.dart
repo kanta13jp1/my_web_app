@@ -10,7 +10,8 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @GenerateMocks(
-    [SupabaseClient, FunctionsClient, FunctionResponse, ThemeService])
+  [SupabaseClient, FunctionsClient, FunctionResponse, ThemeService],
+)
 import 'real_world_danshari_page_test.mocks.dart';
 
 // --- 追加: 有効な1x1ピクセルのPNG画像データ ---
@@ -107,23 +108,25 @@ void main() {
         'item_name': '古いジャケット',
         'spark_joy_score': 30,
         'reason': 'ボロボロです',
-        'witty_comment': 'タイムマシンがあれば...'
-      }
+        'witty_comment': 'タイムマシンがあれば...',
+      },
     };
     final mockResponse = MockFunctionResponse();
     when(mockResponse.data).thenReturn(jsonEncode(successResponse));
 
-    when(mockFunctionsClient.invoke(
-      'ai-assistant',
-      body: anyNamed('body'),
-    )).thenAnswer((_) async => mockResponse);
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: anyNamed('body'),
+      ),
+    ).thenAnswer((_) async => mockResponse);
 
     await tester.pumpWidget(createTestWidget());
     await tester.tap(find.text('アルバムから選択'));
 
     // 画像描画の完了を待つ
     await tester.pump();
-    
+
     // APIコールの完了を待つ
     await tester.pumpAndSettle();
 
@@ -132,7 +135,8 @@ void main() {
     expect(find.text('30 / 100'), findsOneWidget);
   });
 
-  testWidgets('正常系: 画像選択後、分析が成功し結果が表示されること (Mapレスポンス)', (WidgetTester tester) async {
+  testWidgets('正常系: 画像選択後、分析が成功し結果が表示されること (Mapレスポンス)',
+      (WidgetTester tester) async {
     // 修正: 有効な画像データを使用
     mockImagePickerPlatform.pickedFile = XFile.fromData(
       _kTransparentImage,
@@ -145,8 +149,8 @@ void main() {
         'item_name': '大切な時計',
         'spark_joy_score': 90,
         'reason': '輝いています',
-        'witty_comment': '素晴らしい！'
-      }
+        'witty_comment': '素晴らしい！',
+      },
     };
     final mockResponse = MockFunctionResponse();
     when(mockResponse.data).thenReturn(successResponse);
@@ -163,7 +167,8 @@ void main() {
     expect(find.text(' 維持 (KEEP)'), findsOneWidget);
   });
 
-  testWidgets('異常系: APIがエラー(success: false)を返した場合', (WidgetTester tester) async {
+  testWidgets('異常系: APIがエラー(success: false)を返した場合',
+      (WidgetTester tester) async {
     // 修正: 有効な画像データを使用
     mockImagePickerPlatform.pickedFile = XFile.fromData(_kTransparentImage);
 
@@ -179,8 +184,10 @@ void main() {
     await tester.pump(); // 画像ロード待ち
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('AI分析エラー: Exception: AI Error occurred'),
-        findsOneWidget);
+    expect(
+      find.textContaining('AI分析エラー: Exception: AI Error occurred'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('異常系: 画像取得時に例外が発生した場合', (WidgetTester tester) async {
@@ -192,7 +199,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('画像の取得に失敗しました'), findsOneWidget);
-    
+
     // 後始末: 元に戻す（他のテストへの影響防止）
     ImagePickerPlatform.instance = mockImagePickerPlatform;
   });
