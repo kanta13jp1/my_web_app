@@ -129,7 +129,7 @@ void main() {
     final mockTestResp = MockFunctionResponse();
     when(mockTestResp.data).thenReturn({
       'success': true,
-      'benchmark': {'score': 50}
+      'benchmark': {'score': 50},
     });
 
     // argThatを使わず、個別に定義
