@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
@@ -241,9 +242,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      module.content,
-                      style: const TextStyle(height: 1.6),
+                    MarkdownBody(
+                      data: module.content,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(height: 1.6),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     if (!isCompleted)
