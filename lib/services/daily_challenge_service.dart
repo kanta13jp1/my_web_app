@@ -26,12 +26,13 @@ class DailyChallengeService {
       final List<dynamic> data = response as List<dynamic>;
 
       return data.map((item) {
+        final itemMap = item as Map<String, dynamic>;
         return {
-          'challenge': DailyChallenge.fromJson(item),
+          'challenge': DailyChallenge.fromJson(itemMap),
           // SQLの戻り値の列名をそのまま使用
-          'current_progress': item['current_progress'] as int,
-          'is_completed': item['is_completed'] as bool,
-          'reward_claimed': item['reward_claimed'] as bool,
+          'current_progress': itemMap['current_progress'] as int,
+          'is_completed': itemMap['is_completed'] as bool,
+          'reward_claimed': itemMap['reward_claimed'] as bool,
         };
       }).toList();
     } catch (e, stackTrace) {

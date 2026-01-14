@@ -40,11 +40,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Gemini API overview',
-          'url': 'https://ai.google.dev/docs/gemini_api_overview'
+          'url': 'https://ai.google.dev/docs/gemini_api_overview',
         },
         {
           'title': 'Gemini Models',
-          'url': 'https://ai.google.dev/models/gemini'
+          'url': 'https://ai.google.dev/models/gemini',
         },
       ],
     ),
@@ -68,11 +68,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Prompt design strategies',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices'
+          'url': 'https://ai.google.dev/docs/prompt_best_practices',
         },
         {
           'title': 'Prompt Gallery',
-          'url': 'https://ai.google.dev/examples?keywords=prompting'
+          'url': 'https://ai.google.dev/examples?keywords=prompting',
         },
       ],
     ),
@@ -96,12 +96,12 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Function calling',
-          'url': 'https://ai.google.dev/docs/function_calling'
+          'url': 'https://ai.google.dev/docs/function_calling',
         },
         {
           'title': 'Vertex AI - Function calling',
           'url':
-              'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling'
+              'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling',
         },
       ],
     ),
@@ -124,7 +124,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Multimodal concepts',
-          'url': 'https://ai.google.dev/docs/concepts#multimodal'
+          'url': 'https://ai.google.dev/docs/concepts#multimodal',
         },
         {'title': 'Media', 'url': 'https://ai.google.dev/docs/media'},
       ],
@@ -147,19 +147,19 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           'Context Caching',
           'Vector Search',
           'Distillation',
-          'Quantization'
+          'Quantization',
         ],
         correctIndex: 0,
       ),
       officialDocs: [
         {
           'title': 'Context caching',
-          'url': 'https://ai.google.dev/docs/context_caching'
+          'url': 'https://ai.google.dev/docs/context_caching',
         },
         {
           'title': 'Get started with Gemini 1.5 Pro',
           'url':
-              'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro'
+              'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro',
         },
       ],
     ),
@@ -181,7 +181,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'JSON mode',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode'
+          'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode',
         },
       ],
     ),
@@ -203,11 +203,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Safety settings',
-          'url': 'https://ai.google.dev/docs/safety_setting_gemini'
+          'url': 'https://ai.google.dev/docs/safety_setting_gemini',
         },
         {
           'title': 'AI principles',
-          'url': 'https://ai.google/responsibility/principles/'
+          'url': 'https://ai.google/responsibility/principles/',
         },
       ],
     ),
@@ -386,7 +386,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
@@ -435,7 +435,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(doc['title']!),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 alignment: Alignment.centerLeft,
               ),
             ),
@@ -561,7 +562,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         border: Border.all(color: Colors.orange, width: 4),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.2),
+            color: Colors.orange.withValues(alpha: 0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),

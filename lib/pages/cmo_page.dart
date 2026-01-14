@@ -53,12 +53,14 @@ class _CmoPageState extends State<CmoPage> {
       if (response.status != 200) {
         throw Exception('AI Error: ${response.status}');
       }
-      final data = response.data;
-      if (data['success'] != true) throw Exception(data['error']);
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] != true) {
+        throw Exception(data['error'] as String? ?? 'Unknown error from AI function');
+      }
 
       if (mounted) {
         setState(() {
-          _pressRelease = data['result'];
+          _pressRelease = data['result'] as Map<String, dynamic>?;
         });
       }
     } catch (e) {

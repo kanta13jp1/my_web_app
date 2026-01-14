@@ -44,10 +44,10 @@ class BoardMeetingDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 itemCount: minutes.length,
                 itemBuilder: (context, index) {
-                  final item = minutes[index];
-                  final role = item['role'] ?? '';
-                  final name = item['name'] ?? '';
-                  final text = item['text'] ?? '';
+                  final item = minutes[index] as Map<String, dynamic>;
+                  final role = item['role'] as String? ?? '';
+                  final name = item['name'] as String? ?? '';
+                  final text = item['text'] as String? ?? '';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
@@ -56,7 +56,7 @@ class BoardMeetingDialog extends StatelessWidget {
                         CircleAvatar(
                           backgroundColor: _getRoleColor(role),
                           child: Text(
-                            role.substring(0, 1),
+                            role.isNotEmpty ? role.substring(0, 1) : '?',
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),

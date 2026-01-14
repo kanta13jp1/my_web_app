@@ -121,7 +121,8 @@ class _ChroPageState extends State<ChroPage>
       );
 
       if (response.status != 200) throw Exception('AI Error');
-      final data = response.data['result']
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData['result']
           as Map<String, dynamic>; // {rank, report_content, bonus_message}
 
       // 保存
@@ -160,7 +161,8 @@ class _ChroPageState extends State<ChroPage>
       );
 
       if (response.status != 200) throw Exception('Error');
-      final reply = response.data['result'] as String; // String
+      final responseData = response.data as Map<String, dynamic>;
+      final reply = responseData['result'] as String; // String
 
       setState(() {
         _chatHistory.add({'role': 'ai', 'content': reply.toString()});

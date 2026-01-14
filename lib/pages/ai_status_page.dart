@@ -13,7 +13,7 @@ class AiStatusPage extends StatefulWidget {
 }
 
 class _AiStatusPageState extends State<AiStatusPage> {
-  List<dynamic> _models = [];
+  List<Map<String, dynamic>> _models = [];
   bool _isLoading = true;
   String? _error;
 
@@ -101,8 +101,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
   // 全モデルの順次テスト実行
   Future<void> _runAllTests() async {
     for (var model in _models) {
-      final modelMap = model as Map<String, dynamic>;
-      final String modelName = modelMap['model'] as String;
+      final String modelName = model['model'] as String;
       // 各モデルのテストを待機せずに並列気味に回す（UI更新を優先）
       _testSingleModel(modelName);
       await Future.delayed(const Duration(milliseconds: 500));
@@ -136,7 +135,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
             // ★ 多段階ベンチマーク対応: スコアを動的に更新
             final index = _models.indexWhere(
-              (m) => (m as Map<String, dynamic>)['model'] == modelName,
+              (m) => m['model'] == modelName,
             );
             if (index != -1) {
               // (認識率 * 10) - (速度ms / 100)
@@ -145,7 +144,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   (benchmark['latency'] as num?)?.toInt() ?? 0;
               final int newScore = (visionScore * 10) - (latencyMs ~/ 100);
 
-              (_models[index] as Map<String, dynamic>)['score'] = newScore;
+              _models[index]['score'] = newScore;
 
               // ★ 順位が変わる可能性があるため再ソート
               _sortModels();
@@ -157,10 +156,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
           // エラー時はスコアを0にして最下位へ
           final index = _models.indexWhere(
-            (m) => (m as Map<String, dynamic>)['model'] == modelName,
+            (m) => m['model'] == modelName,
           );
           if (index != -1) {
-            (_models[index] as Map<String, dynamic>)['score'] = 0;
+            _models[index]['score'] = 0;
             _sortModels();
           }
         }
@@ -211,7 +210,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _models.length,
                   itemBuilder: (context, index) {
-                    final modelMap = _models[index] as Map<String, dynamic>;
+                    final modelMap = _models[index];
                     final provider =
                         modelMap['provider'] as String? ?? 'Unknown';
                     // scoreがnullでも0として扱う
