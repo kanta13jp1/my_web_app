@@ -223,7 +223,7 @@ class NoteCardService {
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await SharePlus.shareXFiles(
+      await Share.shareXFiles(
         [XFile(file.path)],
         text: '📝 $noteTitle\n\n#マイメモ #メモ習慣',
       );
