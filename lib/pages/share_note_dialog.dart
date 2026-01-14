@@ -9,15 +9,14 @@ class ShareNoteDialog extends StatelessWidget {
   const ShareNoteDialog({super.key, required this.note});
 
   Future<void> _shareNote(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final box = context.findRenderObject() as RenderBox?;
     // シェア実行前にポイント加算などを試行（失敗してもシェアは続行）
     try {
       await supabase.rpc('increment_share_count');
     } catch (_) {
       // エラーは無視
     }
-
-    // iPadなどでクラッシュしないための位置取得
-    final box = context.findRenderObject() as RenderBox?;
 
     // シェア内容の作成
     final shareText = '【${note.title}】\n${note.content}\n\n#マイメモ #Gemini';
@@ -30,9 +29,7 @@ class ShareNoteDialog extends StatelessWidget {
           box != null ? box.localToGlobal(Offset.zero) & box.size : null,
     );
 
-    if (context.mounted) {
-      Navigator.of(context).pop();
-    }
+    navigator.pop();
   }
 
   @override

@@ -65,6 +65,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('就任手続きに失敗しました: $e')),
       );

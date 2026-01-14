@@ -133,6 +133,7 @@ class _ChroPageState extends State<ChroPage>
 
       _fetchData();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('評価エラー: $e')));
     } finally {

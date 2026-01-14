@@ -50,7 +50,9 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
               (response as List).map((n) => Note.fromJson(n)).toList(),
         );
       }
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('Error fetching notes: $e');
+    }
   }
 
   // CKO: 知的資産分析
@@ -72,13 +74,14 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
       );
 
       if (response.status != 200) throw Exception('AI Error');
-      final data = response.data;
+      final data = response.data as Map<String, dynamic>;
 
       setState(() {
-        _knowledgeReport = data['result'];
-        _analysisModel = data['used_model'];
+        _knowledgeReport = data['result'] as Map<String, dynamic>?;
+        _analysisModel = data['used_model'] as String?;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('分析エラー: $e')));
     } finally {
