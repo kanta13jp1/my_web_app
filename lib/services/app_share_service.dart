@@ -372,10 +372,10 @@ $appUrl
     final message = customMessage ?? getRandomShareMessage();
 
     try {
-      await Share.share(
-        message,
+      await SharePlus.instance.share(ShareParams(
+        text: message,
         subject: '$appName - ゲーミフィケーションで楽しくメモ習慣を！',
-      );
+      ));
     } catch (e) {
       // エラー時はクリップボードにコピー
       await Clipboard.setData(ClipboardData(text: message));

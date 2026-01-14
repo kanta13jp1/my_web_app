@@ -598,10 +598,10 @@ class _SharePhilosopherQuoteDialogState
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
         text: _getShareMessage(),
-      );
+      ));
     } catch (e) {
       debugPrint('Error sharing philosopher quote card: $e');
       rethrow;

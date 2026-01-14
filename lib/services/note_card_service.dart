@@ -223,10 +223,10 @@ class NoteCardService {
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
         text: '📝 $noteTitle\n\n#マイメモ #メモ習慣',
-      );
+      ));
     } catch (e, stackTrace) {
       AppLogger.error(
         'Error sharing note card',

@@ -818,11 +818,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       }
 
       // 共有
-      await Share.shareXFiles(
-        files,
+      await SharePlus.instance.share(ShareParams(
+        files: files,
         text:
             '📝 ${widget.note.title.isEmpty ? "(タイトルなし)" : widget.note.title}\n\n#マイメモ #メモ習慣',
-      );
+      ));
     } catch (e) {
       debugPrint('Error sharing note cards: $e');
       rethrow;

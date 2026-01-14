@@ -77,7 +77,10 @@ class _CmoPageState extends State<CmoPage> {
     final body = _pressRelease!['body'];
     final tags = (_pressRelease!['hashtags'] as List).join(' ');
 
-    Share.share('$title\n\n$body\n\n$tags\n#自分株式会社');
+    SharePlus.instance.share(ShareParams(
+      text: '$title\n\n$body\n\n$tags\n#自分株式会社',
+      subject: title,
+    ));
   }
 
   @override

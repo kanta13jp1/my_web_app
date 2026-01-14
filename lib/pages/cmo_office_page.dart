@@ -45,7 +45,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   }
 
   void _shareApp() {
-    Share.share('「自分株式会社」で人生経営中！ #MeInc');
+    SharePlus.instance.share(ShareParams(text: '「自分株式会社」で人生経営中！ #MeInc'));
   }
 
   @override
