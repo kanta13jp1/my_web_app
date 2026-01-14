@@ -211,6 +211,33 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         },
       ],
     ),
+    CourseModule(
+      id: 'api_reference',
+      title: 'Gemini API リファレンス',
+      description: 'REST APIやSDKの技術仕様を学ぶ',
+      icon: Icons.integration_instructions,
+      content:
+          'このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
+          'HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
+          '最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。\n\n'
+          '言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。\n\n'
+          '利用規約を更新しました。',
+      quiz: Quiz(
+        question: 'HTTPリクエストをサポートする環境で利用できるAPIは？',
+        options: ['REST API', 'SDK', 'GraphQL API', 'SOAP API'],
+        correctIndex: 0,
+      ),
+      officialDocs: [
+        {
+          'title': 'Gemini REST API reference',
+          'url': 'https://ai.google.dev/api/rest',
+        },
+        {
+          'title': 'SDK references',
+          'url': 'https://ai.google.dev/docs/sdks',
+        },
+      ],
+    ),
   ];
 
   @override
