@@ -138,7 +138,7 @@ class HomePage extends StatelessWidget {
                 'Gemini大学',
                 Icons.menu_book,
                 Colors.blue,
-                () => _nav(context, const GeminiUniversityPage()),
+                () => _nav(context, const GeminiUniversityV2Page()),
               ),
             ]),
           ],

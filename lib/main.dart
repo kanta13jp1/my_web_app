@@ -111,7 +111,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/gemini-university':
             return MaterialPageRoute(
-              builder: (_) => const GeminiUniversityPage(),
+              builder: (_) => const GeminiUniversityV2Page(),
             );
           case '/danshari':
             return MaterialPageRoute(builder: (_) => const DanshariPage());
