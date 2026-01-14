@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 
@@ -36,43 +37,77 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         options: ['Gemini Pro', 'Gemini Ultra', 'Gemini Nano', 'Gemini Flash'],
         correctIndex: 2,
       ),
+      officialDocs: [
+        {'title': 'Gemini API overview', 'url': 'https://ai.google.dev/docs/gemini_api_overview'},
+        {'title': 'Gemini Models', 'url': 'https://ai.google.dev/models/gemini'},
+      ],
     ),
     CourseModule(
-      id: 'prompt_engineering',
-      title: 'プロンプトエンジニアリング',
-      description: 'AIから最適な回答を引き出すための指示出しテクニック',
+      id: 'prompt_design',
+      title: 'プロンプト設計',
+      description: '効果的なプロンプトを作成するためのベストプラクティス',
       icon: Icons.edit_note,
-      content: 'AIへの指示（プロンプト）の質が、出力の質を大きく左右します。\n\n'
-          '【効果的なプロンプトの4要素】\n'
-          '1. **Persona (役割)**: 「あなたは熟練のエンジニアです」のように役割を与える。\n'
-          '2. **Context (背景)**: 前提条件や背景情報を伝える。\n'
-          '3. **Task (タスク)**: 具体的に何をすべきか指示する。\n'
-          '4. **Format (形式)**: 出力形式（表、JSON、箇条書きなど）を指定する。\n\n'
-          'また、「段階的に考えてください (Chain of Thought)」と指示することで、論理的推論能力が向上します。',
+      content: 'AIから最適な回答を引き出すには、プロンプトの設計が極めて重要です。\n\n'
+          '【プロンプト設計のヒント】\n'
+          '1. **明確な指示**: AIに何をさせたいかを具体的に記述します。\n'
+          '2. **役割を与える (Persona)**: 「あなたは熟練のマーケターです」のように、AIの役割を指定します。\n'
+          '3. **例を示す (Few-shot)**: 期待する出力形式の例をいくつか提示します。\n'
+          '4. **段階的に考えさせる (Chain of Thought)**: 複雑な問題は、ステップバイステップで考えさせると精度が向上します。\n'
+          '5. **出力形式を指定する**: JSON、Markdown、箇条書きなど、希望の形式を明確に指示します。',
       quiz: Quiz(
-        question: '論理的な回答を引き出すために有効なフレーズは？',
-        options: ['急いで答えて', '段階的に考えて', '短く答えて', '英語で答えて'],
-        correctIndex: 1,
-      ),
-    ),
-    CourseModule(
-      id: 'api_integration',
-      title: 'API活用とFunction Calling',
-      description: 'システム開発におけるGemini APIの活用法',
-      icon: Icons.api,
-      content: 'Gemini APIを使用することで、アプリにAI機能を組み込むことができます。\n\n'
-          '【Function Calling (ツール使用)】\n'
-          'Geminiが自ら「外部ツール（APIやDB検索など）を使うべき」と判断し、関数の引数を生成する機能です。これにより、AIがリアルタイム情報にアクセスしたり、特定のアクションを実行したりできます。\n\n'
-          '【JSON Mode】\n'
-          '出力を必ず正しいJSON形式に固定するモードです。システム連携において非常に重要です。',
-      quiz: Quiz(
-        question: 'AIが外部ツールを使用するための引数を生成する機能は？',
-        options: ['RAG', 'Fine-tuning', 'Function Calling', 'Embedding'],
+        question: 'AIに役割を与えるプロンプト手法を何と呼びますか？',
+        options: ['Few-shot', 'Chain of Thought', 'Persona', 'Format'],
         correctIndex: 2,
       ),
+      officialDocs: [
+        {'title': 'Prompt design strategies', 'url': 'https://ai.google.dev/docs/prompt_best_practices'},
+        {'title': 'Prompt Gallery', 'url': 'https://ai.google.dev/examples?keywords=prompting'},
+      ],
+    ),
+        CourseModule(
+      id: 'function_calling',
+      title: 'Function Calling',
+      description: '外部システムと連携して機能を拡張する',
+      icon: Icons.api,
+      content: 'Function Callingは、Geminiが外部のAPIやサービスを呼び出す必要があると判断した際に、特定の関数を呼び出すための構造化されたデータを返す機能です。\n\n'
+          '【主な利点】\n'
+          '1. **リアルタイム情報アクセス**: 天気予報、株価、ニュースなど、最新の情報を取得できます。\n'
+          '2. **外部サービス連携**: 自社のデータベース検索や、Eメール送信などのアクションを実行できます。\n'
+          '3. **構造化データ抽出**: 自然言語のテキストから、定義したスキーマに基づいて情報を抽出します。\n\n'
+          'これにより、AIは単なるテキスト生成にとどまらず、より動的でインタラクティブなアプリケーションの一部として機能します。',
+      quiz: Quiz(
+        question: 'Function Callingの主な利点は次のうちどれですか？',
+        options: ['モデルの学習', 'リアルタイム情報の取得', '画像の生成', 'テキストの翻訳'],
+        correctIndex: 1,
+      ),
+      officialDocs: [
+        {'title': 'Function calling', 'url': 'https://ai.google.dev/docs/function_calling'},
+        {'title': 'Vertex AI - Function calling', 'url': 'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling'},
+      ],
     ),
     CourseModule(
-      id: 'advanced_context',
+      id: 'multimodality',
+      title: 'マルチモーダリティ',
+      description: 'テキスト、画像、音声を組み合わせた入力と出力',
+      icon: Icons.camera_alt,
+      content: 'Geminiは、テキストだけでなく、画像、音声、動画といった複数の種類の情報を同時に理解し、処理することができます。\n\n'
+          '【ユースケース例】\n'
+          '1. **画像の説明**: 画像をアップロードし、その内容を説明する文章を生成します。\n'
+          '2. **動画の要約**: 動画ファイルから主要なシーンを抜き出し、要約を作成します。\n'
+          '3. **音声コマンド**: 音声で指示を出し、それに応じたテキストや画像を生成します。\n\n'
+          'プロンプトに複数のモダリティ（例：画像とテキスト）を組み合わせることで、より複雑で文脈に沿ったタスクを実行できます。',
+      quiz: Quiz(
+        question: 'マルチモーダルAIが扱える情報の種類は次のうちどれですか？',
+        options: ['テキストのみ', 'テキストと画像のみ', 'テキスト、画像、音声、動画など', '数値データのみ'],
+        correctIndex: 2,
+      ),
+      officialDocs: [
+        {'title': 'Multimodal concepts', 'url': 'https://ai.google.dev/docs/concepts#multimodal'},
+        {'title': 'Media', 'url': 'https://ai.google.dev/docs/media'},
+      ],
+    ),
+    CourseModule(
+      id: 'long_context',
       title: 'ロングコンテキストとキャッシュ',
       description: 'Gemini 1.5の長大なコンテキストウィンドウの活用',
       icon: Icons.memory,
@@ -85,15 +120,52 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           '頻繁に使用する長いコンテキスト（マニュアルや規定など）をキャッシュすることで、コストとレイテンシを削減できます。',
       quiz: Quiz(
         question: '長いプロンプトを再利用してコストを削減する機能は？',
-        options: [
-          'Context Caching',
-          'Vector Search',
-          'Distillation',
-          'Quantization'
-              'Quantization',
-        ],
+        options: ['Context Caching', 'Vector Search', 'Distillation', 'Quantization'],
         correctIndex: 0,
       ),
+      officialDocs: [
+        {'title': 'Context caching', 'url': 'https://ai.google.dev/docs/context_caching'},
+        {'title': 'Get started with Gemini 1.5 Pro', 'url': 'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro'},
+      ],
+    ),
+    CourseModule(
+      id: 'json_mode',
+      title: 'JSONモード',
+      description: '構造化されたJSON出力を保証する',
+      icon: Icons.code,
+      content: 'JSONモードを有効にすると、モデルの出力が必ず有効なJSON文字列であることが保証されます。\n\n'
+          '【利点】\n'
+          '- **信頼性**: 出力が常にパース可能であるため、アプリケーションとの連携が安定します。\n'
+          '- **効率化**: 出力形式を検証し、リトライするロジックをクライアント側で実装する必要がなくなります。\n\n'
+          'API連携や、構造化データを必要とするアプリケーション開発において非常に強力な機能です。',
+      quiz: Quiz(
+        question: 'JSONモードの主な利点は何ですか？',
+        options: ['出力が高速になる', '出力が必ず有効なJSONになる', '出力がカラフルになる', '出力が長くなる'],
+        correctIndex: 1,
+      ),
+      officialDocs: [
+        {'title': 'JSON mode', 'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode'},
+      ],
+    ),
+    CourseModule(
+      id: 'responsible_ai',
+      title: '責任あるAI',
+      description: '安全で倫理的なAIアプリケーションを構築する',
+      icon: Icons.health_and_safety,
+      content: 'Googleは、AIを責任を持って開発するためのツールとガイダンスを提供しています。\n\n'
+          '【安全設定 (Safety Settings)】\n'
+          'Gemini APIには、有害なコンテンツ（嫌がらせ、ヘイトスピーチなど）をブロックするための安全設定が組み込まれています。閾値を調整することで、ユースケースに応じたカスタマイズが可能です。\n\n'
+          '【APIキーの保護】\n'
+          'APIキーは、クライアントサイドのコードに直接埋め込むべきではありません。サーバーサイドで管理し、必要に応じて呼び出すなどの対策が推奨されます。',
+      quiz: Quiz(
+        question: '有害なコンテンツをブロックする機能は何ですか？',
+        options: ['APIキー', 'JSONモード', '安全設定', 'Persona'],
+        correctIndex: 2,
+      ),
+      officialDocs: [
+        {'title': 'Safety settings', 'url': 'https://ai.google.dev/docs/safety_setting_gemini'},
+        {'title': 'AI principles', 'url': 'https://ai.google/responsibility/principles/'},
+      ],
     ),
   ];
 
@@ -107,6 +179,20 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch $urlString'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _completeModule(String id) {
@@ -248,7 +334,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                         p: const TextStyle(height: 1.6),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    _buildOfficialDocs(module),
                     if (!isCompleted)
                       _buildQuiz(module)
                     else
@@ -256,7 +342,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
+                          color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
@@ -279,14 +365,53 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     );
   }
 
+  Widget _buildOfficialDocs(CourseModule module) {
+    if (module.officialDocs == null || module.officialDocs!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        const Divider(),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            '【公式ドキュメント】',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
+          ),
+        ),
+        ...module.officialDocs!.map((doc) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: TextButton.icon(
+              onPressed: () => _launchUrl(doc['url']!),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(doc['title']!),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                alignment: Alignment.centerLeft,
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   Widget _buildQuiz(CourseModule module) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 24),
         const Divider(),
-        const Text(
-          '【理解度確認クイズ】',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            '【理解度確認クイズ】',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+          ),
         ),
         const SizedBox(height: 8),
         Text(module.quiz.question, style: const TextStyle(fontSize: 16)),
@@ -391,7 +516,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         border: Border.all(color: Colors.orange, width: 4),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.2),
+            color: Colors.orange.withOpacity(0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -444,6 +569,7 @@ class CourseModule {
   final IconData icon;
   final String content;
   final Quiz quiz;
+  final List<Map<String, String>>? officialDocs;
 
   CourseModule({
     required this.id,
@@ -452,6 +578,7 @@ class CourseModule {
     required this.icon,
     required this.content,
     required this.quiz,
+    this.officialDocs,
   });
 }
 
