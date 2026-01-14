@@ -38,8 +38,14 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 2,
       ),
       officialDocs: [
-        {'title': 'Gemini API overview', 'url': 'https://ai.google.dev/docs/gemini_api_overview'},
-        {'title': 'Gemini Models', 'url': 'https://ai.google.dev/models/gemini'},
+        {
+          'title': 'Gemini API overview',
+          'url': 'https://ai.google.dev/docs/gemini_api_overview'
+        },
+        {
+          'title': 'Gemini Models',
+          'url': 'https://ai.google.dev/models/gemini'
+        },
       ],
     ),
     CourseModule(
@@ -60,16 +66,23 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 2,
       ),
       officialDocs: [
-        {'title': 'Prompt design strategies', 'url': 'https://ai.google.dev/docs/prompt_best_practices'},
-        {'title': 'Prompt Gallery', 'url': 'https://ai.google.dev/examples?keywords=prompting'},
+        {
+          'title': 'Prompt design strategies',
+          'url': 'https://ai.google.dev/docs/prompt_best_practices'
+        },
+        {
+          'title': 'Prompt Gallery',
+          'url': 'https://ai.google.dev/examples?keywords=prompting'
+        },
       ],
     ),
-        CourseModule(
+    CourseModule(
       id: 'function_calling',
       title: 'Function Calling',
       description: '外部システムと連携して機能を拡張する',
       icon: Icons.api,
-      content: 'Function Callingは、Geminiが外部のAPIやサービスを呼び出す必要があると判断した際に、特定の関数を呼び出すための構造化されたデータを返す機能です。\n\n'
+      content:
+          'Function Callingは、Geminiが外部のAPIやサービスを呼び出す必要があると判断した際に、特定の関数を呼び出すための構造化されたデータを返す機能です。\n\n'
           '【主な利点】\n'
           '1. **リアルタイム情報アクセス**: 天気予報、株価、ニュースなど、最新の情報を取得できます。\n'
           '2. **外部サービス連携**: 自社のデータベース検索や、Eメール送信などのアクションを実行できます。\n'
@@ -81,8 +94,15 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 1,
       ),
       officialDocs: [
-        {'title': 'Function calling', 'url': 'https://ai.google.dev/docs/function_calling'},
-        {'title': 'Vertex AI - Function calling', 'url': 'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling'},
+        {
+          'title': 'Function calling',
+          'url': 'https://ai.google.dev/docs/function_calling'
+        },
+        {
+          'title': 'Vertex AI - Function calling',
+          'url':
+              'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling'
+        },
       ],
     ),
     CourseModule(
@@ -102,7 +122,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 2,
       ),
       officialDocs: [
-        {'title': 'Multimodal concepts', 'url': 'https://ai.google.dev/docs/concepts#multimodal'},
+        {
+          'title': 'Multimodal concepts',
+          'url': 'https://ai.google.dev/docs/concepts#multimodal'
+        },
         {'title': 'Media', 'url': 'https://ai.google.dev/docs/media'},
       ],
     ),
@@ -120,12 +143,24 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           '頻繁に使用する長いコンテキスト（マニュアルや規定など）をキャッシュすることで、コストとレイテンシを削減できます。',
       quiz: Quiz(
         question: '長いプロンプトを再利用してコストを削減する機能は？',
-        options: ['Context Caching', 'Vector Search', 'Distillation', 'Quantization'],
+        options: [
+          'Context Caching',
+          'Vector Search',
+          'Distillation',
+          'Quantization'
+        ],
         correctIndex: 0,
       ),
       officialDocs: [
-        {'title': 'Context caching', 'url': 'https://ai.google.dev/docs/context_caching'},
-        {'title': 'Get started with Gemini 1.5 Pro', 'url': 'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro'},
+        {
+          'title': 'Context caching',
+          'url': 'https://ai.google.dev/docs/context_caching'
+        },
+        {
+          'title': 'Get started with Gemini 1.5 Pro',
+          'url':
+              'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro'
+        },
       ],
     ),
     CourseModule(
@@ -144,7 +179,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 1,
       ),
       officialDocs: [
-        {'title': 'JSON mode', 'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode'},
+        {
+          'title': 'JSON mode',
+          'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode'
+        },
       ],
     ),
     CourseModule(
@@ -163,8 +201,14 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         correctIndex: 2,
       ),
       officialDocs: [
-        {'title': 'Safety settings', 'url': 'https://ai.google.dev/docs/safety_setting_gemini'},
-        {'title': 'AI principles', 'url': 'https://ai.google/responsibility/principles/'},
+        {
+          'title': 'Safety settings',
+          'url': 'https://ai.google.dev/docs/safety_setting_gemini'
+        },
+        {
+          'title': 'AI principles',
+          'url': 'https://ai.google/responsibility/principles/'
+        },
       ],
     ),
   ];
@@ -379,7 +423,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           padding: EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
             '【公式ドキュメント】',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
+            style:
+                TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
           ),
         ),
         ...module.officialDocs!.map((doc) {
@@ -395,7 +440,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

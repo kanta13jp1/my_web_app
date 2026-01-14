@@ -182,7 +182,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "Production deployment successful!",
+              "text": "✅ Production Deployment Successful!",
               "blocks": [
                 {
                   "type": "header",
@@ -193,10 +193,33 @@ jobs:
                 },
                 {
                   "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}"
-                  }
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Environment:*\nProduction" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n`${{ github.ref_name }}`" },
+                    { "type": "mrkdwn", "text": "*Commit:*\n`${{ github.sha }}`" },
+                    { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Deployed Site"
+                      },
+                      "url": "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+                    }
+                  ]
                 }
               ]
             }
@@ -209,28 +232,35 @@ jobs:
         with:
           payload: |
             {
-              "text": "Production deployment failed!",
+              "text": "❌ Production Deployment Failed!",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "Production Deployment Failed!"
+                    "text": "❌ Production Deployment Failed!"
                   }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Environment:* Production\n*Branch:* \`${{ github.ref_name }}\`\n*Commit:* \`${{ github.sha }}\`\n*Author:* ${{ github.actor }}\n\n *URGENT*: Production deployment has failed. Please investigate immediately!"
+                    "text": "*URGENT*: Production deployment has failed. Please investigate immediately!\n\n*Environment:* Production\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}"
                   }
                 },
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Logs>"
-                  }
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "danger"
+                    }
+                  ]
                 }
               ]
             }
@@ -246,5 +276,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
-              body: ' Successfully deployed to **Production** environment!\n\n Version: ${{ needs.deploy.outputs.tag }}\n URL: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
+              body: 'Successfully deployed to **Production** environment!\n\n- **Version**: ${{ needs.deploy.outputs.tag }}\n- **URL**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app'
             })
