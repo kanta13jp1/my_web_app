@@ -105,13 +105,14 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
       );
 
       if (response.status != 200) throw Exception('AI Error');
-      final data = response.data;
+      final data = response.data as Map<String, dynamic>;
 
       setState(() {
-        _generatedContent = data['result']; // Raw Markdown string
-        _writerModel = data['used_model'];
+        _generatedContent = data['result'] as String?; // Raw Markdown string
+        _writerModel = data['used_model'] as String?;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('生成エラー: $e')));
     } finally {

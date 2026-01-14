@@ -136,7 +136,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
             // ★ 多段階ベンチマーク対応: スコアを動的に更新
             final index = _models.indexWhere(
-                (m) => (m as Map<String, dynamic>)['model'] == modelName);
+              (m) => (m as Map<String, dynamic>)['model'] == modelName,
+            );
             if (index != -1) {
               // (認識率 * 10) - (速度ms / 100)
               final int visionScore = benchmark['score'] as int? ?? 0;
@@ -156,7 +157,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
           // エラー時はスコアを0にして最下位へ
           final index = _models.indexWhere(
-              (m) => (m as Map<String, dynamic>)['model'] == modelName);
+            (m) => (m as Map<String, dynamic>)['model'] == modelName,
+          );
           if (index != -1) {
             (_models[index] as Map<String, dynamic>)['score'] = 0;
             _sortModels();

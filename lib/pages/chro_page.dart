@@ -93,7 +93,8 @@ class _ChroPageState extends State<ChroPage>
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item['name'] as String}を購入しました！')));
+        SnackBar(content: Text('${item['name'] as String}を購入しました！')),
+      );
       _fetchData();
     } catch (e) {
       if (!mounted) return;
@@ -269,8 +270,10 @@ class _ChroPageState extends State<ChroPage>
                       ),
                       color: Colors.pink,
                     ),
-                    Text(item['name'] as String,
-                        style: const TextStyle(fontSize: 10)),
+                    Text(
+                      item['name'] as String,
+                      style: const TextStyle(fontSize: 10),
+                    ),
                   ],
                 ),
               );
