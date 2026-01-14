@@ -58,7 +58,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
         _models = rawList.map((m) {
           final modelMap = m as Map<String, dynamic>;
           // APIの 'name' をUIの 'model' にマッピング
-          final String name = modelMap['model'] as String? ?? modelMap['name'] as String? ?? 'Unknown';
+          final String name = modelMap['model'] as String? ??
+              modelMap['name'] as String? ??
+              'Unknown';
 
           // プロバイダー名の表記ゆれ吸収 (Google -> gemini)
           String provider = modelMap['provider'] as String? ?? 'Unknown';
@@ -121,9 +123,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
         body: {'action': 'test_model', 'model': modelName},
       );
 
-      final data = (res.data is String
-          ? jsonDecode(res.data)
-          : res.data) as Map<String, dynamic>;
+      final data = (res.data is String ? jsonDecode(res.data) : res.data)
+          as Map<String, dynamic>;
 
       setState(() {
         if (data['success'] == true) {
@@ -134,8 +135,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
             _visionScores[modelName] = benchmark;
 
             // ★ 多段階ベンチマーク対応: スコアを動的に更新
-            final index = _models
-                .indexWhere((m) => (m as Map<String, dynamic>)['model'] == modelName);
+            final index = _models.indexWhere(
+                (m) => (m as Map<String, dynamic>)['model'] == modelName);
             if (index != -1) {
               // (認識率 * 10) - (速度ms / 100)
               final int visionScore = benchmark['score'] as int? ?? 0;
@@ -154,8 +155,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
           _testErrors[modelName] = data['error']?.toString() ?? 'Unknown Error';
 
           // エラー時はスコアを0にして最下位へ
-          final index = _models
-              .indexWhere((m) => (m as Map<String, dynamic>)['model'] == modelName);
+          final index = _models.indexWhere(
+              (m) => (m as Map<String, dynamic>)['model'] == modelName);
           if (index != -1) {
             (_models[index] as Map<String, dynamic>)['score'] = 0;
             _sortModels();
@@ -209,7 +210,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   itemCount: _models.length,
                   itemBuilder: (context, index) {
                     final modelMap = _models[index] as Map<String, dynamic>;
-                    final provider = modelMap['provider'] as String? ?? 'Unknown';
+                    final provider =
+                        modelMap['provider'] as String? ?? 'Unknown';
                     // scoreがnullでも0として扱う
                     final score = modelMap['score'] as int? ?? 0;
                     final modelName = modelMap['model'] as String? ?? 'Unknown';

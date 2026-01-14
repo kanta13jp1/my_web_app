@@ -67,19 +67,19 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
               children: [
                 _buildKpiCard(
                   '顧客エンゲージメント (継続日数)',
-                  '${streak}日',
+                  '$streak日',
                   Icons.local_fire_department,
                   Colors.orange,
                 ),
                 _buildKpiCard(
                   '顧客LTV (総獲得ポイント)',
-                  '${points} pt',
+                  '$points pt',
                   Icons.monetization_on,
                   Colors.yellow[800]!,
                 ),
                 _buildKpiCard(
                   'ブランドランク (レベル)',
-                  'Lv.${level}',
+                  'Lv.$level',
                   Icons.stars,
                   Colors.blue,
                 ),

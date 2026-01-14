@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/gamification_service.dart';
 import '../models/achievement.dart';
-import '../services/theme_service.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});

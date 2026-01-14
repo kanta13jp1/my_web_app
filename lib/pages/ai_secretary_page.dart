@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
@@ -300,7 +300,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           })
           .select()
           .single();
-      final noteId = (noteData as Map<String, dynamic>)['id'] as int;
+      final noteId = (noteData)['id'] as int;
       final bytes = await imageFile.readAsBytes();
       final size = await imageFile.length();
       final file = PlatformFile(name: imageFile.name, size: size, bytes: bytes);

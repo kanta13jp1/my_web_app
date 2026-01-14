@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../main.dart';
 
 class ChroPage extends StatefulWidget {
@@ -91,10 +91,12 @@ class _ChroPageState extends State<ChroPage>
           .from('user_inventory')
           .insert({'user_id': userId, 'item_id': item['id']});
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${item['name']}を購入しました！')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${item['name'] as String}を購入しました！')));
       _fetchData();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('購入エラー: $e')));
     }
@@ -118,8 +120,8 @@ class _ChroPageState extends State<ChroPage>
       );
 
       if (response.status != 200) throw Exception('AI Error');
-      final data =
-          response.data['result'] as Map<String, dynamic>; // {rank, report_content, bonus_message}
+      final data = response.data['result']
+          as Map<String, dynamic>; // {rank, report_content, bonus_message}
 
       // 保存
       await supabase.from('monthly_evaluations').insert({
@@ -246,7 +248,8 @@ class _ChroPageState extends State<ChroPage>
             scrollDirection: Axis.horizontal,
             itemCount: _inventory.length,
             itemBuilder: (context, index) {
-              final item = _inventory[index]['welfare_items'] as Map<String, dynamic>;
+              final item =
+                  _inventory[index]['welfare_items'] as Map<String, dynamic>;
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 8),
                 padding: const EdgeInsets.all(8),
@@ -265,7 +268,8 @@ class _ChroPageState extends State<ChroPage>
                       ),
                       color: Colors.pink,
                     ),
-                    Text(item['name'] as String, style: const TextStyle(fontSize: 10)),
+                    Text(item['name'] as String,
+                        style: const TextStyle(fontSize: 10)),
                   ],
                 ),
               );
