@@ -23,7 +23,7 @@ class ShareNoteDialog extends StatelessWidget {
     final shareText = '【${note.title}】\n${note.content}\n\n#マイメモ #Gemini';
 
     // シェア実行
-    await Share.share(
+    await SharePlus.share(
       shareText,
       subject: note.title,
       sharePositionOrigin:

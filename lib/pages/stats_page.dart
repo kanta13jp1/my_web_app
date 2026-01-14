@@ -30,7 +30,6 @@ class _StatsPageState extends State<StatsPage> {
   @override
   Widget build(BuildContext context) {
     final gameService = Provider.of<GamificationService>(context);
-    final themeService = Provider.of<ThemeService>(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('統計 & 実績')),

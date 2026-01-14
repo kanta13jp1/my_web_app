@@ -350,7 +350,7 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
                           IconButton(
                             icon: const Icon(Icons.share, color: Colors.indigo),
                             onPressed: () {
-                              Share.share(_generatedContent!);
+                              SharePlus.share(_generatedContent!);
                             },
                           ),
                         ],

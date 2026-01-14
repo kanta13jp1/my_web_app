@@ -598,7 +598,7 @@ class _SharePhilosopherQuoteDialogState
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await Share.shareXFiles(
+      await SharePlus.shareXFiles(
         [XFile(file.path)],
         text: _getShareMessage(),
       );

@@ -45,7 +45,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   }
 
   void _shareApp() {
-    Share.share('「自分株式会社」で人生経営中！ #MeInc');
+    SharePlus.share('「自分株式会社」で人生経営中！ #MeInc');
   }
 
   @override
@@ -67,19 +67,19 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
               children: [
                 _buildKpiCard(
                   '顧客エンゲージメント (継続日数)',
-                  '{streak}日',
+                  '${streak}日',
                   Icons.local_fire_department,
                   Colors.orange,
                 ),
                 _buildKpiCard(
                   '顧客LTV (総獲得ポイント)',
-                  '{points} pt',
+                  '${points} pt',
                   Icons.monetization_on,
                   Colors.yellow[800]!,
                 ),
                 _buildKpiCard(
                   'ブランドランク (レベル)',
-                  'Lv.{level}',
+                  'Lv.${level}',
                   Icons.stars,
                   Colors.blue,
                 ),

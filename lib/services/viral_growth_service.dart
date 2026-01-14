@@ -7,7 +7,7 @@ class ViralGrowthService {
   ViralGrowthService(this._gamificationService);
 
   Future<void> shareApp() async {
-    await Share.share('Check out Me Inc. app!');
+    await SharePlus.share('Check out Me Inc. app!');
     await _gamificationService.awardPoints(30, reason: 'App Share');
   }
 

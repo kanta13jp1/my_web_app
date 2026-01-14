@@ -14,7 +14,6 @@ class _ChroPageState extends State<ChroPage>
   int _myPoints = 0;
   List<Map<String, dynamic>> _welfareItems = [];
   List<Map<String, dynamic>> _inventory = [];
-  bool _isLoading = true;
 
   // メンタルケア用
   final TextEditingController _chatController = TextEditingController();
@@ -66,7 +65,7 @@ class _ChroPageState extends State<ChroPage>
           .limit(1);
       if (evals.isNotEmpty) _lastEvaluation = evals.first;
 
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {});
     } catch (e) {
       debugPrint('Error: $e');
     }
@@ -120,7 +119,7 @@ class _ChroPageState extends State<ChroPage>
 
       if (response.status != 200) throw Exception('AI Error');
       final data =
-          response.data['result']; // {rank, report_content, bonus_message}
+          response.data['result'] as Map<String, dynamic>; // {rank, report_content, bonus_message}
 
       // 保存
       await supabase.from('monthly_evaluations').insert({
@@ -157,7 +156,7 @@ class _ChroPageState extends State<ChroPage>
       );
 
       if (response.status != 200) throw Exception('Error');
-      final reply = response.data['result']; // String
+      final reply = response.data['result'] as String; // String
 
       setState(() {
         _chatHistory.add({'role': 'ai', 'content': reply.toString()});
@@ -247,7 +246,7 @@ class _ChroPageState extends State<ChroPage>
             scrollDirection: Axis.horizontal,
             itemCount: _inventory.length,
             itemBuilder: (context, index) {
-              final item = _inventory[index]['welfare_items'];
+              final item = _inventory[index]['welfare_items'] as Map<String, dynamic>;
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 8),
                 padding: const EdgeInsets.all(8),
@@ -261,12 +260,12 @@ class _ChroPageState extends State<ChroPage>
                   children: [
                     Icon(
                       IconData(
-                        item['icon_code'] ?? 58746,
+                        item['icon_code'] as int? ?? 58746,
                         fontFamily: 'MaterialIcons',
                       ),
                       color: Colors.pink,
                     ),
-                    Text(item['name'], style: const TextStyle(fontSize: 10)),
+                    Text(item['name'] as String, style: const TextStyle(fontSize: 10)),
                   ],
                 ),
               );
@@ -287,14 +286,14 @@ class _ChroPageState extends State<ChroPage>
                     backgroundColor: Colors.pink.shade100,
                     child: Icon(
                       IconData(
-                        item['icon_code'] ?? 58746,
+                        item['icon_code'] as int? ?? 58746,
                         fontFamily: 'MaterialIcons',
                       ),
                       color: Colors.pink,
                     ),
                   ),
-                  title: Text(item['name']),
-                  subtitle: Text(item['description']),
+                  title: Text(item['name'] as String),
+                  subtitle: Text(item['description'] as String),
                   trailing: ElevatedButton(
                     onPressed: canBuy ? () => _purchaseItem(item) : null,
                     style: ElevatedButton.styleFrom(
@@ -356,7 +355,7 @@ class _ChroPageState extends State<ChroPage>
                 children: [
                   const Text('CEO RANK', style: TextStyle(color: Colors.grey)),
                   Text(
-                    ev['rank'],
+                    ev['rank'] as String,
                     style: const TextStyle(
                       fontSize: 64,
                       fontWeight: FontWeight.bold,
@@ -369,7 +368,7 @@ class _ChroPageState extends State<ChroPage>
           ),
           const SizedBox(height: 32),
           Text(
-            ev['report_content'] ?? '',
+            ev['report_content'] as String? ?? '',
             style: const TextStyle(fontSize: 16, height: 1.6),
           ),
           const SizedBox(height: 40),
