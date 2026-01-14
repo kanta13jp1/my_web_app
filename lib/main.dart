@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'pages/home_page.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/landing_page.dart';
-import 'pages/gemini_university_page.dart';
+import 'pages/gemini_university_v2_page.dart';
 import 'pages/danshari_page.dart';
 
 import 'services/theme_service.dart';

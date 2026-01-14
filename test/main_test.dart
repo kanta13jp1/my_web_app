@@ -12,6 +12,7 @@ import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/pages/gemini_university_page.dart';
+import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 
 // モック生成

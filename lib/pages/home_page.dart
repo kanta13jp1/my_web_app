@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/theme_service.dart';
@@ -6,7 +6,7 @@ import 'note_editor_page.dart';
 import 'note_list_page.dart';
 import 'ai_status_page.dart';
 import 'danshari_page.dart';
-import 'gemini_university_page.dart';
+import 'gemini_university_v2_page.dart';
 import 'emergency_meeting_page.dart';
 import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
