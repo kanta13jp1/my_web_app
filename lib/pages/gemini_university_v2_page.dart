@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 
-class GeminiUniversityPage extends StatefulWidget {
-  const GeminiUniversityPage({super.key});
+class GeminiUniversityV2Page extends StatefulWidget {
+  const GeminiUniversityV2Page({super.key});
 
   @override
-  State<GeminiUniversityPage> createState() => _GeminiUniversityPageState();
+  State<GeminiUniversityV2Page> createState() => _GeminiUniversityV2PageState();
 }
 
-class _GeminiUniversityPageState extends State<GeminiUniversityPage>
+class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final Set<String> _completedModuleIds = {};
@@ -89,7 +89,7 @@ class _GeminiUniversityPageState extends State<GeminiUniversityPage>
           'Vector Search',
           'Distillation',
           'Quantization'
-          'Quantization',
+              'Quantization',
         ],
         correctIndex: 0,
       ),
