@@ -205,7 +205,7 @@ jobs:
 
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
             {

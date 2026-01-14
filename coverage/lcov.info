@@ -36,7 +36,7 @@ DA:31,0
 DA:32,0
 DA:33,0
 DA:34,0
-DA:42,1
+DA:42,2
 DA:44,1
 DA:46,4
 DA:48,1
@@ -52,7 +52,7 @@ DA:64,1
 DA:65,1
 DA:66,2
 DA:71,1
-DA:80,1
+DA:80,2
 DA:82,1
 DA:84,1
 DA:86,1
@@ -77,7 +77,7 @@ LF:46
 LH:38
 end_of_record
 SF:lib\pages\home_page.dart
-DA:19,1
+DA:19,2
 DA:21,0
 DA:22,0
 DA:23,0
@@ -167,7 +167,7 @@ LF:86
 LH:64
 end_of_record
 SF:lib\pages\onboarding_page.dart
-DA:5,1
+DA:5,2
 DA:7,1
 DA:8,1
 DA:17,1
@@ -272,7 +272,7 @@ LF:101
 LH:71
 end_of_record
 SF:lib\pages\landing_page.dart
-DA:6,1
+DA:6,2
 DA:8,1
 DA:9,1
 DA:18,0
@@ -322,7 +322,7 @@ LF:46
 LH:24
 end_of_record
 SF:lib\pages\gemini_university_v2_page.dart
-DA:8,1
+DA:8,2
 DA:10,1
 DA:11,1
 DA:100,1
@@ -447,7 +447,7 @@ LF:121
 LH:80
 end_of_record
 SF:lib\pages\danshari_page.dart
-DA:7,1
+DA:7,2
 DA:9,1
 DA:10,1
 DA:18,1
@@ -729,7 +729,7 @@ LF:92
 LH:0
 end_of_record
 SF:lib\pages\ai_status_page.dart
-DA:9,2
+DA:9,3
 DA:11,1
 DA:12,1
 DA:26,1
@@ -977,7 +977,7 @@ LF:244
 LH:220
 end_of_record
 SF:lib\pages\cfo_office_page.dart
-DA:5,1
+DA:5,2
 DA:7,0
 DA:9,0
 DA:10,0
@@ -1003,7 +1003,7 @@ LF:22
 LH:1
 end_of_record
 SF:lib\pages\subscription_page.dart
-DA:5,1
+DA:5,2
 DA:7,0
 DA:8,0
 DA:16,0
@@ -1092,7 +1092,7 @@ LF:85
 LH:1
 end_of_record
 SF:lib\pages\cho_office_page.dart
-DA:5,1
+DA:5,2
 DA:7,0
 DA:9,0
 DA:10,0
@@ -1118,7 +1118,7 @@ LF:22
 LH:1
 end_of_record
 SF:lib\pages\health_page.dart
-DA:6,1
+DA:6,2
 DA:8,0
 DA:9,0
 DA:18,0
@@ -1181,7 +1181,7 @@ LF:59
 LH:1
 end_of_record
 SF:lib\pages\chro_office_page.dart
-DA:6,1
+DA:6,2
 DA:8,0
 DA:10,0
 DA:11,0
@@ -1207,7 +1207,7 @@ LF:22
 LH:1
 end_of_record
 SF:lib\pages\rewards_page.dart
-DA:5,1
+DA:5,2
 DA:7,0
 DA:8,0
 DA:16,0
@@ -1277,7 +1277,7 @@ LF:66
 LH:1
 end_of_record
 SF:lib\pages\stats_page.dart
-DA:7,1
+DA:7,2
 DA:9,0
 DA:10,0
 DA:16,0
@@ -1309,7 +1309,7 @@ LF:28
 LH:1
 end_of_record
 SF:lib\pages\cmo_office_page.dart
-DA:6,1
+DA:6,2
 DA:8,0
 DA:9,0
 DA:17,0
@@ -1374,7 +1374,7 @@ LF:61
 LH:1
 end_of_record
 SF:lib\pages\emergency_meeting_page.dart
-DA:10,2
+DA:10,3
 DA:12,2
 DA:13,2
 DA:23,1
@@ -1565,7 +1565,7 @@ LF:20
 LH:20
 end_of_record
 SF:lib\pages\note_editor_page.dart
-DA:10,1
+DA:10,2
 DA:17,0
 DA:18,0
 DA:27,0
@@ -1645,7 +1645,7 @@ LF:76
 LH:1
 end_of_record
 SF:lib\pages\note_list_page.dart
-DA:7,1
+DA:7,2
 DA:9,1
 DA:10,1
 DA:18,1
@@ -1724,7 +1724,7 @@ LF:75
 LH:23
 end_of_record
 SF:lib\pages\real_world_danshari_page.dart
-DA:14,2
+DA:14,3
 DA:16,1
 DA:17,1
 DA:27,1
