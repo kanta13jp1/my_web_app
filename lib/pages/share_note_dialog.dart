@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/note.dart';
@@ -22,12 +22,14 @@ class ShareNoteDialog extends StatelessWidget {
     final shareText = '【${note.title}】\n${note.content}\n\n#マイメモ #Gemini';
 
     // シェア実行
-    await SharePlus.instance.share(ShareParams(
-      text: shareText,
-      subject: note.title,
-      sharePositionOrigin:
-          box != null ? box.localToGlobal(Offset.zero) & box.size : null,
-    ));
+    await SharePlus.instance.share(
+      ShareParams(
+        text: shareText,
+        subject: note.title,
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+      ),
+    );
 
     navigator.pop();
   }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 
@@ -77,10 +77,12 @@ class _CmoPageState extends State<CmoPage> {
     final body = _pressRelease!['body'];
     final tags = (_pressRelease!['hashtags'] as List).join(' ');
 
-    SharePlus.instance.share(ShareParams(
-      text: '$title\n\n$body\n\n$tags\n#自分株式会社',
-      subject: title,
-    ));
+    SharePlus.instance.share(
+      ShareParams(
+        text: '$title\n\n$body\n\n$tags\n#自分株式会社',
+        subject: title,
+      ),
+    );
   }
 
   @override

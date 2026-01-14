@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:typed_data';
 import 'dart:io';
@@ -598,10 +598,12 @@ class _SharePhilosopherQuoteDialogState
       await file.writeAsBytes(imageBytes);
 
       // 共有
-      await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path)],
-        text: _getShareMessage(),
-      ));
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: _getShareMessage(),
+        ),
+      );
     } catch (e) {
       debugPrint('Error sharing philosopher quote card: $e');
       rethrow;
