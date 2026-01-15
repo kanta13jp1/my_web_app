@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/app_timer.dart';
@@ -209,7 +210,12 @@ class TimerService extends ChangeNotifier {
   /// サウンド通知
   void _playSoundNotification() {
     // Web環境でHTML AudioElementを使用してサウンドを再生
-    // TODO: assets/sounds/timer_complete.mp3 を追加して再生
+    // assets/sounds/timer_complete.mp3 が必要
+    if (kIsWeb) {
+      // ignore: unsafe_html
+      html.AudioElement audio = html.AudioElement('assets/sounds/timer_complete.mp3');
+      audio.play();
+    }
     debugPrint('⏱️ Playing sound notification');
   }
 
