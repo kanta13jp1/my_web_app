@@ -224,16 +224,17 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           '利用規約を更新しました。\n\n'
           '## 主要エンドポイント\n\n'
           'Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
-          '**標準コンテンツ生成（generateContent）**: リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。',
+          '**標準コンテンツ生成（generateContent）**: リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
+          '**ストリーミングコンテンツ生成 (streamGenerateContent)**: サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。',
       quiz: Quiz(
-        question: '非対話型のタスクで、モデルの完全な応答を待つ場合に最適なエンドポイントは？',
+        question: 'チャットボットのように、高速でインタラクティブな体験が求められるアプリに最適なエンドポイントは？',
         options: [
           'generateContent',
           'streamGenerateContent',
           'embedContent',
-          'countTokens'
+          'countTokens',
         ],
-        correctIndex: 0,
+        correctIndex: 1,
       ),
       officialDocs: [
         {
