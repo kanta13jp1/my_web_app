@@ -4,6 +4,7 @@
 **Last Updated:** 2026-01-08
 
 ## 1. システムアーキテクチャ
+
 本プロジェクトは、**Flutter (Web)** をフロントエンド、**Supabase** をBaaS (Backend as a Service) として採用したサーバーレス構成である。
 
 ### 1.1 技術スタック
