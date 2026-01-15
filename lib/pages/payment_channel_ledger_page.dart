@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/payment_channel.dart';
-import '../services/payment_channel_service.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import '../models/payment_source.dart';
+import '../services/cfo_service.dart';
 
 class PaymentChannelLedgerPage extends StatefulWidget {
   const PaymentChannelLedgerPage({super.key});
@@ -12,41 +13,39 @@ class PaymentChannelLedgerPage extends StatefulWidget {
 }
 
 class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
-  final PaymentChannelService _paymentChannelService = PaymentChannelService();
-  late Future<List<PaymentChannel>> _channelsFuture;
+  final CfoService _cfoService = CfoService();
+  late Future<List<PaymentSource>> _sourcesFuture;
 
   @override
   void initState() {
     super.initState();
-    _channelsFuture = _paymentChannelService.getPaymentChannels();
+    timeago.setLocaleMessages('ja', timeago.JaMessages());
+    _sourcesFuture = _cfoService.getPaymentSources();
   }
 
-  String _formatCurrency(double amount, String currency) {
-    return NumberFormat.currency(
-      locale: currency == 'JPY' ? 'ja_JP' : 'en_US',
-      symbol: currency == 'JPY' ? '¥' : '\$',
-    ).format(amount);
+  void _refreshSources() {
+    setState(() {
+      _sourcesFuture = _cfoService.getPaymentSources();
+    });
   }
 
-  IconData _getStatusIcon(TransactionStatus status) {
-    switch (status) {
-      case TransactionStatus.completed:
-        return Icons.check_circle;
-      case TransactionStatus.pending:
-        return Icons.hourglass_empty;
-      case TransactionStatus.failed:
-        return Icons.cancel;
-    }
-  }
-
-  Color _getStatusColor(TransactionStatus status) {
-    switch (status) {
-      case TransactionStatus.completed:
-        return Colors.green;
-      case TransactionStatus.pending:
-        return Colors.orange;
-      case TransactionStatus.failed:
-        return Colors.red;
+  Future<void> _auditSource(String id) async {
+    try {
+      await _cfoService.auditPaymentSource(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('監査済みにマークしました。'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _refreshSources();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('監査処理中にエラーが発生しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -54,113 +53,107 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('決済チャネル台帳'),
+        title: const Text('決済ソース台帳'),
         backgroundColor: Colors.green[800],
         foregroundColor: Colors.white,
       ),
-      body: FutureBuilder<List<PaymentChannel>>(
-        future: _channelsFuture,
+      body: FutureBuilder<List<PaymentSource>>(
+        future: _sourcesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
+            // Supabaseからのエラーメッセージを具体的に表示
+            final error = snapshot.error;
+            String errorMessage = 'エラーが発生しました。';
+            if (error is Exception) {
+               // PostgrestExceptionなどのSupabase固有の例外を考慮
+               // For simplicity, converting error to string. In a real app, parse it.
+               errorMessage = error.toString();
+            }
+            return Center(child: Text(errorMessage));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('利用可能な決済チャネルがありません。'));
+            return const Center(child: Text('決済ソースが登録されていません。'));
           }
 
-          final channels = snapshot.data!;
+          final sources = snapshot.data!;
           return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {
-                _channelsFuture = _paymentChannelService.getPaymentChannels();
-              });
-            },
+            onRefresh: () async => _refreshSources(),
             child: ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: channels.length,
+              padding: const EdgeInsets.all(16.0),
+              itemCount: sources.length,
               itemBuilder: (context, index) {
-                final channel = channels[index];
+                final source = sources[index];
+                final isAuditedRecently = source.lastAuditedAt != null &&
+                    DateTime.now().difference(source.lastAuditedAt!).inDays < 30;
+                final auditStatusColor =
+                    isAuditedRecently ? Colors.green : Colors.orange;
+
                 return Card(
-                  elevation: 4,
+                  elevation: 2,
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   shape: RoundedRectangleBorder(
+                    side: BorderSide(color: auditStatusColor, width: 1.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: ExpansionTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.green[100],
-                      child: const Icon(Icons.account_balance_wallet,
-                          color: Colors.green),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          source.name,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.shield_check_outlined,
+                                color: auditStatusColor, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              '最終監査:',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                            const SizedBox(width: 8),
+                            if (source.lastAuditedAt != null)
+                              Text(
+                                timeago.format(source.lastAuditedAt!, locale: 'ja'),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: auditStatusColor,
+                                ),
+                              )
+                            else
+                              const Text(
+                                '未監査',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.fact_check_outlined),
+                            label: const Text('監査済みにする'),
+                            onPressed: () => _auditSource(source.id),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.green[700],
+                              side: BorderSide(color: Colors.green[700]!),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    title: Text(
-                      channel.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(channel.description),
-                    trailing: Text(
-                      _formatCurrency(channel.balance, channel.currency),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    children: [
-                      _buildTransactionList(channel.transactions, channel.currency),
-                    ],
                   ),
                 );
               },
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildTransactionList(List<Transaction> transactions, String currency) {
-    if (transactions.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(child: Text('このチャネルの取引履歴はありません。')),
-      );
-    }
-    
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 24,
-        columns: const [
-          DataColumn(label: Text('状態')),
-          DataColumn(label: Text('日時')),
-          DataColumn(label: Text('内容')),
-          DataColumn(label: Text('金額'), numeric: true),
-        ],
-        rows: transactions.map((tx) {
-          final isIncoming = tx.type == TransactionType.incoming;
-          return DataRow(
-            cells: [
-              DataCell(
-                Icon(
-                  _getStatusIcon(tx.status),
-                  color: _getStatusColor(tx.status),
-                  size: 20,
-                ),
-              ),
-              DataCell(Text(DateFormat('MM/dd HH:mm').format(tx.date))),
-              DataCell(Text(tx.description, overflow: TextOverflow.ellipsis)),
-              DataCell(
-                Text(
-                  '${isIncoming ? '+' : '-'} ${_formatCurrency(tx.amount, currency)}',
-                  style: TextStyle(
-                    color: isIncoming ? Colors.blue : Colors.red[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
       ),
     );
   }
