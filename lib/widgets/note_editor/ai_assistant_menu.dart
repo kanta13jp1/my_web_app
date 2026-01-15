@@ -73,7 +73,7 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
       );
 
       if (response.status == 200) {
-        final result = response.data['result'] as String;
+        final result = (response.data as Map<String, dynamic>)['result'] as String;
         widget.onApply(result); // Apply the AI-generated content
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
