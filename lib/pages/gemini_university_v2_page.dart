@@ -225,16 +225,17 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           '## 主要エンドポイント\n\n'
           'Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
           '**標準コンテンツ生成（generateContent）**: リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
-          '**ストリーミングコンテンツ生成 (streamGenerateContent)**: サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。',
+          '**ストリーミングコンテンツ生成 (streamGenerateContent)**: サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。\n\n'
+          '**ライブAPI（BidiGenerateContent）**: 双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。',
       quiz: Quiz(
-        question: 'チャットボットのように、高速でインタラクティブな体験が求められるアプリに最適なエンドポイントは？',
+        question: 'リアルタイムの双方向ストリーミング会話に最も適したAPIは？',
         options: [
           'generateContent',
           'streamGenerateContent',
-          'embedContent',
-          'countTokens',
+          'BidiGenerateContent',
+          'REST API',
         ],
-        correctIndex: 1,
+        correctIndex: 2,
       ),
       officialDocs: [
         {
