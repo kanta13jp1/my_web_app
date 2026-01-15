@@ -217,25 +217,27 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
       content:
+          'Gemini API リファレンス\n\n'
+          '利用規約を更新しました。\n\n'
           'このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
           'HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
           '最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。\n\n'
           '言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。\n\n'
-          '利用規約を更新しました。\n\n'
           '## 主要エンドポイント\n\n'
           'Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
           '**標準コンテンツ生成（generateContent）**: リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
           '**ストリーミングコンテンツ生成 (streamGenerateContent)**: サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。\n\n'
-          '**ライブAPI（BidiGenerateContent）**: 双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。',
+          '**ライブAPI（BidiGenerateContent）**: 双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。\n\n'
+          '**バッチモード (batchGenerateContent)**: generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。',
       quiz: Quiz(
-        question: 'リアルタイムの双方向ストリーミング会話に最も適したAPIは？',
+        question: 'generateContentリクエストのバッチを送信するためのAPIエンドポイントは？',
         options: [
           'generateContent',
           'streamGenerateContent',
           'BidiGenerateContent',
-          'REST API',
+          'batchGenerateContent',
         ],
-        correctIndex: 2,
+        correctIndex: 3,
       ),
       officialDocs: [
         {
