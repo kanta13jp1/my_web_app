@@ -56,7 +56,8 @@ class _CmoPageState extends State<CmoPage> {
       final data = response.data as Map<String, dynamic>;
       if (data['success'] != true) {
         throw Exception(
-            data['error'] as String? ?? 'Unknown error from AI function');
+          data['error'] as String? ?? 'Unknown error from AI function',
+        );
       }
 
       if (mounted) {

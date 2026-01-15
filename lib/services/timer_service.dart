@@ -227,17 +227,19 @@ class TimerService extends ChangeNotifier {
       if (html.Notification.supported) {
         if (html.Notification.permission == 'granted') {
           // ignore: unsafe_html
-          html.Notification('タイマーが完了しました！',
-              body: '${_activeTimer!.name}が終了しました。',
-              // icon: 'assets/icons/app_icon.png' // 必要であればアイコンパスを指定
+          html.Notification(
+            'タイマーが完了しました！',
+            body: '${_activeTimer!.name}が終了しました。',
+            // icon: 'assets/icons/app_icon.png' // 必要であればアイコンパスを指定
           );
         } else if (html.Notification.permission == 'default') {
           final permission = await html.Notification.requestPermission();
           if (permission == 'granted') {
             // ignore: unsafe_html
-            html.Notification('タイマーが完了しました！',
-                body: '${_activeTimer!.name}が終了しました。',
-                // icon: 'assets/icons/app_icon.png'
+            html.Notification(
+              'タイマーが完了しました！',
+              body: '${_activeTimer!.name}が終了しました。',
+              // icon: 'assets/icons/app_icon.png'
             );
           }
         }

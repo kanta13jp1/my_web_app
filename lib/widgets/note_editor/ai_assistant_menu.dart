@@ -77,7 +77,7 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
         widget.onApply(result); // Apply the AI-generated content
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('AIが${action}を実行しました。')),
+            SnackBar(content: Text('AIが$actionを実行しました。')),
           );
         }
       } else {
