@@ -472,8 +472,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(doc['title']!),
               style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 alignment: Alignment.centerLeft,
               ),
             ),

@@ -213,7 +213,8 @@ class TimerService extends ChangeNotifier {
     // assets/sounds/timer_complete.mp3 が必要
     if (kIsWeb) {
       // ignore: unsafe_html
-      html.AudioElement audio = html.AudioElement('assets/sounds/timer_complete.mp3');
+      final html.AudioElement audio =
+          html.AudioElement('assets/sounds/timer_complete.mp3');
       audio.play();
     }
     debugPrint('⏱️ Playing sound notification');
