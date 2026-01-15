@@ -241,8 +241,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           'url': 'https://ai.google.dev/api/rest',
         },
         {
-          'title': 'SDK quickstarts',
-          'url': 'https://ai.google.dev/docs/quickstarts',
+          'title': 'SDK Quickstart',
+          'url': 'https://ai.google.dev/gemini-api/docs/quickstart',
         },
       ],
     ),
