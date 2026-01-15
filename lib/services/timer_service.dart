@@ -223,7 +223,26 @@ class TimerService extends ChangeNotifier {
   /// ブラウザ通知
   Future<void> _showBrowserNotification() async {
     // Web Notification API を使用
-    // TODO: Web通知の実装
+    if (kIsWeb) {
+      if (html.Notification.supported) {
+        if (html.Notification.permission == 'granted') {
+          // ignore: unsafe_html
+          html.Notification('タイマーが完了しました！',
+              body: '${_activeTimer!.name}が終了しました。',
+              // icon: 'assets/icons/app_icon.png' // 必要であればアイコンパスを指定
+          );
+        } else if (html.Notification.permission == 'default') {
+          final permission = await html.Notification.requestPermission();
+          if (permission == 'granted') {
+            // ignore: unsafe_html
+            html.Notification('タイマーが完了しました！',
+                body: '${_activeTimer!.name}が終了しました。',
+                // icon: 'assets/icons/app_icon.png'
+            );
+          }
+        }
+      }
+    }
     debugPrint('⏱️ Showing browser notification');
   }
 
