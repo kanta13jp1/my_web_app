@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import 'package:my_web_app/pages/subscription_page.dart';
 
 class CfoOfficePage extends StatelessWidget {
@@ -25,9 +26,9 @@ class CfoOfficePage extends StatelessWidget {
           _buildMenuCard(
             context,
             '決済チャネル台帳',
-            'クレジットカードや銀行口座の連携状況を確認します。(準備中)',
+            'クレジットカードや銀行口座の連携状況を確認します。',
             Icons.account_balance,
-            null,
+            const PaymentChannelLedgerPage(),
           ),
           _buildMenuCard(
             context,
