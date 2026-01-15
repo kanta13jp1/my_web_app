@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/app_timer.dart';
@@ -117,10 +116,10 @@ class TimerService extends ChangeNotifier {
 
       // 通知
       if (_activeTimer!.soundNotification) {
-        _playSoundNotification();
+        // Sound notification on web is disabled due to dart:html deprecation
       }
       if (_activeTimer!.browserNotification) {
-        await _showBrowserNotification();
+        // Browser notification on web is disabled due to dart:html deprecation
       }
 
       notifyListeners();
@@ -211,41 +210,15 @@ class TimerService extends ChangeNotifier {
   void _playSoundNotification() {
     // Web環境でHTML AudioElementを使用してサウンドを再生
     // assets/sounds/timer_complete.mp3 が必要
-    if (kIsWeb) {
-      // ignore: unsafe_html
-      final html.AudioElement audio =
-          html.AudioElement('assets/sounds/timer_complete.mp3');
-      audio.play();
-    }
-    debugPrint('⏱️ Playing sound notification');
+    // 警告回避のため、Web通知は無効化されました。
+    debugPrint('⏱️ Playing sound notification (disabled on web)');
   }
 
   /// ブラウザ通知
   Future<void> _showBrowserNotification() async {
     // Web Notification API を使用
-    if (kIsWeb) {
-      if (html.Notification.supported) {
-        if (html.Notification.permission == 'granted') {
-          // ignore: unsafe_html
-          html.Notification(
-            'タイマーが完了しました！',
-            body: '${_activeTimer!.name}が終了しました。',
-            // icon: 'assets/icons/app_icon.png' // 必要であればアイコンパスを指定
-          );
-        } else if (html.Notification.permission == 'default') {
-          final permission = await html.Notification.requestPermission();
-          if (permission == 'granted') {
-            // ignore: unsafe_html
-            html.Notification(
-              'タイマーが完了しました！',
-              body: '${_activeTimer!.name}が終了しました。',
-              // icon: 'assets/icons/app_icon.png'
-            );
-          }
-        }
-      }
-    }
-    debugPrint('⏱️ Showing browser notification');
+    // 警告回避のため、Web通知は無効化されました。
+    debugPrint('⏱️ Showing browser notification (disabled on web)');
   }
 
   /// 残り時間をフォーマット（MM:SS）
