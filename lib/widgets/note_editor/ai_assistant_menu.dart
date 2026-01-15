@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/theme_service.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart'; // 未使用のため削除
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AiAssistantMenu extends StatefulWidget {
   final TextEditingController contentController;
@@ -62,14 +62,41 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
 
   Future<void> _handleAiAction(String action) async {
     setState(() => _isLoading = true);
-    // TODO: Supabase Edge Function連携の実装
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI機能は現在準備中です（スタブ）')),
+    try {
+      final supabase = Supabase.instance.client;
+      final response = await supabase.functions.invoke(
+        'ai-assistant', // Assuming the Edge Function name is 'ai-assistant'
+        body: {
+          'action': action,
+          'content': widget.contentController.text,
+        },
       );
-      setState(() => _isLoading = false);
+
+      if (response.status == 200) {
+        final result = response.data['result'] as String;
+        widget.onApply(result); // Apply the AI-generated content
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('AIが${action}を実行しました。')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('AI機能の呼び出しに失敗しました: ${response.data}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI機能でエラーが発生しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }
