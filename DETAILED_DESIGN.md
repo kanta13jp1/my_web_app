@@ -154,16 +154,16 @@ graph LR
 MVVMライクな構成を採用し、ビジネスロジックを services に分離している。
 
 * **lib/models/**: データモデル。fromMap/toMap を実装し、JSONシリアライズを担当。
-    * board_meeting_model.dart: 役員会議のログメッセージ構造定義。
-    * user_stats.dart: ポイント、レベル等のユーザー統計。
+  * board_meeting_model.dart: 役員会議のログメッセージ構造定義。
+  * user_stats.dart: ポイント、レベル等のユーザー統計。
 * **lib/pages/**: 画面UI。Scaffold を持ち、画面遷移の単位となる。
-    * home_page.dart: 経営コックピット。各機能へのハブ。
-    * emergency_meeting_page.dart: BIレポート形式の会議画面。
-    * note_editor_page.dart: メモ作成編集AI支援。
+  * home_page.dart: 経営コックピット。各機能へのハブ。
+  * emergency_meeting_page.dart: BIレポート形式の会議画面。
+  * note_editor_page.dart: メモ作成編集AI支援。
 * **lib/services/**: アプリケーションロジック状態管理。
-    * gamification_service.dart: ポイント付与、レベル計算、実績解除ロジック。
-    * import_service.dart: 外部データ取り込みとポイント換算。
-    * theme_service.dart: ダークモード管理。
+  * gamification_service.dart: ポイント付与、レベル計算、実績解除ロジック。
+  * import_service.dart: 外部データ取り込みとポイント換算。
+  * theme_service.dart: ダークモード管理。
 * **lib/widgets/**: 再利用可能なUIコンポーネント。
 
 ---
@@ -171,6 +171,7 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 ## 3. 主要機能の内部ロジック
 
 ### 3.1 緊急役員会議 (BI Report System)
+
 チャットボットではなく、データドリブンなレポート生成システム。
 
 1.  **Trigger**: ユーザーが EmergencyMeetingPage で「招集」ボタンを押下。
