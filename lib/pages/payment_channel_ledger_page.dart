@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../models/payment_source.dart';
 import '../services/cfo_service.dart';
@@ -109,7 +108,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                         Row(
                           children: [
                             Icon(Icons.verified_outlined,
-                                color: auditStatusColor, size: 20),
+                                color: auditStatusColor, size: 20,),
                             const SizedBox(width: 8),
                             Text(
                               '最終監査:',
@@ -129,7 +128,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                                 '未監査',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.red),
+                                    color: Colors.red,),
                               ),
                           ],
                         ),
