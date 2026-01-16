@@ -13,7 +13,7 @@
 * **Auth**: Supabase Auth (Email/Password)
 * **Database**: PostgreSQL (Supabase DB)
 * **Backend Logic**: Supabase Edge Functions (Deno/TypeScript)
-    * i-assistant: Gemini APIを用いたAI推論分析
+* **Ai Assistant**: Gemini APIを用いたAI推論分析
 * **State Management**: provider パッケージ (ChangeNotifier)
 
 ### 1.2 データフロー
