@@ -174,7 +174,7 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 
 チャットボットではなく、データドリブンなレポート生成システム。
 
-1.  **Trigger**: ユーザーが EmergencyMeetingPage で「招集」ボタンを押下。
+1. **Trigger**: ユーザーが EmergencyMeetingPage で「招集」ボタンを押下。
 2.  **Data Collection**:
     * 並列処理 (Future.wait) で notes (CKO), subscriptions (CFO), user_stats (CHRO) 等の件数をCount。
 3.  **Prompt Engineering**:
