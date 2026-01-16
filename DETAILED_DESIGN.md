@@ -184,6 +184,7 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
     * 会議本体 (board_meetings) と発言ログ (board_messages) をDBに保存。
 
 ### 3.2 ゲーミフィケーション (Gamification)
+
 ユーザーの行動を即座に報酬へ結びつける。
 
 * **Logic**: GamificationService.awardPoints(points, reason)
@@ -194,6 +195,7 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
     4. notifyListeners() でUI更新 (CHROオフィス等の表示反映)。
 
 ### 3.3 ナレッジ管理 (Note Management)
+
 * **Sync**: 基本的にSupabaseを「正」とする。
 * **Listing**: NoteListPage で created_at, is_pinned に基づきソートして取得。
 * **AI Support**: NoteEditorPage から選択範囲または全文をAIに送信し、校正要約を行う。
@@ -219,6 +221,7 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 全体のテーブル定義を機能ドメインごとに分割して記載しています。
 
 ## 1. ユーザー & プロフィール (User Core)
+
 ユーザーの基本情報、認証、プロフィール、統計データ。
 
 ```mermaid
@@ -241,6 +244,7 @@ erDiagram
 ```
 
 ## 2. 知識 & メモ (Knowledge & Notes)
+
 CKO管轄。メモ、カテゴリ、添付ファイル、共有機能。
 
 ```mermaid
@@ -263,6 +267,7 @@ erDiagram
 ```
 
 ## 3. 戦略 & AI (Strategy & AI Agents)
+
 CEO/CSO管轄。役員会議、AIログ、ベンチマーク。
 
 ```mermaid
@@ -281,6 +286,7 @@ erDiagram
 ```
 
 ## 4. ゲーミフィケーション & 厚生 (Gamification & Welfare)
+
 CHO/CHRO管轄。習慣化、実績、アイテム、厚生施設。
 
 ```mermaid
@@ -302,6 +308,7 @@ erDiagram
 ```
 
 ## 5. その他ログ & 分析 (Logs & Analytics)
+
 CMO/System管轄。
 
 ```mermaid
