@@ -216,8 +216,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       title: 'Gemini API リファレンス',
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
-      content:
-          'Gemini API リファレンス\n\n'
+      content: 'Gemini API リファレンス\n\n'
           '利用規約を更新しました。\n\n'
           'このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
           'HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
@@ -256,8 +255,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       title: 'Gemini Code Assist overview',
       description: 'Gemini Code Assist の概要と活用ガイド',
       icon: Icons.code_sharp,
-      content:
-          '### ジェミニ・コードアシストの概要\n\n'
+      content: '### ジェミニ・コードアシストの概要\n\n'
           '発行日: 2026/1/17\n\n'
           'Gemini Code Assistは、Gemini 2.5モデルを活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。\n\n'
           '【主な機能と特徴】\n'
@@ -274,7 +272,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Gemini Code Assist overview',
-          'url': 'https://developers.google.com/gemini-code-assist/docs/overview', //
+          'url':
+              'https://developers.google.com/gemini-code-assist/docs/overview', //
         },
       ],
     ),

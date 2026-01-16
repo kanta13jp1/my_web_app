@@ -15,6 +15,7 @@ class CfoService {
 
   Future<void> auditPaymentSource(String id) async {
     await _client.from('payment_sources').update(
-        {'last_audited_at': DateTime.now().toIso8601String()}).eq('id', id);
+      {'last_audited_at': DateTime.now().toIso8601String()},
+    ).eq('id', id);
   }
 }

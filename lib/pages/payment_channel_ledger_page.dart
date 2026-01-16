@@ -123,8 +123,10 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                             const SizedBox(width: 8),
                             if (source.lastAuditedAt != null)
                               Text(
-                                timeago.format(source.lastAuditedAt!,
-                                    locale: 'ja'),
+                                timeago.format(
+                                  source.lastAuditedAt!,
+                                  locale: 'ja',
+                                ),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: auditStatusColor,
