@@ -8,6 +8,7 @@
 本プロジェクトは、**Flutter (Web)** をフロントエンド、**Supabase** をBaaS (Backend as a Service) として採用したサーバーレス構成である。
 
 ### 1.1 技術スタック
+
 * **Frontend**: Flutter Web (Channel: stable)
 * **Auth**: Supabase Auth (Email/Password)
 * **Database**: PostgreSQL (Supabase DB)
