@@ -108,7 +108,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.shield_check_outlined,
+                            Icon(Icons.verified_outlined,
                                 color: auditStatusColor, size: 20),
                             const SizedBox(width: 8),
                             Text(
