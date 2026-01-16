@@ -68,9 +68,9 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
             final error = snapshot.error;
             String errorMessage = 'エラーが発生しました。';
             if (error is Exception) {
-               // PostgrestExceptionなどのSupabase固有の例外を考慮
-               // For simplicity, converting error to string. In a real app, parse it.
-               errorMessage = error.toString();
+              // PostgrestExceptionなどのSupabase固有の例外を考慮
+              // For simplicity, converting error to string. In a real app, parse it.
+              errorMessage = error.toString();
             }
             return Center(child: Text(errorMessage));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -86,7 +86,8 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
               itemBuilder: (context, index) {
                 final source = sources[index];
                 final isAuditedRecently = source.lastAuditedAt != null &&
-                    DateTime.now().difference(source.lastAuditedAt!).inDays < 30;
+                    DateTime.now().difference(source.lastAuditedAt!).inDays <
+                        30;
                 final auditStatusColor =
                     isAuditedRecently ? Colors.green : Colors.orange;
 
@@ -109,8 +110,11 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.verified_outlined,
-                                color: auditStatusColor, size: 20,),
+                            Icon(
+                              Icons.verified_outlined,
+                              color: auditStatusColor,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '最終監査:',
@@ -119,7 +123,8 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                             const SizedBox(width: 8),
                             if (source.lastAuditedAt != null)
                               Text(
-                                timeago.format(source.lastAuditedAt!, locale: 'ja'),
+                                timeago.format(source.lastAuditedAt!,
+                                    locale: 'ja'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: auditStatusColor,
@@ -129,8 +134,9 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                               const Text(
                                 '未監査',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red,),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
                               ),
                           ],
                         ),

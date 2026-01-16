@@ -216,8 +216,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       title: 'Gemini API リファレンス',
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
-      content:
-          'Gemini API リファレンス\n\n'
+      content: 'Gemini API リファレンス\n\n'
           '利用規約を更新しました。\n\n'
           'このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
           'HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
@@ -248,6 +247,29 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         {
           'title': 'SDK Quickstart',
           'url': 'https://ai.google.dev/gemini-api/docs/quickstart',
+        },
+      ],
+    ),
+    CourseModule(
+      id: 'gemini_code_assist_overview',
+      title: 'Gemini Code Assist overview',
+      description: 'Gemini Code Assist の概要と活用ガイド',
+      icon: Icons.code_sharp,
+      content: '### ジェミニ・コードアシストの概要\n\n'
+          '発行日: 2026/1/17\n\n'
+          'Gemini Code Assist は、開発者がより効率的に高品質なコードを作成できるよう支援するツールです。\n'
+          'AIによるコード補完、デバッグ支援、コード生成などの機能を提供します。\n'
+          '詳細については、公式ドキュメントを参照してください。',
+      quiz: Quiz(
+        question: 'Gemini Code Assistの主な機能は何ですか？',
+        options: ['デザイン作成', 'コード補完、デバッグ支援、コード生成', 'データ分析', 'ゲーム開発'],
+        correctIndex: 1,
+      ),
+      officialDocs: [
+        {
+          'title': 'Gemini Code Assist overview',
+          'url':
+              'https://developers.google.com/gemini-code-assist/docs/overview',
         },
       ],
     ),
