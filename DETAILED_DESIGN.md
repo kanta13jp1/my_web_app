@@ -175,12 +175,12 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 チャットボットではなく、データドリブンなレポート生成システム。
 
 1. **Trigger**: ユーザーが EmergencyMeetingPage で「招集」ボタンを押下。
-2.  **Data Collection**:
+2. **Data Collection**:
     * 並列処理 (Future.wait) で notes (CKO), subscriptions (CFO), user_stats (CHRO) 等の件数をCount。
-3.  **Prompt Engineering**:
+3. **Prompt Engineering**:
     * 収集した数字をコンテキストとして埋め込み、AIに「各役員のロールプレイ」と「戦略提案」を指示。
-4.  **Generation**: Edge Function (ai-assistant) がGeminiを呼び出し、JSON形式でレポートを生成。
-5.  **Persistence**:
+4. **Generation**: Edge Function (ai-assistant) がGeminiを呼び出し、JSON形式でレポートを生成。
+5. **Persistence**:
     * 会議本体 (board_meetings) と発言ログ (board_messages) をDBに保存。
 
 ### 3.2 ゲーミフィケーション (Gamification)
@@ -188,10 +188,10 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 
 * **Logic**: GamificationService.awardPoints(points, reason)
 * **Flow**:
-    1.  アクション検知 (例: メモ保存)。
-    2.  awardPoints 呼び出し。
-    3.  user_stats テーブルの total_points を加算 (Atomic update推奨だが現在はService層で処理)。
-    4.  notifyListeners() でUI更新 (CHROオフィス等の表示反映)。
+    1. アクション検知 (例: メモ保存)。
+    2. awardPoints 呼び出し。
+    3. user_stats テーブルの total_points を加算 (Atomic update推奨だが現在はService層で処理)。
+    4. notifyListeners() でUI更新 (CHROオフィス等の表示反映)。
 
 ### 3.3 ナレッジ管理 (Note Management)
 * **Sync**: 基本的にSupabaseを「正」とする。
@@ -314,5 +314,5 @@ erDiagram
 ```
 
 ### 修正のポイント
-1.  **5つのカテゴリに分割**: 関連するテーブルごとに図を分けたので、1つ1つの図が小さく、プレビューでもはっきり見えるようになります。
-2.  **重要なカラムのみ表示**: 全カラムを表示すると長くなるため、主要なカラム（ID, 名前, ステータス等）に絞って表示する記述に簡略化しました（実際のカラム定義はSupabase側にありますが、概念図としてはこれで十分です）。
+1. **5つのカテゴリに分割**: 関連するテーブルごとに図を分けたので、1つ1つの図が小さく、プレビューでもはっきり見えるようになります。
+2. **重要なカラムのみ表示**: 全カラムを表示すると長くなるため、主要なカラム（ID, 名前, ステータス等）に絞って表示する記述に簡略化しました（実際のカラム定義はSupabase側にありますが、概念図としてはこれで十分です）。
