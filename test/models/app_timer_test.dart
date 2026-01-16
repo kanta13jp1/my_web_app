@@ -128,14 +128,22 @@ void main() {
               'updated_at': fixedDate.toIso8601String(),
             };
 
-        expect(AppTimer.fromJson(createJson('running')).status,
-            TimerStatus.running);
         expect(
-            AppTimer.fromJson(createJson('paused')).status, TimerStatus.paused);
-        expect(AppTimer.fromJson(createJson('completed')).status,
-            TimerStatus.completed);
-        expect(AppTimer.fromJson(createJson('stopped')).status,
-            TimerStatus.stopped);
+          AppTimer.fromJson(createJson('running')).status,
+          TimerStatus.running,
+        );
+        expect(
+          AppTimer.fromJson(createJson('paused')).status,
+          TimerStatus.paused,
+        );
+        expect(
+          AppTimer.fromJson(createJson('completed')).status,
+          TimerStatus.completed,
+        );
+        expect(
+          AppTimer.fromJson(createJson('stopped')).status,
+          TimerStatus.stopped,
+        );
       });
 
       test('fallbacks to stopped for unknown status string', () {

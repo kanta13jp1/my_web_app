@@ -21,6 +21,7 @@ const FALLBACK_MODELS = [
     { provider: 'anthropic', model: 'claude-3-haiku-20240307' }
 ];
 
+// Define types to avoid 'any'
 interface AIRequest {
     action: string;
     model?: string;
@@ -29,10 +30,41 @@ interface AIRequest {
     mimeType?: string;
     targetLanguage?: string;
     userId?: string;
-    recentNotes?: any[];
-    userStats?: any;
+    recentNotes?: Record<string, unknown>[]; // Better than any[]
+    userStats?: Record<string, unknown>; // Better than any
     participants?: string[];
 }
+
+interface Fighter {
+    provider: string;
+    model: string;
+}
+
+interface ApiKeys {
+    gemini?: string;
+    openai?: string;
+    anthropic?: string;
+    deepseek?: string;
+    grok?: string;
+}
+
+// Interfaces for API payloads
+interface OpenAIMessage {
+    role: string;
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+}
+
+interface AnthropicContent {
+    type: string;
+    text?: string;
+    source?: { type: string; media_type: string; data: string };
+}
+
+interface GeminiPart {
+    text?: string;
+    inline_data?: { mime_type: string; data: string };
+}
+
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -54,15 +86,16 @@ serve(async (req) => {
 
         const tryAIChain = async (originalPrompt: string, image?: { base64: string, mime: string }) => {
             if (targetModel) {
-                 const fighter = { provider: inferProvider(targetModel), model: targetModel };
-                 return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
+                const fighter = { provider: inferProvider(targetModel), model: targetModel };
+                return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
             }
             let lastError;
             for (const model of FALLBACK_MODELS) {
                 try {
                     return await callAI(model, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
-                } catch (e: any) {
-                    console.error(`Model ${model.model} failed:`, e.message);
+                } catch (e: unknown) { // Use unknown instead of any
+                    const errorMessage = e instanceof Error ? e.message : String(e);
+                    console.error(`Model ${model.model} failed:`, errorMessage);
                     lastError = e;
                 }
             }
@@ -88,7 +121,7 @@ serve(async (req) => {
         // --- 2. リアル断捨離クエスト (Vision Analysis) ---
         if (action === 'analyze_danshari_item') {
             if (!requestData.imageBase64) throw new Error("Image required");
-            
+
             const prompt = `
             あなたは「自分株式会社」のCSO（最高戦略責任者）です。
             ユーザーがアップロードした「断捨離候補のモノ」の画像を分析し、辛口かつ的確に判定を下してください。
@@ -128,18 +161,19 @@ serve(async (req) => {
             const result = JSON.parse(cleanJson);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
-        
+
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title'].includes(action)) {
-             const prompt = `Action: ${action}\nContent: ${requestData.content}`;
-             const result = await tryAIChain(prompt);
-             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+            const prompt = `Action: ${action}\nContent: ${requestData.content}`;
+            const result = await tryAIChain(prompt);
+            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
         return new Response(JSON.stringify({ success: false, error: `Action "${action}" not found` }), { headers: corsHeaders, status: 404 });
 
-    } catch (error: any) {
-        return new Response(JSON.stringify({ success: false, error: error.message }), { headers: corsHeaders, status: 400 });
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return new Response(JSON.stringify({ success: false, error: errorMessage }), { headers: corsHeaders, status: 400 });
     }
 });
 
@@ -150,18 +184,19 @@ function inferProvider(modelName: string): string {
     return 'openai';
 }
 
-async function callAI(fighter: any, keys: any, data: AIRequest): Promise<string> {
+async function callAI(fighter: Fighter, keys: ApiKeys, data: AIRequest): Promise<string> {
     if (fighter.provider === 'gemini') return await callGemini(fighter.model, keys.gemini!, data);
     if (fighter.provider === 'anthropic') return await callAnthropic(fighter.model, keys.anthropic!, data);
-    return await callOpenAICompatible(fighter.provider, fighter.model, keys.openai!, data);
+    return await callOpenAICompatible(fighter.model, keys.openai!, data);
 }
 
 // (Helper functions: callOpenAICompatible, callAnthropic, callGemini)
-async function callOpenAICompatible(provider: string, model: string, apiKey: string, data: AIRequest): Promise<string> {
-    const messages: any[] = [{ role: "user", content: data.content }];
+// Removed unused 'provider' argument
+async function callOpenAICompatible(model: string, apiKey: string, data: AIRequest): Promise<string> {
+    const messages: OpenAIMessage[] = [{ role: "user", content: data.content || "" }];
     if (data.imageBase64) {
         messages[0].content = [
-            { type: "text", text: data.content },
+            { type: "text", text: data.content || "" },
             { type: "image_url", image_url: { url: `data:${data.mimeType};base64,${data.imageBase64}` } }
         ];
     }
@@ -176,9 +211,9 @@ async function callOpenAICompatible(provider: string, model: string, apiKey: str
 }
 
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {
-    const content: any[] = [{ type: "text", text: data.content }];
+    const content: AnthropicContent[] = [{ type: "text", text: data.content || "" }];
     if (data.imageBase64) {
-        content.unshift({ type: "image", source: { type: "base64", media_type: data.mimeType as any, data: data.imageBase64 } });
+        content.unshift({ type: "image", source: { type: "base64", media_type: data.mimeType || "image/jpeg", data: data.imageBase64 } });
     }
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -191,9 +226,9 @@ async function callAnthropic(model: string, apiKey: string, data: AIRequest): Pr
 }
 
 async function callGemini(model: string, apiKey: string, data: AIRequest): Promise<string> {
-    const parts: any[] = [{ text: data.content }];
+    const parts: GeminiPart[] = [{ text: data.content || "" }];
     if (data.imageBase64) {
-        parts.push({ inline_data: { mime_type: data.mimeType, data: data.imageBase64 } });
+        parts.push({ inline_data: { mime_type: data.mimeType || "image/jpeg", data: data.imageBase64 } });
     }
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
         method: 'POST',
