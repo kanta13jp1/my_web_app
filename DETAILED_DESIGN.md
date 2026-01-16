@@ -176,13 +176,12 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 
 1.  **Trigger**: ユーザーが EmergencyMeetingPage で「招集」ボタンを押下。
 2.  **Data Collection**:
-    * 並列処理 (Future.wait) で 
-otes (CKO), subscriptions (CFO), user_stats (CHRO) 等の件数をCount。
+    * 並列処理 (Future.wait) で notes (CKO), subscriptions (CFO), user_stats (CHRO) 等の件数をCount。
 3.  **Prompt Engineering**:
     * 収集した数字をコンテキストとして埋め込み、AIに「各役員のロールプレイ」と「戦略提案」を指示。
-4.  **Generation**: Edge Function (i-assistant) がGeminiを呼び出し、JSON形式でレポートを生成。
+4.  **Generation**: Edge Function (ai-assistant) がGeminiを呼び出し、JSON形式でレポートを生成。
 5.  **Persistence**:
-    * 会議本体 (oard_meetings) と発言ログ (oard_messages) をDBに保存。
+    * 会議本体 (board_meetings) と発言ログ (board_messages) をDBに保存。
 
 ### 3.2 ゲーミフィケーション (Gamification)
 ユーザーの行動を即座に報酬へ結びつける。
@@ -190,10 +189,9 @@ otes (CKO), subscriptions (CFO), user_stats (CHRO) 等の件数をCount。
 * **Logic**: GamificationService.awardPoints(points, reason)
 * **Flow**:
     1.  アクション検知 (例: メモ保存)。
-    2.  wardPoints 呼び出し。
-    3.  user_stats テーブルの 	otal_points を加算 (Atomic update推奨だが現在はService層で処理)。
-    4.  
-otifyListeners() でUI更新 (CHROオフィス等の表示反映)。
+    2.  awardPoints 呼び出し。
+    3.  user_stats テーブルの total_points を加算 (Atomic update推奨だが現在はService層で処理)。
+    4.  notifyListeners() でUI更新 (CHROオフィス等の表示反映)。
 
 ### 3.3 ナレッジ管理 (Note Management)
 * **Sync**: 基本的にSupabaseを「正」とする。
@@ -207,15 +205,14 @@ otifyListeners() でUI更新 (CHROオフィス等の表示反映)。
 
 * users (Auth)
     * 1 : 1 -> user_stats (Gamification)
-    * 1 : N -> 
-otes (Knowledge)
-    * 1 : N -> oard_meetings (Strategy)
-        * 1 : N -> oard_messages
+    * 1 : N -> notes (Knowledge)
+    * 1 : N -> board_meetings (Strategy)
+        * 1 : N -> board_messages
 
 ## 5. セキュリティ方針
 * **RLS (Row Level Security)**: 全テーブルで有効化。
-    * 基本ポリシー: uth.uid() == user_id のデータのみ SELECT/INSERT/UPDATE/DELETE 可能。
-* **Env Vars**: APIキー (Supabase Anon Key) は lutter-dotenv またはビルド時注入で管理 (Web公開時はドメイン制限で保護)。
+    * 基本ポリシー: auth.uid() == user_id のデータのみ SELECT/INSERT/UPDATE/DELETE 可能。
+* **Env Vars**: APIキー (Supabase Anon Key) は flutter-dotenv またはビルド時注入で管理 (Web公開時はドメイン制限で保護)。
 
 # データベース設計書 (Database Schema)
 
