@@ -1,162 +1,149 @@
-// AI Tag Suggestion Edge Function
-// メモの内容から自動的にタグとカテゴリを提案
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { quotes, getQuoteById } from "../_shared/quotes.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-interface SuggestRequest {
-  content: string
-  title?: string
-  existingCategories?: string[]
-}
-
-serve(async (req) => {
-  // Handle CORS
+// Removed 'async' keyword here
+serve((req) => {
+  // CORSプリフライトリクエストへの対応
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Verify authorization
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Missing authorization header')
-    }
+    const url = new URL(req.url);
+    const quoteIdParam = url.searchParams.get('id');
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    // クエリパラメータがない場合はランダム
+    let quoteId: number;
+    if (quoteIdParam) {
+      quoteId = parseInt(quoteIdParam);
+      if (isNaN(quoteId)) {
+        quoteId = Math.floor(Math.random() * quotes.length);
       }
-    )
-
-    // Verify user authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
-
-    if (userError || !user) {
-      throw new Error('Unauthorized')
+    } else {
+      quoteId = Math.floor(Math.random() * quotes.length);
     }
 
-    // Parse request body
-    const { content, title = '', existingCategories = [] }: SuggestRequest = await req.json()
+    const quote = getQuoteById(quoteId);
 
-    if (!content) {
-      throw new Error('Content is required')
-    }
+    // テキストを折り返す関数
+    const wrapText = (text: string, maxLength: number): string[] => {
+      const lines: string[] = [];
+      let currentLine = '';
 
-    // Get OpenAI API key from environment
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiApiKey) {
-      throw new Error('OpenAI API key not configured')
-    }
+      for (const char of text) {
+        if (currentLine.length >= maxLength) {
+          lines.push(currentLine);
+          currentLine = char;
+        } else {
+          currentLine += char;
+        }
+      }
 
-    // Fetch user's existing categories from database
-    const { data: userCategories } = await supabaseClient
-      .from('categories')
-      .select('name')
-      .eq('user_id', user.id)
+      if (currentLine) {
+        lines.push(currentLine);
+      }
 
-    const existingCategoryNames = userCategories?.map(c => c.name) || []
-    const allExistingCategories = [...new Set([...existingCategoryNames, ...existingCategories])]
+      return lines;
+    };
 
-    // Prepare prompt
-    const systemPrompt = `あなたはメモやノートの整理の専門家です。ユーザーのメモ内容を分析し、適切なタグとカテゴリを提案してください。
+    // 名言を折り返し（30文字ごと）
+    const quoteLines = wrapText(quote.quote, 30);
+    const quoteY = 280;
+    const lineHeight = 60;
 
-既存のカテゴリ: ${allExistingCategories.length > 0 ? allExistingCategories.join(', ') : 'なし'}
+    // SVGテキストエレメントを生成
+    const quoteSvgElements = quoteLines.map((line, index) => {
+      const y = quoteY + (index * lineHeight);
+      return `<text x="600" y="${y}" font-size="48" font-weight="bold" fill="white" text-anchor="middle" style="text-shadow: 0 4px 12px rgba(0,0,0,0.3);">${escapeXml(line)}</text>`;
+    }).join('\n');
 
-以下のJSON形式で回答してください:
-{
-  "suggestedTags": ["タグ1", "タグ2", "タグ3"],
-  "suggestedCategory": "カテゴリ名",
-  "reason": "提案理由"
-}
+    const authorY = quoteY + (quoteLines.length * lineHeight) + 60;
 
-注意:
-- タグは3〜5個程度提案してください
-- 既存のカテゴリがある場合は、可能な限りそれを使用してください
-- 新しいカテゴリを提案する場合は、簡潔でわかりやすい名前にしてください
-- 日本語で回答してください`
+    // SVG画像を生成（1200x630 OGP標準サイズ）
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
 
-    const userPrompt = `タイトル: ${title}\n\n内容:\n${content}`
+    <pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="2" fill="rgba(255,255,255,0.1)" />
+    </pattern>
+  </defs>
 
-    // Call OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+  <rect width="1200" height="630" fill="url(#bgGradient)" />
+  <rect width="1200" height="630" fill="url(#dots)" />
+
+  <circle cx="100" cy="100" r="80" fill="rgba(255,255,255,0.05)" />
+  <circle cx="1100" cy="530" r="100" fill="rgba(255,255,255,0.05)" />
+
+  <text x="100" y="180" font-size="120" fill="rgba(255,255,255,0.2)" font-weight="bold">"</text>
+  <text x="1100" y="560" font-size="120" fill="rgba(255,255,255,0.2)" font-weight="bold" text-anchor="end">"</text>
+
+  ${quoteSvgElements}
+
+  <text x="600" y="${authorY}" font-size="36" fill="rgba(255,255,255,0.95)" text-anchor="middle" font-weight="600">
+    - ${escapeXml(quote.author)} -
+  </text>
+
+  ${quote.authorDescription ? `
+  <text x="600" y="${authorY + 40}" font-size="20" fill="rgba(255,255,255,0.75)" text-anchor="middle">
+    ${escapeXml(quote.authorDescription)}
+  </text>
+  ` : ''}
+
+  <g transform="translate(600, 570)">
+    <text x="0" y="0" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
+      マイメモ
+    </text>
+    <text x="0" y="30" font-size="16" fill="rgba(255,255,255,0.85)" text-anchor="middle">
+      哲学者と学ぶメモ習慣
+    </text>
+  </g>
+</svg>`;
+
+    // UTF-8エンコーディングを明示的に行う
+    const encoder = new TextEncoder();
+    const encodedSvg = encoder.encode(svg);
+
+    // SVGを返す
+    return new Response(encodedSvg, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`,
+        ...corsHeaders,
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=31536000', // 1年間キャッシュ
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.5,
-        max_tokens: 500,
-        response_format: { type: 'json_object' },
-      }),
-    })
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text()
-      console.error('OpenAI API error:', errorData)
-      throw new Error(`OpenAI API error: ${openaiResponse.status}`)
-    }
-
-    const openaiData = await openaiResponse.json()
-    const resultText = openaiData.choices[0]?.message?.content || '{}'
-    const result = JSON.parse(resultText)
-
-    // Track AI usage in database
-    await supabaseClient.from('ai_usage_log').insert({
-      user_id: user.id,
-      action: 'suggest_tags',
-      input_tokens: openaiData.usage?.prompt_tokens || 0,
-      output_tokens: openaiData.usage?.completion_tokens || 0,
-      total_tokens: openaiData.usage?.total_tokens || 0,
-      cost_estimate: (openaiData.usage?.total_tokens || 0) * 0.00001,
-      created_at: new Date().toISOString(),
-    })
+    });
+  } catch (error: unknown) { // Changed 'any' to 'unknown'
+    console.error('Error in generate-quote-image function:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        suggestions: {
-          tags: result.suggestedTags || [],
-          category: result.suggestedCategory || '',
-          reason: result.reason || '',
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
         },
-        usage: openaiData.usage,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
       }
-    )
-  } catch (error) {
-    console.error('Error in AI tag suggestion:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    )
+    );
   }
-})
+});
+
+// XMLエスケープ関数
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}

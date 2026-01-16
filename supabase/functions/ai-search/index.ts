@@ -14,6 +14,18 @@ interface SearchRequest {
   limit?: number
 }
 
+// Interface for Note to avoid any
+interface Note {
+  id: string;
+  title: string;
+  content?: string;
+  tags?: string[];
+  category_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -155,9 +167,10 @@ JSON形式で回答してください:
     const rankedIds = rankingResult.rankedIds || []
 
     // Reorder notes based on AI ranking
+    // Fix: Use generic type or 'unknown' instead of 'any'
     const rankedNotes = rankedIds
       .map((id: string) => notes?.find(note => note.id === id))
-      .filter((note: any) => note !== undefined)
+      .filter((note: unknown) => note !== undefined)
       .slice(0, limit)
 
     // Track AI usage in database
@@ -183,7 +196,7 @@ JSON形式で回答してください:
         status: 200,
       }
     )
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in AI search:', error)
     return new Response(
       JSON.stringify({

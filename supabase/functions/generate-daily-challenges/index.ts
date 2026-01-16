@@ -1,141 +1,149 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { quotes, getQuoteById } from "../_shared/quotes.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-// Gemini API設定
-const GEMINI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY')
-
-const GEMINI_MODEL = 'gemini-flash-latest'
-
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
-
-Deno.serve(async (req) => {
-    // 1. CORS Preflight
+// Removed 'async' keyword here
+serve((req) => {
+    // CORSプリフライトリクエストへの対応
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', { headers: corsHeaders });
     }
 
     try {
-        const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
+        const url = new URL(req.url);
+        const quoteIdParam = url.searchParams.get('id');
 
-        const { date } = await req.json()
-        const targetDate = date || new Date().toISOString().split('T')[0]
-
-        console.log(`Generating challenges for: ${targetDate} using Gemini (${GEMINI_MODEL})`)
-
-        if (!GEMINI_API_KEY) {
-            throw new Error('GOOGLE_AI_API_KEY is not set')
-        }
-
-        const prompt = `
-    あなたはゲーミフィケーションメモアプリのAIゲームマスターです。
-    日付「${targetDate}」のためのデイリーチャレンジを3つ生成してください。
-    
-    出力は以下のJSONフォーマットの配列のみにしてください（Markdownのコードブロックは不要です）:
-    [
-      {
-        "challenge_title": "タイトル (20文字以内)",
-        "challenge_description": "説明 (60文字以内)",
-        "challenge_type": "create_notes" または "share_notes",
-        "target_value": 数値 (例: 1, 3, 100),
-        "reward_points": 数値 (例: 30, 50, 100)
-      }
-    ]
-    
-    条件:
-    1. 初心者でも達成可能な難易度にすること。
-    2. 3つの内訳は「create_notes(メモ作成)」と「share_notes(シェア)」を混ぜること。
-    3. JSON以外の文字列は含めないでください。
-    `
-
-        // 4. Call Gemini API
-        const geminiResponse = await fetch(
-            `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        responseMimeType: "application/json"
-                    }
-                }),
+        // クエリパラメータがない場合はランダム
+        let quoteId: number;
+        if (quoteIdParam) {
+            quoteId = parseInt(quoteIdParam);
+            if (isNaN(quoteId)) {
+                quoteId = Math.floor(Math.random() * quotes.length);
             }
-        )
-
-        if (!geminiResponse.ok) {
-            const errorData = await geminiResponse.text()
-            console.error('Gemini API error:', errorData)
-            throw new Error(`Gemini API error: ${geminiResponse.status} ${errorData}`)
+        } else {
+            quoteId = Math.floor(Math.random() * quotes.length);
         }
 
-        const geminiData = await geminiResponse.json()
+        const quote = getQuoteById(quoteId);
 
-        // Extract Result
-        let resultText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
+        // テキストを折り返す関数
+        const wrapText = (text: string, maxLength: number): string[] => {
+            const lines: string[] = [];
+            let currentLine = '';
 
-        if (!resultText) {
-            throw new Error('No response from Gemini API')
-        }
+            for (const char of text) {
+                if (currentLine.length >= maxLength) {
+                    lines.push(currentLine);
+                    currentLine = char;
+                } else {
+                    currentLine += char;
+                }
+            }
 
-        // Clean JSON (Markdown記法の除去)
-        resultText = resultText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+            if (currentLine) {
+                lines.push(currentLine);
+            }
 
-        let challenges;
-        try {
-            challenges = JSON.parse(resultText)
-        } catch (e) {
-            console.error("JSON Parse Error:", resultText)
-            throw new Error("Failed to parse AI response")
-        }
+            return lines;
+        };
 
-        // 5. DBへの保存データの整形
-        const insertData = challenges.map((item: any) => ({
-            challenge_date: targetDate,
-            challenge_type: item.challenge_type,
-            challenge_title: item.challenge_title,
-            challenge_description: item.challenge_description,
-            target_value: item.target_value,
-            reward_points: item.reward_points,
-            is_active: true
-        }))
+        // 名言を折り返し（30文字ごと）
+        const quoteLines = wrapText(quote.quote, 30);
+        const quoteY = 280;
+        const lineHeight = 60;
 
-        // 6. DBへ保存
-        const { error } = await supabaseClient
-            .from('daily_challenges')
-            .upsert(insertData, { onConflict: 'challenge_date, challenge_type, target_value' })
+        // SVGテキストエレメントを生成
+        const quoteSvgElements = quoteLines.map((line, index) => {
+            const y = quoteY + (index * lineHeight);
+            return `<text x="600" y="${y}" font-size="48" font-weight="bold" fill="white" text-anchor="middle" style="text-shadow: 0 4px 12px rgba(0,0,0,0.3);">${escapeXml(line)}</text>`;
+        }).join('\n');
 
-        if (error) throw error
+        const authorY = quoteY + (quoteLines.length * lineHeight) + 60;
 
-        return new Response(
-            JSON.stringify({
-                success: true,
-                message: `Created ${insertData.length} challenges for ${targetDate} via Gemini (${GEMINI_MODEL})`
-            }),
-            {
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
+        // SVG画像を生成（1200x630 OGP標準サイズ）
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+
+    <pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="2" fill="rgba(255,255,255,0.1)" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bgGradient)" />
+  <rect width="1200" height="630" fill="url(#dots)" />
+
+  <circle cx="100" cy="100" r="80" fill="rgba(255,255,255,0.05)" />
+  <circle cx="1100" cy="530" r="100" fill="rgba(255,255,255,0.05)" />
+
+  <text x="100" y="180" font-size="120" fill="rgba(255,255,255,0.2)" font-weight="bold">"</text>
+  <text x="1100" y="560" font-size="120" fill="rgba(255,255,255,0.2)" font-weight="bold" text-anchor="end">"</text>
+
+  ${quoteSvgElements}
+
+  <text x="600" y="${authorY}" font-size="36" fill="rgba(255,255,255,0.95)" text-anchor="middle" font-weight="600">
+    - ${escapeXml(quote.author)} -
+  </text>
+
+  ${quote.authorDescription ? `
+  <text x="600" y="${authorY + 40}" font-size="20" fill="rgba(255,255,255,0.75)" text-anchor="middle">
+    ${escapeXml(quote.authorDescription)}
+  </text>
+  ` : ''}
+
+  <g transform="translate(600, 570)">
+    <text x="0" y="0" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
+      マイメモ
+    </text>
+    <text x="0" y="30" font-size="16" fill="rgba(255,255,255,0.85)" text-anchor="middle">
+      哲学者と学ぶメモ習慣
+    </text>
+  </g>
+</svg>`;
+
+        // UTF-8エンコーディングを明示的に行う
+        const encoder = new TextEncoder();
+        const encodedSvg = encoder.encode(svg);
+
+        // SVGを返す
+        return new Response(encodedSvg, {
+            headers: {
+                ...corsHeaders,
+                'Content-Type': 'image/svg+xml; charset=utf-8',
+                'Cache-Control': 'public, max-age=31536000', // 1年間キャッシュ
             },
-        )
+        });
+    } catch (error: unknown) { // Changed 'any' to 'unknown'
+        console.error('Error in generate-quote-image function:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
 
-    } catch (error) {
-        console.error('Error:', error)
         return new Response(
-            JSON.stringify({ success: false, error: error.message }),
+            JSON.stringify({ error: errorMessage }),
             {
                 status: 500,
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
-            },
-        )
+                headers: {
+                    ...corsHeaders,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
     }
-})
+});
+
+// XMLエスケープ関数
+function escapeXml(text: string): string {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
