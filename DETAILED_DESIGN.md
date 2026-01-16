@@ -150,20 +150,20 @@ graph LR
 ---
 
 ## 2. ディレクトリ構成と責務
+
 MVVMライクな構成を採用し、ビジネスロジックを services に分離している。
 
-* **lib/models/**: データモデル。romMap/	oMap を実装し、JSONシリアライズを担当。
-    * oard_meeting_model.dart: 役員会議のログメッセージ構造定義。
+* **lib/models/**: データモデル。fromMap/toMap を実装し、JSONシリアライズを担当。
+    * board_meeting_model.dart: 役員会議のログメッセージ構造定義。
     * user_stats.dart: ポイント、レベル等のユーザー統計。
 * **lib/pages/**: 画面UI。Scaffold を持ち、画面遷移の単位となる。
     * home_page.dart: 経営コックピット。各機能へのハブ。
     * emergency_meeting_page.dart: BIレポート形式の会議画面。
-    * 
-ote_editor_page.dart: メモ作成編集AI支援。
+    * note_editor_page.dart: メモ作成編集AI支援。
 * **lib/services/**: アプリケーションロジック状態管理。
     * gamification_service.dart: ポイント付与、レベル計算、実績解除ロジック。
     * import_service.dart: 外部データ取り込みとポイント換算。
-    * 	heme_service.dart: ダークモード管理。
+    * theme_service.dart: ダークモード管理。
 * **lib/widgets/**: 再利用可能なUIコンポーネント。
 
 ---
