@@ -207,17 +207,18 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 詳細は データベース設計書 を参照。ここでは主要なリレーションのみ記述。
 
 * users (Auth)
-    * 1 : 1 -> user_stats (Gamification)
-    * 1 : N -> notes (Knowledge)
-    * 1 : N -> board_meetings (Strategy)
-        * 1 : N -> board_messages
+  * 1 : 1 -> user_stats (Gamification)
+  * 1 : N -> notes (Knowledge)
+  * 1 : N -> board_meetings (Strategy)
+    * 1 : N -> board_messages
 
 ## 5. セキュリティ方針
+
 * **RLS (Row Level Security)**: 全テーブルで有効化。
-    * 基本ポリシー: auth.uid() == user_id のデータのみ SELECT/INSERT/UPDATE/DELETE 可能。
+  * 基本ポリシー: auth.uid() == user_id のデータのみ SELECT/INSERT/UPDATE/DELETE 可能。
 * **Env Vars**: APIキー (Supabase Anon Key) は flutter-dotenv またはビルド時注入で管理 (Web公開時はドメイン制限で保護)。
 
-# データベース設計書 (Database Schema)
+## データベース設計書 (Database Schema)
 
 全体のテーブル定義を機能ドメインごとに分割して記載しています。
 
@@ -322,5 +323,6 @@ erDiagram
 ```
 
 ### 修正のポイント
+
 1. **5つのカテゴリに分割**: 関連するテーブルごとに図を分けたので、1つ1つの図が小さく、プレビューでもはっきり見えるようになります。
 2. **重要なカラムのみ表示**: 全カラムを表示すると長くなるため、主要なカラム（ID, 名前, ステータス等）に絞って表示する記述に簡略化しました（実際のカラム定義はSupabase側にありますが、概念図としてはこれで十分です）。
