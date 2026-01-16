@@ -9,9 +9,15 @@ import 'package:provider/provider.dart';
 class RealWorldDanshariPage extends StatefulWidget {
   // テスト用にSupabaseClientを注入できるようにする
   final SupabaseClient? supabaseClient;
-  // テスト用にImagePickerを注入できるようにする（任意ですが、今回はPlatformInterfaceで対応するため不要）
+  // テスト用にImagePickerを注入できるようにする
+  final ImagePicker imagePicker;
 
-  const RealWorldDanshariPage({super.key, this.supabaseClient});
+  // ↓ 【修正点】ここにあった 'const' を削除しました
+  RealWorldDanshariPage({
+    super.key,
+    required this.supabaseClient,
+    ImagePicker? imagePicker, 
+  }) : imagePicker = imagePicker ?? ImagePicker();
 
   @override
   State<RealWorldDanshariPage> createState() => _RealWorldDanshariPageState();
