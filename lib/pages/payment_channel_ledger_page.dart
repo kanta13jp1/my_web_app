@@ -31,6 +31,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
   Future<void> _auditSource(String id) async {
     try {
       await _cfoService.auditPaymentSource(id);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('監査済みにマークしました。'),
@@ -39,6 +40,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
       );
       _refreshSources();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('監査処理中にエラーが発生しました: $e'),
