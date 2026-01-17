@@ -78,7 +78,7 @@ class HomePage extends StatelessWidget {
                 '断捨離 (リアル)',
                 Icons.camera_alt,
                 Colors.deepOrange,
-                () => _nav(context, const RealWorldDanshariPage()),
+                () => _nav(context, RealWorldDanshariPage(supabaseClient: Supabase.instance.client)),
               ),
               _MenuData(
                 'AI稼働モニター',

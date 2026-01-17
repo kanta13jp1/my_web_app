@@ -24,7 +24,6 @@ class RealWorldDanshariPage extends StatefulWidget {
 }
 
 class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
-  final ImagePicker _picker = ImagePicker();
   Uint8List? _imageBytes;
   bool _isLoading = false;
   Map<String, dynamic>? _result;
@@ -35,7 +34,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final XFile? image = await widget.imagePicker.pickImage(
         source: source,
         maxWidth: 800,
         imageQuality: 80,
