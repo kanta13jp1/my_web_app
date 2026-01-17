@@ -19,6 +19,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<LineChartBarData> _chartBars = [];
   List<String> _sortedDates = [];
 
+  Map<String, String?> _lastUpdatedDates = {};
+
   final List<Color> _colors = [
     Colors.blue,
     Colors.green,
@@ -74,6 +76,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           );
         });
         _updateChartData();
+        _updateLastUpdatedDates();
       });
     }
   }
@@ -101,6 +104,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetData[today]!.addAll(todayData);
 
       _updateChartData();
+      _updateLastUpdatedDates();
     });
 
     final prefs = await SharedPreferences.getInstance();
@@ -126,6 +130,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetTypes.add(name);
       _initControllers();
       _saveAssetTypes();
+      _updateLastUpdatedDates();
     });
   }
 
@@ -139,7 +144,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _initControllers();
       _saveAssetTypes();
       _updateChartData();
+      _updateLastUpdatedDates();
     });
+  }
+
+  void _updateLastUpdatedDates() {
+    _lastUpdatedDates = {};
+    for (var type in _assetTypes) {
+      String? lastDate;
+      for (var date in _sortedDates.reversed) {
+        if (_assetData[date]?.containsKey(type) ?? false) {
+          lastDate = date;
+          break;
+        }
+      }
+      _lastUpdatedDates[type] = lastDate;
+    }
   }
 
   void _updateChartData() {
@@ -150,7 +170,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final Map<String, List<FlSpot>> spotsData = {
-      for (var type in _assetTypes) type: []
+      for (var type in _assetTypes) type: [],
     };
 
     for (int i = 0; i < _sortedDates.length; i++) {
@@ -230,8 +250,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('今日の資産残高を登録',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              '今日の資産残高を登録',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
@@ -268,17 +290,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: TextField(
-              controller: _controllers[type],
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: type,
-                border: const OutlineInputBorder(),
-                prefixIcon: Icon(_getIconForAsset(type)),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _controllers[type],
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: type,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(_getIconForAsset(type)),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _buildLastUpdatedText(type),
+              ],
             ),
           ),
           if (type != '現金')
@@ -291,6 +321,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildLastUpdatedText(String type) {
+    final lastDateStr = _lastUpdatedDates[type];
+    if (lastDateStr == null) {
+      return const Text('  データなし',
+          style: TextStyle(color: Colors.grey, fontSize: 12));
+    }
+
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (lastDateStr == todayStr) {
+      return const Text('  本日更新済み',
+          style: TextStyle(
+              color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold));
+    }
+
+    final formattedDate =
+        DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
+    return Text('  最終更新: $formattedDate',
+        style: const TextStyle(color: Colors.grey, fontSize: 12));
+  }
+
   Widget _buildChartCard() {
     return Card(
       elevation: 2,
@@ -299,8 +349,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('総資産推移',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              '総資産推移',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 24),
             _chartBars.isEmpty
                 ? const Center(child: Text('登録データがありません。'))
@@ -317,24 +369,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         gridData: const FlGridData(show: true),
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 70,
-                                  getTitlesWidget: _leftTitleWidgets)),
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 70,
+                              getTitlesWidget: _leftTitleWidgets,
+                            ),
+                          ),
                           bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 30,
-                                  getTitlesWidget: _bottomTitleWidgets,
-                                  interval: max(
-                                      1,
-                                      (_sortedDates.length / 5)
-                                          .floor()
-                                          .toDouble()))),
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              getTitlesWidget: _bottomTitleWidgets,
+                              interval: max(
+                                1,
+                                (_sortedDates.length / 5).floor().toDouble(),
+                              ),
+                            ),
+                          ),
                           topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                         ),
                         borderData: FlBorderData(show: true),
                         lineBarsData: _chartBars,
@@ -362,8 +419,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () {
               _addAssetType(controller.text);
@@ -384,8 +442,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         content: const Text('この資産項目と関連するすべてのデータを削除しますか？この操作は元に戻せません。'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () {
               _removeAssetType(type);
@@ -417,7 +476,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
-        axisSide: meta.axisSide, child: Text(text, style: style));
+      axisSide: meta.axisSide,
+      child: Text(text, style: style),
+    );
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
@@ -450,7 +511,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       LineTooltipItem(
         '総資産: $formattedTotal\n',
         const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+        ),
       ),
     ];
 
