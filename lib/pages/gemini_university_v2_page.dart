@@ -216,28 +216,63 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       title: 'Gemini API リファレンス',
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
-      content: 'Gemini API リファレンス\n\n'
-          '利用規約を更新しました。\n\n'
-          'このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
-          'HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
-          '最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。\n\n'
-          '言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。\n\n'
-          '## 主要エンドポイント\n\n'
-          'Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
-          '**標準コンテンツ生成（generateContent）**: リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
-          '**ストリーミングコンテンツ生成 (streamGenerateContent)**: サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。\n\n'
-          '**ライブAPI（BidiGenerateContent）**: 双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。\n\n'
-          '**バッチモード (batchGenerateContent)**: generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。\n\n'
-          '**埋め込み（embedContent）**: 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。',
+      content: '''
+### Gemini API リファレンス
+*2026/1/17 更新*
+
+**利用規約を更新しました。**
+
+このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
+HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
+最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
+言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。
+
+---
+
+### 主要エンドポイント (Primary endpoints)
+Gemini APIは以下の主要なエンドポイントを中心に構成されています。
+
+#### 1. 標準コンテンツ生成 (generateContent)
+リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
+
+#### 2. ストリーミングコンテンツ生成 (streamGenerateContent)
+サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。
+
+#### 3. ライブAPI (BidiGenerateContent)
+双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。
+
+#### 4. バッチモード (batchGenerateContent)
+*2026/1/15 更新*
+`generateContent`リクエストのバッチを送信するための標準的なRESTエンドポイント。
+
+#### 5. 埋め込み (embedContent)
+*2026/1/16 更新*
+入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。
+
+#### 6. Gen Media API
+*2026/1/16 更新*
+画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、`generateContent` APIを使用してアクセスできます。
+
+#### 7. プラットフォームAPI (Platform APIs)
+*2026/1/17 更新*
+ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。
+
+---
+
+### 認証 (Authentication)
+*2026/1/17 更新*
+
+Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-api-key` ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
+''',
       quiz: Quiz(
-        question: 'generateContentリクエストのバッチを送信するためのAPIエンドポイントは？',
+        question: 'リアルタイム会話型ユースケース向けに設計された、双方向ストリーミングのためのWebSocketベースのAPIはどれですか？',
         options: [
           'generateContent',
           'streamGenerateContent',
           'BidiGenerateContent',
           'batchGenerateContent',
         ],
-        correctIndex: 3,
+        correctIndex: 2,
       ),
       officialDocs: [
         {
