@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/cash_management_page.dart';
 import 'package:my_web_app/pages/monthly_closing_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import 'package:my_web_app/pages/subscription_page.dart';
@@ -17,6 +18,13 @@ class CfoOfficePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildMenuCard(
+            context,
+            '現金管理',
+            '毎日の現金残高を記録し、推移を可視化します。',
+            Icons.wallet,
+            const CashManagementPage(),
+          ),
           _buildMenuCard(
             context,
             '固定費削減室 (サブスク管理)',

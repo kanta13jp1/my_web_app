@@ -79,9 +79,11 @@ class HomePage extends StatelessWidget {
                 Icons.camera_alt,
                 Colors.deepOrange,
                 () => _nav(
-                    context,
-                    RealWorldDanshariPage(
-                        supabaseClient: Supabase.instance.client)),
+                  context,
+                  RealWorldDanshariPage(
+                    supabaseClient: Supabase.instance.client,
+                  ),
+                ),
               ),
               _MenuData(
                 'AI稼働モニター',
