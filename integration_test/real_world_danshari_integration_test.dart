@@ -87,7 +87,7 @@ class MockImagePicker extends Mock implements ImagePicker {
       0xAE,
       0x42,
       0x60,
-      0x82
+      0x82,
     ]);
     return XFile.fromData(bytes, name: 'test_image.png');
   }
@@ -114,7 +114,7 @@ void main() {
       email: 'kanta13jp@gmail.com',
       password: 'P@ssw0rd01',
     );
-    
+
     if (authResponse.session == null) {
       fail('Supabaseへのログインに失敗しました。ユーザーが正しく作成されているか確認してください。');
     }

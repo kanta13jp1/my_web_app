@@ -16,7 +16,7 @@ class RealWorldDanshariPage extends StatefulWidget {
   RealWorldDanshariPage({
     super.key,
     required this.supabaseClient,
-    ImagePicker? imagePicker, 
+    ImagePicker? imagePicker,
   }) : imagePicker = imagePicker ?? ImagePicker();
 
   @override

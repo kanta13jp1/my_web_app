@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/theme_service.dart';
@@ -78,7 +78,10 @@ class HomePage extends StatelessWidget {
                 '断捨離 (リアル)',
                 Icons.camera_alt,
                 Colors.deepOrange,
-                () => _nav(context, RealWorldDanshariPage(supabaseClient: Supabase.instance.client)),
+                () => _nav(
+                    context,
+                    RealWorldDanshariPage(
+                        supabaseClient: Supabase.instance.client)),
               ),
               _MenuData(
                 'AI稼働モニター',

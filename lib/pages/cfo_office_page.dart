@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/monthly_closing_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import 'package:my_web_app/pages/subscription_page.dart';
 
@@ -33,9 +34,9 @@ class CfoOfficePage extends StatelessWidget {
           _buildMenuCard(
             context,
             '月次決算レポート',
-            '今月の収支状況を分析します。(準備中)',
+            '今月の収支状況を分析します。',
             Icons.summarize,
-            null,
+            const MonthlyClosingReportPage(),
           ),
         ],
       ),
