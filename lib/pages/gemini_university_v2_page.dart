@@ -265,7 +265,8 @@ Gemini APIは以下の主要なエンドポイントを中心に構成されて�
 Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-api-key` ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
 ''',
       quiz: Quiz(
-        question: 'リアルタイム会話型ユースケース向けに設計された、双方向ストリーミングのためのWebSocketベースのAPIはどれですか？',
+        question:
+            'リアルタイム会話型ユースケース向けに設計された、双方向ストリーミングのためのWebSocketベースのAPIはどれですか？',
         options: [
           'generateContent',
           'streamGenerateContent',

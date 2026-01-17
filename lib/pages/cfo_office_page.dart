@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_web_app/pages/cash_management_page.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/monthly_closing_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import 'package:my_web_app/pages/subscription_page.dart';
@@ -20,10 +20,10 @@ class CfoOfficePage extends StatelessWidget {
         children: [
           _buildMenuCard(
             context,
-            '現金管理',
-            '毎日の現金残高を記録し、推移を可視化します。',
-            Icons.wallet,
-            const CashManagementPage(),
+            '資産管理',
+            '現金や銀行口座の残高を記録し、資産全体の推移を可視化します。',
+            Icons.monetization_on,
+            const AssetManagementPage(),
           ),
           _buildMenuCard(
             context,

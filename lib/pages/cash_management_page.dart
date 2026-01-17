@@ -104,8 +104,10 @@ class _CashManagementPageState extends State<CashManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('今日の現金残高を登録',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              '今日の現金残高を登録',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _cashController,
@@ -158,14 +160,20 @@ class _CashManagementPageState extends State<CashManagementPage> {
                         gridData: const FlGridData(show: true),
                         titlesData: const FlTitlesData(
                           leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                  showTitles: true, reservedSize: 60)),
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 60,
+                            ),
+                          ),
                           bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                         ),
                         borderData: FlBorderData(show: true),
                         lineBarsData: [
@@ -189,8 +197,9 @@ class _CashManagementPageState extends State<CashManagementPage> {
                                 return LineTooltipItem(
                                   _getTooltipText(spot),
                                   const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold),
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 );
                               }).toList();
                             },
