@@ -319,12 +319,71 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _toggleTodo(
-      String id, bool currentValue, String taskTitle) async {
+  Future<void> _toggleTodo(String id, bool currentValue, String taskTitle,
+      int? estimatedMinutes) async {
+    int? actualMinutes;
+
+    // タスクを完了にする場合のみ、実績時間を入力
+    if (!currentValue) {
+      final controller =
+          TextEditingController(text: estimatedMinutes?.toString() ?? '');
+      final shouldComplete = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('作業時間の記録'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('このタスクにかかった実際の時間は？'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '実績時間 (分)',
+                  border: OutlineInputBorder(),
+                  suffixText: '分',
+                ),
+                autofocus: true,
+                onSubmitted: (_) => Navigator.pop(context, true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('完了'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldComplete != true) return; // キャンセルされた場合は処理中断
+
+      if (controller.text.isNotEmpty) {
+        actualMinutes = int.tryParse(controller.text);
+      }
+    }
+
     try {
+      final updates = <String, dynamic>{
+        'is_completed': !currentValue,
+      };
+
+      if (!currentValue) {
+        updates['actual_minutes'] = actualMinutes;
+      } else {
+        updates['actual_minutes'] = null; // 未完了に戻す場合は実績時間をクリア
+      }
+
       await Supabase.instance.client
           .from('daily_todos')
-          .update({'is_completed': !currentValue}).eq('id', id);
+          .update(updates)
+          .eq('id', id);
 
       if (!currentValue && mounted) {
         _confettiController.play();
@@ -577,6 +636,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final recurrence = todo['recurrence'] as String? ?? 'none';
     final category = todo['category'] as String? ?? 'work';
     final estimatedMinutes = todo['estimated_minutes'] as int?;
+    final actualMinutes = todo['actual_minutes'] as int?;
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
@@ -613,6 +673,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('繰り返し: $recurrenceText'),
                   Text('カテゴリ: $categoryText'),
                   Text('見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
+                  Text('実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
                   Text('作成: ${formattedDate(createdAtStr)}'),
                   const Divider(height: 24),
                   const Text('サブタスク',
@@ -751,7 +812,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     final buffer = StringBuffer();
     // Header
-    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes');
+    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes');
 
     // Rows
     for (final todo in historyTodos) {
@@ -762,8 +823,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final isImportant = (todo['is_important'] as bool? ?? false) ? 'Yes' : 'No';
       final recurrence = todo['recurrence'] as String? ?? 'none';
       final estimated = todo['estimated_minutes']?.toString() ?? '';
+      final actual = todo['actual_minutes']?.toString() ?? '';
 
-      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated');
+      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual');
     }
 
     final csvData = buffer.toString();
@@ -1065,11 +1127,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               final task = todo['task'] as String;
                               final createdAtStr = todo['created_at'] as String?;
                               final category = todo['category'] as String? ?? 'work';
+                              final actualMinutes = todo['actual_minutes'] as int?;
                               
                               String subtitleText = '';
                               if (createdAtStr != null) {
                                 final createdAt = DateTime.parse(createdAtStr).toLocal();
                                 subtitleText = '作成: ${timeago.format(createdAt)}';
+                              }
+
+                              if (actualMinutes != null) {
+                                subtitleText += ' (実績: ${actualMinutes}分)';
                               }
 
                               return ListTile(
@@ -1095,7 +1162,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     IconButton(
                                       icon: const Icon(Icons.undo),
                                       tooltip: '未完了に戻す',
-                                      onPressed: () => _toggleTodo(id, true, task),
+                                      onPressed: () => _toggleTodo(id, true, task, null),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline),
@@ -1144,6 +1211,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final recurrence = todo['recurrence'] as String? ?? 'none';
     final category = todo['category'] as String? ?? 'work';
     final estimatedMinutes = todo['estimated_minutes'] as int?;
+    final actualMinutes = todo['actual_minutes'] as int?;
 
     // サブタスクの進捗計算
     final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
@@ -1184,7 +1252,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += ' [Sub: $subDone/$subTotal]';
     }
 
-    if (estimatedMinutes != null) {
+    if (isCompleted && actualMinutes != null) {
+      subtitleText += ' ✅${actualMinutes}分';
+      if (estimatedMinutes != null) subtitleText += '/予${estimatedMinutes}分';
+    } else if (estimatedMinutes != null) {
       subtitleText += ' ⏱$estimatedMinutes分';
     }
 
@@ -1193,7 +1264,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
-        onChanged: (val) => _toggleTodo(id, isCompleted, task),
+        onChanged: (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes),
       ),
       title: Text(
         task,
