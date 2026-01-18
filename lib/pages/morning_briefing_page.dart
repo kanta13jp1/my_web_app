@@ -466,6 +466,28 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('タスクの削除'),
+                            content: const Text('このタスクを削除してもよろしいですか？'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('キャンセル'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: const Text('削除'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                       onDismissed: (_) => _deleteTodo(id),
                       child: ListTile(
                         onTap: () => _editTodo(id, task, dueDate),
