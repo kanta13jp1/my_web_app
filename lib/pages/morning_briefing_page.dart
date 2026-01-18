@@ -323,11 +323,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   Future<void> _toggleTodo(String id, bool currentValue, String taskTitle,
       int? estimatedMinutes) async {
     int? actualMinutes;
+    String? reflection;
 
     // タスクを完了にする場合のみ、実績時間を入力
     if (!currentValue) {
-      final controller =
+      final timeController =
           TextEditingController(text: estimatedMinutes?.toString() ?? '');
+      final reflectionController = TextEditingController();
       final shouldComplete = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -338,7 +340,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               const Text('このタスクにかかった実際の時間は？'),
               const SizedBox(height: 16),
               TextField(
-                controller: controller,
+                controller: timeController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: '実績時間 (分)',
@@ -347,6 +349,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 autofocus: true,
                 onSubmitted: (_) => Navigator.pop(context, true),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: reflectionController,
+                decoration: const InputDecoration(
+                  labelText: '振り返り・メモ',
+                  hintText: '感想や次回の改善点など...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
               ),
             ],
           ),
@@ -365,8 +377,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
       if (shouldComplete != true) return; // キャンセルされた場合は処理中断
 
-      if (controller.text.isNotEmpty) {
-        actualMinutes = int.tryParse(controller.text);
+      if (timeController.text.isNotEmpty) {
+        actualMinutes = int.tryParse(timeController.text);
+      }
+      if (reflectionController.text.isNotEmpty) {
+        reflection = reflectionController.text;
       }
     }
 
@@ -377,8 +392,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
       if (!currentValue) {
         updates['actual_minutes'] = actualMinutes;
+        updates['reflection'] = reflection;
       } else {
         updates['actual_minutes'] = null; // 未完了に戻す場合は実績時間をクリア
+        updates['reflection'] = null;
       }
 
       await Supabase.instance.client
@@ -638,6 +655,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final category = todo['category'] as String? ?? 'work';
     final estimatedMinutes = todo['estimated_minutes'] as int?;
     final actualMinutes = todo['actual_minutes'] as int?;
+    final reflection = todo['reflection'] as String?;
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
@@ -675,6 +693,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('カテゴリ: $categoryText'),
                   Text('見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
                   Text('実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
+                  if (reflection != null && reflection.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    const Text('振り返り:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(reflection),
+                  ],
                   Text('作成: ${formattedDate(createdAtStr)}'),
                   const Divider(height: 24),
                   const Text('サブタスク',
@@ -813,7 +836,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     final buffer = StringBuffer();
     // Header
-    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes');
+    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection');
 
     // Rows
     for (final todo in historyTodos) {
@@ -825,8 +848,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final recurrence = todo['recurrence'] as String? ?? 'none';
       final estimated = todo['estimated_minutes']?.toString() ?? '';
       final actual = todo['actual_minutes']?.toString() ?? '';
+      final reflection = _escapeCsv(todo['reflection'] as String? ?? '');
 
-      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual');
+      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection');
     }
 
     final csvData = buffer.toString();
