@@ -11,6 +11,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../services/gamification_service.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -61,6 +62,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'health': Icons.favorite,
     'study': Icons.school,
     'other': Icons.category,
+  };
+
+  final Map<String, Color> _categoryColors = {
+    'work': Colors.blue,
+    'private': Colors.green,
+    'health': Colors.red,
+    'study': Colors.orange,
+    'other': Colors.grey,
   };
 
   final Map<String, String> _difficultyLabels = {
@@ -963,7 +972,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final response = await model.generateContent(content);
 
       if (mounted && response.text != null) {
-        _showReportDialog(response.text!);
+        _showReportDialog(response.text!, historyTodos);
       }
     } catch (e) {
       debugPrint('Gemini Error: $e');
@@ -1120,13 +1129,37 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return buffer.toString();
   }
 
-  void _showReportDialog(String report) {
+  void _showReportDialog(String report, List<Map<String, dynamic>> tasks) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('生成された日報'),
-        content: SingleChildScrollView(
-          child: SelectableText(report),
+        title: const Text('本日の振り返り'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 500,
+          child: DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                const TabBar(
+                  labelColor: Colors.indigo,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: [
+                    Tab(text: '分析グラフ'),
+                    Tab(text: 'AI日報'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildAnalyticsView(tasks),
+                      SingleChildScrollView(child: SelectableText(report)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         actions: [
           TextButton.icon(
@@ -1148,6 +1181,105 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  Widget _buildAnalyticsView(List<Map<String, dynamic>> tasks) {
+    int totalMinutes = 0;
+    Map<String, int> categoryCounts = {};
+
+    for (var t in tasks) {
+      totalMinutes += t['actual_minutes'] as int? ?? 0;
+      String cat = t['category'] as String? ?? 'work';
+      categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
+    }
+
+    final totalTasks = tasks.length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatCard(
+                  '完了タスク', '$totalTasks件', Icons.check_circle, Colors.green),
+              _buildStatCard(
+                  '合計時間', '${totalMinutes}分', Icons.timer, Colors.blue),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text('カテゴリ別内訳', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: categoryCounts.entries.map((e) {
+                  final color = _categoryColors[e.key] ?? Colors.grey;
+                  final percentage =
+                      (e.value / totalTasks * 100).toStringAsFixed(1);
+                  return PieChartSectionData(
+                    color: color,
+                    value: e.value.toDouble(),
+                    title: '${_categoryLabels[e.key] ?? e.key}\n$percentage%',
+                    radius: 80,
+                    titleStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  );
+                }).toList(),
+                sectionsSpace: 2,
+                centerSpaceRadius: 30,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: categoryCounts.keys.map((key) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    color: _categoryColors[key] ?? Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(_categoryLabels[key] ?? key),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(title,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(value,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // フィルタリング
@@ -1165,10 +1297,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       });
     }
 
-    final totalTasks = filteredTodos.length;
-    final completedTasks =
-        filteredTodos.where((t) => t['is_completed'] == true).length;
-    final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
+    int totalPoints = 0;
+    int completedPoints = 0;
+
+    for (var todo in filteredTodos) {
+      final difficulty = todo['difficulty'] as String? ?? 'normal';
+      final points = _difficultyPoints[difficulty] ?? 10;
+      totalPoints += points;
+      if (todo['is_completed'] == true) {
+        completedPoints += points;
+      }
+    }
+
+    final progress = totalPoints > 0 ? completedPoints / totalPoints : 0.0;
     
     // タスクの振り分け
     final activeTodos = filteredTodos.where((t) => t['is_completed'] == false).toList();
@@ -1282,11 +1423,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            '今日の進捗',
+                            '今日の進捗 (Pt)',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${(progress * 100).toInt()}% ($completedTasks/$totalTasks)',
+                            '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
