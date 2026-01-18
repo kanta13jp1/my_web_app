@@ -30,6 +30,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
   String _selectedRecurrence = 'none'; // 新規タスク用の繰り返し設定
+  String _selectedCategory = 'work'; // 新規タスク用のカテゴリ
+  String _filterCategory = 'all'; // リスト表示用のフィルタ
+
+  final Map<String, String> _categoryLabels = {
+    'work': '仕事',
+    'private': 'プライベート',
+    'health': '健康',
+    'study': '学習',
+    'other': 'その他',
+  };
+
+  final Map<String, IconData> _categoryIcons = {
+    'work': Icons.work,
+    'private': Icons.home,
+    'health': Icons.favorite,
+    'study': Icons.school,
+    'other': Icons.category,
+  };
 
   @override
   void initState() {
@@ -216,6 +234,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final recurrence = sourceTask['recurrence'] as String;
     final taskTitle = sourceTask['task'] as String;
     final isImportant = sourceTask['is_important'] as bool? ?? false;
+    final category = sourceTask['category'] as String? ?? 'work';
 
     // 次の期限を計算（完了した今日を基準にする）
     DateTime baseDate = DateTime.now();
@@ -245,6 +264,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'is_important': isImportant,
         'due_date': nextDate.toIso8601String(),
         'recurrence': recurrence, // 繰り返し設定を引き継ぐ
+        'category': category, // カテゴリを引き継ぐ
         'order_index': maxOrder + 1,
       });
     } catch (e) {
@@ -272,12 +292,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'is_important': false,
         'due_date': _selectedDate?.toIso8601String(),
         'recurrence': _selectedRecurrence,
+        'category': _selectedCategory,
         'order_index': maxOrder + 1,
       });
       _todoController.clear();
       setState(() {
         _selectedDate = null;
         _selectedRecurrence = 'none';
+        _selectedCategory = 'work';
       });
     } catch (e) {
       if (mounted) {
@@ -379,10 +401,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _editTodo(
-      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence) async {
+      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory) async {
     final editController = TextEditingController(text: currentTask);
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
+    String editCategory = currentCategory ?? 'work';
 
     await showDialog(
       context: context,
@@ -455,6 +478,28 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     setState(() => editRecurrence = val!);
                   },
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: editCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'カテゴリ',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: _categoryLabels.entries.map((e) {
+                    return DropdownMenuItem(
+                      value: e.key,
+                      child: Row(children: [
+                        Icon(_categoryIcons[e.key], size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(e.value),
+                      ]),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() => editCategory = val!);
+                  },
+                ),
               ],
             ),
             actions: [
@@ -473,6 +518,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         'task': newTask,
                         'due_date': editDate?.toIso8601String(),
                         'recurrence': editRecurrence,
+                        'category': editCategory,
                       }).eq('id', id);
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
@@ -502,6 +548,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final isCompleted = todo['is_completed'] as bool;
     final isImportant = todo['is_important'] as bool? ?? false;
     final recurrence = todo['recurrence'] as String? ?? 'none';
+    final category = todo['category'] as String? ?? 'work';
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
@@ -513,6 +560,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (recurrence == 'daily') recurrenceText = '毎日';
     if (recurrence == 'weekly') recurrenceText = '毎週';
     if (recurrence == 'monthly') recurrenceText = '毎月';
+    final categoryText = _categoryLabels[category] ?? category;
 
     final subtaskController = TextEditingController();
 
@@ -535,6 +583,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('重要: ${isImportant ? "はい" : "いいえ"}'),
                   Text('期限: ${formattedDate(dueDateStr)}'),
                   Text('繰り返し: $recurrenceText'),
+                  Text('カテゴリ: $categoryText'),
                   Text('作成: ${formattedDate(createdAtStr)}'),
                   const Divider(height: 24),
                   const Text('サブタスク',
@@ -662,14 +711,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   @override
   Widget build(BuildContext context) {
-    final totalTasks = _todos.length;
+    // フィルタリング
+    final filteredTodos = _filterCategory == 'all'
+        ? _todos
+        : _todos.where((t) => (t['category'] ?? 'work') == _filterCategory).toList();
+
+    final totalTasks = filteredTodos.length;
     final completedTasks =
-        _todos.where((t) => t['is_completed'] == true).length;
+        filteredTodos.where((t) => t['is_completed'] == true).length;
     final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
     
     // タスクの振り分け
-    final activeTodos = _todos.where((t) => t['is_completed'] == false).toList();
-    final historyTodos = _todos.where((t) => t['is_completed'] == true).toList();
+    final activeTodos = filteredTodos.where((t) => t['is_completed'] == false).toList();
+    final historyTodos = filteredTodos.where((t) => t['is_completed'] == true).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -722,7 +776,33 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ],
                   ),
                 ],
-                if (_todos.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      const Text('フィルタ:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: const Text('すべて'),
+                        selected: _filterCategory == 'all',
+                        onSelected: (val) => setState(() => _filterCategory = 'all'),
+                      ),
+                      ..._categoryLabels.entries.map((e) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: FilterChip(
+                            avatar: Icon(_categoryIcons[e.key], size: 16),
+                            label: Text(e.value),
+                            selected: _filterCategory == e.key,
+                            onSelected: (val) => setState(() => _filterCategory = e.key),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                if (filteredTodos.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -798,6 +878,29 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                 ),
                 const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    _categoryIcons[_selectedCategory],
+                    color: Colors.grey,
+                  ),
+                  tooltip: 'カテゴリ選択',
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                    });
+                  },
+                  itemBuilder: (context) => _categoryLabels.entries.map((e) {
+                    return PopupMenuItem(
+                      value: e.key,
+                      child: Row(children: [
+                        Icon(_categoryIcons[e.key], color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(e.value),
+                      ]),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: _addTodo,
                   icon: const Icon(Icons.add),
@@ -823,162 +926,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             Text('タスクはありません'),
                           ],
                         ),
-                      )
+                      ) : _filterCategory != 'all'
+                        // フィルタ適用中は並び替え無効 (ListViewを使用)
+                        ? ListView.builder(
+                            itemCount: activeTodos.length,
+                            itemBuilder: (context, index) => _buildTodoItem(activeTodos[index], index, false),
+                          )
                     : ReorderableListView.builder(
                         onReorder: _onReorder,
                         itemCount: activeTodos.length,
-                        itemBuilder: (context, index) {
-                          final todo = activeTodos[index];
-                          final isCompleted = todo['is_completed'] as bool;
-                          final id = todo['id'] as String;
-                          final task = todo['task'] as String;
-                          final dueDateStr = todo['due_date'] as String?;
-                          final createdAtStr = todo['created_at'] as String?;
-                          final isImportant =
-                              todo['is_important'] as bool? ?? false;
-                          final recurrence = todo['recurrence'] as String? ?? 'none';
-                          
-                          // サブタスクの進捗計算
-                          final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
-                          final subTotal = mySubtasks.length;
-                          final subDone = mySubtasks.where((s) => s['is_completed'] == true).length;
-
-                          DateTime? dueDate;
-                          bool isOverdue = false;
-
-                          if (dueDateStr != null) {
-                            dueDate = DateTime.parse(dueDateStr).toLocal();
-                            if (!isCompleted &&
-                                DateTime.now().isAfter(
-                                    dueDate.add(const Duration(days: 1)))) {
-                              isOverdue = true;
-                            }
-                          }
-
-                          // サブタイトル（期限 + 経過時間）の生成
-                          String subtitleText = '';
-                          if (dueDate != null) {
-                            subtitleText =
-                                '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}';
-                          }
-
-                          if (createdAtStr != null) {
-                            final createdAt =
-                                DateTime.parse(createdAtStr).toLocal();
-                            final elapsed = timeago.format(createdAt);
-                            if (subtitleText.isNotEmpty) {
-                              subtitleText += ' • ';
-                            }
-                            subtitleText += '作成: $elapsed';
-                          }
-
-                          if (recurrence != 'none') {
-                            subtitleText += ' (↻)';
-                          }
-
-                          if (subTotal > 0) {
-                            subtitleText += ' [Sub: $subDone/$subTotal]';
-                          }
-
-                          return Dismissible(
-                            key: Key(id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerRight,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              child:
-                                  const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            confirmDismiss: (direction) async {
-                              return await showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('タスクの削除'),
-                                  content: const Text('このタスクを削除してもよろしいですか？'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: const Text('キャンセル'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(true),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                      ),
-                                      child: const Text('削除'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            onDismissed: (_) => _deleteTodo(id),
-                            child: ListTile(
-                              onTap: () => _editTodo(id, task, dueDate, recurrence),
-                              onLongPress: () => _showTaskDetails(todo),
-                              leading: Checkbox(
-                                value: isCompleted,
-                                onChanged: (val) =>
-                                    _toggleTodo(id, isCompleted, task),
-                              ),
-                              title: Text(
-                                task,
-                                style: TextStyle(
-                                  decoration: isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  color: isCompleted
-                                      ? Colors.grey
-                                      : (isOverdue ? Colors.red : null),
-                                  fontWeight:
-                                      isOverdue ? FontWeight.bold : null,
-                                ),
-                              ),
-                              subtitle: subtitleText.isNotEmpty
-                                  ? Text(
-                                      subtitleText,
-                                      style: TextStyle(
-                                        color: isOverdue ? Colors.red : Colors.grey,
-                                      ),
-                                    )
-                                  : null,
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (recurrence != 'none')
-                                    const Padding(
-                                      padding: EdgeInsets.only(right: 8.0),
-                                      child: Icon(Icons.repeat, size: 16, color: Colors.grey),
-                                    ),
-                                  IconButton(
-                                    icon: Icon(
-                                      isImportant
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color: isImportant
-                                          ? Colors.orange
-                                          : Colors.grey,
-                                    ),
-                                    onPressed: () =>
-                                        _toggleImportant(id, isImportant),
-                                  ),
-                                  // ドラッグハンドル
-                                  ReorderableDragStartListener(
-                                    index: index,
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Icon(Icons.drag_handle,
-                                          color: Colors.grey),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                        itemBuilder: (context, index) => _buildTodoItem(activeTodos[index], index, true),
                       ),
                 
                 // --- Tab 2: History (Completed) ---
@@ -1002,6 +959,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               final id = todo['id'] as String;
                               final task = todo['task'] as String;
                               final createdAtStr = todo['created_at'] as String?;
+                              final category = todo['category'] as String? ?? 'work';
                               
                               String subtitleText = '';
                               if (createdAtStr != null) {
@@ -1019,7 +977,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     color: Colors.grey,
                                   ),
                                 ),
-                                subtitle: Text(subtitleText),
+                                subtitle: Row(
+                                  children: [
+                                    Icon(_categoryIcons[category], size: 12, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Text(subtitleText),
+                                  ],
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -1059,6 +1023,149 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTodoItem(Map<String, dynamic> todo, int index, bool isReorderable) {
+    final isCompleted = todo['is_completed'] as bool;
+    final id = todo['id'] as String;
+    final task = todo['task'] as String;
+    final dueDateStr = todo['due_date'] as String?;
+    final createdAtStr = todo['created_at'] as String?;
+    final isImportant = todo['is_important'] as bool? ?? false;
+    final recurrence = todo['recurrence'] as String? ?? 'none';
+    final category = todo['category'] as String? ?? 'work';
+
+    // サブタスクの進捗計算
+    final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
+    final subTotal = mySubtasks.length;
+    final subDone = mySubtasks.where((s) => s['is_completed'] == true).length;
+
+    DateTime? dueDate;
+    bool isOverdue = false;
+
+    if (dueDateStr != null) {
+      dueDate = DateTime.parse(dueDateStr).toLocal();
+      if (!isCompleted &&
+          DateTime.now().isAfter(dueDate.add(const Duration(days: 1)))) {
+        isOverdue = true;
+      }
+    }
+
+    // サブタイトル（期限 + 経過時間）の生成
+    String subtitleText = '';
+    if (dueDate != null) {
+      subtitleText = '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}';
+    }
+
+    if (createdAtStr != null) {
+      final createdAt = DateTime.parse(createdAtStr).toLocal();
+      final elapsed = timeago.format(createdAt);
+      if (subtitleText.isNotEmpty) {
+        subtitleText += ' • ';
+      }
+      subtitleText += '作成: $elapsed';
+    }
+
+    if (recurrence != 'none') {
+      subtitleText += ' (↻)';
+    }
+
+    if (subTotal > 0) {
+      subtitleText += ' [Sub: $subDone/$subTotal]';
+    }
+
+    final content = ListTile(
+      onTap: () => _editTodo(id, task, dueDate, recurrence, category),
+      onLongPress: () => _showTaskDetails(todo),
+      leading: Checkbox(
+        value: isCompleted,
+        onChanged: (val) => _toggleTodo(id, isCompleted, task),
+      ),
+      title: Text(
+        task,
+        style: TextStyle(
+          decoration: isCompleted ? TextDecoration.lineThrough : null,
+          color: isCompleted ? Colors.grey : (isOverdue ? Colors.red : null),
+          fontWeight: isOverdue ? FontWeight.bold : null,
+        ),
+      ),
+      subtitle: Row(
+        children: [
+          Icon(_categoryIcons[category], size: 12, color: Colors.grey),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              subtitleText,
+              style: TextStyle(
+                color: isOverdue ? Colors.red : Colors.grey,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (recurrence != 'none')
+            const Padding(
+              padding: EdgeInsets.only(right: 8.0),
+              child: Icon(Icons.repeat, size: 16, color: Colors.grey),
+            ),
+          IconButton(
+            icon: Icon(
+              isImportant ? Icons.star : Icons.star_border,
+              color: isImportant ? Colors.orange : Colors.grey,
+            ),
+            onPressed: () => _toggleImportant(id, isImportant),
+          ),
+          // ドラッグハンドル (並び替え可能な場合のみ表示)
+          if (isReorderable)
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.drag_handle, color: Colors.grey),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    return Dismissible(
+      key: Key(id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('タスクの削除'),
+            content: const Text('このタスクを削除してもよろしいですか？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('削除'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (_) => _deleteTodo(id),
+      child: content,
     );
   }
 }
