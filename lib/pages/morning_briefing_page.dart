@@ -20,7 +20,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _todoController = TextEditingController();
   List<Map<String, dynamic>> _todos = [];
+  List<Map<String, dynamic>> _subtasks = [];
   StreamSubscription? _todosSubscription;
+  StreamSubscription? _subtasksSubscription;
   late TabController _tabController;
   bool _isLoading = true;
   DateTime? _selectedDate;
@@ -67,6 +69,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         setState(() => _isLoading = false);
       }
     });
+
+    _subtasksSubscription = Supabase.instance.client
+        .from('daily_subtasks')
+        .stream(primaryKey: ['id']).listen((data) {
+      if (mounted) {
+        setState(() {
+          _subtasks = data;
+        });
+      }
+    });
   }
 
   @override
@@ -75,6 +87,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     _tabController.dispose();
     _confettiController.dispose();
     _todosSubscription?.cancel();
+    _subtasksSubscription?.cancel();
     _todoController.dispose();
     super.dispose();
   }
@@ -347,6 +360,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
   }
 
+  Future<void> _addSubtask(String todoId, String title) async {
+    await Supabase.instance.client.from('daily_subtasks').insert({
+      'todo_id': todoId,
+      'title': title,
+      'is_completed': false,
+    });
+  }
+
+  Future<void> _toggleSubtask(String id, bool currentVal) async {
+    await Supabase.instance.client
+        .from('daily_subtasks')
+        .update({'is_completed': !currentVal}).eq('id', id);
+  }
+
+  Future<void> _deleteSubtask(String id) async {
+    await Supabase.instance.client.from('daily_subtasks').delete().eq('id', id);
+  }
+
   Future<void> _editTodo(
       String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence) async {
     final editController = TextEditingController(text: currentTask);
@@ -464,6 +495,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _showTaskDetails(Map<String, dynamic> todo) async {
+    final todoId = todo['id'] as String;
     final task = todo['task'] as String;
     final dueDateStr = todo['due_date'] as String?;
     final createdAtStr = todo['created_at'] as String?;
@@ -482,30 +514,123 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (recurrence == 'weekly') recurrenceText = '毎週';
     if (recurrence == 'monthly') recurrenceText = '毎月';
 
+    final subtaskController = TextEditingController();
+
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('タスク詳細'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('内容: $task',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('状態: ${isCompleted ? "完了" : "未完了"}'),
-            Text('重要: ${isImportant ? "はい" : "いいえ"}'),
-            Text('期限: ${formattedDate(dueDateStr)}'),
-            Text('繰り返し: $recurrenceText'),
-            Text('作成: ${formattedDate(createdAtStr)}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('閉じる'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('タスク詳細 & サブタスク'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('内容: $task',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('状態: ${isCompleted ? "完了" : "未完了"}'),
+                  Text('重要: ${isImportant ? "はい" : "いいえ"}'),
+                  Text('期限: ${formattedDate(dueDateStr)}'),
+                  Text('繰り返し: $recurrenceText'),
+                  Text('作成: ${formattedDate(createdAtStr)}'),
+                  const Divider(height: 24),
+                  const Text('サブタスク',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: subtaskController,
+                          decoration: const InputDecoration(
+                            hintText: 'サブタスクを追加...',
+                            isDense: true,
+                            contentPadding: EdgeInsets.all(8),
+                            border: OutlineInputBorder(),
+                          ),
+                          onSubmitted: (val) {
+                            if (val.trim().isNotEmpty) {
+                              _addSubtask(todoId, val.trim());
+                              subtaskController.clear();
+                            }
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Colors.blue),
+                        onPressed: () {
+                          if (subtaskController.text.trim().isNotEmpty) {
+                            _addSubtask(todoId, subtaskController.text.trim());
+                            subtaskController.clear();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // ダイアログ内でもリアルタイム更新するためにStreamBuilderを使用
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: Supabase.instance.client
+                        .from('daily_subtasks')
+                        .stream(primaryKey: ['id'])
+                        .eq('todo_id', todoId)
+                        .order('created_at'),
+                    builder: (context, snapshot) {
+                      final subtasks = snapshot.data ?? [];
+                      if (subtasks.isEmpty) {
+                        return const Text('サブタスクはありません',
+                            style: TextStyle(color: Colors.grey));
+                      }
+                      return Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: subtasks.length,
+                          itemBuilder: (context, index) {
+                            final st = subtasks[index];
+                            final stId = st['id'] as String;
+                            final stTitle = st['title'] as String;
+                            final stCompleted = st['is_completed'] as bool;
+                            return ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Checkbox(
+                                value: stCompleted,
+                                onChanged: (val) =>
+                                    _toggleSubtask(stId, stCompleted),
+                              ),
+                              title: Text(
+                                stTitle,
+                                style: TextStyle(
+                                  decoration: stCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: stCompleted ? Colors.grey : null,
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () => _deleteSubtask(stId),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('閉じる'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -712,6 +837,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           final isImportant =
                               todo['is_important'] as bool? ?? false;
                           final recurrence = todo['recurrence'] as String? ?? 'none';
+                          
+                          // サブタスクの進捗計算
+                          final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
+                          final subTotal = mySubtasks.length;
+                          final subDone = mySubtasks.where((s) => s['is_completed'] == true).length;
 
                           DateTime? dueDate;
                           bool isOverdue = false;
@@ -744,6 +874,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
                           if (recurrence != 'none') {
                             subtitleText += ' (↻)';
+                          }
+
+                          if (subTotal > 0) {
+                            subtitleText += ' [Sub: $subDone/$subTotal]';
                           }
 
                           return Dismissible(
