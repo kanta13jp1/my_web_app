@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:confetti/confetti.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import '../services/gamification_service.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -22,6 +24,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   DateTime? _selectedDate;
   Map<String, dynamic>? _weatherData;
   late ConfettiController _confettiController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     _confettiController.dispose();
     _todosSubscription?.cancel();
     _todoController.dispose();
@@ -236,6 +240,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
 
       if (!currentValue && mounted) {
         _confettiController.play();
+        try {
+          // 効果音を再生 (assets/sounds/success.mp3 を用意してください)
+          await _audioPlayer.play(AssetSource('sounds/success.mp3'));
+        } catch (e) {
+          debugPrint('SE Play Error: $e');
+        }
         // タスク完了時にポイント付与
         context.read<GamificationService>().awardPoints(
               10,
@@ -248,6 +258,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
             duration: Duration(seconds: 1),
           ),
         );
+      } else if (currentValue && mounted) {
+        // タスク完了取り消し時にポイント減算
+        context.read<GamificationService>().awardPoints(
+              -10,
+              reason: 'タスク完了取り消し: $taskTitle',
+            );
       }
     } catch (e) {
       // エラーハンドリング
@@ -533,6 +549,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                           final id = todo['id'] as String;
                           final task = todo['task'] as String;
                           final dueDateStr = todo['due_date'] as String?;
+                          final createdAtStr = todo['created_at'] as String?;
                           final isImportant =
                               todo['is_important'] as bool? ?? false;
 
@@ -546,6 +563,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                                     dueDate.add(const Duration(days: 1)))) {
                               isOverdue = true;
                             }
+                          }
+
+                          // サブタイトル（期限 + 経過時間）の生成
+                          String subtitleText = '';
+                          if (dueDate != null) {
+                            subtitleText =
+                                '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}';
+                          }
+
+                          if (createdAtStr != null) {
+                            final createdAt =
+                                DateTime.parse(createdAtStr).toLocal();
+                            final elapsed = timeago.format(createdAt);
+                            if (subtitleText.isNotEmpty) {
+                              subtitleText += ' • ';
+                            }
+                            subtitleText += '作成: $elapsed';
                           }
 
                           return Dismissible(
@@ -604,13 +638,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                                       isOverdue ? FontWeight.bold : null,
                                 ),
                               ),
-                              subtitle: dueDate != null
+                              subtitle: subtitleText.isNotEmpty
                                   ? Text(
-                                      '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
+                                      subtitleText,
                                       style: TextStyle(
-                                        color: isOverdue
-                                            ? Colors.red
-                                            : Colors.grey,
+                                        color: isOverdue ? Colors.red : Colors.grey,
                                       ),
                                     )
                                   : null,
