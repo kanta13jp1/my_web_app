@@ -27,6 +27,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   Map<String, dynamic>? _weatherData;
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  String _selectedRecurrence = 'none'; // 新規タスク用の繰り返し設定
 
   @override
   void initState() {
@@ -198,6 +199,46 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
+  Future<void> _createNextRecurringTask(Map<String, dynamic> sourceTask) async {
+    final recurrence = sourceTask['recurrence'] as String;
+    final taskTitle = sourceTask['task'] as String;
+    final isImportant = sourceTask['is_important'] as bool? ?? false;
+
+    // 次の期限を計算（完了した今日を基準にする）
+    DateTime baseDate = DateTime.now();
+    DateTime nextDate = baseDate;
+
+    if (recurrence == 'daily') {
+      nextDate = baseDate.add(const Duration(days: 1));
+    } else if (recurrence == 'weekly') {
+      nextDate = baseDate.add(const Duration(days: 7));
+    } else if (recurrence == 'monthly') {
+      nextDate = DateTime(baseDate.year, baseDate.month + 1, baseDate.day);
+    }
+
+    // order_indexの最大値取得
+    int maxOrder = 0;
+    if (_todos.isNotEmpty) {
+      for (var t in _todos) {
+        final o = t['order_index'] as int? ?? 0;
+        if (o > maxOrder) maxOrder = o;
+      }
+    }
+
+    try {
+      await Supabase.instance.client.from('daily_todos').insert({
+        'task': taskTitle,
+        'is_completed': false,
+        'is_important': isImportant,
+        'due_date': nextDate.toIso8601String(),
+        'recurrence': recurrence, // 繰り返し設定を引き継ぐ
+        'order_index': maxOrder + 1,
+      });
+    } catch (e) {
+      debugPrint('Error creating recurring task: $e');
+    }
+  }
+
   Future<void> _addTodo() async {
     final text = _todoController.text.trim();
     if (text.isEmpty) return;
@@ -217,11 +258,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'is_completed': false,
         'is_important': false,
         'due_date': _selectedDate?.toIso8601String(),
+        'recurrence': _selectedRecurrence,
         'order_index': maxOrder + 1,
       });
       _todoController.clear();
       setState(() {
         _selectedDate = null;
+        _selectedRecurrence = 'none';
       });
     } catch (e) {
       if (mounted) {
@@ -244,6 +287,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
       if (!currentValue && mounted) {
         _confettiController.play();
+
+        // 繰り返しタスクの場合、次のタスクを作成
+        final todoIndex = _todos.indexWhere((t) => t['id'] == id);
+        if (todoIndex != -1) {
+          final todo = _todos[todoIndex];
+          final recurrence = todo['recurrence'] as String? ?? 'none';
+          if (recurrence != 'none') {
+            await _createNextRecurringTask(todo);
+          }
+        }
+
         try {
           // 効果音を再生 (assets/sounds/success.mp3 を用意してください)
           await _audioPlayer.play(AssetSource('sounds/success.mp3'));
@@ -294,9 +348,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _editTodo(
-      String id, String currentTask, DateTime? currentDueDate) async {
+      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence) async {
     final editController = TextEditingController(text: currentTask);
     DateTime? editDate = currentDueDate;
+    String editRecurrence = currentRecurrence ?? 'none';
 
     await showDialog(
       context: context,
@@ -351,6 +406,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: editRecurrence,
+                  decoration: const InputDecoration(
+                    labelText: '繰り返し',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'none', child: Text('繰り返しなし')),
+                    DropdownMenuItem(value: 'daily', child: Text('毎日')),
+                    DropdownMenuItem(value: 'weekly', child: Text('毎週')),
+                    DropdownMenuItem(value: 'monthly', child: Text('毎月')),
+                  ],
+                  onChanged: (val) {
+                    setState(() => editRecurrence = val!);
+                  },
+                ),
               ],
             ),
             actions: [
@@ -368,6 +441,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           .update({
                         'task': newTask,
                         'due_date': editDate?.toIso8601String(),
+                        'recurrence': editRecurrence,
                       }).eq('id', id);
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
@@ -395,12 +469,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final createdAtStr = todo['created_at'] as String?;
     final isCompleted = todo['is_completed'] as bool;
     final isImportant = todo['is_important'] as bool? ?? false;
+    final recurrence = todo['recurrence'] as String? ?? 'none';
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
       final date = DateTime.parse(dateStr).toLocal();
       return '${date.year}/${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     }
+
+    String recurrenceText = 'なし';
+    if (recurrence == 'daily') recurrenceText = '毎日';
+    if (recurrence == 'weekly') recurrenceText = '毎週';
+    if (recurrence == 'monthly') recurrenceText = '毎月';
 
     await showDialog(
       context: context,
@@ -416,6 +496,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             Text('状態: ${isCompleted ? "完了" : "未完了"}'),
             Text('重要: ${isImportant ? "はい" : "いいえ"}'),
             Text('期限: ${formattedDate(dueDateStr)}'),
+            Text('繰り返し: $recurrenceText'),
             Text('作成: ${formattedDate(createdAtStr)}'),
           ],
         ),
@@ -573,6 +654,25 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
                 ),
                 const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.repeat,
+                    color: _selectedRecurrence != 'none' ? Colors.orange : Colors.grey,
+                  ),
+                  tooltip: '繰り返し設定',
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedRecurrence = value;
+                    });
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'none', child: Text('繰り返しなし')),
+                    const PopupMenuItem(value: 'daily', child: Text('毎日')),
+                    const PopupMenuItem(value: 'weekly', child: Text('毎週')),
+                    const PopupMenuItem(value: 'monthly', child: Text('毎月')),
+                  ],
+                ),
+                const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: _addTodo,
                   icon: const Icon(Icons.add),
@@ -611,6 +711,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           final createdAtStr = todo['created_at'] as String?;
                           final isImportant =
                               todo['is_important'] as bool? ?? false;
+                          final recurrence = todo['recurrence'] as String? ?? 'none';
 
                           DateTime? dueDate;
                           bool isOverdue = false;
@@ -639,6 +740,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               subtitleText += ' • ';
                             }
                             subtitleText += '作成: $elapsed';
+                          }
+
+                          if (recurrence != 'none') {
+                            subtitleText += ' (↻)';
                           }
 
                           return Dismissible(
@@ -678,7 +783,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             },
                             onDismissed: (_) => _deleteTodo(id),
                             child: ListTile(
-                              onTap: () => _editTodo(id, task, dueDate),
+                              onTap: () => _editTodo(id, task, dueDate, recurrence),
                               onLongPress: () => _showTaskDetails(todo),
                               leading: Checkbox(
                                 value: isCompleted,
@@ -709,6 +814,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  if (recurrence != 'none')
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 8.0),
+                                      child: Icon(Icons.repeat, size: 16, color: Colors.grey),
+                                    ),
                                   IconButton(
                                     icon: Icon(
                                       isImportant
