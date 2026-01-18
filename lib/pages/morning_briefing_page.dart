@@ -362,34 +362,42 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                       }
                     }
 
-                    return ListTile(
-                      leading: Checkbox(
-                        value: isCompleted,
-                        onChanged: (val) => _toggleTodo(id, isCompleted, task),
+                    return Dismissible(
+                      key: Key(id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      title: Text(
-                        task,
-                        style: TextStyle(
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: isCompleted
-                              ? Colors.grey
-                              : (isOverdue ? Colors.red : null),
-                          fontWeight: isOverdue ? FontWeight.bold : null,
+                      onDismissed: (_) => _deleteTodo(id),
+                      child: ListTile(
+                        leading: Checkbox(
+                          value: isCompleted,
+                          onChanged: (val) =>
+                              _toggleTodo(id, isCompleted, task),
                         ),
-                      ),
-                      subtitle: dueDate != null
-                          ? Text(
-                              '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
-                              style: TextStyle(
-                                color: isOverdue ? Colors.red : Colors.grey,
-                              ),
-                            )
-                          : null,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => _deleteTodo(id),
+                        title: Text(
+                          task,
+                          style: TextStyle(
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: isCompleted
+                                ? Colors.grey
+                                : (isOverdue ? Colors.red : null),
+                            fontWeight: isOverdue ? FontWeight.bold : null,
+                          ),
+                        ),
+                        subtitle: dueDate != null
+                            ? Text(
+                                '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
+                                style: TextStyle(
+                                  color: isOverdue ? Colors.red : Colors.grey,
+                                ),
+                              )
+                            : null,
                       ),
                     );
                   },
