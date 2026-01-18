@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -14,16 +15,16 @@ class MorningBriefingPage extends StatefulWidget {
 
 class _MorningBriefingPageState extends State<MorningBriefingPage> {
   final TextEditingController _todoController = TextEditingController();
-  late final Stream<List<Map<String, dynamic>>> _todosStream;
+  List<Map<String, dynamic>> _todos = [];
+  StreamSubscription? _todosSubscription;
+  bool _isLoading = true;
   DateTime? _selectedDate;
   Map<String, dynamic>? _weatherData;
 
   @override
   void initState() {
     super.initState();
-    _todosStream = Supabase.instance.client
-        .from('daily_todos')
-        .stream(primaryKey: ['id']);
+    _setupStream();
     _fetchWeather();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -31,8 +32,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     });
   }
 
+  void _setupStream() {
+    _todosSubscription = Supabase.instance.client
+        .from('daily_todos')
+        .stream(primaryKey: ['id'])
+        .order('order_index', ascending: true)
+        .listen((data) {
+      if (mounted) {
+        setState(() {
+          _todos = data;
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _todosSubscription?.cancel();
     _todoController.dispose();
     super.dispose();
   }
@@ -161,11 +178,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     final text = _todoController.text.trim();
     if (text.isEmpty) return;
 
+    // 現在の最大order_indexを取得して、末尾に追加
+    int maxOrder = 0;
+    if (_todos.isNotEmpty) {
+      for (var t in _todos) {
+        final o = t['order_index'] as int? ?? 0;
+        if (o > maxOrder) maxOrder = o;
+      }
+    }
+
     try {
       await Supabase.instance.client.from('daily_todos').insert({
         'task': text,
         'is_completed': false,
         'due_date': _selectedDate?.toIso8601String(),
+        'order_index': maxOrder + 1,
       });
       _todoController.clear();
       setState(() {
@@ -319,6 +346,31 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     );
   }
 
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final item = _todos.removeAt(oldIndex);
+      _todos.insert(newIndex, item);
+    });
+
+    _updateOrderInDb();
+  }
+
+  Future<void> _updateOrderInDb() async {
+    // 変更された順序をDBに保存
+    // ※本来はバッチ更新が望ましいですが、簡易的にループで更新します
+    for (int i = 0; i < _todos.length; i++) {
+      final item = _todos[i];
+      if (item['order_index'] != i) {
+        await Supabase.instance.client
+            .from('daily_todos')
+            .update({'order_index': i}).eq('id', item['id']);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -400,160 +452,139 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
           ),
           // リストエリア
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _todosStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('エラー: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                // データをコピーしてクライアントサイドでソート
-                final todos = List<Map<String, dynamic>>.from(snapshot.data!);
-
-                todos.sort((a, b) {
-                  // 1. 完了状態（未完了を上に）
-                  final aCompleted = a['is_completed'] as bool? ?? false;
-                  final bCompleted = b['is_completed'] as bool? ?? false;
-                  if (aCompleted != bCompleted) return aCompleted ? 1 : -1;
-
-                  // 2. 重要フラグ（重要を上に）
-                  final aImportant = a['is_important'] as bool? ?? false;
-                  final bImportant = b['is_important'] as bool? ?? false;
-                  if (aImportant != bImportant) return aImportant ? -1 : 1;
-
-                  // 3. 期限（期限ありを優先、近い順）
-                  final aDue = a['due_date'] as String?;
-                  final bDue = b['due_date'] as String?;
-                  if (aDue != null && bDue != null) {
-                    return aDue.compareTo(bDue);
-                  }
-                  if (aDue != null) return -1; // aのみ期限あり -> aが先
-                  if (bDue != null) return 1; // bのみ期限あり -> bが先
-
-                  // 4. 作成日時（新しい順）
-                  final aCreated = a['created_at'] as String;
-                  final bCreated = b['created_at'] as String;
-                  return bCreated.compareTo(aCreated);
-                });
-
-                if (todos.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.task_alt, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('タスクはありません'),
-                      ],
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: todos.length,
-                  itemBuilder: (context, index) {
-                    final todo = todos[index];
-                    final isCompleted = todo['is_completed'] as bool;
-                    final id = todo['id'] as String;
-                    final task = todo['task'] as String;
-                    final dueDateStr = todo['due_date'] as String?;
-                    final isImportant = todo['is_important'] as bool? ?? false;
-
-                    DateTime? dueDate;
-                    bool isOverdue = false;
-
-                    if (dueDateStr != null) {
-                      dueDate = DateTime.parse(dueDateStr).toLocal();
-                      // 期限(00:00)の翌日00:00を過ぎていたら期限切れとする
-                      if (!isCompleted &&
-                          DateTime.now()
-                              .isAfter(dueDate.add(const Duration(days: 1)))) {
-                        isOverdue = true;
-                      }
-                    }
-
-                    return Dismissible(
-                      key: Key(id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      confirmDismiss: (direction) async {
-                        return await showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('タスクの削除'),
-                            content: const Text('このタスクを削除してもよろしいですか？'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('キャンセル'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                ),
-                                child: const Text('削除'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      onDismissed: (_) => _deleteTodo(id),
-                      child: ListTile(
-                        onTap: () => _editTodo(id, task, dueDate),
-                        leading: Checkbox(
-                          value: isCompleted,
-                          onChanged: (val) =>
-                              _toggleTodo(id, isCompleted, task),
-                        ),
-                        title: Text(
-                          task,
-                          style: TextStyle(
-                            decoration: isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: isCompleted
-                                ? Colors.grey
-                                : (isOverdue ? Colors.red : null),
-                            fontWeight: isOverdue ? FontWeight.bold : null,
-                          ),
-                        ),
-                        subtitle: dueDate != null
-                            ? Text(
-                                '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
-                                style: TextStyle(
-                                  color: isOverdue ? Colors.red : Colors.grey,
-                                ),
-                              )
-                            : null,
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _todos.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                isImportant ? Icons.star : Icons.star_border,
-                                color: isImportant ? Colors.orange : Colors.grey,
-                              ),
-                              onPressed: () => _toggleImportant(id, isImportant),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => _deleteTodo(id),
-                            ),
+                            Icon(Icons.task_alt, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('タスクはありません'),
                           ],
                         ),
+                      )
+                    : ReorderableListView.builder(
+                        onReorder: _onReorder,
+                        itemCount: _todos.length,
+                        itemBuilder: (context, index) {
+                          final todo = _todos[index];
+                          final isCompleted = todo['is_completed'] as bool;
+                          final id = todo['id'] as String;
+                          final task = todo['task'] as String;
+                          final dueDateStr = todo['due_date'] as String?;
+                          final isImportant =
+                              todo['is_important'] as bool? ?? false;
+
+                          DateTime? dueDate;
+                          bool isOverdue = false;
+
+                          if (dueDateStr != null) {
+                            dueDate = DateTime.parse(dueDateStr).toLocal();
+                            if (!isCompleted &&
+                                DateTime.now().isAfter(
+                                    dueDate.add(const Duration(days: 1)))) {
+                              isOverdue = true;
+                            }
+                          }
+
+                          return Dismissible(
+                            key: Key(id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child:
+                                  const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            confirmDismiss: (direction) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('タスクの削除'),
+                                  content: const Text('このタスクを削除してもよろしいですか？'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('キャンセル'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      child: const Text('削除'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            onDismissed: (_) => _deleteTodo(id),
+                            child: ListTile(
+                              onTap: () => _editTodo(id, task, dueDate),
+                              leading: Checkbox(
+                                value: isCompleted,
+                                onChanged: (val) =>
+                                    _toggleTodo(id, isCompleted, task),
+                              ),
+                              title: Text(
+                                task,
+                                style: TextStyle(
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: isCompleted
+                                      ? Colors.grey
+                                      : (isOverdue ? Colors.red : null),
+                                  fontWeight:
+                                      isOverdue ? FontWeight.bold : null,
+                                ),
+                              ),
+                              subtitle: dueDate != null
+                                  ? Text(
+                                      '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
+                                      style: TextStyle(
+                                        color: isOverdue
+                                            ? Colors.red
+                                            : Colors.grey,
+                                      ),
+                                    )
+                                  : null,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      isImportant
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: isImportant
+                                          ? Colors.orange
+                                          : Colors.grey,
+                                    ),
+                                    onPressed: () =>
+                                        _toggleImportant(id, isImportant),
+                                  ),
+                                  // ドラッグハンドル
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Icon(Icons.drag_handle,
+                                          color: Colors.grey),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),
