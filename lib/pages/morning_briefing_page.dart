@@ -33,6 +33,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _selectedRecurrence = 'none'; // 新規タスク用の繰り返し設定
   String _selectedCategory = 'work'; // 新規タスク用のカテゴリ
   String _filterCategory = 'all'; // リスト表示用のフィルタ
+  int? _selectedDuration; // 新規タスク用の見積もり時間（分）
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -236,6 +237,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final taskTitle = sourceTask['task'] as String;
     final isImportant = sourceTask['is_important'] as bool? ?? false;
     final category = sourceTask['category'] as String? ?? 'work';
+    final estimatedMinutes = sourceTask['estimated_minutes'] as int?;
 
     // 次の期限を計算（完了した今日を基準にする）
     DateTime baseDate = DateTime.now();
@@ -266,6 +268,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'due_date': nextDate.toIso8601String(),
         'recurrence': recurrence, // 繰り返し設定を引き継ぐ
         'category': category, // カテゴリを引き継ぐ
+        'estimated_minutes': estimatedMinutes, // 見積もり時間を引き継ぐ
         'order_index': maxOrder + 1,
       });
     } catch (e) {
@@ -294,6 +297,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'due_date': _selectedDate?.toIso8601String(),
         'recurrence': _selectedRecurrence,
         'category': _selectedCategory,
+        'estimated_minutes': _selectedDuration,
         'order_index': maxOrder + 1,
       });
       _todoController.clear();
@@ -301,6 +305,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         _selectedDate = null;
         _selectedRecurrence = 'none';
         _selectedCategory = 'work';
+        _selectedDuration = null;
       });
     } catch (e) {
       if (mounted) {
@@ -402,11 +407,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _editTodo(
-      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory) async {
+      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory, int? currentDuration) async {
     final editController = TextEditingController(text: currentTask);
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
     String editCategory = currentCategory ?? 'work';
+    int? editDuration = currentDuration;
 
     await showDialog(
       context: context,
@@ -501,6 +507,25 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     setState(() => editCategory = val!);
                   },
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int?>(
+                  value: editDuration,
+                  decoration: const InputDecoration(
+                    labelText: '見積もり時間',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('設定なし')),
+                    DropdownMenuItem(value: 15, child: Text('15分')),
+                    DropdownMenuItem(value: 30, child: Text('30分')),
+                    DropdownMenuItem(value: 45, child: Text('45分')),
+                    DropdownMenuItem(value: 60, child: Text('1時間')),
+                    DropdownMenuItem(value: 90, child: Text('1.5時間')),
+                    DropdownMenuItem(value: 120, child: Text('2時間')),
+                  ],
+                  onChanged: (val) => setState(() => editDuration = val),
+                ),
               ],
             ),
             actions: [
@@ -520,6 +545,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         'due_date': editDate?.toIso8601String(),
                         'recurrence': editRecurrence,
                         'category': editCategory,
+                        'estimated_minutes': editDuration,
                       }).eq('id', id);
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
@@ -550,6 +576,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final isImportant = todo['is_important'] as bool? ?? false;
     final recurrence = todo['recurrence'] as String? ?? 'none';
     final category = todo['category'] as String? ?? 'work';
+    final estimatedMinutes = todo['estimated_minutes'] as int?;
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
@@ -585,6 +612,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('期限: ${formattedDate(dueDateStr)}'),
                   Text('繰り返し: $recurrenceText'),
                   Text('カテゴリ: $categoryText'),
+                  Text('見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
                   Text('作成: ${formattedDate(createdAtStr)}'),
                   const Divider(height: 24),
                   const Text('サブタスク',
@@ -723,7 +751,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     final buffer = StringBuffer();
     // Header
-    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence');
+    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes');
 
     // Rows
     for (final todo in historyTodos) {
@@ -733,8 +761,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final dueDate = todo['due_date'] as String? ?? '';
       final isImportant = (todo['is_important'] as bool? ?? false) ? 'Yes' : 'No';
       final recurrence = todo['recurrence'] as String? ?? 'none';
+      final estimated = todo['estimated_minutes']?.toString() ?? '';
 
-      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence');
+      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated');
     }
 
     final csvData = buffer.toString();
@@ -943,6 +972,27 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   }).toList(),
                 ),
                 const SizedBox(width: 8),
+                PopupMenuButton<int>(
+                  icon: Icon(
+                    Icons.access_time,
+                    color: _selectedDuration != null ? Colors.orange : Colors.grey,
+                  ),
+                  tooltip: '見積もり時間',
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedDuration = value;
+                    });
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 15, child: Text('15分')),
+                    const PopupMenuItem(value: 30, child: Text('30分')),
+                    const PopupMenuItem(value: 45, child: Text('45分')),
+                    const PopupMenuItem(value: 60, child: Text('1時間')),
+                    const PopupMenuItem(value: 90, child: Text('1.5時間')),
+                    const PopupMenuItem(value: 120, child: Text('2時間')),
+                  ],
+                ),
+                const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: _addTodo,
                   icon: const Icon(Icons.add),
@@ -1093,6 +1143,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final isImportant = todo['is_important'] as bool? ?? false;
     final recurrence = todo['recurrence'] as String? ?? 'none';
     final category = todo['category'] as String? ?? 'work';
+    final estimatedMinutes = todo['estimated_minutes'] as int?;
 
     // サブタスクの進捗計算
     final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
@@ -1133,8 +1184,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += ' [Sub: $subDone/$subTotal]';
     }
 
+    if (estimatedMinutes != null) {
+      subtitleText += ' ⏱$estimatedMinutes分';
+    }
+
     final content = ListTile(
-      onTap: () => _editTodo(id, task, dueDate, recurrence, category),
+      onTap: () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes),
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
