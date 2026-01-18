@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:confetti/confetti.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/gamification_service.dart';
@@ -20,10 +21,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   bool _isLoading = true;
   DateTime? _selectedDate;
   Map<String, dynamic>? _weatherData;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 1));
     _setupStream();
     _fetchWeather();
 
@@ -49,6 +53,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
 
   @override
   void dispose() {
+    _confettiController.dispose();
     _todosSubscription?.cancel();
     _todoController.dispose();
     super.dispose();
@@ -191,6 +196,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
       await Supabase.instance.client.from('daily_todos').insert({
         'task': text,
         'is_completed': false,
+        'is_important': false,
         'due_date': _selectedDate?.toIso8601String(),
         'order_index': maxOrder + 1,
       });
@@ -218,6 +224,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
           .update({'is_completed': !currentValue}).eq('id', id);
 
       if (!currentValue && mounted) {
+        _confettiController.play();
         // タスク完了時にポイント付与
         context.read<GamificationService>().awardPoints(
               10,
@@ -243,6 +250,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
           .update({'is_important': !currentValue}).eq('id', id);
     } catch (e) {
       debugPrint('Error toggling importance: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラーが発生しました: $e')),
+        );
+      }
     }
   }
 
@@ -379,8 +391,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
         backgroundColor: Colors.indigo.shade900,
         foregroundColor: Colors.white,
       ),
-      body: Column(
+      body: Stack(
         children: [
+          Column(
+            children: [
           // ヘッダーメッセージ
           Container(
             width: double.infinity,
@@ -585,6 +599,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                           );
                         },
                       ),
+          ),
+        ],
+      ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple
+              ],
+            ),
           ),
         ],
       ),
