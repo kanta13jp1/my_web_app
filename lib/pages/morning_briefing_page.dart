@@ -396,6 +396,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final totalTasks = _todos.length;
+    final completedTasks =
+        _todos.where((t) => t['is_completed'] == true).length;
+    final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('モーニング・ブリーフィング'),
@@ -436,6 +441,35 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                         '${_weatherData!['temperature']}°C (Tokyo)',
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ],
+                if (_todos.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '今日の進捗',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${(progress * 100).toInt()}% ($completedTasks/$totalTasks)',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white,
+                        color: progress == 1.0 ? Colors.orange : Colors.green,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ],
                   ),
