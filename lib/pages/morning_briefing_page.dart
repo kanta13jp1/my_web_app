@@ -89,7 +89,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
       // 対象タスクのcreated_atを現在時刻に更新して、リストの上部に表示させる
       await Supabase.instance.client
           .from('daily_todos')
-          .update({'created_at': now}).in_('id', ids);
+          .update({'created_at': now}).filter('id', 'in', ids);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
