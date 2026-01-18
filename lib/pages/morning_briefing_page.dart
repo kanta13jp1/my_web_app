@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -709,6 +710,47 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
+  Future<void> _exportHistoryToCsv() async {
+    final historyTodos =
+        _todos.where((t) => t['is_completed'] == true).toList();
+
+    if (historyTodos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('エクスポートする履歴がありません')),
+      );
+      return;
+    }
+
+    final buffer = StringBuffer();
+    // Header
+    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence');
+
+    // Rows
+    for (final todo in historyTodos) {
+      final task = _escapeCsv(todo['task'] as String);
+      final category = _categoryLabels[todo['category']] ?? todo['category'] ?? '';
+      final createdAt = todo['created_at'] as String? ?? '';
+      final dueDate = todo['due_date'] as String? ?? '';
+      final isImportant = (todo['is_important'] as bool? ?? false) ? 'Yes' : 'No';
+      final recurrence = todo['recurrence'] as String? ?? 'none';
+
+      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence');
+    }
+
+    final csvData = buffer.toString();
+    final uri = Uri.parse('data:text/csv;charset=utf-8,${Uri.encodeComponent(csvData)}');
+    if (!await launchUrl(uri)) {
+      debugPrint('Could not launch CSV export url');
+    }
+  }
+
+  String _escapeCsv(String value) {
+    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     // フィルタリング
@@ -951,8 +993,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 Text('完了したタスクはありません'),
                               ],
                             ),
-                          )
-                        : ListView.builder(
+                          ) : Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _exportHistoryToCsv,
+                                    icon: const Icon(Icons.download),
+                                    label: const Text('CSVエクスポート'),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
                             itemCount: historyTodos.length,
                             itemBuilder: (context, index) {
                               final todo = historyTodos[index];
@@ -1000,6 +1055,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 ),
                               );
                             },
+                          ),
+                              ),
+                            ],
                           ),
               ],
             ),
