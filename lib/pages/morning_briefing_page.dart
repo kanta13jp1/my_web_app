@@ -41,12 +41,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
-  String _selectedModel = 'gemini-1.5-flash'; // 日報生成用モデル
+  String _selectedModel = 'gemini-pro'; // 日報生成用モデル
   String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
       'あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。\n'
       '構成は「本日の業務内容」「成果・振り返り」「明日の予定・課題」としてください。\n'
       '特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。';
+
+  List<String> _selectableModels = [
+    'gemini-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ];
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -158,7 +164,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       setState(() {
         _customPromptInstructions =
             prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
-        _selectedModel = prefs.getString('gemini_model') ?? 'gemini-1.5-flash';
+        _selectedModel = prefs.getString('gemini_model') ?? 'gemini-pro';
+        _geminiApiKey = prefs.getString('gemini_api_key');
       });
     }
   }
@@ -1026,9 +1033,38 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  Future<List<String>> _fetchGeminiModels(String apiKey) async {
+    try {
+      final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['models'] != null) {
+          return (data['models'] as List)
+              .where((m) => (m['supportedGenerationMethods'] as List?)
+                  ?.contains('generateContent') ?? false)
+              .map<String>((m) => m['name'].toString().replaceFirst('models/', ''))
+              .toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch models: $e');
+    }
+    return [];
+  }
+
   Future<void> _showPromptSettingsDialog() async {
     final controller = TextEditingController(text: _customPromptInstructions);
+    final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
+    bool isFetchingModels = false;
+    List<String> currentSelectableModels = List.from(_selectableModels);
+
+    // 現在選択中のモデルがリストにない場合に追加
+    if (!currentSelectableModels.contains(tempSelectedModel)) {
+      currentSelectableModels.add(tempSelectedModel);
+    }
 
     await showDialog(
       context: context,
@@ -1039,7 +1075,55 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('AIモデルとプロンプトをカスタマイズできます。'),
+              const Text('Gemini APIの設定を行います。'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: apiKeyController,
+                decoration: const InputDecoration(
+                  labelText: 'Gemini API Key',
+                  border: OutlineInputBorder(),
+                  hintText: 'APIキーを入力してください',
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 8),
+              if (isFetchingModels)
+                const LinearProgressIndicator()
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      if (apiKeyController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('APIキーを入力してください')),
+                        );
+                        return;
+                      }
+                      setDialogState(() => isFetchingModels = true);
+                      final models = await _fetchGeminiModels(apiKeyController.text);
+                      setDialogState(() {
+                        isFetchingModels = false;
+                        if (models.isNotEmpty) {
+                          currentSelectableModels = models;
+                          // 選択中のモデルが新しいリストにない場合、リストの先頭を選択
+                          if (!currentSelectableModels.contains(tempSelectedModel)) {
+                            tempSelectedModel = currentSelectableModels.first;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${models.length}個のモデルを取得しました')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('モデルの取得に失敗しました')),
+                          );
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('利用可能なモデル一覧を取得'),
+                  ),
+                ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: tempSelectedModel,
@@ -1047,14 +1131,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   labelText: '使用モデル',
                   border: OutlineInputBorder(),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'gemini-1.5-flash',
-                      child: Text('Gemini 1.5 Flash (高速)')),
-                  DropdownMenuItem(
-                      value: 'gemini-1.5-pro',
-                      child: Text('Gemini 1.5 Pro (高性能)')),
-                ],
+                items: currentSelectableModels.map((m) {
+                  return DropdownMenuItem(
+                    value: m,
+                    child: Text(m),
+                  );
+                }).toList(),
                 onChanged: (val) {
                   if (val != null) {
                     setDialogState(() => tempSelectedModel = val);
@@ -1077,7 +1159,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           TextButton(
             onPressed: () {
               controller.text = _defaultPromptInstructions;
-              setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
+              setDialogState(() => tempSelectedModel = 'gemini-pro');
             },
             child: const Text('デフォルトに戻す'),
           ),
@@ -1090,10 +1172,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               final prefs = await SharedPreferences.getInstance();
               await prefs.setString('daily_report_prompt', controller.text);
               await prefs.setString('gemini_model', tempSelectedModel);
+              if (apiKeyController.text.isNotEmpty) {
+                await prefs.setString('gemini_api_key', apiKeyController.text);
+              }
               if (mounted) {
                 setState(() {
                   _customPromptInstructions = controller.text;
                   _selectedModel = tempSelectedModel;
+                  if (apiKeyController.text.isNotEmpty) {
+                    _geminiApiKey = apiKeyController.text;
+                  }
+                  // 取得したモデルリストを保存（簡易的にメモリのみ）
+                  _selectableModels = currentSelectableModels;
                 });
               }
               if (context.mounted) Navigator.pop(context);
@@ -1315,6 +1405,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final activeTodos = filteredTodos.where((t) => t['is_completed'] == false).toList();
     final historyTodos = filteredTodos.where((t) => t['is_completed'] == true).toList();
 
+    int totalEstimatedMinutes = 0;
+    for (var todo in activeTodos) {
+      totalEstimatedMinutes += todo['estimated_minutes'] as int? ?? 0;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('モーニング・ブリーフィング'),
@@ -1440,6 +1535,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         minHeight: 8,
                         borderRadius: BorderRadius.circular(4),
                       ),
+                      if (totalEstimatedMinutes > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                '残り見積もり: ${totalEstimatedMinutes}分',
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ],
