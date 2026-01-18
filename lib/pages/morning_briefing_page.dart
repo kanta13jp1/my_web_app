@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/gamification_service.dart';
@@ -14,6 +16,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   final TextEditingController _todoController = TextEditingController();
   late final Stream<List<Map<String, dynamic>>> _todosStream;
   DateTime? _selectedDate;
+  Map<String, dynamic>? _weatherData;
 
   @override
   void initState() {
@@ -21,6 +24,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     _todosStream = Supabase.instance.client
         .from('daily_todos')
         .stream(primaryKey: ['id']).order('created_at', ascending: false);
+    _fetchWeather();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueTasks();
@@ -31,6 +35,34 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   void dispose() {
     _todoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchWeather() async {
+    try {
+      // Open-Meteo API (Tokyo)
+      final url = Uri.parse(
+          'https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true&timezone=Asia%2FTokyo');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            _weatherData = data['current_weather'];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Weather fetch error: $e');
+    }
+  }
+
+  IconData _getWeatherIcon(int code) {
+    if (code == 0) return Icons.wb_sunny;
+    if (code <= 3) return Icons.wb_cloudy;
+    if (code <= 48) return Icons.foggy;
+    if (code < 70) return Icons.grain; // Rain
+    if (code < 80) return Icons.ac_unit; // Snow
+    return Icons.thunderstorm;
   }
 
   Future<void> _checkOverdueTasks() async {
@@ -207,6 +239,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                   'CEO、本日の最優先事項を定義し、実行に移しましょう。',
                   style: TextStyle(color: Colors.grey.shade700),
                 ),
+                if (_weatherData != null) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                          _getWeatherIcon(
+                              (_weatherData!['weathercode'] as num).toInt()),
+                          color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_weatherData!['temperature']}°C (Tokyo)',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
