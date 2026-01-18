@@ -13,6 +13,7 @@ class MorningBriefingPage extends StatefulWidget {
 class _MorningBriefingPageState extends State<MorningBriefingPage> {
   final TextEditingController _todoController = TextEditingController();
   late final Stream<List<Map<String, dynamic>>> _todosStream;
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -110,6 +111,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
   Future<void> _addTodo() async {
     final text = _todoController.text.trim();
     if (text.isEmpty) return;
@@ -118,8 +133,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
       await Supabase.instance.client.from('daily_todos').insert({
         'task': text,
         'is_completed': false,
+        'due_date': _selectedDate?.toIso8601String(),
       });
       _todoController.clear();
+      setState(() {
+        _selectedDate = null;
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -200,12 +219,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                   child: TextField(
                     controller: _todoController,
                     decoration: const InputDecoration(
-                      hintText: '新しいタスクを追加...',
+                      hintText: 'タスクを追加...',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 16),
                     ),
                     onSubmitted: (_) => _addTodo(),
                   ),
+                ),
+                IconButton(
+                  onPressed: () => _selectDate(context),
+                  icon: Icon(
+                    Icons.calendar_today,
+                    color: _selectedDate != null ? Colors.orange : Colors.grey,
+                  ),
+                  tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
@@ -246,6 +273,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                     final isCompleted = todo['is_completed'] as bool;
                     final id = todo['id'] as String;
                     final task = todo['task'] as String;
+                    final dueDateStr = todo['due_date'] as String?;
+
+                    DateTime? dueDate;
+                    bool isOverdue = false;
+
+                    if (dueDateStr != null) {
+                      dueDate = DateTime.parse(dueDateStr).toLocal();
+                      // 期限(00:00)の翌日00:00を過ぎていたら期限切れとする
+                      if (!isCompleted &&
+                          DateTime.now()
+                              .isAfter(dueDate.add(const Duration(days: 1)))) {
+                        isOverdue = true;
+                      }
+                    }
 
                     return ListTile(
                       leading: Checkbox(
@@ -258,9 +299,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                           decoration: isCompleted
                               ? TextDecoration.lineThrough
                               : null,
-                          color: isCompleted ? Colors.grey : null,
+                          color: isCompleted
+                              ? Colors.grey
+                              : (isOverdue ? Colors.red : null),
+                          fontWeight: isOverdue ? FontWeight.bold : null,
                         ),
                       ),
+                      subtitle: dueDate != null
+                          ? Text(
+                              '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}',
+                              style: TextStyle(
+                                color: isOverdue ? Colors.red : Colors.grey,
+                              ),
+                            )
+                          : null,
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () => _deleteTodo(id),
