@@ -23,8 +23,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     super.initState();
     _todosStream = Supabase.instance.client
         .from('daily_todos')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false);
+        .stream(primaryKey: ['id']);
     _fetchWeather();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
