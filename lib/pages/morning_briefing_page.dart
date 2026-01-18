@@ -23,7 +23,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     super.initState();
     _todosStream = Supabase.instance.client
         .from('daily_todos')
-        .stream(primaryKey: ['id']).order('created_at', ascending: false);
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false);
     _fetchWeather();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -303,7 +304,30 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final todos = snapshot.data!;
+                // データをコピーしてクライアントサイドでソート
+                final todos = List<Map<String, dynamic>>.from(snapshot.data!);
+
+                todos.sort((a, b) {
+                  // 1. 完了状態（未完了を上に）
+                  final aCompleted = a['is_completed'] as bool? ?? false;
+                  final bCompleted = b['is_completed'] as bool? ?? false;
+                  if (aCompleted != bCompleted) return aCompleted ? 1 : -1;
+
+                  // 2. 期限（期限ありを優先、近い順）
+                  final aDue = a['due_date'] as String?;
+                  final bDue = b['due_date'] as String?;
+                  if (aDue != null && bDue != null) {
+                    return aDue.compareTo(bDue);
+                  }
+                  if (aDue != null) return -1; // aのみ期限あり -> aが先
+                  if (bDue != null) return 1; // bのみ期限あり -> bが先
+
+                  // 3. 作成日時（新しい順）
+                  final aCreated = a['created_at'] as String;
+                  final bCreated = b['created_at'] as String;
+                  return bCreated.compareTo(aCreated);
+                });
+
                 if (todos.isEmpty) {
                   return const Center(
                     child: Column(
