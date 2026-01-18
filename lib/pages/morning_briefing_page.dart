@@ -1972,9 +1972,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += ' [Sub: $subDone/$subTotal]';
     }
 
-    if (difficulty != 'normal') {
-      subtitleText += ' [${_difficultyLabels[difficulty]}]';
-    }
+    final points = _difficultyPoints[difficulty] ?? 10;
+    subtitleText += ' [${_difficultyLabels[difficulty] ?? difficulty} (${points}pt)]';
 
     if (isCompleted && actualMinutes != null) {
       subtitleText += ' ✅${actualMinutes}分';
