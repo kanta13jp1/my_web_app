@@ -40,13 +40,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     _todosSubscription = Supabase.instance.client
         .from('daily_todos')
         .stream(primaryKey: ['id'])
-        .order('order_index', ascending: true)
         .listen((data) {
+      // クライアントサイドでソート (DBカラム不足時のクラッシュ回避のため)
+      data.sort((a, b) {
+        final aOrder = a['order_index'] as num? ?? 0;
+        final bOrder = b['order_index'] as num? ?? 0;
+        return aOrder.compareTo(bOrder);
+      });
+
       if (mounted) {
         setState(() {
           _todos = data;
           _isLoading = false;
         });
+      }
+    }, onError: (error) {
+      debugPrint('Stream error: $error');
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     });
   }
