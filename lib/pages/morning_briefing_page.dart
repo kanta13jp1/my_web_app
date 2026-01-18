@@ -68,6 +68,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'hard': Colors.red,
   };
 
+  final Map<String, int> _difficultyPoints = {
+    'easy': 5,
+    'normal': 10,
+    'hard': 20,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -341,9 +347,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _toggleTodo(String id, bool currentValue, String taskTitle,
-      int? estimatedMinutes) async {
+      int? estimatedMinutes, String difficulty) async {
     int? actualMinutes;
     String? reflection;
+    final points = _difficultyPoints[difficulty] ?? 10;
 
     // タスクを完了にする場合のみ、実績時間を入力
     if (!currentValue) {
@@ -444,12 +451,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         }
         // タスク完了時にポイント付与
         context.read<GamificationService>().awardPoints(
-              10,
+              points,
               reason: 'タスク完了: $taskTitle',
             );
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('タスク完了！ (10pt)'),
+          SnackBar(
+            content: Text('タスク完了！ (${points}pt)'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 1),
           ),
@@ -457,7 +464,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       } else if (currentValue && mounted) {
         // タスク完了取り消し時にポイント減算
         context.read<GamificationService>().awardPoints(
-              -10,
+              -points,
               reason: 'タスク完了取り消し: $taskTitle',
             );
       }
@@ -1389,6 +1396,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               final createdAtStr = todo['created_at'] as String?;
                               final category = todo['category'] as String? ?? 'work';
                               final actualMinutes = todo['actual_minutes'] as int?;
+                              final difficulty = todo['difficulty'] as String? ?? 'normal';
                               
                               String subtitleText = '';
                               if (createdAtStr != null) {
@@ -1423,7 +1431,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     IconButton(
                                       icon: const Icon(Icons.undo),
                                       tooltip: '未完了に戻す',
-                                      onPressed: () => _toggleTodo(id, true, task, null),
+                                      onPressed: () => _toggleTodo(id, true, task, null, difficulty),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete_outline),
@@ -1540,7 +1548,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
-        onChanged: (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes),
+        onChanged: (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes, difficulty),
       ),
       title: Text(
         task,
