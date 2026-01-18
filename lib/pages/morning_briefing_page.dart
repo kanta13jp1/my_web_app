@@ -37,6 +37,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _filterCategory = 'all'; // リスト表示用のフィルタ
   int? _selectedDuration; // 新規タスク用の見積もり時間（分）
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
+  String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
 
   final Map<String, String> _categoryLabels = {
@@ -53,6 +54,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'health': Icons.favorite,
     'study': Icons.school,
     'other': Icons.category,
+  };
+
+  final Map<String, String> _difficultyLabels = {
+    'easy': '簡単',
+    'normal': '普通',
+    'hard': '難しい',
+  };
+
+  final Map<String, Color> _difficultyColors = {
+    'easy': Colors.green,
+    'normal': Colors.blue,
+    'hard': Colors.red,
   };
 
   @override
@@ -242,6 +255,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final isImportant = sourceTask['is_important'] as bool? ?? false;
     final category = sourceTask['category'] as String? ?? 'work';
     final estimatedMinutes = sourceTask['estimated_minutes'] as int?;
+    final difficulty = sourceTask['difficulty'] as String? ?? 'normal';
 
     // 次の期限を計算（完了した今日を基準にする）
     DateTime baseDate = DateTime.now();
@@ -273,6 +287,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'recurrence': recurrence, // 繰り返し設定を引き継ぐ
         'category': category, // カテゴリを引き継ぐ
         'estimated_minutes': estimatedMinutes, // 見積もり時間を引き継ぐ
+        'difficulty': difficulty, // 難易度を引き継ぐ
         'order_index': maxOrder + 1,
       });
     } catch (e) {
@@ -302,6 +317,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'recurrence': _selectedRecurrence,
         'category': _selectedCategory,
         'estimated_minutes': _selectedDuration,
+        'difficulty': _selectedDifficulty,
         'order_index': maxOrder + 1,
       });
       _todoController.clear();
@@ -310,6 +326,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         _selectedRecurrence = 'none';
         _selectedCategory = 'work';
         _selectedDuration = null;
+        _selectedDifficulty = 'normal';
       });
     } catch (e) {
       if (mounted) {
@@ -487,12 +504,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _editTodo(
-      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory, int? currentDuration) async {
+      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory, int? currentDuration, String? currentDifficulty) async {
     final editController = TextEditingController(text: currentTask);
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
     String editCategory = currentCategory ?? 'work';
     int? editDuration = currentDuration;
+    String editDifficulty = currentDifficulty ?? 'normal';
 
     await showDialog(
       context: context,
@@ -606,6 +624,25 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                   onChanged: (val) => setState(() => editDuration = val),
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: editDifficulty,
+                  decoration: const InputDecoration(
+                    labelText: '難易度',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: _difficultyLabels.entries.map((e) {
+                    return DropdownMenuItem(
+                      value: e.key,
+                      child: Text(
+                        e.value,
+                        style: TextStyle(color: _difficultyColors[e.key]),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => editDifficulty = val!),
+                ),
               ],
             ),
             actions: [
@@ -626,6 +663,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         'recurrence': editRecurrence,
                         'category': editCategory,
                         'estimated_minutes': editDuration,
+                        'difficulty': editDifficulty,
                       }).eq('id', id);
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
@@ -659,6 +697,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final estimatedMinutes = todo['estimated_minutes'] as int?;
     final actualMinutes = todo['actual_minutes'] as int?;
     final reflection = todo['reflection'] as String?;
+    final difficulty = todo['difficulty'] as String? ?? 'normal';
 
     String formattedDate(String? dateStr) {
       if (dateStr == null) return 'なし';
@@ -671,6 +710,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (recurrence == 'weekly') recurrenceText = '毎週';
     if (recurrence == 'monthly') recurrenceText = '毎月';
     final categoryText = _categoryLabels[category] ?? category;
+    final difficultyText = _difficultyLabels[difficulty] ?? difficulty;
 
     final subtaskController = TextEditingController();
 
@@ -694,6 +734,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('期限: ${formattedDate(dueDateStr)}'),
                   Text('繰り返し: $recurrenceText'),
                   Text('カテゴリ: $categoryText'),
+                  Text('難易度: $difficultyText'),
                   Text('見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
                   Text('実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
                   if (reflection != null && reflection.isNotEmpty) ...[
@@ -839,7 +880,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     final buffer = StringBuffer();
     // Header
-    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection');
+    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection,Difficulty');
 
     // Rows
     for (final todo in historyTodos) {
@@ -852,8 +893,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final estimated = todo['estimated_minutes']?.toString() ?? '';
       final actual = todo['actual_minutes']?.toString() ?? '';
       final reflection = _escapeCsv(todo['reflection'] as String? ?? '');
+      final difficulty = _difficultyLabels[todo['difficulty']] ?? todo['difficulty'] ?? 'normal';
 
-      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection');
+      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection,$difficulty');
     }
 
     final csvData = buffer.toString();
@@ -962,10 +1004,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final estimated = task['estimated_minutes'] != null ? '${task['estimated_minutes']}分' : '設定なし';
       final actual = task['actual_minutes'] != null ? '${task['actual_minutes']}分' : '不明';
       final reflection = task['reflection'] ?? 'なし';
+      final difficulty = _difficultyLabels[task['difficulty']] ?? task['difficulty'] ?? '普通';
 
       buffer.writeln('- タスク名: $title');
       buffer.writeln('  カテゴリ: $category');
-      buffer.writeln('  見積もり: $estimated, 実績: $actual');
+      buffer.writeln('  難易度: $difficulty, 見積もり: $estimated, 実績: $actual');
       buffer.writeln('  振り返りメモ: $reflection');
       buffer.writeln('');
     }
@@ -1239,6 +1282,26 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                 ),
                 const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.signal_cellular_alt,
+                    color: _difficultyColors[_selectedDifficulty],
+                  ),
+                  tooltip: '難易度',
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedDifficulty = value;
+                    });
+                  },
+                  itemBuilder: (context) => _difficultyLabels.entries.map((e) {
+                    return PopupMenuItem(
+                      value: e.key,
+                      child: Text(e.value,
+                          style: TextStyle(color: _difficultyColors[e.key])),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(width: 8),
                 IconButton.filled(
                   onPressed: _addTodo,
                   icon: const Icon(Icons.add),
@@ -1410,6 +1473,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final category = todo['category'] as String? ?? 'work';
     final estimatedMinutes = todo['estimated_minutes'] as int?;
     final actualMinutes = todo['actual_minutes'] as int?;
+    final difficulty = todo['difficulty'] as String? ?? 'normal';
 
     // サブタスクの進捗計算
     final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
@@ -1460,6 +1524,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += ' [Sub: $subDone/$subTotal]';
     }
 
+    if (difficulty != 'normal') {
+      subtitleText += ' [${_difficultyLabels[difficulty]}]';
+    }
+
     if (isCompleted && actualMinutes != null) {
       subtitleText += ' ✅${actualMinutes}分';
       if (estimatedMinutes != null) subtitleText += '/予${estimatedMinutes}分';
@@ -1468,7 +1536,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     final content = ListTile(
-      onTap: () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes),
+      onTap: () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes, difficulty),
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
@@ -1498,7 +1566,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ? Colors.grey
                     : (isOverdue
                         ? Colors.red
-                        : (isDueToday ? Colors.orange.shade800 : Colors.grey)),
+                        : (isDueToday
+                            ? Colors.orange.shade800
+                            : (difficulty == 'hard' ? Colors.red.shade300 : Colors.grey))),
+                fontWeight: difficulty == 'hard' ? FontWeight.w500 : null,
               ),
               overflow: TextOverflow.ellipsis,
             ),
