@@ -324,21 +324,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildLastUpdatedText(String type) {
     final lastDateStr = _lastUpdatedDates[type];
     if (lastDateStr == null) {
-      return const Text('  データなし',
-          style: TextStyle(color: Colors.grey, fontSize: 12));
+      return const Text(
+        '  データなし',
+        style: TextStyle(color: Colors.grey, fontSize: 12),
+      );
     }
 
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (lastDateStr == todayStr) {
-      return const Text('  本日更新済み',
-          style: TextStyle(
-              color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold));
+      return const Text(
+        '  本日更新済み',
+        style: TextStyle(
+          color: Colors.green,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      );
     }
 
     final formattedDate =
         DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
-    return Text('  最終更新: $formattedDate',
-        style: const TextStyle(color: Colors.grey, fontSize: 12));
+    return Text(
+      '  最終更新: $formattedDate',
+      style: const TextStyle(color: Colors.grey, fontSize: 12),
+    );
   }
 
   Widget _buildChartCard() {
