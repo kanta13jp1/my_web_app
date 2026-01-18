@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:confetti/confetti.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -8,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../services/gamification_service.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -35,6 +37,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _filterCategory = 'all'; // リスト表示用のフィルタ
   int? _selectedDuration; // 新規タスク用の見積もり時間（分）
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
+  String? _geminiApiKey; // 日報生成用APIキー
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -867,6 +870,137 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return value;
   }
 
+  Future<void> _generateDailyReport() async {
+    final historyTodos =
+        _todos.where((t) => t['is_completed'] == true).toList();
+
+    if (historyTodos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('日報を生成するための完了タスクがありません')),
+      );
+      return;
+    }
+
+    if (_geminiApiKey == null) {
+      await _showApiKeyDialog();
+      if (_geminiApiKey == null) return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final model = GenerativeModel(model: 'gemini-pro', apiKey: _geminiApiKey!);
+      final prompt = _buildDailyReportPrompt(historyTodos);
+      final content = [Content.text(prompt)];
+      final response = await model.generateContent(content);
+
+      if (mounted && response.text != null) {
+        _showReportDialog(response.text!);
+      }
+    } catch (e) {
+      debugPrint('Gemini Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('日報生成エラー: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showApiKeyDialog() async {
+    final controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Gemini APIキーの設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('日報を自動生成するにはGemini APIキーが必要です。'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'API Key',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                setState(() => _geminiApiKey = controller.text);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('設定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _buildDailyReportPrompt(List<Map<String, dynamic>> tasks) {
+    final buffer = StringBuffer();
+    buffer.writeln('あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。');
+    buffer.writeln('構成は「本日の業務内容」「成果・振り返り」「明日の予定・課題」としてください。');
+    buffer.writeln('特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。');
+    buffer.writeln('\n--- タスク実績データ ---');
+
+    for (final task in tasks) {
+      final title = task['task'];
+      final category = _categoryLabels[task['category']] ?? task['category'];
+      final estimated = task['estimated_minutes'] != null ? '${task['estimated_minutes']}分' : '設定なし';
+      final actual = task['actual_minutes'] != null ? '${task['actual_minutes']}分' : '不明';
+      final reflection = task['reflection'] ?? 'なし';
+
+      buffer.writeln('- タスク名: $title');
+      buffer.writeln('  カテゴリ: $category');
+      buffer.writeln('  見積もり: $estimated, 実績: $actual');
+      buffer.writeln('  振り返りメモ: $reflection');
+      buffer.writeln('');
+    }
+
+    return buffer.toString();
+  }
+
+  void _showReportDialog(String report) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('生成された日報'),
+        content: SingleChildScrollView(
+          child: SelectableText(report),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: report));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('クリップボードにコピーしました')),
+              );
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('コピー'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // フィルタリング
@@ -1161,10 +1295,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 padding: const EdgeInsets.all(8.0),
                                 child: SizedBox(
                                   width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: _exportHistoryToCsv,
-                                    icon: const Icon(Icons.download),
-                                    label: const Text('CSVエクスポート'),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: _exportHistoryToCsv,
+                                          icon: const Icon(Icons.download),
+                                          label: const Text('CSV'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: FilledButton.icon(
+                                          onPressed: _generateDailyReport,
+                                          icon: const Icon(Icons.auto_awesome),
+                                          label: const Text('日報生成 (AI)'),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -1270,12 +1418,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     DateTime? dueDate;
     bool isOverdue = false;
+    bool isDueToday = false;
 
     if (dueDateStr != null) {
       dueDate = DateTime.parse(dueDateStr).toLocal();
-      if (!isCompleted &&
-          DateTime.now().isAfter(dueDate.add(const Duration(days: 1)))) {
-        isOverdue = true;
+      final now = DateTime.now();
+      if (!isCompleted) {
+        if (now.isAfter(dueDate.add(const Duration(days: 1)))) {
+          isOverdue = true;
+        } else if (dueDate.year == now.year &&
+            dueDate.month == now.month &&
+            dueDate.day == now.day) {
+          isDueToday = true;
+        }
       }
     }
 
@@ -1283,6 +1438,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     String subtitleText = '';
     if (dueDate != null) {
       subtitleText = '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}';
+      if (isDueToday) {
+        subtitleText += ' (今日)';
+      }
     }
 
     if (createdAtStr != null) {
@@ -1320,8 +1478,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         task,
         style: TextStyle(
           decoration: isCompleted ? TextDecoration.lineThrough : null,
-          color: isCompleted ? Colors.grey : (isOverdue ? Colors.red : null),
-          fontWeight: isOverdue ? FontWeight.bold : null,
+          color: isCompleted
+              ? Colors.grey
+              : (isOverdue
+                  ? Colors.red
+                  : (isDueToday ? Colors.orange.shade800 : null)),
+          fontWeight: (isOverdue || isDueToday) ? FontWeight.bold : null,
         ),
       ),
       subtitle: Row(
@@ -1332,7 +1494,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             child: Text(
               subtitleText,
               style: TextStyle(
-                color: isOverdue ? Colors.red : Colors.grey,
+                color: isCompleted
+                    ? Colors.grey
+                    : (isOverdue
+                        ? Colors.red
+                        : (isDueToday ? Colors.orange.shade800 : Colors.grey)),
               ),
               overflow: TextOverflow.ellipsis,
             ),
