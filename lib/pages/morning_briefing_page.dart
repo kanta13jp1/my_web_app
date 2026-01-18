@@ -16,10 +16,12 @@ class MorningBriefingPage extends StatefulWidget {
   State<MorningBriefingPage> createState() => _MorningBriefingPageState();
 }
 
-class _MorningBriefingPageState extends State<MorningBriefingPage> {
+class _MorningBriefingPageState extends State<MorningBriefingPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _todoController = TextEditingController();
   List<Map<String, dynamic>> _todos = [];
   StreamSubscription? _todosSubscription;
+  late TabController _tabController;
   bool _isLoading = true;
   DateTime? _selectedDate;
   Map<String, dynamic>? _weatherData;
@@ -29,6 +31,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 1));
     _setupStream();
@@ -68,6 +71,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _tabController.dispose();
     _confettiController.dispose();
     _todosSubscription?.cancel();
     _todoController.dispose();
@@ -385,6 +389,46 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     );
   }
 
+  Future<void> _showTaskDetails(Map<String, dynamic> todo) async {
+    final task = todo['task'] as String;
+    final dueDateStr = todo['due_date'] as String?;
+    final createdAtStr = todo['created_at'] as String?;
+    final isCompleted = todo['is_completed'] as bool;
+    final isImportant = todo['is_important'] as bool? ?? false;
+
+    String formattedDate(String? dateStr) {
+      if (dateStr == null) return 'なし';
+      final date = DateTime.parse(dateStr).toLocal();
+      return '${date.year}/${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('タスク詳細'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('内容: $task',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('状態: ${isCompleted ? "完了" : "未完了"}'),
+            Text('重要: ${isImportant ? "はい" : "いいえ"}'),
+            Text('期限: ${formattedDate(dueDateStr)}'),
+            Text('作成: ${formattedDate(createdAtStr)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
       if (oldIndex < newIndex) {
@@ -416,10 +460,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     final completedTasks =
         _todos.where((t) => t['is_completed'] == true).length;
     final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
+    
+    // タスクの振り分け
+    final activeTodos = _todos.where((t) => t['is_completed'] == false).toList();
+    final historyTodos = _todos.where((t) => t['is_completed'] == true).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('モーニング・ブリーフィング'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [Tab(text: 'ミッション'), Tab(text: '履歴')],
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.orange,
+        ),
         backgroundColor: Colors.indigo.shade900,
         foregroundColor: Colors.white,
       ),
@@ -527,14 +582,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
           ),
           // リストエリア
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _todos.isEmpty
-                    ? const Center(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // --- Tab 1: Active Tasks (Reorderable) ---
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : activeTodos.isEmpty
+                        ? const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.task_alt, size: 64, color: Colors.grey),
+                            Icon(Icons.wb_sunny_outlined, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
                             Text('タスクはありません'),
                           ],
@@ -542,9 +601,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                       )
                     : ReorderableListView.builder(
                         onReorder: _onReorder,
-                        itemCount: _todos.length,
+                        itemCount: activeTodos.length,
                         itemBuilder: (context, index) {
-                          final todo = _todos[index];
+                          final todo = activeTodos[index];
                           final isCompleted = todo['is_completed'] as bool;
                           final id = todo['id'] as String;
                           final task = todo['task'] as String;
@@ -620,6 +679,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                             onDismissed: (_) => _deleteTodo(id),
                             child: ListTile(
                               onTap: () => _editTodo(id, task, dueDate),
+                              onLongPress: () => _showTaskDetails(todo),
                               leading: Checkbox(
                                 value: isCompleted,
                                 onChanged: (val) =>
@@ -676,6 +736,65 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                           );
                         },
                       ),
+                
+                // --- Tab 2: History (Completed) ---
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : historyTodos.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.history, size: 64, color: Colors.grey),
+                                SizedBox(height: 16),
+                                Text('完了したタスクはありません'),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: historyTodos.length,
+                            itemBuilder: (context, index) {
+                              final todo = historyTodos[index];
+                              final id = todo['id'] as String;
+                              final task = todo['task'] as String;
+                              final createdAtStr = todo['created_at'] as String?;
+                              
+                              String subtitleText = '';
+                              if (createdAtStr != null) {
+                                final createdAt = DateTime.parse(createdAtStr).toLocal();
+                                subtitleText = '作成: ${timeago.format(createdAt)}';
+                              }
+
+                              return ListTile(
+                                onTap: () => _showTaskDetails(todo), // 履歴でも詳細表示
+                                leading: const Icon(Icons.check_circle, color: Colors.green),
+                                title: Text(
+                                  task,
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                subtitle: Text(subtitleText),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.undo),
+                                      tooltip: '未完了に戻す',
+                                      onPressed: () => _toggleTodo(id, true, task),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () => _deleteTodo(id),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+              ],
+            ),
           ),
         ],
       ),

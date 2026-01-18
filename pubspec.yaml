@@ -39,6 +39,8 @@ dependencies:
   uuid: ^4.3.3               # UUID騾墓ｻ薙・騾包ｽｨ
   image_picker: ^1.2.1
   google_generative_ai: ^0.4.7
+  confetti: ^0.8.0
+  audioplayers: ^6.5.1
 
 dev_dependencies:
   flutter_test:
