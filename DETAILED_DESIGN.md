@@ -183,6 +183,13 @@ MVVMライクな構成を採用し、ビジネスロジックを services に分
 5. **Persistence**:
     * 会議本体 (board_meetings) と発言ログ (board_messages) をDBに保存。
 
+### 3.4 モーニング・ブリーフィング (Daily TODO)
+
+CEOが毎朝行うタスク確認と実行管理。
+
+*   **Function**: `MorningBriefingPage` でデイリータスクを管理。
+*   **Gamification**: タスク完了時にポイントを付与し、実行を促進。
+
 ### 3.2 ゲーミフィケーション (Gamification)
 
 ユーザーの行動を即座に報酬へ結びつける。
@@ -235,6 +242,7 @@ erDiagram
     users ||--|{ payment_sources : "has"
     user_profiles ||--|{ user_follows : "follows/followers"
     user_profiles ||--|{ user_supporters : "supported by"
+    users ||--|{ daily_todos : "manages"
 
     user_profiles { UUID user_id PK "FK -> auth.users" text display_name text role integer trust_score }
     user_stats { UUID id PK integer total_points integer current_level integer current_streak }
@@ -243,6 +251,7 @@ erDiagram
     payment_sources { UUID id PK text name timestamp last_audited_at }
     user_follows { UUID id PK UUID follower_id UUID following_id }
     user_supporters { UUID id PK text supporter_name boolean is_active }
+    daily_todos { UUID id PK text task boolean is_completed timestamp created_at }
 ```
 
 ## 2. 知識 & メモ (Knowledge & Notes)
