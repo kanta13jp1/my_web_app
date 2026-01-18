@@ -1273,10 +1273,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   Widget _buildAnalyticsView(List<Map<String, dynamic>> tasks) {
     int totalMinutes = 0;
+    int totalEstimated = 0;
     Map<String, int> categoryCounts = {};
 
     for (var t in tasks) {
       totalMinutes += t['actual_minutes'] as int? ?? 0;
+      totalEstimated += t['estimated_minutes'] as int? ?? 0;
       String cat = t['category'] as String? ?? 'work';
       categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
     }
@@ -1344,6 +1346,74 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               );
             }).toList(),
           ),
+          const SizedBox(height: 32),
+          const Text('時間の予実対比 (分)',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: (totalEstimated > totalMinutes
+                            ? totalEstimated
+                            : totalMinutes)
+                        .toDouble() *
+                    1.2,
+                barTouchData: BarTouchData(
+                  enabled: false,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (group) => Colors.transparent,
+                    tooltipPadding: EdgeInsets.zero,
+                    tooltipMargin: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        rod.toY.round().toString(),
+                        const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        const style = TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        );
+                        String text = '';
+                        if (value.toInt() == 0) text = '見積もり';
+                        if (value.toInt() == 1) text = '実績';
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          space: 4,
+                          child: Text(text, style: style),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: [
+                  _makeBarGroup(0, totalEstimated.toDouble(), Colors.orange),
+                  _makeBarGroup(1, totalMinutes.toDouble(), Colors.blue),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1367,6 +1437,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ],
         ),
       ),
+    );
+  }
+
+  BarChartGroupData _makeBarGroup(int x, double y, Color color) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: y,
+          color: color,
+          width: 30,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ],
+      showingTooltipIndicators: [0],
     );
   }
 
