@@ -14,6 +14,7 @@ import 'cfo_office_page.dart';
 import 'cho_office_page.dart';
 import 'cmo_office_page.dart';
 import 'chro_office_page.dart'; // Added
+import 'morning_briefing_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -65,6 +66,8 @@ class HomePage extends StatelessWidget {
               Colors.redAccent,
             ),
             _buildCeoCard(context),
+            const SizedBox(height: 12),
+            _buildMorningBriefingCard(context),
             const SizedBox(height: 24),
             _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
             _buildGridMenu(context, [
@@ -198,6 +201,34 @@ class HomePage extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => const EmergencyMeetingPage(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMorningBriefingCard(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        leading: const CircleAvatar(
+          backgroundColor: Colors.amber,
+          radius: 28,
+          child: Icon(Icons.wb_sunny, color: Colors.white, size: 30),
+        ),
+        title: const Text(
+          'モーニング・ブリーフィング',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: const Text('今日のタスクと優先順位を確認します。'),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MorningBriefingPage(),
           ),
         ),
       ),

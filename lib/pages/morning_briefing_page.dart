@@ -20,12 +20,94 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     _todosStream = Supabase.instance.client
         .from('daily_todos')
         .stream(primaryKey: ['id']).order('created_at', ascending: false);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkOverdueTasks();
+    });
   }
 
   @override
   void dispose() {
     _todoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkOverdueTasks() async {
+    final now = DateTime.now();
+    // ローカル時間の今日の00:00を取得
+    final todayStart = DateTime(now.year, now.month, now.day);
+    // Supabaseのcreated_at(UTC)と比較するため、ローカルの0時をUTCに変換
+    final todayStartUtc = todayStart.toUtc();
+
+    try {
+      final response = await Supabase.instance.client
+          .from('daily_todos')
+          .select()
+          .eq('is_completed', false)
+          .lt('created_at', todayStartUtc.toIso8601String());
+
+      final overdueTasks = response as List<dynamic>;
+
+      if (overdueTasks.isNotEmpty && mounted) {
+        _showMigrationDialog(overdueTasks.length, overdueTasks);
+      }
+    } catch (e) {
+      debugPrint('Error checking overdue tasks: $e');
+    }
+  }
+
+  Future<void> _showMigrationDialog(int count, List<dynamic> tasks) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('未完了タスクの引き継ぎ'),
+        content: Text('昨日以前の未完了タスクが $count 件あります。\n今日のタスクとして引き継ぎますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('そのままにする'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('引き継ぐ'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      _migrateTasks(tasks);
+    }
+  }
+
+  Future<void> _migrateTasks(List<dynamic> tasks) async {
+    final ids = tasks.map((t) => t['id']).toList();
+    final now = DateTime.now().toIso8601String();
+
+    try {
+      // 対象タスクのcreated_atを現在時刻に更新して、リストの上部に表示させる
+      await Supabase.instance.client
+          .from('daily_todos')
+          .update({'created_at': now}).in_('id', ids);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${tasks.length}件のタスクを今日のタスクに移動しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラーが発生しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _addTodo() async {
