@@ -135,6 +135,19 @@ jobs:
       contents: write 
 
     steps:
+      - name: Get commit message
+        id: get_commit_message
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha
+            });
+            const message = commit.data.commit.message;
+            core.setOutput('message', message);
+
       - name: Prepare URL
         id: prepare_url
         if: needs.deploy.result == 'success'
@@ -153,18 +166,56 @@ jobs:
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
             {
-              "text": "✅ Development deployment successful!",
+              "text": "✅ Deployment to ${{ env.ENVIRONMENT }} successful",
               "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":white_check_mark: Deployment to ${{ env.ENVIRONMENT }} Successful"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n`${{ github.repository }}`" },
+                    { "type": "mrkdwn", "text": "*Environment:*\n`${{ env.ENVIRONMENT }}`" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n`${{ github.ref_name }}`" },
+                    { "type": "mrkdwn", "text": "*Author:*\n`${{ github.actor }}`" }
+                  ]
+                },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Development Deployment Successful* ✅\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* ${{ env.DECODED_URL }}"
+                    "text": "*Commit Message:*\n```${{ steps.get_commit_message.outputs.message }}```"
                   }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*URL:*\n${{ env.DECODED_URL }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View Workflow Run" },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View Commit" },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+                    }
+                  ]
                 }
               ]
             }
@@ -174,18 +225,45 @@ jobs:
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
             {
-              "text": "❌ Development deployment failed!",
+              "text": "❌ Deployment to ${{ env.ENVIRONMENT }} failed",
               "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":x: Deployment to ${{ env.ENVIRONMENT }} Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n`${{ github.repository }}`" },
+                    { "type": "mrkdwn", "text": "*Environment:*\n`${{ env.ENVIRONMENT }}`" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n`${{ github.ref_name }}`" },
+                    { "type": "mrkdwn", "text": "*Author:*\n`${{ github.actor }}`" }
+                  ]
+                },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Development Deployment Failed* ❌\n\n*Environment:* Development\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n\nPlease check the workflow logs for details."
+                    "text": "*Commit Message:*\n```${{ steps.get_commit_message.outputs.message }}```"
                   }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View Workflow Run" },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "danger"
+                    }
+                  ]
                 }
               ]
             }
