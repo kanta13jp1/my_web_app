@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/gamification_service.dart';
 
 class MorningBriefingPage extends StatefulWidget {
@@ -39,6 +40,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
+  String _selectedModel = 'gemini-1.5-flash'; // 日報生成用モデル
+  String _customPromptInstructions = _defaultPromptInstructions;
+  static const String _defaultPromptInstructions =
+      'あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。\n'
+      '構成は「本日の業務内容」「成果・振り返り」「明日の予定・課題」としてください。\n'
+      '特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。';
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -82,6 +89,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         ConfettiController(duration: const Duration(seconds: 1));
     _setupStream();
     _fetchWeather();
+    _loadSettings();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueTasks();
@@ -133,6 +141,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     _subtasksSubscription?.cancel();
     _todoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _customPromptInstructions =
+            prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
+        _selectedModel = prefs.getString('gemini_model') ?? 'gemini-1.5-flash';
+      });
+    }
   }
 
   Future<void> _fetchWeather() async {
@@ -938,7 +957,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     setState(() => _isLoading = true);
 
     try {
-      final model = GenerativeModel(model: 'gemini-pro', apiKey: _geminiApiKey!);
+      final model = GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
       final prompt = _buildDailyReportPrompt(historyTodos);
       final content = [Content.text(prompt)];
       final response = await model.generateContent(content);
@@ -998,11 +1017,89 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  Future<void> _showPromptSettingsDialog() async {
+    final controller = TextEditingController(text: _customPromptInstructions);
+    String tempSelectedModel = _selectedModel;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+        title: const Text('日報設定'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('AIモデルとプロンプトをカスタマイズできます。'),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: tempSelectedModel,
+                decoration: const InputDecoration(
+                  labelText: '使用モデル',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'gemini-1.5-flash',
+                      child: Text('Gemini 1.5 Flash (高速)')),
+                  DropdownMenuItem(
+                      value: 'gemini-1.5-pro',
+                      child: Text('Gemini 1.5 Pro (高性能)')),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => tempSelectedModel = val);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'システム指示 (プロンプト)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              controller.text = _defaultPromptInstructions;
+              setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
+            },
+            child: const Text('デフォルトに戻す'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('daily_report_prompt', controller.text);
+              await prefs.setString('gemini_model', tempSelectedModel);
+              if (mounted) {
+                setState(() {
+                  _customPromptInstructions = controller.text;
+                  _selectedModel = tempSelectedModel;
+                });
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      );
+      }),
+    );
+  }
+
   String _buildDailyReportPrompt(List<Map<String, dynamic>> tasks) {
     final buffer = StringBuffer();
-    buffer.writeln('あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。');
-    buffer.writeln('構成は「本日の業務内容」「成果・振り返り」「明日の予定・課題」としてください。');
-    buffer.writeln('特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。');
+    buffer.writeln(_customPromptInstructions);
     buffer.writeln('\n--- タスク実績データ ---');
 
     for (final task in tasks) {
@@ -1080,6 +1177,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('モーニング・ブリーフィング'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showPromptSettingsDialog,
+            tooltip: '設定',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [Tab(text: 'ミッション'), Tab(text: '履歴')],
