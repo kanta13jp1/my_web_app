@@ -209,6 +209,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     }
   }
 
+  Future<void> _toggleImportant(String id, bool currentValue) async {
+    try {
+      await Supabase.instance.client
+          .from('daily_todos')
+          .update({'is_important': !currentValue}).eq('id', id);
+    } catch (e) {
+      debugPrint('Error toggling importance: $e');
+    }
+  }
+
   Future<void> _deleteTodo(String id) async {
     await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
   }
@@ -408,7 +418,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                   final bCompleted = b['is_completed'] as bool? ?? false;
                   if (aCompleted != bCompleted) return aCompleted ? 1 : -1;
 
-                  // 2. 期限（期限ありを優先、近い順）
+                  // 2. 重要フラグ（重要を上に）
+                  final aImportant = a['is_important'] as bool? ?? false;
+                  final bImportant = b['is_important'] as bool? ?? false;
+                  if (aImportant != bImportant) return aImportant ? -1 : 1;
+
+                  // 3. 期限（期限ありを優先、近い順）
                   final aDue = a['due_date'] as String?;
                   final bDue = b['due_date'] as String?;
                   if (aDue != null && bDue != null) {
@@ -417,7 +432,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                   if (aDue != null) return -1; // aのみ期限あり -> aが先
                   if (bDue != null) return 1; // bのみ期限あり -> bが先
 
-                  // 3. 作成日時（新しい順）
+                  // 4. 作成日時（新しい順）
                   final aCreated = a['created_at'] as String;
                   final bCreated = b['created_at'] as String;
                   return bCreated.compareTo(aCreated);
@@ -443,6 +458,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                     final id = todo['id'] as String;
                     final task = todo['task'] as String;
                     final dueDateStr = todo['due_date'] as String?;
+                    final isImportant = todo['is_important'] as bool? ?? false;
 
                     DateTime? dueDate;
                     bool isOverdue = false;
@@ -516,6 +532,22 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                                 ),
                               )
                             : null,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                isImportant ? Icons.star : Icons.star_border,
+                                color: isImportant ? Colors.orange : Colors.grey,
+                              ),
+                              onPressed: () => _toggleImportant(id, isImportant),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _deleteTodo(id),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
