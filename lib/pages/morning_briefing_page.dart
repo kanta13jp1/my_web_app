@@ -214,6 +214,102 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
     await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
   }
 
+  Future<void> _editTodo(
+      String id, String currentTask, DateTime? currentDueDate) async {
+    final editController = TextEditingController(text: currentTask);
+    DateTime? editDate = currentDueDate;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('タスクの編集'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: editController,
+                  decoration: const InputDecoration(
+                    labelText: 'タスク名',
+                    border: OutlineInputBorder(),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text('期限: '),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: editDate ?? DateTime.now(),
+                          firstDate: DateTime.now()
+                              .subtract(const Duration(days: 365)),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            editDate = picked;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today),
+                      label: Text(editDate != null
+                          ? '${editDate!.year}/${editDate!.month}/${editDate!.day}'
+                          : '設定なし'),
+                    ),
+                    if (editDate != null)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            editDate = null;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final newTask = editController.text.trim();
+                  if (newTask.isNotEmpty) {
+                    try {
+                      await Supabase.instance.client
+                          .from('daily_todos')
+                          .update({
+                        'task': newTask,
+                        'due_date': editDate?.toIso8601String(),
+                      }).eq('id', id);
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      debugPrint('Error updating todo: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('更新エラー: $e')),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('保存'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -373,6 +469,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage> {
                       ),
                       onDismissed: (_) => _deleteTodo(id),
                       child: ListTile(
+                        onTap: () => _editTodo(id, task, dueDate),
                         leading: Checkbox(
                           value: isCompleted,
                           onChanged: (val) =>
