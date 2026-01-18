@@ -34,6 +34,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _selectedCategory = 'work'; // 新規タスク用のカテゴリ
   String _filterCategory = 'all'; // リスト表示用のフィルタ
   int? _selectedDuration; // 新規タスク用の見積もり時間（分）
+  String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -845,9 +846,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   @override
   Widget build(BuildContext context) {
     // フィルタリング
-    final filteredTodos = _filterCategory == 'all'
-        ? _todos
+    var filteredTodos = _filterCategory == 'all'
+        ? List<Map<String, dynamic>>.from(_todos)
         : _todos.where((t) => (t['category'] ?? 'work') == _filterCategory).toList();
+
+    // ソート適用
+    if (_sortOrder == 'estimated_asc') {
+      filteredTodos.sort((a, b) {
+        // null (設定なし) は後ろにするために大きな値を設定
+        final aEst = a['estimated_minutes'] as int? ?? 999999;
+        final bEst = b['estimated_minutes'] as int? ?? 999999;
+        return aEst.compareTo(bEst);
+      });
+    }
 
     final totalTasks = filteredTodos.length;
     final completedTasks =
@@ -932,6 +943,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           ),
                         );
                       }),
+                      const SizedBox(width: 16),
+                      const Text('並び替え:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                      PopupMenuButton<String>(
+                        initialValue: _sortOrder,
+                        tooltip: '並び替え順を変更',
+                        icon: Icon(
+                          Icons.sort,
+                          color: _sortOrder != 'manual' ? Colors.orange : Colors.grey,
+                        ),
+                        onSelected: (val) => setState(() => _sortOrder = val),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'manual', child: Text('手動 (ドラッグ)')),
+                          const PopupMenuItem(value: 'estimated_asc', child: Text('見積もり時間 (短い順)')),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -1080,8 +1106,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             Text('タスクはありません'),
                           ],
                         ),
-                      ) : _filterCategory != 'all'
-                        // フィルタ適用中は並び替え無効 (ListViewを使用)
+                      ) : (_filterCategory != 'all' || _sortOrder != 'manual')
+                        // フィルタ適用中または手動ソート以外は並び替え無効 (ListViewを使用)
                         ? ListView.builder(
                             itemCount: activeTodos.length,
                             itemBuilder: (context, index) => _buildTodoItem(activeTodos[index], index, false),
