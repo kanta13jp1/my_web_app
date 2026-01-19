@@ -1129,11 +1129,62 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('利用制限に達しました'),
-              content: const Text(
-                '現在選択中のAIモデルは利用制限（レートリミット）を超過しました。\n\n'
-                '・しばらく時間を空けて再試行する\n'
-                '・設定からより軽量なモデル（Gemini 1.5 Flashなど）に変更する\n\n'
-                'のいずれかをお試しください。',
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('現在選択中のAIモデルは利用制限を超過しました。'),
+                    const SizedBox(height: 12),
+                    // ★ 現在のモデルを表示
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 20, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '現在のモデル: $_selectedModel',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('以下のモデルへの変更を検討してください:'),
+                    const SizedBox(height: 4),
+                    // ★ 利用可能なモデル一覧を表示
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _selectableModels.join(', '),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade800),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '・しばらく時間を空けて再試行する\n'
+                      '・設定からより軽量なモデル（Gemini 1.5 Flashなど）に変更する',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
