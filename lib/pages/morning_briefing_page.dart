@@ -1258,8 +1258,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content:
-                                      Text('${models.length}個のモデルを取得しました'),
+                                  content: Text('${models.length}個のモデルを取得しました'),
                                 ),
                               );
                             } else {
@@ -1319,8 +1318,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString(
-                      'daily_report_prompt', controller.text);
+                  await prefs.setString('daily_report_prompt', controller.text);
                   await prefs.setString('gemini_model', tempSelectedModel);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
@@ -2172,8 +2170,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                                 icon: const Icon(
                                                   Icons.delete_outline,
                                                 ),
-                                                onPressed: () =>
-                                                    deleteTodo(id),
+                                                onPressed: () => deleteTodo(id),
                                               ),
                                             ],
                                           ),
@@ -2225,7 +2222,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final actualMinutes = todo['actual_minutes'] as int?;
     final difficulty = todo['difficulty'] as String? ?? 'normal';
 
-    // ロック状態の判定 (未完了の最重要タスクがある場合、それ以外の未完了タスクはロック)
+    // ロック状態の判定
     final hasIncompleteImportantTasks = _todos.any(
       (t) => t['is_important'] == true && t['is_completed'] == false,
     );
@@ -2289,6 +2286,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     final content = ListTile(
+      // ★ 追加: 今日締め切りのタスクを背景色で強調
+      tileColor: !isCompleted && isDueToday ? Colors.orange.shade50 : null,
+      shape: !isCompleted && isDueToday
+          ? RoundedRectangleBorder(
+              side: const BorderSide(color: Colors.orange, width: 1),
+              borderRadius: BorderRadius.circular(8),
+            )
+          : null,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // パディング調整
+
       onTap: isLocked
           ? () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -2327,24 +2335,47 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   difficulty,
                 ),
       ),
-      title: Text(
-        task,
-        style: TextStyle(
-          decoration: isCompleted ? TextDecoration.lineThrough : null,
-          color: isCompleted
-              ? Colors.grey
-              : (isLocked
-                  ? Colors.grey
-                  : (isOverdue
-                      ? Colors.red
-                      : (isDueToday ? Colors.orange.shade800 : null))),
-          fontWeight:
-              (isOverdue || isDueToday) && !isLocked ? FontWeight.bold : null,
-        ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              task,
+              style: TextStyle(
+                decoration: isCompleted ? TextDecoration.lineThrough : null,
+                color: isCompleted
+                    ? Colors.grey
+                    : (isLocked
+                        ? Colors.grey
+                        : (isOverdue
+                            ? Colors.red
+                            : (isDueToday
+                                ? Colors.deepOrange
+                                : null))), // 色を濃く調整
+                fontWeight: (isOverdue || isDueToday) && !isLocked
+                    ? FontWeight.bold
+                    : null,
+              ),
+            ),
+          ),
+          // ★ 追加: 今日締め切りの場合にアイコンを表示
+          if (!isCompleted && isDueToday)
+            const Padding(
+              padding: EdgeInsets.only(left: 8.0),
+              child: Chip(
+                label: Text('今日中',
+                    style: TextStyle(color: Colors.white, fontSize: 10)),
+                backgroundColor: Colors.orange,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                side: BorderSide.none,
+              ),
+            ),
+        ],
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 4),
           Row(
             children: [
               Icon(_categoryIcons[category], size: 12, color: Colors.grey),
@@ -2360,7 +2391,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             : (isOverdue
                                 ? Colors.red
                                 : (isDueToday
-                                    ? Colors.orange.shade800
+                                    ? Colors.deepOrange
                                     : (difficulty == 'hard'
                                         ? Colors.red.shade300
                                         : Colors.grey)))),
@@ -2412,7 +2443,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             ),
             onPressed: () => toggleImportant(id, isImportant),
           ),
-          // ドラッグハンドル (並び替え可能な場合のみ表示)
           if (isReorderable)
             ReorderableDragStartListener(
               index: index,
