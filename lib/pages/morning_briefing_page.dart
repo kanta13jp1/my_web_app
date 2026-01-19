@@ -1954,6 +1954,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final actualMinutes = todo['actual_minutes'] as int?;
     final difficulty = todo['difficulty'] as String? ?? 'normal';
 
+    // ロック状態の判定 (未完了の最重要タスクがある場合、それ以外の未完了タスクはロック)
+    final hasIncompleteImportantTasks = _todos.any((t) =>
+        t['is_important'] == true && t['is_completed'] == false);
+    final isLocked = !isCompleted && !isImportant && hasIncompleteImportantTasks;
+
     // サブタスクの進捗計算
     final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
     final subTotal = mySubtasks.length;
@@ -2014,11 +2019,29 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     final content = ListTile(
-      onTap: () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes, difficulty),
+      onTap: isLocked
+          ? () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('最重要タスク（★）が残っています。先に片付けましょう！'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          : () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes, difficulty),
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
-        onChanged: (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes, difficulty),
+        onChanged: isLocked
+            ? (val) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('最重要タスク（★）が残っています。先に片付けましょう！'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            : (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes, difficulty),
       ),
       title: Text(
         task,
@@ -2026,10 +2049,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           decoration: isCompleted ? TextDecoration.lineThrough : null,
           color: isCompleted
               ? Colors.grey
-              : (isOverdue
-                  ? Colors.red
-                  : (isDueToday ? Colors.orange.shade800 : null)),
-          fontWeight: (isOverdue || isDueToday) ? FontWeight.bold : null,
+              : (isLocked
+                  ? Colors.grey
+                  : (isOverdue
+                      ? Colors.red
+                      : (isDueToday ? Colors.orange.shade800 : null))),
+          fontWeight: (isOverdue || isDueToday) && !isLocked ? FontWeight.bold : null,
         ),
       ),
       subtitle: Row(
@@ -2042,12 +2067,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               style: TextStyle(
                 color: isCompleted
                     ? Colors.grey
-                    : (isOverdue
-                        ? Colors.red
-                        : (isDueToday
-                            ? Colors.orange.shade800
-                            : (difficulty == 'hard' ? Colors.red.shade300 : Colors.grey))),
-                fontWeight: difficulty == 'hard' ? FontWeight.w500 : null,
+                    : (isLocked
+                        ? Colors.grey
+                        : (isOverdue
+                            ? Colors.red
+                            : (isDueToday
+                                ? Colors.orange.shade800
+                                : (difficulty == 'hard' ? Colors.red.shade300 : Colors.grey)))),
+                fontWeight: difficulty == 'hard' && !isLocked ? FontWeight.w500 : null,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -2114,7 +2141,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         );
       },
       onDismissed: (_) => _deleteTodo(id),
-      child: content,
+      child: isLocked ? Opacity(opacity: 0.5, child: content) : content,
     );
   }
 }
