@@ -28,6 +28,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   List<Map<String, dynamic>> _subtasks = [];
   StreamSubscription? _todosSubscription;
   StreamSubscription? _subtasksSubscription;
+  Timer? _reconnectTimer;
   late TabController _tabController;
   bool _isLoading = true;
   DateTime? _selectedDate;
@@ -112,6 +113,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   void _setupStream() {
+    _todosSubscription?.cancel();
     _todosSubscription = Supabase.instance.client
         .from('daily_todos')
         .stream(primaryKey: ['id'])
@@ -133,9 +135,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       debugPrint('Stream error: $error');
       if (mounted) {
         setState(() => _isLoading = false);
+        _scheduleReconnect();
       }
     });
 
+    _subtasksSubscription?.cancel();
     _subtasksSubscription = Supabase.instance.client
         .from('daily_subtasks')
         .stream(primaryKey: ['id']).listen((data) {
@@ -146,11 +150,34 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       }
     }, onError: (error) {
       debugPrint('Subtasks Stream error: $error');
+      if (mounted) _scheduleReconnect();
+    });
+  }
+
+  void _scheduleReconnect() {
+    if (_reconnectTimer?.isActive ?? false) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('接続エラー。5秒後に再接続を試みます...'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
+
+    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        debugPrint('Reconnecting...');
+        _setupStream();
+      }
     });
   }
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _audioPlayer.dispose();
     _tabController.dispose();
     _confettiController.dispose();
