@@ -1719,29 +1719,26 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             .toList();
 
     // ソート適用
-    if (_sortOrder == 'estimated_asc') {
-// ソート適用
-      filteredTodos.sort((a, b) {
-        // 1. 最重要タスク (is_important == true) を常に最優先
-        final aImp = a['is_important'] as bool? ?? false;
-        final bImp = b['is_important'] as bool? ?? false;
-        if (aImp != bImp) {
-          return aImp ? -1 : 1; // 重要(true)が先 (-1)
-        }
+    filteredTodos.sort((a, b) {
+      // 1. 最重要タスク (is_important == true) を常に最優先
+      final aImp = a['is_important'] as bool? ?? false;
+      final bImp = b['is_important'] as bool? ?? false;
+      if (aImp != bImp) {
+        return aImp ? -1 : 1; // 重要(true)が先 (-1)
+      }
 
-        // 2. ユーザー選択のソート順
-        if (_sortOrder == 'estimated_asc') {
-          final aEst = a['estimated_minutes'] as int? ?? 999999;
-          final bEst = b['estimated_minutes'] as int? ?? 999999;
-          return aEst.compareTo(bEst);
-        }
+      // 2. ユーザー選択のソート順
+      if (_sortOrder == 'estimated_asc') {
+        final aEst = a['estimated_minutes'] as int? ?? 999999;
+        final bEst = b['estimated_minutes'] as int? ?? 999999;
+        return aEst.compareTo(bEst);
+      }
 
-        // 3. デフォルト (手動順 / order_index順)
-        final aOrder = a['order_index'] as num? ?? 0;
-        final bOrder = b['order_index'] as num? ?? 0;
-        return aOrder.compareTo(bOrder);
-      });
-    }
+      // 3. デフォルト (手動順 / order_index順)
+      final aOrder = a['order_index'] as num? ?? 0;
+      final bOrder = b['order_index'] as num? ?? 0;
+      return aOrder.compareTo(bOrder);
+    });
 
     int totalPoints = 0;
     int completedPoints = 0;
