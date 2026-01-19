@@ -144,6 +144,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           _subtasks = data;
         });
       }
+    }, onError: (error) {
+      debugPrint('Subtasks Stream error: $error');
     });
   }
 
