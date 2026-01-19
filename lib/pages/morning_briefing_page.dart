@@ -13,6 +13,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/gamification_service.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class MorningBriefingPage extends StatefulWidget {
   const MorningBriefingPage({super.key});
@@ -1407,7 +1408,34 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   child: TabBarView(
                     children: [
                       buildAnalyticsView(tasks),
-                      SingleChildScrollView(child: SelectableText(report)),
+                      // ↓↓↓ CHANGED: Use Markdown widget here ↓↓↓
+                      Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Markdown(
+                          data: report,
+                          selectable: true, // Allow text selection
+                          styleSheet: MarkdownStyleSheet(
+                            h1: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo),
+                            h2: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo),
+                            h3: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            p: const TextStyle(fontSize: 14, height: 1.5),
+                            listBullet: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      // ↑↑↑ END CHANGE ↑↑↑
                     ],
                   ),
                 ),
