@@ -2,7 +2,8 @@
 import os
 
 # 保存先ディレクトリ
-output_dir = "web/assets/sounds"
+# 修正: Flutter標準の assets フォルダ構成に合わせました
+output_dir = "assets/sounds" 
 os.makedirs(output_dir, exist_ok=True)
 
 # 難易度別の音声テキスト

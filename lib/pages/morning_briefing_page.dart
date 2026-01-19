@@ -564,11 +564,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
         try {
           // 難易度に応じて効果音を変更
-          String soundPath = 'web/assets/sounds/success.mp3'; // Normal
+          String soundPath = 'sounds/success.mp3'; // Normal
           if (difficulty == 'easy') {
-            soundPath = 'web/assets/sounds/success_easy.mp3';
+            soundPath = 'sounds/success_easy.mp3';
           } else if (difficulty == 'hard') {
-            soundPath = 'web/assets/sounds/success_hard.mp3';
+            soundPath = 'sounds/success_hard.mp3';
           }
           await _audioPlayer.play(AssetSource(soundPath));
         } catch (e) {
