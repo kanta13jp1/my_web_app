@@ -393,6 +393,31 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     String? reflection;
     final points = _difficultyPoints[difficulty] ?? 10;
 
+    // タスクを完了にする場合、最重要タスクのチェックを行う
+    if (!currentValue) {
+      final currentTask = _todos.firstWhere((t) => t['id'] == id, orElse: () => {});
+      if (currentTask.isNotEmpty) {
+        final isCurrentImportant = currentTask['is_important'] == true;
+        // 自分が重要タスクでない場合、他に未完了の重要タスクがあるかチェック
+        if (!isCurrentImportant) {
+          final hasIncompleteImportantTasks = _todos.any((t) =>
+              t['is_important'] == true && t['is_completed'] == false);
+          
+          if (hasIncompleteImportantTasks) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('最重要タスク（★）が残っています。先に片付けましょう！'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+            return;
+          }
+        }
+      }
+    }
+
     // タスクを完了にする場合のみ、実績時間を入力
     if (!currentValue) {
       final timeController =
