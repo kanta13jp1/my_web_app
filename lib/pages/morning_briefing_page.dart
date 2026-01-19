@@ -268,7 +268,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _showMigrationDialog(int count, List<dynamic> tasks) async {
-  Future<void> _showMigrationDialog(
+  Future<void> showMigrationDialog(
     int count,
     List<Map<String, dynamic>> tasks,
   ) async {
@@ -291,12 +291,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
 
     if (result == true) {
-      _migrateTasks(tasks);
+      migrateTasks(tasks);
     }
   }
 
-  Future<void> _migrateTasks(List<dynamic> tasks) async {
-  Future<void> _migrateTasks(List<Map<String, dynamic>> tasks) async {
+  Future<void> migrateTasks(List<dynamic> tasks) async {
+  Future<void> migrateTasks(List<Map<String, dynamic>> tasks) async {
     final ids = tasks.map((t) => t['id']).toList();
     final now = DateTime.now().toIso8601String();
 
@@ -326,7 +326,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -340,7 +340,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _createNextRecurringTask(Map<String, dynamic> sourceTask) async {
+  Future<void> createNextRecurringTask(Map<String, dynamic> sourceTask) async {
     final recurrence = sourceTask['recurrence'] as String;
     final taskTitle = sourceTask['task'] as String;
     final isImportant = sourceTask['is_important'] as bool? ?? false;
@@ -386,7 +386,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _addTodo() async {
+  Future<void> addTodo() async {
     final text = _todoController.text.trim();
     if (text.isEmpty) return;
 
@@ -431,7 +431,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _toggleTodo(
+  Future<void> toggleTodo(
     String id,
     bool currentValue,
     String taskTitle,
@@ -563,7 +563,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           final todo = _todos[todoIndex];
           final recurrence = todo['recurrence'] as String? ?? 'none';
           if (recurrence != 'none') {
-            await _createNextRecurringTask(todo);
+            await createNextRecurringTask(todo);
           }
         }
 
@@ -606,7 +606,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _toggleImportant(String id, bool currentValue) async {
+  Future<void> toggleImportant(String id, bool currentValue) async {
     try {
       await Supabase.instance.client
           .from('daily_todos')
@@ -621,11 +621,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _deleteTodo(String id) async {
+  Future<void> deleteTodo(String id) async {
     await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
   }
 
-  Future<void> _addSubtask(String todoId, String title) async {
+  Future<void> addSubtask(String todoId, String title) async {
     await Supabase.instance.client.from('daily_subtasks').insert({
       'todo_id': todoId,
       'title': title,
@@ -633,17 +633,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     });
   }
 
-  Future<void> _toggleSubtask(String id, bool currentVal) async {
+  Future<void> toggleSubtask(String id, bool currentVal) async {
     await Supabase.instance.client
         .from('daily_subtasks')
         .update({'is_completed': !currentVal}).eq('id', id);
   }
 
-  Future<void> _deleteSubtask(String id) async {
+  Future<void> deleteSubtask(String id) async {
     await Supabase.instance.client.from('daily_subtasks').delete().eq('id', id);
   }
 
-  Future<void> _editTodo(
+  Future<void> editTodo(
     String id,
     String currentTask,
     DateTime? currentDueDate,
@@ -748,7 +748,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       child: Row(
                         children: [
                           Icon(_categoryIcons[e.key],
-                              size: 16, color: Colors.grey),
+                              size: 16, color: Colors.grey,),
                           const SizedBox(width: 8),
                           Text(e.value),
                         ],
@@ -841,7 +841,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Future<void> _showTaskDetails(Map<String, dynamic> todo) async {
+  Future<void> showTaskDetails(Map<String, dynamic> todo) async {
     final todoId = todo['id'] as String;
     final task = todo['task'] as String;
     final dueDateStr = todo['due_date'] as String?;
@@ -894,13 +894,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('カテゴリ: $categoryText'),
                   Text('難易度: $difficultyText'),
                   Text(
-                      '見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
+                      '見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}',),
                   Text(
-                      '実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
+                      '実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}',),
                   if (reflection != null && reflection.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     const Text('振り返り:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: TextStyle(fontWeight: FontWeight.bold),),
                     Text(reflection),
                   ],
                   Text('作成: ${formattedDate(createdAtStr)}'),
@@ -923,7 +923,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           ),
                           onSubmitted: (val) {
                             if (val.trim().isNotEmpty) {
-                              _addSubtask(todoId, val.trim());
+                              addSubtask(todoId, val.trim());
                               subtaskController.clear();
                             }
                           },
@@ -933,7 +933,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         icon: const Icon(Icons.add_circle, color: Colors.blue),
                         onPressed: () {
                           if (subtaskController.text.trim().isNotEmpty) {
-                            _addSubtask(todoId, subtaskController.text.trim());
+                            addSubtask(todoId, subtaskController.text.trim());
                             subtaskController.clear();
                           }
                         },
@@ -971,7 +971,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               leading: Checkbox(
                                 value: stCompleted,
                                 onChanged: (val) =>
-                                    _toggleSubtask(stId, stCompleted),
+                                    toggleSubtask(stId, stCompleted),
                               ),
                               title: Text(
                                 stTitle,
@@ -984,7 +984,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.close, size: 16),
-                                onPressed: () => _deleteSubtask(stId),
+                                onPressed: () => deleteSubtask(stId),
                               ),
                             );
                           },
@@ -1007,7 +1007,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  void _onReorder(int oldIndex, int newIndex) {
+  void onReorder(int oldIndex, int newIndex) {
     setState(() {
       if (oldIndex < newIndex) {
         newIndex -= 1;
@@ -1016,10 +1016,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       _todos.insert(newIndex, item);
     });
 
-    _updateOrderInDb();
+    updateOrderInDb();
   }
 
-  Future<void> _updateOrderInDb() async {
+  Future<void> updateOrderInDb() async {
     // 変更された順序をDBに保存
     // ※本来はバッチ更新が望ましいですが、簡易的にループで更新します
     for (int i = 0; i < _todos.length; i++) {
@@ -1032,7 +1032,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _exportHistoryToCsv() async {
+  Future<void> exportHistoryToCsv() async {
     final historyTodos =
         _todos.where((t) => t['is_completed'] == true).toList();
 
@@ -1046,11 +1046,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final buffer = StringBuffer();
     // Header
     buffer.writeln(
-        'Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection,Difficulty');
+        'Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection,Difficulty',);
 
     // Rows
     for (final todo in historyTodos) {
-      final task = _escapeCsv(todo['task'] as String);
+      final task = escapeCsv(todo['task'] as String);
       final category =
           _categoryLabels[todo['category']] ?? todo['category'] ?? '';
       final createdAt = todo['created_at'] as String? ?? '';
@@ -1060,31 +1060,31 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       final recurrence = todo['recurrence'] as String? ?? 'none';
       final estimated = todo['estimated_minutes']?.toString() ?? '';
       final actual = todo['actual_minutes']?.toString() ?? '';
-      final reflection = _escapeCsv(todo['reflection'] as String? ?? '');
+      final reflection = escapeCsv(todo['reflection'] as String? ?? '');
       final difficulty = _difficultyLabels[todo['difficulty']] ??
           todo['difficulty'] ??
           'normal';
 
       buffer.writeln(
-          '$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection,$difficulty');
+          '$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection,$difficulty',);
     }
 
     final csvData = buffer.toString();
     final uri = Uri.parse(
-        'data:text/csv;charset=utf-8,${Uri.encodeComponent(csvData)}');
+        'data:text/csv;charset=utf-8,${Uri.encodeComponent(csvData)}',);
     if (!await launchUrl(uri)) {
       debugPrint('Could not launch CSV export url');
     }
   }
 
-  String _escapeCsv(String value) {
+  String escapeCsv(String value) {
     if (value.contains(',') || value.contains('"') || value.contains('\n')) {
       return '"${value.replaceAll('"', '""')}"';
     }
     return value;
   }
 
-  Future<void> _generateDailyReport() async {
+  Future<void> generateDailyReport() async {
     final historyTodos =
         _todos.where((t) => t['is_completed'] == true).toList();
 
@@ -1096,7 +1096,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     if (_geminiApiKey == null) {
-      await _showApiKeyDialog();
+      await showApiKeyDialog();
       if (_geminiApiKey == null) return;
     }
 
@@ -1105,12 +1105,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     try {
       final model =
           GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
-      final prompt = _buildDailyReportPrompt(historyTodos);
+      final prompt = buildDailyReportPrompt(historyTodos);
       final content = [Content.text(prompt)];
       final response = await model.generateContent(content);
 
       if (mounted && response.text != null) {
-        _showReportDialog(response.text!, historyTodos);
+        showReportDialog(response.text!, historyTodos);
       }
     } catch (e) {
       debugPrint('Gemini Error: $e');
@@ -1124,7 +1124,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _showApiKeyDialog() async {
+  Future<void> showApiKeyDialog() async {
     final controller = TextEditingController();
     await showDialog(
       context: context,
@@ -1164,7 +1164,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Future<List<String>> _fetchGeminiModels(String apiKey) async {
+  Future<List<String>> fetchGeminiModels(String apiKey) async {
     try {
       final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
@@ -1181,7 +1181,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     false,
               )
               .map<String>(
-                  (m) => m['name'].toString().replaceFirst('models/', ''))
+                  (m) => m['name'].toString().replaceFirst('models/', ''),)
               .toList();
         }
       }
@@ -1191,7 +1191,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return [];
   }
 
-  Future<void> _showPromptSettingsDialog() async {
+  Future<void> showPromptSettingsDialog() async {
     final controller = TextEditingController(text: _customPromptInstructions);
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
@@ -1240,7 +1240,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           }
                           setDialogState(() => isFetchingModels = true);
                           final models =
-                              await _fetchGeminiModels(apiKeyController.text);
+                              await fetchGeminiModels(apiKeyController.text);
                           setDialogState(() {
                             isFetchingModels = false;
                             if (models.isNotEmpty) {
@@ -1254,7 +1254,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content:
-                                        Text('${models.length}個のモデルを取得しました')),
+                                        Text('${models.length}個のモデルを取得しました'),),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1317,7 +1317,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   await prefs.setString('gemini_model', tempSelectedModel);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
-                        'gemini_api_key', apiKeyController.text);
+                        'gemini_api_key', apiKeyController.text,);
                   }
                   if (mounted) {
                     setState(() {
@@ -1341,7 +1341,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  String _buildDailyReportPrompt(List<Map<String, dynamic>> tasks) {
+  String buildDailyReportPrompt(List<Map<String, dynamic>> tasks) {
     final buffer = StringBuffer();
     buffer.writeln(_customPromptInstructions);
     buffer.writeln('\n--- タスク実績データ ---');
@@ -1367,7 +1367,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       buffer.writeln('- タスク名: $title');
       buffer.writeln('  カテゴリ: $category');
       buffer.writeln(
-          '  難易度: $difficulty, 見積もり: $estimated, 実績: $actual$subtaskInfo');
+          '  難易度: $difficulty, 見積もり: $estimated, 実績: $actual$subtaskInfo',);
       buffer.writeln('  振り返りメモ: $reflection');
       buffer.writeln('');
     }
@@ -1375,7 +1375,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return buffer.toString();
   }
 
-  void _showReportDialog(String report, List<Map<String, dynamic>> tasks) {
+  void showReportDialog(String report, List<Map<String, dynamic>> tasks) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1398,7 +1398,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildAnalyticsView(tasks),
+                      buildAnalyticsView(tasks),
                       SingleChildScrollView(child: SelectableText(report)),
                     ],
                   ),
@@ -1427,7 +1427,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildAnalyticsView(List<Map<String, dynamic>> tasks) {
+  Widget buildAnalyticsView(List<Map<String, dynamic>> tasks) {
     int totalMinutes = 0;
     int totalEstimated = 0;
     final Map<String, int> categoryCounts = {};
@@ -1449,13 +1449,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatCard(
+              buildStatCard(
                 '完了タスク',
                 '$totalTasks件',
                 Icons.check_circle,
                 Colors.green,
               ),
-              _buildStatCard(
+              buildStatCard(
                 '合計時間',
                 '$totalMinutes分',
                 Icons.timer,
@@ -1579,8 +1579,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: [
-                  _makeBarGroup(0, totalEstimated.toDouble(), Colors.orange),
-                  _makeBarGroup(1, totalMinutes.toDouble(), Colors.blue),
+                  makeBarGroup(0, totalEstimated.toDouble(), Colors.orange),
+                  makeBarGroup(1, totalMinutes.toDouble(), Colors.blue),
                 ],
               ),
             ),
@@ -1590,7 +1590,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildStatCard(
+  Widget buildStatCard(
     String title,
     String value,
     IconData icon,
@@ -1618,7 +1618,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  BarChartGroupData _makeBarGroup(int x, double y, Color color) {
+  BarChartGroupData makeBarGroup(int x, double y, Color color) {
     return BarChartGroupData(
       x: x,
       barRods: [
@@ -1683,7 +1683,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: _showPromptSettingsDialog,
+            onPressed: showPromptSettingsDialog,
             tooltip: '設定',
           ),
         ],
@@ -1748,7 +1748,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           const Text('フィルタ:',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey)),
+                                  color: Colors.grey,),),
                           const SizedBox(width: 8),
                           FilterChip(
                             label: const Text('すべて'),
@@ -1772,7 +1772,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           const Text('並び替え:',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey)),
+                                  color: Colors.grey,),),
                           PopupMenuButton<String>(
                             initialValue: _sortOrder,
                             tooltip: '並び替え順を変更',
@@ -1786,10 +1786,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 setState(() => _sortOrder = val),
                             itemBuilder: (context) => [
                               const PopupMenuItem(
-                                  value: 'manual', child: Text('手動 (ドラッグ)')),
+                                  value: 'manual', child: Text('手動 (ドラッグ)'),),
                               const PopupMenuItem(
                                   value: 'estimated_asc',
-                                  child: Text('見積もり時間 (短い順)')),
+                                  child: Text('見積もり時間 (短い順)'),),
                             ],
                           ),
                         ],
@@ -1810,7 +1810,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               Text(
                                 '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                                    fontWeight: FontWeight.bold,),
                               ),
                             ],
                           ),
@@ -1830,12 +1830,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   const Icon(Icons.access_time,
-                                      size: 14, color: Colors.grey),
+                                      size: 14, color: Colors.grey,),
                                   const SizedBox(width: 4),
                                   Text(
                                     '残り見積もり: $totalEstimatedMinutes分',
                                     style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
+                                        fontSize: 12, color: Colors.grey,),
                                   ),
                                 ],
                               ),
@@ -1859,11 +1859,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16),
                         ),
-                        onSubmitted: (_) => _addTodo(),
+                        onSubmitted: (_) => addTodo(),
                       ),
                     ),
                     IconButton(
-                      onPressed: () => _selectDate(context),
+                      onPressed: () => selectDate(context),
                       icon: Icon(
                         Icons.calendar_today,
                         color:
@@ -1887,11 +1887,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       },
                       itemBuilder: (context) => [
                         const PopupMenuItem(
-                            value: 'none', child: Text('繰り返しなし')),
+                            value: 'none', child: Text('繰り返しなし'),),
                         const PopupMenuItem(value: 'daily', child: Text('毎日')),
                         const PopupMenuItem(value: 'weekly', child: Text('毎週')),
                         const PopupMenuItem(
-                            value: 'monthly', child: Text('毎月')),
+                            value: 'monthly', child: Text('毎月'),),
                       ],
                     ),
                     const SizedBox(width: 8),
@@ -1968,7 +1968,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ),
                     const SizedBox(width: 8),
                     IconButton.filled(
-                      onPressed: _addTodo,
+                      onPressed: addTodo,
                       icon: const Icon(Icons.add),
                     ),
                   ],
@@ -1988,7 +1988,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.wb_sunny_outlined,
-                                        size: 64, color: Colors.grey),
+                                        size: 64, color: Colors.grey,),
                                     SizedBox(height: 16),
                                     Text('タスクはありません'),
                                   ],
@@ -2000,15 +2000,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 ? ListView.builder(
                                     itemCount: activeTodos.length,
                                     itemBuilder: (context, index) =>
-                                        _buildTodoItem(
-                                            activeTodos[index], index, false),
+                                        buildTodoItem(
+                                            activeTodos[index], index, false,),
                                   )
                                 : ReorderableListView.builder(
-                                    onReorder: _onReorder,
+                                    onReorder: onReorder,
                                     itemCount: activeTodos.length,
                                     itemBuilder: (context, index) =>
-                                        _buildTodoItem(
-                                            activeTodos[index], index, true),
+                                        buildTodoItem(
+                                            activeTodos[index], index, true,),
                                   ),
 
                     // --- Tab 2: History (Completed) ---
@@ -2020,7 +2020,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.history,
-                                        size: 64, color: Colors.grey),
+                                        size: 64, color: Colors.grey,),
                                     SizedBox(height: 16),
                                     Text('完了したタスクはありません'),
                                   ],
@@ -2036,7 +2036,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                         children: [
                                           Expanded(
                                             child: OutlinedButton.icon(
-                                              onPressed: _exportHistoryToCsv,
+                                              onPressed: exportHistoryToCsv,
                                               icon: const Icon(Icons.download),
                                               label: const Text('CSV'),
                                             ),
@@ -2044,9 +2044,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: FilledButton.icon(
-                                              onPressed: _generateDailyReport,
+                                              onPressed: generateDailyReport,
                                               icon: const Icon(
-                                                  Icons.auto_awesome),
+                                                  Icons.auto_awesome,),
                                               label: const Text('日報生成 (AI)'),
                                             ),
                                           ),
@@ -2087,11 +2087,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                         }
 
                                         return ListTile(
-                                          onTap: () => _showTaskDetails(
-                                              todo), // 履歴でも詳細表示
+                                          onTap: () => showTaskDetails(
+                                              todo,), // 履歴でも詳細表示
                                           leading: const Icon(
                                               Icons.check_circle,
-                                              color: Colors.green),
+                                              color: Colors.green,),
                                           title: Text(
                                             task,
                                             style: const TextStyle(
@@ -2103,7 +2103,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           subtitle: Row(
                                             children: [
                                               Icon(_categoryIcons[category],
-                                                  size: 12, color: Colors.grey),
+                                                  size: 12, color: Colors.grey,),
                                               const SizedBox(width: 4),
                                               Text(subtitleText),
                                             ],
@@ -2114,18 +2114,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               IconButton(
                                                 icon: const Icon(Icons.undo),
                                                 tooltip: '未完了に戻す',
-                                                onPressed: () => _toggleTodo(
+                                                onPressed: () => toggleTodo(
                                                     id,
                                                     true,
                                                     task,
                                                     null,
-                                                    difficulty),
+                                                    difficulty,),
                                               ),
                                               IconButton(
                                                 icon: const Icon(
-                                                    Icons.delete_outline),
+                                                    Icons.delete_outline,),
                                                 onPressed: () =>
-                                                    _deleteTodo(id),
+                                                    deleteTodo(id),
                                               ),
                                             ],
                                           ),
@@ -2160,8 +2160,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildTodoItem(
-      Map<String, dynamic> todo, int index, bool isReorderable) {
+  Widget buildTodoItem(
+      Map<String, dynamic> todo, int index, bool isReorderable,) {
     final isCompleted = todo['is_completed'] as bool;
     final id = todo['id'] as String;
     final task = todo['task'] as String;
@@ -2247,9 +2247,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
               );
             }
-          : () => _editTodo(id, task, dueDate, recurrence, category,
-              estimatedMinutes, difficulty),
-      onLongPress: () => _showTaskDetails(todo),
+          : () => editTodo(id, task, dueDate, recurrence, category,
+              estimatedMinutes, difficulty,),
+      onLongPress: () => showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
         onChanged: isLocked
@@ -2261,8 +2261,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ),
                 );
               }
-            : (val) => _toggleTodo(
-                id, isCompleted, task, estimatedMinutes, difficulty),
+            : (val) => toggleTodo(
+                id, isCompleted, task, estimatedMinutes, difficulty,),
       ),
       title: Text(
         task,
@@ -2347,7 +2347,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               isImportant ? Icons.star : Icons.star_border,
               color: isImportant ? Colors.orange : Colors.grey,
             ),
-            onPressed: () => _toggleImportant(id, isImportant),
+            onPressed: () => toggleImportant(id, isImportant),
           ),
           // ドラッグハンドル (並び替え可能な場合のみ表示)
           if (isReorderable)
@@ -2393,7 +2393,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
         );
       },
-      onDismissed: (_) => _deleteTodo(id),
+      onDismissed: (_) => deleteTodo(id),
       child: isLocked ? Opacity(opacity: 0.5, child: content) : content,
     );
   }
