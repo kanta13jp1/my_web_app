@@ -41,7 +41,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
-  String _selectedModel = 'gemini-pro'; // 日報生成用モデル
+  String _selectedModel = 'gemini-1.5-flash'; // 日報生成用モデル
   String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
       'あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。\n'
@@ -49,9 +49,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       '特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。';
 
   List<String> _selectableModels = [
-    'gemini-pro',
     'gemini-1.5-flash',
     'gemini-1.5-pro',
+    'gemini-2.0-flash',
   ];
 
   final Map<String, String> _categoryLabels = {
@@ -164,7 +164,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       setState(() {
         _customPromptInstructions =
             prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
-        _selectedModel = prefs.getString('gemini_model') ?? 'gemini-pro';
+        
+        // gemini-pro は 404 エラーになる可能性があるため、デフォルトを gemini-1.5-flash に変更
+        String? savedModel = prefs.getString('gemini_model');
+        if (savedModel == 'gemini-pro' || savedModel == null) {
+          savedModel = 'gemini-1.5-flash';
+        }
+        _selectedModel = savedModel;
         _geminiApiKey = prefs.getString('gemini_api_key');
       });
     }
@@ -1159,7 +1165,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           TextButton(
             onPressed: () {
               controller.text = _defaultPromptInstructions;
-              setDialogState(() => tempSelectedModel = 'gemini-pro');
+              setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
             },
             child: const Text('デフォルトに戻す'),
           ),
@@ -1355,11 +1361,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: (totalEstimated > totalMinutes
+                maxY: ((totalEstimated > totalMinutes
                             ? totalEstimated
                             : totalMinutes)
                         .toDouble() *
-                    1.2,
+                    1.2) + 10, // 0の場合の表示崩れを防ぐためにバッファを追加
                 barTouchData: BarTouchData(
                   enabled: false,
                   touchTooltipData: BarTouchTooltipData(
