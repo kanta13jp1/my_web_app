@@ -1421,15 +1421,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           selectable: true, // Allow text selection
                           styleSheet: MarkdownStyleSheet(
                             h1: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.indigo),
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                            ),
                             h2: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.indigo),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                            ),
                             h3: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                             p: const TextStyle(fontSize: 14, height: 1.5),
                             listBullet: const TextStyle(fontSize: 16),
                           ),
@@ -1679,11 +1683,26 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     // ソート適用
     if (_sortOrder == 'estimated_asc') {
+// ソート適用
       filteredTodos.sort((a, b) {
-        // null (設定なし) は後ろにするために大きな値を設定
-        final aEst = a['estimated_minutes'] as int? ?? 999999;
-        final bEst = b['estimated_minutes'] as int? ?? 999999;
-        return aEst.compareTo(bEst);
+        // 1. 最重要タスク (is_important == true) を常に最優先
+        final aImp = a['is_important'] as bool? ?? false;
+        final bImp = b['is_important'] as bool? ?? false;
+        if (aImp != bImp) {
+          return aImp ? -1 : 1; // 重要(true)が先 (-1)
+        }
+
+        // 2. ユーザー選択のソート順
+        if (_sortOrder == 'estimated_asc') {
+          final aEst = a['estimated_minutes'] as int? ?? 999999;
+          final bEst = b['estimated_minutes'] as int? ?? 999999;
+          return aEst.compareTo(bEst);
+        }
+
+        // 3. デフォルト (手動順 / order_index順)
+        final aOrder = a['order_index'] as num? ?? 0;
+        final bOrder = b['order_index'] as num? ?? 0;
+        return aOrder.compareTo(bOrder);
       });
     }
 
@@ -2390,8 +2409,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             const Padding(
               padding: EdgeInsets.only(left: 8.0),
               child: Chip(
-                label: Text('今日中',
-                    style: TextStyle(color: Colors.white, fontSize: 10)),
+                label: Text(
+                  '今日中',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
                 backgroundColor: Colors.orange,
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
