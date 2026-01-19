@@ -526,6 +526,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           .eq('id', id);
 
       if (!currentValue && mounted) {
+        // 難易度に応じて紙吹雪の時間を調整
+        if (difficulty == 'hard') {
+          _confettiController.duration = const Duration(seconds: 3); // 難しいタスクは長めに
+        } else {
+          _confettiController.duration = const Duration(seconds: 1);
+        }
         _confettiController.play();
 
         // 繰り返しタスクの場合、次のタスクを作成
@@ -539,8 +545,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         }
 
         try {
-          // 効果音を再生 (assets/sounds/success.mp3 を用意してください)
-          await _audioPlayer.play(AssetSource('sounds/success.mp3'));
+          // 難易度に応じて効果音を変更
+          String soundPath = 'web/assets/sounds/success.mp3'; // Normal
+          if (difficulty == 'easy') {
+            soundPath = 'web/assets/sounds/success_easy.mp3';
+          } else if (difficulty == 'hard') {
+            soundPath = 'web/assets/sounds/success_hard.mp3';
+          }
+          await _audioPlayer.play(AssetSource(soundPath));
         } catch (e) {
           debugPrint('SE Play Error: $e');
         }
