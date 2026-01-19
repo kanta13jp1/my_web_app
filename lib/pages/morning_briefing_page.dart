@@ -1120,9 +1120,46 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     } catch (e) {
       debugPrint('Gemini Error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('日報生成エラー: $e')),
-        );
+        final errString = e.toString();
+        // 429エラー (Too Many Requests) または Quota (利用枠超過) を検知
+        if (errString.contains('429') ||
+            errString.contains('Quota') ||
+            errString.contains('Too Many Requests')) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('利用制限に達しました'),
+              content: const Text(
+                '現在選択中のAIモデルは利用制限（レートリミット）を超過しました。\n\n'
+                '・しばらく時間を空けて再試行する\n'
+                '・設定からより軽量なモデル（Gemini 1.5 Flashなど）に変更する\n\n'
+                'のいずれかをお試しください。',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('閉じる'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context); // エラーダイアログを閉じる
+                    showPromptSettingsDialog(); // 設定ダイアログを開く
+                  },
+                  icon: const Icon(Icons.settings),
+                  label: const Text('モデルを変更する'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // その他のエラー
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('日報生成エラー: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
