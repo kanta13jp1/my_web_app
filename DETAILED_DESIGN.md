@@ -243,6 +243,7 @@ erDiagram
     user_profiles ||--|{ user_follows : "follows/followers"
     user_profiles ||--|{ user_supporters : "supported by"
     users ||--|{ daily_todos : "manages"
+    daily_todos ||--|{ daily_subtasks : "contains"
 
     user_profiles { UUID user_id PK "FK -> auth.users" text display_name text role integer trust_score }
     user_stats { UUID id PK integer total_points integer current_level integer current_streak }
@@ -252,6 +253,7 @@ erDiagram
     user_follows { UUID id PK UUID follower_id UUID following_id }
     user_supporters { UUID id PK text supporter_name boolean is_active }
     daily_todos { UUID id PK text task boolean is_completed timestamp created_at }
+    daily_subtasks { UUID id PK UUID todo_id FK text title boolean is_completed }
 ```
 
 ## 2. 知識 & メモ (Knowledge & Notes)

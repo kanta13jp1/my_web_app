@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
-import 'dart:math';
 
 class FinancialReportPage extends StatefulWidget {
   const FinancialReportPage({super.key});
@@ -102,9 +101,10 @@ class _FinancialReportPageState extends State<FinancialReportPage>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Text(reportData.title,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            reportData.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           _buildSummaryCard(formatter, reportData, diff, diffColor, percentage),
           const SizedBox(height: 24),
@@ -114,8 +114,13 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     );
   }
 
-  Widget _buildSummaryCard(NumberFormat formatter, ReportData data, double diff,
-      Color diffColor, double percentage) {
+  Widget _buildSummaryCard(
+    NumberFormat formatter,
+    ReportData data,
+    double diff,
+    Color diffColor,
+    double percentage,
+  ) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -148,11 +153,14 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: const TextStyle(fontSize: 16, color: Colors.grey)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: valueColor)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
+          ),
         ],
       ),
     );
@@ -166,8 +174,10 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('総資産推移',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              '総資産推移',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 24),
             SizedBox(
               height: 250,
@@ -186,30 +196,39 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                         return BarTooltipItem(
                           '$formattedDate\n$value',
                           const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         );
                       },
                     ),
                   ),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 60,
-                            getTitlesWidget: (value, meta) => SideTitleWidget(
-                                axisSide: meta.axisSide,
-                                child: Text(
-                                    NumberFormat.compact(locale: 'ja_JP')
-                                        .format(value))))),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 60,
+                        getTitlesWidget: (value, meta) => SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            NumberFormat.compact(locale: 'ja_JP').format(value),
+                          ),
+                        ),
+                      ),
+                    ),
                     bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) =>
-                                _getBottomTitle(value, meta, data, period))),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) =>
+                            _getBottomTitle(value, meta, data, period),
+                      ),
+                    ),
                     topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   gridData:
                       const FlGridData(show: true, drawVerticalLine: false),
@@ -219,7 +238,10 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                       x: e.key,
                       barRods: [
                         BarChartRodData(
-                            toY: e.value.total, color: Colors.green, width: 16),
+                          toY: e.value.total,
+                          color: Colors.green,
+                          width: 16,
+                        ),
                       ],
                     );
                   }).toList(),
@@ -233,7 +255,11 @@ class _FinancialReportPageState extends State<FinancialReportPage>
   }
 
   Widget _getBottomTitle(
-      double value, TitleMeta meta, ReportData data, ReportPeriod period) {
+    double value,
+    TitleMeta meta,
+    ReportData data,
+    ReportPeriod period,
+  ) {
     String text = '';
     final spot = data.chartSpots[value.toInt()];
     switch (period) {
@@ -246,8 +272,9 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         break;
     }
     return SideTitleWidget(
-        axisSide: meta.axisSide,
-        child: Text(text, style: const TextStyle(fontSize: 10)));
+      axisSide: meta.axisSide,
+      child: Text(text, style: const TextStyle(fontSize: 10)),
+    );
   }
 
   // #region Report Logic
@@ -286,10 +313,12 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     DateTime currentDate = startOfPeriod;
     while (currentDate.isBefore(endOfPeriod) ||
         currentDate.isAtSameMomentAs(endOfPeriod)) {
-      spots.add(ChartSpot(
+      spots.add(
+        ChartSpot(
           date: currentDate,
-          total:
-              _getTotalForDate(DateFormat('yyyy-MM-dd').format(currentDate))));
+          total: _getTotalForDate(DateFormat('yyyy-MM-dd').format(currentDate)),
+        ),
+      );
       currentDate = currentDate.add(const Duration(days: 1));
     }
 
@@ -302,7 +331,9 @@ class _FinancialReportPageState extends State<FinancialReportPage>
   }
 
   Map<String, Map<String, double>> _getDataForPeriod(
-      DateTime start, DateTime end) {
+    DateTime start,
+    DateTime end,
+  ) {
     final Map<String, Map<String, double>> periodData = {};
     for (var dateStr in _sortedDates) {
       final date = DateTime.parse(dateStr);
@@ -320,8 +351,10 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     String? effectiveDate = dateStr;
     if (!_assetData.containsKey(effectiveDate)) {
       // Find the closest previous date with data
-      effectiveDate = _sortedDates.lastWhere((d) => d.compareTo(dateStr) <= 0,
-          orElse: () => '');
+      effectiveDate = _sortedDates.lastWhere(
+        (d) => d.compareTo(dateStr) <= 0,
+        orElse: () => '',
+      );
       if (effectiveDate.isEmpty) return 0;
     }
 

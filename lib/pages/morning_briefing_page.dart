@@ -116,42 +116,47 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     _todosSubscription?.cancel();
     _todosSubscription = Supabase.instance.client
         .from('daily_todos')
-        .stream(primaryKey: ['id'])
-        .listen((data) {
-      // クライアントサイドでソート (DBカラム不足時のクラッシュ回避のため)
-      data.sort((a, b) {
-        final aOrder = a['order_index'] as num? ?? 0;
-        final bOrder = b['order_index'] as num? ?? 0;
-        return aOrder.compareTo(bOrder);
-      });
-
-      if (mounted) {
-        setState(() {
-          _todos = data;
-          _isLoading = false;
+        .stream(primaryKey: ['id']).listen(
+      (data) {
+        // クライアントサイドでソート (DBカラム不足時のクラッシュ回避のため)
+        data.sort((a, b) {
+          final aOrder = a['order_index'] as num? ?? 0;
+          final bOrder = b['order_index'] as num? ?? 0;
+          return aOrder.compareTo(bOrder);
         });
-      }
-    }, onError: (error) {
-      debugPrint('Stream error: $error');
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _scheduleReconnect();
-      }
-    });
+
+        if (mounted) {
+          setState(() {
+            _todos = data;
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (error) {
+        debugPrint('Stream error: $error');
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _scheduleReconnect();
+        }
+      },
+    );
 
     _subtasksSubscription?.cancel();
     _subtasksSubscription = Supabase.instance.client
         .from('daily_subtasks')
-        .stream(primaryKey: ['id']).listen((data) {
-      if (mounted) {
-        setState(() {
-          _subtasks = data;
-        });
-      }
-    }, onError: (error) {
-      debugPrint('Subtasks Stream error: $error');
-      if (mounted) _scheduleReconnect();
-    });
+        .stream(primaryKey: ['id']).listen(
+      (data) {
+        if (mounted) {
+          setState(() {
+            _subtasks = data;
+          });
+        }
+      },
+      onError: (error) {
+        debugPrint('Subtasks Stream error: $error');
+        if (mounted) _scheduleReconnect();
+      },
+    );
   }
 
   void _scheduleReconnect() {
@@ -191,9 +196,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _customPromptInstructions =
-            prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
-        
+        _customPromptInstructions = prefs.getString('daily_report_prompt') ??
+            _defaultPromptInstructions;
+
         // gemini-pro は 404 エラーになる可能性があるため、デフォルトを gemini-1.5-flash に変更
         String? savedModel = prefs.getString('gemini_model');
         if (savedModel == 'gemini-pro' || savedModel == null) {
@@ -209,13 +214,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     try {
       // Open-Meteo API (Tokyo)
       final url = Uri.parse(
-          'https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true&timezone=Asia%2FTokyo');
+        'https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true&timezone=Asia%2FTokyo',
+      );
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        final data = json.decode(response.body) as Map<String, dynamic>;
         if (mounted) {
           setState(() {
             _weatherData = data['current_weather'];
+            _weatherData =
+                data['current_weather'] as Map<String, dynamic>;
           });
         }
       }
@@ -248,6 +257,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           .lt('created_at', todayStartUtc.toIso8601String());
 
       final overdueTasks = response as List<dynamic>;
+      final overdueTasks = List<Map<String, dynamic>>.from(response);
 
       if (overdueTasks.isNotEmpty && mounted) {
         _showMigrationDialog(overdueTasks.length, overdueTasks);
@@ -258,6 +268,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _showMigrationDialog(int count, List<dynamic> tasks) async {
+  Future<void> _showMigrationDialog(
+    int count,
+    List<Map<String, dynamic>> tasks,
+  ) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -282,6 +296,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _migrateTasks(List<dynamic> tasks) async {
+  Future<void> _migrateTasks(List<Map<String, dynamic>> tasks) async {
     final ids = tasks.map((t) => t['id']).toList();
     final now = DateTime.now().toIso8601String();
 
@@ -334,7 +349,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final difficulty = sourceTask['difficulty'] as String? ?? 'normal';
 
     // 次の期限を計算（完了した今日を基準にする）
-    DateTime baseDate = DateTime.now();
+    final DateTime baseDate = DateTime.now();
     DateTime nextDate = baseDate;
 
     if (recurrence == 'daily') {
@@ -416,22 +431,29 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> _toggleTodo(String id, bool currentValue, String taskTitle,
-      int? estimatedMinutes, String difficulty) async {
+  Future<void> _toggleTodo(
+    String id,
+    bool currentValue,
+    String taskTitle,
+    int? estimatedMinutes,
+    String difficulty,
+  ) async {
     int? actualMinutes;
     String? reflection;
     final points = _difficultyPoints[difficulty] ?? 10;
 
     // タスクを完了にする場合、最重要タスクのチェックを行う
     if (!currentValue) {
-      final currentTask = _todos.firstWhere((t) => t['id'] == id, orElse: () => {});
+      final currentTask =
+          _todos.firstWhere((t) => t['id'] == id, orElse: () => {});
       if (currentTask.isNotEmpty) {
         final isCurrentImportant = currentTask['is_important'] == true;
         // 自分が重要タスクでない場合、他に未完了の重要タスクがあるかチェック
         if (!isCurrentImportant) {
-          final hasIncompleteImportantTasks = _todos.any((t) =>
-              t['is_important'] == true && t['is_completed'] == false);
-          
+          final hasIncompleteImportantTasks = _todos.any(
+            (t) => t['is_important'] == true && t['is_completed'] == false,
+          );
+
           if (hasIncompleteImportantTasks) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -528,7 +550,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       if (!currentValue && mounted) {
         // 難易度に応じて紙吹雪の時間を調整
         if (difficulty == 'hard') {
-          _confettiController.duration = const Duration(seconds: 3); // 難しいタスクは長めに
+          _confettiController.duration =
+              const Duration(seconds: 3); // 難しいタスクは長めに
         } else {
           _confettiController.duration = const Duration(seconds: 1);
         }
@@ -556,6 +579,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         } catch (e) {
           debugPrint('SE Play Error: $e');
         }
+
+        if (!mounted) return;
+
         // タスク完了時にポイント付与
         context.read<GamificationService>().awardPoints(
               points,
@@ -565,7 +591,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           SnackBar(
             content: Text('タスク完了！ (${points}pt)'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
           ),
         );
       } else if (currentValue && mounted) {
@@ -618,7 +644,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _editTodo(
-      String id, String currentTask, DateTime? currentDueDate, String? currentRecurrence, String? currentCategory, int? currentDuration, String? currentDifficulty) async {
+    String id,
+    String currentTask,
+    DateTime? currentDueDate,
+    String? currentRecurrence,
+    String? currentCategory,
+    int? currentDuration,
+    String? currentDifficulty,
+  ) async {
     final editController = TextEditingController(text: currentTask);
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
@@ -664,9 +697,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         }
                       },
                       icon: const Icon(Icons.calendar_today),
-                      label: Text(editDate != null
-                          ? '${editDate!.year}/${editDate!.month}/${editDate!.day}'
-                          : '設定なし'),
+                      label: Text(
+                        editDate != null
+                            ? '${editDate!.year}/${editDate!.month}/${editDate!.day}'
+                            : '設定なし',
+                      ),
                     ),
                     if (editDate != null)
                       IconButton(
@@ -681,11 +716,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: editRecurrence,
+                  initialValue: editRecurrence,
                   decoration: const InputDecoration(
                     labelText: '繰り返し',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'none', child: Text('繰り返しなし')),
@@ -699,20 +735,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: editCategory,
+                  initialValue: editCategory,
                   decoration: const InputDecoration(
                     labelText: 'カテゴリ',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: _categoryLabels.entries.map((e) {
                     return DropdownMenuItem(
                       value: e.key,
-                      child: Row(children: [
-                        Icon(_categoryIcons[e.key], size: 16, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Text(e.value),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(_categoryIcons[e.key],
+                              size: 16, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Text(e.value),
+                        ],
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -721,11 +761,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int?>(
-                  value: editDuration,
+                  initialValue: editDuration,
                   decoration: const InputDecoration(
                     labelText: '見積もり時間',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: const [
                     DropdownMenuItem(value: null, child: Text('設定なし')),
@@ -740,11 +781,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: editDifficulty,
+                  initialValue: editDifficulty,
                   decoration: const InputDecoration(
                     labelText: '難易度',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: _difficultyLabels.entries.map((e) {
                     return DropdownMenuItem(
@@ -840,8 +882,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('内容: $task',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    '内容: $task',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text('状態: ${isCompleted ? "完了" : "未完了"}'),
                   Text('重要: ${isImportant ? "はい" : "いいえ"}'),
@@ -849,17 +893,22 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text('繰り返し: $recurrenceText'),
                   Text('カテゴリ: $categoryText'),
                   Text('難易度: $difficultyText'),
-                  Text('見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
-                  Text('実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
+                  Text(
+                      '見積もり: ${estimatedMinutes != null ? "$estimatedMinutes分" : "なし"}'),
+                  Text(
+                      '実績: ${actualMinutes != null ? "$actualMinutes分" : "なし"}'),
                   if (reflection != null && reflection.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    const Text('振り返り:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('振り返り:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(reflection),
                   ],
                   Text('作成: ${formattedDate(createdAtStr)}'),
                   const Divider(height: 24),
-                  const Text('サブタスク',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'サブタスク',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -902,8 +951,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     builder: (context, snapshot) {
                       final subtasks = snapshot.data ?? [];
                       if (subtasks.isEmpty) {
-                        return const Text('サブタスクはありません',
-                            style: TextStyle(color: Colors.grey));
+                        return const Text(
+                          'サブタスクはありません',
+                          style: TextStyle(color: Colors.grey),
+                        );
                       }
                       return Flexible(
                         child: ListView.builder(
@@ -994,26 +1045,33 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     final buffer = StringBuffer();
     // Header
-    buffer.writeln('Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection,Difficulty');
+    buffer.writeln(
+        'Task,Category,Created At,Due Date,Important,Recurrence,Estimated Minutes,Actual Minutes,Reflection,Difficulty');
 
     // Rows
     for (final todo in historyTodos) {
       final task = _escapeCsv(todo['task'] as String);
-      final category = _categoryLabels[todo['category']] ?? todo['category'] ?? '';
+      final category =
+          _categoryLabels[todo['category']] ?? todo['category'] ?? '';
       final createdAt = todo['created_at'] as String? ?? '';
       final dueDate = todo['due_date'] as String? ?? '';
-      final isImportant = (todo['is_important'] as bool? ?? false) ? 'Yes' : 'No';
+      final isImportant =
+          (todo['is_important'] as bool? ?? false) ? 'Yes' : 'No';
       final recurrence = todo['recurrence'] as String? ?? 'none';
       final estimated = todo['estimated_minutes']?.toString() ?? '';
       final actual = todo['actual_minutes']?.toString() ?? '';
       final reflection = _escapeCsv(todo['reflection'] as String? ?? '');
-      final difficulty = _difficultyLabels[todo['difficulty']] ?? todo['difficulty'] ?? 'normal';
+      final difficulty = _difficultyLabels[todo['difficulty']] ??
+          todo['difficulty'] ??
+          'normal';
 
-      buffer.writeln('$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection,$difficulty');
+      buffer.writeln(
+          '$task,$category,$createdAt,$dueDate,$isImportant,$recurrence,$estimated,$actual,$reflection,$difficulty');
     }
 
     final csvData = buffer.toString();
-    final uri = Uri.parse('data:text/csv;charset=utf-8,${Uri.encodeComponent(csvData)}');
+    final uri = Uri.parse(
+        'data:text/csv;charset=utf-8,${Uri.encodeComponent(csvData)}');
     if (!await launchUrl(uri)) {
       debugPrint('Could not launch CSV export url');
     }
@@ -1045,7 +1103,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     setState(() => _isLoading = true);
 
     try {
-      final model = GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
+      final model =
+          GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
       final prompt = _buildDailyReportPrompt(historyTodos);
       final content = [Content.text(prompt)];
       final response = await model.generateContent(content);
@@ -1108,15 +1167,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   Future<List<String>> _fetchGeminiModels(String apiKey) async {
     try {
       final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
+      );
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['models'] != null) {
           return (data['models'] as List)
-              .where((m) => (m['supportedGenerationMethods'] as List?)
-                  ?.contains('generateContent') ?? false)
-              .map<String>((m) => m['name'].toString().replaceFirst('models/', ''))
+              .where(
+                (m) =>
+                    (m['supportedGenerationMethods'] as List?)
+                        ?.contains('generateContent') ??
+                    false,
+              )
+              .map<String>(
+                  (m) => m['name'].toString().replaceFirst('models/', ''))
               .toList();
         }
       }
@@ -1140,131 +1205,139 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-        title: const Text('日報設定'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Gemini APIの設定を行います。'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: apiKeyController,
-                decoration: const InputDecoration(
-                  labelText: 'Gemini API Key',
-                  border: OutlineInputBorder(),
-                  hintText: 'APIキーを入力してください',
-                ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 8),
-              if (isFetchingModels)
-                const LinearProgressIndicator()
-              else
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      if (apiKeyController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('APIキーを入力してください')),
-                        );
-                        return;
-                      }
-                      setDialogState(() => isFetchingModels = true);
-                      final models = await _fetchGeminiModels(apiKeyController.text);
-                      setDialogState(() {
-                        isFetchingModels = false;
-                        if (models.isNotEmpty) {
-                          currentSelectableModels = models;
-                          // 選択中のモデルが新しいリストにない場合、リストの先頭を選択
-                          if (!currentSelectableModels.contains(tempSelectedModel)) {
-                            tempSelectedModel = currentSelectableModels.first;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${models.length}個のモデルを取得しました')),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('モデルの取得に失敗しました')),
-                          );
-                        }
-                      });
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('利用可能なモデル一覧を取得'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('日報設定'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Gemini APIの設定を行います。'),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: apiKeyController,
+                    decoration: const InputDecoration(
+                      labelText: 'Gemini API Key',
+                      border: OutlineInputBorder(),
+                      hintText: 'APIキーを入力してください',
+                    ),
+                    obscureText: true,
                   ),
-                ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: tempSelectedModel,
-                decoration: const InputDecoration(
-                  labelText: '使用モデル',
-                  border: OutlineInputBorder(),
-                ),
-                items: currentSelectableModels.map((m) {
-                  return DropdownMenuItem(
-                    value: m,
-                    child: Text(m),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setDialogState(() => tempSelectedModel = val);
-                  }
-                },
+                  const SizedBox(height: 8),
+                  if (isFetchingModels)
+                    const LinearProgressIndicator()
+                  else
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          if (apiKeyController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('APIキーを入力してください')),
+                            );
+                            return;
+                          }
+                          setDialogState(() => isFetchingModels = true);
+                          final models =
+                              await _fetchGeminiModels(apiKeyController.text);
+                          setDialogState(() {
+                            isFetchingModels = false;
+                            if (models.isNotEmpty) {
+                              currentSelectableModels = models;
+                              // 選択中のモデルが新しいリストにない場合、リストの先頭を選択
+                              if (!currentSelectableModels
+                                  .contains(tempSelectedModel)) {
+                                tempSelectedModel =
+                                    currentSelectableModels.first;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('${models.length}個のモデルを取得しました')),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('モデルの取得に失敗しました')),
+                              );
+                            }
+                          });
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('利用可能なモデル一覧を取得'),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: tempSelectedModel,
+                    decoration: const InputDecoration(
+                      labelText: '使用モデル',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: currentSelectableModels.map((m) {
+                      return DropdownMenuItem(
+                        value: m,
+                        child: Text(m),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => tempSelectedModel = val);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    maxLines: 6,
+                    decoration: const InputDecoration(
+                      labelText: 'システム指示 (プロンプト)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'システム指示 (プロンプト)',
-                  border: OutlineInputBorder(),
-                ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  controller.text = _defaultPromptInstructions;
+                  setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
+                },
+                child: const Text('デフォルトに戻す'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('daily_report_prompt', controller.text);
+                  await prefs.setString('gemini_model', tempSelectedModel);
+                  if (apiKeyController.text.isNotEmpty) {
+                    await prefs.setString(
+                        'gemini_api_key', apiKeyController.text);
+                  }
+                  if (mounted) {
+                    setState(() {
+                      _customPromptInstructions = controller.text;
+                      _selectedModel = tempSelectedModel;
+                      if (apiKeyController.text.isNotEmpty) {
+                        _geminiApiKey = apiKeyController.text;
+                      }
+                      // 取得したモデルリストを保存（簡易的にメモリのみ）
+                      _selectableModels = currentSelectableModels;
+                    });
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                },
+                child: const Text('保存'),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              controller.text = _defaultPromptInstructions;
-              setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
-            },
-            child: const Text('デフォルトに戻す'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('daily_report_prompt', controller.text);
-              await prefs.setString('gemini_model', tempSelectedModel);
-              if (apiKeyController.text.isNotEmpty) {
-                await prefs.setString('gemini_api_key', apiKeyController.text);
-              }
-              if (mounted) {
-                setState(() {
-                  _customPromptInstructions = controller.text;
-                  _selectedModel = tempSelectedModel;
-                  if (apiKeyController.text.isNotEmpty) {
-                    _geminiApiKey = apiKeyController.text;
-                  }
-                  // 取得したモデルリストを保存（簡易的にメモリのみ）
-                  _selectableModels = currentSelectableModels;
-                });
-              }
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      );
-      }),
+          );
+        },
+      ),
     );
   }
 
@@ -1276,14 +1349,25 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     for (final task in tasks) {
       final title = task['task'];
       final category = _categoryLabels[task['category']] ?? task['category'];
-      final estimated = task['estimated_minutes'] != null ? '${task['estimated_minutes']}分' : '設定なし';
-      final actual = task['actual_minutes'] != null ? '${task['actual_minutes']}分' : '不明';
+      final estimated = task['estimated_minutes'] != null
+          ? '${task['estimated_minutes']}分'
+          : '設定なし';
+      final actual =
+          task['actual_minutes'] != null ? '${task['actual_minutes']}分' : '不明';
       final reflection = task['reflection'] ?? 'なし';
-      final difficulty = _difficultyLabels[task['difficulty']] ?? task['difficulty'] ?? '普通';
+      final difficulty =
+          _difficultyLabels[task['difficulty']] ?? task['difficulty'] ?? '普通';
+
+      final mySubtasks =
+          _subtasks.where((s) => s['todo_id'] == task['id']).toList();
+      final subTotal = mySubtasks.length;
+      final subDone = mySubtasks.where((s) => s['is_completed'] == true).length;
+      final subtaskInfo = subTotal > 0 ? ', サブタスク: $subDone/$subTotal' : '';
 
       buffer.writeln('- タスク名: $title');
       buffer.writeln('  カテゴリ: $category');
-      buffer.writeln('  難易度: $difficulty, 見積もり: $estimated, 実績: $actual');
+      buffer.writeln(
+          '  難易度: $difficulty, 見積もり: $estimated, 実績: $actual$subtaskInfo');
       buffer.writeln('  振り返りメモ: $reflection');
       buffer.writeln('');
     }
@@ -1346,12 +1430,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   Widget _buildAnalyticsView(List<Map<String, dynamic>> tasks) {
     int totalMinutes = 0;
     int totalEstimated = 0;
-    Map<String, int> categoryCounts = {};
+    final Map<String, int> categoryCounts = {};
 
     for (var t in tasks) {
+    for (final t in tasks) {
       totalMinutes += t['actual_minutes'] as int? ?? 0;
       totalEstimated += t['estimated_minutes'] as int? ?? 0;
-      String cat = t['category'] as String? ?? 'work';
+      final String cat = t['category'] as String? ?? 'work';
       categoryCounts[cat] = (categoryCounts[cat] ?? 0) + 1;
     }
 
@@ -1365,9 +1450,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatCard(
-                  '完了タスク', '$totalTasks件', Icons.check_circle, Colors.green),
+                '完了タスク',
+                '$totalTasks件',
+                Icons.check_circle,
+                Colors.green,
+              ),
               _buildStatCard(
-                  '合計時間', '${totalMinutes}分', Icons.timer, Colors.blue),
+                '合計時間',
+                '$totalMinutes分',
+                Icons.timer,
+                Colors.blue,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -1419,8 +1512,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             }).toList(),
           ),
           const SizedBox(height: 32),
-          const Text('時間の予実対比 (分)',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            '時間の予実対比 (分)',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 200,
@@ -1428,10 +1523,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: ((totalEstimated > totalMinutes
-                            ? totalEstimated
-                            : totalMinutes)
-                        .toDouble() *
-                    1.2) + 10, // 0の場合の表示崩れを防ぐためにバッファを追加
+                                ? totalEstimated
+                                : totalMinutes)
+                            .toDouble() *
+                        1.2) +
+                    10, // 0の場合の表示崩れを防ぐためにバッファを追加
                 barTouchData: BarTouchData(
                   enabled: false,
                   touchTooltipData: BarTouchTooltipData(
@@ -1472,11 +1568,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ),
                   ),
                   leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: [
@@ -1492,7 +1591,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -1501,11 +1604,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           children: [
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 8),
-            Text(title,
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -1530,9 +1636,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   @override
   Widget build(BuildContext context) {
     // フィルタリング
-    var filteredTodos = _filterCategory == 'all'
+    final filteredTodos = _filterCategory == 'all'
         ? List<Map<String, dynamic>>.from(_todos)
-        : _todos.where((t) => (t['category'] ?? 'work') == _filterCategory).toList();
+        : _todos
+            .where((t) => (t['category'] ?? 'work') == _filterCategory)
+            .toList();
 
     // ソート適用
     if (_sortOrder == 'estimated_asc') {
@@ -1557,10 +1665,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     final progress = totalPoints > 0 ? completedPoints / totalPoints : 0.0;
-    
+
     // タスクの振り分け
-    final activeTodos = filteredTodos.where((t) => t['is_completed'] == false).toList();
-    final historyTodos = filteredTodos.where((t) => t['is_completed'] == true).toList();
+    final activeTodos =
+        filteredTodos.where((t) => t['is_completed'] == false).toList();
+    final historyTodos =
+        filteredTodos.where((t) => t['is_completed'] == true).toList();
 
     int totalEstimatedMinutes = 0;
     for (var todo in activeTodos) {
@@ -1591,377 +1701,445 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         children: [
           Column(
             children: [
-          // ヘッダーメッセージ
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.indigo.shade50,
-            child: Column(
-              children: [
-                const Text(
-                  '今日のミッション',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'CEO、本日の最優先事項を定義し、実行に移しましょう。',
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-                if (_weatherData != null) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                          _getWeatherIcon(
-                              (_weatherData!['weathercode'] as num).toInt()),
-                          color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${_weatherData!['temperature']}°C (Tokyo)',
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+              // ヘッダーメッセージ
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.indigo.shade50,
+                child: Column(
+                  children: [
+                    const Text(
+                      '今日のミッション',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'CEO、本日の最優先事項を定義し、実行に移しましょう。',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                    if (_weatherData != null) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _getWeatherIcon(
+                              (_weatherData!['weathercode'] as num).toInt(),
+                            ),
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_weatherData!['temperature']}°C (Tokyo)',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      const Text('フィルタ:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('すべて'),
-                        selected: _filterCategory == 'all',
-                        onSelected: (val) => setState(() => _filterCategory = 'all'),
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          const Text('フィルタ:',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey)),
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: const Text('すべて'),
+                            selected: _filterCategory == 'all',
+                            onSelected: (val) =>
+                                setState(() => _filterCategory = 'all'),
+                          ),
+                          ..._categoryLabels.entries.map((e) {
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: FilterChip(
+                                avatar: Icon(_categoryIcons[e.key], size: 16),
+                                label: Text(e.value),
+                                selected: _filterCategory == e.key,
+                                onSelected: (val) =>
+                                    setState(() => _filterCategory = e.key),
+                              ),
+                            );
+                          }),
+                          const SizedBox(width: 16),
+                          const Text('並び替え:',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey)),
+                          PopupMenuButton<String>(
+                            initialValue: _sortOrder,
+                            tooltip: '並び替え順を変更',
+                            icon: Icon(
+                              Icons.sort,
+                              color: _sortOrder != 'manual'
+                                  ? Colors.orange
+                                  : Colors.grey,
+                            ),
+                            onSelected: (val) =>
+                                setState(() => _sortOrder = val),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                  value: 'manual', child: Text('手動 (ドラッグ)')),
+                              const PopupMenuItem(
+                                  value: 'estimated_asc',
+                                  child: Text('見積もり時間 (短い順)')),
+                            ],
+                          ),
+                        ],
                       ),
-                      ..._categoryLabels.entries.map((e) {
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: FilterChip(
-                            avatar: Icon(_categoryIcons[e.key], size: 16),
-                            label: Text(e.value),
-                            selected: _filterCategory == e.key,
-                            onSelected: (val) => setState(() => _filterCategory = e.key),
+                    ),
+                    if (filteredTodos.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '今日の進捗 (Pt)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.white,
+                            color:
+                                progress == 1.0 ? Colors.orange : Colors.green,
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          if (totalEstimatedMinutes > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Icon(Icons.access_time,
+                                      size: 14, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '残り見積もり: $totalEstimatedMinutes分',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // 入力エリア
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _todoController,
+                        decoration: const InputDecoration(
+                          hintText: 'タスクを追加...',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onSubmitted: (_) => _addTodo(),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _selectDate(context),
+                      icon: Icon(
+                        Icons.calendar_today,
+                        color:
+                            _selectedDate != null ? Colors.orange : Colors.grey,
+                      ),
+                      tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.repeat,
+                        color: _selectedRecurrence != 'none'
+                            ? Colors.orange
+                            : Colors.grey,
+                      ),
+                      tooltip: '繰り返し設定',
+                      onSelected: (value) {
+                        setState(() {
+                          _selectedRecurrence = value;
+                        });
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                            value: 'none', child: Text('繰り返しなし')),
+                        const PopupMenuItem(value: 'daily', child: Text('毎日')),
+                        const PopupMenuItem(value: 'weekly', child: Text('毎週')),
+                        const PopupMenuItem(
+                            value: 'monthly', child: Text('毎月')),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        _categoryIcons[_selectedCategory],
+                        color: Colors.grey,
+                      ),
+                      tooltip: 'カテゴリ選択',
+                      onSelected: (value) {
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
+                      itemBuilder: (context) =>
+                          _categoryLabels.entries.map((e) {
+                        return PopupMenuItem(
+                          value: e.key,
+                          child: Row(
+                            children: [
+                              Icon(_categoryIcons[e.key], color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Text(e.value),
+                            ],
                           ),
                         );
-                      }),
-                      const SizedBox(width: 16),
-                      const Text('並び替え:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                      PopupMenuButton<String>(
-                        initialValue: _sortOrder,
-                        tooltip: '並び替え順を変更',
-                        icon: Icon(
-                          Icons.sort,
-                          color: _sortOrder != 'manual' ? Colors.orange : Colors.grey,
-                        ),
-                        onSelected: (val) => setState(() => _sortOrder = val),
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'manual', child: Text('手動 (ドラッグ)')),
-                          const PopupMenuItem(value: 'estimated_asc', child: Text('見積もり時間 (短い順)')),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (filteredTodos.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '今日の進捗 (Pt)',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.white,
-                        color: progress == 1.0 ? Colors.orange : Colors.green,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      if (totalEstimatedMinutes > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Icon(Icons.access_time, size: 14, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                '残り見積もり: ${totalEstimatedMinutes}分',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // 入力エリア
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _todoController,
-                    decoration: const InputDecoration(
-                      hintText: 'タスクを追加...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      }).toList(),
                     ),
-                    onSubmitted: (_) => _addTodo(),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _selectDate(context),
-                  icon: Icon(
-                    Icons.calendar_today,
-                    color: _selectedDate != null ? Colors.orange : Colors.grey,
-                  ),
-                  tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.repeat,
-                    color: _selectedRecurrence != 'none' ? Colors.orange : Colors.grey,
-                  ),
-                  tooltip: '繰り返し設定',
-                  onSelected: (value) {
-                    setState(() {
-                      _selectedRecurrence = value;
-                    });
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'none', child: Text('繰り返しなし')),
-                    const PopupMenuItem(value: 'daily', child: Text('毎日')),
-                    const PopupMenuItem(value: 'weekly', child: Text('毎週')),
-                    const PopupMenuItem(value: 'monthly', child: Text('毎月')),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    _categoryIcons[_selectedCategory],
-                    color: Colors.grey,
-                  ),
-                  tooltip: 'カテゴリ選択',
-                  onSelected: (value) {
-                    setState(() {
-                      _selectedCategory = value;
-                    });
-                  },
-                  itemBuilder: (context) => _categoryLabels.entries.map((e) {
-                    return PopupMenuItem(
-                      value: e.key,
-                      child: Row(children: [
-                        Icon(_categoryIcons[e.key], color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Text(e.value),
-                      ]),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<int>(
-                  icon: Icon(
-                    Icons.access_time,
-                    color: _selectedDuration != null ? Colors.orange : Colors.grey,
-                  ),
-                  tooltip: '見積もり時間',
-                  onSelected: (value) {
-                    setState(() {
-                      _selectedDuration = value;
-                    });
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 15, child: Text('15分')),
-                    const PopupMenuItem(value: 30, child: Text('30分')),
-                    const PopupMenuItem(value: 45, child: Text('45分')),
-                    const PopupMenuItem(value: 60, child: Text('1時間')),
-                    const PopupMenuItem(value: 90, child: Text('1.5時間')),
-                    const PopupMenuItem(value: 120, child: Text('2時間')),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.signal_cellular_alt,
-                    color: _difficultyColors[_selectedDifficulty],
-                  ),
-                  tooltip: '難易度',
-                  onSelected: (value) {
-                    setState(() {
-                      _selectedDifficulty = value;
-                    });
-                  },
-                  itemBuilder: (context) => _difficultyLabels.entries.map((e) {
-                    return PopupMenuItem(
-                      value: e.key,
-                      child: Text(e.value,
-                          style: TextStyle(color: _difficultyColors[e.key])),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: _addTodo,
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-          ),
-          // リストエリア
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // --- Tab 1: Active Tasks (Reorderable) ---
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : activeTodos.isEmpty
-                        ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.wb_sunny_outlined, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text('タスクはありません'),
-                          ],
-                        ),
-                      ) : (_filterCategory != 'all' || _sortOrder != 'manual')
-                        // フィルタ適用中または手動ソート以外は並び替え無効 (ListViewを使用)
-                        ? ListView.builder(
-                            itemCount: activeTodos.length,
-                            itemBuilder: (context, index) => _buildTodoItem(activeTodos[index], index, false),
-                          )
-                    : ReorderableListView.builder(
-                        onReorder: _onReorder,
-                        itemCount: activeTodos.length,
-                        itemBuilder: (context, index) => _buildTodoItem(activeTodos[index], index, true),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<int>(
+                      icon: Icon(
+                        Icons.access_time,
+                        color: _selectedDuration != null
+                            ? Colors.orange
+                            : Colors.grey,
                       ),
-                
-                // --- Tab 2: History (Completed) ---
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : historyTodos.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.history, size: 64, color: Colors.grey),
-                                SizedBox(height: 16),
-                                Text('完了したタスクはありません'),
-                              ],
-                            ),
-                          ) : Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: _exportHistoryToCsv,
-                                          icon: const Icon(Icons.download),
-                                          label: const Text('CSV'),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: FilledButton.icon(
-                                          onPressed: _generateDailyReport,
-                                          icon: const Icon(Icons.auto_awesome),
-                                          label: const Text('日報生成 (AI)'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: ListView.builder(
-                            itemCount: historyTodos.length,
-                            itemBuilder: (context, index) {
-                              final todo = historyTodos[index];
-                              final id = todo['id'] as String;
-                              final task = todo['task'] as String;
-                              final createdAtStr = todo['created_at'] as String?;
-                              final category = todo['category'] as String? ?? 'work';
-                              final actualMinutes = todo['actual_minutes'] as int?;
-                              final difficulty = todo['difficulty'] as String? ?? 'normal';
-                              
-                              String subtitleText = '';
-                              if (createdAtStr != null) {
-                                final createdAt = DateTime.parse(createdAtStr).toLocal();
-                                subtitleText = '作成: ${timeago.format(createdAt)}';
-                              }
-
-                              if (actualMinutes != null) {
-                                subtitleText += ' (実績: ${actualMinutes}分)';
-                              }
-
-                              return ListTile(
-                                onTap: () => _showTaskDetails(todo), // 履歴でも詳細表示
-                                leading: const Icon(Icons.check_circle, color: Colors.green),
-                                title: Text(
-                                  task,
-                                  style: const TextStyle(
-                                    decoration: TextDecoration.lineThrough,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                subtitle: Row(
+                      tooltip: '見積もり時間',
+                      onSelected: (value) {
+                        setState(() {
+                          _selectedDuration = value;
+                        });
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 15, child: Text('15分')),
+                        const PopupMenuItem(value: 30, child: Text('30分')),
+                        const PopupMenuItem(value: 45, child: Text('45分')),
+                        const PopupMenuItem(value: 60, child: Text('1時間')),
+                        const PopupMenuItem(value: 90, child: Text('1.5時間')),
+                        const PopupMenuItem(value: 120, child: Text('2時間')),
+                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.signal_cellular_alt,
+                        color: _difficultyColors[_selectedDifficulty],
+                      ),
+                      tooltip: '難易度',
+                      onSelected: (value) {
+                        setState(() {
+                          _selectedDifficulty = value;
+                        });
+                      },
+                      itemBuilder: (context) =>
+                          _difficultyLabels.entries.map((e) {
+                        return PopupMenuItem(
+                          value: e.key,
+                          child: Text(
+                            e.value,
+                            style: TextStyle(color: _difficultyColors[e.key]),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      onPressed: _addTodo,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ),
+              // リストエリア
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // --- Tab 1: Active Tasks (Reorderable) ---
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : activeTodos.isEmpty
+                            ? const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(_categoryIcons[category], size: 12, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(subtitleText),
+                                    Icon(Icons.wb_sunny_outlined,
+                                        size: 64, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text('タスクはありません'),
                                   ],
                                 ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                              )
+                            : (_filterCategory != 'all' ||
+                                    _sortOrder != 'manual')
+                                // フィルタ適用中または手動ソート以外は並び替え無効 (ListViewを使用)
+                                ? ListView.builder(
+                                    itemCount: activeTodos.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildTodoItem(
+                                            activeTodos[index], index, false),
+                                  )
+                                : ReorderableListView.builder(
+                                    onReorder: _onReorder,
+                                    itemCount: activeTodos.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildTodoItem(
+                                            activeTodos[index], index, true),
+                                  ),
+
+                    // --- Tab 2: History (Completed) ---
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : historyTodos.isEmpty
+                            ? const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.undo),
-                                      tooltip: '未完了に戻す',
-                                      onPressed: () => _toggleTodo(id, true, task, null, difficulty),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline),
-                                      onPressed: () => _deleteTodo(id),
-                                    ),
+                                    Icon(Icons.history,
+                                        size: 64, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text('完了したタスクはありません'),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
+                              )
+                            : Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: OutlinedButton.icon(
+                                              onPressed: _exportHistoryToCsv,
+                                              icon: const Icon(Icons.download),
+                                              label: const Text('CSV'),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: FilledButton.icon(
+                                              onPressed: _generateDailyReport,
+                                              icon: const Icon(
+                                                  Icons.auto_awesome),
+                                              label: const Text('日報生成 (AI)'),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      itemCount: historyTodos.length,
+                                      itemBuilder: (context, index) {
+                                        final todo = historyTodos[index];
+                                        final id = todo['id'] as String;
+                                        final task = todo['task'] as String;
+                                        final createdAtStr =
+                                            todo['created_at'] as String?;
+                                        final category =
+                                            todo['category'] as String? ??
+                                                'work';
+                                        final actualMinutes =
+                                            todo['actual_minutes'] as int?;
+                                        final difficulty =
+                                            todo['difficulty'] as String? ??
+                                                'normal';
+
+                                        String subtitleText = '';
+                                        if (createdAtStr != null) {
+                                          final createdAt =
+                                              DateTime.parse(createdAtStr)
+                                                  .toLocal();
+                                          subtitleText =
+                                              '作成: ${timeago.format(createdAt)}';
+                                        }
+
+                                        if (actualMinutes != null) {
+                                          subtitleText +=
+                                              ' (実績: $actualMinutes分)';
+                                        }
+
+                                        return ListTile(
+                                          onTap: () => _showTaskDetails(
+                                              todo), // 履歴でも詳細表示
+                                          leading: const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.green),
+                                          title: Text(
+                                            task,
+                                            style: const TextStyle(
+                                              decoration:
+                                                  TextDecoration.lineThrough,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          subtitle: Row(
+                                            children: [
+                                              Icon(_categoryIcons[category],
+                                                  size: 12, color: Colors.grey),
+                                              const SizedBox(width: 4),
+                                              Text(subtitleText),
+                                            ],
+                                          ),
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.undo),
+                                                tooltip: '未完了に戻す',
+                                                onPressed: () => _toggleTodo(
+                                                    id,
+                                                    true,
+                                                    task,
+                                                    null,
+                                                    difficulty),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.delete_outline),
+                                                onPressed: () =>
+                                                    _deleteTodo(id),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -1973,7 +2151,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 Colors.blue,
                 Colors.pink,
                 Colors.orange,
-                Colors.purple
+                Colors.purple,
               ],
             ),
           ),
@@ -1982,7 +2160,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildTodoItem(Map<String, dynamic> todo, int index, bool isReorderable) {
+  Widget _buildTodoItem(
+      Map<String, dynamic> todo, int index, bool isReorderable) {
     final isCompleted = todo['is_completed'] as bool;
     final id = todo['id'] as String;
     final task = todo['task'] as String;
@@ -1996,9 +2175,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final difficulty = todo['difficulty'] as String? ?? 'normal';
 
     // ロック状態の判定 (未完了の最重要タスクがある場合、それ以外の未完了タスクはロック)
-    final hasIncompleteImportantTasks = _todos.any((t) =>
-        t['is_important'] == true && t['is_completed'] == false);
-    final isLocked = !isCompleted && !isImportant && hasIncompleteImportantTasks;
+    final hasIncompleteImportantTasks = _todos.any(
+      (t) => t['is_important'] == true && t['is_completed'] == false,
+    );
+    final isLocked =
+        !isCompleted && !isImportant && hasIncompleteImportantTasks;
 
     // サブタスクの進捗計算
     final mySubtasks = _subtasks.where((s) => s['todo_id'] == id).toList();
@@ -2045,16 +2226,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += ' (↻)';
     }
 
-    if (subTotal > 0) {
-      subtitleText += ' [Sub: $subDone/$subTotal]';
-    }
-
     final points = _difficultyPoints[difficulty] ?? 10;
-    subtitleText += ' [${_difficultyLabels[difficulty] ?? difficulty} (${points}pt)]';
+    subtitleText +=
+        ' [${_difficultyLabels[difficulty] ?? difficulty} (${points}pt)]';
 
     if (isCompleted && actualMinutes != null) {
-      subtitleText += ' ✅${actualMinutes}分';
-      if (estimatedMinutes != null) subtitleText += '/予${estimatedMinutes}分';
+      subtitleText += ' ✅$actualMinutes分';
+      if (estimatedMinutes != null) subtitleText += '/予$estimatedMinutes分';
     } else if (estimatedMinutes != null) {
       subtitleText += ' ⏱$estimatedMinutes分';
     }
@@ -2069,7 +2247,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
               );
             }
-          : () => _editTodo(id, task, dueDate, recurrence, category, estimatedMinutes, difficulty),
+          : () => _editTodo(id, task, dueDate, recurrence, category,
+              estimatedMinutes, difficulty),
       onLongPress: () => _showTaskDetails(todo),
       leading: Checkbox(
         value: isCompleted,
@@ -2082,7 +2261,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ),
                 );
               }
-            : (val) => _toggleTodo(id, isCompleted, task, estimatedMinutes, difficulty),
+            : (val) => _toggleTodo(
+                id, isCompleted, task, estimatedMinutes, difficulty),
       ),
       title: Text(
         task,
@@ -2095,31 +2275,63 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   : (isOverdue
                       ? Colors.red
                       : (isDueToday ? Colors.orange.shade800 : null))),
-          fontWeight: (isOverdue || isDueToday) && !isLocked ? FontWeight.bold : null,
+          fontWeight:
+              (isOverdue || isDueToday) && !isLocked ? FontWeight.bold : null,
         ),
       ),
-      subtitle: Row(
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_categoryIcons[category], size: 12, color: Colors.grey),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              subtitleText,
-              style: TextStyle(
-                color: isCompleted
-                    ? Colors.grey
-                    : (isLocked
+          Row(
+            children: [
+              Icon(_categoryIcons[category], size: 12, color: Colors.grey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  subtitleText,
+                  style: TextStyle(
+                    color: isCompleted
                         ? Colors.grey
-                        : (isOverdue
-                            ? Colors.red
-                            : (isDueToday
-                                ? Colors.orange.shade800
-                                : (difficulty == 'hard' ? Colors.red.shade300 : Colors.grey)))),
-                fontWeight: difficulty == 'hard' && !isLocked ? FontWeight.w500 : null,
+                        : (isLocked
+                            ? Colors.grey
+                            : (isOverdue
+                                ? Colors.red
+                                : (isDueToday
+                                    ? Colors.orange.shade800
+                                    : (difficulty == 'hard'
+                                        ? Colors.red.shade300
+                                        : Colors.grey)))),
+                    fontWeight: difficulty == 'hard' && !isLocked
+                        ? FontWeight.w500
+                        : null,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
+            ],
           ),
+          if (subTotal > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: LinearProgressIndicator(
+                      value: subTotal > 0 ? subDone / subTotal : 0,
+                      backgroundColor: Colors.grey.shade200,
+                      color: Colors.blueAccent,
+                      minHeight: 4,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$subDone/$subTotal',
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
       trailing: Row(
