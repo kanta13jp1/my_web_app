@@ -358,8 +358,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     List<String> currentContent = [];
     const uuid = Uuid();
 
-    // Regex to find speaker headings like **【CSO】** or 【CFO/財務】
-    final speakerRegex = RegExp(r'\*?\*?【(.*?)】\*?\*?');
+    // Regex to find speaker headings like **CKO/知識:**
+    final speakerRegex = RegExp(r'\*\*(.*?):\*\*');
 
     for (var line in lines) {
       final match = speakerRegex.firstMatch(line);
@@ -401,6 +401,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   String _extractConclusion(String text, List<BoardMessage> messages) {
+    // Attempt to find a specific conclusion section from CEO
+    final ceoMessages = messages.where((m) => m.role.contains('CEO')).toList();
+    if (ceoMessages.isNotEmpty) {
+      for (var msg in ceoMessages.reversed) {
+        final conclusionIndex = msg.content.indexOf('結論として');
+        if (conclusionIndex != -1) {
+          return msg.content.substring(conclusionIndex);
+        }
+      }
+    }
+    
     // Attempt to find a specific conclusion section
     final conclusionIdentifier = "【CSOの最終結論】";
     final index = text.indexOf(conclusionIdentifier);
