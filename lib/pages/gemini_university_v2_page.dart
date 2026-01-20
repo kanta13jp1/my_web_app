@@ -291,18 +291,34 @@ Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-a
       title: 'Gemini Code Assist overview',
       description: 'Gemini Code Assist の概要と活用ガイド',
       icon: Icons.code_sharp,
-      content: '### ジェミニ・コードアシストの概要\n\n'
-          '発行日: 2026/1/17\n\n'
-          'Gemini Code Assistは、Gemini 2.5モデルを活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。\n\n'
-          '【主な機能と特徴】\n'
-          '1. **AI支援**: 対応するIDEでコード生成、対話型ヘルプの提供、ソース引用などの機能を利用できます。\n'
-          '2. **3つのエディション**: 無料版、スタンダード版、エンタープライズ版の3種類が用意されており、それぞれ機能と対象ユーザー層が異なります。\n'
-          '3. **クラウド連携**: Standard版とEnterprise版では、IDE以外の追加機能を提供しており、各種Google Cloudサービスとの連携が含まれます。\n\n'
-          '【注意点】\n'
-          'ユーザーは、Gemini Code Assistの出力を検証する必要があります。これは初期段階の技術であり、誤った情報を生成する場合があるためです。',
+      content: '''
+### ジェミニ・コードアシストの概要
+*2026/1/21 更新*
+
+Gemini Code Assistは、Gemini 2.5モデルを活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。
+
+#### 主な機能と特徴
+1. **AI支援**: 対応するIDEでコード生成、対話型ヘルプの提供、ソース引用などの機能を利用できます。
+2. **3つのエディション**: 無料版、スタンダード版、エンタープライズ版の3種類が用意されており、それぞれ機能と対象ユーザー層が異なります。
+   - **個人向けGemini Code Assist**: 無料で利用いただけます。
+   - **Gemini Code Assist Standard**: Google Cloud ポートフォリオ製品。
+   - **Gemini Code Assist Enterprise**: Google Cloud ポートフォリオ製品。
+3. **クラウド連携**: Standard版とEnterprise版では、IDE以外の追加機能を提供しており、各種Google Cloudサービスとの連携が含まれます。
+
+#### 注意点
+* ユーザーは、Gemini Code Assistの出力を検証する必要があります。これは初期段階の技術であり、誤った情報を生成する場合があるためです。
+* **個人開発者向けのヒント**: Google AI ProまたはUltraのサブスクリプションを購入することで、Gemini Code Assist、Gemini CLI、エージェントモードで共有される1日あたりのモデルリクエスト上限を引き上げることができます。
+
+ビジネス利用の場合、またはチームレベルの特典をさらにご利用になりたい場合は、Gemini Code Assist Standard または Enterprise のご利用をご検討ください。
+''',
       quiz: Quiz(
-        question: 'Gemini Code Assistの主な機能は何ですか？',
-        options: ['デザイン作成', 'コード補完、デバッグ支援、コード生成', 'データ分析', 'ゲーム開発'],
+        question: 'Gemini Code Assistの個人開発者が1日のリクエスト上限を引き上げる方法は？',
+        options: [
+          'Enterprise版を契約する',
+          'Google AI Pro/Ultraのサブスクリプションを購入する',
+          'Google Cloudのプロジェクトを作成する',
+          '設定で制限解除を申請する'
+        ],
         correctIndex: 1,
       ),
       officialDocs: [
@@ -349,12 +365,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
 ''',
       quiz: Quiz(
         question: '「共有リソースの使用可能量であり、変動する可能性がある」と定義されているのはどれですか？',
-        options: [
-          'システム制限 (System Limits)',
-          'クォータ (Quotas)',
-          'ライセンスタイプ',
-          'エディション'
-        ],
+        options: ['システム制限 (System Limits)', 'クォータ (Quotas)', 'ライセンスタイプ', 'エディション'],
         correctIndex: 1,
       ),
       officialDocs: [
