@@ -48,7 +48,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- 各役員は自分の専門分野のデータのみに言及すること。\n'
       '- 数字が少ない場合は「怠慢である」と厳しく指摘すること。\n'
       '- 数字が多い場合は「リソース過多」のリスクを指摘すること。\n'
-      '- 馴れ合いは不要。ビジネスライクかつ辛口に。';
+      '- 馴れ合いは不要。ビジネスライクかつ辛口に。\n\n'
+      '【出力フォーマット】\n'
+      '- 各役員の発言は【役職】で始めること。(例: 【CFO】)\n'
+      '- 結論は【CSOの最終結論】で始めること。';
   // --- End of new state variables ---
 
   // Supabase client getter
