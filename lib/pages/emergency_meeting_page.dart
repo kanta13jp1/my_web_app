@@ -100,6 +100,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               .map<String>(
                 (m) => m['name'].toString().replaceFirst('models/', ''),
               )
+              .where((name) => !name.contains('tts'))
               .toList();
         }
       }
