@@ -19,11 +19,60 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _isLoading = false;
   String _loadingStatus = '';
 
+  // Model selection state
+  List<Map<String, dynamic>> _availableModels = [];
+  String? _selectedModel;
+  bool _modelsLoading = true;
+
   // テスト時は注入されたクライアントを使い、通常時はシングルトンを使う
   SupabaseClient get _supabase =>
       widget.supabaseClient ?? Supabase.instance.client;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchModels();
+  }
+
+  Future<void> _fetchModels() async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      );
+
+      if (response.data != null && response.data['success'] == true) {
+        final models = List<Map<String, dynamic>>.from(response.data['models']);
+        setState(() {
+          _availableModels = models;
+          if (models.isNotEmpty) {
+            _selectedModel = models.first['name'] as String?;
+          }
+          _modelsLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load models');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('モデルの取得に失敗: $e')),
+        );
+        setState(() {
+          _modelsLoading = false;
+        });
+      }
+    }
+  }
+
   Future<void> _conveneBoard() async {
+    if (_selectedModel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('使用するAIモデルを選択してください。')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _loadingStatus = '各部門からデータを収集中...';
@@ -91,6 +140,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         body: {
           'action': 'hold_board_meeting',
           'topic': contextPrompt,
+          'model': _selectedModel, // <--- モデル選択を追加
         },
       );
 
@@ -197,16 +247,56 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        '「招集」ボタンを押すと、CFO, CKO, CSOなどの全AI役員がデータベース内の最新情報を分析し、CEOであるあなたに現状報告と次の一手を提案します。',
+                        'CFO, CKO, CSOなどの全AI役員が最新情報を分析し、CEOであるあなたに現状報告と次の一手を提案します。',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 40),
+                      // --- Model Selection Dropdown ---
+                      if (_modelsLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                            boxShadow: [
+                               BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              )
+                            ]
+                          ),
+                          child: DropdownButton<String>(
+                            value: _selectedModel,
+                            isExpanded: true,
+                            underline: const SizedBox.shrink(),
+                            hint: const Text('AIモデルを選択'),
+                            items: _availableModels.map((model) {
+                              return DropdownMenuItem<String>(
+                                value: model['name'] as String,
+                                child: Text(
+                                    '${model['name']} (${model['provider']})'),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedModel = value;
+                              });
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      // --- Convene Button ---
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton.icon(
-                          onPressed: _conveneBoard,
+                          onPressed: _isLoading || _modelsLoading ? null : _conveneBoard,
                           icon: const Icon(Icons.notifications_active),
                           label: const Text(
                             '緊急招集する',
@@ -219,6 +309,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             backgroundColor: Colors.redAccent,
                             foregroundColor: Colors.white,
                             elevation: 4,
+                            disabledBackgroundColor: Colors.grey,
                           ),
                         ),
                       ),
