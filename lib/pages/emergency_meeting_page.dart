@@ -328,9 +328,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _currentLog = log);
       await _saveMeetingToDb(log, contextPrompt);
-    } catch (e) {
+    } catch (e, s) {
       if (mounted) {
         final errString = e.toString();
+        debugPrint('Failed to convene board: $e');
+        debugPrint('Stack trace: $s');
+
         if (errString.contains('503') || errString.contains('UNAVAILABLE')) {
           _errorMessage = 'AIモデルが現在高負荷です。しばらくしてから再試行してください。';
         } else if (errString.contains('429') ||
