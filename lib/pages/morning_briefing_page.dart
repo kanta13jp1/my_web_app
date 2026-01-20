@@ -61,6 +61,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'private': 'プライベート',
     'health': '健康',
     'study': '学習',
+    'routine': '毎日の積み上げ', // ★ 追加
     'other': 'その他',
   };
 
@@ -69,6 +70,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'private': Icons.home,
     'health': Icons.favorite,
     'study': Icons.school,
+    'routine': Icons.trending_up, // ★ 追加
     'other': Icons.category,
   };
 
@@ -77,6 +79,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'private': Colors.green,
     'health': Colors.red,
     'study': Colors.orange,
+    'routine': Colors.cyan, // ★ 追加
     'other': Colors.grey,
   };
 

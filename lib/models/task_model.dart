@@ -3,6 +3,7 @@ enum TaskType {
   daily, // B. 毎日実施する必要があるタスク
   routine, // C. 定期的な自己研鑽・開発
   reward, // D. 完了後の快楽
+  daily_accumulation, // E. 毎日の積み上げ
 }
 
 class TaskModel {
@@ -26,7 +27,7 @@ class TaskModel {
     required this.createdAt,
   });
 
-  // A -> B -> C -> D の順に並び替えるためのスコア
+  // A -> B -> C -> D -> E の順に並び替えるためのスコア
   int get priorityScore {
     switch (taskType) {
       case TaskType.deadline:
@@ -37,6 +38,8 @@ class TaskModel {
         return 3;
       case TaskType.reward:
         return 4;
+      case TaskType.daily_accumulation:
+        return 5;
     }
   }
 
@@ -51,6 +54,8 @@ class TaskModel {
         return '興味を持てるように工夫せよ。感情や疲労は顔に出すな。';
       case TaskType.reward:
         return 'やるべきことは終わったか？ 終わっていなければ着手してはならない。';
+      case TaskType.daily_accumulation:
+        return 'コツコツ積み上げが大事。今日もサボるな。';
     }
   }
 

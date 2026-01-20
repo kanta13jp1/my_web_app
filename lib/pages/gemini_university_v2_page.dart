@@ -365,7 +365,12 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
 ''',
       quiz: Quiz(
         question: '「共有リソースの使用可能量であり、変動する可能性がある」と定義されているのはどれですか？',
-        options: ['システム制限 (System Limits)', 'クォータ (Quotas)', 'ライセンスタイプ', 'エディション'],
+        options: [
+          'システム制限 (System Limits)',
+          'クォータ (Quotas)',
+          'ライセンスタイプ',
+          'エディション'
+        ],
         correctIndex: 1,
       ),
       officialDocs: [
