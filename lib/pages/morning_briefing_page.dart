@@ -1010,14 +1010,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   void onReorder(int oldIndex, int newIndex) {
+    if (_sortOrder != 'manual') return; // 手動ソート時のみ実行
+
     setState(() {
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
       final item = _todos.removeAt(oldIndex);
       _todos.insert(newIndex, item);
+
+      // ★★★ 修正点: ローカルのorder_indexを即時更新 ★★★
+      // これにより、UIの再描画時に正しい順序が維持される
+      for (int i = 0; i < _todos.length; i++) {
+        _todos[i]['order_index'] = i;
+      }
     });
 
+    // DB更新はバックグラウンドで実行
     updateOrderInDb();
   }
 
