@@ -327,7 +327,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     } catch (e) {
       if (mounted) {
         final errString = e.toString();
-        if (errString.contains('429') ||
+        if (errString.contains('503') || errString.contains('UNAVAILABLE')) {
+          _errorMessage = 'AIモデルが現在高負荷です。しばらくしてから再試行してください。';
+        } else if (errString.contains('429') ||
             errString.contains('Quota') ||
             errString.contains('rate limit')) {
           _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
