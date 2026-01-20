@@ -167,7 +167,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         });
       } else {
          setState(() {
-          _errorMessage = '会議エラー: ${e.message}';
+          _errorMessage = '会議エラー: ${e.toString()}';
         });
       }
     } catch (e) {
