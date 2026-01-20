@@ -26,8 +26,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   // --- Start of new state variables ---
   String? _geminiApiKey;
   String _selectedModel =
-      'gemini-1.5-flash'; // Default model, similar to morning briefing
+      'gemma-3-4b-it'; // Default model, similar to morning briefing
   List<String> _selectableModels = [
+    'gemma-3-1b-it',
+    'gemma-3-4b-it',
     'gemini-1.5-flash',
     'gemini-1.5-pro',
   ];
@@ -48,10 +50,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- 各役員は自分の専門分野のデータのみに言及すること。\n'
       '- 数字が少ない場合は「怠慢である」と厳しく指摘すること。\n'
       '- 数字が多い場合は「リソース過多」のリスクを指摘すること。\n'
-      '- 馴れ合いは不要。ビジネスライクかつ辛口に。\n\n'
-      '【出力フォーマット】\n'
-      '- 各役員の発言は【役職】で始めること。(例: 【CFO】)\n'
-      '- 結論は【CSOの最終結論】で始めること。';
+      '- 馴れ合いは不要。ビジネスライクかつ辛口に。';
   // --- End of new state variables ---
 
   // Supabase client getter
@@ -72,13 +71,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       setState(() {
         _geminiApiKey = prefs.getString('gemini_api_key');
         // A model saved for the daily report can be reused here for consistency
-        String? savedModel = prefs.getString('gemini_model');
+        String? savedModel = prefs.getString('gemini_model_emergency_meeting');
         if (savedModel != null) {
           _selectedModel = savedModel;
         }
         // Ensure the selected model is in the list, if not, add it.
         if (!_selectableModels.contains(_selectedModel)) {
-          _selectableModels.add(_selectedModel);
+          _selectableModels.insert(0, _selectedModel);
         }
       });
     }
@@ -96,14 +95,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           return (data['models'] as List)
               .where(
                 (m) =>
-                    (m['supportedGenerationMethods'] as List?)
-                        ?.contains('generateContent') ??
+                    (m['supportedGenerationMethods'] as List?)?.contains('generateContent') ??
                     false,
               )
               .map<String>(
                 (m) => m['name'].toString().replaceFirst('models/', ''),
               )
-              .where((name) => !name.contains('tts'))
+              .where((name) => !name.contains('tts') && !name.contains('embedding'))
               .toList();
         }
       }
@@ -195,10 +193,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       labelText: '使用モデル',
                       border: OutlineInputBorder(),
                     ),
-                    items: currentSelectableModels.map((m) {
+                    isExpanded: true,
+                    items: currentSelectableModels.toSet().map((m) {
                       return DropdownMenuItem(
                         value: m,
-                        child: Text(m),
+                        child: Text(
+                          m,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -218,7 +220,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('gemini_model', tempSelectedModel);
+                  await prefs.setString('gemini_model_emergency_meeting', tempSelectedModel);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
                       'gemini_api_key',
@@ -250,7 +252,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   String? _errorMessage;
 
 
-  // ... (initState and _fetchModels remain the same)
+  // ... (initState and _fetchModels remain the same) 
 
   Future<void> _conveneBoard() async {
     if (_geminiApiKey == null || _geminiApiKey!.isEmpty) {
@@ -315,11 +317,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         throw Exception("AIからの応答がありません。");
       }
 
+      setState(() => _loadingStatus = '議事録を作成中...');
+
       final messages = _parseResponseToMessages(responseText);
       final conclusion = _extractConclusion(responseText, messages);
 
       final log = BoardMeetingLog(
-        id: 'temp_id_${DateTime.now().millisecondsSinceEpoch}',
+        id: const Uuid().v4(),
+        userId: userId,
         topic: '定期現状分析報告会',
         conclusion: conclusion,
         messages: messages,
@@ -327,7 +332,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       );
 
       setState(() => _currentLog = log);
-      await _saveMeetingToDb(log, contextPrompt);
+      await _saveMeetingToDb(log);
+
     } catch (e, s) {
       if (mounted) {
         final errString = e.toString();
@@ -340,7 +346,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             errString.contains('Quota') ||
             errString.contains('rate limit')) {
           _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
-        } else {
+        } else if (errString.contains('400') && errString.contains('API key not valid')) {
+            _errorMessage = 'APIキーが無効です。設定を確認してください。';
+        }
+         else {
           _errorMessage = '会議エラー: $errString';
         }
         setState(() {}); // Update UI to show error
@@ -352,47 +361,31 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   List<BoardMessage> _parseResponseToMessages(String text) {
     final messages = <BoardMessage>[];
-    final lines = text.split('\n');
-    String currentSpeaker = "Unknown";
-    String currentRole = "System";
-    List<String> currentContent = [];
+    // Split by role headings (e.g., **CKO/知識:** or 【CKO】)
+    final parts = text.split(RegExp(r'\n(?=\*\*?\[?(\w+)[/:\w]*\]?\*?\*:?\s)'));
     const uuid = Uuid();
 
-    // Regex to find speaker headings like **CKO/知識:**
-    final speakerRegex = RegExp(r'\*\*(.*?):\*\*');
+    for (final part in parts) {
+      if (part.trim().isEmpty) continue;
 
-    for (var line in lines) {
-      final match = speakerRegex.firstMatch(line);
-      if (match != null) {
-        // Save the previous message
-        if (currentContent.isNotEmpty) {
-          messages.add(BoardMessage(
-            id: uuid.v4(),
-            speakerName: currentSpeaker,
-            role: currentRole,
-            content: currentContent.join('\n').trim(),
-            timestamp: DateTime.now(),
-          ));
-        }
-        currentContent = [];
+      String speakerName = "System";
+      String role = "SYS";
+      String content = part.trim();
 
-        // Start a new message
-        final tag = match.group(1)!;
-        final parts = tag.split('/');
-        currentRole = parts[0].trim();
-        currentSpeaker = 'AI $currentRole'; // e.g., "AI CSO"
-      } else {
-        currentContent.add(line);
+      // Extract speaker and role from the heading
+      final headingMatch =
+          RegExp(r'^\*\*?\[?(\w+)[/:\w]*\]?\*?\*:?\s?').firstMatch(content);
+      if (headingMatch != null) {
+        role = headingMatch.group(1)!.toUpperCase();
+        speakerName = 'AI $role';
+        content = content.substring(headingMatch.end).trim();
       }
-    }
 
-    // Add the last message
-    if (currentContent.isNotEmpty) {
       messages.add(BoardMessage(
         id: uuid.v4(),
-        speakerName: currentSpeaker,
-        role: currentRole,
-        content: currentContent.join('\n').trim(),
+        speakerName: speakerName,
+        role: role,
+        content: content,
         timestamp: DateTime.now(),
       ));
     }
@@ -400,51 +393,48 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     return messages;
   }
 
-  String _extractConclusion(String text, List<BoardMessage> messages) {
-    // Attempt to find a specific conclusion section from CEO
-    final ceoMessages = messages.where((m) => m.role.contains('CEO')).toList();
-    if (ceoMessages.isNotEmpty) {
-      for (var msg in ceoMessages.reversed) {
-        final conclusionIndex = msg.content.indexOf('結論として');
-        if (conclusionIndex != -1) {
-          return msg.content.substring(conclusionIndex);
-        }
-      }
-    }
-    
-    // Attempt to find a specific conclusion section
-    final conclusionIdentifier = "【CSOの最終結論】";
-    final index = text.indexOf(conclusionIdentifier);
+String _extractConclusion(String text, List<BoardMessage> messages) {
+  // 1. Look for a specific conclusion heading
+  final conclusionIdentifiers = [
+    '【CSOの最終結論】',
+    '**CEO (ユーザー):** 結論として',
+    '結論として、'
+  ];
+  for (var identifier in conclusionIdentifiers) {
+    final index = text.indexOf(identifier);
     if (index != -1) {
-      return text.substring(index + conclusionIdentifier.length).trim();
+      return text.substring(index).trim();
     }
-
-    // Fallback: Find the last message from the CSO
-    final csoMessages =
-        messages.where((m) => m.role == 'CSO').toList();
-    if (csoMessages.isNotEmpty) {
-      return csoMessages.last.content;
-    }
-    
-    if (messages.isNotEmpty) {
-      return messages.last.content;
-    }
-
-    // Generic fallback
-    return "結論が見つかりませんでした。";
   }
 
-  Future<void> _saveMeetingToDb(BoardMeetingLog log, String prompt) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
+  // 2. Fallback to the last message from a strategic role
+  final strategicRoles = ['CEO', 'CSO'];
+  for (var role in strategicRoles) {
+    final lastMessage = messages.lastWhere((m) => m.role == role, orElse: () => BoardMessage.empty());
+    if (lastMessage.id.isNotEmpty) {
+      return lastMessage.content;
+    }
+  }
 
+  // 3. If no strategic message, return the last message overall
+  if (messages.isNotEmpty) {
+    return messages.last.content;
+  }
+
+  // 4. If all else fails
+  return "結論が見つかりませんでした。";
+}
+
+
+  Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
     final meetingRes = await _supabase
         .from('board_meetings')
         .insert({
-          'user_id': userId,
-          'topic': '定期現状分析報告会',
+          'id': log.id,
+          'user_id': log.userId,
+          'topic': log.topic,
           'conclusion': log.conclusion,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': log.createdAt.toIso8601String(),
         })
         .select()
         .single();
@@ -457,7 +447,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         'speaker_name': msg.speakerName,
         'role': msg.role,
         'content': msg.content,
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': msg.timestamp.toIso8601String(),
       };
     }).toList();
 
@@ -502,6 +492,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       const Text(
@@ -519,16 +510,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
                               '使用モデル: ',
                               style: TextStyle(color: Colors.black54),
                             ),
-                            Text(
-                              _selectedModel,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
+                            Flexible(
+                              child: Text(
+                                _selectedModel,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -609,7 +604,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Center(
                         child: Text(
-                          '${DateTime.now().year}年${DateTime.now().month}月${DateTime.now().day}日 臨時取締役会',
+                          '${_currentLog!.createdAt.year}年${_currentLog!.createdAt.month}月${_currentLog!.createdAt.day}日 臨時取締役会',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontWeight: FontWeight.bold,
@@ -700,7 +695,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -726,7 +721,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           ),
           const Divider(color: Colors.white24, height: 30),
           Text(
-            _currentLog!.conclusion ?? '',
+            _currentLog!.conclusion,
             style: const TextStyle(
               fontSize: 16,
               color: Colors.white,
@@ -778,5 +773,47 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       default:
         return Icons.smart_toy;
     }
+  }
+}
+
+// Add the BoardMeetingLog and BoardMessage models if they are not in a separate file.
+// For the purpose of this file, I'm assuming they might look something like this.
+// NOTE: I'm getting an error that BoardMeetingLog is not defined. I will define it.
+
+class BoardMeetingLog {
+  final String id;
+  final String userId;
+  final String topic;
+  final String conclusion;
+  final List<BoardMessage> messages;
+  final DateTime createdAt;
+
+  BoardMeetingLog({
+    required this.id,
+    required this.userId,
+    required this.topic,
+    required this.conclusion,
+    required this.messages,
+    required this.createdAt,
+  });
+}
+
+class BoardMessage {
+  final String id;
+  final String speakerName;
+  final String role;
+  final String content;
+  final DateTime timestamp;
+
+  BoardMessage({
+    required this.id,
+    required this.speakerName,
+    required this.role,
+    required this.content,
+    required this.timestamp,
+  });
+
+  static BoardMessage empty() {
+    return BoardMessage(id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0));
   }
 }
