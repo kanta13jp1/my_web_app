@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import '../models/board_meeting_model.dart';
 
 class EmergencyMeetingPage extends StatefulWidget {
   // テスト用にSupabaseClientを注入できるようにする
@@ -33,7 +32,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     'gemini-1.5-flash',
     'gemini-1.5-pro',
   ];
-  String _customPromptInstructions = _defaultPromptInstructions;
+  final String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
       '緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。\n'
       '最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。\n\n'
@@ -71,7 +70,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       setState(() {
         _geminiApiKey = prefs.getString('gemini_api_key');
         // A model saved for the daily report can be reused here for consistency
-        String? savedModel = prefs.getString('gemini_model_emergency_meeting');
+        final String? savedModel =
+            prefs.getString('gemini_model_emergency_meeting');
         if (savedModel != null) {
           _selectedModel = savedModel;
         }
@@ -95,13 +95,15 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           return (data['models'] as List)
               .where(
                 (m) =>
-                    (m['supportedGenerationMethods'] as List?)?.contains('generateContent') ??
+                    (m['supportedGenerationMethods'] as List?)
+                        ?.contains('generateContent') ??
                     false,
               )
               .map<String>(
                 (m) => m['name'].toString().replaceFirst('models/', ''),
               )
-              .where((name) => !name.contains('tts') && !name.contains('embedding'))
+              .where((name) =>
+                  !name.contains('tts') && !name.contains('embedding'))
               .toList();
         }
       }
@@ -152,7 +154,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           if (apiKeyController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('APIキーを入力してください')),
+                                content: Text('APIキーを入力してください'),
+                              ),
                             );
                             return;
                           }
@@ -170,14 +173,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                               }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content:
-                                      Text('${models.length}個のモデルを取得しました'),
+                                  content: Text('${models.length}個のモデルを取得しました'),
                                 ),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('モデルの取得に失敗しました')),
+                                  content: Text('モデルの取得に失敗しました'),
+                                ),
                               );
                             }
                           });
@@ -188,7 +191,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: tempSelectedModel,
+                    initialValue: tempSelectedModel,
                     decoration: const InputDecoration(
                       labelText: '使用モデル',
                       border: OutlineInputBorder(),
@@ -220,7 +223,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('gemini_model_emergency_meeting', tempSelectedModel);
+                  await prefs.setString(
+                      'gemini_model_emergency_meeting', tempSelectedModel);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
                       'gemini_api_key',
@@ -251,8 +255,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   String? _errorMessage;
 
-
-  // ... (initState and _fetchModels remain the same) 
+  // ... (initState and _fetchModels remain the same)
 
   Future<void> _conveneBoard() async {
     if (_geminiApiKey == null || _geminiApiKey!.isEmpty) {
@@ -272,7 +275,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
-        throw Exception("User not logged in.");
+        throw Exception('User not logged in.');
       }
 
       final results = await Future.wait<dynamic>([
@@ -308,13 +311,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
-      final model = GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
+      final model =
+          GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
       final content = [Content.text(contextPrompt)];
       final response = await model.generateContent(content);
       final responseText = response.text;
 
       if (responseText == null) {
-        throw Exception("AIからの応答がありません。");
+        throw Exception('AIからの応答がありません。');
       }
 
       setState(() => _loadingStatus = '議事録を作成中...');
@@ -333,7 +337,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _currentLog = log);
       await _saveMeetingToDb(log);
-
     } catch (e, s) {
       if (mounted) {
         final errString = e.toString();
@@ -346,10 +349,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             errString.contains('Quota') ||
             errString.contains('rate limit')) {
           _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
-        } else if (errString.contains('400') && errString.contains('API key not valid')) {
-            _errorMessage = 'APIキーが無効です。設定を確認してください。';
-        }
-         else {
+        } else if (errString.contains('400') &&
+            errString.contains('API key not valid')) {
+          _errorMessage = 'APIキーが無効です。設定を確認してください。';
+        } else {
           _errorMessage = '会議エラー: $errString';
         }
         setState(() {}); // Update UI to show error
@@ -368,8 +371,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     for (final part in parts) {
       if (part.trim().isEmpty) continue;
 
-      String speakerName = "System";
-      String role = "SYS";
+      String speakerName = 'System';
+      String role = 'SYS';
       String content = part.trim();
 
       // Extract speaker and role from the heading
@@ -381,50 +384,52 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         content = content.substring(headingMatch.end).trim();
       }
 
-      messages.add(BoardMessage(
-        id: uuid.v4(),
-        speakerName: speakerName,
-        role: role,
-        content: content,
-        timestamp: DateTime.now(),
-      ));
+      messages.add(
+        BoardMessage(
+          id: uuid.v4(),
+          speakerName: speakerName,
+          role: role,
+          content: content,
+          timestamp: DateTime.now(),
+        ),
+      );
     }
 
     return messages;
   }
 
-String _extractConclusion(String text, List<BoardMessage> messages) {
-  // 1. Look for a specific conclusion heading
-  final conclusionIdentifiers = [
-    '【CSOの最終結論】',
-    '**CEO (ユーザー):** 結論として',
-    '結論として、'
-  ];
-  for (var identifier in conclusionIdentifiers) {
-    final index = text.indexOf(identifier);
-    if (index != -1) {
-      return text.substring(index).trim();
+  String _extractConclusion(String text, List<BoardMessage> messages) {
+    // 1. Look for a specific conclusion heading
+    final conclusionIdentifiers = [
+      '【CSOの最終結論】',
+      '**CEO (ユーザー):** 結論として',
+      '結論として、',
+    ];
+    for (var identifier in conclusionIdentifiers) {
+      final index = text.indexOf(identifier);
+      if (index != -1) {
+        return text.substring(index).trim();
+      }
     }
-  }
 
-  // 2. Fallback to the last message from a strategic role
-  final strategicRoles = ['CEO', 'CSO'];
-  for (var role in strategicRoles) {
-    final lastMessage = messages.lastWhere((m) => m.role == role, orElse: () => BoardMessage.empty());
-    if (lastMessage.id.isNotEmpty) {
-      return lastMessage.content;
+    // 2. Fallback to the last message from a strategic role
+    final strategicRoles = ['CEO', 'CSO'];
+    for (var role in strategicRoles) {
+      final lastMessage = messages.lastWhere((m) => m.role == role,
+          orElse: () => BoardMessage.empty());
+      if (lastMessage.id.isNotEmpty) {
+        return lastMessage.content;
+      }
     }
+
+    // 3. If no strategic message, return the last message overall
+    if (messages.isNotEmpty) {
+      return messages.last.content;
+    }
+
+    // 4. If all else fails
+    return '結論が見つかりませんでした。';
   }
-
-  // 3. If no strategic message, return the last message overall
-  if (messages.isNotEmpty) {
-    return messages.last.content;
-  }
-
-  // 4. If all else fails
-  return "結論が見つかりませんでした。";
-}
-
 
   Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
     final meetingRes = await _supabase
@@ -503,7 +508,9 @@ String _extractConclusion(String text, List<BoardMessage> messages) {
                       const SizedBox(height: 40),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(8),
@@ -520,8 +527,9 @@ String _extractConclusion(String text, List<BoardMessage> messages) {
                               child: Text(
                                 _selectedModel,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -536,8 +544,9 @@ String _extractConclusion(String text, List<BoardMessage> messages) {
                           child: Text(
                             _errorMessage!,
                             style: const TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -814,6 +823,7 @@ class BoardMessage {
   });
 
   static BoardMessage empty() {
-    return BoardMessage(id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0));
+    return BoardMessage(
+        id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0));
   }
 }

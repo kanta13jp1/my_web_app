@@ -309,7 +309,59 @@ Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-a
         {
           'title': 'Gemini Code Assist overview',
           'url':
-              'https://developers.google.com/gemini-code-assist/docs/overview', //
+              'https://developers.google.com/gemini-code-assist/docs/overview',
+        },
+      ],
+    ),
+    CourseModule(
+      id: 'gemini_quotas_limits',
+      title: '割当(Quotas)と制限(Limits)',
+      description: 'Gemini Code Assist と CLI のクォータとシステム制限について学ぶ',
+      icon: Icons.speed,
+      content: '''
+### 割当(Quotas)と制限(Limits)
+*Last Updated: 2026/1/21*
+
+このドキュメントでは、Gemini Code AssistおよびGemini CLIの使用に関するクォータとシステム制限について説明します。
+
+---
+
+### 基本概念
+* **クォータ (Quotas)**: 共有リソースの使用可能量（変動する可能性があります）。
+* **システム制限 (System Limits)**: 固定値です。
+
+### 適用範囲
+Gemini Code AssistおよびGemini CLIには、以下の単位でリクエスト数のクォータが設定されています。これらはエディションまたはライセンスタイプによって異なります。
+* ローカルコードベースの認識
+* コードカスタマイズリポジトリ
+* ユーザーごとの分単位/日単位のリクエスト数
+
+### プラットフォーム別の仕様
+
+#### GitHub
+GitHubにおけるGemini Code Assistの使用には、プルリクエストのレビュー用に別途クォータが設定されています。
+
+#### BigQuery
+BigQueryのコードアシスト機能におけるGeminiのクォータは、Gemini Code Assistと同じです。ただし、BigQueryの使用状況に基づく高度な機能については追加のクォータが適用されます。
+
+### 併用時の注意
+このドキュメントに記載されているクォータとシステム制限は、Gemini Code AssistとGemini CLIの**併用**に対して適用されます。
+''',
+      quiz: Quiz(
+        question: '「共有リソースの使用可能量であり、変動する可能性がある」と定義されているのはどれですか？',
+        options: [
+          'システム制限 (System Limits)',
+          'クォータ (Quotas)',
+          'ライセンスタイプ',
+          'エディション'
+        ],
+        correctIndex: 1,
+      ),
+      officialDocs: [
+        {
+          'title': 'Quotas and limits',
+          'url':
+              'https://developers.google.com/gemini-code-assist/docs/quotas-limits',
         },
       ],
     ),

@@ -1155,15 +1155,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline,
-                              size: 20, color: Colors.red,),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 20,
+                            color: Colors.red,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '現在のモデル: $_selectedModel',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
                             ),
                           ),
                         ],
@@ -1183,7 +1187,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       child: Text(
                         _selectableModels.join(', '),
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade800,),
+                          fontSize: 12,
+                          color: Colors.grey.shade800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
