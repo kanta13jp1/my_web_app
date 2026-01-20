@@ -4,6 +4,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../models/board_meeting_model.dart';
 
 class EmergencyMeetingPage extends StatefulWidget {
@@ -315,7 +316,6 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       final log = BoardMeetingLog(
         id: 'temp_id_${DateTime.now().millisecondsSinceEpoch}',
-        userId: userId,
         topic: '定期現状分析報告会',
         conclusion: conclusion,
         messages: messages,
@@ -347,6 +347,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     String currentSpeaker = "Unknown";
     String currentRole = "System";
     List<String> currentContent = [];
+    const uuid = Uuid();
 
     // Regex to find speaker headings like **【CSO】** or 【CFO/財務】
     final speakerRegex = RegExp(r'\*?\*?【(.*?)】\*?\*?');
@@ -357,9 +358,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         // Save the previous message
         if (currentContent.isNotEmpty) {
           messages.add(BoardMessage(
+            id: uuid.v4(),
             speakerName: currentSpeaker,
             role: currentRole,
             content: currentContent.join('\n').trim(),
+            timestamp: DateTime.now(),
           ));
         }
         currentContent = [];
@@ -377,9 +380,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     // Add the last message
     if (currentContent.isNotEmpty) {
       messages.add(BoardMessage(
+        id: uuid.v4(),
         speakerName: currentSpeaker,
         role: currentRole,
         content: currentContent.join('\n').trim(),
+        timestamp: DateTime.now(),
       ));
     }
 
