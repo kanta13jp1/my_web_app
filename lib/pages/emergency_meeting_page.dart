@@ -65,6 +65,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     }
   }
 
+  String? _errorMessage;
+
+  // ... (initState and _fetchModels remain the same)
+
   Future<void> _conveneBoard() async {
     if (_selectedModel == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,31 +80,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     setState(() {
       _isLoading = true;
       _loadingStatus = '各部門からデータを収集中...';
+      _errorMessage = null; // Clear previous errors
     });
 
     try {
-      // _supabase クライアントを使用
+      // ... (rest of the data collection logic is the same)
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // 修正: 型推論エラーを防ぐため <dynamic> を指定
       final results = await Future.wait<dynamic>([
-        // CKO: メモ数 (int)
         _supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
-        // CFO: サブスク数 (int)
-        _supabase
-            .from('subscriptions')
-            .count(CountOption.exact)
-            .eq('user_id', userId)
-            .catchError((_) => 0),
-        // CHRO: ポイント、レベル (Map?)
-        // 【修正】id -> user_id に変更して型エラー回避
-        _supabase
-            .from('user_stats')
-            .select()
-            .eq('user_id', userId)
-            .maybeSingle(),
-        // CSO: 断捨離 (int) - 仮置き
+        _supabase.from('subscriptions').count(CountOption.exact).eq('user_id', userId).catchError((_) => 0),
+        _supabase.from('user_stats').select().eq('user_id', userId).maybeSingle(),
         Future.value(0),
       ]);
 
@@ -108,10 +99,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final subCount = results[1] as int;
       final userStats = results[2] as Map<String, dynamic>?;
       final danshariCount = results[3] as int;
-
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
-
       final contextPrompt = '''
 緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。
 最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。
@@ -140,29 +129,23 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         body: {
           'action': 'hold_board_meeting',
           'topic': contextPrompt,
-          'model': _selectedModel, // <--- モデル選択を追加
+          'model': _selectedModel,
         },
       );
 
       dynamic rawData = response.data;
-
-      // レスポンスがStringの場合はJSONパースを試みる
       if (rawData is String) {
         try {
           rawData = jsonDecode(rawData);
         } catch (e) {
-          // パース失敗時はそのまま
+          // Ignore if parsing fails
         }
       }
 
       if (rawData is Map<String, dynamic> && rawData['success'] == true) {
         final result = rawData['result'] as Map<String, dynamic>;
         final log = BoardMeetingLog.fromMap(result);
-
-        setState(() {
-          _currentLog = log;
-        });
-
+        setState(() => _currentLog = log);
         await _saveMeetingToDb(log, contextPrompt);
       } else {
         String errorMessage = 'AI応答エラー';
@@ -173,10 +156,25 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         }
         throw Exception(errorMessage);
       }
+    } on FunctionException catch (e) {
+      // Check if this is a rate limit error (status 429)
+      // Supabase wraps the error, so we inspect the details.
+      // The exact structure might vary, so a flexible check is good.
+      final details = e.details;
+      if (details is Map && details['status'] == 429) {
+        setState(() {
+          _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
+        });
+      } else {
+         setState(() {
+          _errorMessage = '会議エラー: ${e.message}';
+        });
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('会議エラー: $e')));
+         setState(() {
+          _errorMessage = '予期せぬエラーが発生しました: $e';
+        });
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -290,7 +288,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             },
                           ),
                         ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      // --- Error Message Display ---
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            _errorMessage!,
+                            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       // --- Convene Button ---
                       SizedBox(
                         width: double.infinity,

@@ -82,9 +82,16 @@ serve(async (req) => {
                 JSON.stringify({
                     success: true,
                     models: [
-                        { name: 'gemini-2.0-flash', provider: 'Google', description: 'Fast & Versatile' },
-                        { name: 'gpt-4o', provider: 'OpenAI', description: 'High Intelligence' },
-                        { name: 'claude-3-opus', provider: 'Anthropic', description: 'Complex Tasks' },
+                        // Recommended
+                        { name: 'gpt-4o', provider: 'OpenAI', description: 'High Intelligence (Recommended)' },
+                        { name: 'claude-3-opus-20240229', provider: 'Anthropic', description: 'Complex Tasks (High Perf.)' },
+                        { name: 'gemini-1.5-pro-latest', provider: 'Google', description: 'Large Context (High Perf.)' },
+                        // Mid-tier
+                        { name: 'gpt-4o-mini', provider: 'OpenAI', description: 'Good Balance' },
+                        { name: 'claude-3-sonnet-20240229', provider: 'Anthropic', description: 'Good Balance' },
+                        { name: 'gemini-1.5-flash-latest', provider: 'Google', description: 'Fast & Versatile' },
+                        // Economy
+                        { name: 'claude-3-haiku-20240307', provider: 'Anthropic', description: 'Fast & Compact' },
                     ]
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -195,7 +202,12 @@ serve(async (req) => {
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
-        return new Response(JSON.stringify({ success: false, error: msg }), { headers: corsHeaders, status: 400 });
+        
+        // Check for quota/rate limit errors
+        const isQuotaError = /quota|rate limit/i.test(msg);
+        const status = isQuotaError ? 429 : 400;
+
+        return new Response(JSON.stringify({ success: false, error: msg }), { headers: corsHeaders, status });
     }
 });
 
