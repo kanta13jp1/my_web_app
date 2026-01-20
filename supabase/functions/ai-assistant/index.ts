@@ -122,17 +122,66 @@ serve(async (req) => {
 
         // --- 3. Board Meeting ---
         if (action === 'hold_board_meeting') {
-            const topic = requestData.content;
-            const prompt = `
-            あなたは「自分株式会社」の取締役会シミュレーターです。
-            議題: ${topic}
-            役割: CEO(Steve), CTO(Linus), CMO(Gary), CFO(Warren).
-            JSON出力: { "meeting_minutes": [{"role": "...", "name": "...", "text": "..."}], "conclusion": "..." }
-            `;
-            const resultStr = await tryAIChain(prompt!);
-            const cleanJson = resultStr.replace(/```json|```/g, '').trim();
+            // 元のプロンプト（コンテキスト）を取得
+            const contextFromClient = requestData.content;
+
+            // AIに対する指示とJSON出力形式を定義
+            const systemPrompt = `
+あなたは「自分株式会社」の経営シミュレーターです。
+受け取った【現状データ】と【発言ルール】に厳密に従って、各役員のロールプレイを実行し、会議を進行してください。
+
+【出力形式】
+以下のJSON形式のみで回答してください。コードブロックや他のテキストは含めないでください。
+
+{
+  "messages": [
+    {
+      "speakerName": "CFO",
+      "role": "CFO",
+      "content": "CFOとしての分析報告です..."
+    },
+    {
+      "speakerName": "CKO",
+      "role": "CKO",
+      "content": "CKOとしての分析報告です..."
+    },
+    {
+      "speakerName": "CHRO",
+      "role": "CHRO",
+      "content": "CHROとしての分析報告です..."
+    },
+    {
+      "speakerName": "CSO",
+      "role": "CSO",
+      "content": "CSOとしての分析報告です..."
+    }
+  ],
+  "conclusion": "CSOとして、CEOが今週末に実行すべき具体的な行動計画です..."
+}
+`;
+            
+            // 指示とクライアントからのコンテキストを結合
+            const finalPrompt = `${systemPrompt}\n\n${contextFromClient}`;
+            
+            const resultStr = await tryAIChain(finalPrompt);
+
+            // 結果からJSONを抽出
+            // AIが ```json ... ``` のようにコードブロックを付けてくる場合に対応
+            const match = resultStr.match(/\{[\s\S]*\}/);
+            if (!match) {
+                throw new Error("AI response did not contain valid JSON.");
+            }
+            const cleanJson = match[0];
+
             const result = JSON.parse(cleanJson);
-            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+
+            // フロントエンドのモデル `BoardMeetingLog` と構造を合わせる
+            const formattedResult = {
+                messages: result.messages,
+                conclusion: result.conclusion,
+            };
+
+            return new Response(JSON.stringify({ success: true, result: formattedResult }), { headers: corsHeaders });
         }
         
         // --- 4. Generic Actions ---
