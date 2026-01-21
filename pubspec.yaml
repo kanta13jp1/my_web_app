@@ -41,6 +41,7 @@ dependencies:
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
   audioplayers: ^6.5.1
+  table_calendar: ^3.1.2
 
   http: any
 dev_dependencies:

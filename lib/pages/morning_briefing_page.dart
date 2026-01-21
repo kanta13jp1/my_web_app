@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../services/gamification_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
@@ -33,6 +34,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   late TabController _tabController;
   bool _isLoading = true;
   DateTime? _selectedDate;
+  // for Calendar View
+  late final ValueNotifier<List<Map<String, dynamic>>> _selectedEvents;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
   Map<String, dynamic>? _weatherData;
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -113,7 +119,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _selectedDay = _focusedDay;
+    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 1));
     _setupStream();
@@ -123,6 +132,21 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueTasks();
     });
+  }
+
+  List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
+    return _todos.where((todo) {
+      if (todo['due_date'] == null) {
+        return false;
+      }
+      try {
+        final dueDate = DateTime.parse(todo['due_date']).toLocal();
+        return isSameDay(dueDate, day);
+      } catch (e) {
+        debugPrint('Invalid due_date format: ${todo['due_date']}');
+        return false;
+      }
+    }).toList();
   }
 
   void _setupStream() {
@@ -141,6 +165,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         if (mounted) {
           setState(() {
             _todos = data;
+            // カレンダーのイベントも更新
+            if (_selectedDay != null) {
+              _selectedEvents.value = _getEventsForDay(_selectedDay!);
+            }
             _isLoading = false;
           });
         }
@@ -202,6 +230,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     _todosSubscription?.cancel();
     _subtasksSubscription?.cancel();
     _todoController.dispose();
+    _selectedEvents.dispose();
     super.dispose();
   }
 
