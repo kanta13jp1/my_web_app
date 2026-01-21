@@ -2437,7 +2437,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       }
     }
 
-    // サブタイトル（期限 + 経過時間）の生成
+    // 繰り返しの日本語ラベル
+    String? recurrenceLabel;
+    if (recurrence == 'daily') recurrenceLabel = '毎日';
+    if (recurrence == 'weekly') recurrenceLabel = '毎週';
+    if (recurrence == 'monthly') recurrenceLabel = '毎月';
+
+    // サブタイトル生成
     String subtitleText = '';
     if (dueDate != null) {
       subtitleText = '期限: ${dueDate.year}/${dueDate.month}/${dueDate.day}';
@@ -2455,10 +2461,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       subtitleText += '作成: $elapsed';
     }
 
-    if (recurrence != 'none') {
-      subtitleText += ' (↻)';
-    }
-
     final points = _difficultyPoints[difficulty] ?? 10;
     subtitleText +=
         ' [${_difficultyLabels[difficulty] ?? difficulty} (${points}pt)]';
@@ -2471,7 +2473,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     final content = ListTile(
-      // ★ 追加: 今日締め切りのタスクを背景色で強調
+      // 背景色設定（今日締め切りを強調）
       tileColor: !isCompleted && isDueToday ? Colors.orange.shade50 : null,
       shape: !isCompleted && isDueToday
           ? RoundedRectangleBorder(
@@ -2479,8 +2481,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               borderRadius: BorderRadius.circular(8),
             )
           : null,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // パディング調整
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
 
       onTap: isLocked
           ? () {
@@ -2520,42 +2521,50 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   difficulty,
                 ),
       ),
-      title: Row(
+      title: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
         children: [
-          Expanded(
-            child: Text(
-              task,
-              style: TextStyle(
-                decoration: isCompleted ? TextDecoration.lineThrough : null,
-                color: isCompleted
-                    ? Colors.grey
-                    : (isLocked
-                        ? Colors.grey
-                        : (isOverdue
-                            ? Colors.red
-                            : (isDueToday
-                                ? Colors.deepOrange
-                                : null))), // 色を濃く調整
-                fontWeight: (isOverdue || isDueToday) && !isLocked
-                    ? FontWeight.bold
-                    : null,
-              ),
+          Text(
+            task,
+            style: TextStyle(
+              decoration: isCompleted ? TextDecoration.lineThrough : null,
+              color: isCompleted
+                  ? Colors.grey
+                  : (isLocked
+                      ? Colors.grey
+                      : (isOverdue
+                          ? Colors.red
+                          : (isDueToday ? Colors.deepOrange : null))),
+              fontWeight: (isOverdue || isDueToday) && !isLocked
+                  ? FontWeight.bold
+                  : null,
             ),
           ),
-          // ★ 追加: 今日締め切りの場合にアイコンを表示
+          // ★ 追加: 今日中バッジ
           if (!isCompleted && isDueToday)
-            const Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Chip(
-                label: Text(
-                  '今日中',
-                  style: TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                backgroundColor: Colors.orange,
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                side: BorderSide.none,
+            const Chip(
+              label: Text(
+                '今日中',
+                style: TextStyle(color: Colors.white, fontSize: 10),
               ),
+              backgroundColor: Colors.orange,
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              side: BorderSide.none,
+            ),
+          // ★ 追加: 繰り返しバッジ
+          if (recurrenceLabel != null)
+            Chip(
+              avatar: const Icon(Icons.repeat, size: 12, color: Colors.white),
+              label: Text(
+                recurrenceLabel,
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+              ),
+              backgroundColor: Colors.purple.shade300,
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              side: BorderSide.none,
             ),
         ],
       ),
@@ -2618,11 +2627,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (recurrence != 'none')
-            const Padding(
-              padding: EdgeInsets.only(right: 8.0),
-              child: Icon(Icons.repeat, size: 16, color: Colors.grey),
-            ),
           IconButton(
             icon: Icon(
               isImportant ? Icons.star : Icons.star_border,
