@@ -42,11 +42,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Gemini API overview',
-          'url': 'https://ai.google.dev/docs/gemini_api_overview',
+          'url':
+              '[https://ai.google.dev/docs/gemini_api_overview](https://ai.google.dev/docs/gemini_api_overview)',
         },
         {
           'title': 'Gemini Models',
-          'url': 'https://ai.google.dev/models/gemini',
+          'url':
+              '[https://ai.google.dev/models/gemini](https://ai.google.dev/models/gemini)',
         },
       ],
     ),
@@ -78,7 +80,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Gemini Models',
-          'url': 'https://ai.google.dev/models/gemini',
+          'url':
+              '[https://ai.google.dev/models/gemini](https://ai.google.dev/models/gemini)',
         },
       ],
     ),
@@ -102,11 +105,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Prompt design strategies',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices',
+          'url':
+              '[https://ai.google.dev/docs/prompt_best_practices](https://ai.google.dev/docs/prompt_best_practices)',
         },
         {
           'title': 'Prompt Gallery',
-          'url': 'https://ai.google.dev/examples?keywords=prompting',
+          'url':
+              '[https://ai.google.dev/examples?keywords=prompting](https://ai.google.dev/examples?keywords=prompting)',
         },
       ],
     ),
@@ -130,12 +135,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Function calling',
-          'url': 'https://ai.google.dev/docs/function_calling',
+          'url':
+              '[https://ai.google.dev/docs/function_calling](https://ai.google.dev/docs/function_calling)',
         },
         {
           'title': 'Vertex AI - Function calling',
           'url':
-              'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling',
+              '[https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling](https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling)',
         },
       ],
     ),
@@ -158,9 +164,14 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Multimodal concepts',
-          'url': 'https://ai.google.dev/docs/concepts#multimodal',
+          'url':
+              '[https://ai.google.dev/docs/concepts#multimodal](https://ai.google.dev/docs/concepts#multimodal)',
         },
-        {'title': 'Media', 'url': 'https://ai.google.dev/docs/media'},
+        {
+          'title': 'Media',
+          'url':
+              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)'
+        },
       ],
     ),
     CourseModule(
@@ -188,11 +199,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Context caching',
-          'url': 'https://ai.google.dev/docs/context_caching',
+          'url':
+              '[https://ai.google.dev/docs/context_caching](https://ai.google.dev/docs/context_caching)',
         },
         {
           'title': 'Get started with Gemini',
-          'url': 'https://ai.google.dev/docs/gemini_api_overview',
+          'url':
+              '[https://ai.google.dev/docs/gemini_api_overview](https://ai.google.dev/docs/gemini_api_overview)',
         },
       ],
     ),
@@ -214,7 +227,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'JSON mode',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode',
+          'url':
+              '[https://ai.google.dev/docs/prompt_best_practices#json-mode](https://ai.google.dev/docs/prompt_best_practices#json-mode)',
         },
       ],
     ),
@@ -236,11 +250,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       officialDocs: [
         {
           'title': 'Safety settings',
-          'url': 'https://ai.google.dev/docs/safety_setting_gemini',
+          'url':
+              '[https://ai.google.dev/docs/safety_setting_gemini](https://ai.google.dev/docs/safety_setting_gemini)',
         },
         {
           'title': 'AI principles',
-          'url': 'https://ai.google/responsibility/principles/',
+          'url':
+              '[https://ai.google/responsibility/principles/](https://ai.google/responsibility/principles/)',
         },
       ],
     ),
@@ -256,6 +272,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 **利用規約を更新しました。**
 
 このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
+HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
+最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
 
 ---
 
@@ -296,7 +314,7 @@ Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-a
 
 **リクエスト例 (Gemini 2.5 Flash):**
 ```bash
-curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)" \\
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \\
 -H "x-goog-api-key: \$GEMINI_API_KEY" \\
 -H 'Content-Type: application/json' \\
 -X POST \\
@@ -326,11 +344,13 @@ curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:
       officialDocs: [
         {
           'title': 'Gemini REST API reference',
-          'url': 'https://ai.google.dev/api/rest',
+          'url':
+              '[https://ai.google.dev/api/rest](https://ai.google.dev/api/rest)',
         },
         {
           'title': 'SDK Quickstart',
-          'url': 'https://ai.google.dev/gemini-api/docs/quickstart',
+          'url':
+              '[https://ai.google.dev/gemini-api/docs/quickstart](https://ai.google.dev/gemini-api/docs/quickstart)',
         },
       ],
     ),
@@ -356,6 +376,7 @@ Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア
 #### 注意点
 * ユーザーは、Gemini Code Assistの出力を検証する必要があります。これは初期段階の技術であり、誤った情報を生成する場合があるためです。
 * **個人開発者向けのヒント**: Google AI ProまたはUltraのサブスクリプションを購入することで、Gemini Code Assist、Gemini CLI、エージェントモードで共有される1日あたりのモデルリクエスト上限を引き上げることができます。
+* **対応IDE**: VS Code, IntelliJ IDEA (JetBrains), Android Studio など、多くの主要なIDEで利用可能です。
 
 ビジネス利用の場合、またはチームレベルの特典をさらにご利用になりたい場合は、Gemini Code Assist Standard または Enterprise のご利用をご検討ください。
 ''',
@@ -365,7 +386,7 @@ Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア
           'Enterprise版を契約する',
           'Google AI Pro/Ultraのサブスクリプションを購入する',
           'Google Cloudのプロジェクトを作成する',
-          '設定で制限解除を申請する',
+          '設定で制限解除を申請する'
         ],
         correctIndex: 1,
       ),
@@ -373,7 +394,7 @@ Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア
         {
           'title': 'Gemini Code Assist overview',
           'url':
-              'https://developers.google.com/gemini-code-assist/docs/overview',
+              '[https://developers.google.com/gemini-code-assist/docs/overview](https://developers.google.com/gemini-code-assist/docs/overview)',
         },
       ],
     ),
@@ -417,7 +438,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
           'システム制限 (System Limits)',
           'クォータ (Quotas)',
           'ライセンスタイプ',
-          'エディション',
+          'エディション'
         ],
         correctIndex: 1,
       ),
@@ -425,7 +446,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
         {
           'title': 'Quotas and limits',
           'url':
-              'https://developers.google.com/gemini-code-assist/docs/quotas-limits',
+              '[https://developers.google.com/gemini-code-assist/docs/quotas-limits](https://developers.google.com/gemini-code-assist/docs/quotas-limits)',
         },
       ],
     ),
