@@ -105,6 +105,13 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             _buildMorningBriefingCard(context),
             const SizedBox(height: 24),
+            _buildSectionHeader(
+              'KPI SUMMARY',
+              Icons.show_chart,
+              Colors.purple,
+            ),
+            _buildKpiSummary(context),
+            const SizedBox(height: 24),
             _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
             _buildGridMenu(context, [
               _MenuData(
@@ -298,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: item.color.withValues(alpha: 0.1),
+                      color: item.color.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(item.icon, color: item.color, size: 20),
@@ -323,7 +330,71 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
+  Widget _buildKpiSummary(BuildContext context) {
+    // Dummy data for KPIs
+    final kpis = [
+      _KpiData('総資産 (CFO)', '¥1,234,567', Icons.account_balance, Colors.green),
+      _KpiData('睡眠時間 (CHO)', '7h 30m', Icons.bedtime, Colors.blue),
+      _KpiData('訪問者数 (CMO)', '8,123', Icons.people, Colors.pink),
+      _KpiData('新規メモ (CKO)', '3件', Icons.note_add, Colors.orange),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.8, // Adjust aspect ratio for KPI cards
+      ),
+      itemCount: kpis.length,
+      itemBuilder: (context, index) {
+        final kpi = kpis[index];
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      kpi.title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black.withOpacity(0.6),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Icon(kpi.icon, color: kpi.color, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  kpi.value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: kpi.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+
 
 class _MenuData {
   final String title;
@@ -332,3 +403,12 @@ class _MenuData {
   final VoidCallback onTap;
   _MenuData(this.title, this.icon, this.color, this.onTap);
 }
+
+class _KpiData {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  _KpiData(this.title, this.value, this.icon, this.color);
+}
+
