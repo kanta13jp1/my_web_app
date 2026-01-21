@@ -1920,6 +1920,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   @override
   Widget build(BuildContext context) {
     // フィルタリング
+
     final filteredTodos = _filterCategory == 'all'
         ? List<Map<String, dynamic>>.from(_todos)
         : _todos
@@ -1927,34 +1928,48 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             .toList();
 
     // ソート適用
+
     filteredTodos.sort((a, b) {
       // 1. 最重要タスク (is_important == true) を常に最優先
+
       final aImp = a['is_important'] as bool? ?? false;
+
       final bImp = b['is_important'] as bool? ?? false;
+
       if (aImp != bImp) {
         return aImp ? -1 : 1; // 重要(true)が先 (-1)
       }
 
       // 2. ユーザー選択のソート順
+
       if (_sortOrder == 'estimated_asc') {
         final aEst = a['estimated_minutes'] as int? ?? 999999;
+
         final bEst = b['estimated_minutes'] as int? ?? 999999;
+
         return aEst.compareTo(bEst);
       }
 
       // 3. デフォルト (手動順 / order_index順)
+
       final aOrder = a['order_index'] as num? ?? 0;
+
       final bOrder = b['order_index'] as num? ?? 0;
+
       return aOrder.compareTo(bOrder);
     });
 
     int totalPoints = 0;
+
     int completedPoints = 0;
 
     for (var todo in filteredTodos) {
       final difficulty = todo['difficulty'] as String? ?? 'normal';
+
       final points = _difficultyPoints[difficulty] ?? 10;
+
       totalPoints += points;
+
       if (todo['is_completed'] == true) {
         completedPoints += points;
       }
@@ -1963,12 +1978,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final progress = totalPoints > 0 ? completedPoints / totalPoints : 0.0;
 
     // タスクの振り分け
+
     final activeTodos =
         filteredTodos.where((t) => t['is_completed'] == false).toList();
+
     final historyTodos =
         filteredTodos.where((t) => t['is_completed'] == true).toList();
 
     int totalEstimatedMinutes = 0;
+
     for (var todo in activeTodos) {
       totalEstimatedMinutes += todo['estimated_minutes'] as int? ?? 0;
     }
@@ -1985,7 +2003,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [Tab(text: 'ミッション'), Tab(text: '履歴')],
+          tabs: const [
+            Tab(icon: Icon(Icons.list_alt), text: 'ミッション'),
+            Tab(icon: Icon(Icons.history), text: '履歴'),
+            Tab(icon: Icon(Icons.calendar_month), text: 'カレンダー'),
+          ],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.orange,
@@ -1998,6 +2020,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Column(
             children: [
               // ヘッダーメッセージ
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -2009,11 +2032,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+
                     const SizedBox(height: 8),
+
                     Text(
                       'CEO、本日の最優先事項を定義し、実行に移しましょう。',
                       style: TextStyle(color: Colors.grey.shade700),
                     ),
+
                     if (_weatherData != null) ...[
                       const SizedBox(height: 16),
                       Row(
@@ -2036,8 +2062,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ],
                       ),
                     ],
+
                     const SizedBox(height: 16),
+
                     // ★ START: AI Assistant Settings Display
+
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -2085,13 +2114,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Row(
                             children: [
                               Icon(
-                                _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                                _geminiApiKey != null &&
+                                        _geminiApiKey!.isNotEmpty
                                     ? Icons.check_circle
                                     : Icons.warning_amber,
-                                color:
-                                    _geminiApiKey != null && _geminiApiKey!.isNotEmpty
-                                        ? Colors.green
-                                        : Colors.orange,
+                                color: _geminiApiKey != null &&
+                                        _geminiApiKey!.isNotEmpty
+                                    ? Colors.green
+                                    : Colors.orange,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
@@ -2125,8 +2155,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               '利用可能: ' +
                                   _selectableModels.map((m) {
                                     final name = m['name'] as String;
-                                    final methods = (m['methods'] as List? ?? [])
-                                        .join(',');
+
+                                    final methods =
+                                        (m['methods'] as List? ?? []).join(',');
+
                                     return '$name($methods)';
                                   }).join('; '),
                               style: TextStyle(
@@ -2138,8 +2170,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ],
                       ),
                     ),
+
                     // ★ END: AI Assistant Settings Display
+
                     const SizedBox(height: 12),
+
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -2203,6 +2238,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ],
                       ),
                     ),
+
                     if (filteredTodos.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Column(
@@ -2260,7 +2296,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                 ),
               ),
+
               // 入力エリア
+
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -2392,12 +2430,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                 ),
               ),
+
               // リストエリア
+
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
                     // --- Tab 1: Active Tasks (Reorderable) ---
+
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : activeTodos.isEmpty
@@ -2417,7 +2458,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               )
                             : (_filterCategory != 'all' ||
                                     _sortOrder != 'manual')
+
                                 // フィルタ適用中または手動ソート以外は並び替え無効 (ListViewを使用)
+
                                 ? ListView.builder(
                                     itemCount: activeTodos.length,
                                     itemBuilder: (context, index) =>
@@ -2439,6 +2482,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   ),
 
                     // --- Tab 2: History (Completed) ---
+
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : historyTodos.isEmpty
@@ -2490,24 +2534,32 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       itemCount: historyTodos.length,
                                       itemBuilder: (context, index) {
                                         final todo = historyTodos[index];
+
                                         final id = todo['id'] as String;
+
                                         final task = todo['task'] as String;
+
                                         final createdAtStr =
                                             todo['created_at'] as String?;
+
                                         final category =
                                             todo['category'] as String? ??
                                                 'work';
+
                                         final actualMinutes =
                                             todo['actual_minutes'] as int?;
+
                                         final difficulty =
                                             todo['difficulty'] as String? ??
                                                 'normal';
 
                                         String subtitleText = '';
+
                                         if (createdAtStr != null) {
                                           final createdAt =
                                               DateTime.parse(createdAtStr)
                                                   .toLocal();
+
                                           subtitleText =
                                               '作成: ${timeago.format(createdAt)}';
                                         }
@@ -2521,10 +2573,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           onTap: () => showTaskDetails(
                                             todo,
                                           ), // 履歴でも詳細表示
+
                                           leading: const Icon(
                                             Icons.check_circle,
                                             color: Colors.green,
                                           ),
+
                                           title: Text(
                                             task,
                                             style: const TextStyle(
@@ -2533,6 +2587,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               color: Colors.grey,
                                             ),
                                           ),
+
                                           subtitle: Row(
                                             children: [
                                               Icon(
@@ -2544,6 +2599,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               Text(subtitleText),
                                             ],
                                           ),
+
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
@@ -2572,6 +2628,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   ),
                                 ],
                               ),
+
+                    // --- Tab 3: Calendar View ---
+
+                    _buildCalendarView(),
                   ],
                 ),
               ),
@@ -2594,6 +2654,107 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCalendarView() {
+    return Column(
+      children: [
+        TableCalendar<Map<String, dynamic>>(
+          locale: 'ja_JP',
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          calendarFormat: CalendarFormat.month,
+          eventLoader: _getEventsForDay,
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            todayDecoration: BoxDecoration(
+              color: Colors.orange.shade200,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              shape: BoxShape.circle,
+            ),
+            markerDecoration: const BoxDecoration(
+              color: Colors.indigo,
+              shape: BoxShape.circle,
+            ),
+          ),
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+          ),
+          onDaySelected: (selectedDay, focusedDay) {
+            if (!isSameDay(_selectedDay, selectedDay)) {
+              setState(() {
+                _selectedDay = selectedDay;
+
+                _focusedDay = focusedDay;
+              });
+
+              _selectedEvents.value = _getEventsForDay(selectedDay);
+            }
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+        ),
+        const Divider(),
+        Expanded(
+          child: ValueListenableBuilder<List<Map<String, dynamic>>>(
+            valueListenable: _selectedEvents,
+            builder: (context, value, _) {
+              if (value.isEmpty) {
+                return const Center(
+                  child: Text('この日に予定されているタスクはありません。'),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  final todo = value[index];
+
+                  final isCompleted = todo['is_completed'] as bool;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 4.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isCompleted ? Colors.grey.shade100 : Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: ListTile(
+                      onTap: () => showTaskDetails(todo),
+                      title: Text(
+                        '${todo['task']}',
+                        style: TextStyle(
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
+                          color: isCompleted ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                      leading: Icon(
+                        isCompleted
+                            ? Icons.check_circle
+                            : Icons.check_circle_outline,
+                        color: isCompleted ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
