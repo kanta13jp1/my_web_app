@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 import '../services/theme_service.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
@@ -16,8 +19,33 @@ import 'cmo_office_page.dart';
 import 'chro_office_page.dart'; // Added
 import 'morning_briefing_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late DateTime _dateTime;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateTime = DateTime.now();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _dateTime = DateTime.now();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
@@ -38,7 +66,15 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? Colors.black87 : const Color(0xFFF1F5F9),
       appBar: AppBar(
-        title: const Text('自分株式会社 経営コックピット'),
+        title: Column(
+          children: [
+            const Text('自分株式会社 経営コックピット'),
+            Text(
+              DateFormat('yyyy/MM/dd HH:mm:ss').format(_dateTime),
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ],
+        ),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         centerTitle: true,
