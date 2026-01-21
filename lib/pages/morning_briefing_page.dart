@@ -2714,43 +2714,167 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 );
               }
 
-              return ListView.builder(
-                itemCount: value.length,
-                itemBuilder: (context, index) {
-                  final todo = value[index];
+                            return ListView.builder(
 
-                  final isCompleted = todo['is_completed'] as bool;
+                              itemCount: value.length,
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isCompleted ? Colors.grey.shade100 : Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: ListTile(
-                      onTap: () => showTaskDetails(todo),
-                      title: Text(
-                        '${todo['task']}',
-                        style: TextStyle(
-                          decoration:
-                              isCompleted ? TextDecoration.lineThrough : null,
-                          color: isCompleted ? Colors.grey : Colors.black,
-                        ),
-                      ),
-                      leading: Icon(
-                        isCompleted
-                            ? Icons.check_circle
-                            : Icons.check_circle_outline,
-                        color: isCompleted ? Colors.green : Colors.grey,
-                      ),
-                    ),
-                  );
-                },
-              );
+                              itemBuilder: (context, index) {
+
+                                final todo = value[index];
+
+                                final isCompleted = todo['is_completed'] as bool;
+
+                                final category = todo['category'] as String? ?? 'work';
+
+                                final difficulty =
+
+                                    todo['difficulty'] as String? ?? 'normal';
+
+                                final estimatedMinutes = todo['estimated_minutes'] as int?;
+
+              
+
+                                return Container(
+
+                                  margin: const EdgeInsets.symmetric(
+
+                                    horizontal: 12.0,
+
+                                    vertical: 4.0,
+
+                                  ),
+
+                                  decoration: BoxDecoration(
+
+                                    color:
+
+                                        isCompleted ? Colors.grey.shade100 : Colors.white,
+
+                                    border: Border.all(color: Colors.grey.shade300),
+
+                                    borderRadius: BorderRadius.circular(12.0),
+
+                                  ),
+
+                                  child: ListTile(
+
+                                    onTap: () => showTaskDetails(todo),
+
+                                    title: Text(
+
+                                      '${todo['task']}',
+
+                                      style: TextStyle(
+
+                                        decoration: isCompleted
+
+                                            ? TextDecoration.lineThrough
+
+                                            : null,
+
+                                        color: isCompleted ? Colors.grey : Colors.black,
+
+                                      ),
+
+                                    ),
+
+                                    subtitle: Padding(
+
+                                      padding: const EdgeInsets.only(top: 4.0),
+
+                                      child: Row(
+
+                                        children: [
+
+                                          Icon(
+
+                                            _categoryIcons[category],
+
+                                            size: 14,
+
+                                            color: _categoryColors[category],
+
+                                          ),
+
+                                          const SizedBox(width: 4),
+
+                                          Text(
+
+                                            _categoryLabels[category] ?? '',
+
+                                            style: const TextStyle(fontSize: 12),
+
+                                          ),
+
+                                          const Text(' / ',
+
+                                              style:
+
+                                                  TextStyle(fontSize: 12, color: Colors.grey)),
+
+                                          Text(
+
+                                            _difficultyLabels[difficulty] ?? '',
+
+                                            style: TextStyle(
+
+                                              fontSize: 12,
+
+                                              color: _difficultyColors[difficulty],
+
+                                            ),
+
+                                          ),
+
+                                          if (estimatedMinutes != null) ...[
+
+                                            const Text(' / ',
+
+                                                style: TextStyle(
+
+                                                    fontSize: 12, color: Colors.grey)),
+
+                                            const Icon(Icons.access_time,
+
+                                                size: 14, color: Colors.grey),
+
+                                            const SizedBox(width: 2),
+
+                                            Text(
+
+                                              '${estimatedMinutes}分',
+
+                                              style: const TextStyle(fontSize: 12),
+
+                                            ),
+
+                                          ]
+
+                                        ],
+
+                                      ),
+
+                                    ),
+
+                                    leading: Icon(
+
+                                      isCompleted
+
+                                          ? Icons.check_circle
+
+                                          : Icons.check_circle_outline,
+
+                                      color: isCompleted ? Colors.green : Colors.grey,
+
+                                    ),
+
+                                  ),
+
+                                );
+
+                              },
+
+                            );
             },
           ),
         ),
