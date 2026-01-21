@@ -103,7 +103,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 (m) => m['name'].toString().replaceFirst('models/', ''),
               )
               .where((name) =>
-                  !name.contains('tts') && !name.contains('embedding'))
+                  !name.contains('tts') && !name.contains('embedding'),)
               .toList();
         }
       }
@@ -224,7 +224,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(
-                      'gemini_model_emergency_meeting', tempSelectedModel);
+                      'gemini_model_emergency_meeting', tempSelectedModel,);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
                       'gemini_api_key',
@@ -416,7 +416,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final strategicRoles = ['CEO', 'CSO'];
     for (var role in strategicRoles) {
       final lastMessage = messages.lastWhere((m) => m.role == role,
-          orElse: () => BoardMessage.empty());
+          orElse: () => BoardMessage.empty(),);
       if (lastMessage.id.isNotEmpty) {
         return lastMessage.content;
       }
@@ -824,6 +824,6 @@ class BoardMessage {
 
   static BoardMessage empty() {
     return BoardMessage(
-        id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0));
+        id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0),);
   }
 }

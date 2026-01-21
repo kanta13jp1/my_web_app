@@ -1015,21 +1015,56 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   void onReorder(int oldIndex, int newIndex) {
     if (_sortOrder != 'manual') return; // 手動ソート時のみ実行
 
+    // The `ReorderableListView` is built from a filtered and sorted list of active todos.
+    // We must replicate that list here to correctly map the indices from the callback.
+    final activeTodos = _todos
+        .where((todo) => todo['is_completed'] == false)
+        .toList();
+    
+    // Apply the same sorting as in the build method to get the identical list that the user sees.
+    activeTodos.sort((a, b) {
+      final aImp = a['is_important'] as bool? ?? false;
+      final bImp = b['is_important'] as bool? ?? false;
+      if (aImp != bImp) {
+        return aImp ? -1 : 1;
+      }
+      final aOrder = a['order_index'] as num? ?? 0;
+      final bOrder = b['order_index'] as num? ?? 0;
+      return aOrder.compareTo(bOrder);
+    });
+
     setState(() {
+      // This adjustment is needed because the item is still at `oldIndex`
+      // in the list when `newIndex` is calculated by the framework.
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
-      final item = _todos.removeAt(oldIndex);
-      _todos.insert(newIndex, item);
 
-      // ★★★ 修正点: ローカルのorder_indexを即時更新 ★★★
-      // これにより、UIの再描画時に正しい順序が維持される
-      for (int i = 0; i < _todos.length; i++) {
-        _todos[i]['order_index'] = i;
+      // 1. Reorder the temporary `activeTodos` list to match the user's action.
+      final movedItem = activeTodos.removeAt(oldIndex);
+      activeTodos.insert(newIndex, movedItem);
+
+      // 2. Now that `activeTodos` is correctly ordered, we update the `order_index`
+      //    on the master `_todos` list. This ensures the order persists across rebuilds.
+      //    Active tasks get the lowest indices, followed by completed tasks.
+      final completedTodos = _todos.where((t) => t['is_completed'] == true).toList();
+
+      int newOrderIndex = 0;
+      for (final todo in activeTodos) {
+        // Find the corresponding item in the master list and update its order.
+        final masterTodo = _todos.firstWhere((t) => t['id'] == todo['id']);
+        masterTodo['order_index'] = newOrderIndex++;
       }
+      for (final todo in completedTodos) {
+        final masterTodo = _todos.firstWhere((t) => t['id'] == todo['id']);
+        masterTodo['order_index'] = newOrderIndex++;
+      }
+      
+      // We don't need to re-order `_todos` here. The `build` method will sort it
+      // using the updated `order_index`, which is the source of truth for ordering.
     });
 
-    // DB更新はバックグラウンドで実行
+    // The database update can be slow, so run it after the UI state has been updated.
     updateOrderInDb();
   }
 
