@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'admin_analytics_page.dart'; // ★追加: 遷移先をインポート
+import 'admin_analytics_page.dart';
 
 class CmoOfficePage extends StatefulWidget {
   const CmoOfficePage({super.key});
@@ -26,10 +26,14 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
+      // ★修正箇所:
+      // 'id' (bigint) ではなく 'user_id' (uuid) で検索します。
+      // ※ Supabase側で user_stats テーブルに user_id カラムを作成し、
+      //    データを登録しておく必要があります。
       final data = await _supabase
           .from('user_stats')
           .select()
-          .eq('id', userId)
+          .eq('user_id', userId) // ここを 'id' から 'user_id' に変更
           .maybeSingle();
 
       if (mounted) {
@@ -39,6 +43,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
         });
       }
     } catch (e) {
+      debugPrint('Error fetching stats: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -51,6 +56,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
 
   @override
   Widget build(BuildContext context) {
+    // データがまだない場合のデフォルト値
     final streak = _userStats?['current_streak'] ?? 0;
     final points = _userStats?['total_points'] ?? 0;
     final level = _userStats?['current_level'] ?? 1;
@@ -86,7 +92,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                 ),
                 const SizedBox(height: 24),
 
-                // ★追加: 詳細分析ページへの導線
+                // 詳細分析ページへの導線
                 _buildActionCard(
                   context,
                   '市場詳細分析 (Admin Analytics)',
