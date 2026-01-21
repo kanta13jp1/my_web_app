@@ -218,19 +218,18 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       icon: Icons.integration_instructions,
       content: '''
 ### Gemini API リファレンス
-*2026/1/17 更新*
+*Last Updated: 2026/1/21*
 
 **利用規約を更新しました。**
 
 このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
 HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
 最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
-言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。
 
 ---
 
 ### 主要エンドポイント (Primary endpoints)
-Gemini APIは以下の主要なエンドポイントを中心に構成されています。
+Gemini APIは以下の主要なエンドポイントを中心に構成されています：
 
 #### 1. 標準コンテンツ生成 (generateContent)
 リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
@@ -263,6 +262,24 @@ Gemini APIは以下の主要なエンドポイントを中心に構成されて�
 *2026/1/17 更新*
 
 Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-api-key` ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
+
+**リクエスト例 (Gemini 2.5 Flash):**
+```bash
+curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)" \\
+-H "x-goog-api-key: \$GEMINI_API_KEY" \\
+-H 'Content-Type: application/json' \\
+-X POST \\
+-d '{ "contents": [{ "parts": [{ "text": "Explain how AI works in a few words" }] }] }'
+```
+
+---
+### コンテンツ生成 (Content generation)
+*2026/1/21 更新*
+
+これはモデルにプロンプトを送信するための中央エンドポイントです。コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：
+
+1. **generateContent (REST)**: リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。
+2. **streamGenerateContent (SSE)**: まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。
 ''',
       quiz: Quiz(
         question:
