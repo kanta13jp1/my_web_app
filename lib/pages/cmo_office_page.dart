@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'admin_analytics_page.dart'; // ★追加: 遷移先をインポート
 
 class CmoOfficePage extends StatefulWidget {
   const CmoOfficePage({super.key});
@@ -84,6 +85,22 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   Colors.blue,
                 ),
                 const SizedBox(height: 24),
+
+                // ★追加: 詳細分析ページへの導線
+                _buildActionCard(
+                  context,
+                  '市場詳細分析 (Admin Analytics)',
+                  'アプリ全体のアクセス数やCVRなどの統計データを確認します。',
+                  Icons.bar_chart,
+                  Colors.purple,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminAnalyticsPage(),
+                    ),
+                  ),
+                ),
+
                 _buildActionCard(
                   context,
                   '株主総会へ報告 (SNSシェア)',
