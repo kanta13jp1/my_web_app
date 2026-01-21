@@ -50,10 +50,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       '構成は「本日の業務内容」「成果・振り返り」「明日の予定・課題」としてください。\n'
       '特に「振り返り」の内容を重視し、ポジティブかつ建設的なトーンでまとめてください。';
 
-  List<String> _selectableModels = [
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-2.0-flash',
+  List<Map<String, dynamic>> _selectableModels = [
+    {
+      'name': 'gemini-1.5-flash',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-1.5-pro',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-2.0-flash',
+      'methods': ['generateContent'],
+    },
   ];
 
   final Map<String, String> _categoryLabels = {
@@ -1223,7 +1232,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        _selectableModels.join(', '),
+                        _selectableModels
+                            .map((m) => m['name'] as String)
+                            .join(', '),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade800,
@@ -1310,7 +1321,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Future<List<String>> fetchGeminiModels(String apiKey) async {
+  Future<List<Map<String, dynamic>>> fetchGeminiModels(String apiKey) async {
     try {
       final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
@@ -1326,9 +1337,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ?.contains('generateContent') ??
                     false,
               )
-              .map<String>(
-                (m) => m['name'].toString().replaceFirst('models/', ''),
-              )
+              .map<Map<String, dynamic>>((m) => {
+                    'name': m['name'].toString().replaceFirst('models/', ''),
+                    'methods':
+                        (m['supportedGenerationMethods'] as List<dynamic>)
+                            .cast<String>()
+                            .toList()
+                  })
               .toList();
         }
       }
@@ -1343,11 +1358,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
-    List<String> currentSelectableModels = List.from(_selectableModels);
+    List<Map<String, dynamic>> currentSelectableModels =
+        List.from(_selectableModels);
 
     // 現在選択中のモデルがリストにない場合に追加
-    if (!currentSelectableModels.contains(tempSelectedModel)) {
-      currentSelectableModels.add(tempSelectedModel);
+    if (!currentSelectableModels.any((m) => m['name'] == tempSelectedModel)) {
+      currentSelectableModels.add({
+        'name': tempSelectedModel,
+        'methods': ['generateContent']
+      });
     }
 
     await showDialog(
@@ -1394,9 +1413,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               currentSelectableModels = models;
                               // 選択中のモデルが新しいリストにない場合、リストの先頭を選択
                               if (!currentSelectableModels
-                                  .contains(tempSelectedModel)) {
-                                tempSelectedModel =
-                                    currentSelectableModels.first;
+                                  .any((m) => m['name'] == tempSelectedModel)) {
+                                tempSelectedModel = models.first['name'];
                               }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -1405,7 +1423,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('モデルの取得に失敗しました')),
+                                const SnackBar(
+                                  content: Text('モデルの取得に失敗しました'),
+                                ),
                               );
                             }
                           });
@@ -1423,8 +1443,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ),
                     items: currentSelectableModels.map((m) {
                       return DropdownMenuItem(
-                        value: m,
-                        child: Text(m),
+                        value: m['name'] as String,
+                        child: Text(m['name'] as String),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -1455,7 +1475,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             Expanded(
                               child: Text(
                                 tempSelectedModel,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -1463,12 +1485,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ),
                         const Divider(height: 16),
                         Text(
-                          '利用可能なモデル一覧:',
+                          '利用可能なモデル一覧 (サポートメソッド):',
                           style: TextStyle(color: Colors.grey.shade600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          currentSelectableModels.join(', '),
+                          currentSelectableModels.map((m) {
+                            final name = m['name'] as String;
+                            final methods =
+                                (m['methods'] as List? ?? []).join(', ');
+                            return '$name ($methods)';
+                          }).join('\n'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade800,
@@ -1505,7 +1532,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('daily_report_prompt', controller.text);
+                  await prefs.setString(
+                    'daily_report_prompt',
+                    controller.text,
+                  );
                   await prefs.setString('gemini_model', tempSelectedModel);
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
@@ -1520,7 +1550,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       if (apiKeyController.text.isNotEmpty) {
                         _geminiApiKey = apiKeyController.text;
                       }
-                      // 取得したモデルリストを保存（簡易的にメモリのみ）
+                      // 取得したモデルリストを保存
                       _selectableModels = currentSelectableModels;
                     });
                   }
@@ -2063,7 +2093,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Text(
-                              '利用可能: ${_selectableModels.join(', ')}',
+                              '利用可能: ${(_selectableModels.map((m) => '${m['name']}(${(m['methods'] as List? ?? []).join(',')})').join('; ')}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
