@@ -72,6 +72,7 @@ graph LR
 
     %% --- CMOの機能 ---
     CMO --> CMO_1[アプリ分析]
+    CMO_1 --> CMO_1a[登録ユーザー数確認]
     CMO --> CMO_2[シェア機能]
     CMO --> CMO_3[UI/UX 経営コックピット]
     CMO_3 -.- CMO_3a[ランディングページ]
@@ -136,6 +137,7 @@ graph LR
 
     %% --- CMOの機能 ---
     CMO --> CMO_1[アプリ分析]
+    CMO_1 --> CMO_1a[登録ユーザー数確認]
     CMO --> CMO_2[シェア機能]
     CMO --> CMO_3[UI/UX 経営コックピット]
     CMO_3 -.- CMO_3a[ランディングページ]
@@ -189,6 +191,16 @@ CEOが毎朝行うタスク確認と実行管理。
 
 *   **Function**: `MorningBriefingPage` でデイリータスクを管理。
 *   **Gamification**: タスク完了時にポイントを付与し、実行を促進。
+
+### 3.5 CMO機能 (Marketing & Analytics)
+
+CMOはアプリの成長とユーザーエンゲージメントを測定する責務を負う。
+
+*   **アプリ分析 (App Analysis)**:
+    *   **機能**: 主要KPIを追跡する。
+    *   **実装**:
+        *   **登録ユーザー数確認**: Supabase Edge Function (`count-users`) を呼び出して、現在の総登録ユーザー数を取得する。
+        *   **配置場所**: 現在は `CKO` 管轄の `Gemini大学` -> `学位・成績` タブ内に「CMOダッシュボード」として暫定的に実装されている。将来的には独立した分析ページへの移行を検討する。
 
 ### 3.2 ゲーミフィケーション (Gamification)
 

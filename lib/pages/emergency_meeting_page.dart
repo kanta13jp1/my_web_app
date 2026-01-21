@@ -102,8 +102,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               .map<String>(
                 (m) => m['name'].toString().replaceFirst('models/', ''),
               )
-              .where((name) =>
-                  !name.contains('tts') && !name.contains('embedding'),)
+              .where(
+                (name) => !name.contains('tts') && !name.contains('embedding'),
+              )
               .toList();
         }
       }
@@ -224,7 +225,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(
-                      'gemini_model_emergency_meeting', tempSelectedModel,);
+                    'gemini_model_emergency_meeting',
+                    tempSelectedModel,
+                  );
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
                       'gemini_api_key',
@@ -415,8 +418,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     // 2. Fallback to the last message from a strategic role
     final strategicRoles = ['CEO', 'CSO'];
     for (var role in strategicRoles) {
-      final lastMessage = messages.lastWhere((m) => m.role == role,
-          orElse: () => BoardMessage.empty(),);
+      final lastMessage = messages.lastWhere(
+        (m) => m.role == role,
+        orElse: () => BoardMessage.empty(),
+      );
       if (lastMessage.id.isNotEmpty) {
         return lastMessage.content;
       }
@@ -824,6 +829,11 @@ class BoardMessage {
 
   static BoardMessage empty() {
     return BoardMessage(
-        id: '', speakerName: '', role: '', content: '', timestamp: DateTime(0),);
+      id: '',
+      speakerName: '',
+      role: '',
+      content: '',
+      timestamp: DateTime(0),
+    );
   }
 }

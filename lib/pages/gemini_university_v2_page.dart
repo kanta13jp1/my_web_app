@@ -170,7 +170,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         {
           'title': 'Media',
           'url':
-              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)'
+              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)',
         },
       ],
     ),
@@ -386,7 +386,7 @@ Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア
           'Enterprise版を契約する',
           'Google AI Pro/Ultraのサブスクリプションを購入する',
           'Google Cloudのプロジェクトを作成する',
-          '設定で制限解除を申請する'
+          '設定で制限解除を申請する',
         ],
         correctIndex: 1,
       ),
@@ -438,7 +438,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
           'システム制限 (System Limits)',
           'クォータ (Quotas)',
           'ライセンスタイプ',
-          'エディション'
+          'エディション',
         ],
         correctIndex: 1,
       ),

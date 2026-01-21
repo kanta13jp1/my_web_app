@@ -1367,13 +1367,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ?.contains('generateContent') ??
                     false,
               )
-              .map<Map<String, dynamic>>((m) => {
-                    'name': m['name'].toString().replaceFirst('models/', ''),
-                    'methods':
-                        (m['supportedGenerationMethods'] as List<dynamic>)
-                            .cast<String>()
-                            .toList()
-                  })
+              .map<Map<String, dynamic>>(
+                (m) => {
+                  'name': m['name'].toString().replaceFirst('models/', ''),
+                  'methods': (m['supportedGenerationMethods'] as List<dynamic>)
+                      .cast<String>()
+                      .toList(),
+                },
+              )
               .toList();
         }
       }
@@ -1395,7 +1396,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (!currentSelectableModels.any((m) => m['name'] == tempSelectedModel)) {
       currentSelectableModels.add({
         'name': tempSelectedModel,
-        'methods': ['generateContent']
+        'methods': ['generateContent'],
       });
     }
 
@@ -2020,293 +2021,294 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         children: [
           Column(
             children: [
-                            // ヘッダーメッセージ
-                            Container(
-                              color: Colors.indigo.shade50,
-                              child: ExpansionTile(
-                                title: const Text(
-                                  '今日のミッション',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // ヘッダーメッセージ
+              Container(
+                color: Colors.indigo.shade50,
+                child: ExpansionTile(
+                  title: const Text(
+                    '今日のミッション',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  initiallyExpanded: _isHeaderExpanded,
+                  onExpansionChanged: (bool expanded) {
+                    setState(() {
+                      _isHeaderExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          Text(
+                            'CEO、本日の最優先事項を定義し、実行に移しましょう。',
+                            style: TextStyle(color: Colors.grey.shade700),
+                          ),
+                          if (_weatherData != null) ...[
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _getWeatherIcon(
+                                    (_weatherData!['weathercode'] as num)
+                                        .toInt(),
+                                  ),
+                                  color: Colors.orange,
                                 ),
-                                subtitle: Text(
-                                  _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_weatherData!['temperature']}°C (Tokyo)',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                initiallyExpanded: _isHeaderExpanded,
-                                onExpansionChanged: (bool expanded) {
-                                  setState(() {
-                                    _isHeaderExpanded = expanded;
-                                  });
-                                },
-                                children: [
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          // ★ START: AI Assistant Settings Display
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'AIアシスタント設定',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        size: 20,
+                                        color: Colors.grey,
+                                      ),
+                                      onPressed: showPromptSettingsDialog,
+                                      tooltip: '設定を開く',
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 12),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      _geminiApiKey != null &&
+                                              _geminiApiKey!.isNotEmpty
+                                          ? Icons.check_circle
+                                          : Icons.warning_amber,
+                                      color: _geminiApiKey != null &&
+                                              _geminiApiKey!.isNotEmpty
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _geminiApiKey != null &&
+                                                _geminiApiKey!.isNotEmpty
+                                            ? 'APIキー設定済み'
+                                            : 'APIキーが設定されていません',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _geminiApiKey != null &&
+                                                  _geminiApiKey!.isNotEmpty
+                                              ? Colors.green
+                                              : Colors.orange,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '使用モデル: $_selectedModel',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                const SizedBox(height: 4),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Text(
+                                    '利用可能: ${_selectableModels.map((m) {
+                                      final name = m['name'] as String;
+                                      final methods =
+                                          (m['methods'] as List? ?? [])
+                                              .join(',');
+                                      return '$name($methods)';
+                                    }).join('; ')}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // ★ END: AI Assistant Settings Display
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'フィルタ:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                FilterChip(
+                                  label: const Text('すべて'),
+                                  selected: _filterCategory == 'all',
+                                  onSelected: (val) =>
+                                      setState(() => _filterCategory = 'all'),
+                                ),
+                                ..._categoryLabels.entries.map((e) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: FilterChip(
+                                      avatar: Icon(
+                                        _categoryIcons[e.key],
+                                        size: 16,
+                                      ),
+                                      label: Text(e.value),
+                                      selected: _filterCategory == e.key,
+                                      onSelected: (val) => setState(
+                                        () => _filterCategory = e.key,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                                const SizedBox(width: 16),
+                                const Text(
+                                  '並び替え:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                  initialValue: _sortOrder,
+                                  tooltip: '並び替え順を変更',
+                                  icon: Icon(
+                                    Icons.sort,
+                                    color: _sortOrder != 'manual'
+                                        ? Colors.orange
+                                        : Colors.grey,
+                                  ),
+                                  onSelected: (val) =>
+                                      setState(() => _sortOrder = val),
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'manual',
+                                      child: Text('手動 (ドラッグ)'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'estimated_asc',
+                                      child: Text('見積もり時間 (短い順)'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (filteredTodos.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      '今日の進捗 (Pt)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                LinearProgressIndicator(
+                                  value: progress,
+                                  backgroundColor: Colors.white,
+                                  color: progress == 1.0
+                                      ? Colors.orange
+                                      : Colors.green,
+                                  minHeight: 8,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                if (totalEstimatedMinutes > 0)
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                    child: Column(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        const SizedBox(height: 8),
+                                        const Icon(
+                                          Icons.access_time,
+                                          size: 14,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 4),
                                         Text(
-                                          'CEO、本日の最優先事項を定義し、実行に移しましょう。',
-                                          style: TextStyle(color: Colors.grey.shade700),
-                                        ),
-                                        if (_weatherData != null) ...[
-                                          const SizedBox(height: 16),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                _getWeatherIcon(
-                                                  (_weatherData!['weathercode'] as num)
-                                                      .toInt(),
-                                                ),
-                                                color: Colors.orange,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                '${_weatherData!['temperature']}°C (Tokyo)',
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                        const SizedBox(height: 16),
-                                        // ★ START: AI Assistant Settings Display
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey.shade300),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.grey.withOpacity(0.1),
-                                                spreadRadius: 1,
-                                                blurRadius: 3,
-                                                offset: const Offset(0, 1),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  const Text(
-                                                    'AIアシスタント設定',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.edit,
-                                                      size: 20,
-                                                      color: Colors.grey,
-                                                    ),
-                                                    onPressed: showPromptSettingsDialog,
-                                                    tooltip: '設定を開く',
-                                                    visualDensity: VisualDensity.compact,
-                                                  )
-                                                ],
-                                              ),
-                                              const Divider(height: 12),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    _geminiApiKey != null &&
-                                                            _geminiApiKey!.isNotEmpty
-                                                        ? Icons.check_circle
-                                                        : Icons.warning_amber,
-                                                    color: _geminiApiKey != null &&
-                                                            _geminiApiKey!.isNotEmpty
-                                                        ? Colors.green
-                                                        : Colors.orange,
-                                                    size: 16,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Expanded(
-                                                    child: Text(
-                                                      _geminiApiKey != null &&
-                                                              _geminiApiKey!.isNotEmpty
-                                                          ? 'APIキー設定済み'
-                                                          : 'APIキーが設定されていません',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: _geminiApiKey != null &&
-                                                                _geminiApiKey!.isNotEmpty
-                                                            ? Colors.green
-                                                            : Colors.orange,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                '使用モデル: $_selectedModel',
-                                                style: const TextStyle(fontSize: 12),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              SingleChildScrollView(
-                                                scrollDirection: Axis.horizontal,
-                                                child: Text(
-                                                  '利用可能: ' +
-                                                      _selectableModels.map((m) {
-                                                        final name = m['name'] as String;
-                                                        final methods =
-                                                            (m['methods'] as List? ?? [])
-                                                                .join(',');
-                                                        return '$name($methods)';
-                                                      }).join('; '),
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey.shade600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                          '残り見積もり: $totalEstimatedMinutes分',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
                                           ),
                                         ),
-                                        // ★ END: AI Assistant Settings Display
-                                        const SizedBox(height: 12),
-                                        SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: Row(
-                                            children: [
-                                              const Text(
-                                                'フィルタ:',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              FilterChip(
-                                                label: const Text('すべて'),
-                                                selected: _filterCategory == 'all',
-                                                onSelected: (val) =>
-                                                    setState(() => _filterCategory = 'all'),
-                                              ),
-                                              ..._categoryLabels.entries.map((e) {
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(left: 8.0),
-                                                  child: FilterChip(
-                                                    avatar: Icon(_categoryIcons[e.key],
-                                                        size: 16),
-                                                    label: Text(e.value),
-                                                    selected: _filterCategory == e.key,
-                                                    onSelected: (val) => setState(
-                                                        () => _filterCategory = e.key),
-                                                  ),
-                                                );
-                                              }),
-                                              const SizedBox(width: 16),
-                                              const Text(
-                                                '並び替え:',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                              PopupMenuButton<String>(
-                                                initialValue: _sortOrder,
-                                                tooltip: '並び替え順を変更',
-                                                icon: Icon(
-                                                  Icons.sort,
-                                                  color: _sortOrder != 'manual'
-                                                      ? Colors.orange
-                                                      : Colors.grey,
-                                                ),
-                                                onSelected: (val) =>
-                                                    setState(() => _sortOrder = val),
-                                                itemBuilder: (context) => [
-                                                  const PopupMenuItem(
-                                                    value: 'manual',
-                                                    child: Text('手動 (ドラッグ)'),
-                                                  ),
-                                                  const PopupMenuItem(
-                                                    value: 'estimated_asc',
-                                                    child: Text('見積もり時間 (短い順)'),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (filteredTodos.isNotEmpty) ...[
-                                          const SizedBox(height: 16),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  const Text(
-                                                    '今日の進捗 (Pt)',
-                                                    style: TextStyle(
-                                                        fontWeight: FontWeight.bold),
-                                                  ),
-                                                  Text(
-                                                    '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
-                                                    style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              LinearProgressIndicator(
-                                                value: progress,
-                                                backgroundColor: Colors.white,
-                                                color: progress == 1.0
-                                                    ? Colors.orange
-                                                    : Colors.green,
-                                                minHeight: 8,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              if (totalEstimatedMinutes > 0)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 8.0),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.access_time,
-                                                        size: 14,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '残り見積もり: $totalEstimatedMinutes分',
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.grey,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ],
                                       ],
                                     ),
-                                  )
-                                ],
-                              ),
+                                  ),
+                              ],
                             ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               // 入力エリア
 
@@ -2725,167 +2727,97 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 );
               }
 
-                            return ListView.builder(
-
-                              itemCount: value.length,
-
-                              itemBuilder: (context, index) {
-
-                                final todo = value[index];
-
-                                final isCompleted = todo['is_completed'] as bool;
-
-                                final category = todo['category'] as String? ?? 'work';
-
-                                final difficulty =
-
-                                    todo['difficulty'] as String? ?? 'normal';
-
-                                final estimatedMinutes = todo['estimated_minutes'] as int?;
-
-              
-
-                                return Container(
-
-                                  margin: const EdgeInsets.symmetric(
-
-                                    horizontal: 12.0,
-
-                                    vertical: 4.0,
-
-                                  ),
-
-                                  decoration: BoxDecoration(
-
-                                    color:
-
-                                        isCompleted ? Colors.grey.shade100 : Colors.white,
-
-                                    border: Border.all(color: Colors.grey.shade300),
-
-                                    borderRadius: BorderRadius.circular(12.0),
-
-                                  ),
-
-                                  child: ListTile(
-
-                                    onTap: () => showTaskDetails(todo),
-
-                                    title: Text(
-
-                                      '${todo['task']}',
-
-                                      style: TextStyle(
-
-                                        decoration: isCompleted
-
-                                            ? TextDecoration.lineThrough
-
-                                            : null,
-
-                                        color: isCompleted ? Colors.grey : Colors.black,
-
-                                      ),
-
-                                    ),
-
-                                    subtitle: Padding(
-
-                                      padding: const EdgeInsets.only(top: 4.0),
-
-                                      child: Row(
-
-                                        children: [
-
-                                          Icon(
-
-                                            _categoryIcons[category],
-
-                                            size: 14,
-
-                                            color: _categoryColors[category],
-
-                                          ),
-
-                                          const SizedBox(width: 4),
-
-                                          Text(
-
-                                            _categoryLabels[category] ?? '',
-
-                                            style: const TextStyle(fontSize: 12),
-
-                                          ),
-
-                                          const Text(' / ',
-
-                                              style:
-
-                                                  TextStyle(fontSize: 12, color: Colors.grey)),
-
-                                          Text(
-
-                                            _difficultyLabels[difficulty] ?? '',
-
-                                            style: TextStyle(
-
-                                              fontSize: 12,
-
-                                              color: _difficultyColors[difficulty],
-
-                                            ),
-
-                                          ),
-
-                                          if (estimatedMinutes != null) ...[
-
-                                            const Text(' / ',
-
-                                                style: TextStyle(
-
-                                                    fontSize: 12, color: Colors.grey)),
-
-                                            const Icon(Icons.access_time,
-
-                                                size: 14, color: Colors.grey),
-
-                                            const SizedBox(width: 2),
-
-                                            Text(
-
-                                              '${estimatedMinutes}分',
-
-                                              style: const TextStyle(fontSize: 12),
-
-                                            ),
-
-                                          ]
-
-                                        ],
-
-                                      ),
-
-                                    ),
-
-                                    leading: Icon(
-
-                                      isCompleted
-
-                                          ? Icons.check_circle
-
-                                          : Icons.check_circle_outline,
-
-                                      color: isCompleted ? Colors.green : Colors.grey,
-
-                                    ),
-
-                                  ),
-
-                                );
-
-                              },
-
-                            );
+              return ListView.builder(
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  final todo = value[index];
+
+                  final isCompleted = todo['is_completed'] as bool;
+
+                  final category = todo['category'] as String? ?? 'work';
+
+                  final difficulty = todo['difficulty'] as String? ?? 'normal';
+
+                  final estimatedMinutes = todo['estimated_minutes'] as int?;
+
+                  return Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 4.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isCompleted ? Colors.grey.shade100 : Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: ListTile(
+                      onTap: () => showTaskDetails(todo),
+                      title: Text(
+                        '${todo['task']}',
+                        style: TextStyle(
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
+                          color: isCompleted ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _categoryIcons[category],
+                              size: 14,
+                              color: _categoryColors[category],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _categoryLabels[category] ?? '',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            const Text(
+                              ' / ',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            Text(
+                              _difficultyLabels[difficulty] ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _difficultyColors[difficulty],
+                              ),
+                            ),
+                            if (estimatedMinutes != null) ...[
+                              const Text(
+                                ' / ',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.access_time,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '$estimatedMinutes分',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      leading: Icon(
+                        isCompleted
+                            ? Icons.check_circle
+                            : Icons.check_circle_outline,
+                        color: isCompleted ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                  );
+                },
+              );
             },
           ),
         ),
