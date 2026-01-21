@@ -1017,10 +1017,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     // The `ReorderableListView` is built from a filtered and sorted list of active todos.
     // We must replicate that list here to correctly map the indices from the callback.
-    final activeTodos = _todos
-        .where((todo) => todo['is_completed'] == false)
-        .toList();
-    
+    final activeTodos =
+        _todos.where((todo) => todo['is_completed'] == false).toList();
+
     // Apply the same sorting as in the build method to get the identical list that the user sees.
     activeTodos.sort((a, b) {
       final aImp = a['is_important'] as bool? ?? false;
@@ -1047,7 +1046,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       // 2. Now that `activeTodos` is correctly ordered, we update the `order_index`
       //    on the master `_todos` list. This ensures the order persists across rebuilds.
       //    Active tasks get the lowest indices, followed by completed tasks.
-      final completedTodos = _todos.where((t) => t['is_completed'] == true).toList();
+      final completedTodos =
+          _todos.where((t) => t['is_completed'] == true).toList();
 
       int newOrderIndex = 0;
       for (final todo in activeTodos) {
@@ -1059,7 +1059,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         final masterTodo = _todos.firstWhere((t) => t['id'] == todo['id']);
         masterTodo['order_index'] = newOrderIndex++;
       }
-      
+
       // We don't need to re-order `_todos` here. The `build` method will sort it
       // using the updated `order_index`, which is the source of truth for ordering.
     });
