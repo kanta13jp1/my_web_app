@@ -2122,7 +2122,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Text(
-                              '利用可能: ${(_selectableModels.map((m) => '${m['name']}(${(m['methods'] as List? ?? []).join(',')})').join('; ')}',
+                              '利用可能: ' +
+                                  _selectableModels.map((m) {
+                                    final name = m['name'] as String;
+                                    final methods = (m['methods'] as List? ?? [])
+                                        .join(',');
+                                    return '$name($methods)';
+                                  }).join('; '),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
