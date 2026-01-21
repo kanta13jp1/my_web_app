@@ -1434,6 +1434,51 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     },
                   ),
                   const SizedBox(height: 16),
+                  // ★ START: Added display for current and available models
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '現在のモデル: ',
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                            Expanded(
+                              child: Text(
+                                tempSelectedModel,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 16),
+                        Text(
+                          '利用可能なモデル一覧:',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          currentSelectableModels.join(', '),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // ★ END: Added display
+                  const SizedBox(height: 16),
                   TextField(
                     controller: controller,
                     maxLines: 6,
