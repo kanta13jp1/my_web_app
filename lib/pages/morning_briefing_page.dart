@@ -1977,6 +1977,103 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ],
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    // ★ START: AI Assistant Settings Display
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'AIアシスタント設定',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: showPromptSettingsDialog,
+                                tooltip: '設定を開く',
+                                visualDensity: VisualDensity.compact,
+                              )
+                            ],
+                          ),
+                          const Divider(height: 12),
+                          Row(
+                            children: [
+                              Icon(
+                                _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                                    ? Icons.check_circle
+                                    : Icons.warning_amber,
+                                color:
+                                    _geminiApiKey != null && _geminiApiKey!.isNotEmpty
+                                        ? Colors.green
+                                        : Colors.orange,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _geminiApiKey != null &&
+                                          _geminiApiKey!.isNotEmpty
+                                      ? 'APIキー設定済み'
+                                      : 'APIキーが設定されていません',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _geminiApiKey != null &&
+                                            _geminiApiKey!.isNotEmpty
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '使用モデル: $_selectedModel',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 4),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Text(
+                              '利用可能: ${_selectableModels.join(', ')}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ★ END: AI Assistant Settings Display
                     const SizedBox(height: 12),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
