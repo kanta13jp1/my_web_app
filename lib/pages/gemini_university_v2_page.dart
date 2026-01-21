@@ -25,11 +25,13 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       description: 'GeminiモデルファミリーとマルチモーダルAIの基本を学ぶ',
       icon: Icons.auto_awesome,
       content: 'GeminiはGoogleが開発した最新のマルチモーダル生成AIモデルです。\n\n'
+          '【最新動向 (2026/1/21現在)】\n'
+          '現在は **Gemini 2.5** シリーズが主力モデルとして提供されています。\n\n'
           '【主な特徴】\n'
           '1. **ネイティブ・マルチモーダル**: テキストだけでなく、画像、音声、動画、コードを最初から理解できるように設計されています。\n'
           '2. **モデルファミリー**: \n'
-          '   - **Gemini Pro**: 幅広いタスクに対応する最高性能モデル。\n'
-          '   - **Gemini Flash**: 高速かつ低コスト。大量データ処理に最適。\n'
+          '   - **Gemini 2.5 Pro**: 推論能力が高く、複雑なタスクに最適。Thinking機能に対応。\n'
+          '   - **Gemini 2.5 Flash**: 高速・低コストかつ高性能。100万トークン対応。\n'
           '   - **Gemini Nano**: デバイス上で動作する効率的なモデル。\n\n'
           '従来のAIと異なり、複数のモダリティをシームレスに扱えるのが最大の特徴です。',
       quiz: Quiz(
@@ -42,6 +44,38 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           'title': 'Gemini API overview',
           'url': 'https://ai.google.dev/docs/gemini_api_overview',
         },
+        {
+          'title': 'Gemini Models',
+          'url': 'https://ai.google.dev/models/gemini',
+        },
+      ],
+    ),
+    CourseModule(
+      id: 'gemini_model_specs',
+      title: 'モデル仕様スペック',
+      description: '各モデルのトークン上限やThinking機能の対応状況',
+      icon: Icons.table_chart,
+      content: '''
+### Gemini モデル仕様一覧 (2026/1/21現在)
+
+主要なモデルのスペック比較です。特に**Gemini 2.5**シリーズの出力トークン上限の大幅な増加と、**Thinking**パラメータへの対応が特徴です。
+
+| モデル名 | バージョン | 説明 | 入力トークン | 出力トークン | Thinking |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gemini 2.5 Flash** | 1 | 2025年6月リリース。最大100万トークンをサポートする中規模マルチモーダルモデル。 | 1,048,576 | 65,536 | **TRUE** |
+| **Gemini 2.5 Pro** | 2.5 | 2025年6月17日リリース。安定版。 | 1,048,576 | 65,536 | **TRUE** |
+| **Gemini 2.0 Flash** | 2 | Gemini 2.0 フラッシュ (旧世代)。 | 1,048,576 | 8,192 | - |
+| **Embedding Gecko** | 1 | テキストの分散表現を取得する。 | 1,024 | 1 | - |
+
+**用語解説:**
+* **Thinking**: モデルが回答を出力する前に「思考プロセス」を経ることで、より論理的で正確な回答を生成する機能です。
+''',
+      quiz: Quiz(
+        question: 'Gemini 2.5 Flash の出力トークン上限（Output Token Limit）は何トークンですか？',
+        options: ['4,096', '8,192', '32,768', '65,536'],
+        correctIndex: 3,
+      ),
+      officialDocs: [
         {
           'title': 'Gemini Models',
           'url': 'https://ai.google.dev/models/gemini',
@@ -132,9 +166,9 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     CourseModule(
       id: 'long_context',
       title: 'ロングコンテキストとキャッシュ',
-      description: 'Gemini 1.5の長大なコンテキストウィンドウの活用',
+      description: 'Gemini 1.5/2.5の長大なコンテキストウィンドウの活用',
       icon: Icons.memory,
-      content: 'Gemini 1.5 Proは、最大200万トークンという圧倒的なコンテキストウィンドウを持っています。\n\n'
+      content: 'Gemini 2.5 Proなどは、最大100万トークン以上の圧倒的なコンテキストウィンドウを持っています。\n\n'
           '【活用例】\n'
           '・数時間の動画や音声を一度に読み込んで分析\n'
           '・数千ページのドキュメント全体から情報を検索\n'
@@ -157,9 +191,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           'url': 'https://ai.google.dev/docs/context_caching',
         },
         {
-          'title': 'Get started with Gemini 1.5 Pro',
-          'url':
-              'https://ai.google.dev/docs/gemini_api_overview?language=python#gemini-1.5-pro',
+          'title': 'Get started with Gemini',
+          'url': 'https://ai.google.dev/docs/gemini_api_overview',
         },
       ],
     ),
@@ -223,8 +256,6 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 **利用規約を更新しました。**
 
 このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
-HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
-最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
 
 ---
 
@@ -312,11 +343,11 @@ curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:
 ### ジェミニ・コードアシストの概要
 *2026/1/21 更新*
 
-Gemini Code Assistは、Gemini 2.5モデルを活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。
+Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。
 
 #### 主な機能と特徴
 1. **AI支援**: 対応するIDEでコード生成、対話型ヘルプの提供、ソース引用などの機能を利用できます。
-2. **3つのエディション**: 無料版、スタンダード版、エンタープライズ版の3種類が用意されており、それぞれ機能と対象ユーザー層が異なります。
+2. **3つのエディション**:
    - **個人向けGemini Code Assist**: 無料で利用いただけます。
    - **Gemini Code Assist Standard**: Google Cloud ポートフォリオ製品。
    - **Gemini Code Assist Enterprise**: Google Cloud ポートフォリオ製品。
