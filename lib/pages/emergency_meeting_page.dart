@@ -34,22 +34,59 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   ];
   final String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
-      '緊急役員会議を開催します。各CxOは以下の【現状データ】に基づき、厳しく現状を分析し、報告してください。\n'
-      '最後にCSOがこれらを統合し、CEO(ユーザー)が今週末にとるべき具体的な行動プランを3つ提案してください。\n\n'
+      'あなたは「自分株式会社」の役員会のファシリテーターです。\n'
+      '以下の【現状データ】と【役員構成】に基づき、緊急役員会議の議事録をJSON形式で生成してください。\n\n'
+      '【役員構成と専門分野】\n'
+      '- CEO: 最高経営責任者 (ユーザー自身)\n'
+      '- CSO: 最高戦略責任者 (全体戦略、目標達成)\n'
+      '- CFO: 最高財務責任者 (コスト、サブスクリプション)\n'
+      '- CKO: 最高知識責任者 (メモ、知識蓄積)\n'
+      '- CHRO: 最高人事責任者 (ユーザーのモチベーション、ポイント、レベル)\n'
+      '- CHO: 最高健康責任者 (健康状態、運動)\n'
+      '- CMO: 最高マーケティング責任者 (アプリ利用頻度、市場での立ち位置)\n'
+      '- M&A: 合併・買収担当 (外部連携、データインポート)\n\n'
       '【現状データ】\n'
-      '[CEO] ユーザーID: {userId}\n'
-      '[CKO/知識] 蓄積メモ数: {noteCount} 件\n'
-      '[CFO/財務] 登録サブスク数: {subCount} 件\n'
-      '[CHRO/人事] 獲得ポイント: {points} pt (Lv.{level})\n'
-      '[CSO/戦略] 断捨離実行数: {danshariCount} 件\n'
-      '[CHO/健康] (データ未連携のため「運動不足の可能性」と仮定して報告)\n'
-      '[CMO/市場] (データ未連携のため「アプリ利用頻度」から分析)\n'
-      '[M&A/連携] インポート機能利用: 未確認\n\n'
-      '【発言ルール】\n'
-      '- 各役員は自分の専門分野のデータのみに言及すること。\n'
-      '- 数字が少ない場合は「怠慢である」と厳しく指摘すること。\n'
-      '- 数字が多い場合は「リソース過多」のリスクを指摘すること。\n'
-      '- 馴れ合いは不要。ビジネスライクかつ辛口に。';
+      '- userId: {userId}\n'
+      '- noteCount: {noteCount}\n'
+      '- subCount: {subCount}\n'
+      '- points: {points}\n'
+      '- level: {level}\n'
+      '- danshariCount: {danshariCount}\n'
+      '- healthData: "データ未連携"\n'
+      '- marketData: "データ未連携"\n'
+      '- importUsed: "未確認"\n\n'
+      '【指示】\n'
+      '1. 各役員に、担当分野のデータに基づいて辛口な現状分析と報告をさせてください。データが未連携の場合は、仮説に基づいて報告させてください。\n'
+      '2. 数字が少ない場合は「怠慢」、多い場合は「リソースの無駄遣いや管理不足」の観点から指摘させてください。\n'
+      '3. 最後に、CSOに全体の状況を要約させ、CEOが今週末に実行すべき具体的なアクションプランを3つ提案させてください。\n'
+      '4. 出力は必ず以下のJSON形式に従ってください。他のテキストは一切含めないでください。\n\n'
+      '```json\n'
+      '{\n'
+      '  "messages": [\n'
+      '    {\n'
+      '      "role": "CKO",\n'
+      '      "speaker_name": "AI CKO",\n'
+      '      "content": "(ここにCKOの報告内容)"\n'
+      '    },\n'
+      '    {\n'
+      '      "role": "CFO",\n'
+      '      "speaker_name": "AI CFO",\n'
+      '      "content": "(ここにCFOの報告内容)"\n'
+      '    },\n'
+      '    {\n'
+      '      "role": "CHRO",\n'
+      '      "speaker_name": "AI CHRO",\n'
+      '      "content": "(ここにCHROの報告内容)"\n'
+      '    },\n'
+      '    {\n'
+      '      "role": "CSO",\n'
+      '      "speaker_name": "AI CSO",\n'
+      '      "content": "(ここにCSOの最終提案内容)"\n'
+      '    }\n'
+      '  ],\n'
+      '  "conclusion": "(ここにCSOが提案するアクションプラン3つをまとめた結論)"\n'
+      '}\n'
+      '```';
   // --- End of new state variables ---
 
   // Supabase client getter
@@ -324,10 +361,33 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         throw Exception('AIからの応答がありません。');
       }
 
-      setState(() => _loadingStatus = '議事録を作成中...');
+      setState(() => _loadingStatus = '議事録を解析中...');
 
-      final messages = _parseResponseToMessages(responseText);
-      final conclusion = _extractConclusion(responseText, messages);
+      // Clean up potential markdown code block
+      var responseJson = responseText.trim();
+      final jsonStartIndex = responseJson.indexOf('{');
+      final jsonEndIndex = responseJson.lastIndexOf('}');
+      if (jsonStartIndex != -1 && jsonEndIndex != -1) {
+        responseJson = responseJson.substring(
+          jsonStartIndex,
+          jsonEndIndex + 1,
+        );
+      }
+
+      final decoded = jsonDecode(responseJson) as Map<String, dynamic>;
+      final messageList = decoded['messages'] as List<dynamic>;
+      final conclusion = decoded['conclusion'] as String;
+
+      final messages = messageList.map((item) {
+        final msg = item as Map<String, dynamic>;
+        return BoardMessage(
+          id: const Uuid().v4(),
+          speakerName: msg['speaker_name'] as String,
+          role: msg['role'] as String,
+          content: msg['content'] as String,
+          timestamp: DateTime.now(),
+        );
+      }).toList();
 
       final log = BoardMeetingLog(
         id: const Uuid().v4(),
