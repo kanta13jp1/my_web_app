@@ -251,69 +251,116 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
       content: '''
-### Gemini API リファレンス
-*Last Updated: 2026/1/21*
+### Gemini API Reference
+*Last Updated: 2026/1/23*
 
-**利用規約を更新しました。**
+> We have updated our Terms of Service.
+> 利用規約を更新しました。
 
-このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
-HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
-最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
+This API reference describes the standard, streaming, and realtime APIs you can use to interact with the Gemini models.
+> このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
 
----
+You can use the REST APIs in any environment that supports HTTP requests.
+> HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
 
-### 主要エンドポイント (Primary endpoints)
-Gemini APIは以下の主要なエンドポイントを中心に構成されています：
+Refer to the Quickstart guide for how to get started with your first API call.
+> 最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
 
-#### 1. 標準コンテンツ生成 (generateContent)
-リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
-
-#### 2. ストリーミングコンテンツ生成 (streamGenerateContent)
-サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。
-
-#### 3. ライブAPI (BidiGenerateContent)
-双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。
-
-#### 4. バッチモード (batchGenerateContent)
-*2026/1/15 更新*
-`generateContent`リクエストのバッチを送信するための標準的なRESTエンドポイント。
-
-#### 5. 埋め込み (embedContent)
-*2026/1/16 更新*
-入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。
-
-#### 6. Gen Media API
-*2026/1/16 更新*
-画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、`generateContent` APIを使用してアクセスできます。
-
-#### 7. プラットフォームAPI (Platform APIs)
-*2026/1/17 更新*
-ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。
+If you're looking for the references for our language-specific libraries and SDKs, go to the link for that language in the left navigation under SDK references.
+> 言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。
 
 ---
 
-### 認証 (Authentication)
-*2026/1/17 更新*
+### Primary endpoints / 主要評価項目
 
-Gemini APIへのすべてのリクエストには、APIキーを含む `x-goog-api-key` ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
+The Gemini API is organized around the following major endpoints:
+> Gemini APIは以下の主要なエンドポイントを中心に構成されています：
 
-**リクエスト例 (Gemini 2.5 Flash):**
+**Standard content generation (generateContent):** A standard REST endpoint that processes your request and returns the model's full response in a single package. This is best for non-interactive tasks where you can wait for the entire result.
+> **標準コンテンツ生成（generateContent）：**リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
+
+**Streaming content generation (streamGenerateContent):** Uses Server-Sent Events (SSE) to push chunks of the response to you as they are generated. This provides a faster, more interactive experience for applications like chatbots.
+> **ストリーミングコンテンツ生成 (streamGenerateContent):** サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。
+
+**Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming, designed for real-time conversational use cases.
+> **ライブAPI（BidiGenerateContent）：**双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。
+
+**Batch mode (batchGenerateContent):** (*Updated: 2026/1/15*) A standard REST endpoint for submitting batches of generateContent requests.
+> **バッチモード (batchGenerateContent):** (*2026/1/15 更新*) generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。
+
+**Embeddings (embedContent):** (*Updated: 2026/1/16*) A standard REST endpoint that generates a text embedding vector from the input Content.
+> **埋め込み（embedContent）：**(*2026/1/16 更新*) 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。
+
+**Gen Media APIs:** (*Updated: 2026/1/16*) Endpoints for generating media with our specialized models such as Imagen for image generation, and Veo for video generation. Gemini also has these capabilities built in which you can access using the generateContent API.
+> **Gen Media API:** (*2026/1/16 更新*) 画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、generateContent APIを使用してアクセスできます。
+
+**Platform APIs:** (*Updated: 2026/1/17*) Utility endpoints that support core capabilities such as uploading files, and counting tokens.
+> **プラットフォームAPI:** (*2026/1/17 更新*) ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。
+
+---
+
+### Authentication / 認証
+*Updated: 2026/1/17*
+
+All requests to the Gemini API must include an `x-goog-api-key` header with your API key. Create one with a few clicks in Google AI Studio.
+> Gemini APIへのすべてのリクエストには、APIキーを含む`x-goog-api-key`ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
+
+The following is an example request with the API key included in the header: (*Updated: 2026/1/21*)
+> 以下は、ヘッダーにAPIキーを含めたリクエストの例です： (*2026/1/21 更新*)
 ```bash
 curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)" \\
--H "x-goog-api-key: \$GEMINI_API_KEY" \\
--H 'Content-Type: application/json' \\
--X POST \\
--d '{ "contents": [{ "parts": [{ "text": "Explain how AI works in a few words" }] }] }'
+  -H "x-goog-api-key: \$GEMINI_API_KEY" \\
+  -H 'Content-Type: application/json' \\
+  -X POST \\
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Explain how AI works in a few words"
+          }
+        ]
+      }
+    ]
+  }'
 ```
 
+For instructions on how to pass your key to the API using Gemini SDKs, see the Using Gemini API keys guide. (*Updated: 2026/1/21*)
+> Gemini SDKを使用してAPIにキーを渡す方法については、「Gemini APIキーの使用」ガイドを参照してください。 (*2026/1/21 更新*)
+
 ---
-### コンテンツ生成 (Content generation)
-*2026/1/21 更新*
 
-これはモデルにプロンプトを送信するための中央エンドポイントです。コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：
+### Content generation / コンテンツ生成
+*Updated: 2026/1/21*
 
-1. **generateContent (REST)**: リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。
-2. **streamGenerateContent (SSE)**: まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。
+This is the central endpoint for sending prompts to the model.
+> これはモデルにプロンプトを送信するための中央エンドポイントです。
+
+There are two endpoints for generating content, the key difference is how you receive the response:
+> コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：
+
+**generateContent (REST):** Receives a request and provides a single response after the model has finished its entire generation.
+> **generateContent (REST):** リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。
+
+**streamGenerateContent (SSE):** Receives the exact same request, but the model streams back chunks of the response as they are generated. This provides a better user experience for interactive applications as it lets you display partial results immediately.
+> **streamGenerateContent (SSE):** まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。
+
+---
+
+### Request body structure / リクエスト本文の構造
+*Updated: 2026/1/23*
+
+The request body is a JSON object that is identical for both standard and streaming modes and is built from a few core objects:
+> リクエスト本体は、標準モードとストリーミングモードの両方で同一のJSONオブジェクトであり、以下のコアオブジェクトから構成されます：
+
+**Content object:** Represents a single turn in a conversation.
+> **コンテンツオブジェクト：**会話における単一のターンを表す。
+
+**Part object:** A piece of data within a Content turn (like text or an image).
+> **部分オブジェクト：**コンテンツターン内のデータの一部（テキストや画像など）。
+
+**inline_data (Blob):** (*Updated: 2026/1/23*) A container for raw media bytes and their MIME type.
+> **inline_data (Blob):** (*2026/1/23 更新*) 生メディアバイトとそのMIMEタイプを格納するコンテナ。
 ''',
       quiz: Quiz(
         question:

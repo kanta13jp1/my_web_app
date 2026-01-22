@@ -463,14 +463,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final bool isStocking = _addToStock;
     final tableName = isStocking ? 'tasks' : 'daily_todos';
 
-    final data = {
-      'task': text,
-      'is_completed': false,
-      'is_important': false,
-      'category': _selectedCategory,
-      'estimated_minutes': _selectedDuration,
-      'difficulty': _selectedDifficulty,
-    };
+    final Map<String, dynamic> data;
+    if (isStocking) {
+      data = {
+        'task': text,
+        'is_completed': false,
+        'is_important': false,
+      };
+    } else {
+      data = {
+        'task': text,
+        'is_completed': false,
+        'is_important': false,
+        'category': _selectedCategory,
+        'estimated_minutes': _selectedDuration,
+        'difficulty': _selectedDifficulty,
+      };
+    }
 
     // daily_todos のみ order_index と日付関連フィールドを追加
     if (!isStocking) {
