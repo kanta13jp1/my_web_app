@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart'; // MarkdownBodyを使用するために必要
+import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
-import 'embedding_lab_page.dart';
 
 class GeminiUniversityV2Page extends StatefulWidget {
   const GeminiUniversityV2Page({super.key});
@@ -545,7 +545,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const EmbeddingLabPage(),
+                  builder: (context) => const ApiPlaygroundPage(),
                 ),
               );
             },
