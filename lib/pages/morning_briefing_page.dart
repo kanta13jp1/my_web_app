@@ -28,8 +28,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   final TextEditingController _todoController = TextEditingController();
   List<Map<String, dynamic>> _todos = [];
   List<Map<String, dynamic>> _subtasks = [];
+  List<Map<String, dynamic>> _somedayTasks = [];
   StreamSubscription? _todosSubscription;
   StreamSubscription? _subtasksSubscription;
+  StreamSubscription? _somedayTasksSubscription;
   Timer? _reconnectTimer;
   late TabController _tabController;
   bool _isLoading = true;
@@ -51,6 +53,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
   String _selectedModel = 'gemini-1.5-flash'; // 日報生成用モデル
+  bool _addToStock = false; // ★ Add this line
   String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
       'あなたは優秀なビジネスパーソンです。以下の本日のタスク実績データを元に、簡潔で分かりやすい日報を作成してください。\n'
@@ -132,7 +135,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _selectedDay = _focusedDay;
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
 
@@ -211,6 +214,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         if (mounted) _scheduleReconnect();
       },
     );
+
+    _somedayTasksSubscription?.cancel();
+    _somedayTasksSubscription = Supabase.instance.client
+        .from('someday_tasks')
+        .stream(primaryKey: ['id']).listen(
+      (data) {
+        if (mounted) {
+          setState(() {
+            _somedayTasks = data;
+          });
+        }
+      },
+      onError: (error) {
+        debugPrint('Someday Tasks Stream error: $error');
+        if (mounted) _scheduleReconnect();
+      },
+    );
   }
 
   void _scheduleReconnect() {
@@ -242,6 +262,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     _confettiController.dispose();
     _todosSubscription?.cancel();
     _subtasksSubscription?.cancel();
+    _somedayTasksSubscription?.cancel();
     _todoController.dispose();
     _selectedEvents.dispose();
     super.dispose();
@@ -439,27 +460,35 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final text = _todoController.text.trim();
     if (text.isEmpty) return;
 
-    // 現在の最大order_indexを取得して、末尾に追加
-    int maxOrder = 0;
-    if (_todos.isNotEmpty) {
-      for (var t in _todos) {
-        final o = t['order_index'] as int? ?? 0;
-        if (o > maxOrder) maxOrder = o;
+    final bool isStocking = _addToStock;
+    final tableName = isStocking ? 'someday_tasks' : 'daily_todos';
+
+    final data = {
+      'task': text,
+      'is_completed': false,
+      'is_important': false,
+      'category': _selectedCategory,
+      'estimated_minutes': _selectedDuration,
+      'difficulty': _selectedDifficulty,
+    };
+
+    // daily_todos のみ order_index と日付関連フィールドを追加
+    if (!isStocking) {
+      int maxOrder = 0;
+      if (_todos.isNotEmpty) {
+        for (var t in _todos) {
+          final o = t['order_index'] as int? ?? 0;
+          if (o > maxOrder) maxOrder = o;
+        }
       }
+      data['order_index'] = maxOrder + 1;
+      data['due_date'] = _selectedDate?.toIso8601String();
+      data['recurrence'] = _selectedRecurrence;
     }
 
+
     try {
-      await Supabase.instance.client.from('daily_todos').insert({
-        'task': text,
-        'is_completed': false,
-        'is_important': false,
-        'due_date': _selectedDate?.toIso8601String(),
-        'recurrence': _selectedRecurrence,
-        'category': _selectedCategory,
-        'estimated_minutes': _selectedDuration,
-        'difficulty': _selectedDifficulty,
-        'order_index': maxOrder + 1,
-      });
+      await Supabase.instance.client.from(tableName).insert(data);
       _todoController.clear();
       setState(() {
         _selectedDate = null;
@@ -467,7 +496,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         _selectedCategory = 'work';
         _selectedDuration = null;
         _selectedDifficulty = 'normal';
+        _addToStock = false; // Reset the switch
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isStocking ? 'タスクをストックしました。' : 'タスクを追加しました。'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2019,9 +2059,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.list_alt), text: 'ミッション'),
+            Tab(icon: Icon(Icons.list_alt), text: 'タスク'),
+            Tab(icon: Icon(Icons.calendar_today), text: 'カレンダー'),
             Tab(icon: Icon(Icons.history), text: '履歴'),
-            Tab(icon: Icon(Icons.calendar_month), text: 'カレンダー'),
+            Tab(icon: Icon(Icons.inventory_2), text: 'ストック'),
           ],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -2324,9 +2365,31 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               ),
 
               // 入力エリア
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: SwitchListTile(
+                  title: const Text('タスクをストックする（いつかやる）'),
+                  value: _addToStock,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _addToStock = value;
+                    });
+                  },
+                  secondary: const Icon(Icons.inventory_2_outlined),
+                  dense: true,
+                  activeColor: Colors.orange,
+                  tileColor: _addToStock ? Colors.orange.shade50 : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: _addToStock ? Colors.orange.shade200 : Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
 
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Row(
                   children: [
                     Expanded(
@@ -2463,8 +2526,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    // --- Tab 1: Active Tasks (Reorderable) ---
-
+                    // --- Tab 1: Active Tasks (タスク) ---
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : activeTodos.isEmpty
@@ -2478,15 +2540,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       color: Colors.grey,
                                     ),
                                     SizedBox(height: 16),
-                                    Text('タスクはありません'),
+                                    Text('今日のタスクはありません'),
                                   ],
                                 ),
                               )
                             : (_filterCategory != 'all' ||
                                     _sortOrder != 'manual')
-
                                 // フィルタ適用中または手動ソート以外は並び替え無効 (ListViewを使用)
-
                                 ? ListView.builder(
                                     itemCount: activeTodos.length,
                                     itemBuilder: (context, index) =>
@@ -2496,6 +2556,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       false,
                                     ),
                                   )
+                                // 手動ソート用のReorderableListView
                                 : ReorderableListView.builder(
                                     onReorder: onReorder,
                                     itemCount: activeTodos.length,
@@ -2507,8 +2568,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     ),
                                   ),
 
-                    // --- Tab 2: History (Completed) ---
+                    // --- Tab 2: Calendar View (カレンダー) ---
+                    _buildCalendarView(),
 
+                    // --- Tab 3: History (履歴) ---
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : historyTodos.isEmpty
@@ -2560,36 +2623,27 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       itemCount: historyTodos.length,
                                       itemBuilder: (context, index) {
                                         final todo = historyTodos[index];
-
                                         final id = todo['id'] as String;
-
                                         final task = todo['task'] as String;
-
                                         final createdAtStr =
                                             todo['created_at'] as String?;
-
                                         final category =
                                             todo['category'] as String? ??
                                                 'work';
-
                                         final actualMinutes =
                                             todo['actual_minutes'] as int?;
-
                                         final difficulty =
                                             todo['difficulty'] as String? ??
                                                 'normal';
 
                                         String subtitleText = '';
-
                                         if (createdAtStr != null) {
                                           final createdAt =
                                               DateTime.parse(createdAtStr)
                                                   .toLocal();
-
                                           subtitleText =
                                               '作成: ${timeago.format(createdAt)}';
                                         }
-
                                         if (actualMinutes != null) {
                                           subtitleText +=
                                               ' (実績: $actualMinutes分)';
@@ -2599,12 +2653,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           onTap: () => showTaskDetails(
                                             todo,
                                           ), // 履歴でも詳細表示
-
                                           leading: const Icon(
                                             Icons.check_circle,
                                             color: Colors.green,
                                           ),
-
                                           title: Text(
                                             task,
                                             style: const TextStyle(
@@ -2613,7 +2665,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               color: Colors.grey,
                                             ),
                                           ),
-
                                           subtitle: Row(
                                             children: [
                                               Icon(
@@ -2625,7 +2676,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               Text(subtitleText),
                                             ],
                                           ),
-
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
@@ -2655,9 +2705,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 ],
                               ),
 
-                    // --- Tab 3: Calendar View ---
-
-                    _buildCalendarView(),
+                    // --- Tab 4: Someday/Stock (ストック) ---
+                    _buildSomedayTaskView(),
                   ],
                 ),
               ),
@@ -3129,5 +3178,162 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       onDismissed: (_) => deleteTodo(id),
       child: isLocked ? Opacity(opacity: 0.5, child: content) : content,
     );
+  }
+
+  Widget _buildSomedayTaskView() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_somedayTasks.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'ストックされたタスクはありません。',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '「いつかやる」タスクをここに追加して、頭をスッキリさせましょう。',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Sort tasks by creation date, newest first
+    _somedayTasks.sort((a, b) {
+      final aDate = a['created_at'] != null ? DateTime.parse(a['created_at']) : DateTime(0);
+      final bDate = b['created_at'] != null ? DateTime.parse(b['created_at']) : DateTime(0);
+      return bDate.compareTo(aDate);
+    });
+
+    return ListView.builder(
+      itemCount: _somedayTasks.length,
+      itemBuilder: (context, index) {
+        final task = _somedayTasks[index];
+        final id = task['id'] as String;
+        final taskTitle = task['task'] as String;
+        final createdAtStr = task['created_at'] as String?;
+        String createdDate = '';
+        if (createdAtStr != null) {
+          createdDate = timeago.format(DateTime.parse(createdAtStr).toLocal());
+        }
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: ListTile(
+            title: Text(taskTitle),
+            subtitle: Text('追加日: $createdDate'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.upgrade, color: Colors.green),
+                  tooltip: '今日のタスクにする',
+                  onPressed: () => _moveSomedayTaskToToday(id),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: '削除',
+                  onPressed: () => _deleteSomedayTask(id),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _moveSomedayTaskToToday(String id) async {
+    final taskToMove = _somedayTasks.firstWhere((t) => t['id'] == id);
+
+    try {
+      // Get max order_index from daily_todos
+      int maxOrder = 0;
+      if (_todos.isNotEmpty) {
+        for (var t in _todos) {
+          final o = t['order_index'] as int? ?? 0;
+          if (o > maxOrder) maxOrder = o;
+        }
+      }
+
+      await Supabase.instance.client.from('daily_todos').insert({
+        'task': taskToMove['task'],
+        'is_completed': false,
+        'is_important': false,
+        'category': taskToMove['category'] ?? 'work',
+        'difficulty': taskToMove['difficulty'] ?? 'normal',
+        'details': taskToMove['details'],
+        'order_index': maxOrder + 1, // Add to the end of the list
+      });
+
+      await Supabase.instance.client.from('someday_tasks').delete().eq('id', id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('タスクを「今日」に移動しました。'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error moving task: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('移動エラー: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteSomedayTask(String id) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ストックタスクの削除'),
+        content: const Text('このタスクを完全に削除しますか？\nこの操作は元に戻せません。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true) return;
+
+    try {
+      await Supabase.instance.client.from('someday_tasks').delete().eq('id', id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('タスクを削除しました。')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting someday task: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除エラー: $e')),
+        );
+      }
+    }
   }
 }
