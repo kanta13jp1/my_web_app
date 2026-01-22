@@ -4,6 +4,7 @@ import 'package:my_web_app/services/gamification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 
+import 'package:my_web_app/services/notification_service.dart';
 import 'pages/home_page.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/landing_page.dart';
@@ -23,6 +24,10 @@ SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final NotificationService notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.scheduleSaturdayReminder();
+
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
     anonKey:
@@ -34,6 +39,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => GamificationService()),
+        Provider<NotificationService>(create: (_) => notificationService),
       ],
       child: const MyApp(),
     ),

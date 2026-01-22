@@ -1295,7 +1295,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                            'モデル「$_selectedModel」は利用制限に達したか、利用できません。'),
+                            'モデル「$_selectedModel」は利用制限に達したか、利用できません。',),
                         const SizedBox(height: 20),
                         const Text('別のモデルを選択して再試行してください。'),
                         const SizedBox(height: 10),
@@ -2377,7 +2377,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   },
                   secondary: const Icon(Icons.inventory_2_outlined),
                   dense: true,
-                  activeColor: Colors.orange,
+                  activeThumbColor: Colors.orange,
                   tileColor: _addToStock ? Colors.orange.shade50 : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
