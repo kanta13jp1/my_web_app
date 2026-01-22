@@ -217,7 +217,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
     _somedayTasksSubscription?.cancel();
     _somedayTasksSubscription = Supabase.instance.client
-        .from('tasks')
+        .from(someday_tasks)
         .stream(primaryKey: ['id']).listen(
       (data) {
         if (mounted) {
@@ -461,7 +461,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (text.isEmpty) return;
 
     final bool isStocking = _addToStock;
-    final tableName = isStocking ? 'tasks' : 'daily_todos';
+    final tableName = isStocking ? someday_tasks : 'daily_todos';
 
     Map<String, dynamic> data = {
       'task': text,
@@ -3277,7 +3277,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'order_index': maxOrder + 1, // Add to the end of the list
       });
 
-      await Supabase.instance.client.from('tasks').delete().eq('id', id);
+      await Supabase.instance.client.from(someday_tasks).delete().eq('id', id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3320,7 +3320,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (result != true) return;
 
     try {
-      await Supabase.instance.client.from('tasks').delete().eq('id', id);
+      await Supabase.instance.client.from(someday_tasks).delete().eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('タスクを削除しました。')),
