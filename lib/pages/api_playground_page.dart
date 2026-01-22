@@ -41,7 +41,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
 
     try {
       final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models?key=$key');
+          'https://generativelanguage.googleapis.com/v1beta/models?key=$key',);
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -55,7 +55,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
         });
       } else {
         setState(() => _responseBody =
-            'モデル一覧の取得に失敗しました: ${response.statusCode}\n${response.body}');
+            'モデル一覧の取得に失敗しました: ${response.statusCode}\n${response.body}',);
       }
     } catch (e) {
       setState(() => _responseBody = 'エラーが発生しました: $e');
@@ -68,7 +68,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
     setState(() {
       _selectedModel = model;
       // モデルを変更したら、そのモデルがサポートするメソッドのリストを取得して、最初のものをデフォルト選択
-      List<dynamic> methods = model['supportedGenerationMethods'] ?? [];
+      final List<dynamic> methods = model['supportedGenerationMethods'] ?? [];
       // 利用頻度の高いメソッドを優先的にデフォルトにするロジック
       if (methods.contains('generateContent')) {
         _selectedMethod = 'generateContent';
@@ -85,8 +85,9 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
   }
 
   Future<void> _executeApi() async {
-    if (_apiKey == null || _selectedModel == null || _selectedMethod == null)
+    if (_apiKey == null || _selectedModel == null || _selectedMethod == null) {
       return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -115,10 +116,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
             'contents': [
               {
                 'parts': [
-                  {'text': text}
-                ]
+                  {'text': text},
+                ],
               }
-            ]
+            ],
           };
           break;
         case 'embedContent':
@@ -126,9 +127,9 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
           body = {
             'content': {
               'parts': [
-                {'text': text}
-              ]
-            }
+                {'text': text},
+              ],
+            },
           };
           break;
         case 'embedText':
@@ -141,10 +142,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
             'contents': [
               {
                 'parts': [
-                  {'text': text}
-                ]
+                  {'text': text},
+                ],
               }
-            ]
+            ],
           };
       }
 
@@ -198,7 +199,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                value: _selectedModel?['name'],
+                initialValue: _selectedModel?['name'],
                 items: _models.map<DropdownMenuItem<String>>((dynamic model) {
                   return DropdownMenuItem<String>(
                     value: model['name'],
@@ -226,7 +227,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                value: _selectedMethod,
+                initialValue: _selectedMethod,
                 items: (_selectedModel!['supportedGenerationMethods']
                         as List<dynamic>?)
                     ?.map<DropdownMenuItem<String>>((dynamic method) {
@@ -267,7 +268,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                            color: Colors.white, strokeWidth: 2,),)
                     : const Icon(Icons.play_arrow),
                 label: const Text('Execute API'),
                 style: FilledButton.styleFrom(

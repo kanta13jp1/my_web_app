@@ -67,7 +67,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       'methods': ['generateContent'],
     },
     {
+      'name': 'gemini-pro',
+      'methods': ['generateContent'],
+    },
+    {
       'name': 'gemini-2.0-flash',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-2.5-flash',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-2.5-pro',
       'methods': ['generateContent'],
     },
   ];
@@ -1211,90 +1223,72 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         if (errString.contains('429') ||
             errString.contains('Quota') ||
             errString.contains('Too Many Requests')) {
-          showDialog(
+          String? modelInDialog = _selectedModel;
+          showDialog<void>(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('利用制限に達しました'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('現在選択中のAIモデルは利用制限を超過しました。'),
-                    const SizedBox(height: 12),
-                    // ★ 現在のモデルを表示
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 20,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '現在のモデル: $_selectedModel',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('以下のモデルへの変更を検討してください:'),
-                    const SizedBox(height: 4),
-                    // ★ 利用可能なモデル一覧を表示
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _selectableModels
-                            .map((m) => m['name'] as String)
-                            .join(', '),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade800,
+            builder: (BuildContext context) {
+              return StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return AlertDialog(
+                    title: const Text('モデルの利用制限'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                            'モデル「$_selectedModel」は利用制限に達したか、利用できません。'),
+                        const SizedBox(height: 20),
+                        const Text('別のモデルを選択して再試行してください。'),
+                        const SizedBox(height: 10),
+                        // Dropdown to select a new model
+                        DropdownButton<String>(
+                          value: modelInDialog,
+                          isExpanded: true,
+                          items: _selectableModels
+                              .map<DropdownMenuItem<String>>((model) {
+                            return DropdownMenuItem<String>(
+                              value: model['name'],
+                              child: Text(model['name']),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setDialogState(() {
+                                modelInDialog = newValue;
+                              });
+                            }
+                          },
                         ),
+                      ],
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('キャンセル'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      '・しばらく時間を空けて再試行する\n'
-                      '・設定からより軽量なモデル（Gemini 1.5 Flashなど）に変更する',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('閉じる'),
-                ),
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context); // エラーダイアログを閉じる
-                    showPromptSettingsDialog(); // 設定ダイアログを開く
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('モデルを変更する'),
-                ),
-              ],
-            ),
+                      FilledButton(
+                        child: const Text('このモデルで再試行'),
+                        onPressed: () {
+                          if (modelInDialog == null) return;
+                          Navigator.of(context).pop();
+                          // Update the model on the main page and retry
+                          setState(() {
+                            _selectedModel = modelInDialog!;
+                          });
+                          // Save the new model selection to preferences
+                          SharedPreferences.getInstance().then((prefs) {
+                            prefs.setString('gemini_model', modelInDialog!);
+                          });
+                          generateDailyReport();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           );
         } else {
           // その他のエラー
