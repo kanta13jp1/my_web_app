@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EmbeddingLabPage extends StatefulWidget {
@@ -37,25 +38,40 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
     });
 
     try {
-      // ★ ここで指定されたモデルを使用します
-      final model = GenerativeModel(
-        model: 'models/embedding-gecko-001',
-        apiKey: _apiKey!,
+      // models/embedding-gecko-001 は古い embedText メソッドのみサポートしているため、
+      // SDKではなく直接 REST API を叩きます。
+      final url = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/embedding-gecko-001:embedText?key=$_apiKey',
       );
 
-      final content = Content.text(_inputController.text);
-      
-      // SDKでは 'embedText' ではなく 'embedContent' を使用します
-      final response = await model.embedContent(content);
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'text': _inputController.text,
+        }),
+      );
 
-      if (mounted) {
-        setState(() {
-          // ベクトルデータ（数値の配列）が返ってきます
-          final vector = response.embedding.values;
-          _result = '次元数: ${vector.length}\n\n'
-              '先頭のデータ(5件):\n${vector.take(5).join(', ')}...\n\n'
-              '※Embedding成功！この数値配列がテキストの意味を表しています。';
-        });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // レスポンス形式: { "embedding": { "value": [0.1, 0.2, ...] } }
+        final embeddingData = data['embedding'];
+        List<dynamic> vector = [];
+
+        if (embeddingData != null && embeddingData['value'] != null) {
+          vector = embeddingData['value'];
+        }
+
+        if (mounted) {
+          setState(() {
+            _result = 'モデル: embedding-gecko-001 (via embedText)\n'
+                '次元数: ${vector.length}\n\n'
+                '--- 先頭データ(10件) ---\n[${vector.take(10).join(', ')}...]\n\n'
+                '※Embedding成功！';
+          });
+        }
+      } else {
+        throw Exception('API Error: ${response.statusCode}\n${response.body}');
       }
     } catch (e) {
       if (mounted) {
@@ -83,20 +99,35 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'モデル: models/embedding-gecko-001',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'テキストを入力すると、その意味を数値ベクトル（Embedding）に変換します。',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            const Card(
+              color: Colors.teal,
+              child: Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.science, color: Colors.white, size: 32),
+                    SizedBox(height: 8),
+                    Text(
+                      'モデル: models/embedding-gecko-001',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Legacy method: embedText',
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _inputController,
               decoration: const InputDecoration(
-                labelText: 'テキストを入力',
+                labelText: 'テキストを入力 (max 1024 tokens)',
                 border: OutlineInputBorder(),
                 hintText: '例: 人工知能について教えて',
               ),
@@ -104,7 +135,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: (_isLoading || _apiKey == null) ? null : _generateEmbedding,
+              onPressed:
+                  (_isLoading || _apiKey == null) ? null : _generateEmbedding,
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -114,8 +146,20 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     )
                   : const Icon(Icons.calculate),
               label: const Text('Embeddingを実行'),
-              style: FilledButton.styleFrom(backgroundColor: Colors.teal),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.teal,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
+            if (_apiKey == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: Text(
+                  '※設定画面でGemini APIキーを設定してください',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             const SizedBox(height: 24),
             const Text(
               '実行結果:',
@@ -131,9 +175,12 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: SingleChildScrollView(
-                  child: Text(
-                    _result,
-                    style: const TextStyle(fontFamily: 'monospace'),
+                  child: SelectableText(
+                    _result.isEmpty ? 'ここに結果が表示されます' : _result,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      color: _result.isEmpty ? Colors.grey : Colors.black87,
+                    ),
                   ),
                 ),
               ),
