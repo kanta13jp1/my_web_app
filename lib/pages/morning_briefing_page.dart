@@ -463,25 +463,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final bool isStocking = _addToStock;
     final tableName = isStocking ? 'tasks' : 'daily_todos';
 
-    final Map<String, dynamic> data;
-    if (isStocking) {
-      data = {
-        'task': text,
-        'is_completed': false,
-        'is_important': false,
-      };
-    } else {
-      data = {
-        'task': text,
-        'is_completed': false,
-        'is_important': false,
-        'category': _selectedCategory,
-        'estimated_minutes': _selectedDuration,
-        'difficulty': _selectedDifficulty,
-      };
-    }
+    Map<String, dynamic> data = {
+      'task': text,
+      'is_completed': false,
+      'is_important': false,
+      'category': _selectedCategory,
+      'estimated_minutes': _selectedDuration,
+      'difficulty': _selectedDifficulty,
+    };
 
-    // daily_todos のみ order_index と日付関連フィールドを追加
     if (!isStocking) {
       int maxOrder = 0;
       if (_todos.isNotEmpty) {
@@ -3280,7 +3270,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       await Supabase.instance.client.from('daily_todos').insert({
         'task': taskToMove['task'],
         'is_completed': false,
-        'is_important': false,
+        'is_important': taskToMove['is_important'] ?? false,
         'category': taskToMove['category'] ?? 'work',
         'difficulty': taskToMove['difficulty'] ?? 'normal',
         'details': taskToMove['details'],
