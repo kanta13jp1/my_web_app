@@ -700,8 +700,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     String? currentCategory,
     int? currentDuration,
     String? currentDifficulty,
+    String? currentDetails, // <-- Add currentDetails
   ) async {
     final editController = TextEditingController(text: currentTask);
+    final editDetailsController =
+        TextEditingController(text: currentDetails); // <-- Add controller for details
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
     String editCategory = currentCategory ?? 'work';
@@ -714,144 +717,159 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         builder: (context, setState) {
           return AlertDialog(
             title: const Text('タスクの編集'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: editController,
-                  decoration: const InputDecoration(
-                    labelText: 'タスク名',
-                    border: OutlineInputBorder(),
-                  ),
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('期限: '),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: editDate ?? DateTime.now(),
-                          firstDate: DateTime.now()
-                              .subtract(const Duration(days: 365)),
-                          lastDate:
-                              DateTime.now().add(const Duration(days: 365)),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            editDate = picked;
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.calendar_today),
-                      label: Text(
-                        editDate != null
-                            ? '${editDate!.year}/${editDate!.month}/${editDate!.day}'
-                            : '設定なし',
-                      ),
+            content: SingleChildScrollView(
+              // <-- Wrap with SingleChildScrollView
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: editController,
+                    decoration: const InputDecoration(
+                      labelText: 'タスク名',
+                      border: OutlineInputBorder(),
                     ),
-                    if (editDate != null)
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            editDate = null;
-                          });
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 16),
+                  // ★★★ NEW FIELD FOR DETAILS ★★★
+                  TextField(
+                    controller: editDetailsController,
+                    decoration: const InputDecoration(
+                      labelText: '詳細・補足情報',
+                      hintText: 'タスクに関するメモやリンクなどを自由入力...',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 4, // Allow multi-line input
+                  ),
+                  // ★★★ END OF NEW FIELD ★★★
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Text('期限: '),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: editDate ?? DateTime.now(),
+                            firstDate: DateTime.now()
+                                .subtract(const Duration(days: 365)),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              editDate = picked;
+                            });
+                          }
                         },
+                        icon: const Icon(Icons.calendar_today),
+                        label: Text(
+                          editDate != null
+                              ? '${editDate!.year}/${editDate!.month}/${editDate!.day}'
+                              : '設定なし',
+                        ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: editRecurrence,
-                  decoration: const InputDecoration(
-                    labelText: '繰り返し',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      if (editDate != null)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              editDate = null;
+                            });
+                          },
+                        ),
+                    ],
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'none', child: Text('繰り返しなし')),
-                    DropdownMenuItem(value: 'daily', child: Text('毎日')),
-                    DropdownMenuItem(value: 'weekly', child: Text('毎週')),
-                    DropdownMenuItem(value: 'monthly', child: Text('毎月')),
-                  ],
-                  onChanged: (val) {
-                    setState(() => editRecurrence = val!);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: editCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'カテゴリ',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: editRecurrence,
+                    decoration: const InputDecoration(
+                      labelText: '繰り返し',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'none', child: Text('繰り返しなし')),
+                      DropdownMenuItem(value: 'daily', child: Text('毎日')),
+                      DropdownMenuItem(value: 'weekly', child: Text('毎週')),
+                      DropdownMenuItem(value: 'monthly', child: Text('毎月')),
+                    ],
+                    onChanged: (val) {
+                      setState(() => editRecurrence = val!);
+                    },
                   ),
-                  items: _categoryLabels.entries.map((e) {
-                    return DropdownMenuItem(
-                      value: e.key,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _categoryIcons[e.key],
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(e.value),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    setState(() => editCategory = val!);
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<int?>(
-                  initialValue: editDuration,
-                  decoration: const InputDecoration(
-                    labelText: '見積もり時間',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: editCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'カテゴリ',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: _categoryLabels.entries.map((e) {
+                      return DropdownMenuItem(
+                        value: e.key,
+                        child: Row(
+                          children: [
+                            Icon(
+                              _categoryIcons[e.key],
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(e.value),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() => editCategory = val!);
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('設定なし')),
-                    DropdownMenuItem(value: 15, child: Text('15分')),
-                    DropdownMenuItem(value: 30, child: Text('30分')),
-                    DropdownMenuItem(value: 45, child: Text('45分')),
-                    DropdownMenuItem(value: 60, child: Text('1時間')),
-                    DropdownMenuItem(value: 90, child: Text('1.5時間')),
-                    DropdownMenuItem(value: 120, child: Text('2時間')),
-                  ],
-                  onChanged: (val) => setState(() => editDuration = val),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: editDifficulty,
-                  decoration: const InputDecoration(
-                    labelText: '難易度',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int?>(
+                    initialValue: editDuration,
+                    decoration: const InputDecoration(
+                      labelText: '見積もり時間',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('設定なし')),
+                      DropdownMenuItem(value: 15, child: Text('15分')),
+                      DropdownMenuItem(value: 30, child: Text('30分')),
+                      DropdownMenuItem(value: 45, child: Text('45分')),
+                      DropdownMenuItem(value: 60, child: Text('1時間')),
+                      DropdownMenuItem(value: 90, child: Text('1.5時間')),
+                      DropdownMenuItem(value: 120, child: Text('2時間')),
+                    ],
+                    onChanged: (val) => setState(() => editDuration = val),
                   ),
-                  items: _difficultyLabels.entries.map((e) {
-                    return DropdownMenuItem(
-                      value: e.key,
-                      child: Text(
-                        e.value,
-                        style: TextStyle(color: _difficultyColors[e.key]),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => editDifficulty = val!),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: editDifficulty,
+                    decoration: const InputDecoration(
+                      labelText: '難易度',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: _difficultyLabels.entries.map((e) {
+                      return DropdownMenuItem(
+                        value: e.key,
+                        child: Text(
+                          e.value,
+                          style: TextStyle(color: _difficultyColors[e.key]),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => editDifficulty = val!),
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -867,6 +885,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           .from('daily_todos')
                           .update({
                         'task': newTask,
+                        'details': editDetailsController.text.trim(), // <-- Save details
                         'due_date': editDate?.toIso8601String(),
                         'recurrence': editRecurrence,
                         'category': editCategory,
@@ -2929,6 +2948,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 category,
                 estimatedMinutes,
                 difficulty,
+                todo['details'] as String?,
               ),
       onLongPress: () => showTaskDetails(todo),
       leading: Checkbox(
