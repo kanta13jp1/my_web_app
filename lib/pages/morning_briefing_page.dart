@@ -3210,16 +3210,22 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
 
     // Sort tasks by creation date, newest first
-    _somedayTasks.sort((a, b) {
-      final aDate = a['created_at'] != null ? DateTime.parse(a['created_at']) : DateTime(0);
-      final bDate = b['created_at'] != null ? DateTime.parse(b['created_at']) : DateTime(0);
-      return bDate.compareTo(aDate);
+    final sortedTasks = List<Map<String, dynamic>>.from(_somedayTasks);
+    sortedTasks.sort((a, b) {
+      final aDateStr = a['created_at'] as String?;
+      final bDateStr = b['created_at'] as String?;
+      if (aDateStr == null && bDateStr == null) return 0;
+      if (aDateStr == null) return 1; // nulls last
+      if (bDateStr == null) return -1; // nulls last
+      final aDate = DateTime.parse(aDateStr);
+      final bDate = DateTime.parse(bDateStr);
+      return bDate.compareTo(aDate); // newest first
     });
 
     return ListView.builder(
-      itemCount: _somedayTasks.length,
+      itemCount: sortedTasks.length,
       itemBuilder: (context, index) {
-        final task = _somedayTasks[index];
+        final task = sortedTasks[index];
         final id = task['id'] as String;
         final taskTitle = task['task'] as String;
         final createdAtStr = task['created_at'] as String?;
