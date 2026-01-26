@@ -463,7 +463,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final bool isStocking = _addToStock;
     final tableName = isStocking ? 'someday_tasks' : 'daily_todos';
 
-    Map<String, dynamic> data = {
+    final Map<String, dynamic> data = {
       'task': text,
       'is_completed': false,
       'is_important': false,

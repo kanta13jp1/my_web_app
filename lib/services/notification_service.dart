@@ -58,7 +58,7 @@ class NotificationService {
   }
 
   tz.TZDateTime _nextInstanceOfSaturdayTenAM() {
-    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
         tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
     
