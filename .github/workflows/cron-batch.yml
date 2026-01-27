@@ -1,0 +1,80 @@
+name: Scheduled Analysis Batch
+
+# トリガー: 定期実行 または 手動実行
+on:
+    schedule:
+        # 毎日 UTC 0:00 (JST 9:00) に実行
+        - cron: "0 0 * * *"
+    workflow_dispatch:
+
+jobs:
+    run-batch:
+        name: Run Python Analysis Batch
+        runs-on: ubuntu-latest
+        environment: production
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.10"
+                  cache: "pip"
+
+            - name: Install Python dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+                  pip install supabase google-generativeai
+
+            - name: Run Batch Script
+              run: python batch_analysis.py
+              env:
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+                  # 書き込み権限のあるService Role Keyを使用
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+                  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+            # バッチ処理失敗時のみSlack通知を送る (オプション)
+            - name: Notify Slack on failure
+              if: failure()
+              uses: slackapi/slack-github-action@v1.26.0
+              with:
+                  payload: |
+                      {
+                        "text": "❌ Scheduled Batch Analysis Failed!",
+                        "blocks": [
+                          {
+                            "type": "header",
+                            "text": {
+                              "type": "plain_text",
+                              "text": "❌ Scheduled Batch Analysis Failed!"
+                            }
+                          },
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "The scheduled Python batch process failed. Please check the logs."
+                            }
+                          },
+                          {
+                            "type": "actions",
+                            "elements": [
+                              {
+                                "type": "button",
+                                "text": {
+                                  "type": "plain_text",
+                                  "text": "View Logs"
+                                },
+                                "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                                "style": "danger"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
