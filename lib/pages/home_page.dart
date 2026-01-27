@@ -114,15 +114,12 @@ class _HomePageState extends State<HomePage> {
             _buildKpiSummary(context),
             const SizedBox(height: 24),
             _buildSectionHeader(
-              'SPECIAL PROJECT',
-              Icons.rocket_launch,
-              Colors.indigo,
-            ),
+                'SPECIAL PROJECT', Icons.rocket_launch, Colors.indigo),
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              color: Colors.indigo, // 目立たせるために背景色を変更
+              color: Colors.indigo,
               child: ListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -134,18 +131,21 @@ class _HomePageState extends State<HomePage> {
                 title: const Text(
                   '2026 衆院選 勝利戦略室',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.white, // テキストを白く
-                  ),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white),
                 ),
                 subtitle: const Text(
-                  'シミュレーションとAI参謀による戦略立案を行います。',
+                  'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
                   style: TextStyle(color: Colors.white70),
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios,
                     size: 16, color: Colors.white),
-                onTap: () => _nav(context, const ElectionStrategyPage()),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ElectionStrategyPage()),
+                ),
               ),
             ),
             const SizedBox(height: 24),
