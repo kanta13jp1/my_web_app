@@ -18,9 +18,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   late TabController _tabController;
   bool _isSubmitting = false;
 
-  // ユーザー情報
-  String _myDistrict = ''; // 例: 東京1区
-  bool _isLoadingProfile = true;
+  // ユーザー情報 & 分析データ
+  String _myDistrict = '';
+  String _candidateInfo = '';
+  String _victoryCondition = '';
+  bool _isAnalyzingDistrict = false;
 
   // シミュレーション用パラメータ
   double _supportRate = 15.0;
@@ -42,13 +44,13 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     });
   }
 
-  // --- Profile Logic (修正版: user_idを使用) ---
+  // --- Profile & District Analysis Logic ---
+
   Future<void> _fetchUserProfile() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // user_id カラムを使って検索
       final data = await _supabase
           .from('user_profiles')
           .select('election_district')
@@ -59,11 +61,90 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         setState(() {
           _myDistrict = data['election_district'];
         });
+        // プロフィール取得時に、その選挙区の分析データも取得
+        _fetchDistrictAnalysis(data['election_district']);
       }
     } catch (e) {
       debugPrint('Error fetching profile: $e');
+    }
+  }
+
+  Future<void> _fetchDistrictAnalysis(String district) async {
+    // まずSupabaseのキャッシュを確認
+    try {
+      final data = await _supabase
+          .from('district_analytics')
+          .select()
+          .eq('district_name', district)
+          .maybeSingle();
+
+      if (data != null) {
+        setState(() {
+          _candidateInfo = data['candidate_info'] ?? '';
+          _victoryCondition = data['victory_condition'] ?? '';
+        });
+      } else {
+        // データがなければAI分析を実行（自動）
+        _analyzeDistrict(district);
+      }
+    } catch (e) {
+      debugPrint('Error fetching analytics: $e');
+    }
+  }
+
+  Future<void> _analyzeDistrict(String district) async {
+    if (_apiKey == null) return;
+    setState(() => _isAnalyzingDistrict = true);
+
+    try {
+      final model = GenerativeModel(
+        model: 'models/gemini-2.5-flash',
+        apiKey: _apiKey!,
+        generationConfig:
+            GenerationConfig(responseMimeType: 'application/json'),
+      );
+
+      final prompt = '''
+      あなたは選挙アナリストです。「$district」における国民民主党の状況を分析し、JSONで出力してください。
+      候補者が不明な場合は「擁立調整中」や「（過去の候補者名）氏など」と推測を含めて記述してください。
+      
+      【出力フォーマット JSON】
+      {
+        "candidate": "候補者名と肩書き（例: 現職、新人、元職）",
+        "condition": "この選挙区で勝利するために必要な具体的な条件（例: 無党派層の〇〇%獲得、野党共闘の有無、重点エリアなど）を150文字以内で"
+      }
+      ''';
+
+      final response = await model.generateContent([Content.text(prompt)]);
+      final text = response.text ?? '{}';
+
+      // 簡易JSONパース
+      String candidate = '情報なし';
+      String condition = '分析できませんでした';
+
+      // (正規表現で抽出)
+      final candMatch = RegExp(r'"candidate":\s*"(.*?)"').firstMatch(text);
+      final condMatch = RegExp(r'"condition":\s*"(.*?)"').firstMatch(text);
+
+      if (candMatch != null) candidate = candMatch.group(1)!;
+      if (condMatch != null) condition = condMatch.group(1)!;
+
+      setState(() {
+        _candidateInfo = candidate;
+        _victoryCondition = condition;
+      });
+
+      // Supabaseにキャッシュ保存
+      await _supabase.from('district_analytics').upsert({
+        'district_name': district,
+        'candidate_info': candidate,
+        'victory_condition': condition,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('AI Analysis Error: $e');
     } finally {
-      setState(() => _isLoadingProfile = false);
+      if (mounted) setState(() => _isAnalyzingDistrict = false);
     }
   }
 
@@ -72,14 +153,13 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     if (userId == null) return;
 
     try {
-      // user_id をキーにして更新 (upsert)
       await _supabase.from('user_profiles').upsert({
-        'user_id': userId, // ここが重要：idではなくuser_id
+        'user_id': userId,
         'election_district': district,
         'updated_at': DateTime.now().toIso8601String(),
       });
-
       setState(() => _myDistrict = district);
+      _fetchDistrictAnalysis(district); // 保存後に分析開始
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -88,85 +168,55 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存エラー: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('保存エラー: $e')));
       }
     }
   }
 
-  // --- AI & Supabase Logic ---
+  // --- Strategy Submit Logic ---
   Future<void> _submitStrategy() async {
     if (_apiKey == null || _strategyController.text.isEmpty) return;
-
     setState(() => _isSubmitting = true);
-
     try {
-      // 1. Geminiで分析
-      final model = GenerativeModel(
-        model: 'models/gemini-2.5-flash',
-        apiKey: _apiKey!,
-      );
-
-      // 選挙区情報があればプロンプトに追加
-      String contextInfo = '';
-      if (_myDistrict.isNotEmpty) {
-        contextInfo = '投稿者の選挙区: $_myDistrict (この地域の特性も考慮してアドバイスしてください)';
-      }
-
+      final model =
+          GenerativeModel(model: 'models/gemini-2.5-flash', apiKey: _apiKey!);
+      String contextInfo = _myDistrict.isNotEmpty ? '選挙区: $_myDistrict' : '';
       final prompt = '''
-      あなたは国民民主党の選挙戦略コンサルタントです。以下の戦略案を評価し、結果をテキストで返してください。
-      
-      【戦略案】
-      ${_strategyController.text}
-      
-      【コンテキスト】
-      $contextInfo
-      党の重要政策: 「手取りを増やす」「103万円の壁撤廃」
-
-      【出力フォーマット】
-      Score: [0-100の数値]
-      Feedback: [具体的で士気を高める100文字以内のアドバイス]
+      選挙戦略コンサルとして評価してください。
+      戦略: ${_strategyController.text}
+      コンテキスト: $contextInfo
+      出力: Score: [0-100] Feedback: [文章]
       ''';
-
       final response = await model.generateContent([Content.text(prompt)]);
       final text = response.text ?? '';
-
-      // 簡易パース
       int score = 50;
       String feedback = text;
-
       final scoreMatch = RegExp(r'Score:\s*(\d+)').firstMatch(text);
       if (scoreMatch != null) {
         score = int.parse(scoreMatch.group(1)!);
-        feedback = text.replaceAll(scoreMatch.group(0)!, '').trim();
-        feedback = feedback.replaceAll('Feedback:', '').trim();
+        feedback = text
+            .replaceAll(scoreMatch.group(0)!, '')
+            .trim()
+            .replaceAll('Feedback:', '')
+            .trim();
       }
-
-      // 2. Supabaseへ保存
       await _supabase.from('election_strategies').insert({
         'user_id': _supabase.auth.currentUser!.id,
         'content': _strategyController.text,
         'ai_feedback': feedback,
         'impact_score': score,
       });
-
       if (mounted) {
         _strategyController.clear();
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('提出完了！ AIスコア: $score点'),
-            backgroundColor: score >= 80 ? Colors.red : Colors.indigo,
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('AIスコア: $score点')));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
-        );
-      }
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('エラー: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -183,15 +233,14 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('あなたの選挙区を登録すると、AIが地域特性を考慮したアドバイスを行います。'),
+            const Text('AIが地域特性を分析します。'),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               decoration: const InputDecoration(
-                labelText: '選挙区名',
-                hintText: '例: 東京1区、愛知2区',
-                border: OutlineInputBorder(),
-              ),
+                  labelText: '選挙区名',
+                  hintText: '例: 東京1区',
+                  border: OutlineInputBorder()),
             ),
           ],
         ),
@@ -204,7 +253,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               _updateDistrict(controller.text);
               Navigator.pop(context);
             },
-            child: const Text('保存'),
+            child: const Text('保存・分析'),
           ),
         ],
       ),
@@ -225,22 +274,17 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ManualItem(
-                icon: Icons.person_pin_circle,
-                title: '1. 選挙区の登録',
-                desc:
-                    '画面右上のアイコンから「選挙区」を登録しましょう。AIがあなたの地域の特性（無党派層の多さや産業構造など）を推測し、より的確なアドバイスを行います。',
-              ),
+                  icon: Icons.map,
+                  title: '1. 選挙区分析',
+                  desc: '右上のアイコンから選挙区を登録すると、AIが「候補者情報」と「勝利への条件」を自動分析して表示します。'),
               _ManualItem(
-                icon: Icons.poll,
-                title: '2. シミュレーション',
-                desc: 'スライダーを操作して、支持率や投票率が議席数にどう影響するか予測します。',
-              ),
+                  icon: Icons.poll,
+                  title: '2. シミュレーション',
+                  desc: '各種パラメータを操作し、目標議席数への到達度を予測します。'),
               _ManualItem(
-                icon: Icons.lightbulb,
-                title: '3. 戦略の投稿',
-                desc:
-                    '「手取りを増やす」ための具体的なアクションを投稿してください。AI参謀が即座に採点し、優れたアイデアは全ユーザーに共有されます。',
-              ),
+                  icon: Icons.campaign,
+                  title: '3. 戦略共有',
+                  desc: 'あなたのアイデアを投稿してください。AIが採点し、他のサポーターと共有されます。'),
             ],
           ),
         ),
@@ -258,52 +302,28 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       isScrollControlled: true,
       builder: (_) => Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16,
-          right: 16,
-          top: 16,
-        ),
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('戦略を提案',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            if (_myDistrict.isNotEmpty)
-              Chip(
-                label: Text('$_myDistrict の戦略として分析します'),
-                avatar: const Icon(Icons.location_on, size: 16),
-                backgroundColor: Colors.orange.shade100,
-              ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             TextField(
-              controller: _strategyController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: '例: 駅前でのビラ配りで、現役世代に「103万円の壁」のメリットをスマホ画面で見せるキャンペーン...',
-                border: OutlineInputBorder(),
-              ),
-            ),
+                controller: _strategyController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                    hintText: '具体的なアクションを入力...', border: OutlineInputBorder())),
             const SizedBox(height: 16),
             SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _isSubmitting ? null : _submitStrategy,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.psychology),
-                label: const Text('AI分析して投稿'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
+                width: double.infinity,
+                child: FilledButton.icon(
+                    onPressed: _isSubmitting ? null : _submitStrategy,
+                    icon: const Icon(Icons.psychology),
+                    label: const Text('AI分析して投稿'))),
             const SizedBox(height: 24),
           ],
         ),
@@ -326,10 +346,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             onPressed: _showDistrictDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'マニュアル',
-            onPressed: _showManualDialog,
-          )
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'マニュアル',
+              onPressed: _showManualDialog)
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -366,7 +385,68 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ▼ 選挙区分析カード (追加)
+          if (_myDistrict.isNotEmpty)
+            Card(
+              color: Colors.indigo.shade50,
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 24),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.indigo.shade200)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.analytics, color: Colors.indigo),
+                        const SizedBox(width: 8),
+                        Text('$_myDistrict の分析レポート',
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo)),
+                        if (_isAnalyzingDistrict) ...[
+                          const Spacer(),
+                          const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                        ]
+                      ],
+                    ),
+                    const Divider(),
+                    const Text('予想候補者',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.grey)),
+                    Text(
+                        _candidateInfo.isNotEmpty
+                            ? _candidateInfo
+                            : '分析中または情報なし',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 12),
+                    const Text('勝利への条件 (AI参謀)',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.grey)),
+                    Text(
+                        _victoryCondition.isNotEmpty
+                            ? _victoryCondition
+                            : '分析中...',
+                        style: const TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+
           Card(
             color: Colors.white,
             elevation: 4,
@@ -376,7 +456,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Text('獲得予測議席', style: TextStyle(color: Colors.grey)),
+                  const Text('全国獲得予測議席', style: TextStyle(color: Colors.grey)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -443,7 +523,6 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         final items = snapshot.data!;
         if (items.isEmpty)
           return const Center(child: Text('まだ戦略がありません。最初の投稿者になりましょう！'));
-
         return ListView.builder(
           padding: const EdgeInsets.only(bottom: 80),
           itemCount: items.length,
@@ -458,32 +537,13 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       score >= 80 ? Colors.red.shade100 : Colors.grey.shade200,
                   child: Text('$score',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: score >= 80 ? Colors.red : Colors.black87,
-                      )),
+                          fontWeight: FontWeight.bold,
+                          color: score >= 80 ? Colors.red : Colors.black87)),
                 ),
                 title: Text(item['content'] ?? '',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.auto_awesome,
-                            size: 12, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        const Text('AI参謀:',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey)),
-                      ],
-                    ),
-                    Text(item['ai_feedback'] ?? '分析中...',
-                        style: const TextStyle(fontSize: 13)),
-                  ],
-                ),
+                subtitle: Text(item['ai_feedback'] ?? '分析中...',
+                    style: const TextStyle(fontSize: 13)),
               ),
             );
           },
@@ -497,10 +557,8 @@ class _ManualItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String desc;
-
   const _ManualItem(
       {required this.icon, required this.title, required this.desc});
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -511,16 +569,14 @@ class _ManualItem extends StatelessWidget {
           Icon(icon, size: 20, color: Colors.indigo),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 Text(title,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
-              ],
-            ),
-          ),
+              ])),
         ],
       ),
     );
