@@ -39,14 +39,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage> {
   // 簡易的な議席獲得予測ロジック (あくまでシミュレーション用の仮計算です)
   int get _projectedSeats {
     // 基礎票 + (支持率 * 勢い係数) + (若年層投票率 * ブースト)
-    // ※これはゲーム的なロジックであり、実際の選挙予測式とは異なります
-    const double base = 10.0;
-    final double momentum = (_supportRate * 3.5);
-    final double youthBoost =
-        (_youthTurnout > 50) ? (_youthTurnout - 50) * 1.5 : 0;
-    final double swingBoost = _swingVoterCapture * 0.5;
+    double base = 10.0;
+    double momentum = (_supportRate * 3.5);
+    double youthBoost = (_youthTurnout > 50) ? (_youthTurnout - 50) * 1.5 : 0;
+    double swingBoost = _swingVoterCapture * 0.5;
 
-    final int seats = (base + momentum + youthBoost + swingBoost).round();
+    int seats = (base + momentum + youthBoost + swingBoost).round();
     return seats > 465 ? 465 : seats; // 最大議席数キャップ
   }
 
@@ -109,7 +107,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage> {
   @override
   Widget build(BuildContext context) {
     final projectedSeats = _projectedSeats;
-    final progress = projectedSeats / _targetSeats;
+    // final progress = projectedSeats / _targetSeats; // 削除: 未使用変数
     final isVictory = projectedSeats >= _targetSeats;
 
     return Scaffold(
@@ -169,7 +167,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                            color: Colors.white, strokeWidth: 2),
+                      )
                     : const Icon(Icons.psychology),
                 label: const Text('Gemini参謀に戦略を諮問する'),
                 style: FilledButton.styleFrom(

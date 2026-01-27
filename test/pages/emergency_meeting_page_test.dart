@@ -46,15 +46,16 @@ class FakeGoTrueClient extends Fake implements GoTrueClient {
 class FakeFunctionsClient extends Fake implements FunctionsClient {
   FunctionResponse? nextResponse;
 
+  // ★修正箇所: シグネチャをパッケージの定義に完全一致させました
   @override
   Future<FunctionResponse> invoke(
     String functionName, {
     Map<String, String>? headers,
-    Object? body,
-    Iterable<MultipartFile>? files,
+    Object? body, // Map<String, dynamic>? から Object? に変更
+    Iterable<MultipartFile>? files, // 追加
     Map<String, dynamic>? queryParameters,
-    HttpMethod? method = HttpMethod.post,
-    String? region,
+    HttpMethod method = HttpMethod.post, // HttpMethod? から HttpMethod に変更
+    String? region, // 追加
   }) async {
     return nextResponse ?? FunctionResponse(data: {}, status: 200);
   }
