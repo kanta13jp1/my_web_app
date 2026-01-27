@@ -18,6 +18,7 @@ import 'cho_office_page.dart';
 import 'cmo_office_page.dart';
 import 'chro_office_page.dart'; // Added
 import 'morning_briefing_page.dart';
+import 'election_strategy_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -111,6 +112,42 @@ class _HomePageState extends State<HomePage> {
               Colors.purple,
             ),
             _buildKpiSummary(context),
+            const SizedBox(height: 24),
+            _buildSectionHeader(
+              'SPECIAL PROJECT',
+              Icons.rocket_launch,
+              Colors.indigo,
+            ),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              color: Colors.indigo, // 目立たせるために背景色を変更
+              child: ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 28,
+                  child: Icon(Icons.campaign, color: Colors.indigo, size: 30),
+                ),
+                title: const Text(
+                  '2026 衆院選 勝利戦略室',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white, // テキストを白く
+                  ),
+                ),
+                subtitle: const Text(
+                  'シミュレーションとAI参謀による戦略立案を行います。',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.white),
+                onTap: () => _nav(context, const ElectionStrategyPage()),
+              ),
+            ),
             const SizedBox(height: 24),
             _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
             _buildGridMenu(context, [
