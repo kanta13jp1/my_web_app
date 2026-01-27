@@ -35,6 +35,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   double _youthTurnout = 35.0;
   double _swingCapture = 20.0;
 
+  Map<String, dynamic>? _lastBatchLog;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +51,25 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     _loadApiKey();
     _fetchUserProfile();
     _fetchCandidates();
+    _fetchBatchLog(); // 初期化時にログも取得
+  }
+
+// ★ 最新のバッチログを取得
+  Future<void> _fetchBatchLog() async {
+    try {
+      final data = await _supabase
+          .from('batch_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() => _lastBatchLog = data);
+      }
+    } catch (e) {
+      debugPrint('Log fetch error: $e');
+    }
   }
 
   Future<void> _loadApiKey() async {
@@ -133,6 +154,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           throw 'Status Code: ${response.status}';
         }
       }
+      await Future.delayed(const Duration(seconds: 3)); // ログ書き込み待ち
+      await _fetchBatchLog();
+      await _fetchCandidates(); // マップデータも更新
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -617,7 +641,59 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             ),
           ],
         ),
+// ▼▼▼ 追加: システム稼働状況パネル (左上) ▼▼▼
+        Positioned(
+          top: 16,
+          left: 16,
+          child: GestureDetector(
+            onTap: _showLogDetail, // タップで詳細表示
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+              ),
+              child: Row(
+                children: [
+                  // ステータスに応じたアイコン
+                  if (_isBusy)
+                    const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                  else if (_lastBatchLog?['status'] == 'SUCCESS')
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 16)
+                  else if (_lastBatchLog?['status'] == 'ERROR')
+                    const Icon(Icons.error, color: Colors.red, size: 16)
+                  else
+                    const Icon(Icons.access_time, color: Colors.grey, size: 16),
 
+                  const SizedBox(width: 8),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('AI戦略本部システム',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo)),
+                      Text(
+                        _isBusy
+                            ? '分析実行中...'
+                            : _formatLogDate(_lastBatchLog?['created_at']),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // ▲▲▲ 追加ここまで ▲▲▲
         // 操作ボタン群
         Positioned(
           bottom: 16,
@@ -677,6 +753,59 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             ),
           ),
       ],
+    );
+  }
+
+// 日付フォーマット用ヘルパー
+  String _formatLogDate(String? isoString) {
+    if (isoString == null) return 'データなし';
+    try {
+      final date = DateTime.parse(isoString).toLocal();
+      // 簡易フォーマット (パッケージなしで実装)
+      return '${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')} 更新';
+    } catch (e) {
+      return '不明';
+    }
+  }
+
+  // ログ詳細ダイアログ
+  void _showLogDetail() {
+    if (_lastBatchLog == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('バッチ実行結果'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _logRow('ステータス', _lastBatchLog!['status']),
+            _logRow('実行日時', _formatLogDate(_lastBatchLog!['created_at'])),
+            _logRow('処理件数', '${_lastBatchLog!['records_processed']} 件'),
+            const SizedBox(height: 8),
+            const Text('メッセージ:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              color: Colors.grey.shade100,
+              child: Text(_lastBatchLog!['message'] ?? '', style: const TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる'))],
+      ),
+    );
+  }
+
+  Widget _logRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(width: 80, child: Text(label, style: const TextStyle(color: Colors.grey))),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold))),
+        ],
+      ),
     );
   }
 
