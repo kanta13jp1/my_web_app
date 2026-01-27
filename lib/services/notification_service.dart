@@ -36,7 +36,8 @@ class NotificationService {
         AndroidNotificationDetails(
       'someday_tasks_reminder_channel',
       'Someday Tasks Reminder',
-      channelDescription: 'Reminds you to check your stocked tasks every Saturday.',
+      channelDescription:
+          'Reminds you to check your stocked tasks every Saturday.',
       importance: Importance.max,
       priority: Priority.high,
       showWhen: false,
@@ -58,12 +59,13 @@ class NotificationService {
   }
 
   tz.TZDateTime _nextInstanceOfSaturdayTenAM() {
-    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
         tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
-    
+
     // If today is Saturday and it's already past 10 AM, schedule for next week
-    if (scheduledDate.weekday == DateTime.saturday && now.isAfter(scheduledDate)) {
+    if (scheduledDate.weekday == DateTime.saturday &&
+        now.isAfter(scheduledDate)) {
       scheduledDate = scheduledDate.add(const Duration(days: 7));
     }
 

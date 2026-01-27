@@ -142,7 +142,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white,),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.calculate),
               label: const Text('Embeddingを実行'),

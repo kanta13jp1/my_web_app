@@ -354,7 +354,8 @@ class _HomePageState extends State<HomePage> {
         final kpi = kpis[index];
         return Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -395,7 +396,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-
 class _MenuData {
   final String title;
   final IconData icon;
@@ -411,4 +411,3 @@ class _KpiData {
   final Color color;
   _KpiData(this.title, this.value, this.icon, this.color);
 }
-

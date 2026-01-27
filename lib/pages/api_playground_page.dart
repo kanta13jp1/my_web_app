@@ -41,7 +41,8 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
 
     try {
       final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models?key=$key',);
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$key',
+      );
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -54,8 +55,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
           }
         });
       } else {
-        setState(() => _responseBody =
-            'モデル一覧の取得に失敗しました: ${response.statusCode}\n${response.body}',);
+        setState(
+          () => _responseBody =
+              'モデル一覧の取得に失敗しました: ${response.statusCode}\n${response.body}',
+        );
       }
     } catch (e) {
       setState(() => _responseBody = 'エラーが発生しました: $e');
@@ -268,7 +271,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2,),)
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Icon(Icons.play_arrow),
                 label: const Text('Execute API'),
                 style: FilledButton.styleFrom(

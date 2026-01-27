@@ -463,7 +463,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final bool isStocking = _addToStock;
     final tableName = isStocking ? 'someday_tasks' : 'daily_todos';
 
-    Map<String, dynamic> data = {
+    final Map<String, dynamic> data = {
       'task': text,
       'is_completed': false,
       'is_important': false,
@@ -485,7 +485,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       data['recurrence'] = _selectedRecurrence;
     }
 
-
     try {
       await Supabase.instance.client.from(tableName).insert(data);
       _todoController.clear();
@@ -506,7 +505,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
         );
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -742,8 +740,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     String? currentDetails, // <-- Add currentDetails
   ) async {
     final editController = TextEditingController(text: currentTask);
-    final editDetailsController =
-        TextEditingController(text: currentDetails); // <-- Add controller for details
+    final editDetailsController = TextEditingController(
+        text: currentDetails); // <-- Add controller for details
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
     String editCategory = currentCategory ?? 'work';
@@ -924,7 +922,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           .from('daily_todos')
                           .update({
                         'task': newTask,
-                        'details': editDetailsController.text.trim(), // <-- Save details
+                        'details': editDetailsController.text
+                            .trim(), // <-- Save details
                         'due_date': editDate?.toIso8601String(),
                         'recurrence': editRecurrence,
                         'category': editCategory,
@@ -1294,7 +1293,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                            'モデル「$_selectedModel」は利用制限に達したか、利用できません。',),
+                          'モデル「$_selectedModel」は利用制限に達したか、利用できません。',
+                        ),
                         const SizedBox(height: 20),
                         const Text('別のモデルを選択して再試行してください。'),
                         const SizedBox(height: 10),
@@ -2381,7 +2381,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: BorderSide(
-                      color: _addToStock ? Colors.orange.shade200 : Colors.transparent,
+                      color: _addToStock
+                          ? Colors.orange.shade200
+                          : Colors.transparent,
                     ),
                   ),
                 ),
@@ -3283,7 +3285,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'order_index': maxOrder + 1, // Add to the end of the list
       });
 
-      await Supabase.instance.client.from('someday_tasks').delete().eq('id', id);
+      await Supabase.instance.client
+          .from('someday_tasks')
+          .delete()
+          .eq('id', id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3326,7 +3331,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (result != true) return;
 
     try {
-      await Supabase.instance.client.from('someday_tasks').delete().eq('id', id);
+      await Supabase.instance.client
+          .from('someday_tasks')
+          .delete()
+          .eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('タスクを削除しました。')),
