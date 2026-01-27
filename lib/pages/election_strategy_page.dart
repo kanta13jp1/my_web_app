@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ElectionStrategyPage extends StatefulWidget {
   const ElectionStrategyPage({super.key});
@@ -17,24 +19,24 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   String? _apiKey;
   final TextEditingController _strategyController = TextEditingController();
   late TabController _tabController;
-  bool _isSubmitting = false;
+  bool _isBusy = false;
 
-  // ユーザー情報 & 分析データ
+  // データ
   String _myDistrict = '';
   String _candidateInfo = '';
   String _victoryCondition = '';
-  bool _isAnalyzingDistrict = false;
-  bool _isFetchingTrends = false; // トレンド取得中フラグ
+  List<Map<String, dynamic>> _stationData = []; // 駅データ
 
-  // シミュレーション用パラメータ (初期値)
-  double _supportRate = 6.0; // 国民民主党の基準値
+  // シミュレーション値
+  double _supportRate = 6.0;
   double _youthTurnout = 35.0;
   double _swingCapture = 20.0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // タブを4つに増加 (予測, 地上戦, 戦略, 素材)
+    _tabController = TabController(length: 4, vsync: this);
     _loadApiKey();
     _fetchUserProfile();
   }
@@ -46,54 +48,61 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     });
   }
 
-  // --- Profile & District Analysis Logic ---
   Future<void> _fetchUserProfile() async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final data = await _supabase
-          .from('user_profiles')
-          .select('election_district')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (data != null && data['election_district'] != null) {
-        setState(() {
-          _myDistrict = data['election_district'];
-        });
-        _fetchDistrictAnalysis(data['election_district']);
-      }
-    } catch (e) {
-      debugPrint('Error fetching profile: $e');
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final data = await _supabase
+        .from('user_profiles')
+        .select('election_district')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (data != null && data['election_district'] != null) {
+      setState(() => _myDistrict = data['election_district']);
+      _fetchDistrictAnalysis(data['election_district']);
+      _fetchLogistics(data['election_district']); // 物流データも取得
     }
   }
 
   Future<void> _fetchDistrictAnalysis(String district) async {
+    final data = await _supabase
+        .from('district_analytics')
+        .select()
+        .eq('district_name', district)
+        .maybeSingle();
+    if (data != null) {
+      setState(() {
+        _candidateInfo = data['candidate_info'] ?? '';
+        _victoryCondition = data['victory_condition'] ?? '';
+      });
+    } else {
+      _analyzeDistrict(district);
+    }
+  }
+
+  // ★ 駅データの取得（キャッシュ or AI）
+  Future<void> _fetchLogistics(String district) async {
     try {
       final data = await _supabase
-          .from('district_analytics')
+          .from('district_logistics')
           .select()
           .eq('district_name', district)
           .maybeSingle();
-
-      if (data != null) {
+      if (data != null && data['station_data'] != null) {
         setState(() {
-          _candidateInfo = data['candidate_info'] ?? '';
-          _victoryCondition = data['victory_condition'] ?? '';
+          _stationData = List<Map<String, dynamic>>.from(data['station_data']);
         });
       } else {
-        _analyzeDistrict(district);
+        _analyzeLogistics(district);
       }
     } catch (e) {
-      debugPrint('Error fetching analytics: $e');
+      debugPrint('Logistics Error: $e');
     }
   }
 
-  // AIによる選挙区分析
-  Future<void> _analyzeDistrict(String district) async {
+  // ★ AIによる駅データ分析
+  Future<void> _analyzeLogistics(String district) async {
     if (_apiKey == null) return;
-    setState(() => _isAnalyzingDistrict = true);
+    setState(() => _isBusy = true);
 
     try {
       final model = GenerativeModel(
@@ -104,149 +113,123 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       );
 
       final prompt = '''
-      あなたは選挙アナリストです。2026年時点の情勢を想定し、「$district」における国民民主党の状況を分析してJSONで出力してください。
-      
-      【出力フォーマット JSON】
-      {
-        "candidate": "候補者名と肩書き（例: 現職、新人、元職）。不明な場合は推測される人物",
-        "condition": "この選挙区で勝利するために必要な条件（150文字以内）。無党派層の動向や対立候補（自民、立憲など）の状況を踏まえて。"
-      }
+      あなたは選挙参謀です。「$district」に含まれる主要な鉄道駅を最大10個リストアップし、
+      1日あたりの推定乗降客数（概算）と共にJSONで出力してください。
+      乗降客数が多い順にソートしてください。
+
+      出力フォーマット:
+      [
+        {"name": "駅名", "passengers": 数値(人), "importance": "S/A/Bのランク"},
+        ...
+      ]
       ''';
 
       final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text ?? '{}';
+      final jsonText = response.text ?? '[]';
+      final List<dynamic> rawList = jsonDecode(jsonText);
+      final List<Map<String, dynamic>> stations =
+          rawList.map((e) => Map<String, dynamic>.from(e)).toList();
 
-      String candidate = '情報なし';
-      String condition = '分析できませんでした';
+      setState(() => _stationData = stations);
 
-      try {
-        final jsonMap = jsonDecode(text);
-        candidate = jsonMap['candidate'] ?? candidate;
-        condition = jsonMap['condition'] ?? condition;
-      } catch (e) {
-        // Fallback for raw text
-        final candMatch = RegExp(r'"candidate":\s*"(.*?)"').firstMatch(text);
-        if (candMatch != null) candidate = candMatch.group(1)!;
-      }
-
-      setState(() {
-        _candidateInfo = candidate;
-        _victoryCondition = condition;
-      });
-
-      await _supabase.from('district_analytics').upsert({
+      // キャッシュ保存
+      await _supabase.from('district_logistics').upsert({
         'district_name': district,
-        'candidate_info': candidate,
-        'victory_condition': condition,
+        'station_data': stations,
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      debugPrint('AI Analysis Error: $e');
+      debugPrint('AI Logistics Error: $e');
     } finally {
-      if (mounted) setState(() => _isAnalyzingDistrict = false);
+      setState(() => _isBusy = false);
     }
   }
 
-  // ★ 追加機能: 最新トレンドの自動取得
-  Future<void> _fetchLatestTrends() async {
-    if (_apiKey == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('APIキーが設定されていません')));
-      return;
-    }
-
-    setState(() => _isFetchingTrends = true);
-
+  // 既存メソッド群 (省略せず記述)
+  Future<void> _analyzeDistrict(String district) async {
+    if (_apiKey == null) return;
+    setState(() => _isBusy = true);
     try {
       final model = GenerativeModel(
-        model: 'models/gemini-2.5-flash',
-        apiKey: _apiKey!,
-        generationConfig:
-            GenerationConfig(responseMimeType: 'application/json'),
-      );
-
-      // 2026年の仮想的な、あるいは最新の検索結果に基づく情勢をシミュレートさせるプロンプト
-      final prompt = '''
-      あなたは選挙データアナリストです。
-      2026年1月現在の最新の世論調査（読売、日経、JX通信など）のトレンドに基づき、以下の数値を推計してください。
-      
-      【対象】
-      政党: 国民民主党 (Democratic Party for the People)
-      
-      【出力フォーマット JSON】
-      {
-        "support_rate": 0.0〜100.0,  // 政党支持率（%）
-        "youth_turnout": 0.0〜100.0, // 10-20代の推定投票率（%）
-        "swing_potential": 0.0〜100.0, // 無党派層のうち獲得可能な割合（%）
-        "reason": "数値の根拠（30文字以内）"
-      }
-      ''';
-
+          model: 'models/gemini-2.5-flash',
+          apiKey: _apiKey!,
+          generationConfig:
+              GenerationConfig(responseMimeType: 'application/json'));
+      final prompt =
+          'あなたは選挙アナリストです。「$district」の国民民主党の情勢(候補者、勝利条件)を分析しJSON({candidate, condition})で出力してください。';
       final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text ?? '{}';
-
-      try {
-        final data = jsonDecode(text);
-        setState(() {
-          _supportRate = (data['support_rate'] as num).toDouble();
-          _youthTurnout = (data['youth_turnout'] as num).toDouble();
-          _swingCapture = (data['swing_potential'] as num).toDouble();
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('最新トレンドを反映しました: ${data['reason']}')),
-          );
-        }
-      } catch (e) {
-        debugPrint('JSON Parse Error: $e');
-      }
+      final json = jsonDecode(response.text ?? '{}');
+      setState(() {
+        _candidateInfo = json['candidate'] ?? '情報なし';
+        _victoryCondition = json['condition'] ?? '分析不能';
+      });
+      await _supabase.from('district_analytics').upsert({
+        'district_name': district,
+        'candidate_info': _candidateInfo,
+        'victory_condition': _victoryCondition,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('取得エラー: $e')));
+      debugPrint('Error: $e');
     } finally {
-      if (mounted) setState(() => _isFetchingTrends = false);
+      setState(() => _isBusy = false);
     }
   }
 
   Future<void> _updateDistrict(String district) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
+    await _supabase.from('user_profiles').upsert({
+      'user_id': userId,
+      'election_district': district,
+      'updated_at': DateTime.now().toIso8601String()
+    });
+    setState(() => _myDistrict = district);
+    _fetchDistrictAnalysis(district);
+    _fetchLogistics(district); // 駅データも再取得
+  }
 
+  Future<void> _fetchLatestTrends() async {
+    if (_apiKey == null) return;
+    setState(() => _isBusy = true);
     try {
-      await _supabase.from('user_profiles').upsert({
-        'user_id': userId,
-        'election_district': district,
-        'updated_at': DateTime.now().toIso8601String(),
+      final model = GenerativeModel(
+          model: 'models/gemini-2.5-flash',
+          apiKey: _apiKey!,
+          generationConfig:
+              GenerationConfig(responseMimeType: 'application/json'));
+      final prompt =
+          '2026年1月現在の最新世論調査に基づき、国民民主党の支持率(support_rate)、若年投票率(youth_turnout)、無党派獲得率(swing_potential)を推計しJSONで出力せよ。';
+      final response = await model.generateContent([Content.text(prompt)]);
+      final data = jsonDecode(response.text ?? '{}');
+      setState(() {
+        _supportRate = (data['support_rate'] as num).toDouble();
+        _youthTurnout = (data['youth_turnout'] as num).toDouble();
+        _swingCapture = (data['swing_potential'] as num).toDouble();
       });
-      setState(() => _myDistrict = district);
-      _fetchDistrictAnalysis(district);
-
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('選挙区を保存しました')));
-      }
+            .showSnackBar(const SnackBar(content: Text('最新トレンドを反映しました')));
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('保存エラー: $e')));
+            .showSnackBar(SnackBar(content: Text('エラー: $e')));
+    } finally {
+      setState(() => _isBusy = false);
     }
   }
 
-  // --- Strategy Submit Logic ---
   Future<void> _submitStrategy() async {
     if (_apiKey == null || _strategyController.text.isEmpty) return;
-    setState(() => _isSubmitting = true);
+    setState(() => _isBusy = true);
     try {
       final model =
           GenerativeModel(model: 'models/gemini-2.5-flash', apiKey: _apiKey!);
-      String contextInfo = _myDistrict.isNotEmpty ? '選挙区: $_myDistrict' : '';
       final prompt = '''
-      選挙戦略コンサルとして評価してください。
+      選挙コンサルとして以下の戦略を評価し、より有権者に響くキャッチコピーにリライトしてください。
       戦略: ${_strategyController.text}
-      コンテキスト: $contextInfo
-      出力: Score: [0-100] Feedback: [文章]
+      選挙区: $_myDistrict
+      出力形式: Score: [0-100] Feedback: [評価] Rewrite: [改善案]
       ''';
       final response = await model.generateContent([Content.text(prompt)]);
       final text = response.text ?? '';
@@ -255,11 +238,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       final scoreMatch = RegExp(r'Score:\s*(\d+)').firstMatch(text);
       if (scoreMatch != null) {
         score = int.parse(scoreMatch.group(1)!);
-        feedback = text
-            .replaceAll(scoreMatch.group(0)!, '')
-            .trim()
-            .replaceAll('Feedback:', '')
-            .trim();
+        feedback = text.replaceAll(scoreMatch.group(0)!, '').trim();
       }
       await _supabase.from('election_strategies').insert({
         'user_id': _supabase.auth.currentUser!.id,
@@ -278,11 +257,59 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      setState(() => _isBusy = false);
     }
   }
 
-  // --- UI Components ---
+  Future<void> _pickAndAnalyzeImage() async {
+    if (_apiKey == null) return;
+    final picker = ImagePicker();
+    final XFile? image =
+        await picker.pickImage(source: ImageSource.gallery, maxWidth: 800);
+    if (image == null) return;
+    setState(() => _isBusy = true);
+    try {
+      final bytes = await image.readAsBytes();
+      final model =
+          GenerativeModel(model: 'models/gemini-1.5-flash', apiKey: _apiKey!);
+      final prompt = TextPart('''
+      選挙ポスター診断:
+      1. インパクトと視認性
+      2. 「手取りを増やす」のメッセージ性
+      3. 印象評価
+      出力: Score: [0-100] Advice: [詳細]
+      ''');
+      final content = Content.multi([prompt, DataPart('image/jpeg', bytes)]);
+      final response = await model.generateContent([content]);
+      final text = response.text ?? '';
+      int score = 50;
+      String advice = text;
+      final scoreMatch = RegExp(r'Score:\s*(\d+)').firstMatch(text);
+      if (scoreMatch != null) {
+        score = int.parse(scoreMatch.group(1)!);
+        advice = text
+            .replaceAll(scoreMatch.group(0)!, '')
+            .trim()
+            .replaceAll('Advice:', '')
+            .trim();
+      }
+      await _supabase.from('campaign_diagnostics').insert({
+        'user_id': _supabase.auth.currentUser!.id,
+        'material_type': 'poster',
+        'ai_feedback': advice,
+        'score': score,
+      });
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('診断スコア: $score点')));
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('画像分析エラー: $e')));
+    } finally {
+      setState(() => _isBusy = false);
+    }
+  }
 
   void _showDistrictDialog() {
     final controller = TextEditingController(text: _myDistrict);
@@ -290,31 +317,20 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('選挙区の設定'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('AIが地域特性を分析します。'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                  labelText: '選挙区名',
-                  hintText: '例: 東京1区',
-                  border: OutlineInputBorder()),
-            ),
-          ],
-        ),
+        content: TextField(
+            controller: controller,
+            decoration:
+                const InputDecoration(labelText: '選挙区名', hintText: '例: 東京1区')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('キャンセル')),
           FilledButton(
-            onPressed: () {
-              _updateDistrict(controller.text);
-              Navigator.pop(context);
-            },
-            child: const Text('保存・分析'),
-          ),
+              onPressed: () {
+                _updateDistrict(controller.text);
+                Navigator.pop(context);
+              },
+              child: const Text('保存・分析')),
         ],
       ),
     );
@@ -334,18 +350,18 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ManualItem(
-                  icon: Icons.auto_graph,
-                  title: '1. 最新トレンド自動取得',
+                  icon: Icons.map, title: '1. 選挙区設定', desc: '右上のアイコンで選挙区を登録。'),
+              _ManualItem(
+                  icon: Icons.train,
+                  title: '2. 地上戦ロジスティクス(New)',
                   desc:
-                      '「最新トレンドをAI分析」ボタンを押すと、AIがネット上の世論調査や情勢を分析し、支持率や投票率のパラメータを自動で現実に合わせます。'),
+                      '「地上戦」タブで、その選挙区の主要駅と乗降客数をAIがリストアップ。朝の駅立ち重点スポットがひと目で分かります。'),
               _ManualItem(
-                  icon: Icons.map,
-                  title: '2. 選挙区分析',
-                  desc: '右上のアイコンから選挙区を登録すると、そのエリアの「候補者予想」や「勝利への条件」が表示されます。'),
+                  icon: Icons.auto_graph,
+                  title: '3. トレンド分析',
+                  desc: '「予測」タブで最新世論調査を反映。'),
               _ManualItem(
-                  icon: Icons.campaign,
-                  title: '3. 集合知戦略',
-                  desc: 'あなたの考えた戦略を投稿してください。AI参謀が採点し、優れたアイデアは共有されます。'),
+                  icon: Icons.image, title: '4. 素材診断', desc: 'ポスターを撮影してAI診断。'),
             ],
           ),
         ),
@@ -382,9 +398,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                    onPressed: _isSubmitting ? null : _submitStrategy,
+                    onPressed: _isBusy ? null : _submitStrategy,
                     icon: const Icon(Icons.psychology),
-                    label: const Text('AI分析して投稿'))),
+                    label: const Text('AI分析・推敲して投稿'))),
             const SizedBox(height: 24),
           ],
         ),
@@ -401,14 +417,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(
-                _myDistrict.isEmpty ? Icons.location_off : Icons.location_on),
-            tooltip: '選挙区設定',
-            onPressed: _showDistrictDialog,
-          ),
+              icon: Icon(
+                  _myDistrict.isEmpty ? Icons.location_off : Icons.location_on),
+              onPressed: _showDistrictDialog),
           IconButton(
               icon: const Icon(Icons.help_outline),
-              tooltip: 'マニュアル',
               onPressed: _showManualDialog)
         ],
         bottom: TabBar(
@@ -416,24 +429,38 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.amber,
-          tabs: const [Tab(text: 'シミュレーション'), Tab(text: '集合知・アイデア')],
+          isScrollable: true, // タブが多いのでスクロール許可
+          tabs: const [
+            Tab(icon: Icon(Icons.poll), text: '予測'),
+            Tab(icon: Icon(Icons.train), text: '地上戦'), // 追加
+            Tab(icon: Icon(Icons.lightbulb), text: '戦略'),
+            Tab(icon: Icon(Icons.image), text: '素材'),
+          ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildSimulationTab(),
-          _buildStrategyFeedTab(),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddDialog,
-        backgroundColor: Colors.red,
-        icon: const Icon(Icons.add_comment, color: Colors.white),
-        label: const Text('戦略を投稿', style: TextStyle(color: Colors.white)),
-      ),
+      body: _isBusy && !mounted
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildSimulationTab(),
+                _buildLogisticsTab(), // 追加
+                _buildStrategyFeedTab(),
+                _buildMaterialDiagnosticsTab(),
+              ],
+            ),
+      floatingActionButton: _tabController.index == 2
+          ? FloatingActionButton.extended(
+              onPressed: _showAddDialog,
+              backgroundColor: Colors.red,
+              icon: const Icon(Icons.add_comment, color: Colors.white),
+              label: const Text('戦略投稿'),
+            )
+          : null,
     );
   }
+
+  // --- タブUI ---
 
   Widget _buildSimulationTab() {
     int seats = (10 +
@@ -446,117 +473,52 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_myDistrict.isNotEmpty)
             Card(
               color: Colors.indigo.shade50,
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 24),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.indigo.shade200)),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.analytics, color: Colors.indigo),
-                        const SizedBox(width: 8),
-                        Text('$_myDistrict の分析レポート',
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.indigo)),
-                        if (_isAnalyzingDistrict) ...[
-                          const Spacer(),
-                          const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                        ]
-                      ],
-                    ),
-                    const Divider(),
-                    const Text('予想候補者',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.grey)),
-                    Text(
-                        _candidateInfo.isNotEmpty
-                            ? _candidateInfo
-                            : '分析中または情報なし',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 12),
-                    const Text('勝利への条件 (AI参謀)',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.grey)),
-                    Text(
-                        _victoryCondition.isNotEmpty
-                            ? _victoryCondition
-                            : '分析中...',
-                        style: const TextStyle(fontSize: 14)),
-                  ],
-                ),
-              ),
-            ),
-
-          Card(
-            color: Colors.white,
-            elevation: 4,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Text('全国獲得予測議席', style: TextStyle(color: Colors.grey)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$seats',
+                      Text('$_myDistrict 分析レポート',
                           style: const TextStyle(
-                              fontSize: 64,
                               fontWeight: FontWeight.bold,
                               color: Colors.indigo)),
-                      const Text(' / 465',
-                          style: TextStyle(fontSize: 24, color: Colors.grey)),
-                    ],
-                  ),
-                  if (seats >= 233)
-                    const Text('政権交代・過半数圏内！',
-                        style: TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.bold)),
-                ],
+                      const Divider(),
+                      Text('候補者: $_candidateInfo'),
+                      Text('条件: $_victoryCondition',
+                          style: const TextStyle(fontSize: 12)),
+                    ]),
               ),
             ),
-          ),
-
           const SizedBox(height: 16),
-
-          // ★ 追加: 自動取得ボタン
-          Center(
-            child: OutlinedButton.icon(
-              onPressed: _isFetchingTrends ? null : _fetchLatestTrends,
-              icon: _isFetchingTrends
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_graph),
-              label: const Text('最新トレンドをAI分析して反映'),
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.indigo),
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(children: [
+                const Text('獲得予測議席', style: TextStyle(color: Colors.grey)),
+                Text('$seats / 465',
+                    style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo)),
+                if (seats >= 233)
+                  const Text('過半数獲得圏内！',
+                      style: TextStyle(
+                          color: Colors.red, fontWeight: FontWeight.bold)),
+              ]),
             ),
           ),
-
+          const SizedBox(height: 16),
+          if (_isBusy) const LinearProgressIndicator(),
+          OutlinedButton.icon(
+            onPressed: _isBusy ? null : _fetchLatestTrends,
+            icon: const Icon(Icons.auto_graph),
+            label: const Text('最新トレンドをAI分析して反映'),
+          ),
           const SizedBox(height: 16),
           _slider('党支持率', _supportRate, 0, 60,
               (v) => setState(() => _supportRate = v), Colors.orange),
@@ -569,23 +531,78 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     );
   }
 
+  // ★ 新規タブ: 地上戦ロジスティクス
+  Widget _buildLogisticsTab() {
+    if (_myDistrict.isEmpty) {
+      return const Center(child: Text('まずは右上のアイコンから\n選挙区を設定してください。'));
+    }
+
+    if (_stationData.isEmpty && !_isBusy) {
+      // データがない場合は手動トリガー
+      return Center(
+        child: FilledButton.icon(
+          onPressed: () => _analyzeLogistics(_myDistrict),
+          icon: const Icon(Icons.search),
+          label: const Text('主要駅と乗降客数を分析'),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _stationData.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              '重点駅リスト (AI推計)',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.indigo),
+            ),
+          );
+        }
+        final station = _stationData[index - 1];
+        final passengers = station['passengers'] as int? ?? 0;
+        final rank = station['importance'] ?? 'B';
+        final isS = rank == 'S';
+
+        return Card(
+          elevation: isS ? 4 : 1,
+          color: isS ? Colors.red.shade50 : Colors.white,
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: isS ? Colors.red : Colors.blue,
+              child: Text(rank,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            title: Text(station['name'] ?? '',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle:
+                Text('推定乗降客数: ${(passengers / 10000).toStringAsFixed(1)}万人/日'),
+            trailing: const Icon(Icons.campaign, color: Colors.grey),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _slider(String label, double val, double min, double max,
       ValueChanged<double> onChanged, Color color) {
-    return Column(
-      children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text('${val.toStringAsFixed(1)}%',
-              style: TextStyle(fontWeight: FontWeight.bold, color: color))
-        ]),
-        Slider(
-            value: val,
-            min: min,
-            max: max,
-            activeColor: color,
-            onChanged: onChanged),
-      ],
-    );
+    return Column(children: [
+      Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [Text(label), Text('${val.toStringAsFixed(1)}%')]),
+      Slider(
+          value: val,
+          min: min,
+          max: max,
+          activeColor: color,
+          onChanged: onChanged),
+    ]);
   }
 
   Widget _buildStrategyFeedTab() {
@@ -599,10 +616,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         if (!snapshot.hasData)
           return const Center(child: CircularProgressIndicator());
         final items = snapshot.data!;
-        if (items.isEmpty)
-          return const Center(child: Text('まだ戦略がありません。最初の投稿者になりましょう！'));
         return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
@@ -611,22 +625,66 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor:
-                      score >= 80 ? Colors.red.shade100 : Colors.grey.shade200,
-                  child: Text('$score',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: score >= 80 ? Colors.red : Colors.black87)),
-                ),
-                title: Text(item['content'] ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(item['ai_feedback'] ?? '分析中...',
-                    style: const TextStyle(fontSize: 13)),
+                    backgroundColor: score >= 80
+                        ? Colors.red.shade100
+                        : Colors.grey.shade200,
+                    child: Text('$score')),
+                title: Text(item['content'] ?? ''),
+                subtitle: Text(item['ai_feedback'] ?? ''),
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildMaterialDiagnosticsTab() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: FilledButton.icon(
+            onPressed: _isBusy ? null : _pickAndAnalyzeImage,
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('ポスター/チラシを撮影・診断'),
+            style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: Colors.teal),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _supabase
+                .from('campaign_diagnostics')
+                .stream(primaryKey: ['id'])
+                .order('created_at', ascending: false)
+                .limit(20),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData)
+                return const Center(child: CircularProgressIndicator());
+              final items = snapshot.data!;
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final score = item['score'] as int? ?? 0;
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      leading: Icon(Icons.image,
+                          color: score >= 80 ? Colors.teal : Colors.grey),
+                      title: Text('診断スコア: $score点'),
+                      subtitle: Text(item['ai_feedback'] ?? ''),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -641,22 +699,17 @@ class _ManualItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: Colors.indigo),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
-              ])),
-        ],
-      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 20, color: Colors.indigo),
+        const SizedBox(width: 12),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
+        ])),
+      ]),
     );
   }
 }
