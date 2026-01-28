@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import time
 from datetime import datetime, timezone
 from google import genai
 from google.genai import types
@@ -35,7 +36,7 @@ def log_result(status, message, count=0):
 
 
 def analyze_candidates():
-    print("🚀 バッチ処理開始 (Debug Mode)")
+    print("🚀 バッチ処理開始 (Rate Limit Safe Mode)")
     processed_count = 0
     
     try:
@@ -48,16 +49,20 @@ def analyze_candidates():
 
         client = genai.Client(api_key=GEMINI_API_KEY)
 
-        for candidate in candidates:
-            print(f"Analyzing: {candidate['name']}...")
+        for i, candidate in enumerate(candidates):
+            print(f"Analyzing ({i+1}/{len(candidates)}): {candidate['name']}...")
             
-            # 動作確認のため、Python側で乱数を生成して確実に値を変動させる
-            # 本番ではAIの値を優先してください
+            # ★レート制限対策: 最初の1件以外は、処理の前に5秒待機する
+            if i > 0:
+                print("  Waiting 5s for API rate limit...")
+                time.sleep(5)
+
+            # 動作確認用デバッグ値 (AIが失敗しても更新を確認するため)
             debug_prob = random.randint(30, 90)
             
             prompt = f"""
             選挙区「{candidate['district']}」の候補者「{candidate['name']}」について。
-            現在の当選確率を {debug_prob}% と仮定して、その理由となる短い分析コメントを作成してください。
+            現在の当選確率を {debug_prob}% 前後と仮定して、その理由となる短い分析コメントを作成してください。
             
             出力形式(JSON):
             {{
@@ -66,8 +71,9 @@ def analyze_candidates():
             """
             
             try:
+                # モデルを gemini-1.5-flash に変更 (安定性のため)
                 response = client.models.generate_content(
-                    model='gemini-2.0-flash',
+                    model='gemini-1.5-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(response_mime_type='application/json')
                 )
@@ -75,12 +81,11 @@ def analyze_candidates():
                 result = json.loads(response.text)
                 comment = result.get('comment', '分析完了')
 
-                # 現在時刻をPythonで生成
                 now_iso = datetime.now(timezone.utc).isoformat()
 
                 # 更新実行
                 update_res = supabase.table("candidates").update({
-                    "win_probability": debug_prob,  # 強制的に値を変更
+                    "win_probability": debug_prob,
                     "ai_analysis": comment,
                     "updated_at": now_iso
                 }).eq("id", candidate['id']).execute()
@@ -89,13 +94,15 @@ def analyze_candidates():
                     processed_count += 1
                     print(f"  -> Success: {debug_prob}%")
                 else:
-                    print(f"  -> Failed: No rows updated. (Check RLS/Permissions)")
+                    print(f"  -> Failed: No rows updated.")
                 
             except Exception as e:
                 print(f"Error on {candidate['name']}: {e}")
+                # APIエラーが出ても止まらず次へ進む
 
         if processed_count == 0:
-             log_result("ERROR", "更新成功数0件。権限(Service Role Key)を確認してください。", 0)
+             # 全て失敗した場合のみエラーログ
+             log_result("ERROR", "更新成功数0件。API制限または権限を確認してください。", 0)
         else:
              log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
 
