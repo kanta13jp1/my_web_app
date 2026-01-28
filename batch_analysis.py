@@ -22,8 +22,8 @@ if not SUPABASE_URL or not SUPABASE_KEY or not GEMINI_API_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ★ 使用するモデルを指定
-MODEL_NAME = 'gemini-2.5-flash-preview-09-2025'
+# ★ ここを変更しました
+MODEL_NAME = 'gemini-2.5-flash-lite-preview-09-2025'
 
 
 def log_result(status, message, count=0):
@@ -48,11 +48,11 @@ def clean_json_text(text):
     return text.strip()
 
 
-def analyze_candidates_final():
+def analyze_candidates_lite():
     print(f"🚀 バッチ処理開始 (Model: {MODEL_NAME})")
     processed_count = 0
     
-    # 連続エラー回数カウント（APIが死んでいるか判定用）
+    # 連続エラー回数カウント
     api_failure_count = 0
     FORCE_SIMULATION_MODE = False
 
@@ -79,9 +79,9 @@ def analyze_candidates_final():
             comment = ""
             is_simulated = False
 
-            # --- 1. AI分析トライ (APIが生きていれば) ---
+            # --- 1. AI分析トライ ---
             if not FORCE_SIMULATION_MODE:
-                # 待機 (API制限対策: 念のため5秒入れる)
+                # Liteモデルでも念のため少し待機
                 if i > 0:
                     time.sleep(5) 
 
@@ -89,7 +89,8 @@ def analyze_candidates_final():
                 選挙区: {district}
                 政党: 国民民主党
                 タスク: 
-                1. 候補者(総支部長)の実名をGoogle検索で特定。
+                1. Google検索を使用し、この選挙区の「国民民主党」の候補者(総支部長)の実名を特定。
+                   (不明な場合は「{current_name}」を使用)
                 2. 2026年当選確率予測(0-100)。
                 3. 30文字以内のコメント作成。
                 
@@ -118,23 +119,20 @@ def analyze_candidates_final():
                         raise Exception("Empty response or Search failed")
 
                 except Exception as e:
-                    print(f"  ⚠️ AI Failed: {e}")
+                    print(f"  ⚠️ AI Failed ({e})")
                     api_failure_count += 1
                     
-                    # 3回連続失敗したら、以降はすべてシミュレーションモードに切り替える（時間短縮）
+                    # 連続失敗したらシミュレーションモードへ
                     if api_failure_count >= 3:
-                        print("  🚨 API limit likely reached. Switching to ALL SIMULATION mode.")
+                        print("  🚨 API error/limit reached. Switching to SIMULATION mode.")
                         FORCE_SIMULATION_MODE = True
                     
-                    # 今回はシミュレーションデータを使う
                     is_simulated = True
-
             else:
                 is_simulated = True
 
-            # --- 2. シミュレーションデータ生成 (AI失敗時 or 強制モード時) ---
+            # --- 2. シミュレーションデータ生成 (AI失敗時) ---
             if is_simulated:
-                # 前回の値をベースに -5% 〜 +5% の範囲でランダム変動
                 base_prob = candidate.get('win_probability', 50)
                 change = random.randint(-5, 5)
                 prob = max(0, min(100, base_prob + change))
@@ -146,9 +144,8 @@ def analyze_candidates_final():
                 
                 print(f"  Using Simulation Data: {prob}%")
 
-            # --- 3. データベース更新 (絶対に実行する) ---
+            # --- 3. データベース更新 ---
             try:
-                # 名前が変わった場合のみログ
                 if new_name != current_name:
                     print(f"  ✨ Name Updated: {current_name} -> {new_name}")
 
@@ -182,4 +179,4 @@ def analyze_candidates_final():
 
 
 if __name__ == "__main__":
-    analyze_candidates_final()
+    analyze_candidates_lite()
