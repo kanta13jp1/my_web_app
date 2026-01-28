@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+
+// Services
 import '../services/theme_service.dart';
+
+// Pages
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
 import 'ai_status_page.dart';
@@ -16,7 +20,7 @@ import 'landing_page.dart';
 import 'cfo_office_page.dart';
 import 'cho_office_page.dart';
 import 'cmo_office_page.dart';
-import 'chro_office_page.dart'; // Added
+import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 
@@ -28,25 +32,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late DateTime _dateTime;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _dateTime = DateTime.now();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _dateTime = DateTime.now();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
+  // 時計ロジックは _ClockWidget に分離したため、ここでの Timer は不要になりました
 
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
@@ -65,15 +51,14 @@ class _HomePageState extends State<HomePage> {
     final primaryColor = themeService.primaryColor;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black87 : const Color(0xFFF1F5F9),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
       appBar: AppBar(
-        title: Column(
+        title: const Column(
           children: [
-            const Text('自分株式会社 経営コックピット'),
-            Text(
-              DateFormat('yyyy/MM/dd HH:mm:ss').format(_dateTime),
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-            ),
+            Text('自分株式会社 経営コックピット'),
+            // 時計部分を独立したウィジェットとして配置（パフォーマンス改善）
+            _ClockWidget(),
           ],
         ),
         backgroundColor: primaryColor,
@@ -111,14 +96,19 @@ class _HomePageState extends State<HomePage> {
               Icons.show_chart,
               Colors.purple,
             ),
-            _buildKpiSummary(context),
+            // コンテキスト(テーマ情報)を渡して色を適切に処理
+            _buildKpiSummary(context, isDark),
             const SizedBox(height: 24),
             _buildSectionHeader(
-                'SPECIAL PROJECT', Icons.rocket_launch, Colors.indigo),
+              'SPECIAL PROJECT',
+              Icons.rocket_launch,
+              Colors.indigo,
+            ),
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               color: Colors.indigo,
               child: ListTile(
                 contentPadding:
@@ -131,20 +121,25 @@ class _HomePageState extends State<HomePage> {
                 title: const Text(
                   '2026 衆院選 勝利戦略室',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
                 ),
                 subtitle: const Text(
                   'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
                   style: TextStyle(color: Colors.white70),
                 ),
-                trailing: const Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.white),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.white,
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const ElectionStrategyPage()),
+                    builder: (context) => const ElectionStrategyPage(),
+                  ),
                 ),
               ),
             ),
@@ -229,6 +224,8 @@ class _HomePageState extends State<HomePage> {
                 () => _nav(context, const GeminiUniversityV2Page()),
               ),
             ]),
+            // 下部の余白を追加
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -329,7 +326,7 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index) {
         final item = items[index];
         return Material(
-          color: Colors.white,
+          color: Theme.of(context).cardColor, // テーマに合わせたカード色
           elevation: 2,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
@@ -368,14 +365,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildKpiSummary(BuildContext context) {
-    // Dummy data for KPIs
+  // isDark引数を追加して色を制御
+  Widget _buildKpiSummary(BuildContext context, bool isDark) {
+    // Dummy data for KPIs (将来的にDBから取得)
     final kpis = [
       _KpiData('総資産 (CFO)', '¥1,234,567', Icons.account_balance, Colors.green),
       _KpiData('睡眠時間 (CHO)', '7h 30m', Icons.bedtime, Colors.blue),
       _KpiData('訪問者数 (CMO)', '8,123', Icons.people, Colors.pink),
       _KpiData('新規メモ (CKO)', '3件', Icons.note_add, Colors.orange),
     ];
+
+    // ダークモード時の文字色調整
+    final labelColor = isDark ? Colors.white70 : Colors.black.withOpacity(0.6);
 
     return GridView.builder(
       shrinkWrap: true,
@@ -384,7 +385,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.8, // Adjust aspect ratio for KPI cards
+        childAspectRatio: 1.8,
       ),
       itemCount: kpis.length,
       itemBuilder: (context, index) {
@@ -402,15 +403,17 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      kpi.title,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black.withOpacity(0.6),
+                    Expanded(
+                      child: Text(
+                        kpi.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: labelColor, // 修正された色を使用
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     Icon(kpi.icon, color: kpi.color, size: 20),
                   ],
@@ -429,6 +432,46 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+}
+
+// 時計表示用の独立したウィジェット（パフォーマンス改善のため分離）
+class _ClockWidget extends StatefulWidget {
+  const _ClockWidget();
+
+  @override
+  State<_ClockWidget> createState() => _ClockWidgetState();
+}
+
+class _ClockWidgetState extends State<_ClockWidget> {
+  late DateTime _dateTime;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateTime = DateTime.now();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _dateTime = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      DateFormat('yyyy/MM/dd HH:mm:ss').format(_dateTime),
+      style: const TextStyle(fontSize: 12, color: Colors.white70),
     );
   }
 }

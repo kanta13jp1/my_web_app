@@ -741,7 +741,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   ) async {
     final editController = TextEditingController(text: currentTask);
     final editDetailsController = TextEditingController(
-        text: currentDetails); // <-- Add controller for details
+      text: currentDetails,
+    ); // <-- Add controller for details
     DateTime? editDate = currentDueDate;
     String editRecurrence = currentRecurrence ?? 'none';
     String editCategory = currentCategory ?? 'work';

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -113,13 +112,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       _fetchDistrictAnalysis(district);
       _fetchLogistics(district);
 
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('選挙区を保存しました')));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('保存エラー: $e')));
+      }
     }
   }
 
@@ -246,10 +247,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     setState(() => _isBusy = true);
     try {
       final model = GenerativeModel(
-          model: 'models/gemini-2.0-flash',
-          apiKey: _apiKey!,
-          generationConfig:
-              GenerationConfig(responseMimeType: 'application/json'));
+        model: 'models/gemini-2.0-flash',
+        apiKey: _apiKey!,
+        generationConfig:
+            GenerationConfig(responseMimeType: 'application/json'),
+      );
       final prompt =
           'あなたは選挙アナリストです。「$district」の国民民主党の情勢(候補者、勝利条件)を分析しJSON({candidate, condition})で出力してください。';
       final response = await model.generateContent([Content.text(prompt)]);
@@ -277,11 +279,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     setState(() => _isBusy = true);
     try {
       final model = GenerativeModel(
-          model: 'models/gemini-2.0-flash',
-          apiKey: _apiKey!,
-          generationConfig:
-              GenerationConfig(responseMimeType: 'application/json'));
-      final prompt =
+        model: 'models/gemini-2.0-flash',
+        apiKey: _apiKey!,
+        generationConfig:
+            GenerationConfig(responseMimeType: 'application/json'),
+      );
+      const prompt =
           '2026年1月現在の最新世論調査に基づき、国民民主党の支持率(support_rate)、若年投票率(youth_turnout)、無党派獲得率(swing_potential)を推計しJSONで出力せよ。';
       final response = await model.generateContent([Content.text(prompt)]);
       final data = jsonDecode(response.text ?? '{}');
@@ -290,13 +293,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         _youthTurnout = (data['youth_turnout'] as num).toDouble();
         _swingCapture = (data['swing_potential'] as num).toDouble();
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('最新トレンドを反映しました')));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
+      }
     } finally {
       setState(() => _isBusy = false);
     }
@@ -337,9 +342,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('AIスコア: $score点')));
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
+      }
     } finally {
       setState(() => _isBusy = false);
     }
@@ -384,13 +390,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         'ai_feedback': advice,
         'score': score,
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('診断スコア: $score点')));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('画像分析エラー: $e')));
+      }
     } finally {
       setState(() => _isBusy = false);
     }
@@ -411,8 +419,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           FilledButton(
             onPressed: () {
               _updateDistrict(controller.text);
@@ -431,28 +440,36 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       isScrollControlled: true,
       builder: (_) => Padding(
         padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16),
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('戦略を提案',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              '戦略を提案',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             TextField(
-                controller: _strategyController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                    hintText: '具体的なアクションを入力...', border: OutlineInputBorder())),
+              controller: _strategyController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: '具体的なアクションを入力...',
+                border: OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                    onPressed: _isBusy ? null : _submitStrategy,
-                    icon: const Icon(Icons.psychology),
-                    label: const Text('AI分析・推敲して投稿'))),
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isBusy ? null : _submitStrategy,
+                icon: const Icon(Icons.psychology),
+                label: const Text('AI分析・推敲して投稿'),
+              ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -464,37 +481,45 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(children: [
-          Icon(Icons.menu_book, color: Colors.indigo),
-          SizedBox(width: 8),
-          Text('利用マニュアル')
-        ]),
+        title: const Row(
+          children: [
+            Icon(Icons.menu_book, color: Colors.indigo),
+            SizedBox(width: 8),
+            Text('利用マニュアル'),
+          ],
+        ),
         content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ManualItem(
-                  icon: Icons.map,
-                  title: '1. 戦況マップ (New)',
-                  desc: '全国の候補者の優勢・劣勢を可視化。右下の脳アイコンでAI一斉分析バッチを実行できます。'),
+                icon: Icons.map,
+                title: '1. 戦況マップ (New)',
+                desc: '全国の候補者の優勢・劣勢を可視化。右下の脳アイコンでAI一斉分析バッチを実行できます。',
+              ),
               _ManualItem(
-                  icon: Icons.train,
-                  title: '2. 地上戦ロジスティクス',
-                  desc: '主要駅データをAI分析し、Sランク(重点)駅を表示します。'),
+                icon: Icons.train,
+                title: '2. 地上戦ロジスティクス',
+                desc: '主要駅データをAI分析し、Sランク(重点)駅を表示します。',
+              ),
               _ManualItem(
-                  icon: Icons.auto_graph,
-                  title: '3. トレンド分析',
-                  desc: '最新の支持率データを反映し議席予測を行います。'),
+                icon: Icons.auto_graph,
+                title: '3. トレンド分析',
+                desc: '最新の支持率データを反映し議席予測を行います。',
+              ),
               _ManualItem(
-                  icon: Icons.lightbulb,
-                  title: '4. 戦略・素材',
-                  desc: '戦略投稿のAI推敲、ポスターの画像診断が可能です。'),
+                icon: Icons.lightbulb,
+                title: '4. 戦略・素材',
+                desc: '戦略投稿のAI推敲、ポスターの画像診断が可能です。',
+              ),
             ],
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('閉じる'))
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
         ],
       ),
     );
@@ -510,24 +535,29 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${cand['district']} : ${cand['name']}',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              '${cand['district']} : ${cand['name']}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
                 const Text('当選確率: '),
-                Text('${cand['win_probability']}%',
-                    style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red)),
+                Text(
+                  '${cand['win_probability']}%',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
               ],
             ),
             const Divider(),
-            const Text('AI情勢分析 (Batch Updated):',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Text(
+              'AI情勢分析 (Batch Updated):',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
             const SizedBox(height: 8),
             Text(cand['ai_analysis'] ?? '分析データなし'),
             const SizedBox(height: 16),
@@ -547,13 +577,14 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         actions: [
           IconButton(
             icon: Icon(
-                _myDistrict.isEmpty ? Icons.location_off : Icons.location_on),
+              _myDistrict.isEmpty ? Icons.location_off : Icons.location_on,
+            ),
             onPressed: _showDistrictDialog,
           ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _showManualDialog,
-          )
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -625,13 +656,20 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                         Icon(Icons.location_on, color: color, size: 40),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4)),
-                          child: Text('${cand['win_probability']}%',
-                              style: const TextStyle(
-                                  fontSize: 10, fontWeight: FontWeight.bold)),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${cand['win_probability']}%',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -652,19 +690,25 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 4)
+                ],
               ),
               child: Row(
                 children: [
                   // ステータスに応じたアイコン
                   if (_isBusy)
                     const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   else if (_lastBatchLog?['status'] == 'SUCCESS')
-                    const Icon(Icons.check_circle,
-                        color: Colors.green, size: 16)
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 16,
+                    )
                   else if (_lastBatchLog?['status'] == 'ERROR')
                     const Icon(Icons.error, color: Colors.red, size: 16)
                   else
@@ -675,11 +719,14 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('AI戦略本部システム',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.indigo)),
+                      const Text(
+                        'AI戦略本部システム',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo,
+                        ),
+                      ),
                       Text(
                         _isBusy
                             ? '分析実行中...'
@@ -712,7 +759,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Icon(Icons.psychology, color: Colors.white),
               ),
               const SizedBox(height: 12),
@@ -736,18 +786,24 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(20)),
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: const Row(
                 children: [
                   SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white)),
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
                   SizedBox(width: 8),
-                  Text('AI総本部: 情勢分析中...',
-                      style: TextStyle(color: Colors.white, fontSize: 12)),
+                  Text(
+                    'AI総本部: 情勢分析中...',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -788,11 +844,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               color: Colors.grey.shade100,
-              child: Text(_lastBatchLog!['message'] ?? '', style: const TextStyle(fontSize: 12)),
+              child: Text(_lastBatchLog!['message'] ?? '',
+                  style: const TextStyle(fontSize: 12)),
             ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる'))],
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('閉じる'))
+        ],
       ),
     );
   }
@@ -802,8 +862,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          SizedBox(width: 80, child: Text(label, style: const TextStyle(color: Colors.grey))),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold))),
+          SizedBox(
+              width: 80,
+              child: Text(label, style: const TextStyle(color: Colors.grey))),
+          Expanded(
+              child: Text(value,
+                  style: const TextStyle(fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -828,18 +892,24 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('$_myDistrict 分析レポート',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.indigo)),
-                      const Divider(),
-                      Text('候補者: $_candidateInfo'),
-                      const SizedBox(height: 8),
-                      Text('条件: $_victoryCondition',
-                          style: const TextStyle(fontSize: 13)),
-                    ]),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$_myDistrict 分析レポート',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    const Divider(),
+                    Text('候補者: $_candidateInfo'),
+                    const SizedBox(height: 8),
+                    Text(
+                      '条件: $_victoryCondition',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
             ),
           const SizedBox(height: 16),
@@ -847,18 +917,27 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             elevation: 4,
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(children: [
-                const Text('獲得予測議席', style: TextStyle(color: Colors.grey)),
-                Text('$seats / 465',
+              child: Column(
+                children: [
+                  const Text('獲得予測議席', style: TextStyle(color: Colors.grey)),
+                  Text(
+                    '$seats / 465',
                     style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo)),
-                if (seats >= 233)
-                  const Text('過半数獲得圏内！',
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
+                  ),
+                  if (seats >= 233)
+                    const Text(
+                      '過半数獲得圏内！',
                       style: TextStyle(
-                          color: Colors.red, fontWeight: FontWeight.bold)),
-              ]),
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -868,57 +947,97 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             label: const Text('最新トレンドをAI分析して反映'),
           ),
           const SizedBox(height: 16),
-          _slider('党支持率', _supportRate, 0, 60,
-              (v) => setState(() => _supportRate = v), Colors.orange),
-          _slider('若年層投票率', _youthTurnout, 20, 80,
-              (v) => setState(() => _youthTurnout = v), Colors.blue),
-          _slider('無党派層獲得', _swingCapture, 0, 100,
-              (v) => setState(() => _swingCapture = v), Colors.green),
+          _slider(
+            '党支持率',
+            _supportRate,
+            0,
+            60,
+            (v) => setState(() => _supportRate = v),
+            Colors.orange,
+          ),
+          _slider(
+            '若年層投票率',
+            _youthTurnout,
+            20,
+            80,
+            (v) => setState(() => _youthTurnout = v),
+            Colors.blue,
+          ),
+          _slider(
+            '無党派層獲得',
+            _swingCapture,
+            0,
+            100,
+            (v) => setState(() => _swingCapture = v),
+            Colors.green,
+          ),
         ],
       ),
     );
   }
 
-  Widget _slider(String label, double val, double min, double max,
-      ValueChanged<double> onChanged, Color color) {
-    return Column(children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text('${val.toStringAsFixed(1)}%',
-            style: TextStyle(fontWeight: FontWeight.bold, color: color))
-      ]),
-      Slider(
+  Widget _slider(
+    String label,
+    double val,
+    double min,
+    double max,
+    ValueChanged<double> onChanged,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '${val.toStringAsFixed(1)}%',
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+            ),
+          ],
+        ),
+        Slider(
           value: val,
           min: min,
           max: max,
           activeColor: color,
-          onChanged: onChanged),
-    ]);
+          onChanged: onChanged,
+        ),
+      ],
+    );
   }
 
   // --- Tab 3: Logistics ---
   Widget _buildLogisticsTab() {
-    if (_myDistrict.isEmpty)
+    if (_myDistrict.isEmpty) {
       return const Center(child: Text('まずは右上のアイコンから\n選挙区を設定してください。'));
+    }
     if (_stationData.isEmpty && !_isBusy) {
       return Center(
-          child: FilledButton.icon(
-              onPressed: () => _analyzeLogistics(_myDistrict),
-              icon: const Icon(Icons.search),
-              label: const Text('主要駅と乗降客数を分析')));
+        child: FilledButton.icon(
+          onPressed: () => _analyzeLogistics(_myDistrict),
+          icon: const Icon(Icons.search),
+          label: const Text('主要駅と乗降客数を分析'),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _stationData.length + 1,
       itemBuilder: (context, index) {
-        if (index == 0)
+        if (index == 0) {
           return const Padding(
-              padding: EdgeInsets.only(bottom: 16.0),
-              child: Text('重点駅リスト (AI推計)',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.indigo)));
+            padding: EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              '重点駅リスト (AI推計)',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo,
+              ),
+            ),
+          );
+        }
         final station = _stationData[index - 1];
         final passengers = station['passengers'] as int? ?? 0;
         final rank = station['importance'] ?? 'B';
@@ -928,12 +1047,19 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           color: isS ? Colors.red.shade50 : Colors.white,
           child: ListTile(
             leading: CircleAvatar(
-                backgroundColor: isS ? Colors.red : Colors.blue,
-                child: Text(rank,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold))),
-            title: Text(station['name'] ?? '',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+              backgroundColor: isS ? Colors.red : Colors.blue,
+              child: Text(
+                rank,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            title: Text(
+              station['name'] ?? '',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle:
                 Text('推定乗降客数: ${(passengers / 10000).toStringAsFixed(1)}万人/日'),
           ),
@@ -951,8 +1077,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           .order('created_at', ascending: false)
           .limit(50),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final items = snapshot.data!;
         if (items.isEmpty) return const Center(child: Text('まだ戦略がありません'));
         return ListView.builder(
@@ -964,10 +1091,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 leading: CircleAvatar(
-                    backgroundColor: score >= 80
-                        ? Colors.red.shade100
-                        : Colors.grey.shade200,
-                    child: Text('$score')),
+                  backgroundColor:
+                      score >= 80 ? Colors.red.shade100 : Colors.grey.shade200,
+                  child: Text('$score'),
+                ),
                 title: Text(item['content'] ?? ''),
                 subtitle: Text(item['ai_feedback'] ?? ''),
               ),
@@ -989,8 +1116,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             icon: const Icon(Icons.camera_alt),
             label: const Text('ポスター/チラシを撮影・診断'),
             style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                backgroundColor: Colors.teal),
+              minimumSize: const Size(double.infinity, 50),
+              backgroundColor: Colors.teal,
+            ),
           ),
         ),
         Expanded(
@@ -1001,8 +1129,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 .order('created_at', ascending: false)
                 .limit(20),
             builder: (context, snapshot) {
-              if (!snapshot.hasData)
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
               final items = snapshot.data!;
               if (items.isEmpty) return const Center(child: Text('履歴がありません'));
               return ListView.builder(
@@ -1014,10 +1143,14 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     margin:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
-                      leading: Icon(Icons.image,
-                          color: score >= 80 ? Colors.teal : Colors.grey),
-                      title: Text('診断スコア: $score点',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      leading: Icon(
+                        Icons.image,
+                        color: score >= 80 ? Colors.teal : Colors.grey,
+                      ),
+                      title: Text(
+                        '診断スコア: $score点',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(item['ai_feedback'] ?? ''),
                     ),
                   );
@@ -1035,23 +1168,33 @@ class _ManualItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String desc;
-  const _ManualItem(
-      {required this.icon, required this.title, required this.desc});
+  const _ManualItem({
+    required this.icon,
+    required this.title,
+    required this.desc,
+  });
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 20, color: Colors.indigo),
-        const SizedBox(width: 12),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
-        ])),
-      ]),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.indigo),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
