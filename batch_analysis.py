@@ -1,6 +1,5 @@
 import os
 import json
-import random
 import time
 from datetime import datetime, timezone
 from google import genai
@@ -35,36 +34,12 @@ def log_result(status, message, count=0):
         print(f"Log Error: {e}")
 
 
-def generate_content_with_retry(client, prompt, model='gemini-flash-latest'):
-    """レート制限(429)発生時に自動で待機してリトライする関数"""
-    try:
-        # 1回目のトライ
-        return client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type='application/json')
-        )
-    except Exception as e:
-        error_str = str(e)
-        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-            print("  ⚠️ Rate limit hit. Cooling down for 60 seconds...")
-            time.sleep(60)  # 1分待機
-            print("  🔄 Retrying...")
-            # 2回目のトライ
-            return client.models.generate_content(
-                model=model,
-                contents=prompt,
-                config=types.GenerateContentConfig(response_mime_type='application/json')
-            )
-        else:
-            raise e  # その他のエラーはそのまま投げる
-
-
-def analyze_candidates():
-    print("🚀 バッチ処理開始 (Ultra Safe Mode)")
+def analyze_candidates_with_search():
+    print("🚀 バッチ処理開始 (Google Search Grounding Mode)")
     processed_count = 0
     
     try:
+        # 候補者データ取得
         response = supabase.table("candidates").select("*").execute()
         candidates = response.data
         
@@ -75,55 +50,78 @@ def analyze_candidates():
         client = genai.Client(api_key=GEMINI_API_KEY)
 
         for i, candidate in enumerate(candidates):
-            print(f"Analyzing ({i+1}/{len(candidates)}): {candidate['name']}...")
+            district = candidate['district']
+            current_name = candidate['name']
             
-            # ★基本待機: 20秒 (API制限回避のため長めに取る)
+            print(f"\n🔍 Searching info for: {district} (Current: {current_name})...")
+            
+            # API制限対策 (検索は重いので30秒待機推奨)
             if i > 0:
-                print("  Waiting 20s...")
-                time.sleep(20)
+                print("  Waiting 30s for Search API rate limit...")
+                time.sleep(30)
 
-            debug_prob = random.randint(30, 90)
-            
+            # Google検索を有効にしたプロンプト
             prompt = f"""
-            選挙区「{candidate['district']}」の候補者「{candidate['name']}」について。
-            現在の当選確率を {debug_prob}% 前後と仮定して、その理由となる短い分析コメントを作成してください。
+            Google検索を使って、次の選挙区の最新情報を調査してください。
+            選挙区: {district}
+            政党: 国民民主党 (Democratic Party for the People)
+            
+            タスク:
+            1. この選挙区の国民民主党の「総支部長」または「立候補予定者」の実名を特定してください。
+               (もし現職がいる場合はその名前。決まっていない場合は「擁立調整中」としてください)
+            2. その候補者の、2026年時点での予想当選確率(0-100)を、競合相手(自民・立憲など)の強さを踏まえて算出してください。
+            3. 短い分析コメントを書いてください。
             
             出力形式(JSON):
             {{
-                "comment": "30文字以内のコメント"
+                "real_name": "氏名(フルネーム)",
+                "probability": 0〜100の整数,
+                "comment": "30文字以内の分析"
             }}
             """
             
             try:
-                # リトライ機能付きの関数で呼び出し
-                response = generate_content_with_retry(client, prompt)
+                # ツール設定で GoogleSearch を有効化
+                response = client.models.generate_content(
+                    model='gemini-flash-latest',  # ★指定のモデル
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        tools=[types.Tool(google_search=types.GoogleSearch())],
+                        response_mime_type='application/json'
+                    )
+                )
                 
                 result = json.loads(response.text)
-                comment = result.get('comment', '分析完了')
+                
+                new_name = result.get('real_name', current_name)
+                prob = result.get('probability', 50)
+                comment = result.get('comment', '情報取得失敗')
 
+                # 名前が更新される場合のみログ出力
+                if new_name != current_name:
+                    print(f"  ✨ Name Updated: {current_name} -> {new_name}")
+                
                 now_iso = datetime.now(timezone.utc).isoformat()
 
-                # 更新実行
+                # DB更新: 名前(name)も更新する
                 update_res = supabase.table("candidates").update({
-                    "win_probability": debug_prob,
+                    "name": new_name,
+                    "win_probability": prob,
                     "ai_analysis": comment,
                     "updated_at": now_iso
                 }).eq("id", candidate['id']).execute()
                 
                 if len(update_res.data) > 0:
                     processed_count += 1
-                    print(f"  -> Success: {debug_prob}%")
+                    print(f"  -> Analyzed: {prob}% {comment}")
                 else:
-                    print(f"  -> Failed: No rows updated.")
+                    print(f"  -> DB Update Failed")
                 
             except Exception as e:
-                print(f"Error on {candidate['name']}: {e}")
-                # エラーでも止まらず次へ
+                # エラー時はスキップして次へ
+                print(f"  ❌ Error on {district}: {e}")
 
-        if processed_count == 0:
-             log_result("ERROR", "更新成功数0件。APIエラーが継続しています。", 0)
-        else:
-             log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
+        log_result("SUCCESS", f"{processed_count}選挙区の最新情報をWebから取得・更新しました", processed_count)
 
     except Exception as e:
         print(f"Fatal Error: {e}")
@@ -132,4 +130,4 @@ def analyze_candidates():
 
 
 if __name__ == "__main__":
-    analyze_candidates()
+    analyze_candidates_with_search()
