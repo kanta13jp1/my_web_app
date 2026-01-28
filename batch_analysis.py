@@ -35,8 +35,33 @@ def log_result(status, message, count=0):
         print(f"Log Error: {e}")
 
 
+def generate_content_with_retry(client, prompt, model='gemini-2.0-flash'):
+    """レート制限(429)発生時に自動で待機してリトライする関数"""
+    try:
+        # 1回目のトライ
+        return client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type='application/json')
+        )
+    except Exception as e:
+        error_str = str(e)
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+            print("  ⚠️ Rate limit hit. Cooling down for 60 seconds...")
+            time.sleep(60)  # 1分待機
+            print("  🔄 Retrying...")
+            # 2回目のトライ
+            return client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type='application/json')
+            )
+        else:
+            raise e  # その他のエラーはそのまま投げる
+
+
 def analyze_candidates():
-    print("🚀 バッチ処理開始 (Gemini 2.0 Flash + Rate Limit Safe Mode)")
+    print("🚀 バッチ処理開始 (Ultra Safe Mode)")
     processed_count = 0
     
     try:
@@ -52,12 +77,11 @@ def analyze_candidates():
         for i, candidate in enumerate(candidates):
             print(f"Analyzing ({i+1}/{len(candidates)}): {candidate['name']}...")
             
-            # ★レート制限対策: 最初の1件以外は5秒待機
+            # ★基本待機: 20秒 (API制限回避のため長めに取る)
             if i > 0:
-                print("  Waiting 5s for API rate limit...")
-                time.sleep(5)
+                print("  Waiting 20s...")
+                time.sleep(20)
 
-            # 動作確認用デバッグ値
             debug_prob = random.randint(30, 90)
             
             prompt = f"""
@@ -71,12 +95,8 @@ def analyze_candidates():
             """
             
             try:
-                # リストに存在することを確認済みのモデルを指定
-                response = client.models.generate_content(
-                    model='gemini-2.0-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(response_mime_type='application/json')
-                )
+                # リトライ機能付きの関数で呼び出し
+                response = generate_content_with_retry(client, prompt)
                 
                 result = json.loads(response.text)
                 comment = result.get('comment', '分析完了')
@@ -98,10 +118,10 @@ def analyze_candidates():
                 
             except Exception as e:
                 print(f"Error on {candidate['name']}: {e}")
-                # APIエラーが出ても止まらず次へ進む
+                # エラーでも止まらず次へ
 
         if processed_count == 0:
-             log_result("ERROR", "更新成功数0件。APIエラーまたは権限を確認してください。", 0)
+             log_result("ERROR", "更新成功数0件。APIエラーが継続しています。", 0)
         else:
              log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
 
