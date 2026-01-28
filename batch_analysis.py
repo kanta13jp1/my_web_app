@@ -1,7 +1,9 @@
 import os
 import json
+import random
+from datetime import datetime, timezone
 from google import genai
-from google.genai import types # 型定義用
+from google.genai import types
 from supabase import create_client, Client
 
 # 環境変数
@@ -18,25 +20,25 @@ if not SUPABASE_URL or not SUPABASE_KEY or not GEMINI_API_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 def log_result(status, message, count=0):
-    """実行結果をログテーブルに保存"""
     try:
         supabase.table("batch_logs").insert({
             "status": status,
             "message": message,
             "records_processed": count,
-            "created_at": "now()"
+            "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
         print(f"[{status}] {message}")
     except Exception as e:
         print(f"Log Error: {e}")
 
+
 def analyze_candidates():
-    print("🚀 バッチ処理開始")
+    print("🚀 バッチ処理開始 (Debug Mode)")
     processed_count = 0
     
     try:
-        # 1. 候補者リスト取得
         response = supabase.table("candidates").select("*").execute()
         candidates = response.data
         
@@ -49,57 +51,59 @@ def analyze_candidates():
         for candidate in candidates:
             print(f"Analyzing: {candidate['name']}...")
             
-            # プロンプト: JSON出力を強制
-            prompt = f"""
-            選挙区「{candidate['district']}」の候補者「{candidate['name']}」について、
-            2026年現在の架空の選挙情勢をシミュレーションしてください。
-            前回の値（勝率{candidate.get('win_probability')}%）から少し変化させてください。
+            # 動作確認のため、Python側で乱数を生成して確実に値を変動させる
+            # 本番ではAIの値を優先してください
+            debug_prob = random.randint(30, 90)
             
-            以下のJSON形式のみを出力してください:
+            prompt = f"""
+            選挙区「{candidate['district']}」の候補者「{candidate['name']}」について。
+            現在の当選確率を {debug_prob}% と仮定して、その理由となる短い分析コメントを作成してください。
+            
+            出力形式(JSON):
             {{
-                "probability": 0〜100の整数,
-                "comment": "分析コメント(30文字以内)"
+                "comment": "30文字以内のコメント"
             }}
             """
             
             try:
-                # JSONモードでリクエスト
                 response = client.models.generate_content(
                     model='gemini-2.0-flash',
                     contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type='application/json'
-                    )
+                    config=types.GenerateContentConfig(response_mime_type='application/json')
                 )
                 
-                # JSONパース
                 result = json.loads(response.text)
-                prob = result.get('probability', 50)
-                comment = result.get('comment', '分析不能')
+                comment = result.get('comment', '分析完了')
 
-                # 3. Supabase更新 (エラーがあれば例外発生)
+                # 現在時刻をPythonで生成
+                now_iso = datetime.now(timezone.utc).isoformat()
+
+                # 更新実行
                 update_res = supabase.table("candidates").update({
-                    "win_probability": prob,
+                    "win_probability": debug_prob,  # 強制的に値を変更
                     "ai_analysis": comment,
-                    "updated_at": "now()"
+                    "updated_at": now_iso
                 }).eq("id", candidate['id']).execute()
                 
-                # 更新確認
                 if len(update_res.data) > 0:
                     processed_count += 1
-                    print(f"  -> Updated: {prob}% {comment}")
+                    print(f"  -> Success: {debug_prob}%")
                 else:
-                    print(f"  -> Update failed (No rows affected)")
+                    print(f"  -> Failed: No rows updated. (Check RLS/Permissions)")
                 
             except Exception as e:
                 print(f"Error on {candidate['name']}: {e}")
 
-        log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
+        if processed_count == 0:
+             log_result("ERROR", "更新成功数0件。権限(Service Role Key)を確認してください。", 0)
+        else:
+             log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
 
     except Exception as e:
         print(f"Fatal Error: {e}")
-        log_result("ERROR", str(e), processed_count)
+        log_result("ERROR", str(e), 0)
         exit(1)
+
 
 if __name__ == "__main__":
     analyze_candidates()
