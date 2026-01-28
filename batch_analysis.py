@@ -36,7 +36,7 @@ def log_result(status, message, count=0):
 
 
 def analyze_candidates():
-    print("🚀 バッチ処理開始 (Rate Limit Safe Mode)")
+    print("🚀 バッチ処理開始 (Gemini 2.0 Flash + Rate Limit Safe Mode)")
     processed_count = 0
     
     try:
@@ -52,12 +52,12 @@ def analyze_candidates():
         for i, candidate in enumerate(candidates):
             print(f"Analyzing ({i+1}/{len(candidates)}): {candidate['name']}...")
             
-            # ★レート制限対策: 最初の1件以外は、処理の前に5秒待機する
+            # ★レート制限対策: 最初の1件以外は5秒待機
             if i > 0:
                 print("  Waiting 5s for API rate limit...")
                 time.sleep(5)
 
-            # 動作確認用デバッグ値 (AIが失敗しても更新を確認するため)
+            # 動作確認用デバッグ値
             debug_prob = random.randint(30, 90)
             
             prompt = f"""
@@ -71,9 +71,9 @@ def analyze_candidates():
             """
             
             try:
-                # モデルを gemini-1.5-flash に変更 (安定性のため)
+                # リストに存在することを確認済みのモデルを指定
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.0-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(response_mime_type='application/json')
                 )
@@ -101,8 +101,7 @@ def analyze_candidates():
                 # APIエラーが出ても止まらず次へ進む
 
         if processed_count == 0:
-             # 全て失敗した場合のみエラーログ
-             log_result("ERROR", "更新成功数0件。API制限または権限を確認してください。", 0)
+             log_result("ERROR", "更新成功数0件。APIエラーまたは権限を確認してください。", 0)
         else:
              log_result("SUCCESS", f"{processed_count}人の分析を更新しました", processed_count)
 
