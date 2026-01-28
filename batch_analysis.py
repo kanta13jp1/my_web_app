@@ -22,8 +22,26 @@ if not SUPABASE_URL or not SUPABASE_KEY or not GEMINI_API_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ★ ここを変更しました
-MODEL_NAME = 'gemini-2.5-flash-lite-preview-09-2025'
+# ★モデルの優先順位リスト (指定順)
+# 上から順に試行し、エラーや制限なら次へ進みます
+MODEL_CASCADE = [
+    'gemini-pro-latest',
+    'gemini-flash-latest',
+    'gemini-flash-lite-latest',
+    'gemini-3-pro-preview',
+    'gemini-3-flash-preview',
+    'gemma-3-1b-it',
+    'gemma-3-4b-it',
+    'gemma-3-12b-it',
+    'gemma-3-27b-it',
+    'gemma-3n-e4b-it',
+    'gemma-3n-e2b-it',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite'
+]
 
 
 def log_result(status, message, count=0):
@@ -40,7 +58,7 @@ def log_result(status, message, count=0):
 
 
 def clean_json_text(text):
-    """Markdownコードブロックを除去してJSON文字列のみ抽出"""
+    """Markdownコードブロックを除去"""
     pattern = r"```(?:json)?\s*([\s\S]*?)\s*```"
     match = re.search(pattern, text)
     if match:
@@ -48,24 +66,37 @@ def clean_json_text(text):
     return text.strip()
 
 
-def analyze_candidates_lite():
-    print(f"🚀 バッチ処理開始 (Model: {MODEL_NAME})")
-    processed_count = 0
+def extract_json(text):
+    """JSON抽出"""
+    try:
+        text = re.sub(r'```(?:json)?', '', text).strip()
+        text = text.replace('```', '')
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end != -1:
+            json_str = text[start:end + 1]
+            return json.loads(json_str)
+        return json.loads(text)
+    except Exception:
+        return None
+
+
+def analyze_candidates_cascade():
+    print("🚀 バッチ処理開始 (Custom Cascade Mode)")
+    # 上位5つだけ表示
+    print(f"📋 Priority: {', '.join(MODEL_CASCADE[:5])} ... and more")
     
-    # 連続エラー回数カウント
-    api_failure_count = 0
-    FORCE_SIMULATION_MODE = False
+    processed_count = 0
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     try:
-        # 候補者データ取得 (ID順)
+        # ID順に全候補者を取得
         response = supabase.table("candidates").select("*").order("id").execute()
         candidates = response.data
         
         if not candidates:
-            log_result("WARNING", "候補者データが0件でした", 0)
+            log_result("WARNING", "候補者データが0件です", 0)
             return
-
-        client = genai.Client(api_key=GEMINI_API_KEY)
 
         for i, candidate in enumerate(candidates):
             district = candidate['district']
@@ -73,104 +104,110 @@ def analyze_candidates_lite():
             
             print(f"\nProcessing ({i+1}/{len(candidates)}): {district}...")
 
-            # --- 変数の初期化 ---
+            # --- 変数 ---
             new_name = current_name
             prob = 50
             comment = ""
+            success_model = None
             is_simulated = False
 
-            # --- 1. AI分析トライ ---
-            if not FORCE_SIMULATION_MODE:
-                # Liteモデルでも念のため少し待機
-                if i > 0:
-                    time.sleep(5) 
+            # --- プロンプト作成 ---
+            prompt = f"""
+            選挙区: {district}
+            政党: 国民民主党
+            タスク:
+            1. Google検索で候補者(総支部長)の実名を特定 (不明なら「{current_name}」)。
+            2. 2026年当選確率予測(0-100)。
+            3. 30文字以内のコメント。
+            
+            JSON出力: {{ "real_name": "氏名", "probability": 50, "comment": "..." }}
+            """
 
-                prompt = f"""
-                選挙区: {district}
-                政党: 国民民主党
-                タスク: 
-                1. Google検索を使用し、この選挙区の「国民民主党」の候補者(総支部長)の実名を特定。
-                   (不明な場合は「{current_name}」を使用)
-                2. 2026年当選確率予測(0-100)。
-                3. 30文字以内のコメント作成。
-                
-                出力JSONキー: real_name, probability, comment
-                """
-                
+            # --- モデル・カスケード実行 ---
+            for model_name in MODEL_CASCADE:
                 try:
-                    # モデル呼び出し (検索ツール付き)
-                    response = client.models.generate_content(
-                        model=MODEL_NAME,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            tools=[types.Tool(google_search=types.GoogleSearch())]
-                        )
-                    )
+                    # モデル切り替え時の待機（短めに）
+                    if i > 0: time.sleep(1)
+
+                    print(f"  Trying {model_name}...", end=" ")
                     
+                    # Gemma系など検索非対応モデルへの対策:
+                    # 検索ツールを指定してエラーが出たら、ツールなしで再トライするロジックも内包
+                    try:
+                        # まず検索ありでトライ
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                tools=[types.Tool(google_search=types.GoogleSearch())]
+                            )
+                        )
+                    except Exception as tool_error:
+                        # ツール非対応(Gemma等)の場合はツールなしでリトライ
+                        if "Showcase" not in str(tool_error) and ("not supported" in str(tool_error) or "INVALID_ARGUMENT" in str(tool_error)):
+                             # print("(Search N/A)", end=" ")
+                             response = client.models.generate_content(
+                                model=model_name,
+                                contents=prompt
+                            )
+                        else:
+                            raise tool_error
+
                     if response and response.text:
-                        json_text = clean_json_text(response.text)
-                        result = json.loads(json_text)
-                        new_name = result.get('real_name', current_name)
-                        prob = result.get('probability', 50)
-                        comment = result.get('comment', '分析完了')
-                        # 成功したらエラーカウントリセット
-                        api_failure_count = 0
+                        result = extract_json(response.text)
+                        if result:
+                            new_name = result.get('real_name', current_name)
+                            prob = result.get('probability', 50)
+                            comment = result.get('comment', '分析完了')
+                            success_model = model_name
+                            print("✅ OK")
+                            break  # 成功！ループを抜ける
+                        else:
+                            print("❌ JSON Error")
                     else:
-                        raise Exception("Empty response or Search failed")
+                        print("❌ Empty")
 
                 except Exception as e:
-                    print(f"  ⚠️ AI Failed ({e})")
-                    api_failure_count += 1
-                    
-                    # 連続失敗したらシミュレーションモードへ
-                    if api_failure_count >= 3:
-                        print("  🚨 API error/limit reached. Switching to SIMULATION mode.")
-                        FORCE_SIMULATION_MODE = True
-                    
-                    is_simulated = True
-            else:
-                is_simulated = True
+                    # エラーハンドリング
+                    error_msg = str(e)
+                    if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                        print(f"⚠️ Limit")
+                    elif "404" in error_msg or "NOT_FOUND" in error_msg:
+                         print(f"❌ Not Found")
+                    else:
+                        print(f"❌ Error: {error_msg[:20]}...")
+                    # 次のモデルへ
 
-            # --- 2. シミュレーションデータ生成 (AI失敗時) ---
-            if is_simulated:
+            # --- 全滅時 ---
+            if success_model is None:
+                print("  🚨 All models failed. Using SIMULATION.")
+                is_simulated = True
                 base_prob = candidate.get('win_probability', 50)
                 change = random.randint(-5, 5)
                 prob = max(0, min(100, base_prob + change))
-                
-                if FORCE_SIMULATION_MODE:
-                    comment = f"※API制限中のためシミュレーション値 (前日比 {change:+d}%)"
-                else:
-                    comment = "データ取得エラーにより推定値を表示"
-                
-                print(f"  Using Simulation Data: {prob}%")
+                comment = "※全AIモデル制限のため推定値を表示"
 
-            # --- 3. データベース更新 ---
+            # --- DB更新 ---
             try:
                 if new_name != current_name:
                     print(f"  ✨ Name Updated: {current_name} -> {new_name}")
-
-                update_res = supabase.table("candidates").update({
+                
+                supabase.table("candidates").update({
                     "name": new_name,
                     "win_probability": prob,
                     "ai_analysis": comment,
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }).eq("id", candidate['id']).execute()
                 
-                if len(update_res.data) > 0:
-                    processed_count += 1
-                    status_icon = "🤖" if not is_simulated else "🎲"
-                    print(f"  -> Update Success {status_icon}: {prob}%")
-                
-            except Exception as e:
-                print(f"  ❌ DB Update Error: {e}")
+                status_icon = "🤖" if not is_simulated else "🎲"
+                model_info = f"({success_model})" if success_model else "(Sim)"
+                print(f"  -> Success {status_icon} {model_info}: {prob}%")
+                if not is_simulated: processed_count += 1
 
-        # 最終ログ
-        final_status = "SUCCESS" if not FORCE_SIMULATION_MODE else "WARNING"
-        log_msg = f"{processed_count}件更新完了"
-        if FORCE_SIMULATION_MODE:
-            log_msg += " (一部シミュレーション)"
-            
-        log_result(final_status, log_msg, processed_count)
+            except Exception as e:
+                print(f"  ❌ DB Error: {e}")
+
+        log_result("SUCCESS", f"{len(candidates)}件処理完了 (AI成功: {processed_count}件)", processed_count)
 
     except Exception as e:
         print(f"Fatal Error: {e}")
@@ -179,4 +216,4 @@ def analyze_candidates_lite():
 
 
 if __name__ == "__main__":
-    analyze_candidates_lite()
+    analyze_candidates_cascade()
