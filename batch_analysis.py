@@ -35,7 +35,7 @@ def log_result(status, message, count=0):
         print(f"Log Error: {e}")
 
 
-def generate_content_with_retry(client, prompt, model='gemini-2.0-flash'):
+def generate_content_with_retry(client, prompt, model='gemini-flash-latest'):
     """レート制限(429)発生時に自動で待機してリトライする関数"""
     try:
         # 1回目のトライ
