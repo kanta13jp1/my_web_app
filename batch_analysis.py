@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import re
 from datetime import datetime, timezone
 from google import genai
 from google.genai import types
@@ -34,8 +35,21 @@ def log_result(status, message, count=0):
         print(f"Log Error: {e}")
 
 
+def clean_json_text(text):
+    """
+    Markdownのコードブロック (```json ... ```) を除去して
+    純粋なJSON文字列を取り出すヘルパー関数
+    """
+    # ```json ... ``` または ``` ... ``` を削除
+    pattern = r"```(?:json)?\s*([\s\S]*?)\s*```"
+    match = re.search(pattern, text)
+    if match:
+        return match.group(1)
+    return text.strip()
+
+
 def analyze_candidates_with_search():
-    print("🚀 バッチ処理開始 (Google Search Grounding Mode)")
+    print("🚀 バッチ処理開始 (Search Grounding + Text Parsing Mode)")
     processed_count = 0
     
     try:
@@ -55,12 +69,12 @@ def analyze_candidates_with_search():
             
             print(f"\n🔍 Searching info for: {district} (Current: {current_name})...")
             
-            # API制限対策 (検索は重いので30秒待機推奨)
+            # API制限対策 (検索は重いので30秒待機)
             if i > 0:
                 print("  Waiting 30s for Search API rate limit...")
                 time.sleep(30)
 
-            # Google検索を有効にしたプロンプト
+            # プロンプト: JSON形式のテキスト出力を強く指示
             prompt = f"""
             Google検索を使って、次の選挙区の最新情報を調査してください。
             選挙区: {district}
@@ -68,42 +82,52 @@ def analyze_candidates_with_search():
             
             タスク:
             1. この選挙区の国民民主党の「総支部長」または「立候補予定者」の実名を特定してください。
-               (もし現職がいる場合はその名前。決まっていない場合は「擁立調整中」としてください)
-            2. その候補者の、2026年時点での予想当選確率(0-100)を、競合相手(自民・立憲など)の強さを踏まえて算出してください。
-            3. 短い分析コメントを書いてください。
+               (現職がいる場合はその名前。未定の場合は「擁立調整中」)
+            2. 2026年時点での予想当選確率(0-100)を、競合相手の強さを踏まえて算出してください。
+            3. 30文字以内の短い分析コメントを書いてください。
             
-            出力形式(JSON):
+            【重要】
+            回答は以下のJSON形式の文字列のみを出力してください。余計な説明は不要です。
+            
+            ```json
             {{
-                "real_name": "氏名(フルネーム)",
-                "probability": 0〜100の整数,
-                "comment": "30文字以内の分析"
+                "real_name": "氏名",
+                "probability": 50,
+                "comment": "分析コメント"
             }}
+            ```
             """
             
             try:
-                # ツール設定で GoogleSearch を有効化
+                # ツール設定: Search有効化 + JSONモード無効化(デフォルト)
                 response = client.models.generate_content(
-                    model='gemini-flash-latest',  # ★指定のモデル
+                    model='gemini-flash-latest',
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=[types.Tool(google_search=types.GoogleSearch())],
-                        response_mime_type='application/json'
+                        # response_mime_type='application/json' は指定しない！
                     )
                 )
                 
-                result = json.loads(response.text)
+                raw_text = response.text
+                if not raw_text:
+                    print("  ❌ Empty response from AI")
+                    continue
+                    
+                # テキストからJSON部分を抽出・パース
+                json_text = clean_json_text(raw_text)
+                result = json.loads(json_text)
                 
                 new_name = result.get('real_name', current_name)
                 prob = result.get('probability', 50)
                 comment = result.get('comment', '情報取得失敗')
 
-                # 名前が更新される場合のみログ出力
                 if new_name != current_name:
                     print(f"  ✨ Name Updated: {current_name} -> {new_name}")
                 
                 now_iso = datetime.now(timezone.utc).isoformat()
 
-                # DB更新: 名前(name)も更新する
+                # DB更新
                 update_res = supabase.table("candidates").update({
                     "name": new_name,
                     "win_probability": prob,
@@ -118,7 +142,6 @@ def analyze_candidates_with_search():
                     print(f"  -> DB Update Failed")
                 
             except Exception as e:
-                # エラー時はスキップして次へ
                 print(f"  ❌ Error on {district}: {e}")
 
         log_result("SUCCESS", f"{processed_count}選挙区の最新情報をWebから取得・更新しました", processed_count)
