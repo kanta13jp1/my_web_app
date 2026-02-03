@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:my_web_app/models/board_meeting.dart';
+import 'package:my_web_app/services/ai_model_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -351,11 +352,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
-      final model =
-          GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
-      final content = [Content.text(contextPrompt)];
-      final response = await model.generateContent(content);
-      final responseText = response.text;
+      final responseText = await AIModelService.instance.generateContent(
+        model: _selectedModel,
+        apiKey: _geminiApiKey!,
+        prompt: contextPrompt,
+      );
 
       if (responseText == null) {
         throw Exception('AIからの応答がありません。');
@@ -853,47 +854,3 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 // Add the BoardMeetingLog and BoardMessage models if they are not in a separate file.
 // For the purpose of this file, I'm assuming they might look something like this.
 // NOTE: I'm getting an error that BoardMeetingLog is not defined. I will define it.
-
-class BoardMeetingLog {
-  final String id;
-  final String userId;
-  final String topic;
-  final String conclusion;
-  final List<BoardMessage> messages;
-  final DateTime createdAt;
-
-  BoardMeetingLog({
-    required this.id,
-    required this.userId,
-    required this.topic,
-    required this.conclusion,
-    required this.messages,
-    required this.createdAt,
-  });
-}
-
-class BoardMessage {
-  final String id;
-  final String speakerName;
-  final String role;
-  final String content;
-  final DateTime timestamp;
-
-  BoardMessage({
-    required this.id,
-    required this.speakerName,
-    required this.role,
-    required this.content,
-    required this.timestamp,
-  });
-
-  static BoardMessage empty() {
-    return BoardMessage(
-      id: '',
-      speakerName: '',
-      role: '',
-      content: '',
-      timestamp: DateTime(0),
-    );
-  }
-}
