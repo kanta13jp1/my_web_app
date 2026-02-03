@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 class BoardMeetingLog {
   final String id;
   final String userId;
