@@ -691,7 +691,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 4)
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
                 ],
               ),
               child: Row(
@@ -845,13 +845,13 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               padding: const EdgeInsets.all(8),
               color: Colors.grey.shade100,
               child: Text(_lastBatchLog!['message'] ?? '',
-                  style: const TextStyle(fontSize: 12)),
+                  style: const TextStyle(fontSize: 12),),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('閉じる'))
+              onPressed: () => Navigator.pop(context), child: const Text('閉じる'),),
         ],
       ),
     );
@@ -864,10 +864,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         children: [
           SizedBox(
               width: 80,
-              child: Text(label, style: const TextStyle(color: Colors.grey))),
+              child: Text(label, style: const TextStyle(color: Colors.grey)),),
           Expanded(
               child: Text(value,
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
+                  style: const TextStyle(fontWeight: FontWeight.bold),),),
         ],
       ),
     );
@@ -1187,7 +1187,7 @@ class _ManualItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontWeight: FontWeight.bold),),
                 const SizedBox(height: 4),
                 Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
               ],
