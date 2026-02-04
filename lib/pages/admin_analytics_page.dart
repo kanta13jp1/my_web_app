@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import 'package:my_web_app/main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
-  const AdminAnalyticsPage({super.key});
+  final SupabaseClient? supabaseClient;
+  const AdminAnalyticsPage({super.key, this.supabaseClient});
 
   @override
   State<AdminAnalyticsPage> createState() => _AdminAnalyticsPageState();
@@ -11,16 +13,19 @@ class AdminAnalyticsPage extends StatefulWidget {
 class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _dailyStats = [];
   bool _isLoading = true;
+  late final SupabaseClient _supabase;
+
 
   @override
   void initState() {
     super.initState();
+    _supabase = widget.supabaseClient ?? supabase;
     _loadStats();
   }
 
   Future<void> _loadStats() async {
     try {
-      final response = await supabase
+      final response = await _supabase
           .from('app_analytics')
           .select()
           .order('date', ascending: false)
