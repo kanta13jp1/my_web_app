@@ -31,7 +31,7 @@ class FakeGoTrueClient extends Fake implements GoTrueClient {
       appMetadata: {},
       userMetadata: {},
       aud: 'authenticated',
-      createdAt: '2023-01-01');
+      createdAt: '2023-01-01',);
 }
 
 class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
@@ -44,13 +44,13 @@ class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
 
   @override
   PostgrestFilterBuilder<List<Map<String, dynamic>>> select(
-          [String? columns = '*']) =>
+          [String? columns = '*',]) =>
       FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(
-          _data as List<Map<String, dynamic>>? ?? []);
+          _data as List<Map<String, dynamic>>? ?? [],);
 
   @override
   PostgrestFilterBuilder<dynamic> insert(Object? values,
-          {bool? defaultToNull = true}) =>
+          {bool? defaultToNull = true,}) =>
       FakePostgrestFilterBuilder<dynamic>(_data);
 }
 
@@ -64,7 +64,7 @@ class FakePostgrestFilterBuilder<T> extends Fake
 
   @override
   Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-          {Function? onError}) =>
+          {Function? onError,}) =>
       Future.value(_value).then(onValue, onError: onError);
 
   @override
@@ -75,16 +75,16 @@ class FakePostgrestFilterBuilder<T> extends Fake
   PostgrestTransformBuilder<Map<String, dynamic>?> maybeSingle() {
     if (_value is List && (_value as List).isNotEmpty) {
       return FakePostgrestTransformBuilder<Map<String, dynamic>?>(
-          (_value as List).first as Map<String, dynamic>);
+          (_value as List).first as Map<String, dynamic>,);
     }
     return FakePostgrestTransformBuilder<Map<String, dynamic>?>(null);
   }
 
   @override
   PostgrestTransformBuilder<List<Map<String, dynamic>>> select(
-      [String? columns = '*']) {
+      [String? columns = '*',]) {
     return FakePostgrestTransformBuilder<List<Map<String, dynamic>>>(
-        _value as List<Map<String, dynamic>>);
+        _value as List<Map<String, dynamic>>,);
   }
 }
 
@@ -95,16 +95,16 @@ class FakePostgrestTransformBuilder<T> extends Fake
 
   @override
   Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-          {Function? onError}) =>
+          {Function? onError,}) =>
       Future.value(_value).then(onValue, onError: onError);
   @override
   PostgrestTransformBuilder<Map<String, dynamic>> single() {
     if (_value is List && (_value as List).isNotEmpty) {
       return FakePostgrestTransformBuilder<Map<String, dynamic>>(
-          (_value as List).first as Map<String, dynamic>);
+          (_value as List).first as Map<String, dynamic>,);
     }
     return FakePostgrestTransformBuilder<Map<String, dynamic>>(
-        _value as Map<String, dynamic>);
+        _value as Map<String, dynamic>,);
   }
 }
 
@@ -141,15 +141,15 @@ void main() {
 
     // 2. AI分析のモック設定
     final aiResponseJson = {
-      "messages": [
-        {"role": "CEO", "speaker_name": "Steve", "content": "現状報告します。"},
+      'messages': [
+        {'role': 'CEO', 'speaker_name': 'Steve', 'content': '現状報告します。'},
       ],
-      "conclusion": "今週末は休息が必要です。",
+      'conclusion': '今週末は休息が必要です。',
     };
     when(mockAIModelService.generateContent(
             model: anyNamed('model'),
             apiKey: anyNamed('apiKey'),
-            prompt: anyNamed('prompt')))
+            prompt: anyNamed('prompt'),),)
         .thenAnswer((_) async => jsonEncode(aiResponseJson));
 
     // 3. 保存処理のモック設定
@@ -178,7 +178,7 @@ void main() {
     when(mockAIModelService.generateContent(
             model: anyNamed('model'),
             apiKey: anyNamed('apiKey'),
-            prompt: anyNamed('prompt')))
+            prompt: anyNamed('prompt'),),)
         .thenThrow(Exception('AI Busy'));
 
     // --- テスト実行 ---

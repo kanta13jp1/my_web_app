@@ -77,14 +77,14 @@ void main() {
       'landing_views': 100,
       'conversions': 10,
       'share_count': 5,
-      'source_details': {'direct': 80, 'x_share': 20}
+      'source_details': {'direct': 80, 'x_share': 20},
     },
     {
       'date': '2023-10-26',
       'landing_views': 80,
       'conversions': 12,
       'share_count': 3,
-      'source_details': {'direct': 70, 'google': 10}
+      'source_details': {'direct': 70, 'google': 10},
     },
   ];
 
@@ -122,7 +122,7 @@ void main() {
           'landing_views': 50,
           'conversions': 5,
           'share_count': 2,
-          'source_details': {'direct': 50}
+          'source_details': {'direct': 50},
         },
       ];
       fakeSupabaseClient.queryBuilder.setData(newData);

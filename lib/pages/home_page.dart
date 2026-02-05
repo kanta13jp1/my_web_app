@@ -23,6 +23,7 @@ import 'cmo_office_page.dart';
 import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
+import 'mind_map_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -222,6 +223,12 @@ class _HomePageState extends State<HomePage> {
                 Icons.menu_book,
                 Colors.blue,
                 () => _nav(context, const GeminiUniversityV2Page()),
+              ),
+              _MenuData(
+                'マインドマップ (思考整理)',
+                Icons.hub,
+                Colors.blue,
+                () => _nav(context, const MindMapPage()),
               ),
             ]),
             // 下部の余白を追加
