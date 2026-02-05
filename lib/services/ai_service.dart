@@ -1,8 +1,9 @@
-import 'dart:async'; // Future.wait, Timer のために追加
+import 'dart:async';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import '../main.dart';
-import 'dart:math'; // 指数バックオフのために追加
+import 'dart:math';
 
 /// AI機能のカスタム例外
 class AIServiceException implements Exception {
@@ -18,16 +19,14 @@ class AIServiceException implements Exception {
   String toString() => message;
 }
 
-// ... (TagSuggestion, AISearchResult, AIUsageStats, TaskRecommendations のクラス定義はファイル末尾に保持)
-
 /// AI機能を提供するサービス
-/// NotionのAI機能に対抗する包括的なAI支援機能
 class AIService {
   final SupabaseClient _supabase;
+  final String? _googleAIApiKey;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
 
-  AIService([SupabaseClient? supabaseClient])
+  AIService([SupabaseClient? supabaseClient, this._googleAIApiKey])
       : _supabase = supabaseClient ?? supabase;
 
   /// 指数バックオフでリトライを実行するヘルパーメソッド
@@ -157,6 +156,66 @@ class AIService {
   }
 
   // =========================================================================
+  // Google Generative AI direct methods
+  // =========================================================================
+
+  Future<String?> generateContent({
+    required String model,
+    required String prompt,
+  }) async {
+    if (_googleAIApiKey == null) {
+      throw AIServiceException('Google AI API key is not configured.');
+    }
+    final genModel = GenerativeModel(model: model, apiKey: _googleAIApiKey!);
+    final content = [Content.text(prompt)];
+    final response = await genModel.generateContent(content);
+    return response.text;
+  }
+
+  Future<String?> generateMindMap({
+    required String model,
+    required String topic,
+  }) {
+    const promptTemplate = '''
+You are an expert mind map generator. Your task is to take a central topic and generate a hierarchical structure of related ideas, concepts, and sub-topics. The output must be a valid JSON object.
+
+The JSON object should have a single root key representing the central topic. The value should be an object where each key is a child idea. This can be nested recursively for sub-ideas.
+
+**Example Input:** "時間管理術" (Time Management Techniques)
+
+**Example Output:**
+```json
+{
+  "時間管理術": {
+    "目標設定": {
+      "SMARTの法則": {},
+      "短期・長期目標": {}
+    },
+    "タスクの優先順位付け": {
+      "アイゼンハワー・マトリクス": {},
+      "ABCDEメソッド": {}
+    },
+    "テクニック": {
+      "ポモドーロ・テクニック": {},
+      "2分ルール": {}
+    },
+    "ツール": {
+      "カレンダーアプリ": {},
+      "タスク管理ツール": {}
+    }
+  }
+}
+```
+
+**Your Task:**
+
+Generate a mind map for the following topic: **"{topic}"**
+''';
+    final prompt = promptTemplate.replaceFirst('{topic}', topic);
+    return generateContent(model: model, prompt: prompt);
+  }
+
+  // =========================================================================
   // AIアシスタント機能
   // =========================================================================
 
@@ -176,6 +235,7 @@ class AIService {
       operationName: 'improveText',
     );
   }
+
 
   /// 要約生成
   Future<String> summarizeText(String content) async {

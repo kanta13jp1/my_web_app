@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:my_web_app/models/board_meeting.dart';
-import 'package:my_web_app/services/ai_model_service.dart';
+import 'package:my_web_app/services/ai_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -352,9 +352,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = 'AI役員が分析中...');
 
-      final responseText = await AIModelService.instance.generateContent(
+      final aiService = AIService(null, _geminiApiKey);
+      final responseText = await aiService.generateContent(
         model: _selectedModel,
-        apiKey: _geminiApiKey!,
         prompt: contextPrompt,
       );
 

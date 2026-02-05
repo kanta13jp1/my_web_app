@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:my_web_app/services/ai_model_service.dart';
+import 'package:my_web_app/services/ai_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MindMapPage extends StatefulWidget {
@@ -66,9 +66,9 @@ class _MindMapPageState extends State<MindMapPage> {
     });
 
     try {
-      final responseText = await AIModelService.instance.generateMindMap(
+      final aiService = AIService(null, _geminiApiKey);
+      final responseText = await aiService.generateMindMap(
         model: _selectedModel,
-        apiKey: _geminiApiKey ?? '',
         topic: topic,
       );
 
@@ -155,7 +155,7 @@ class _MindMapPageState extends State<MindMapPage> {
                       graph: _graph,
                       algorithm: BuchheimWalkerAlgorithm(_algorithmConfig, TreeEdgeRenderer(_algorithmConfig)),
                       builder: (Node node) {
-                        var a = node.key!.value as String?;
+                        final a = node.key!.value as String?;
                         return _buildNode(a!);
                       },
                     ),
@@ -182,7 +182,7 @@ class _MindMapPageState extends State<MindMapPage> {
             color: Colors.grey.withOpacity(0.3),
             spreadRadius: 1,
             blurRadius: 3,
-          )
+          ),
         ],
       ),
       child: Text(text, textAlign: TextAlign.center),
