@@ -12,6 +12,7 @@ class AdminAnalyticsPage extends StatefulWidget {
 
 class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _dailyStats = [];
+  int _actualUserCount = 0;
   bool _isLoading = true;
   late final SupabaseClient _supabase;
 
@@ -25,15 +26,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Future<void> _loadStats() async {
     try {
-      final response = await _supabase
+      final statsResponse = await _supabase
           .from('app_analytics')
           .select()
           .order('date', ascending: false)
           .limit(30);
 
+      // 実際のユーザー総数を取得
+      final userCountResponse = await _supabase.from('profiles').select().count(CountOption.exact);
+
       if (mounted) {
         setState(() {
-          _dailyStats = List<Map<String, dynamic>>.from(response);
+          _dailyStats = List<Map<String, dynamic>>.from(statsResponse);
+          _actualUserCount = userCountResponse.count;
           _isLoading = false;
         });
       }
@@ -124,7 +129,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               ),
                               _buildStatItem(
                                 '登録数',
-                                '$totalConversions',
+                                '$_actualUserCount',
                                 Icons.person_add,
                               ),
                               _buildStatItem(
