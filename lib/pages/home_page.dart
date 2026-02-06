@@ -24,6 +24,7 @@ import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,6 +71,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeService.toggleTheme(),
             tooltip: 'テーマ切替',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+            tooltip: '設定',
           ),
           IconButton(
             icon: const Icon(Icons.logout),
