@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AiAssistantMenu extends StatefulWidget {
   final TextEditingController contentController;
   final Function(String) onApply;
+  final SupabaseClient? supabaseClient;
 
   const AiAssistantMenu({
     super.key,
     required this.contentController,
     required this.onApply,
+    this.supabaseClient,
   });
 
   @override
@@ -63,7 +65,7 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
   Future<void> _handleAiAction(String action) async {
     setState(() => _isLoading = true);
     try {
-      final supabase = Supabase.instance.client;
+      final supabase = widget.supabaseClient ?? Supabase.instance.client;
       final response = await supabase.functions.invoke(
         'ai-assistant', // Assuming the Edge Function name is 'ai-assistant'
         body: {
