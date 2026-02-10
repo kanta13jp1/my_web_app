@@ -128,9 +128,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       );
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
         if (data['models'] != null) {
           return (data['models'] as List)
+              .whereType<Map<String, dynamic>>()
               .where(
                 (m) =>
                     (m['supportedGenerationMethods'] as List?)
@@ -331,8 +332,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             .select()
             .eq('user_id', userId)
             .maybeSingle(),
-        // TODO: Replace with actual danshari count when available
-        Future.value(0),
+        _supabase
+            .from('danshari_items')
+            .count(CountOption.exact)
+            .eq('user_id', userId),
       ]);
 
       final noteCount = results[0] as int;
@@ -699,7 +702,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
