@@ -58,7 +58,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       builder: (context) => AlertDialog(
         title: const Text('データのリセット'),
         content: const Text(
-            '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？'),
+            '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -92,7 +92,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラーが発生しました: $e'), backgroundColor: Colors.red),
+              content: Text('エラーが発生しました: $e'), backgroundColor: Colors.red,),
         );
         setState(() => _isLoading = false);
       }
@@ -174,7 +174,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildKpiSummaryCard(
-                        totalCvr, totalViews, _actualUserCount, totalShares),
+                        totalCvr, totalViews, _actualUserCount, totalShares,),
                     const SizedBox(height: 24),
                     const Text(
                       '過去30日間の推移 (閲覧 vs 登録)',
@@ -235,7 +235,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: Column(
           children: [
             const Text('現在のコンバージョン率 (CVR)',
-                style: TextStyle(fontSize: 14, color: Colors.grey)),
+                style: TextStyle(fontSize: 14, color: Colors.grey),),
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +257,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _getCvrColor(cvr))),
+                          color: _getCvrColor(cvr),),),
                 ),
               ],
             ),
@@ -285,7 +285,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildStatItem(
-      String label, String value, IconData icon, Color color) {
+      String label, String value, IconData icon, Color color,) {
     return Column(
       children: [
         Container(
@@ -308,7 +308,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildTrendChart(List<Map<String, dynamic>> data, int maxViews) {
     if (data.isEmpty) {
-      return const Center(child: Text("データがありません"));
+      return const Center(child: Text('データがありません'));
     }
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -327,12 +327,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           final double convHeightRatio =
               maxViews == 0 ? 0 : (conv / maxViews).clamp(0.0, 1.0);
 
-          String label = "";
+          String label = '';
           try {
             final date = DateTime.parse(stat['date'].toString());
-            label = "${date.month}/${date.day}";
+            label = '${date.month}/${date.day}';
           } catch (_) {
-            label = "";
+            label = '';
           }
 
           final shouldShowLabel = data.length <= 7 ||
@@ -371,14 +371,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                shouldShowLabel ? label : "",
+                shouldShowLabel ? label : '',
                 style: const TextStyle(fontSize: 10, color: Colors.grey),
               ),
             ],
           );
         }).toList(),
       );
-    });
+    },);
   }
 
   Widget _buildSourceDistribution(Map<String, int> sources) {
@@ -389,10 +389,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Padding(
               padding: EdgeInsets.all(24),
               child: Center(
-                  child: Text("データなし", style: TextStyle(color: Colors.grey)))));
+                  child: Text('データなし', style: TextStyle(color: Colors.grey)),),),);
     }
 
-    int total = sources.values.fold(0, (sum, count) => sum + count);
+    final int total = sources.values.fold(0, (sum, count) => sum + count);
 
     final sortedEntries = sources.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -416,7 +416,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       flex: e.value,
                       child: Tooltip(
                         message:
-                            "${_formatSourceName(e.key)}: ${e.value} ($ratio%)",
+                            '${_formatSourceName(e.key)}: ${e.value} ($ratio%)',
                         child: Container(color: _getSourceColor(e.key)),
                       ),
                     );
@@ -447,11 +447,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       style: const TextStyle(fontSize: 12),
                     ),
                     Text(
-                      " $percent%",
+                      ' $percent%',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[600]),
+                          color: Colors.grey[600],),
                     ),
                   ],
                 );
@@ -526,12 +526,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             title: Text(dateStr,
                 style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
             subtitle: Row(
               children: [
-                _miniStat(Icons.visibility, "$views", Colors.blue),
+                _miniStat(Icons.visibility, '$views', Colors.blue),
                 const SizedBox(width: 12),
-                _miniStat(Icons.person_add, "$conv", Colors.indigo),
+                _miniStat(Icons.person_add, '$conv', Colors.indigo),
               ],
             ),
             trailing: Container(
@@ -553,8 +553,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       color: _getCvrColor(cvr),
                     ),
                   ),
-                  Text("CVR",
-                      style: TextStyle(fontSize: 10, color: _getCvrColor(cvr))),
+                  Text('CVR',
+                      style: TextStyle(fontSize: 10, color: _getCvrColor(cvr)),),
                 ],
               ),
             ),
@@ -571,7 +571,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         const SizedBox(width: 4),
         Text(value,
             style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+                fontSize: 13, fontWeight: FontWeight.w500, color: color,),),
       ],
     );
   }

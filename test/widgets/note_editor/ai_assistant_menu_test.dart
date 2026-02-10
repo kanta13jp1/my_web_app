@@ -86,7 +86,7 @@ void main() {
     String? appliedResult;
 
     when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'improve', 'content': 'Initial content'}))
+            body: {'action': 'improve', 'content': 'Initial content'},),)
         .thenAnswer((_) async {
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 100));
@@ -98,7 +98,7 @@ void main() {
 
     await tester.pumpWidget(buildTestWidget(onApply: (result) {
       appliedResult = result;
-    }));
+    },),);
 
     // Open menu
     await tester.tap(find.byIcon(Icons.auto_awesome));

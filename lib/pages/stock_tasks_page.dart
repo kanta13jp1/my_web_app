@@ -152,7 +152,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                             child: Center(
                               child: Text('時間ができたらやりたいことを\n書き留めましょう',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey)),
+                                  style: TextStyle(color: Colors.grey),),
                             ),
                           ),
 
@@ -164,7 +164,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 8),
                             child: Text('完了済み',
-                                style: TextStyle(color: Colors.grey)),
+                                style: TextStyle(color: Colors.grey),),
                           ),
                           const Divider(),
                           // 完了済みタスク
@@ -203,7 +203,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.add_circle,
-                      size: 32, color: Colors.teal),
+                      size: 32, color: Colors.teal,),
                   onPressed: _addTask,
                 ),
               ],

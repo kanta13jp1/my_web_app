@@ -166,7 +166,7 @@ class AIService {
     if (_googleAIApiKey == null) {
       throw AIServiceException('Google AI API key is not configured.');
     }
-    final genModel = GenerativeModel(model: model, apiKey: _googleAIApiKey!);
+    final genModel = GenerativeModel(model: model, apiKey: _googleAIApiKey);
     final content = [Content.text(prompt)];
     final response = await genModel.generateContent(content);
     return response.text;
