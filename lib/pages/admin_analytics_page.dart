@@ -33,7 +33,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           .limit(30);
 
       // 実際のユーザー総数を取得
-      final userCountResponse = await _supabase.from('profiles').select().count(CountOption.exact);
+      final userCountResponse = await _supabase.from('user_profiles').select().count(CountOption.exact);
 
       if (mounted) {
         setState(() {
