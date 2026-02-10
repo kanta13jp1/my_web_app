@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'package:my_web_app/main.dart'; // 必要に応じてインポート
+import 'package:intl/intl.dart'; // 日付フォーマット用に追加
 
 class AdminAnalyticsPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
@@ -19,7 +19,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   @override
   void initState() {
     super.initState();
-    // 外部から渡されなければシングルトンを使用（main.dartの実装に合わせる）
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _loadStats();
   }
@@ -59,7 +58,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalShares = 0;
     final Map<String, int> sourceBreakdown = {};
 
-    // グラフ用の最大値を計算（スケーリング用）
+    // グラフ用の最大値を計算
     int maxDailyViews = 0;
 
     for (var stat in _dailyStats) {
@@ -77,24 +76,31 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (sources != null && sources is Map) {
         sources.forEach((key, value) {
           final count = value as int? ?? 0;
-          sourceBreakdown[key] = (sourceBreakdown[key] ?? 0) + count;
+          if (count > 0) {
+            sourceBreakdown[key.toString()] =
+                (sourceBreakdown[key.toString()] ?? 0) + count;
+          }
         });
       }
     }
 
-    // 最新のデータが右に来るようにリストを反転（グラフ描画用）
+    // 最新のデータが右に来るようにリストを反転
     final chartData = _dailyStats.reversed.toList();
 
     final double totalCvr =
         totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // 背景色を少しグレーに
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('経営分析ダッシュボード'),
+        title: const Text(
+          '経営分析ダッシュボード',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -102,65 +108,76 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               setState(() => _isLoading = true);
               _loadStats();
             },
+            tooltip: 'データを更新',
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 1. KPIサマリーカード
-                  _buildKpiSummaryCard(
-                      totalCvr, totalViews, _actualUserCount, totalShares),
+          : RefreshIndicator(
+              onRefresh: _loadStats,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 1. KPIサマリーカード
+                    _buildKpiSummaryCard(
+                        totalCvr, totalViews, _actualUserCount, totalShares),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // 2. トレンドグラフ（棒グラフ）
-                  const Text(
-                    '過去30日間の推移 (閲覧 vs 登録)',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 200,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                    // 2. トレンドグラフ
+                    const Text(
+                      '過去30日間の推移 (閲覧 vs 登録)',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    child: _buildTrendChart(chartData, maxDailyViews),
-                  ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 220,
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: _buildTrendChart(chartData, maxDailyViews),
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // 3. 流入元分析（構成比バー）
-                  const Text(
-                    '流入元チャネル (Source Breakdown)',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSourceDistribution(sourceBreakdown),
+                    // 3. 流入元分析
+                    const Text(
+                      '流入元チャネル (Source Breakdown)',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSourceDistribution(sourceBreakdown),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // 4. 詳細データリスト
-                  const Text(
-                    '日次レポート詳細',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDailyList(),
-                ],
+                    // 4. 詳細データリスト
+                    const Text(
+                      '日次レポート詳細',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDailyList(),
+                    
+                    // 下部の余白
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
     );
@@ -170,6 +187,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildKpiSummaryCard(double cvr, int views, int users, int shares) {
     return Card(
       elevation: 4,
+      shadowColor: Colors.black26,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Colors.white,
       child: Padding(
@@ -181,7 +199,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
                   cvr.toStringAsFixed(1),
@@ -189,10 +208,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     color: _getCvrColor(cvr),
+                    height: 1.0,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+                  padding: const EdgeInsets.only(left: 4),
                   child: Text('%',
                       style: TextStyle(
                           fontSize: 20,
@@ -201,7 +221,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               ],
             ),
-            const Divider(height: 32),
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -226,18 +248,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       String label, String value, IconData icon, Color color) {
     return Column(
       children: [
-        Icon(icon, size: 24, color: color.withOpacity(0.8)),
-        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }
 
-  // カスタム棒グラフ（ライブラリ不使用）
+  // カスタム棒グラフ
   Widget _buildTrendChart(List<Map<String, dynamic>> data, int maxViews) {
     if (data.isEmpty) {
       return const Center(child: Text("データがありません"));
@@ -245,7 +274,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
-      final barWidth = (width / (data.length * 2)).clamp(4.0, 12.0);
+      // データの数に応じてバーの幅を動的に調整
+      final barWidth = (width / (data.length * 2.5)).clamp(6.0, 16.0);
 
       return Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -254,31 +284,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           final views = stat['landing_views'] as int? ?? 0;
           final conv = stat['conversions'] as int? ?? 0;
 
-          // 高さの比率計算 (最大値を1.0とする)
-          // 0除算回避のため maxViews が 0 の場合は 1 とする
-          final double viewHeightRatio = maxViews == 0 ? 0 : (views / maxViews);
-          final double convHeightRatio = maxViews == 0 ? 0 : (conv / maxViews);
+          final double viewHeightRatio =
+              maxViews == 0 ? 0 : (views / maxViews).clamp(0.0, 1.0);
+          final double convHeightRatio =
+              maxViews == 0 ? 0 : (conv / maxViews).clamp(0.0, 1.0);
 
-          // 日付の整形 (例: "2023-10-01" -> "10/1")
           String label = "";
           try {
             final date = DateTime.parse(stat['date'].toString());
             label = "${date.month}/${date.day}";
           } catch (_) {
-            label = "?";
+            label = "";
           }
+
+          // データ数が多い場合はラベルを間引く
+          final shouldShowLabel = data.length <= 7 ||
+              data.indexOf(stat) % (data.length ~/ 5) == 0 ||
+              data.indexOf(stat) == data.length - 1;
 
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // グラフ部分
               Expanded(
                 child: Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
-                    // 背景（最大高さの枠）
-                    Container(width: barWidth, color: Colors.transparent),
-                    // 閲覧数（青）
+                    // 閲覧数（薄い青）
                     FractionallySizedBox(
                       heightFactor: viewHeightRatio,
                       child: Container(
@@ -289,7 +320,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                       ),
                     ),
-                    // コンバージョン数（濃い青/オレンジ）
+                    // コンバージョン数（濃い青）
                     FractionallySizedBox(
                       heightFactor: convHeightRatio,
                       child: Container(
@@ -303,16 +334,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
-              // 日付ラベル（5件に1件表示など間引く）
-              if (data.indexOf(stat) % 5 == 0 ||
-                  data.indexOf(stat) == data.length - 1)
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                )
-              else
-                const Text("", style: TextStyle(fontSize: 10)),
+              const SizedBox(height: 8),
+              Text(
+                shouldShowLabel ? label : "",
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
             ],
           );
         }).toList(),
@@ -324,46 +350,49 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildSourceDistribution(Map<String, int> sources) {
     if (sources.isEmpty) {
       return const Card(
-          child: Padding(padding: EdgeInsets.all(16), child: Text("データなし")));
+          elevation: 0,
+          color: Colors.white,
+          child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                  child: Text("データなし", style: TextStyle(color: Colors.grey)))));
     }
 
     int total = sources.values.fold(0, (sum, count) => sum + count);
 
-    // ソートして多い順に
     final sortedEntries = sources.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // 構成比バー
+            // プログレスバー風の構成比
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
-                height: 20,
+                height: 24,
                 child: Row(
                   children: sortedEntries.map((e) {
                     final double ratio = e.value / total;
+                    // 比率が小さすぎる場合は表示しないなどの制御も可能
                     return Expanded(
                       flex: e.value,
-                      child: Container(
-                        color: _getSourceColor(e.key),
-                        child: Tooltip(
-                          message: "${e.key}: ${e.value} ($ratio%)",
-                          child: Container(),
-                        ),
+                      child: Tooltip(
+                        message: "${_formatSourceName(e.key)}: ${e.value} ($ratio%)",
+                        child: Container(color: _getSourceColor(e.key)),
                       ),
                     );
                   }).toList(),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            // 凡例 (Legend)
+            const SizedBox(height: 16),
+            // 凡例
             Wrap(
               spacing: 16,
               runSpacing: 8,
@@ -373,24 +402,24 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 12,
-                      height: 12,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
                         color: _getSourceColor(e.key),
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     Text(
                       _formatSourceName(e.key),
                       style: const TextStyle(fontSize: 12),
                     ),
                     Text(
-                      " ($percent%)",
-                      style: const TextStyle(
+                      " $percent%",
+                      style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey),
+                          color: Colors.grey[600]),
                     ),
                   ],
                 );
@@ -403,24 +432,36 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   String _formatSourceName(String key) {
-    if (key == 'direct') return '直接/その他';
-    if (key == 'x_share') return 'X (Twitter)';
-    if (key == 'qr_scan') return 'QRコード';
-    return key;
+    switch (key) {
+      case 'direct':
+        return '直接/その他';
+      case 'x_share':
+        return 'X (Twitter)';
+      case 'qr_scan':
+        return 'QRコード';
+      case 'facebook':
+        return 'Facebook';
+      case 'line':
+        return 'LINE';
+      default:
+        return key;
+    }
   }
 
   Color _getSourceColor(String key) {
     switch (key) {
       case 'direct':
-        return Colors.grey;
+        return Colors.grey.shade400;
       case 'x_share':
-        return Colors.black; // X brand color
+        return Colors.black;
       case 'qr_scan':
         return Colors.teal;
       case 'facebook':
-        return Colors.blue.shade800;
+        return const Color(0xFF1877F2);
+      case 'line':
+        return const Color(0xFF06C755);
       default:
-        return Colors.indigo;
+        return Colors.indigo.shade300;
     }
   }
 
@@ -436,51 +477,72 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final conv = stat['conversions'] as int? ?? 0;
         final cvr = views == 0 ? 0.0 : (conv / views * 100);
 
-        // 日付整形
         String dateStr = stat['date'].toString();
         try {
           final d = DateTime.parse(dateStr);
-          dateStr = "${d.year}/${d.month}/${d.day}";
+          dateStr = DateFormat('yyyy/MM/dd').format(d);
         } catch (_) {}
 
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 8),
-          elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
           child: ListTile(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             title: Text(dateStr,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             subtitle: Row(
               children: [
-                Icon(Icons.visibility, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text("$views  "),
-                Icon(Icons.person_add, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text("$conv"),
+                _miniStat(Icons.visibility, "$views", Colors.blue),
+                const SizedBox(width: 12),
+                _miniStat(Icons.person_add, "$conv", Colors.indigo),
               ],
             ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${cvr.toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: _getCvrColor(cvr),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getCvrColor(cvr).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${cvr.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: _getCvrColor(cvr),
+                    ),
                   ),
-                ),
-                const Text("CVR",
-                    style: TextStyle(fontSize: 10, color: Colors.grey)),
-              ],
+                  Text("CVR",
+                      style: TextStyle(
+                          fontSize: 10, color: _getCvrColor(cvr))),
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _miniStat(IconData icon, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+      ],
     );
   }
 }
