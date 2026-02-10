@@ -21,33 +21,31 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   // Curriculum Data
   final List<CourseModule> _modules = [
     CourseModule(
-      id: 'gemini_basics',
-      title: 'Gemini 基礎概論',
-      description: 'GeminiモデルファミリーとマルチモーダルAIの基本を学ぶ',
+      id: 'ai_overview',
+      title: '現代AI 基礎概論',
+      description: '主要なAIモデル（GPT, Claude, Gemini等）の基本を学ぶ',
       icon: Icons.auto_awesome,
-      content: 'GeminiはGoogleが開発した最新のマルチモーダル生成AIモデルです。\n\n'
-          '【最新動向 (2026/1/21現在)】\n'
-          '現在は **Gemini 2.5** シリーズが主力モデルとして提供されています。\n\n'
-          '【主な特徴】\n'
-          '1. **ネイティブ・マルチモーダル**: テキストだけでなく、画像、音声、動画、コードを最初から理解できるように設計されています。\n'
-          '2. **モデルファミリー**: \n'
-          '   - **Gemini 2.5 Pro**: 推論能力が高く、複雑なタスクに最適。Thinking機能に対応。\n'
-          '   - **Gemini 2.5 Flash**: 高速・低コストかつ高性能。100万トークン対応。\n'
-          '   - **Gemini Nano**: デバイス上で動作する効率的なモデル。\n\n'
-          '従来のAIと異なり、複数のモダリティをシームレスに扱えるのが最大の特徴です。',
+      content: '現代のAI環境は、複数の強力なモデルが競い合っています。\n\n'
+          '【主要なAIモデルファミリー】\n'
+          '1. **OpenAI (GPT-4o/o1)**: 高い汎用性と推論能力。業界のスタンダード。\n'
+          '2. **Anthropic (Claude 3.5 Sonnet)**: 自然な文章表現と高いコーディング能力、安全性に定評。\n'
+          '3. **Google (Gemini 2.5)**: 圧倒的なロングコンテキストとGoogleエコシステムとの連携。\n'
+          '4. **DeepSeek (V3/R1)**: 非常に高いコストパフォーマンスと推論特化モデル。\n'
+          '5. **xAI (Grok-3)**: リアルタイム情報へのアクセスと自由な表現。\n\n'
+          '各モデルには得意分野があり、用途に応じて使い分けることが重要です。',
       quiz: Quiz(
-        question: 'Geminiファミリーの中で、デバイス上で動作する最も軽量なモデルは？',
-        options: ['Gemini Pro', 'Gemini Ultra', 'Gemini Nano', 'Gemini Flash'],
-        correctIndex: 2,
+        question: '自然な文章表現やコーディング能力に定評があり、Anthropic社が開発しているモデルは？',
+        options: ['GPT-4', 'Claude 3.5', 'Gemini', 'Grok'],
+        correctIndex: 1,
       ),
       officialDocs: [
         {
-          'title': 'Gemini API overview',
-          'url': 'https://ai.google.dev/docs/gemini_api_overview',
+          'title': 'OpenAI Documentation',
+          'url': 'https://platform.openai.com/docs/',
         },
         {
-          'title': 'Gemini Models',
-          'url': 'https://ai.google.dev/models/gemini',
+          'title': 'Anthropic Claude Docs',
+          'url': 'https://docs.anthropic.com/',
         },
       ],
     ),
@@ -517,7 +515,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
       // ポイント付与
       context
           .read<GamificationService>()
-          .awardPoints(50, reason: 'Gemini大学講義修了');
+          .awardPoints(50, reason: 'AI大学講義修了');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -547,10 +545,10 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Gemini大学の全カリキュラムを修了しました。'),
+            Text('AI大学の全カリキュラムを修了しました。'),
             SizedBox(height: 16),
             Text(
-              '学位: Gemini Master',
+              '学位: AI Master',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -562,7 +560,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
             onPressed: () {
               context
                   .read<GamificationService>()
-                  .awardPoints(500, reason: 'Gemini大学卒業');
+                  .awardPoints(500, reason: 'AI大学卒業');
               Navigator.pop(context);
             },
             child: const Text('学位を受け取る'),
@@ -580,7 +578,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gemini 大学'),
+        title: const Text('AI 大学'),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         actions: [
@@ -817,7 +815,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
             _buildCertificate()
           else
             const Text(
-              'すべての講義を修了して、\nGeminiマスターの称号を手に入れましょう！',
+              'すべての講義を修了して、\nAIマスターの称号を手に入れましょう！',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
@@ -866,7 +864,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
           ),
           const SizedBox(height: 8),
           const Text(
-            'Gemini Master',
+            'AI Master',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -876,7 +874,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
           ),
           const SizedBox(height: 16),
           const Text(
-            'この証書は、Gemini大学の全課程を修了し、\n生成AIに関する高度な知識を有することを証明します。',
+            'この証書は、AI大学の全課程を修了し、\n生成AIに関する高度な知識を有することを証明します。',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.black54),
           ),
