@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // 日付フォーマット用に追加
+import 'package:intl/intl.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
@@ -50,6 +50,55 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
+  // ★追加: データリセット処理
+  Future<void> _resetAnalyticsData() async {
+    // 確認ダイアログを表示
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('データのリセット'),
+        content: const Text(
+            '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('リセット実行'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 全データを削除 (idが0以上のものを削除＝全件削除)
+      await _supabase.from('app_analytics').delete().neq('id', 0);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('分析データをリセットしました')),
+        );
+        // 再読み込み
+        await _loadStats();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('エラーが発生しました: $e'), backgroundColor: Colors.red),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // データ集計
@@ -58,7 +107,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalShares = 0;
     final Map<String, int> sourceBreakdown = {};
 
-    // グラフ用の最大値を計算
     int maxDailyViews = 0;
 
     for (var stat in _dailyStats) {
@@ -71,7 +119,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
       if (views > maxDailyViews) maxDailyViews = views;
 
-      // ソース内訳を集計
       final sources = stat['source_details'];
       if (sources != null && sources is Map) {
         sources.forEach((key, value) {
@@ -84,9 +131,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     }
 
-    // 最新のデータが右に来るようにリストを反転
     final chartData = _dailyStats.reversed.toList();
-
     final double totalCvr =
         totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
 
@@ -102,6 +147,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
+          // ★追加: リセットボタン（ゴミ箱アイコン）
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            onPressed: _resetAnalyticsData,
+            tooltip: 'データをリセット',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -122,13 +173,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 1. KPIサマリーカード
                     _buildKpiSummaryCard(
                         totalCvr, totalViews, _actualUserCount, totalShares),
-
                     const SizedBox(height: 24),
-
-                    // 2. トレンドグラフ
                     const Text(
                       '過去30日間の推移 (閲覧 vs 登録)',
                       style:
@@ -151,10 +198,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                       child: _buildTrendChart(chartData, maxDailyViews),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // 3. 流入元分析
                     const Text(
                       '流入元チャネル (Source Breakdown)',
                       style:
@@ -162,10 +206,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildSourceDistribution(sourceBreakdown),
-
                     const SizedBox(height: 24),
-
-                    // 4. 詳細データリスト
                     const Text(
                       '日次レポート詳細',
                       style:
@@ -173,8 +214,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildDailyList(),
-                    
-                    // 下部の余白
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -183,7 +222,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  // KPIサマリーカード
+  // --- 以下、既存のウィジェットメソッド ---
+
   Widget _buildKpiSummaryCard(double cvr, int views, int users, int shares) {
     return Card(
       elevation: 4,
@@ -266,7 +306,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
-  // カスタム棒グラフ
   Widget _buildTrendChart(List<Map<String, dynamic>> data, int maxViews) {
     if (data.isEmpty) {
       return const Center(child: Text("データがありません"));
@@ -274,7 +313,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
     return LayoutBuilder(builder: (context, constraints) {
       final width = constraints.maxWidth;
-      // データの数に応じてバーの幅を動的に調整
       final barWidth = (width / (data.length * 2.5)).clamp(6.0, 16.0);
 
       return Row(
@@ -297,7 +335,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             label = "";
           }
 
-          // データ数が多い場合はラベルを間引く
           final shouldShowLabel = data.length <= 7 ||
               data.indexOf(stat) % (data.length ~/ 5) == 0 ||
               data.indexOf(stat) == data.length - 1;
@@ -309,7 +346,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Stack(
                   alignment: Alignment.bottomCenter,
                   children: [
-                    // 閲覧数（薄い青）
                     FractionallySizedBox(
                       heightFactor: viewHeightRatio,
                       child: Container(
@@ -320,7 +356,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                       ),
                     ),
-                    // コンバージョン数（濃い青）
                     FractionallySizedBox(
                       heightFactor: convHeightRatio,
                       child: Container(
@@ -346,7 +381,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     });
   }
 
-  // 流入元の構成比バー
   Widget _buildSourceDistribution(Map<String, int> sources) {
     if (sources.isEmpty) {
       return const Card(
@@ -371,7 +405,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // プログレスバー風の構成比
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -379,11 +412,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Row(
                   children: sortedEntries.map((e) {
                     final double ratio = e.value / total;
-                    // 比率が小さすぎる場合は表示しないなどの制御も可能
                     return Expanded(
                       flex: e.value,
                       child: Tooltip(
-                        message: "${_formatSourceName(e.key)}: ${e.value} ($ratio%)",
+                        message:
+                            "${_formatSourceName(e.key)}: ${e.value} ($ratio%)",
                         child: Container(color: _getSourceColor(e.key)),
                       ),
                     );
@@ -392,7 +425,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // 凡例
             Wrap(
               spacing: 16,
               runSpacing: 8,
@@ -465,7 +497,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  // 日次リスト
   Widget _buildDailyList() {
     return ListView.builder(
       shrinkWrap: true,
@@ -523,8 +554,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                   ),
                   Text("CVR",
-                      style: TextStyle(
-                          fontSize: 10, color: _getCvrColor(cvr))),
+                      style: TextStyle(fontSize: 10, color: _getCvrColor(cvr))),
                 ],
               ),
             ),
