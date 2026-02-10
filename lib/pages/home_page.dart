@@ -25,6 +25,7 @@ import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
 import 'settings_page.dart';
+import 'stock_tasks_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -175,6 +176,12 @@ class _HomePageState extends State<HomePage> {
                 Icons.monitor_heart,
                 Colors.orange,
                 () => _nav(context, const AiStatusPage()),
+              ),
+              _MenuData(
+                '週末ストック',
+                Icons.check_circle_outline, // アイコン
+                Colors.teal,
+                () => _nav(context, const StockTasksPage()),
               ),
             ]),
             const SizedBox(height: 24),
