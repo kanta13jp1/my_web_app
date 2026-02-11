@@ -302,19 +302,22 @@ The Gemini API is organized around the following major endpoints:
 > Gemini APIは以下の主要なエンドポイントを中心に構成されています：
 
 **Standard content generation (generateContent):** A standard REST endpoint that processes your request and returns the model's full response in a single package. This is best for non-interactive tasks where you can wait for the entire result.
-> **標準コンテンツ生成（generateContent）：**リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
+> **標準コンテンツ生成 (generateContent):** リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
 
 **Streaming content generation (streamGenerateContent):** Uses Server-Sent Events (SSE) to push chunks of the response to you as they are generated. This provides a faster, more interactive experience for applications like chatbots.
 > **ストリーミングコンテンツ生成 (streamGenerateContent):** サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。
 
-**Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming, designed for real-time conversational use cases.
-> **ライブAPI（BidiGenerateContent）：**双方向ストリーミングのためのステートフルWebSocketベースのAPI。リアルタイム会話ユースケース向けに設計されています。
+**Multimodal Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming of audio and video, designed for real-time conversational use cases with sub-second latency.
+> **マルチモーダル・ライブAPI (BidiGenerateContent):** 音声とビデオの双方向ストリーミングのためのステートフルなWebSocketベースのAPI。1秒未満の低遅延でリアルタイムな会話ユースケース向けに設計されています。
 
 **Batch mode (batchGenerateContent):** (*Updated: 2026/1/15*) A standard REST endpoint for submitting batches of generateContent requests.
 > **バッチモード (batchGenerateContent):** (*2026/1/15 更新*) generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。
 
 **Embeddings (embedContent):** (*Updated: 2026/1/16*) A standard REST endpoint that generates a text embedding vector from the input Content.
 > **埋め込み（embedContent）：**(*2026/1/16 更新*) 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。
+
+**Semantic Retrieval (AQA):** (*New: 2026/1/20*) Attributed Question Answering (AQA) endpoint for grounding responses in your own data with source citations.
+> **セマンティック検索 (AQA):** (*2026/1/20 新機能*) 出典を明記しながら独自のデータに基づいて回答を生成する、根拠付け（Grounding）に特化したエンドポイント。
 
 **Gen Media APIs:** (*Updated: 2026/1/16*) Endpoints for generating media with our specialized models such as Imagen for image generation, and Veo for video generation. Gemini also has these capabilities built in which you can access using the generateContent API.
 > **Gen Media API:** (*2026/1/16 更新*) 画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、generateContent APIを使用してアクセスできます。
@@ -333,7 +336,7 @@ All requests to the Gemini API must include an `x-goog-api-key` header with your
 The following is an example request with the API key included in the header: (*Updated: 2026/1/21*)
 > 以下は、ヘッダーにAPIキーを含めたリクエストの例です： (*2026/1/21 更新*)
 ```bash
-curl "[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)" \\
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \\
   -H "x-goog-api-key: \$GEMINI_API_KEY" \\
   -H 'Content-Type: application/json' \\
   -X POST \\
@@ -386,6 +389,33 @@ The request body is a JSON object that is identical for both standard and stream
 
 **inline_data (Blob):** (*Updated: 2026/1/23*) A container for raw media bytes and their MIME type.
 > **inline_data (Blob):** (*2026/1/23 更新*) 生メディアバイトとそのMIMEタイプを格納するコンテナ。
+
+---
+
+### Advanced Configuration / 高度な設定
+
+**System Instructions:** Define the behavior and constraints of the model before any user input.
+> **システム指示:** ユーザー入力の前に、モデルの振る舞いや制約を定義します。
+
+**Safety Settings:** Configure thresholds for blocking harmful content across categories like harassment and hate speech.
+> **安全設定:** 嫌がらせやヘイトスピーチなどのカテゴリごとに、有害なコンテンツをブロックする閾値を設定します。
+
+**Generation Config:** Fine-tune the output using parameters like `temperature`, `topP`, `topK`, and `maxOutputTokens`.
+> **生成設定:** `temperature`、`topP`、`topK`、`maxOutputTokens` などのパラメータを使用して出力を微調整します。
+
+**Thinking Config:** (*New*) Enable the model to perform internal reasoning before generating the final response.
+> **思考設定 (Thinking Config):** (*新機能*) 最終的な回答を生成する前に、モデルが内部的な推論（思考プロセス）を実行できるようにします。
+
+```json
+{
+  "contents": [...],
+  "generationConfig": {
+    "thinking_config": {
+      "include_thoughts": true
+    }
+  }
+}
+```
 ''',
       quiz: Quiz(
         question:
