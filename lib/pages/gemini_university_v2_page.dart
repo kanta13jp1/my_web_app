@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart'; // MarkdownBodyを使用するために必要
-import 'package:my_web_app/pages/api_playground_page.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+// 以下の自作ファイルへのパスは適宜調整してください
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
+import 'api_playground_page.dart';
 
 class GeminiUniversityV2Page extends StatefulWidget {
   const GeminiUniversityV2Page({super.key});
@@ -18,6 +19,9 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   late TabController _tabController;
   final Set<String> _completedModuleIds = {};
   final Map<String, double> _readingProgress = {}; // 各モジュールの読了率
+
+  // ユーザーの課金状態（デモ用にトグル可能）
+  bool isUserSubscribed = false;
 
   // Curriculum Data
   final List<CourseModule> _modules = [
@@ -39,27 +43,26 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         options: ['GPT-4', 'Claude 3.5', 'Gemini', 'Grok'],
         correctIndex: 1,
       ),
-      labContent: '''
-### ハンズオン：モデルの使い分け
-
-以下のコードは、Python SDKを使用してモデルを指定する例です。
-
-```python
-import google.generativeai as genai
-
-# 速度重視なら Flash
-model_flash = genai.GenerativeModel('gemini-2.0-flash')
-# 精度重視なら Pro
-model_pro = genai.GenerativeModel('gemini-2.5-pro')
-```''',
+      isPremium: false, // 無料
+      // 表示崩れを防ぐため、文字列結合で記述しています
+      labContent: '### ハンズオン：モデルの使い分け\n\n'
+          '以下のコードは、Python SDKを使用してモデルを指定する例です。\n\n'
+          '```python\n'
+          'import google.generativeai as genai\n\n'
+          '# 速度重視なら Flash\n'
+          "model_flash = genai.GenerativeModel('gemini-2.0-flash')\n"
+          '# 精度重視なら Pro\n'
+          "model_pro = genai.GenerativeModel('gemini-2.5-pro')\n"
+          '```',
       officialDocs: [
         {
           'title': 'OpenAI Documentation',
-          'url': 'https://platform.openai.com/docs/',
+          'url':
+              '[https://platform.openai.com/docs/](https://platform.openai.com/docs/)',
         },
         {
           'title': 'Anthropic Claude Docs',
-          'url': 'https://docs.anthropic.com/',
+          'url': '[https://docs.anthropic.com/](https://docs.anthropic.com/)',
         },
       ],
     ),
@@ -88,10 +91,12 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
         options: ['4,096', '8,192', '32,768', '65,536'],
         correctIndex: 3,
       ),
+      isPremium: true, // ★ 有料
       officialDocs: [
         {
           'title': 'Gemini Models',
-          'url': 'https://ai.google.dev/models/gemini',
+          'url':
+              '[https://ai.google.dev/models/gemini](https://ai.google.dev/models/gemini)',
         },
       ],
     ),
@@ -112,27 +117,25 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
         options: ['Few-shot', 'Chain of Thought', 'Persona', 'Format'],
         correctIndex: 2,
       ),
-      labContent: '''
-### 実践：Chain of Thought プロンプト
-
-```text
-以下の数学の問題を、ステップバイステップで解いてください。
-最後に必ず【結論】として答えを書いてください。
-
-問題：リンゴが3個あります。2個追加し、その後半分を友達にあげました。
-今、リンゴは何個ありますか？
-```
-
-このように「ステップバイステップ」と指示するだけで、AIの論理的推論能力が向上します。
-''',
+      // 表示崩れを防ぐため、文字列結合で記述しています
+      labContent: '### 実践：Chain of Thought プロンプト\n\n'
+          '```text\n'
+          '以下の数学の問題を、ステップバイステップで解いてください。\n'
+          '最後に必ず【結論】として答えを書いてください。\n\n'
+          '問題：リンゴが3個あります。2個追加し、その後半分を友達にあげました。\n'
+          '今、リンゴは何個ありますか？\n'
+          '```\n\n'
+          'このように「ステップバイステップ」と指示するだけで、AIの論理的推論能力が向上します。',
       officialDocs: [
         {
           'title': 'Prompt design strategies',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices',
+          'url':
+              '[https://ai.google.dev/docs/prompt_best_practices](https://ai.google.dev/docs/prompt_best_practices)',
         },
         {
           'title': 'Prompt Gallery',
-          'url': 'https://ai.google.dev/examples?keywords=prompting',
+          'url':
+              '[https://ai.google.dev/examples?keywords=prompting](https://ai.google.dev/examples?keywords=prompting)',
         },
       ],
     ),
@@ -156,12 +159,13 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       officialDocs: [
         {
           'title': 'Function calling',
-          'url': 'https://ai.google.dev/docs/function_calling',
+          'url':
+              '[https://ai.google.dev/docs/function_calling](https://ai.google.dev/docs/function_calling)',
         },
         {
           'title': 'Vertex AI - Function calling',
           'url':
-              'https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling',
+              '[https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling](https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/function-calling)',
         },
       ],
     ),
@@ -184,9 +188,14 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       officialDocs: [
         {
           'title': 'Multimodal concepts',
-          'url': 'https://ai.google.dev/docs/concepts#multimodal',
+          'url':
+              '[https://ai.google.dev/docs/concepts#multimodal](https://ai.google.dev/docs/concepts#multimodal)',
         },
-        {'title': 'Media', 'url': 'https://ai.google.dev/docs/media'},
+        {
+          'title': 'Media',
+          'url':
+              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)'
+        },
       ],
     ),
     CourseModule(
@@ -214,11 +223,13 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       officialDocs: [
         {
           'title': 'Context caching',
-          'url': 'https://ai.google.dev/docs/context_caching',
+          'url':
+              '[https://ai.google.dev/docs/context_caching](https://ai.google.dev/docs/context_caching)',
         },
         {
           'title': 'Get started with Gemini',
-          'url': 'https://ai.google.dev/docs/gemini_api_overview',
+          'url':
+              '[https://ai.google.dev/docs/gemini_api_overview](https://ai.google.dev/docs/gemini_api_overview)',
         },
       ],
     ),
@@ -240,7 +251,8 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       officialDocs: [
         {
           'title': 'JSON mode',
-          'url': 'https://ai.google.dev/docs/prompt_best_practices#json-mode',
+          'url':
+              '[https://ai.google.dev/docs/prompt_best_practices#json-mode](https://ai.google.dev/docs/prompt_best_practices#json-mode)',
         },
       ],
     ),
@@ -262,11 +274,13 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       officialDocs: [
         {
           'title': 'Safety settings',
-          'url': 'https://ai.google.dev/docs/safety_setting_gemini',
+          'url':
+              '[https://ai.google.dev/docs/safety_setting_gemini](https://ai.google.dev/docs/safety_setting_gemini)',
         },
         {
           'title': 'AI principles',
-          'url': 'https://ai.google/responsibility/principles/',
+          'url':
+              '[https://ai.google/responsibility/principles/](https://ai.google/responsibility/principles/)',
         },
       ],
     ),
@@ -275,148 +289,107 @@ model_pro = genai.GenerativeModel('gemini-2.5-pro')
       title: 'Gemini API リファレンス',
       description: 'REST APIやSDKの技術仕様を学ぶ',
       icon: Icons.integration_instructions,
-      content: '''
-### Gemini API Reference
-*Last Updated: 2026/1/23*
-
-> We have updated our Terms of Service.
-> 利用規約を更新しました。
-
-This API reference describes the standard, streaming, and realtime APIs you can use to interact with the Gemini models.
-> このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。
-
-You can use the REST APIs in any environment that supports HTTP requests.
-> HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。
-
-Refer to the Quickstart guide for how to get started with your first API call.
-> 最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。
-
-If you're looking for the references for our language-specific libraries and SDKs, go to the link for that language in the left navigation under SDK references.
-> 言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。
-
----
-
-### Primary endpoints / 主要評価項目
-
-The Gemini API is organized around the following major endpoints:
-> Gemini APIは以下の主要なエンドポイントを中心に構成されています：
-
-**Standard content generation (generateContent):** A standard REST endpoint that processes your request and returns the model's full response in a single package. This is best for non-interactive tasks where you can wait for the entire result.
-> **標準コンテンツ生成 (generateContent):** リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。
-
-**Streaming content generation (streamGenerateContent):** Uses Server-Sent Events (SSE) to push chunks of the response to you as they are generated. This provides a faster, more interactive experience for applications like chatbots.
-> **ストリーミングコンテンツ生成 (streamGenerateContent):** サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。
-
-**Multimodal Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming of audio and video, designed for real-time conversational use cases with sub-second latency.
-> **マルチモーダル・ライブAPI (BidiGenerateContent):** 音声とビデオの双方向ストリーミングのためのステートフルなWebSocketベースのAPI。1秒未満の低遅延でリアルタイムな会話ユースケース向けに設計されています。
-
-**Batch mode (batchGenerateContent):** (*Updated: 2026/1/15*) A standard REST endpoint for submitting batches of generateContent requests.
-> **バッチモード (batchGenerateContent):** (*2026/1/15 更新*) generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。
-
-**Embeddings (embedContent):** (*Updated: 2026/1/16*) A standard REST endpoint that generates a text embedding vector from the input Content.
-> **埋め込み（embedContent）：**(*2026/1/16 更新*) 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。
-
-**Semantic Retrieval (AQA):** (*New: 2026/1/20*) Attributed Question Answering (AQA) endpoint for grounding responses in your own data with source citations.
-> **セマンティック検索 (AQA):** (*2026/1/20 新機能*) 出典を明記しながら独自のデータに基づいて回答を生成する、根拠付け（Grounding）に特化したエンドポイント。
-
-**Gen Media APIs:** (*Updated: 2026/1/16*) Endpoints for generating media with our specialized models such as Imagen for image generation, and Veo for video generation. Gemini also has these capabilities built in which you can access using the generateContent API.
-> **Gen Media API:** (*2026/1/16 更新*) 画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、generateContent APIを使用してアクセスできます。
-
-**Platform APIs:** (*Updated: 2026/1/17*) Utility endpoints that support core capabilities such as uploading files, and counting tokens.
-> **プラットフォームAPI:** (*2026/1/17 更新*) ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。
-
----
-
-### Authentication / 認証
-*Updated: 2026/1/17*
-
-All requests to the Gemini API must include an `x-goog-api-key` header with your API key. Create one with a few clicks in Google AI Studio.
-> Gemini APIへのすべてのリクエストには、APIキーを含む`x-goog-api-key`ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。
-
-The following is an example request with the API key included in the header: (*Updated: 2026/1/21*)
-> 以下は、ヘッダーにAPIキーを含めたリクエストの例です： (*2026/1/21 更新*)
-```bash
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \\
-  -H "x-goog-api-key: \$GEMINI_API_KEY" \\
-  -H 'Content-Type: application/json' \\
-  -X POST \\
-  -d '{
-    "contents": [
-      {
-        "parts": [
-          {
-            "text": "Explain how AI works in a few words"
-          }
-        ]
-      }
-    ]
-  }'
-```
-
-For instructions on how to pass your key to the API using Gemini SDKs, see the Using Gemini API keys guide. (*Updated: 2026/1/21*)
-> Gemini SDKを使用してAPIにキーを渡す方法については、「Gemini APIキーの使用」ガイドを参照してください。 (*2026/1/21 更新*)
-
----
-
-### Content generation / コンテンツ生成
-*Updated: 2026/1/21*
-
-This is the central endpoint for sending prompts to the model.
-> これはモデルにプロンプトを送信するための中央エンドポイントです。
-
-There are two endpoints for generating content, the key difference is how you receive the response:
-> コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：
-
-**generateContent (REST):** Receives a request and provides a single response after the model has finished its entire generation.
-> **generateContent (REST):** リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。
-
-**streamGenerateContent (SSE):** Receives the exact same request, but the model streams back chunks of the response as they are generated. This provides a better user experience for interactive applications as it lets you display partial results immediately.
-> **streamGenerateContent (SSE):** まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。
-
----
-
-### Request body structure / リクエスト本文の構造
-*Updated: 2026/1/23*
-
-The request body is a JSON object that is identical for both standard and streaming modes and is built from a few core objects:
-> リクエスト本体は、標準モードとストリーミングモードの両方で同一のJSONオブジェクトであり、以下のコアオブジェクトから構成されます：
-
-**Content object:** Represents a single turn in a conversation.
-> **コンテンツオブジェクト：**会話における単一のターンを表す。
-
-**Part object:** A piece of data within a Content turn (like text or an image).
-> **部分オブジェクト：**コンテンツターン内のデータの一部（テキストや画像など）。
-
-**inline_data (Blob):** (*Updated: 2026/1/23*) A container for raw media bytes and their MIME type.
-> **inline_data (Blob):** (*2026/1/23 更新*) 生メディアバイトとそのMIMEタイプを格納するコンテナ。
-
----
-
-### Advanced Configuration / 高度な設定
-
-**System Instructions:** Define the behavior and constraints of the model before any user input.
-> **システム指示:** ユーザー入力の前に、モデルの振る舞いや制約を定義します。
-
-**Safety Settings:** Configure thresholds for blocking harmful content across categories like harassment and hate speech.
-> **安全設定:** 嫌がらせやヘイトスピーチなどのカテゴリごとに、有害なコンテンツをブロックする閾値を設定します。
-
-**Generation Config:** Fine-tune the output using parameters like `temperature`, `topP`, `topK`, and `maxOutputTokens`.
-> **生成設定:** `temperature`、`topP`、`topK`、`maxOutputTokens` などのパラメータを使用して出力を微調整します。
-
-**Thinking Config:** (*New*) Enable the model to perform internal reasoning before generating the final response.
-> **思考設定 (Thinking Config):** (*新機能*) 最終的な回答を生成する前に、モデルが内部的な推論（思考プロセス）を実行できるようにします。
-
-```json
-{
-  "contents": [...],
-  "generationConfig": {
-    "thinking_config": {
-      "include_thoughts": true
-    }
-  }
-}
-```
-''',
+      // Markdownコードブロックの干渉を避けるため、文字列結合で記述しています
+      content: '### Gemini API Reference\n'
+          '*Last Updated: 2026/1/23*\n\n'
+          '> We have updated our Terms of Service.\n'
+          '> 利用規約を更新しました。\n\n'
+          'This API reference describes the standard, streaming, and realtime APIs you can use to interact with the Gemini models.\n'
+          '> このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
+          'You can use the REST APIs in any environment that supports HTTP requests.\n'
+          '> HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
+          'Refer to the Quickstart guide for how to get started with your first API call.\n'
+          '> 最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。\n\n'
+          "If you're looking for the references for our language-specific libraries and SDKs, go to the link for that language in the left navigation under SDK references.\n"
+          '> 言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。\n\n'
+          '---\n\n'
+          '### Primary endpoints / 主要評価項目\n\n'
+          'The Gemini API is organized around the following major endpoints:\n'
+          '> Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
+          '**Standard content generation (generateContent):** A standard REST endpoint that processes your request and returns the model\'s full response in a single package. This is best for non-interactive tasks where you can wait for the entire result.\n'
+          '> **標準コンテンツ生成 (generateContent):** リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
+          '**Streaming content generation (streamGenerateContent):** Uses Server-Sent Events (SSE) to push chunks of the response to you as they are generated. This provides a faster, more interactive experience for applications like chatbots.\n'
+          '> **ストリーミングコンテンツ生成 (streamGenerateContent):** サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。\n\n'
+          '**Multimodal Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming of audio and video, designed for real-time conversational use cases with sub-second latency.\n'
+          '> **マルチモーダル・ライブAPI (BidiGenerateContent):** 音声とビデオの双方向ストリーミングのためのステートフルなWebSocketベースのAPI。1秒未満の低遅延でリアルタイムな会話ユースケース向けに設計されています。\n\n'
+          '**Batch mode (batchGenerateContent):** (*Updated: 2026/1/15*) A standard REST endpoint for submitting batches of generateContent requests.\n'
+          '> **バッチモード (batchGenerateContent):** (*2026/1/15 更新*) generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。\n\n'
+          '**Embeddings (embedContent):** (*Updated: 2026/1/16*) A standard REST endpoint that generates a text embedding vector from the input Content.\n'
+          '> **埋め込み（embedContent）：**(*2026/1/16 更新*) 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。\n\n'
+          '**Semantic Retrieval (AQA):** (*New: 2026/1/20*) Attributed Question Answering (AQA) endpoint for grounding responses in your own data with source citations.\n'
+          '> **セマンティック検索 (AQA):** (*2026/1/20 新機能*) 出典を明記しながら独自のデータに基づいて回答を生成する、根拠付け（Grounding）に特化したエンドポイント。\n\n'
+          '**Gen Media APIs:** (*Updated: 2026/1/16*) Endpoints for generating media with our specialized models such as Imagen for image generation, and Veo for video generation. Gemini also has these capabilities built in which you can access using the generateContent API.\n'
+          '> **Gen Media API:** (*2026/1/16 更新*) 画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、generateContent APIを使用してアクセスできます。\n\n'
+          '**Platform APIs:** (*Updated: 2026/1/17*) Utility endpoints that support core capabilities such as uploading files, and counting tokens.\n'
+          '> **プラットフォームAPI:** (*2026/1/17 更新*) ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。\n\n'
+          '---\n\n'
+          '### Authentication / 認証\n'
+          '*Updated: 2026/1/17*\n\n'
+          'All requests to the Gemini API must include an `x-goog-api-key` header with your API key. Create one with a few clicks in Google AI Studio.\n'
+          '> Gemini APIへのすべてのリクエストには、APIキーを含む`x-goog-api-key`ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。\n\n'
+          'The following is an example request with the API key included in the header: (*Updated: 2026/1/21*)\n'
+          '> 以下は、ヘッダーにAPIキーを含めたリクエストの例です： (*2026/1/21 更新*)\n'
+          '```bash\n'
+          'curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \\\n'
+          '  -H "x-goog-api-key: \$GEMINI_API_KEY" \\\n'
+          "  -H 'Content-Type: application/json' \\\n"
+          '  -X POST \\\n'
+          "  -d '{\n"
+          '    "contents": [\n'
+          '      {\n'
+          '        "parts": [\n'
+          '          {\n'
+          '            "text": "Explain how AI works in a few words"\n'
+          '          }\n'
+          '        ]\n'
+          '      }\n'
+          '    ]\n'
+          "  }'\n"
+          '```\n\n'
+          'For instructions on how to pass your key to the API using Gemini SDKs, see the Using Gemini API keys guide. (*Updated: 2026/1/21*)\n'
+          '> Gemini SDKを使用してAPIにキーを渡す方法については、「Gemini APIキーの使用」ガイドを参照してください。 (*2026/1/21 更新*)\n\n'
+          '---\n\n'
+          '### Content generation / コンテンツ生成\n'
+          '*Updated: 2026/1/21*\n\n'
+          'This is the central endpoint for sending prompts to the model.\n'
+          '> これはモデルにプロンプトを送信するための中央エンドポイントです。\n\n'
+          'There are two endpoints for generating content, the key difference is how you receive the response:\n'
+          '> コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：\n\n'
+          '**generateContent (REST):** Receives a request and provides a single response after the model has finished its entire generation.\n'
+          '> **generateContent (REST):** リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。\n\n'
+          '**streamGenerateContent (SSE):** Receives the exact same request, but the model streams back chunks of the response as they are generated. This provides a better user experience for interactive applications as it lets you display partial results immediately.\n'
+          '> **streamGenerateContent (SSE):** まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。\n\n'
+          '---\n\n'
+          '### Request body structure / リクエスト本文の構造\n'
+          '*Updated: 2026/1/23*\n\n'
+          'The request body is a JSON object that is identical for both standard and streaming modes and is built from a few core objects:\n'
+          '> リクエスト本体は、標準モードとストリーミングモードの両方で同一のJSONオブジェクトであり、以下のコアオブジェクトから構成されます：\n\n'
+          '**Content object:** Represents a single turn in a conversation.\n'
+          '> **コンテンツオブジェクト：**会話における単一のターンを表す。\n\n'
+          '**Part object:** A piece of data within a Content turn (like text or an image).\n'
+          '> **部分オブジェクト：**コンテンツターン内のデータの一部（テキストや画像など）。\n\n'
+          '**inline_data (Blob):** (*Updated: 2026/1/23*) A container for raw media bytes and their MIME type.\n'
+          '> **inline_data (Blob):** (*2026/1/23 更新*) 生メディアバイトとそのMIMEタイプを格納するコンテナ。\n\n'
+          '---\n\n'
+          '### Advanced Configuration / 高度な設定\n\n'
+          '**System Instructions:** Define the behavior and constraints of the model before any user input.\n'
+          '> **システム指示:** ユーザー入力の前に、モデルの振る舞いや制約を定義します。\n\n'
+          '**Safety Settings:** Configure thresholds for blocking harmful content across categories like harassment and hate speech.\n'
+          '> **安全設定:** 嫌がらせやヘイトスピーチなどのカテゴリごとに、有害なコンテンツをブロックする閾値を設定します。\n\n'
+          '**Generation Config:** Fine-tune the output using parameters like `temperature`, `topP`, `topK`, and `maxOutputTokens`.\n'
+          '> **生成設定:** `temperature`、`topP`、`topK`、`maxOutputTokens` などのパラメータを使用して出力を微調整します。\n\n'
+          '**Thinking Config:** (*New*) Enable the model to perform internal reasoning before generating the final response.\n'
+          '> **思考設定 (Thinking Config):** (*新機能*) 最終的な回答を生成する前に、モデルが内部的な推論（思考プロセス）を実行できるようにします。\n\n'
+          '```json\n'
+          '{\n'
+          '  "contents": [...],\n'
+          '  "generationConfig": {\n'
+          '    "thinking_config": {\n'
+          '      "include_thoughts": true\n'
+          '    }\n'
+          '  }\n'
+          '}\n'
+          '```',
       quiz: Quiz(
         question:
             'リアルタイム会話型ユースケース向けに設計された、双方向ストリーミングのためのWebSocketベースのAPIはどれですか？',
@@ -431,11 +404,13 @@ The request body is a JSON object that is identical for both standard and stream
       officialDocs: [
         {
           'title': 'Gemini REST API reference',
-          'url': 'https://ai.google.dev/api/rest',
+          'url':
+              '[https://ai.google.dev/api/rest](https://ai.google.dev/api/rest)',
         },
         {
           'title': 'SDK Quickstart',
-          'url': 'https://ai.google.dev/gemini-api/docs/quickstart',
+          'url':
+              '[https://ai.google.dev/gemini-api/docs/quickstart](https://ai.google.dev/gemini-api/docs/quickstart)',
         },
       ],
     ),
@@ -479,7 +454,7 @@ Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア
         {
           'title': 'Gemini Code Assist overview',
           'url':
-              'https://developers.google.com/gemini-code-assist/docs/overview',
+              '[https://developers.google.com/gemini-code-assist/docs/overview](https://developers.google.com/gemini-code-assist/docs/overview)',
         },
       ],
     ),
@@ -531,7 +506,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
         {
           'title': 'Quotas and limits',
           'url':
-              'https://developers.google.com/gemini-code-assist/docs/quotas-limits',
+              '[https://developers.google.com/gemini-code-assist/docs/quotas-limits](https://developers.google.com/gemini-code-assist/docs/quotas-limits)',
         },
       ],
     ),
@@ -570,9 +545,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
       });
 
       // ポイント付与
-      context
-          .read<GamificationService>()
-          .awardPoints(50, reason: 'AI大学講義修了');
+      context.read<GamificationService>().awardPoints(50, reason: 'AI大学講義修了');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -621,6 +594,55 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
               Navigator.pop(context);
             },
             child: const Text('学位を受け取る'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ★追加: 課金誘導ダイアログ
+  void _showPremiumDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.lock, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Premium コンテンツ'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('この講義はAI大学 Proコースに含まれています。'),
+            SizedBox(height: 16),
+            Text('Proコース (月額 ¥500)'),
+            Text('・すべての講義が見放題'),
+            Text('・AI実験室の利用制限解除'),
+            Text('・専属AIチューターへの質問'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // 課金処理のモック
+              setState(() {
+                isUserSubscribed = true;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Proコースにアップグレードしました！')),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+            child: const Text('アップグレードする'),
           ),
         ],
       ),
@@ -682,7 +704,8 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
       itemBuilder: (context, index) {
         final module = _modules[index];
         final isCompleted = _completedModuleIds.contains(module.id);
-
+        final isLocked =
+            module.isPremium && !isUserSubscribed; // ※isUserSubscribedは課金状態
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           elevation: 2,
@@ -693,85 +716,152 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                 : BorderSide.none,
           ),
           child: ExpansionTile(
+            // 鍵がかかっている場合は開かせない、またはダイアログを出す
+            onExpansionChanged: (expanded) {
+              if (expanded && isLocked) {
+                // ここで開くのをキャンセルし、課金誘導ダイアログを表示
+                // ExpansionTileの開閉制御はControllerがないため、
+                // 強制的に閉じた状態に戻すにはkeyの再生成が必要ですが、
+                // 簡易的にダイアログを出して、ユーザーに閉じてもらうUIとします。
+                _showPremiumDialog();
+              }
+            },
             leading: CircleAvatar(
-              backgroundColor:
-                  isCompleted ? Colors.green : Colors.indigo.shade100,
+              backgroundColor: isLocked
+                  ? Colors.grey
+                  : (isCompleted ? Colors.green : Colors.indigo.shade100),
               child: Icon(
-                isCompleted ? Icons.check : module.icon,
-                color: isCompleted ? Colors.white : Colors.indigo,
+                isLocked
+                    ? Icons.lock
+                    : (isCompleted ? Icons.check : module.icon),
+                color: isLocked
+                    ? Colors.white
+                    : (isCompleted ? Colors.white : Colors.indigo),
               ),
             ),
-            title: Text(
-              module.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    module.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isLocked ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+                if (module.isPremium) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text('PRO',
+                        style: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ],
             ),
             subtitle: Text(module.description),
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 学習進捗インジケーター
-                    LinearProgressIndicator(
-                      value: isCompleted ? 1.0 : (_readingProgress[module.id] ?? 0.0),
-                      backgroundColor: Colors.grey.shade200,
-                      color: isCompleted ? Colors.green : Colors.blue,
-                    ),
-                    const SizedBox(height: 16),
-                    MarkdownBody(
-                      data: module.content,
-                      styleSheet: MarkdownStyleSheet(
-                        p: const TextStyle(height: 1.6),
-                        code: TextStyle(
-                          backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                          fontFamily: 'monospace',
-                        ),
+              // isLockedの場合は中身を見せない
+              if (isLocked)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _showPremiumDialog,
+                      icon: const Icon(Icons.lock_open),
+                      label: const Text('Proコースでアンロック'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black,
                       ),
                     ),
-                    if (module.labContent != null) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Row(children: [Icon(Icons.biotech, color: Colors.orange), SizedBox(width: 8), Text('実践ラボ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange))]),
-                            const SizedBox(height: 8),
-                            MarkdownBody(data: module.labContent!),
-                          ],
-                        ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 学習進捗インジケーター
+                      LinearProgressIndicator(
+                        value: isCompleted
+                            ? 1.0
+                            : (_readingProgress[module.id] ?? 0.0),
+                        backgroundColor: Colors.grey.shade200,
+                        color: isCompleted ? Colors.green : Colors.blue,
                       ),
-                    ],
-                    _buildOfficialDocs(module),
-                    if (!isCompleted)
-                      _buildQuiz(module)
-                    else
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '単位取得済み',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      const SizedBox(height: 16),
+                      MarkdownBody(
+                        data: module.content,
+                        styleSheet: MarkdownStyleSheet(
+                          p: const TextStyle(height: 1.6),
+                          code: TextStyle(
+                            backgroundColor: isDark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade200,
+                            fontFamily: 'monospace',
                           ),
                         ),
                       ),
-                  ],
+                      if (module.labContent != null) ...[
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Colors.orange.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(children: [
+                                Icon(Icons.biotech, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text('実践ラボ',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange))
+                              ]),
+                              const SizedBox(height: 8),
+                              MarkdownBody(data: module.labContent!),
+                            ],
+                          ),
+                        ),
+                      ],
+                      _buildOfficialDocs(module),
+                      if (!isCompleted)
+                        _buildQuiz(module)
+                      else
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '単位取得済み',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         );
@@ -931,7 +1021,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
         border: Border.all(color: Colors.orange, width: 4),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.2),
+            color: Colors.orange.withOpacity(0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -986,6 +1076,7 @@ class CourseModule {
   final String? labContent; // 実践ラボ用のコンテンツ
   final Quiz quiz;
   final List<Map<String, String>>? officialDocs;
+  final bool isPremium; // ★ 追加: 有料コンテンツフラグ
 
   CourseModule({
     required this.id,
@@ -996,6 +1087,7 @@ class CourseModule {
     this.labContent,
     required this.quiz,
     this.officialDocs,
+    this.isPremium = false, // デフォルトは無料
   });
 }
 
