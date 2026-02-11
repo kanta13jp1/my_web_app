@@ -17,6 +17,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final Set<String> _completedModuleIds = {};
+  final Map<String, double> _readingProgress = {}; // 各モジュールの読了率
 
   // Curriculum Data
   final List<CourseModule> _modules = [
@@ -38,6 +39,19 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         options: ['GPT-4', 'Claude 3.5', 'Gemini', 'Grok'],
         correctIndex: 1,
       ),
+      labContent: '''
+### ハンズオン：モデルの使い分け
+
+以下のコードは、Python SDKを使用してモデルを指定する例です。
+
+```python
+import google.generativeai as genai
+
+# 速度重視なら Flash
+model_flash = genai.GenerativeModel('gemini-2.0-flash')
+# 精度重視なら Pro
+model_pro = genai.GenerativeModel('gemini-2.5-pro')
+```''',
       officialDocs: [
         {
           'title': 'OpenAI Documentation',
@@ -98,6 +112,19 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         options: ['Few-shot', 'Chain of Thought', 'Persona', 'Format'],
         correctIndex: 2,
       ),
+      labContent: '''
+### 実践：Chain of Thought プロンプト
+
+```text
+以下の数学の問題を、ステップバイステップで解いてください。
+最後に必ず【結論】として答えを書いてください。
+
+問題：リンゴが3個あります。2個追加し、その後半分を友達にあげました。
+今、リンゴは何個ありますか？
+```
+
+このように「ステップバイステップ」と指示するだけで、AIの論理的推論能力が向上します。
+''',
       officialDocs: [
         {
           'title': 'Prompt design strategies',
@@ -620,6 +647,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
   Widget _buildCurriculumTab(bool isDark) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 1000,
       itemCount: _modules.length,
       itemBuilder: (context, index) {
         final module = _modules[index];
@@ -654,12 +682,42 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 学習進捗インジケーター
+                    LinearProgressIndicator(
+                      value: isCompleted ? 1.0 : (_readingProgress[module.id] ?? 0.0),
+                      backgroundColor: Colors.grey.shade200,
+                      color: isCompleted ? Colors.green : Colors.blue,
+                    ),
+                    const SizedBox(height: 16),
                     MarkdownBody(
                       data: module.content,
                       styleSheet: MarkdownStyleSheet(
                         p: const TextStyle(height: 1.6),
+                        code: TextStyle(
+                          backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                          fontFamily: 'monospace',
+                        ),
                       ),
                     ),
+                    if (module.labContent != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(children: [Icon(Icons.biotech, color: Colors.orange), SizedBox(width: 8), Text('実践ラボ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange))]),
+                            const SizedBox(height: 8),
+                            MarkdownBody(data: module.labContent!),
+                          ],
+                        ),
+                      ),
+                    ],
                     _buildOfficialDocs(module),
                     if (!isCompleted)
                       _buildQuiz(module)
@@ -895,6 +953,7 @@ class CourseModule {
   final String description;
   final IconData icon;
   final String content;
+  final String? labContent; // 実践ラボ用のコンテンツ
   final Quiz quiz;
   final List<Map<String, String>>? officialDocs;
 
@@ -904,6 +963,7 @@ class CourseModule {
     required this.description,
     required this.icon,
     required this.content,
+    this.labContent,
     required this.quiz,
     this.officialDocs,
   });
