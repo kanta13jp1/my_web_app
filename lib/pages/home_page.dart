@@ -26,6 +26,7 @@ import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
+import 'mindless_task_page.dart'; // インポート
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -75,7 +76,8 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SettingsPage())),
             tooltip: '設定',
           ),
           IconButton(
@@ -182,6 +184,12 @@ class _HomePageState extends State<HomePage> {
                 Icons.check_circle_outline, // アイコン
                 Colors.teal,
                 () => _nav(context, const StockTasksPage()),
+              ),
+              _MenuData(
+                '思考停止ログ',
+                Icons.access_time_filled,
+                Colors.indigo,
+                () => _nav(context, const MindlessTaskPage()),
               ),
             ]),
             const SizedBox(height: 24),
