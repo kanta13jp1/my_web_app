@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
           .select('amount') // ← 金額カラム名を修正
           .eq('user_id', userId);
 
-      if (data == null || data.isEmpty) {
+      if (data.isEmpty) {
         return NumberFormat.currency(
                 locale: 'ja_JP', symbol: '¥', decimalDigits: 0)
             .format(0);
