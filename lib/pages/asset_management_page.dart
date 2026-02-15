@@ -93,18 +93,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _saveAssetData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
+
     final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final Map<String, double> todayData = {};
     bool hasData = false;
+
+    // 入力があるものだけ抽出
     _controllers.forEach((assetType, controller) {
       if (controller.text.isNotEmpty) {
-        final double amount = double.tryParse(controller.text) ?? 0.0;
+        // ▼ 修正: カンマを取り除いてからパースする
+        final cleanText = controller.text.replaceAll(',', '');
+        final double amount = double.tryParse(cleanText) ?? 0.0;
+
         todayData[assetType] = amount;
         hasData = true;
       }
     });
+
     if (!hasData) return;
+
     try {
+      // Supabaseにインサート (ログ形式で追記)
       for (var entry in todayData.entries) {
         await _supabase.from('cfo_assets').insert({
           'user_id': userId,
@@ -113,18 +122,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'created_at': DateTime.now().toIso8601String(),
         });
       }
+
       setState(() {
-        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        if (!_assetData.containsKey(today)) {
+          _assetData[today] = {};
+        }
         _assetData[today]!.addAll(todayData);
         _updateChartData();
         _updateLastUpdatedDates();
       });
+
+      // 入力欄をクリア
       _controllers.forEach((_, controller) => controller.clear());
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('登録しました')));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('資産を登録しました。')),
+        );
+      }
     } catch (e) {
-      debugPrint('$e');
+      debugPrint('Error saving assets: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e')),
+        );
+      }
     }
   }
 
@@ -346,8 +368,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 TextField(
                   controller: _controllers[type],
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  // ▼ 修正: signed: true を追加してマイナス入力を許可
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
                   decoration: InputDecoration(
                     labelText: type,
                     border: const OutlineInputBorder(),
