@@ -48,6 +48,43 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ▼ 追加: Supabaseから総資産合計を取得する関数
+  Future<String> _fetchTotalAssets() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return '¥0';
+
+    try {
+      // 【重要】ご自身のデータベースに合わせてテーブル名とカラム名を変更してください。
+      // ここでは仮に 'cfo_assets' テーブルの 'amount' カラムの合計を取得するとします。
+      final data = await Supabase.instance.client
+          .from('cfo_assets') // ← テーブル名を修正
+          .select('amount') // ← 金額カラム名を修正
+          .eq('user_id', userId);
+
+      if (data == null || data.isEmpty) {
+        return NumberFormat.currency(
+                locale: 'ja_JP', symbol: '¥', decimalDigits: 0)
+            .format(0);
+      }
+
+      // 合計を計算
+      double total = 0;
+      for (var item in data) {
+        // カラム名を修正
+        total += (item['amount'] as num? ?? 0).toDouble();
+      }
+
+      // 通貨フォーマット (例: ¥1,234,567)
+      final formatter =
+          NumberFormat.currency(locale: 'ja_JP', symbol: '¥', decimalDigits: 0);
+      return formatter.format(total);
+    } catch (e) {
+      debugPrint('Error fetching total assets: $e');
+      return 'Error'; // エラー時の表示
+    }
+  }
+  // ▲ 追加ここまで
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
@@ -393,78 +430,157 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // isDark引数を追加して色を制御
+  // ▼ 変更: KPIサマリー構築メソッドを刷新
   Widget _buildKpiSummary(BuildContext context, bool isDark) {
-    // Dummy data for KPIs (将来的にDBから取得)
-    final kpis = [
-      _KpiData('総資産 (CFO)', '¥1,234,567', Icons.account_balance, Colors.green),
-      _KpiData('睡眠時間 (CHO)', '7h 30m', Icons.bedtime, Colors.blue),
-      _KpiData('訪問者数 (CMO)', '8,123', Icons.people, Colors.pink),
-      _KpiData('新規メモ (CKO)', '3件', Icons.note_add, Colors.orange),
-    ];
-
-    // ダークモード時の文字色調整
-    final labelColor = isDark ? Colors.white70 : Colors.black.withOpacity(0.6);
-
-    return GridView.builder(
+    // GridView.builder から GridView.count に変更し、個別のカードを配置
+    return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.8,
-      ),
-      itemCount: kpis.length,
-      itemBuilder: (context, index) {
-        final kpi = kpis[index];
-        return Card(
-          elevation: 2,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        kpi.title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: labelColor, // 修正された色を使用
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Icon(kpi.icon, color: kpi.color, size: 20),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  kpi.value,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: kpi.color,
-                  ),
-                ),
-              ],
-            ),
-          ),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.8,
+      children: [
+        // 1. 総資産 (非同期で取得)
+        _buildAsyncKpiCard(
+          context,
+          isDark,
+          '総資産 (CFO)',
+          Icons.account_balance,
+          Colors.green,
+          _fetchTotalAssets(), // 将来の値を渡す
+        ),
+        // 2. 睡眠時間 (ダミー)
+        _buildKpiCard(
+          context,
+          isDark,
+          '睡眠時間 (CHO)',
+          '7h 30m',
+          Icons.bedtime,
+          Colors.blue,
+        ),
+        // 3. 訪問者数 (ダミー)
+        _buildKpiCard(
+          context,
+          isDark,
+          '訪問者数 (CMO)',
+          '8,123',
+          Icons.people,
+          Colors.pink,
+        ),
+        // 4. 新規メモ (ダミー)
+        _buildKpiCard(
+          context,
+          isDark,
+          '新規メモ (CKO)',
+          '3件',
+          Icons.note_add,
+          Colors.orange,
+        ),
+      ],
+    );
+  }
+
+  // ▼ 追加: 非同期データ用のKPIカード構築メソッド
+  Widget _buildAsyncKpiCard(
+    BuildContext context,
+    bool isDark,
+    String title,
+    IconData icon,
+    Color color,
+    Future<String> futureValue,
+  ) {
+    return FutureBuilder<String>(
+      future: futureValue,
+      builder: (context, snapshot) {
+        String displayValue;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          displayValue = 'Loading...';
+        } else if (snapshot.hasError) {
+          displayValue = 'Error';
+        } else {
+          displayValue = snapshot.data ?? '¥0';
+        }
+
+        // ローディング中はインジケータを表示
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Card(
+            elevation: 2,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return _buildKpiCard(
+          context,
+          isDark,
+          title,
+          displayValue,
+          icon,
+          color,
         );
       },
     );
   }
+
+  // ▼ 追加: 通常のKPIカード構築メソッド (元のロジックを切り出し)
+  Widget _buildKpiCard(
+    BuildContext context,
+    bool isDark,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final labelColor = isDark ? Colors.white70 : Colors.black.withOpacity(0.6);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: labelColor,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(icon, color: color, size: 20),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // ▲ 変更・追加ここまで
 }
 
 // 時計表示用の独立したウィジェット（パフォーマンス改善のため分離）
+// ... (以下、元のコードと同じ_ClockWidget, _MenuData, _KpiDataクラス)
 class _ClockWidget extends StatefulWidget {
   const _ClockWidget();
 
@@ -512,6 +628,8 @@ class _MenuData {
   _MenuData(this.title, this.icon, this.color, this.onTap);
 }
 
+// _KpiDataクラスは不要になったため削除しても良いですが、
+// 他の場所で使われていないか確認が必要です。今回は残しています。
 class _KpiData {
   final String title;
   final String value;

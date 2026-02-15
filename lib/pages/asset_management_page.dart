@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Supabase追加
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
 import 'dart:math';
 
 class AssetManagementPage extends StatefulWidget {
@@ -13,6 +12,8 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  final _supabase = Supabase.instance.client; // Supabaseクライアント
+
   Map<String, TextEditingController> _controllers = {};
   List<String> _assetTypes = ['現金'];
   Map<String, Map<String, double>> _assetData = {};
@@ -37,7 +38,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
-    _loadAssetTypes();
+    _loadDataFromSupabase(); // 起動時にデータをロード
   }
 
   @override
@@ -46,48 +47,71 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     super.dispose();
   }
 
-  // #region Data Persistence
-  Future<void> _loadAssetTypes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? assetTypes = prefs.getStringList('asset_types_v2');
-    setState(() {
-      _assetTypes = assetTypes ?? ['現金'];
-      _initControllers();
-      _loadAssetData();
-    });
-  }
+  // #region Data Persistence (Supabase)
 
-  Future<void> _saveAssetTypes() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('asset_types_v2', _assetTypes);
-  }
+  // データを読み込み、資産項目と履歴データを構築する
+  Future<void> _loadDataFromSupabase() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
 
-  Future<void> _loadAssetData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? dataString = prefs.getString('asset_data_v2');
-    if (dataString != null) {
-      final Map<String, dynamic> decodedData = jsonDecode(dataString);
-      setState(() {
-        _assetData = decodedData.map((date, assets) {
-          return MapEntry(
-            date,
-            (assets as Map<String, dynamic>)
-                .map((k, v) => MapEntry(k, v.toDouble())),
-          );
+    try {
+      // 全データを取得し、日付順に並べる
+      final data = await _supabase
+          .from('cfo_assets')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
+
+      final Map<String, Map<String, double>> loadedData = {};
+      final Set<String> loadedTypes = {'現金'}; // デフォルト
+
+      for (var item in data) {
+        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
+        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final String title = item['title'];
+        final double amount = (item['amount'] as num).toDouble();
+
+        loadedTypes.add(title);
+
+        if (!loadedData.containsKey(dateKey)) {
+          loadedData[dateKey] = {};
+        }
+        // 同じ日に複数データがある場合は最新（リストの後ろ）が上書きされる
+        loadedData[dateKey]![title] = amount;
+      }
+
+      if (mounted) {
+        setState(() {
+          _assetTypes = loadedTypes.toList();
+          _assetData = loadedData;
+          _initControllers(); // 入力欄を更新
+          _updateChartData();
+          _updateLastUpdatedDates();
         });
-        _updateChartData();
-        _updateLastUpdatedDates();
-      });
+      }
+    } catch (e) {
+      debugPrint('Error loading assets: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('データ読み込みエラー: $e')),
+        );
+      }
     }
   }
 
+  // データを保存する（追記形式）
   Future<void> _saveAssetData() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
     final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final Map<String, double> todayData = {};
     bool hasData = false;
+
+    // 入力があるものだけ抽出
     _controllers.forEach((assetType, controller) {
-      final double amount = double.tryParse(controller.text) ?? 0.0;
       if (controller.text.isNotEmpty) {
+        final double amount = double.tryParse(controller.text) ?? 0.0;
         todayData[assetType] = amount;
         hasData = true;
       }
@@ -95,33 +119,103 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (!hasData) return;
 
-    setState(() {
-      // If there's no entry for today, create one
-      if (!_assetData.containsKey(today)) {
-        _assetData[today] = {};
+    try {
+      // Supabaseにインサート (ログ形式で追記)
+      for (var entry in todayData.entries) {
+        await _supabase.from('cfo_assets').insert({
+          'user_id': userId,
+          'title': entry.key,
+          'amount': entry.value,
+          'created_at': DateTime.now().toIso8601String(),
+        });
       }
-      // Update today's data with new values, keeping old ones if not entered
-      _assetData[today]!.addAll(todayData);
 
-      _updateChartData();
-      _updateLastUpdatedDates();
-    });
+      setState(() {
+        if (!_assetData.containsKey(today)) {
+          _assetData[today] = {};
+        }
+        _assetData[today]!.addAll(todayData);
+        _updateChartData();
+        _updateLastUpdatedDates();
+      });
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('asset_data_v2', jsonEncode(_assetData));
+      // 入力欄をクリア
+      _controllers.forEach((_, controller) => controller.clear());
 
-    _controllers.forEach((_, controller) => controller.clear());
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('資産を登録しました。')),
-    );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('資産を登録しました。')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving assets: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e')),
+        );
+      }
+    }
   }
+
+  // 資産項目を削除する（Supabaseからも削除）
+  Future<void> _removeAssetType(String name) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      // Supabaseから該当タイトルのデータを全て削除
+      await _supabase
+          .from('cfo_assets')
+          .delete()
+          .eq('user_id', userId)
+          .eq('title', name);
+
+      setState(() {
+        _assetTypes.remove(name);
+        _controllers.remove(name)?.dispose();
+        _assetData.forEach((date, assets) {
+          assets.remove(name);
+        });
+        _initControllers();
+        _updateChartData();
+        _updateLastUpdatedDates();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('「$name」を削除しました')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting asset type: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除エラー: $e')),
+        );
+      }
+    }
+  }
+
   // #endregion
 
+  // #region Logic Helpers
   void _initControllers() {
-    _controllers.forEach((_, controller) => controller.dispose());
-    _controllers = {
-      for (var type in _assetTypes) type: TextEditingController(),
-    };
+    // 既存のコントローラーを保持しつつ、足りないものを追加、不要なものを削除
+    final newControllers = <String, TextEditingController>{};
+    for (var type in _assetTypes) {
+      if (_controllers.containsKey(type)) {
+        newControllers[type] = _controllers[type]!;
+      } else {
+        newControllers[type] = TextEditingController();
+      }
+    }
+    // 不要になったコントローラーを破棄
+    _controllers.forEach((key, controller) {
+      if (!newControllers.containsKey(key)) {
+        controller.dispose();
+      }
+    });
+    _controllers = newControllers;
   }
 
   void _addAssetType(String name) {
@@ -129,30 +223,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _assetTypes.add(name);
       _initControllers();
-      _saveAssetTypes();
-      _updateLastUpdatedDates();
-    });
-  }
-
-  void _removeAssetType(String name) {
-    setState(() {
-      _assetTypes.remove(name);
-      _controllers.remove(name)?.dispose();
-      _assetData.forEach((date, assets) {
-        assets.remove(name);
-      });
-      _initControllers();
-      _saveAssetTypes();
-      _updateChartData();
+      // Supabaseへの保存は、実際に金額を入れて「登録」ボタンを押したときに行われるため
+      // ここではUI上のリストに追加するだけでOK
       _updateLastUpdatedDates();
     });
   }
 
   void _updateLastUpdatedDates() {
     _lastUpdatedDates = {};
+    // 日付順にソートされたキーを取得
+    final sortedDates = _assetData.keys.toList()..sort();
+
     for (var type in _assetTypes) {
       String? lastDate;
-      for (var date in _sortedDates.reversed) {
+      // 最新の日付から遡って、その資産タイプのデータがある日を探す
+      for (var date in sortedDates.reversed) {
         if (_assetData[date]?.containsKey(type) ?? false) {
           lastDate = date;
           break;
@@ -177,7 +262,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final String date = _sortedDates[i];
       double cumulativeValue = 0;
 
-      // Fill in missing values from the previous day
+      // 前日のデータを引き継ぐロジック（データの穴埋め）
       if (i > 0) {
         final prevDate = _sortedDates[i - 1];
         for (var type in _assetTypes) {
@@ -202,8 +287,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final type = entry.value;
           final color = _colors[index % _colors.length];
 
+          // データが空の場合は空リストを返す
+          final spots = spotsData[type] ?? [];
+          if (spots.isEmpty) return null;
+
           return LineChartBarData(
-            spots: spotsData[type] ?? [],
+            spots: spots,
             isCurved: false,
             color: color,
             barWidth: 2,
@@ -215,10 +304,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           );
         })
+        .whereType<LineChartBarData>() // nullを除外
         .toList()
         .reversed
-        .toList(); // Reversed for correct stacking order
+        .toList();
   }
+  // #endregion
 
   // #region UI Building
   @override
