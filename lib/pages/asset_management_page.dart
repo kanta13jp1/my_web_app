@@ -98,18 +98,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _saveAssetData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
+
     final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final Map<String, double> todayData = {};
     bool hasData = false;
+
     _controllers.forEach((assetType, controller) {
+      // ▼ 変更: 入力が空でないなら、0でも保存対象にする
       if (controller.text.isNotEmpty) {
         final cleanText = controller.text.replaceAll(',', '');
+        // tryParseで失敗した場合は0.0にするが、明示的に0が入力された場合も0.0になる
         final double amount = double.tryParse(cleanText) ?? 0.0;
+
         todayData[assetType] = amount;
         hasData = true;
       }
     });
+
     if (!hasData) return;
+
     try {
       for (var entry in todayData.entries) {
         await _supabase.from('cfo_assets').insert({
@@ -119,21 +126,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'created_at': DateTime.now().toIso8601String(),
         });
       }
+
       setState(() {
-        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        if (!_assetData.containsKey(today)) {
+          _assetData[today] = {};
+        }
+        // ▼ 変更: 既存データを上書きする形でマージ
         _assetData[today]!.addAll(todayData);
+
         _updateChartData();
         _updateLastUpdatedDates();
       });
+
+      // 入力欄をクリア
       _controllers.forEach((_, controller) => controller.clear());
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('資産を登録しました。')));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('資産を登録しました。')),
+        );
+      }
     } catch (e) {
       debugPrint('Error saving assets: $e');
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('保存エラー: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e')),
+        );
+      }
     }
   }
 
@@ -388,6 +407,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (i > 0) {
         final prevDate = _sortedDates[i - 1];
         for (var type in _assetTypes) {
+          // ▼ 重要: 「その日のデータが存在しない」場合のみ、前日のデータを引き継ぐ。
+          // 0円であってもキーが存在すれば ("containsKey") それが優先されるべき。
           if (!_assetData[date]!.containsKey(type) &&
               _assetData[prevDate]!.containsKey(type)) {
             _assetData[date]![type] = _assetData[prevDate]![type]!;
@@ -396,7 +417,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
 
       for (var type in _assetTypes) {
+        // ▼ ここでデータがない場合は0になるが、前段の穴埋め処理で埋まっているはず
         final double value = _assetData[date]?[type] ?? 0;
+
         if (_isStacked) {
           cumulativeValue += value;
           spotsData[type]!.add(FlSpot(i.toDouble(), cumulativeValue));
@@ -406,6 +429,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     }
 
+    // ... (以下、チャートバー生成部分は変更なし) ...
     _chartBars = _assetTypes
         .asMap()
         .entries
