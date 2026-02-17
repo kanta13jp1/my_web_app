@@ -20,20 +20,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
 
   // グラフデータ
-  List<LineChartBarData> _lineChartBars = []; // 資産推移用
-  List<BarChartGroupData> _barChartGroups = []; // 日次損益用
-  double _maxDailyChange = 0; // 棒グラフのスケール用
+  List<LineChartBarData> _lineChartBars = [];
+  List<BarChartGroupData> _barChartGroups = [];
+  double _maxDailyChange = 0;
 
   List<String> _sortedDates = [];
   Map<String, String?> _lastUpdatedDates = {};
 
-  // 表示モード
-  bool _isStacked = true; // 積み上げ(合計) vs 個別
-  bool _showDailyChange = false; // 資産推移(Line) vs 日次損益(Bar)
+  bool _isStacked = true;
+  bool _showDailyChange = false;
 
-  // 富の攻防戦用State
-  int _todayDefended = 0;
-  int _todayConquered = 0;
+  // ▼ 富の攻防戦用State（投資を追加）
+  int _todayDefended = 0; // 浪費回避
+  int _todayConquered = 0; // 稼ぎ
+  int _todayInvested = 0; // 自己投資（本・経験）
   bool _isLoadingStruggle = false;
 
   final List<Color> _colors = [
@@ -166,7 +166,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
   // #endregion
 
-  // #region Struggle Logic
+  // #region Struggle Logic (Updated for Investment)
   Future<void> _fetchTodayStruggleData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -188,18 +188,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       int defended = 0;
       int conquered = 0;
+      int invested = 0; // 新規追加
+
       for (var item in data) {
         final amount = item['amount'] as int;
-        if (item['action_type'] == 'defend') {
+        final type = item['action_type'];
+        if (type == 'defend') {
           defended += amount;
-        } else {
+        } else if (type == 'conquer') {
           conquered += amount;
+        } else if (type == 'invest') {
+          invested += amount;
         }
       }
       if (mounted) {
         setState(() {
           _todayDefended = defended;
           _todayConquered = conquered;
+          _todayInvested = invested;
         });
       }
     } catch (e) {
@@ -210,28 +216,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _showStruggleDialog(String actionType) {
-    final isDefend = actionType == 'defend';
-    final title = isDefend ? '富の防衛 (節約)' : '富の奪取 (稼ぎ)';
+    String title = '';
+    String message = '';
+    Color color = Colors.grey;
+    IconData icon = Icons.help;
+
+    // アクションタイプごとの設定
+    switch (actionType) {
+      case 'defend':
+        title = '穴を塞ぐ (浪費回避)';
+        message = 'コンビニ、何気ないコーヒー、サブスク。\nその少額浪費を阻止し、富を守り切った。';
+        color = Colors.blue[800]!;
+        icon = Icons.block;
+        break;
+      case 'invest': // 新規追加
+        title = '未来へ投資 (本・体験)';
+        message = '数千円を惜しむな。\nその規律と経験が能力に変わり、5年後の景色を激変させる。';
+        color = Colors.purple[800]!;
+        icon = Icons.auto_graph;
+        break;
+      case 'conquer':
+        title = '富の奪取 (稼ぎ)';
+        message = '1円稼いだということは、誰かの富を奪ったということ。\n市場から富を勝ち取れ。';
+        color = Colors.orange[800]!;
+        icon = Icons.colorize;
+        break;
+    }
+
     final amountController = TextEditingController();
     final memoController = TextEditingController();
-    final color = isDefend ? Colors.blue[800]! : Colors.orange[800]!;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+        title: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 8),
+            Text(title,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                isDefend
-                    ? '1円を節約した＝1円の富を守り切った。\n敵から富を死守せよ。'
-                    : '1円稼いだ＝誰かの富を奪った。\n市場から富を奪取せよ。',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                message,
+                style: const TextStyle(
+                    fontSize: 12, color: Colors.black87, height: 1.4),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
@@ -246,7 +282,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               TextField(
                 controller: memoController,
                 decoration: const InputDecoration(
-                  labelText: '戦況詳細 (例: コンビニ回避)',
+                  labelText: '詳細 (例: ビジネス書、コーヒー我慢)',
                   prefixIcon: Icon(Icons.notes),
                   border: OutlineInputBorder(),
                 ),
@@ -256,7 +292,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('撤退')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
           ElevatedButton.icon(
             onPressed: () async {
               final amountStr = amountController.text.replaceAll(',', '');
@@ -267,8 +304,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: color, foregroundColor: Colors.white),
-            icon: Icon(isDefend ? Icons.shield : Icons.colorize),
-            label: Text(isDefend ? '死守する' : '奪取する'),
+            icon: const Icon(Icons.check),
+            label: const Text('記録する'),
           ),
         ],
       ),
@@ -289,11 +326,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       await _fetchTodayStruggleData();
       if (mounted) {
-        final isDefend = actionType == 'defend';
+        String msg = '';
+        if (actionType == 'defend') msg = '¥$amount の浪費を阻止しました。';
+        if (actionType == 'invest') msg = '¥$amount を未来に投資しました。';
+        if (actionType == 'conquer') msg = '¥$amount を市場から奪取しました。';
+
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text(isDefend ? '¥$amount の富を死守しました。' : '¥$amount の富を奪取しました。'),
-          backgroundColor: isDefend ? Colors.blue[800] : Colors.orange[800],
+          content: Text(msg),
+          backgroundColor: Colors.black87,
         ));
       }
     } catch (e) {
@@ -302,7 +342,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
   // #endregion
 
-  // #region Logic Helpers
+  // #region Logic Helpers (Standard)
   void _initControllers() {
     final newControllers = <String, TextEditingController>{};
     for (var type in _assetTypes) {
@@ -339,7 +379,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  // ★ 戦況分析データの作成（グラフ用）
   void _updateChartData() {
     _sortedDates = _assetData.keys.toList()..sort();
     if (_sortedDates.isEmpty) {
@@ -348,20 +387,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
-    // 1. 資産推移データ (Line Chart) の作成
     final Map<String, List<FlSpot>> spotsData = {
       for (var type in _assetTypes) type: [],
     };
 
-    // 日ごとの合計資産を計算（損益計算用）
     List<double> dailyTotals = [];
 
     for (int i = 0; i < _sortedDates.length; i++) {
       final String date = _sortedDates[i];
-      double currentDayTotal = 0; // その日の合計
-      double cumulativeValue = 0; // 積み上げグラフ用
+      double currentDayTotal = 0;
+      double cumulativeValue = 0;
 
-      // 前日データの補完
       if (i > 0) {
         final prevDate = _sortedDates[i - 1];
         for (var type in _assetTypes) {
@@ -416,7 +452,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _lineChartBars = _lineChartBars.reversed.toList();
     }
 
-    // 2. 日次損益データ (Bar Chart) の作成
     _barChartGroups = [];
     _maxDailyChange = 0;
 
@@ -425,15 +460,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (i > 0) {
         diff = dailyTotals[i] - dailyTotals[i - 1];
       }
-
-      // 最大値更新（グラフスケール用）
       if (diff.abs() > _maxDailyChange) {
         _maxDailyChange = diff.abs();
       }
-
-      // 勝てば緑(富の奪取)、負ければ赤(富の喪失)
       final color = diff >= 0 ? Colors.green : Colors.red;
-
       _barChartGroups.add(
         BarChartGroupData(
           x: i,
@@ -451,7 +481,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       );
     }
-    // スケールに余裕を持たせる
     if (_maxDailyChange == 0) _maxDailyChange = 1000;
     _maxDailyChange *= 1.2;
   }
@@ -463,7 +492,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('資産管理闘争'),
-        backgroundColor: const Color(0xFF1B5E20), // 深い緑（軍事的）
+        backgroundColor: const Color(0xFF212121), // 黒に近いグレーで哲学的な重みを
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.blueGrey[50],
@@ -473,9 +502,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             _buildStruggleCard(),
             const SizedBox(height: 24),
-            _buildChartCard(), // ここが戦況マップの核
+            _buildChartCard(),
             const SizedBox(height: 16),
-            if (!_showDailyChange) _buildLegendCard(), // 資産推移の時だけ内訳表示
+            if (!_showDailyChange) _buildLegendCard(),
             const SizedBox(height: 24),
             _buildInputCard(),
           ],
@@ -511,7 +540,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                   ],
                 ),
-                // モード切替
                 Row(
                   children: [
                     const Icon(Icons.show_chart, size: 16),
@@ -521,7 +549,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       onChanged: (value) {
                         setState(() {
                           _showDailyChange = value;
-                          // 棒グラフモードになったら、折れ線の積み上げはデフォルトに戻す等の調整も可
                         });
                       },
                     ),
@@ -530,7 +557,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
-            // 資産推移モードの時のみ、合計/個別の切り替えを表示
             if (!_showDailyChange)
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -549,17 +575,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const Text('合計', style: TextStyle(fontSize: 10)),
                 ],
               ),
-
             const SizedBox(height: 24),
-
-            // グラフエリア
             SizedBox(
               height: 300,
               child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
                   ? const Center(child: Text('戦況データなし。記録を開始せよ。'))
                   : _showDailyChange
-                      ? _buildDailyChangeChart() // 棒グラフ (日次損益)
-                      : _buildAssetTrendChart(), // 折れ線グラフ (資産推移)
+                      ? _buildDailyChangeChart()
+                      : _buildAssetTrendChart(),
             ),
           ],
         ),
@@ -567,7 +590,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // 折れ線グラフ（資産推移）
   Widget _buildAssetTrendChart() {
     return LineChart(
       LineChartData(
@@ -586,7 +608,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // 棒グラフ（日次損益）
   Widget _buildDailyChangeChart() {
     return BarChart(
       BarChartData(
@@ -617,10 +638,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
           ),
         ),
-        titlesData: _buildChartTitles(), // 共通のタイトル設定を使用
+        titlesData: _buildChartTitles(),
         gridData: FlGridData(
           show: true,
-          checkToShowHorizontalLine: (value) => value == 0, // 0ラインを強調
+          checkToShowHorizontalLine: (value) => value == 0,
           getDrawingHorizontalLine: (value) {
             if (value == 0)
               return const FlLine(color: Colors.black54, strokeWidth: 1);
@@ -655,7 +676,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ▼ 富の攻防戦UI
+  // ▼ 富の攻防戦UI (アップデート：投資を追加)
   Widget _buildStruggleCard() {
     final currencyFormat =
         NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0);
@@ -680,7 +701,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '人生とは富の奪い合いである。',
+              '「お金がない」と嘆く前に。',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -688,13 +709,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              '毎日1円を守るために必死で生き、1円を奪うために必死で生きなければならない。',
+              '財布の底に空いた穴を塞げ。毎日の少額浪費があなたの豊かさを奪っている。\n数千円を本と経験に使え。その規律が5年後の景色を変える。',
               style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontStyle: FontStyle.italic),
             ),
             const Divider(color: Colors.white24, height: 24),
+
+            // スコアボード（3カラム）
             _isLoadingStruggle
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.white))
@@ -702,13 +725,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildStruggleScore(
-                        title: '今日の防衛 (節約)',
+                        title: '穴を塞ぐ (防衛)',
                         amount: currencyFormat.format(_todayDefended),
-                        icon: Icons.shield,
+                        icon: Icons.block,
                         color: Colors.blueAccent,
                       ),
                       _buildStruggleScore(
-                        title: '今日の奪取 (稼ぎ)',
+                        title: '未来へ投資',
+                        amount: currencyFormat.format(_todayInvested),
+                        icon: Icons.auto_graph,
+                        color: Colors.purpleAccent,
+                      ),
+                      _buildStruggleScore(
+                        title: '市場から奪取',
                         amount: currencyFormat.format(_todayConquered),
                         icon: Icons.colorize,
                         color: Colors.orangeAccent,
@@ -716,31 +745,70 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ),
             const SizedBox(height: 24),
+
+            // アクションボタン
             Row(
               children: [
+                // 防衛ボタン
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () => _showStruggleDialog('defend'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[800],
+                      backgroundColor: Colors.blue[900],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    icon: const Icon(Icons.shield_outlined),
-                    label: const Text('1円を死守する'),
+                    child: const Column(
+                      children: [
+                        Icon(Icons.block, size: 20),
+                        SizedBox(height: 4),
+                        Text('浪費阻止', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
+                // 投資ボタン
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
+                    onPressed: () => _showStruggleDialog('invest'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple[900],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Column(
+                      children: [
+                        Icon(Icons.menu_book, size: 20),
+                        SizedBox(height: 4),
+                        Text('自己投資', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 奪取ボタン
+                Expanded(
+                  child: ElevatedButton(
                     onPressed: () => _showStruggleDialog('conquer'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange[900],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    icon: const Icon(Icons.colorize_outlined),
-                    label: const Text('1円を奪取する'),
+                    child: const Column(
+                      children: [
+                        Icon(Icons.colorize, size: 20),
+                        SizedBox(height: 4),
+                        Text('富の奪取', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -758,13 +826,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       required Color color}) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 28),
+        Icon(icon, color: color, size: 24),
         const SizedBox(height: 4),
         Text(title,
-            style: TextStyle(color: color.withOpacity(0.8), fontSize: 12)),
+            style: TextStyle(color: color.withOpacity(0.8), fontSize: 10)),
         Text(amount,
             style: TextStyle(
-                color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+                color: color, fontSize: 16, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -816,12 +884,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
     );
   }
-
-  // ... (_buildAssetInputRow, _buildLastUpdatedText, _buildLegendCard, _showAddAssetDialog, _showRemoveAssetDialog, Helpers は変更なし) ...
-  // コード長削減のため、以下は既存ロジックを維持してコピーしてください。
-  // ただし、_buildLegendCard, _buildAssetInputRow, _buildLastUpdatedText, _showAddAssetDialog, _showRemoveAssetDialog,
-  // _getIconForAsset, _bottomTitleWidgets, _leftTitleWidgets, _getTooltipItems は元のままで動作します。
-  // ここでは完全性のため記述します。
 
   Widget _buildAssetInputRow(String type) {
     return Padding(
