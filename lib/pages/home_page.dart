@@ -63,8 +63,10 @@ class _HomePageState extends State<HomePage> {
 
       if (data.isEmpty) {
         return NumberFormat.currency(
-                locale: 'ja_JP', symbol: '¥', decimalDigits: 0)
-            .format(0);
+          locale: 'ja_JP',
+          symbol: '¥',
+          decimalDigits: 0,
+        ).format(0);
       }
 
       // 合計を計算
@@ -113,8 +115,10 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const SettingsPage())),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
             tooltip: '設定',
           ),
           IconButton(
@@ -626,14 +630,4 @@ class _MenuData {
   final Color color;
   final VoidCallback onTap;
   _MenuData(this.title, this.icon, this.color, this.onTap);
-}
-
-// _KpiDataクラスは不要になったため削除しても良いですが、
-// 他の場所で使われていないか確認が必要です。今回は残しています。
-class _KpiData {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  _KpiData(this.title, this.value, this.icon, this.color);
 }
