@@ -20,21 +20,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
 
   // グラフデータ
-  List<LineChartBarData> _lineChartBars = [];
-  List<BarChartGroupData> _barChartGroups = [];
-  double _maxDailyChange = 0;
+  List<LineChartBarData> _lineChartBars = []; // 資産推移用
+  List<BarChartGroupData> _barChartGroups = []; // 日次損益用
+  double _maxDailyChange = 0; // 棒グラフのスケール用
 
   List<String> _sortedDates = [];
   Map<String, String?> _lastUpdatedDates = {};
 
-  bool _isStacked = true;
-  bool _showDailyChange = false;
+  // 表示モード
+  bool _isStacked = true; // 積み上げ(合計) vs 個別
+  bool _showDailyChange = false; // 資産推移(Line) vs 日次損益(Bar)
 
-  // ▼ 富の攻防戦用State（投資を追加）
-  int _todayDefended = 0; // 浪費回避
-  int _todayConquered = 0; // 稼ぎ
-  int _todayInvested = 0; // 自己投資（本・経験）
+  // 富の攻防戦用State
+  int _todayDefended = 0;
+  int _todayConquered = 0;
+  int _todayInvested = 0;
   bool _isLoadingStruggle = false;
+
+  // ▼ 追加: 漸進主義（1日1件の明細確認）用State
+  bool _isGradualMissionDoneToday = false;
+  final TextEditingController _gradualMemoController = TextEditingController();
+  final TextEditingController _gradualAmountController =
+      TextEditingController();
 
   final List<Color> _colors = [
     Colors.blue,
@@ -59,6 +66,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
+    _gradualMemoController.dispose();
+    _gradualAmountController.dispose();
     super.dispose();
   }
 
@@ -166,7 +175,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
   // #endregion
 
-  // #region Struggle Logic (Updated for Investment)
+  // #region Struggle Logic
   Future<void> _fetchTodayStruggleData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -181,24 +190,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final data = await _supabase
           .from('wealth_struggles')
-          .select('action_type, amount')
+          .select('action_type, amount, description')
           .eq('user_id', userId)
           .gte('occurred_at', startOfDay)
           .lte('occurred_at', endOfDay);
 
       int defended = 0;
       int conquered = 0;
-      int invested = 0; // 新規追加
+      int invested = 0;
+      bool missionDone = false;
 
       for (var item in data) {
         final amount = item['amount'] as int;
         final type = item['action_type'];
+        final desc = item['description']?.toString() ?? '';
+
         if (type == 'defend') {
           defended += amount;
         } else if (type == 'conquer') {
           conquered += amount;
         } else if (type == 'invest') {
           invested += amount;
+        } else if (type == 'expense' && desc.contains('[三井住友銀行大塚支店]')) {
+          // 本日の漸進主義ミッションが完了しているか判定
+          missionDone = true;
         }
       }
       if (mounted) {
@@ -206,6 +221,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _todayDefended = defended;
           _todayConquered = conquered;
           _todayInvested = invested;
+          _isGradualMissionDoneToday = missionDone;
         });
       }
     } catch (e) {
@@ -216,31 +232,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _showStruggleDialog(String actionType) {
-    String title = '';
-    String message = '';
-    Color color = Colors.grey;
-    IconData icon = Icons.help;
+    final isDefend = actionType == 'defend';
+    final isInvest = actionType == 'invest';
 
-    // アクションタイプごとの設定
-    switch (actionType) {
-      case 'defend':
-        title = '穴を塞ぐ (浪費回避)';
-        message = 'コンビニ、何気ないコーヒー、サブスク。\nその少額浪費を阻止し、富を守り切った。';
-        color = Colors.blue[800]!;
-        icon = Icons.block;
-        break;
-      case 'invest': // 新規追加
-        title = '未来へ投資 (本・体験)';
-        message = '数千円を惜しむな。\nその規律と経験が能力に変わり、5年後の景色を激変させる。';
-        color = Colors.purple[800]!;
-        icon = Icons.auto_graph;
-        break;
-      case 'conquer':
-        title = '富の奪取 (稼ぎ)';
-        message = '1円稼いだということは、誰かの富を奪ったということ。\n市場から富を勝ち取れ。';
-        color = Colors.orange[800]!;
-        icon = Icons.colorize;
-        break;
+    String title = '富の奪取 (稼ぎ)';
+    Color color = Colors.orange[800]!;
+    IconData icon = Icons.colorize;
+    String desc = '1円稼いだ＝誰かの富を奪った。\n市場から富を奪取せよ。';
+
+    if (isDefend) {
+      title = '富の防衛 (節約)';
+      color = Colors.blue[800]!;
+      icon = Icons.shield;
+      desc = '1円を節約した＝1円の富を守り切った。\n敵から富を死守せよ。';
+    } else if (isInvest) {
+      title = '未来へ投資 (本・体験)';
+      color = Colors.purple[800]!;
+      icon = Icons.auto_graph;
+      desc = '数千円を惜しむな。\nその規律が5年後の景色を激変させる。';
     }
 
     final amountController = TextEditingController();
@@ -249,25 +258,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 8),
-            Text(title,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
-        ),
+        title: Text(title,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                message,
-                style: const TextStyle(
-                    fontSize: 12, color: Colors.black87, height: 1.4),
+                desc,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
@@ -282,7 +283,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               TextField(
                 controller: memoController,
                 decoration: const InputDecoration(
-                  labelText: '詳細 (例: ビジネス書、コーヒー我慢)',
+                  labelText: '戦況詳細',
                   prefixIcon: Icon(Icons.notes),
                   border: OutlineInputBorder(),
                 ),
@@ -292,8 +293,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+              onPressed: () => Navigator.pop(context), child: const Text('撤退')),
           ElevatedButton.icon(
             onPressed: () async {
               final amountStr = amountController.text.replaceAll(',', '');
@@ -304,7 +304,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: color, foregroundColor: Colors.white),
-            icon: const Icon(Icons.check),
+            icon: Icon(icon),
             label: const Text('記録する'),
           ),
         ],
@@ -326,10 +326,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       await _fetchTodayStruggleData();
       if (mounted) {
-        String msg = '';
-        if (actionType == 'defend') msg = '¥$amount の浪費を阻止しました。';
-        if (actionType == 'invest') msg = '¥$amount を未来に投資しました。';
-        if (actionType == 'conquer') msg = '¥$amount を市場から奪取しました。';
+        String msg = '記録しました。';
+        if (actionType == 'defend') msg = '¥$amount の富を死守しました。';
+        if (actionType == 'conquer') msg = '¥$amount の富を奪取しました。';
+        if (actionType == 'invest') msg = '¥$amount を未来へ投資しました。';
+        if (actionType == 'expense') msg = '明細を1件把握し、前進しました。';
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(msg),
@@ -342,7 +343,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
   // #endregion
 
-  // #region Logic Helpers (Standard)
+  // #region Logic Helpers
   void _initControllers() {
     final newControllers = <String, TextEditingController>{};
     for (var type in _assetTypes) {
@@ -492,14 +493,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('資産管理闘争'),
-        backgroundColor: const Color(0xFF212121), // 黒に近いグレーで哲学的な重みを
+        backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.blueGrey[50],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildGradualismCard(), // ▼ 追加: 漸進主義ミッションカード
+            const SizedBox(height: 24),
             _buildStruggleCard(),
             const SizedBox(height: 24),
             _buildChartCard(),
@@ -507,6 +511,146 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (!_showDailyChange) _buildLegendCard(),
             const SizedBox(height: 24),
             _buildInputCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ▼ 追加: 漸進主義ミッション（1日1歩）のUI
+  Widget _buildGradualismCard() {
+    return Card(
+      elevation: 2,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.blueGrey[300]!, width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.directions_walk, color: Colors.blueGrey[800]),
+                const SizedBox(width: 8),
+                Text(
+                  '漸進主義ミッション',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey[900]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '一歩でもいいから毎日前進する。\n三井住友銀行大塚支店の取引明細を確認し、1件だけ記録せよ。',
+              style:
+                  TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            if (_isGradualMissionDoneToday)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        '本日の明細確認は完了しました。素晴らしい前進です。明日も続けましょう。',
+                        style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _gradualMemoController,
+                          decoration: const InputDecoration(
+                            labelText: '内容 (例: Amazon)',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _gradualAmountController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: '金額 (円)',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 98, // TextField2つ分の高さに合わせる
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final memo = _gradualMemoController.text.trim();
+                          final amountStr =
+                              _gradualAmountController.text.replaceAll(',', '');
+                          final amount = int.tryParse(amountStr);
+
+                          if (amount != null && amount > 0 && memo.isNotEmpty) {
+                            // 明細記録として保存 (判別用に[三井住友銀行大塚支店]のタグを付与)
+                            await _recordStruggle(
+                                'expense', amount, '[三井住友銀行大塚支店] $memo');
+                            _gradualMemoController.clear();
+                            _gradualAmountController.clear();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('内容と金額(1円以上)を正しく入力してください')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueGrey[800],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check),
+                            SizedBox(height: 4),
+                            Text('記録して\n前進する',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -676,7 +820,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ▼ 富の攻防戦UI (アップデート：投資を追加)
   Widget _buildStruggleCard() {
     final currencyFormat =
         NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0);
@@ -701,7 +844,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '「お金がない」と嘆く前に。',
+              '人生とは富の奪い合いである。',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -709,15 +852,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              '財布の底に空いた穴を塞げ。毎日の少額浪費があなたの豊かさを奪っている。\n数千円を本と経験に使え。その規律が5年後の景色を変える。',
+              '毎日1円を守るために必死で生き、1円を奪うために必死で生きなければならない。',
               style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontStyle: FontStyle.italic),
             ),
             const Divider(color: Colors.white24, height: 24),
-
-            // スコアボード（3カラム）
             _isLoadingStruggle
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.white))
@@ -725,9 +866,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildStruggleScore(
-                        title: '穴を塞ぐ (防衛)',
+                        title: '今日の防衛 (節約)',
                         amount: currencyFormat.format(_todayDefended),
-                        icon: Icons.block,
+                        icon: Icons.shield,
                         color: Colors.blueAccent,
                       ),
                       _buildStruggleScore(
@@ -737,7 +878,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         color: Colors.purpleAccent,
                       ),
                       _buildStruggleScore(
-                        title: '市場から奪取',
+                        title: '今日の奪取 (稼ぎ)',
                         amount: currencyFormat.format(_todayConquered),
                         icon: Icons.colorize,
                         color: Colors.orangeAccent,
@@ -745,70 +886,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ),
             const SizedBox(height: 24),
-
-            // アクションボタン
             Row(
               children: [
-                // 防衛ボタン
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () => _showStruggleDialog('defend'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
+                      backgroundColor: Colors.blue[800],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Column(
-                      children: [
-                        Icon(Icons.block, size: 20),
-                        SizedBox(height: 4),
-                        Text('浪費阻止', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    icon: const Icon(Icons.shield_outlined),
+                    label: const Text('死守', style: TextStyle(fontSize: 12)),
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 投資ボタン
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () => _showStruggleDialog('invest'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple[900],
+                      backgroundColor: Colors.purple[800],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Column(
-                      children: [
-                        Icon(Icons.menu_book, size: 20),
-                        SizedBox(height: 4),
-                        Text('自己投資', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    icon: const Icon(Icons.auto_graph),
+                    label: const Text('投資', style: TextStyle(fontSize: 12)),
                   ),
                 ),
                 const SizedBox(width: 8),
-                // 奪取ボタン
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () => _showStruggleDialog('conquer'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange[900],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Column(
-                      children: [
-                        Icon(Icons.colorize, size: 20),
-                        SizedBox(height: 4),
-                        Text('富の奪取', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    icon: const Icon(Icons.colorize_outlined),
+                    label: const Text('奪取', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
