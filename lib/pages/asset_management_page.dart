@@ -36,11 +36,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _todayInvested = 0;
   bool _isLoadingStruggle = false;
 
-  // ▼ 追加・変更: 漸進主義（明細確認）用State
-  bool _isSmbcMissionDoneToday = false; // 三井住友銀行の確認フラグ
-  bool _isPaypayMissionDoneToday = false; // PayPayカードの確認フラグ
+  // 漸進主義（明細確認）用State
+  bool _isSmbcMissionDoneToday = false;
+  bool _isPaypayMissionDoneToday = false;
   DateTime _selectedGradualDate = DateTime.now();
-  String _selectedSource = '[三井住友銀行大塚支店]'; // 明細元の選択用
+  String _selectedSource = '[三井住友銀行大塚支店]';
   final List<String> _sourceOptions = ['[三井住友銀行大塚支店]', '[PayPayカード]'];
 
   final TextEditingController _gradualMemoController = TextEditingController();
@@ -121,6 +121,59 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  // ▼ 新規追加: 個別の資産を更新するメソッド
+  Future<void> _saveSingleAssetData(String type) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final controller = _controllers[type];
+    if (controller == null || controller.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type の金額を入力してください')),
+      );
+      return;
+    }
+
+    final cleanText = controller.text.replaceAll(',', '');
+    final double amount = double.tryParse(cleanText) ?? 0.0;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    try {
+      await _supabase.from('cfo_assets').insert({
+        'user_id': userId,
+        'title': type,
+        'amount': amount,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      setState(() {
+        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        _assetData[today]![type] = amount;
+        _updateChartData();
+        _updateLastUpdatedDates();
+      });
+
+      controller.clear(); // 入力後クリア
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ $type の戦況を更新しました'),
+            backgroundColor: Colors.green[700],
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving $type: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  // 既存の一括更新メソッド（複数入力した時用）
   Future<void> _saveAssetData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -156,8 +209,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       _controllers.forEach((_, controller) => controller.clear());
       if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('戦況を記録しました。')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('入力された項目を一括更新しました。')),
+        );
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
@@ -237,7 +291,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  // ▼ 変更: PayPayカードの確認状況も取得する
   Future<void> _fetchRecentStruggles() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -258,7 +311,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       for (var item in data) {
         final createdAtStr = item['created_at'] as String;
         final createdLocal = DateTime.parse(createdAtStr).toLocal();
-        // 「今日登録したか」でミッション完了を判定
         if (DateFormat('yyyy-MM-dd').format(createdLocal) == todayStr) {
           if (item['action_type'] == 'expense') {
             final desc = item['description']?.toString() ?? '';
@@ -632,19 +684,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGradualismCard(), // ▼ 変更: PayPayカード対応
+            _buildGradualismCard(), // 漸進主義
             const SizedBox(height: 24),
-            _buildStruggleCard(),
+            _buildStruggleCard(), // 富の奪い合い
             const SizedBox(height: 24),
-            _buildChartCard(),
+            _buildChartCard(), // グラフ
             const SizedBox(height: 16),
-            if (!_showDailyChange) _buildLegendCard(),
+            if (!_showDailyChange) _buildLegendCard(), // 内訳
             const SizedBox(height: 24),
-            _buildSubscriptionCard(),
+            _buildSubscriptionCard(), // 固定費
             const SizedBox(height: 24),
-            _buildInputCard(),
+            _buildInputCard(), // ▼ 変更: 個別更新UI
             const SizedBox(height: 24),
-            _buildHistoryCard(),
+            _buildHistoryCard(), // 戦歴
           ],
         ),
       ),
@@ -655,7 +707,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 各カードUIコンポーネント
   // -------------------------
 
-  // ▼ 変更: 漸進主義ミッション（口座・カード選択機能付き）
   Widget _buildGradualismCard() {
     return Card(
       elevation: 2,
@@ -685,8 +736,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(
                     fontSize: 12, color: Colors.black87, height: 1.4)),
             const SizedBox(height: 12),
-
-            // 今日のミッション達成状況
             Row(
               children: [
                 Icon(
@@ -720,7 +769,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 16),
-
             if (_isSmbcMissionDoneToday && _isPaypayMissionDoneToday)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -749,25 +797,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     flex: 3,
                     child: Column(
                       children: [
-                        // 明細元の選択
                         DropdownButtonFormField<String>(
                           value: _selectedSource,
                           isExpanded: true,
                           decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                          ),
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8)),
                           items: _sourceOptions.map((String source) {
                             return DropdownMenuItem<String>(
-                              value: source,
-                              child: Text(
-                                  source
-                                      .replaceAll('[', '')
-                                      .replaceAll(']', ''),
-                                  style: const TextStyle(fontSize: 13)),
-                            );
+                                value: source,
+                                child: Text(
+                                    source
+                                        .replaceAll('[', '')
+                                        .replaceAll(']', ''),
+                                    style: const TextStyle(fontSize: 13)));
                           }).toList(),
                           onChanged: (String? newValue) {
                             if (newValue != null)
@@ -775,7 +820,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           },
                         ),
                         const SizedBox(height: 8),
-                        // 日付選択
                         InkWell(
                           onTap: () async {
                             final date = await showDatePicker(
@@ -832,7 +876,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Expanded(
                     flex: 2,
                     child: SizedBox(
-                      height: 196, // 入力フィールド4つ分に合わせて高さを調整
+                      height: 196,
                       child: ElevatedButton(
                         onPressed: () async {
                           final memo = _gradualMemoController.text.trim();
@@ -1174,13 +1218,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  // ▼ 変更: 個別更新UIと警告を反映させた InputCard
   Widget _buildInputCard() {
-    // ▼ 追加: 本日の日付を取得し、1つでも未更新の項目があるかチェックする
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    bool needsUpdate = false;
+    // 未更新の項目がいくつあるかカウント
+    int unupdatedCount = 0;
     if (_assetTypes.isNotEmpty) {
-      needsUpdate =
-          _assetTypes.any((type) => _lastUpdatedDates[type] != todayStr);
+      unupdatedCount = _assetTypes
+          .where((type) => _lastUpdatedDates[type] != todayStr)
+          .length;
     }
 
     return Card(
@@ -1192,60 +1238,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Text('現状確認 (残高更新)',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Text('現実を直視せよ。数値は嘘をつかない。',
+            const Text('現実を直視せよ。1つずつ個別に更新できます。',
                 style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
 
-            // ▼ 追加: 未更新時の警告バナー
-            if (needsUpdate)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red[200]!),
-                ),
+            if (unupdatedCount > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text('⚠️ 本日未報告の戦線が $unupdatedCount 箇所あります。',
+                    style: TextStyle(
+                        color: Colors.red[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13)),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.red[800]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '本日の戦況（残高）が未報告です。直ちに最新の数値を入力し、前線を維持せよ。',
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 16),
+                    const SizedBox(width: 4),
+                    Text('全ての戦線で本日の報告が完了しています。',
                         style: TextStyle(
-                          color: Colors.red[900],
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
+                            color: Colors.green[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
                   ],
                 ),
               ),
 
+            // 各資産の入力行
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
+
             const SizedBox(height: 8),
             Row(
               children: [
                 TextButton.icon(
-                  onPressed: _showAddAssetDialog,
-                  icon: const Icon(Icons.add),
-                  label: const Text('管理項目を追加'),
-                ),
+                    onPressed: _showAddAssetDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('管理項目を追加')),
               ],
             ),
             const SizedBox(height: 16),
+            // 一括更新ボタン（補助的）
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: _saveAssetData,
-                icon: const Icon(Icons.save),
-                label: const Text('戦況を更新する'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[800],
-                  foregroundColor: Colors.white,
+                icon: const Icon(Icons.done_all),
+                label: const Text('入力した項目を一括更新'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.green[800],
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -1256,7 +1300,126 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ▼ 追加: 記録した明細の履歴リスト
+  // ▼ 変更: 個別カードデザイン、個別更新ボタン、個別警告を搭載
+  Widget _buildAssetInputRow(String type) {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: isUpdatedToday ? Colors.green[50] : Colors.red[50],
+          border: Border.all(
+            color: isUpdatedToday ? Colors.green[200]! : Colors.red[300]!,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isUpdatedToday
+                          ? Icons.check_circle
+                          : Icons.warning_amber_rounded,
+                      color:
+                          isUpdatedToday ? Colors.green[700] : Colors.red[700],
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      type,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: isUpdatedToday
+                            ? Colors.green[800]
+                            : Colors.red[900],
+                      ),
+                    ),
+                  ],
+                ),
+                _buildLastUpdatedText(type),
+              ],
+            ),
+            if (!isUpdatedToday)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                child: Text(
+                  '⚠️ $type の残高が未報告です。前線を直視してください。',
+                  style: TextStyle(fontSize: 11, color: Colors.red[800]),
+                ),
+              ),
+            if (isUpdatedToday) const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controllers[type],
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true, signed: true),
+                    decoration: InputDecoration(
+                      hintText: '最新の残高',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: Icon(_getIconForAsset(type)),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // ▼ 個別更新ボタン
+                ElevatedButton(
+                  onPressed: () => _saveSingleAssetData(type),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isUpdatedToday ? Colors.green[700] : Colors.red[700],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                  ),
+                  child: const Text('更新'),
+                ),
+                if (type != '現金')
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                    onPressed: () => _showRemoveAssetDialog(type),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLastUpdatedText(String type) {
+    final lastDateStr = _lastUpdatedDates[type];
+    if (lastDateStr == null)
+      return const Text('データなし',
+          style: TextStyle(color: Colors.grey, fontSize: 11));
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (lastDateStr == todayStr) {
+      return Text('✅ 本日報告済み',
+          style: TextStyle(
+              color: Colors.green[700],
+              fontSize: 11,
+              fontWeight: FontWeight.bold));
+    }
+    final formattedDate =
+        DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
+    return Text('最終更新: $formattedDate',
+        style: const TextStyle(color: Colors.grey, fontSize: 11));
+  }
+
   Widget _buildHistoryCard() {
     return Card(
       elevation: 2,
@@ -1424,57 +1587,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
     );
-  }
-
-  Widget _buildAssetInputRow(String type) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _controllers[type],
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  decoration: InputDecoration(
-                    labelText: type,
-                    border: const OutlineInputBorder(),
-                    prefixIcon: Icon(_getIconForAsset(type)),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                _buildLastUpdatedText(type),
-              ],
-            ),
-          ),
-          if (type != '現金')
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-              onPressed: () => _showRemoveAssetDialog(type),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLastUpdatedText(String type) {
-    final lastDateStr = _lastUpdatedDates[type];
-    if (lastDateStr == null)
-      return const Text('  データなし',
-          style: TextStyle(color: Colors.grey, fontSize: 12));
-    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    if (lastDateStr == todayStr)
-      return const Text('  本日更新済み',
-          style: TextStyle(
-              color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold));
-    final formattedDate =
-        DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
-    return Text('  最終更新: $formattedDate',
-        style: const TextStyle(color: Colors.grey, fontSize: 12));
   }
 
   Widget _buildLegendCard() {
