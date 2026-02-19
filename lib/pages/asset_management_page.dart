@@ -20,16 +20,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
 
   // グラフデータ
-  List<LineChartBarData> _lineChartBars = []; // 資産推移用
-  List<BarChartGroupData> _barChartGroups = []; // 日次損益用
-  double _maxDailyChange = 0; // 棒グラフのスケール用
+  List<LineChartBarData> _lineChartBars = [];
+  List<BarChartGroupData> _barChartGroups = [];
+  double _maxDailyChange = 0;
 
   List<String> _sortedDates = [];
   Map<String, String?> _lastUpdatedDates = {};
 
-  // 表示モード
-  bool _isStacked = true; // 積み上げ(合計) vs 個別
-  bool _showDailyChange = false; // 資産推移(Line) vs 日次損益(Bar)
+  bool _isStacked = true;
+  bool _showDailyChange = false;
 
   // 富の攻防戦用State
   int _todayDefended = 0;
@@ -37,11 +36,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _todayInvested = 0;
   bool _isLoadingStruggle = false;
 
-  // ▼ 追加: 漸進主義（1日1件の明細確認）用State
+  // 漸進主義（明細確認）用State
   bool _isGradualMissionDoneToday = false;
+  DateTime _selectedGradualDate = DateTime.now(); // ▼ 追加: 発生日の選択用
   final TextEditingController _gradualMemoController = TextEditingController();
   final TextEditingController _gradualAmountController =
       TextEditingController();
+
+  // ▼ 追加: 戦歴（明細）リスト
+  List<Map<String, dynamic>> _recentStruggles = [];
 
   final List<Color> _colors = [
     Colors.blue,
@@ -61,6 +64,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     super.initState();
     _loadDataFromSupabase();
     _fetchTodayStruggleData();
+    _fetchRecentStruggles(); // ▼ 追加: 履歴を取得
   }
 
   @override
@@ -190,7 +194,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final data = await _supabase
           .from('wealth_struggles')
-          .select('action_type, amount, description')
+          .select('action_type, amount')
           .eq('user_id', userId)
           .gte('occurred_at', startOfDay)
           .lte('occurred_at', endOfDay);
@@ -198,22 +202,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       int defended = 0;
       int conquered = 0;
       int invested = 0;
-      bool missionDone = false;
 
       for (var item in data) {
         final amount = item['amount'] as int;
         final type = item['action_type'];
-        final desc = item['description']?.toString() ?? '';
-
         if (type == 'defend') {
           defended += amount;
         } else if (type == 'conquer') {
           conquered += amount;
         } else if (type == 'invest') {
           invested += amount;
-        } else if (type == 'expense' && desc.contains('[三井住友銀行大塚支店]')) {
-          // 本日の漸進主義ミッションが完了しているか判定
-          missionDone = true;
         }
       }
       if (mounted) {
@@ -221,13 +219,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _todayDefended = defended;
           _todayConquered = conquered;
           _todayInvested = invested;
-          _isGradualMissionDoneToday = missionDone;
         });
       }
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
       if (mounted) setState(() => _isLoadingStruggle = false);
+    }
+  }
+
+  // ▼ 追加: 直近の明細・戦歴を取得する
+  Future<void> _fetchRecentStruggles() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final data = await _supabase
+          .from('wealth_struggles')
+          .select()
+          .eq('user_id', userId)
+          .order('occurred_at', ascending: false) // 発生日順に並べる
+          .limit(30);
+
+      // 今日の漸進主義ミッションが「今日登録されたか(created_at)」を判定
+      final now = DateTime.now();
+      final todayStr = DateFormat('yyyy-MM-dd').format(now);
+      bool missionDone = false;
+
+      for (var item in data) {
+        final createdAtStr = item['created_at'] as String;
+        final createdLocal = DateTime.parse(createdAtStr).toLocal();
+        if (DateFormat('yyyy-MM-dd').format(createdLocal) == todayStr) {
+          if (item['action_type'] == 'expense' &&
+              (item['description']?.toString().contains('[三井住友銀行大塚支店]') ??
+                  false)) {
+            missionDone = true;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _recentStruggles = List<Map<String, dynamic>>.from(data);
+          _isGradualMissionDoneToday = missionDone;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching history: $e');
     }
   }
 
@@ -264,10 +301,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                desc,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
+              Text(desc,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
@@ -312,8 +347,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  // ▼ 引数に occurredAt を追加
   Future<void> _recordStruggle(
-      String actionType, int amount, String description) async {
+      String actionType, int amount, String description,
+      {DateTime? occurredAt}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
@@ -322,9 +359,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'action_type': actionType,
         'amount': amount,
         'description': description.isEmpty ? null : description,
-        'occurred_at': DateTime.now().toUtc().toIso8601String(),
+        'occurred_at': (occurredAt ?? DateTime.now()).toUtc().toIso8601String(),
       });
       await _fetchTodayStruggleData();
+      await _fetchRecentStruggles(); // ▼ 履歴を再取得
+
       if (mounted) {
         String msg = '記録しました。';
         if (actionType == 'defend') msg = '¥$amount の富を死守しました。';
@@ -502,22 +541,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGradualismCard(), // ▼ 追加: 漸進主義ミッションカード
+            _buildGradualismCard(), // 漸進主義ミッション
             const SizedBox(height: 24),
-            _buildStruggleCard(),
+            _buildStruggleCard(), // 攻防記録ボタン
             const SizedBox(height: 24),
-            _buildChartCard(),
+            _buildChartCard(), // グラフ
             const SizedBox(height: 16),
             if (!_showDailyChange) _buildLegendCard(),
             const SizedBox(height: 24),
-            _buildInputCard(),
+            _buildInputCard(), // 残高更新
+            const SizedBox(height: 24),
+            _buildHistoryCard(), // ▼ 追加: 記録した明細リスト
           ],
         ),
       ),
     );
   }
 
-  // ▼ 追加: 漸進主義ミッション（1日1歩）のUI
+  // 漸進主義ミッション（1日1歩）のUI
   Widget _buildGradualismCard() {
     return Card(
       elevation: 2,
@@ -583,6 +624,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     flex: 3,
                     child: Column(
                       children: [
+                        // ▼ 変更: 日付選択UIを追加
+                        InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedGradualDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              setState(() => _selectedGradualDate = date);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[400]!),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(DateFormat('yyyy/MM/dd')
+                                    .format(_selectedGradualDate)),
+                                Icon(Icons.calendar_today,
+                                    size: 16, color: Colors.grey[600]),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         TextField(
                           controller: _gradualMemoController,
                           decoration: const InputDecoration(
@@ -608,7 +681,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Expanded(
                     flex: 2,
                     child: SizedBox(
-                      height: 98, // TextField2つ分の高さに合わせる
+                      height: 156, // TextField 3つ分の高さに合わせる
                       child: ElevatedButton(
                         onPressed: () async {
                           final memo = _gradualMemoController.text.trim();
@@ -617,9 +690,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           final amount = int.tryParse(amountStr);
 
                           if (amount != null && amount > 0 && memo.isNotEmpty) {
-                            // 明細記録として保存 (判別用に[三井住友銀行大塚支店]のタグを付与)
+                            // ▼ 変更: 選択した日付(occurredAt)を渡す
                             await _recordStruggle(
-                                'expense', amount, '[三井住友銀行大塚支店] $memo');
+                                'expense', amount, '[三井住友銀行大塚支店] $memo',
+                                occurredAt: _selectedGradualDate);
                             _gradualMemoController.clear();
                             _gradualAmountController.clear();
                           } else {
@@ -657,7 +731,102 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // 戦況分析カード（グラフ）
+  // ▼ 追加: 戦歴（明細）を表示するカード
+  Widget _buildHistoryCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.history),
+                SizedBox(width: 8),
+                Text(
+                  '戦歴 (直近の明細)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_recentStruggles.isEmpty)
+              const Text('記録がありません。', style: TextStyle(color: Colors.grey))
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _recentStruggles.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final item = _recentStruggles[index];
+                  final type = item['action_type'];
+                  final amount = item['amount'] as int;
+                  final desc = item['description']?.toString() ?? '';
+                  final occurredAtStr = item['occurred_at'] as String;
+                  final occurredAt = DateTime.parse(occurredAtStr).toLocal();
+
+                  IconData icon = Icons.help;
+                  Color color = Colors.grey;
+                  String typeLabel = '';
+
+                  switch (type) {
+                    case 'defend':
+                      icon = Icons.shield;
+                      color = Colors.blue[800]!;
+                      typeLabel = '防衛';
+                      break;
+                    case 'invest':
+                      icon = Icons.auto_graph;
+                      color = Colors.purple[800]!;
+                      typeLabel = '投資';
+                      break;
+                    case 'conquer':
+                      icon = Icons.colorize;
+                      color = Colors.orange[800]!;
+                      typeLabel = '奪取';
+                      break;
+                    case 'expense':
+                      icon = Icons.money_off;
+                      color = Colors.red[800]!;
+                      typeLabel = '支出';
+                      break;
+                  }
+
+                  // ユーザー入力のメモがない場合はアクション名をセット
+                  final displayDesc = desc.isNotEmpty ? desc : typeLabel;
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: color.withOpacity(0.1),
+                      child: Icon(icon, color: color, size: 20),
+                    ),
+                    title:
+                        Text(displayDesc, style: const TextStyle(fontSize: 14)),
+                    subtitle: Text(
+                      DateFormat('yyyy/MM/dd').format(occurredAt),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    trailing: Text(
+                      '¥${NumberFormat('#,###').format(amount)}',
+                      style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // グラフカード
   Widget _buildChartCard() {
     return Card(
       elevation: 4,
