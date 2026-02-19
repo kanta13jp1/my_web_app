@@ -6,7 +6,6 @@ import 'asset_management_page.dart';
 import 'financial_report_page.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
-import 'subscription_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -24,14 +23,9 @@ class SettingsPage extends StatelessWidget {
             title: const Text('プロフィール設定'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),),
-          ),
-          ListTile(
-            leading: const Icon(Icons.subscriptions_outlined),
-            title: const Text('サブスクリプション'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const SubscriptionPage()),),
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
+            ),
           ),
           const Divider(),
           ListTile(
@@ -46,14 +40,18 @@ class SettingsPage extends StatelessWidget {
             title: const Text('アセット管理'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const AssetManagementPage()),),
+              context,
+              MaterialPageRoute(builder: (_) => const AssetManagementPage()),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.assessment_outlined),
             title: const Text('財務レポート'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const FinancialReportPage()),),
+              context,
+              MaterialPageRoute(builder: (_) => const FinancialReportPage()),
+            ),
           ),
           const Divider(),
           ListTile(
@@ -61,14 +59,18 @@ class SettingsPage extends StatelessWidget {
             title: const Text('フィードバック'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const FeedbackPage()),),
+              context,
+              MaterialPageRoute(builder: (_) => const FeedbackPage()),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.admin_panel_settings_outlined),
             title: const Text('管理者パネル'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const AdminAnalyticsPage()),),
+              context,
+              MaterialPageRoute(builder: (_) => const AdminAnalyticsPage()),
+            ),
           ),
         ],
       ),

@@ -48,18 +48,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ▼ 追加: Supabaseから総資産合計を取得する関数
+// ▼ 修正: 最新の総資産合計を正しく計算する
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return '¥0';
 
     try {
-      // 【重要】ご自身のデータベースに合わせてテーブル名とカラム名を変更してください。
-      // ここでは仮に 'cfo_assets' テーブルの 'amount' カラムの合計を取得するとします。
+      // 1. まず、ユーザーの全資産データを取得（日付でソート）
       final data = await Supabase.instance.client
-          .from('cfo_assets') // ← テーブル名を修正
-          .select('amount') // ← 金額カラム名を修正
-          .eq('user_id', userId);
+          .from('cfo_assets')
+          .select('title, amount, created_at')
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
 
       if (data.isEmpty) {
         return NumberFormat.currency(
@@ -69,12 +69,33 @@ class _HomePageState extends State<HomePage> {
         ).format(0);
       }
 
-      // 合計を計算
-      double total = 0;
+      // 2. 日付ごとの各資産の残高を整理する
+      // Map<日付(yyyy-MM-dd), Map<資産名, 金額>>
+      final Map<String, Map<String, double>> groupedData = {};
+
       for (var item in data) {
-        // カラム名を修正
-        total += (item['amount'] as num? ?? 0).toDouble();
+        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
+        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final String title = item['title'];
+        final double amount = (item['amount'] as num).toDouble();
+
+        if (!groupedData.containsKey(dateKey)) {
+          groupedData[dateKey] = {};
+        }
+        // 同じ日に複数回更新した場合は最新のものが上書きされる
+        groupedData[dateKey]![title] = amount;
       }
+
+      // 3. 一番新しい日付のデータ群を取得
+      final sortedDates = groupedData.keys.toList()..sort();
+      final String latestDate = sortedDates.last;
+      final Map<String, double> latestAssets = groupedData[latestDate]!;
+
+      // 4. 最新の日の各資産額を合計する
+      double total = 0;
+      latestAssets.forEach((_, amount) {
+        total += amount;
+      });
 
       // 通貨フォーマット (例: ¥1,234,567)
       final formatter =
@@ -82,10 +103,9 @@ class _HomePageState extends State<HomePage> {
       return formatter.format(total);
     } catch (e) {
       debugPrint('Error fetching total assets: $e');
-      return 'Error'; // エラー時の表示
+      return 'Error';
     }
   }
-  // ▲ 追加ここまで
 
   @override
   Widget build(BuildContext context) {
