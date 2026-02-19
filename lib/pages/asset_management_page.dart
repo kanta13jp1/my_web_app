@@ -20,16 +20,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
 
   // グラフデータ
-  List<LineChartBarData> _lineChartBars = []; // 資産推移用
-  List<BarChartGroupData> _barChartGroups = []; // 日次損益用
-  double _maxDailyChange = 0; // 棒グラフのスケール用
+  List<LineChartBarData> _lineChartBars = [];
+  List<BarChartGroupData> _barChartGroups = [];
+  double _maxDailyChange = 0;
 
   List<String> _sortedDates = [];
   Map<String, String?> _lastUpdatedDates = {};
 
-  // 表示モード
-  bool _isStacked = true; // 積み上げ(合計) vs 個別
-  bool _showDailyChange = false; // 資産推移(Line) vs 日次損益(Bar)
+  bool _isStacked = true;
+  bool _showDailyChange = false;
 
   // 富の攻防戦用State
   int _todayDefended = 0;
@@ -37,9 +36,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _todayInvested = 0;
   bool _isLoadingStruggle = false;
 
-  // 漸進主義（明細確認）用State
-  bool _isGradualMissionDoneToday = false;
+  // ▼ 追加・変更: 漸進主義（明細確認）用State
+  bool _isSmbcMissionDoneToday = false; // 三井住友銀行の確認フラグ
+  bool _isPaypayMissionDoneToday = false; // PayPayカードの確認フラグ
   DateTime _selectedGradualDate = DateTime.now();
+  String _selectedSource = '[三井住友銀行大塚支店]'; // 明細元の選択用
+  final List<String> _sourceOptions = ['[三井住友銀行大塚支店]', '[PayPayカード]'];
+
   final TextEditingController _gradualMemoController = TextEditingController();
   final TextEditingController _gradualAmountController =
       TextEditingController();
@@ -47,7 +50,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 戦歴（明細）リスト
   List<Map<String, dynamic>> _recentStruggles = [];
 
-  // ▼ 追加: サブスクリプション管理用変数
+  // サブスクリプション管理用変数
   List<Map<String, dynamic>> _subscriptions = [];
   bool _isLoadingSubscriptions = false;
 
@@ -70,7 +73,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDataFromSupabase();
     _fetchTodayStruggleData();
     _fetchRecentStruggles();
-    _fetchSubscriptions(); // ▼ サブスクデータの読み込みを開始
+    _fetchSubscriptions();
   }
 
   @override
@@ -234,6 +237,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  // ▼ 変更: PayPayカードの確認状況も取得する
   Future<void> _fetchRecentStruggles() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -247,16 +251,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final now = DateTime.now();
       final todayStr = DateFormat('yyyy-MM-dd').format(now);
-      bool missionDone = false;
+
+      bool smbcDone = false;
+      bool paypayDone = false;
 
       for (var item in data) {
         final createdAtStr = item['created_at'] as String;
         final createdLocal = DateTime.parse(createdAtStr).toLocal();
+        // 「今日登録したか」でミッション完了を判定
         if (DateFormat('yyyy-MM-dd').format(createdLocal) == todayStr) {
-          if (item['action_type'] == 'expense' &&
-              (item['description']?.toString().contains('[三井住友銀行大塚支店]') ??
-                  false)) {
-            missionDone = true;
+          if (item['action_type'] == 'expense') {
+            final desc = item['description']?.toString() ?? '';
+            if (desc.contains('[三井住友銀行大塚支店]')) smbcDone = true;
+            if (desc.contains('[PayPayカード]')) paypayDone = true;
           }
         }
       }
@@ -264,7 +271,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         setState(() {
           _recentStruggles = List<Map<String, dynamic>>.from(data);
-          _isGradualMissionDoneToday = missionDone;
+          _isSmbcMissionDoneToday = smbcDone;
+          _isPaypayMissionDoneToday = paypayDone;
         });
       }
     } catch (e) {
@@ -624,19 +632,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGradualismCard(), // 漸進主義
+            _buildGradualismCard(), // ▼ 変更: PayPayカード対応
             const SizedBox(height: 24),
-            _buildStruggleCard(), // 富の奪い合い
+            _buildStruggleCard(),
             const SizedBox(height: 24),
-            _buildChartCard(), // グラフ
+            _buildChartCard(),
             const SizedBox(height: 16),
-            if (!_showDailyChange) _buildLegendCard(), // 内訳
+            if (!_showDailyChange) _buildLegendCard(),
             const SizedBox(height: 24),
-            _buildSubscriptionCard(), // ▼ 追加: 固定費削減室（サブスク）を統合
+            _buildSubscriptionCard(),
             const SizedBox(height: 24),
-            _buildInputCard(), // 残高更新
+            _buildInputCard(),
             const SizedBox(height: 24),
-            _buildHistoryCard(), // 戦歴
+            _buildHistoryCard(),
           ],
         ),
       ),
@@ -647,6 +655,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 各カードUIコンポーネント
   // -------------------------
 
+  // ▼ 変更: 漸進主義ミッション（口座・カード選択機能付き）
   Widget _buildGradualismCard() {
     return Card(
       elevation: 2,
@@ -672,23 +681,59 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 8),
-            const Text('一歩でもいいから毎日前進する。\n三井住友銀行大塚支店の取引明細を確認し、1件だけ記録せよ。',
+            const Text('一歩でもいいから毎日前進する。\n銀行・カードの取引明細を確認し、1件ずつ記録せよ。',
                 style: TextStyle(
                     fontSize: 12, color: Colors.black87, height: 1.4)),
+            const SizedBox(height: 12),
+
+            // 今日のミッション達成状況
+            Row(
+              children: [
+                Icon(
+                    _isSmbcMissionDoneToday
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
+                    color: _isSmbcMissionDoneToday ? Colors.green : Colors.grey,
+                    size: 16),
+                const SizedBox(width: 4),
+                Text('三井住友銀行',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _isSmbcMissionDoneToday
+                            ? Colors.green[700]
+                            : Colors.grey[700])),
+                const SizedBox(width: 16),
+                Icon(
+                    _isPaypayMissionDoneToday
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
+                    color:
+                        _isPaypayMissionDoneToday ? Colors.green : Colors.grey,
+                    size: 16),
+                const SizedBox(width: 4),
+                Text('PayPayカード',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _isPaypayMissionDoneToday
+                            ? Colors.green[700]
+                            : Colors.grey[700])),
+              ],
+            ),
             const SizedBox(height: 16),
-            if (_isGradualMissionDoneToday)
+
+            if (_isSmbcMissionDoneToday && _isPaypayMissionDoneToday)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                     color: Colors.green[50],
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.green[200]!)),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.green),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                        child: Text('本日の明細確認は完了しました。素晴らしい前進です。明日も続けましょう。',
+                    Icon(Icons.emoji_events, color: Colors.green),
+                    SizedBox(width: 8),
+                    Expanded(
+                        child: Text('本日の明細確認は全て完了しました。財布の穴を監視する習慣が身についています。',
                             style: TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.bold,
@@ -704,6 +749,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     flex: 3,
                     child: Column(
                       children: [
+                        // 明細元の選択
+                        DropdownButtonFormField<String>(
+                          value: _selectedSource,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                          ),
+                          items: _sourceOptions.map((String source) {
+                            return DropdownMenuItem<String>(
+                              value: source,
+                              child: Text(
+                                  source
+                                      .replaceAll('[', '')
+                                      .replaceAll(']', ''),
+                                  style: const TextStyle(fontSize: 13)),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null)
+                              setState(() => _selectedSource = newValue);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // 日付選択
                         InkWell(
                           onTap: () async {
                             final date = await showDatePicker(
@@ -724,8 +796,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(DateFormat('yyyy/MM/dd')
-                                    .format(_selectedGradualDate)),
+                                Text(
+                                    DateFormat('yyyy/MM/dd')
+                                        .format(_selectedGradualDate),
+                                    style: const TextStyle(fontSize: 13)),
                                 Icon(Icons.calendar_today,
                                     size: 16, color: Colors.grey[600]),
                               ],
@@ -739,6 +813,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               labelText: '内容 (例: Amazon)',
                               border: OutlineInputBorder(),
                               isDense: true),
+                          style: const TextStyle(fontSize: 13),
                         ),
                         const SizedBox(height: 8),
                         TextField(
@@ -748,6 +823,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               labelText: '金額 (円)',
                               border: OutlineInputBorder(),
                               isDense: true),
+                          style: const TextStyle(fontSize: 13),
                         ),
                       ],
                     ),
@@ -756,7 +832,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Expanded(
                     flex: 2,
                     child: SizedBox(
-                      height: 156,
+                      height: 196, // 入力フィールド4つ分に合わせて高さを調整
                       child: ElevatedButton(
                         onPressed: () async {
                           final memo = _gradualMemoController.text.trim();
@@ -765,7 +841,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           final amount = int.tryParse(amountStr);
                           if (amount != null && amount > 0 && memo.isNotEmpty) {
                             await _recordStruggle(
-                                'expense', amount, '[三井住友銀行大塚支店] $memo',
+                                'expense', amount, '$_selectedSource $memo',
                                 occurredAt: _selectedGradualDate);
                             _gradualMemoController.clear();
                             _gradualAmountController.clear();
@@ -990,7 +1066,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // --- 統合されたサブスクカード ---
   Widget _buildSubscriptionCard() {
     int totalCost = 0;
     for (var sub in _subscriptions) {
@@ -1141,6 +1216,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  // ▼ 追加: 記録した明細の履歴リスト
   Widget _buildHistoryCard() {
     return Card(
       elevation: 2,
@@ -1211,10 +1287,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         backgroundColor: color.withOpacity(0.1),
                         child: Icon(icon, color: color, size: 20)),
                     title:
-                        Text(displayDesc, style: const TextStyle(fontSize: 14)),
+                        Text(displayDesc, style: const TextStyle(fontSize: 13)),
                     subtitle: Text(DateFormat('yyyy/MM/dd').format(occurredAt),
                         style:
-                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                            const TextStyle(fontSize: 11, color: Colors.grey)),
                     trailing: Text('¥${NumberFormat('#,###').format(amount)}',
                         style: TextStyle(
                             color: color,
