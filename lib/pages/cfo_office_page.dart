@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/financial_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
-import 'package:my_web_app/pages/subscription_page.dart';
 
 class CfoOfficePage extends StatelessWidget {
   const CfoOfficePage({super.key});
@@ -20,17 +19,10 @@ class CfoOfficePage extends StatelessWidget {
         children: [
           _buildMenuCard(
             context,
-            '資産管理',
-            '現金や銀行口座の残高を記録し、資産全体の推移を可視化します。',
+            '資産管理闘争', // 名前をコンセプトに合わせました
+            '資産推移、戦況記録、サブスク管理を統合した前線基地。',
             Icons.monetization_on,
             const AssetManagementPage(),
-          ),
-          _buildMenuCard(
-            context,
-            '固定費削減室 (サブスク管理)',
-            '毎月の固定費を見直し、無駄な支出を削減します。',
-            Icons.credit_card_off,
-            const SubscriptionPage(),
           ),
           _buildMenuCard(
             context,
