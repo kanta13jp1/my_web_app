@@ -36,12 +36,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _todayInvested = 0;
   bool _isLoadingStruggle = false;
 
-  // 漸進主義（明細確認）用State
+  // ▼ 追加・変更: 漸進主義（明細確認）用State
   bool _isSmbcMissionDoneToday = false;
   bool _isPaypayMissionDoneToday = false;
+  bool _isYokohamaMissionDoneToday = false; // 横浜銀行を追加
   DateTime _selectedGradualDate = DateTime.now();
   String _selectedSource = '[三井住友銀行大塚支店]';
-  final List<String> _sourceOptions = ['[三井住友銀行大塚支店]', '[PayPayカード]'];
+  final List<String> _sourceOptions = [
+    '[三井住友銀行大塚支店]',
+    '[PayPayカード]',
+    '[横浜銀行]'
+  ]; // 横浜銀行を追加
 
   final TextEditingController _gradualMemoController = TextEditingController();
   final TextEditingController _gradualAmountController =
@@ -121,7 +126,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  // ▼ 新規追加: 個別の資産を更新するメソッド
   Future<void> _saveSingleAssetData(String type) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -153,7 +157,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _updateLastUpdatedDates();
       });
 
-      controller.clear(); // 入力後クリア
+      controller.clear();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +177,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  // 既存の一括更新メソッド（複数入力した時用）
   Future<void> _saveAssetData() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -307,6 +310,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       bool smbcDone = false;
       bool paypayDone = false;
+      bool yokohamaDone = false;
 
       for (var item in data) {
         final createdAtStr = item['created_at'] as String;
@@ -316,6 +320,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             final desc = item['description']?.toString() ?? '';
             if (desc.contains('[三井住友銀行大塚支店]')) smbcDone = true;
             if (desc.contains('[PayPayカード]')) paypayDone = true;
+            if (desc.contains('[横浜銀行]')) yokohamaDone = true;
           }
         }
       }
@@ -325,6 +330,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _recentStruggles = List<Map<String, dynamic>>.from(data);
           _isSmbcMissionDoneToday = smbcDone;
           _isPaypayMissionDoneToday = paypayDone;
+          _isYokohamaMissionDoneToday = yokohamaDone;
         });
       }
     } catch (e) {
@@ -694,7 +700,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 24),
             _buildSubscriptionCard(), // 固定費
             const SizedBox(height: 24),
-            _buildInputCard(), // ▼ 変更: 個別更新UI
+            _buildInputCard(), // 個別更新UI
             const SizedBox(height: 24),
             _buildHistoryCard(), // 戦歴
           ],
@@ -707,6 +713,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 各カードUIコンポーネント
   // -------------------------
 
+  // ▼ 変更: 横浜銀行を追加
   Widget _buildGradualismCard() {
     return Card(
       elevation: 2,
@@ -736,40 +743,80 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(
                     fontSize: 12, color: Colors.black87, height: 1.4)),
             const SizedBox(height: 12),
-            Row(
+
+            // スマホでの表示崩れを防ぐためにWrapを使用
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                Icon(
-                    _isSmbcMissionDoneToday
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
-                    color: _isSmbcMissionDoneToday ? Colors.green : Colors.grey,
-                    size: 16),
-                const SizedBox(width: 4),
-                Text('三井住友銀行',
-                    style: TextStyle(
-                        fontSize: 12,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                        _isSmbcMissionDoneToday
+                            ? Icons.check_circle
+                            : Icons.circle_outlined,
                         color: _isSmbcMissionDoneToday
-                            ? Colors.green[700]
-                            : Colors.grey[700])),
-                const SizedBox(width: 16),
-                Icon(
-                    _isPaypayMissionDoneToday
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
-                    color:
-                        _isPaypayMissionDoneToday ? Colors.green : Colors.grey,
-                    size: 16),
-                const SizedBox(width: 4),
-                Text('PayPayカード',
-                    style: TextStyle(
-                        fontSize: 12,
+                            ? Colors.green
+                            : Colors.grey,
+                        size: 16),
+                    const SizedBox(width: 4),
+                    Text('三井住友',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: _isSmbcMissionDoneToday
+                                ? Colors.green[700]
+                                : Colors.grey[700])),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                        _isPaypayMissionDoneToday
+                            ? Icons.check_circle
+                            : Icons.circle_outlined,
                         color: _isPaypayMissionDoneToday
-                            ? Colors.green[700]
-                            : Colors.grey[700])),
+                            ? Colors.green
+                            : Colors.grey,
+                        size: 16),
+                    const SizedBox(width: 4),
+                    Text('PayPay',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: _isPaypayMissionDoneToday
+                                ? Colors.green[700]
+                                : Colors.grey[700])),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                        _isYokohamaMissionDoneToday
+                            ? Icons.check_circle
+                            : Icons.circle_outlined,
+                        color: _isYokohamaMissionDoneToday
+                            ? Colors.green
+                            : Colors.grey,
+                        size: 16),
+                    const SizedBox(width: 4),
+                    Text('横浜銀行',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: _isYokohamaMissionDoneToday
+                                ? Colors.green[700]
+                                : Colors.grey[700])),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            if (_isSmbcMissionDoneToday && _isPaypayMissionDoneToday)
+
+            // 全達成時のメッセージ
+            if (_isSmbcMissionDoneToday &&
+                _isPaypayMissionDoneToday &&
+                _isYokohamaMissionDoneToday)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -1218,10 +1265,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ▼ 変更: 個別更新UIと警告を反映させた InputCard
   Widget _buildInputCard() {
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    // 未更新の項目がいくつあるかカウント
     int unupdatedCount = 0;
     if (_assetTypes.isNotEmpty) {
       unupdatedCount = _assetTypes
@@ -1241,7 +1286,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const Text('現実を直視せよ。1つずつ個別に更新できます。',
                 style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
-
             if (unupdatedCount > 0)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
@@ -1267,10 +1311,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ],
                 ),
               ),
-
-            // 各資産の入力行
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
-
             const SizedBox(height: 8),
             Row(
               children: [
@@ -1281,7 +1322,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 16),
-            // 一括更新ボタン（補助的）
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -1300,7 +1340,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ▼ 変更: 個別カードデザイン、個別更新ボタン、個別警告を搭載
   Widget _buildAssetInputRow(String type) {
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
@@ -1376,7 +1415,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // ▼ 個別更新ボタン
                 ElevatedButton(
                   onPressed: () => _saveSingleAssetData(type),
                   style: ElevatedButton.styleFrom(
