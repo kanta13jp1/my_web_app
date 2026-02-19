@@ -1175,6 +1175,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildInputCard() {
+    // ▼ 追加: 本日の日付を取得し、1つでも未更新の項目があるかチェックする
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    bool needsUpdate = false;
+    if (_assetTypes.isNotEmpty) {
+      needsUpdate =
+          _assetTypes.any((type) => _lastUpdatedDates[type] != todayStr);
+    }
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -1187,14 +1195,45 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const Text('現実を直視せよ。数値は嘘をつかない。',
                 style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
+
+            // ▼ 追加: 未更新時の警告バナー
+            if (needsUpdate)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.red[800]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '本日の戦況（残高）が未報告です。直ちに最新の数値を入力し、前線を維持せよ。',
+                        style: TextStyle(
+                          color: Colors.red[900],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
             Row(
               children: [
                 TextButton.icon(
-                    onPressed: _showAddAssetDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('管理項目を追加')),
+                  onPressed: _showAddAssetDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('管理項目を追加'),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -1205,9 +1244,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 icon: const Icon(Icons.save),
                 label: const Text('戦況を更新する'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[800],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
+                  backgroundColor: Colors.green[800],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],
