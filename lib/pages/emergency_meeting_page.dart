@@ -128,7 +128,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       );
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+        final Map<String, dynamic> data =
+            json.decode(response.body) as Map<String, dynamic>;
         if (data['models'] != null) {
           return (data['models'] as List)
               .whereType<Map<String, dynamic>>()
@@ -320,22 +321,29 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         throw Exception('User not logged in.');
       }
 
+// ▼ 修正: テーブルが存在しない(404)場合などにクラッシュさせず、0やnullを返すように catchError を追加
       final results = await Future.wait<dynamic>([
-        _supabase.from('notes').count(CountOption.exact).eq('user_id', userId),
+        _supabase
+            .from('notes')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .catchError((_) => 0), // エラー時は0を返す
         _supabase
             .from('subscriptions')
             .count(CountOption.exact)
             .eq('user_id', userId)
-            .catchError((_) => 0),
+            .catchError((_) => 0), // エラー時は0を返す
         _supabase
             .from('user_stats')
             .select()
             .eq('user_id', userId)
-            .maybeSingle(),
+            .maybeSingle()
+            .catchError((_) => null), // エラー時はnullを返す
         _supabase
             .from('danshari_items')
             .count(CountOption.exact)
-            .eq('user_id', userId),
+            .eq('user_id', userId)
+            .catchError((_) => 0), // エラー時は0を返す（今回の原因）
       ]);
 
       final noteCount = results[0] as int;

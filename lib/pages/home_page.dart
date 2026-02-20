@@ -48,18 +48,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ▼ 修正: 各資産ごとの「最新の残高」を取得して合計する
+// ▼ 修正: 各資産の「最新の残高」を取得して合計する正しいロジック
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return '¥0';
 
     try {
-      // 1. ユーザーの全資産データを取得（日付の古い順）
+      // 1. まず、ユーザーの全資産データを取得（日付の古い順）
       final data = await Supabase.instance.client
           .from('cfo_assets')
           .select('title, amount, created_at')
           .eq('user_id', userId)
-          .order('created_at', ascending: true);
+          .order('created_at', ascending: true); // 古い順で取得
 
       if (data.isEmpty) {
         return NumberFormat.currency(
@@ -70,22 +70,22 @@ class _HomePageState extends State<HomePage> {
       }
 
       // 2. 各資産ごとの「最新の金額」を保持するMap
-      // 古い順でループするため、同じ資産名(title)があれば最新の金額で上書きされ続ける
       final Map<String, double> latestAssets = {};
 
+      // 古い順でループを回すため、同じ名前(title)の資産は最新の金額で上書きされ続ける
       for (var item in data) {
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
-        latestAssets[title] = amount;
+        latestAssets[title] = amount; 
       }
 
-      // 3. 全資産の最新残高を合計する
+      // 3. 最終的に残った各資産の最新残高をすべて合計する
       double total = 0;
       latestAssets.forEach((_, amount) {
         total += amount;
       });
 
-      // 通貨フォーマット (例: ¥1,234,567)
+      // 通貨フォーマット (例: ¥1,234,567, マイナスも対応)
       final formatter =
           NumberFormat.currency(locale: 'ja_JP', symbol: '¥', decimalDigits: 0);
       return formatter.format(total);
