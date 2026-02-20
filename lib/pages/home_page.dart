@@ -48,13 +48,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-// ▼ 修正: 最新の総資産合計を正しく計算する
+  // ▼ 修正: 各資産ごとの「最新の残高」を取得して合計する
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return '¥0';
 
     try {
-      // 1. まず、ユーザーの全資産データを取得（日付でソート）
+      // 1. ユーザーの全資産データを取得（日付の古い順）
       final data = await Supabase.instance.client
           .from('cfo_assets')
           .select('title, amount, created_at')
@@ -69,29 +69,17 @@ class _HomePageState extends State<HomePage> {
         ).format(0);
       }
 
-      // 2. 日付ごとの各資産の残高を整理する
-      // Map<日付(yyyy-MM-dd), Map<資産名, 金額>>
-      final Map<String, Map<String, double>> groupedData = {};
+      // 2. 各資産ごとの「最新の金額」を保持するMap
+      // 古い順でループするため、同じ資産名(title)があれば最新の金額で上書きされ続ける
+      final Map<String, double> latestAssets = {};
 
       for (var item in data) {
-        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
-        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
         final String title = item['title'];
         final double amount = (item['amount'] as num).toDouble();
-
-        if (!groupedData.containsKey(dateKey)) {
-          groupedData[dateKey] = {};
-        }
-        // 同じ日に複数回更新した場合は最新のものが上書きされる
-        groupedData[dateKey]![title] = amount;
+        latestAssets[title] = amount;
       }
 
-      // 3. 一番新しい日付のデータ群を取得
-      final sortedDates = groupedData.keys.toList()..sort();
-      final String latestDate = sortedDates.last;
-      final Map<String, double> latestAssets = groupedData[latestDate]!;
-
-      // 4. 最新の日の各資産額を合計する
+      // 3. 全資産の最新残高を合計する
       double total = 0;
       latestAssets.forEach((_, amount) {
         total += amount;
