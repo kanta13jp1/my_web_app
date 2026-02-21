@@ -997,6 +997,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _fetchTodayClosing();
   }
 
+  Future<void> _editSubscriptionDueDate(Map<String, dynamic> item) async {
+    final String id = item['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+
+    // due_date は "YYYY-MM-DD" が来る想定
+    final dueStr = item['due_date'] as String?;
+    DateTime initial = DateTime.now();
+    if (dueStr != null && dueStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(dueStr);
+      if (parsed != null) {
+        // 日付だけに丸める（タイムゾーン事故防止）
+        initial = DateTime(parsed.year, parsed.month, parsed.day);
+      }
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(DateTime.now().year - 1, 1, 1),
+      lastDate: DateTime(DateTime.now().year + 5, 12, 31),
+    );
+
+    if (picked == null) return;
+
+    final dueDateStr = DateFormat('yyyy-MM-dd').format(picked);
+
+    try {
+      await _supabase
+          .from('subscriptions')
+          .update({'due_date': dueDateStr}).eq('id', id);
+
+      await _fetchSubscriptions();
+      await _fetchTodayClosing();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('支払日を更新しました: $dueDateStr')),
+      );
+    } catch (e) {
+      debugPrint('edit due_date error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('支払日の更新に失敗: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   // ==========================================
   // グラフ描画ロジック
   // ==========================================
@@ -1787,6 +1834,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   fontWeight: FontWeight.bold,
                                   color: isPaid ? Colors.grey : Colors.black87,
                                 ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_calendar, size: 20),
+                                tooltip: '支払日を編集',
+                                onPressed: () => _editSubscriptionDueDate(item),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
