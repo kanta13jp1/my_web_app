@@ -64,7 +64,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ▼ 各資産の「最新の残高」を取得して合計するロジック（現状維持 + 例外対策）
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
@@ -76,38 +75,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      // 1. ユーザーの全資産データを取得（日付の古い順）
-      final data = await Supabase.instance.client
-          .from('cfo_assets')
-          .select('title, amount, created_at')
-          .eq('user_id', userId)
-          .order('created_at', ascending: true);
+      // ✅ RPC: スカラー(numeric)が返ってくる想定
+      final res = await Supabase.instance.client.rpc('cfo_total_assets');
 
-      if (data.isEmpty) {
-        return NumberFormat.currency(
-          locale: 'ja_JP',
-          symbol: '¥',
-          decimalDigits: 0,
-        ).format(0);
-      }
+      final total = (res as num?)?.toDouble() ?? 0.0;
 
-      // 2. 各資産ごとの「最新の金額」を保持するMap
-      final Map<String, double> latestAssets = {};
-
-      // 古い順でループ → 同じtitleは最新で上書きされ続ける
-      for (final item in data) {
-        final String title = (item['title'] ?? '').toString();
-        final num rawAmount = (item['amount'] as num?) ?? 0;
-        latestAssets[title] = rawAmount.toDouble();
-      }
-
-      // 3. 各資産の最新残高を合計
-      double total = 0;
-      for (final amount in latestAssets.values) {
-        total += amount;
-      }
-
-      // 4. 通貨フォーマット（マイナスも対応）
       final formatter = NumberFormat.currency(
         locale: 'ja_JP',
         symbol: '¥',
@@ -115,7 +87,7 @@ class _HomePageState extends State<HomePage> {
       );
       return formatter.format(total);
     } catch (e) {
-      debugPrint('Error fetching total assets: $e');
+      debugPrint('Error fetching total assets (rpc): $e');
       return 'Error';
     }
   }
