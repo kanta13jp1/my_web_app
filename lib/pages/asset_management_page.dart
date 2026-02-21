@@ -108,6 +108,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     super.dispose();
   }
 
+  List<String> _paymentSourceCandidates() {
+    // _assetTypes の順序を維持しつつ重複排除
+    final ordered = <String>[];
+
+    void add(String s) {
+      final t = s.trim();
+      if (t.isEmpty) return;
+      if (!ordered.contains(t)) ordered.add(t);
+    }
+
+    for (final t in _assetTypes) {
+      add(t);
+    }
+
+    // 先頭に「未設定」、末尾に「その他」
+    return ['（未設定）', ...ordered, 'その他'];
+  }
+
   String _dateOnly(DateTime dt) {
     final y = dt.year.toString().padLeft(4, '0');
     final m = dt.month.toString().padLeft(2, '0');
@@ -681,6 +699,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final priceController = TextEditingController();
     DateTime dueDate = DateTime.now();
     bool isPaid = false;
+    final candidates = _paymentSourceCandidates();
+    String paymentSource = candidates.first; // （未設定）
+    final customPaymentSourceController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -734,6 +755,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: paymentSource,
+                  decoration: const InputDecoration(
+                    labelText: '引落先（資産・負債から選択）',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: candidates
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setDialogState(() => paymentSource = v);
+                  },
+                ),
+                const SizedBox(height: 8),
+                if (paymentSource == 'その他')
+                  TextField(
+                    controller: customPaymentSourceController,
+                    decoration: const InputDecoration(
+                      labelText: '引落先（自由入力）',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                const SizedBox(height: 8),
                 CheckboxListTile(
                   value: isPaid,
                   onChanged: (v) => setDialogState(() => isPaid = v ?? false),
@@ -758,6 +805,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   if (name.isEmpty || price <= 0) return;
 
                   final dueDateStr = DateFormat('yyyy-MM-dd').format(dueDate);
+                  final sourceText = paymentSource == '（未設定）'
+                      ? null
+                      : (paymentSource == 'その他'
+                          ? customPaymentSourceController.text.trim()
+                          : paymentSource);
 
                   await _supabase.from('subscriptions').insert({
                     'user_id': userId,
@@ -765,6 +817,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     'price': price,
                     'due_date': dueDateStr,
                     'is_paid': isPaid,
+                    'payment_source': (sourceText == null || sourceText.isEmpty)
+                        ? null
+                        : sourceText,
                   });
 
                   if (context.mounted) Navigator.pop(context);
@@ -778,6 +833,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         },
       ),
     );
+    nameController.dispose();
+    priceController.dispose();
+    customPaymentSourceController.dispose();
   }
 
   Future<void> _deleteSubscription(String id) async {
@@ -1041,6 +1099,93 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('支払日の更新に失敗: $e'), backgroundColor: Colors.red),
       );
+    }
+  }
+
+  Future<void> _editSubscriptionPaymentSource(Map<String, dynamic> item) async {
+    final id = item['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+
+    final candidates = _paymentSourceCandidates();
+
+    final current = (item['payment_source']?.toString() ?? '').trim();
+    String selected = current.isEmpty
+        ? '（未設定）'
+        : (candidates.contains(current) ? current : 'その他');
+
+    final custom =
+        TextEditingController(text: selected == 'その他' ? current : '');
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('引落先を編集'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selected,
+                decoration: const InputDecoration(
+                  labelText: '引落先（資産・負債から選択）',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: candidates
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setDialogState(() => selected = v);
+                },
+              ),
+              const SizedBox(height: 8),
+              if (selected == 'その他')
+                TextField(
+                  controller: custom,
+                  decoration: const InputDecoration(
+                    labelText: '引落先（自由入力）',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) {
+      custom.dispose();
+      return;
+    }
+
+    final sourceText = selected == '（未設定）'
+        ? null
+        : (selected == 'その他' ? custom.text.trim() : selected);
+
+    custom.dispose();
+
+    try {
+      await _supabase.from('subscriptions').update({
+        'payment_source':
+            (sourceText == null || sourceText.isEmpty) ? null : sourceText
+      }).eq('id', id);
+
+      await _fetchSubscriptions();
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('edit payment_source error: $e');
     }
   }
 
@@ -1798,7 +1943,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         final dueDate =
                             due != null ? DateTime.parse(due) : null;
                         final isPaid = (item['is_paid'] as bool?) == true;
-
+                        final src =
+                            (item['payment_source'] ?? '').toString().trim();
                         return ListTile(
                           dense: true,
                           leading: Checkbox(
@@ -1816,14 +1962,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   isPaid ? FontWeight.normal : FontWeight.bold,
                             ),
                           ),
-                          subtitle: Text(
-                            dueDate != null
-                                ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
-                                : '支払日: 未設定',
-                            style: TextStyle(
-                              color: isPaid ? Colors.grey : Colors.red.shade700,
-                              fontSize: 12,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                dueDate != null
+                                    ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                                    : '支払日: 未設定',
+                                style: TextStyle(
+                                  color: isPaid
+                                      ? Colors.grey
+                                      : Colors.red.shade700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (src != null && src.isNotEmpty)
+                                Text(
+                                  '引落先: $src',
+                                  style: TextStyle(
+                                    color: isPaid
+                                        ? Colors.grey
+                                        : Colors.grey.shade700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1839,6 +2002,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 icon: const Icon(Icons.edit_calendar, size: 20),
                                 tooltip: '支払日を編集',
                                 onPressed: () => _editSubscriptionDueDate(item),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.account_balance_wallet,
+                                    size: 20),
+                                tooltip: '引落先を編集',
+                                onPressed: () =>
+                                    _editSubscriptionPaymentSource(item),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
