@@ -1285,6 +1285,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.of(context).size.width < 420;
     return Scaffold(
       appBar: AppBar(
         title: const Text('資産管理闘争'),
@@ -1294,7 +1295,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       backgroundColor: Colors.blueGrey[50],
       body: SingleChildScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1323,6 +1324,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildDeadlineChecklistCard() {
     final remainText = _remainingToDeadlineText();
     final p = _progress();
+    final isCompact = MediaQuery.of(context).size.width < 420;
 
     return Card(
       elevation: 3,
@@ -1423,25 +1425,47 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _autoCheckFromData,
-                    icon: const Icon(Icons.auto_fix_high),
-                    label: const Text('記録状況から自動チェック'),
+            isCompact
+                ? Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _autoCheckFromData,
+                          icon: const Icon(Icons.auto_fix_high),
+                          label: const Text('記録状況から自動チェック'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _copyDailySummary,
+                          icon: const Icon(Icons.copy),
+                          label: const Text('提出用サマリーをコピー'),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _autoCheckFromData,
+                          icon: const Icon(Icons.auto_fix_high),
+                          label: const Text('記録状況から自動チェック'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _copyDailySummary,
+                          icon: const Icon(Icons.copy),
+                          label: const Text('提出用サマリーをコピー'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _copyDailySummary,
-                    icon: const Icon(Icons.copy),
-                    label: const Text('提出用サマリーをコピー'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -1501,6 +1525,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetInputRow(String type) {
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
+    final isCompact = MediaQuery.of(context).size.width < 420;
 
     // 最新残高を取得
     final lastDate = _lastUpdatedDates[type];
@@ -1515,39 +1540,78 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controllers[type],
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: true),
-                  decoration: InputDecoration(
-                    labelText: type,
-                    hintText: '負債はマイナス(-)をつける',
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                    filled: isUpdatedToday,
-                    fillColor: isUpdatedToday ? Colors.green[50] : null,
-                  ),
+          isCompact
+              ? Column(
+                  children: [
+                    TextField(
+                      controller: _controllers[type],
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true, signed: true),
+                      decoration: InputDecoration(
+                        labelText: type,
+                        hintText: '負債はマイナス(-)をつける',
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        filled: isUpdatedToday,
+                        fillColor: isUpdatedToday ? Colors.green[50] : null,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => _saveSingleAssetData(type),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isUpdatedToday ? Colors.grey : Colors.green[700],
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(isUpdatedToday ? '済' : '記録'),
+                        ),
+                        if (type != '現金')
+                          IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.grey),
+                              onPressed: () => _showRemoveAssetDialog(type)),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controllers[type],
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true, signed: true),
+                        decoration: InputDecoration(
+                          labelText: type,
+                          hintText: '負債はマイナス(-)をつける',
+                          border: const OutlineInputBorder(),
+                          isDense: true,
+                          filled: isUpdatedToday,
+                          fillColor: isUpdatedToday ? Colors.green[50] : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => _saveSingleAssetData(type),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isUpdatedToday ? Colors.grey : Colors.green[700],
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(isUpdatedToday ? '済' : '記録'),
+                    ),
+                    if (type != '現金')
+                      IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.grey),
+                          onPressed: () => _showRemoveAssetDialog(type)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () => _saveSingleAssetData(type),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isUpdatedToday ? Colors.grey : Colors.green[700],
-                  foregroundColor: Colors.white,
-                ),
-                child: Text(isUpdatedToday ? '済' : '記録'),
-              ),
-              if (type != '現金')
-                IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.grey),
-                    onPressed: () => _showRemoveAssetDialog(type)),
-            ],
-          ),
           if (lastAmount != null)
             Padding(
               padding: const EdgeInsets.only(left: 4, top: 3),
@@ -1859,6 +1923,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildSubscriptionCard() {
     int totalCost = 0;
     int unpaidCost = 0;
+    final isCompact = MediaQuery.of(context).size.width < 420;
     for (final sub in _subscriptions) {
       final price = (sub['price'] as num?)?.toInt() ?? 0;
       totalCost += price;
@@ -1877,53 +1942,93 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(Icons.credit_card_off, color: Colors.red[800]),
-                      const SizedBox(width: 8),
-                      Text('③固定費をすべて把握',
-                          style: TextStyle(
-                              fontSize: 18,
+            child: isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.credit_card_off, color: Colors.red[800]),
+                        const SizedBox(width: 8),
+                        Text('③固定費をすべて把握',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red[900]))
+                      ]),
+                      const SizedBox(height: 6),
+                      const Text('毎月自動で奪われる富を監視せよ。',
+                          style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Text(
+                        '¥${NumberFormat('#,###').format(totalCost)}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: unpaidCost > 0
+                              ? Colors.red[700]
+                              : Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.credit_card_off, color: Colors.red[800]),
+                            const SizedBox(width: 8),
+                            Text('③固定費をすべて把握',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red[900]))
+                          ]),
+                          const Text('毎月自動で奪われる富を監視せよ。',
+                              style:
+                                  TextStyle(fontSize: 11, color: Colors.grey)),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('月額合計',
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.grey)),
+                          Text(
+                            '¥${NumberFormat('#,###').format(totalCost)}',
+                            style: TextStyle(
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red[900]))
-                    ]),
-                    const Text('毎月自動で奪われる富を監視せよ。',
-                        style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('月額合計',
-                        style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text(
-                      '¥${NumberFormat('#,###').format(totalCost)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red[800],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: unpaidCost > 0
-                            ? Colors.red[700]
-                            : Colors.green[700],
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
+                              color: Colors.red[800],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: unpaidCost > 0
+                                  ? Colors.red[700]
+                                  : Colors.green[700],
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
           ),
           _isLoadingSubscriptions
               ? const Padding(
@@ -1952,15 +2057,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             onChanged: (_) =>
                                 _toggleSubscriptionPaid(item['id'], isPaid),
                           ),
-                          title: Text(
-                            item['service_name'] ?? '',
-                            style: TextStyle(
-                              decoration:
-                                  isPaid ? TextDecoration.lineThrough : null,
-                              color: isPaid ? Colors.grey : null,
-                              fontWeight:
-                                  isPaid ? FontWeight.normal : FontWeight.bold,
-                            ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item['service_name'] ?? '',
+                                  style: TextStyle(
+                                    decoration: isPaid
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    color: isPaid ? Colors.grey : null,
+                                    fontWeight: isPaid
+                                        ? FontWeight.normal
+                                        : FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '¥${NumberFormat('#,###').format(item['price'])}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isPaid ? Colors.grey : Colors.black87,
+                                ),
+                              ),
+                            ],
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1988,33 +2110,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 ),
                             ],
                           ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '¥${NumberFormat('#,###').format(item['price'])}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isPaid ? Colors.grey : Colors.black87,
-                                ),
+                          trailing: PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert),
+                            onSelected: (value) {
+                              if (value == 'due') {
+                                _editSubscriptionDueDate(item);
+                              } else if (value == 'source') {
+                                _editSubscriptionPaymentSource(item);
+                              } else if (value == 'delete') {
+                                _deleteSubscription(item['id']);
+                              }
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem<String>(
+                                value: 'due',
+                                child: Text('支払日を編集'),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_calendar, size: 20),
-                                tooltip: '支払日を編集',
-                                onPressed: () => _editSubscriptionDueDate(item),
+                              PopupMenuItem<String>(
+                                value: 'source',
+                                child: Text('引落先を編集'),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.account_balance_wallet,
-                                    size: 20),
-                                tooltip: '引落先を編集',
-                                onPressed: () =>
-                                    _editSubscriptionPaymentSource(item),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.grey, size: 20),
-                                onPressed: () =>
-                                    _deleteSubscription(item['id']),
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text('削除'),
                               ),
                             ],
                           ),
