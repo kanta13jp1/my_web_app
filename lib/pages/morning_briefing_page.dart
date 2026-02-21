@@ -165,6 +165,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }).toList();
   }
 
+  String _dateOnly(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$y-$m-$d'; // YYYY-MM-DD
+  }
+
   void _setupStream() {
     _todosSubscription?.cancel();
     _todosSubscription = Supabase.instance.client
@@ -316,18 +323,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> _checkOverdueTasks() async {
-    final now = DateTime.now();
-    // ローカル時間の今日の00:00を取得
-    final todayStart = DateTime(now.year, now.month, now.day);
-    // Supabaseのcreated_at(UTC)と比較するため、ローカルの0時をUTCに変換
-    final todayStartUtc = todayStart.toUtc();
+    final todayStr = _dateOnly(DateTime.now());
 
     try {
       final response = await Supabase.instance.client
           .from('daily_todos')
           .select()
           .eq('is_completed', false)
-          .lt('created_at', todayStartUtc.toIso8601String());
+          .lt('task_date', todayStr); // ✅ task_dateが今日より前
 
       final overdueTasks = List<Map<String, dynamic>>.from(response);
 
@@ -368,13 +371,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   Future<void> migrateTasks(List<Map<String, dynamic>> tasks) async {
     final ids = tasks.map((t) => t['id']).toList();
-    final now = DateTime.now().toIso8601String();
+    final todayStr = _dateOnly(DateTime.now());
 
     try {
-      // 対象タスクのcreated_atを現在時刻に更新して、リストの上部に表示させる
       await Supabase.instance.client
           .from('daily_todos')
-          .update({'created_at': now}).filter('id', 'in', ids);
+          .update({'task_date': todayStr}) // ✅ created_atは触らない
+          .filter('id', 'in', ids);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -445,11 +448,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         'is_completed': false,
         'is_important': isImportant,
         'due_date': nextDate.toIso8601String(),
-        'recurrence': recurrence, // 繰り返し設定を引き継ぐ
-        'category': category, // カテゴリを引き継ぐ
-        'estimated_minutes': estimatedMinutes, // 見積もり時間を引き継ぐ
-        'difficulty': difficulty, // 難易度を引き継ぐ
+        'recurrence': recurrence,
+        'category': category,
+        'estimated_minutes': estimatedMinutes,
+        'difficulty': difficulty,
         'order_index': maxOrder + 1,
+        'task_date': _dateOnly(nextDate), // ✅
       });
     } catch (e) {
       debugPrint('Error creating recurring task: $e');
@@ -481,8 +485,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         }
       }
       data['order_index'] = maxOrder + 1;
+
       data['due_date'] = _selectedDate?.toIso8601String();
       data['recurrence'] = _selectedRecurrence;
+
+      // ✅ 追加：どの日のタスクか（未指定なら今日）
+      final baseDay = _selectedDate ?? DateTime.now();
+      data['task_date'] = _dateOnly(baseDay);
     }
 
     try {
@@ -1262,8 +1271,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> generateDailyReport() async {
-    final historyTodos =
-        _todos.where((t) => t['is_completed'] == true).toList();
+    final todayStr = _dateOnly(DateTime.now());
+
+    final historyTodos = _todos.where((t) {
+      final td = t['task_date'] as String?;
+      return t['is_completed'] == true && td == todayStr;
+    }).toList();
 
     if (historyTodos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
