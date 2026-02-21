@@ -1,0 +1,925 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+
+// =====================================================
+// モデル
+// =====================================================
+class ClothingItem {
+  final String id;
+  final String name;
+  final String category;
+  final String color;
+  final String status; // keep / donate / sell / discard
+  final DateTime? lastWornAt;
+  final DateTime createdAt;
+  final String? memo;
+
+  ClothingItem({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.color,
+    required this.status,
+    this.lastWornAt,
+    required this.createdAt,
+    this.memo,
+  });
+
+  factory ClothingItem.fromMap(Map<String, dynamic> m) => ClothingItem(
+        id: m['id'] as String,
+        name: m['name'] as String,
+        category: m['category'] as String? ?? 'その他',
+        color: m['color'] as String? ?? 'その他',
+        status: m['status'] as String? ?? 'keep',
+        lastWornAt: m['last_worn_at'] != null
+            ? DateTime.parse(m['last_worn_at'] as String).toLocal()
+            : null,
+        createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+        memo: m['memo'] as String?,
+      );
+}
+
+// =====================================================
+// ページ本体
+// =====================================================
+class WardrobePage extends StatefulWidget {
+  const WardrobePage({super.key});
+
+  @override
+  State<WardrobePage> createState() => _WardrobePageState();
+}
+
+class _WardrobePageState extends State<WardrobePage>
+    with SingleTickerProviderStateMixin {
+  final _supabase = Supabase.instance.client;
+  late TabController _tabController;
+
+  List<ClothingItem> _items = [];
+  bool _isLoading = true;
+  String _filterCategory = 'すべて';
+  String _filterStatus = 'すべて';
+
+  static const List<String> _categories = [
+    'すべて',
+    'トップス',
+    'ボトムス',
+    'アウター',
+    'スーツ',
+    'シューズ',
+    'バッグ',
+    'アクセサリー',
+    'その他',
+  ];
+  static const List<String> _statusFilters = [
+    'すべて',
+    'keep',
+    'donate',
+    'sell',
+    'discard',
+  ];
+  static const List<String> _colors = [
+    'ブラック',
+    'ホワイト',
+    'グレー',
+    'ネイビー',
+    'ブルー',
+    'グリーン',
+    'レッド',
+    'ブラウン',
+    'ベージュ',
+    'ピンク',
+    'その他',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchItems();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchItems() async {
+    setState(() => _isLoading = true);
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final data = await _supabase
+          .from('wardrobe_items')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          _items = (data as List)
+              .map((e) => ClothingItem.fromMap(e as Map<String, dynamic>))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching wardrobe: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<ClothingItem> get _filtered {
+    return _items.where((item) {
+      final catOk =
+          _filterCategory == 'すべて' || item.category == _filterCategory;
+      final stOk = _filterStatus == 'すべて' || item.status == _filterStatus;
+      return catOk && stOk;
+    }).toList();
+  }
+
+  // ステータス別カウント
+  Map<String, int> get _statusCount {
+    final map = <String, int>{'keep': 0, 'donate': 0, 'sell': 0, 'discard': 0};
+    for (final item in _items) {
+      map[item.status] = (map[item.status] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  Future<void> _addItem() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => _AddItemSheet(
+        onSaved: () {
+          Navigator.pop(context);
+          _fetchItems();
+        },
+      ),
+    );
+  }
+
+  Future<void> _updateStatus(ClothingItem item, String newStatus) async {
+    try {
+      await _supabase
+          .from('wardrobe_items')
+          .update({'status': newStatus}).eq('id', item.id);
+      _fetchItems();
+    } catch (e) {
+      debugPrint('Error updating status: $e');
+    }
+  }
+
+  Future<void> _markWorn(ClothingItem item) async {
+    try {
+      await _supabase.from('wardrobe_items').update({
+        'last_worn_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', item.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('「${item.name}」を着用記録しました'),
+              backgroundColor: Colors.green[700]),
+        );
+      }
+      _fetchItems();
+    } catch (e) {
+      debugPrint('Error marking worn: $e');
+    }
+  }
+
+  Future<void> _deleteItem(ClothingItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('「${item.name}」を削除'),
+        content: const Text('この衣類を削除しますか？'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _supabase.from('wardrobe_items').delete().eq('id', item.id);
+      _fetchItems();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final counts = _statusCount;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ワードローブ管理'),
+        backgroundColor: Colors.brown[700],
+        foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
+          tabs: const [
+            Tab(icon: Icon(Icons.checkroom), text: '一覧'),
+            Tab(icon: Icon(Icons.pie_chart), text: '断捨離分析'),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.brown[50],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addItem,
+        backgroundColor: Colors.brown[700],
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('衣類を追加'),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildListTab(),
+          _buildAnalysisTab(counts),
+        ],
+      ),
+    );
+  }
+
+  // =====================================================
+  // タブ1: 一覧
+  // =====================================================
+  Widget _buildListTab() {
+    final filtered = _filtered;
+    return Column(
+      children: [
+        // フィルター
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            children: [
+              // カテゴリフィルター
+              SizedBox(
+                height: 36,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, i) {
+                    final cat = _categories[i];
+                    final selected = _filterCategory == cat;
+                    return FilterChip(
+                      label: Text(cat, style: const TextStyle(fontSize: 12)),
+                      selected: selected,
+                      selectedColor: Colors.brown[200],
+                      onSelected: (_) => setState(() => _filterCategory = cat),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 6),
+              // ステータスフィルター
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _statusFilters.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, i) {
+                    final st = _statusFilters[i];
+                    final selected = _filterStatus == st;
+                    return FilterChip(
+                      label: Text(_statusLabel(st),
+                          style: const TextStyle(fontSize: 11)),
+                      selected: selected,
+                      selectedColor: _statusColor(st).withOpacity(0.3),
+                      onSelected: (_) => setState(() => _filterStatus = st),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        // 件数
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              Text('${filtered.length}件',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+            ],
+          ),
+        ),
+        // リスト
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : filtered.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.checkroom,
+                              size: 60, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          Text('衣類を追加してください',
+                              style: TextStyle(color: Colors.grey[500])),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 80),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) =>
+                          _buildItemCard(filtered[index]),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemCard(ClothingItem item) {
+    final daysSinceWorn = item.lastWornAt != null
+        ? DateTime.now().difference(item.lastWornAt!).inDays
+        : null;
+    final isOld = daysSinceWorn != null && daysSinceWorn > 180;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: item.status != 'keep'
+            ? BorderSide(color: _statusColor(item.status), width: 1.5)
+            : BorderSide.none,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // カラーサークル
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: _colorToFlutter(item.color),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
+                      Row(
+                        children: [
+                          _chip(item.category, Colors.brown[100]!),
+                          const SizedBox(width: 4),
+                          _chip(item.color, Colors.grey[100]!),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // ステータスバッジ
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _statusColor(item.status).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _statusLabel(item.status),
+                    style: TextStyle(
+                        color: _statusColor(item.status),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            if (item.memo != null && item.memo!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(item.memo!,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.schedule,
+                    size: 12, color: isOld ? Colors.red : Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  item.lastWornAt != null
+                      ? '最終着用: ${DateFormat('yyyy/MM/dd').format(item.lastWornAt!)}（${daysSinceWorn}日前）'
+                      : '着用記録なし',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: isOld ? Colors.red : Colors.grey[500]),
+                ),
+                if (isOld) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(4)),
+                    child: const Text('長期未使用',
+                        style: TextStyle(color: Colors.red, fontSize: 10)),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            // アクションボタン行
+            Row(
+              children: [
+                _actionBtn(
+                    '着用', Icons.check, Colors.green, () => _markWorn(item)),
+                const SizedBox(width: 6),
+                _actionBtn('寄付', Icons.favorite, Colors.blue,
+                    () => _updateStatus(item, 'donate')),
+                const SizedBox(width: 6),
+                _actionBtn('売却', Icons.sell, Colors.orange,
+                    () => _updateStatus(item, 'sell')),
+                const SizedBox(width: 6),
+                _actionBtn('処分', Icons.delete_outline, Colors.red,
+                    () => _updateStatus(item, 'discard')),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.grey),
+                  onPressed: () => _deleteItem(item),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionBtn(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 2),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 11, color: color, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String label, Color bg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+        child: Text(label, style: const TextStyle(fontSize: 10)),
+      );
+
+  // =====================================================
+  // タブ2: 断捨離分析
+  // =====================================================
+  Widget _buildAnalysisTab(Map<String, int> counts) {
+    final total = _items.length;
+    // 180日以上着用なし
+    final longUnused = _items
+        .where((i) =>
+            i.status == 'keep' &&
+            (i.lastWornAt == null ||
+                DateTime.now().difference(i.lastWornAt!).inDays > 180))
+        .toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // サマリーカード
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('ワードローブサマリー',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _summaryItem('総数', '$total件', Colors.brown),
+                      _summaryItem('保持', '${counts['keep']}件', Colors.green),
+                      _summaryItem('寄付', '${counts['donate']}件', Colors.blue),
+                      _summaryItem('売却', '${counts['sell']}件', Colors.orange),
+                      _summaryItem('処分', '${counts['discard']}件', Colors.red),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 断捨離候補
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.orange[300]!, width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.warning_amber, color: Colors.orange[700]),
+                      const SizedBox(width: 8),
+                      Text('断捨離候補（180日以上未着用）',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange[800])),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${longUnused.length}件の衣類が半年以上着用されていません',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  if (longUnused.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    ...longUnused.take(5).map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                    color: _colorToFlutter(item.color),
+                                    shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(item.name,
+                                    style: const TextStyle(fontSize: 13)),
+                              ),
+                              Text(
+                                item.lastWornAt != null
+                                    ? '${DateTime.now().difference(item.lastWornAt!).inDays}日前'
+                                    : '記録なし',
+                                style: TextStyle(
+                                    color: Colors.red[400], fontSize: 12),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _updateStatus(item, 'donate'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('寄付',
+                                      style: TextStyle(
+                                          color: Colors.blue, fontSize: 11)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                    if (longUnused.length > 5)
+                      Text('+${longUnused.length - 5}件...',
+                          style:
+                              TextStyle(color: Colors.grey[500], fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // カテゴリ内訳
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('カテゴリ別内訳',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  ..._categories.skip(1).map((cat) {
+                    final count = _items.where((i) => i.category == cat).length;
+                    if (count == 0) return const SizedBox.shrink();
+                    final pct = total > 0 ? count / total : 0.0;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                              width: 70,
+                              child: Text(cat,
+                                  style: const TextStyle(fontSize: 12))),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: pct,
+                                backgroundColor: Colors.grey[200],
+                                color: Colors.brown[400],
+                                minHeight: 10,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('$count件',
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryItem(String label, String value, Color color) => Column(
+        children: [
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+        ],
+      );
+
+  // =====================================================
+  // ユーティリティ
+  // =====================================================
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'keep':
+        return '保持';
+      case 'donate':
+        return '寄付';
+      case 'sell':
+        return '売却';
+      case 'discard':
+        return '処分';
+      default:
+        return status;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'keep':
+        return Colors.green;
+      case 'donate':
+        return Colors.blue;
+      case 'sell':
+        return Colors.orange;
+      case 'discard':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _colorToFlutter(String color) {
+    switch (color) {
+      case 'ブラック':
+        return Colors.black;
+      case 'ホワイト':
+        return Colors.white;
+      case 'グレー':
+        return Colors.grey;
+      case 'ネイビー':
+        return const Color(0xFF001F5B);
+      case 'ブルー':
+        return Colors.blue;
+      case 'グリーン':
+        return Colors.green;
+      case 'レッド':
+        return Colors.red;
+      case 'ブラウン':
+        return Colors.brown;
+      case 'ベージュ':
+        return const Color(0xFFF5F5DC);
+      case 'ピンク':
+        return Colors.pink;
+      default:
+        return Colors.grey[400]!;
+    }
+  }
+}
+
+// =====================================================
+// 衣類追加シート
+// =====================================================
+class _AddItemSheet extends StatefulWidget {
+  final VoidCallback onSaved;
+  const _AddItemSheet({required this.onSaved});
+
+  @override
+  State<_AddItemSheet> createState() => _AddItemSheetState();
+}
+
+class _AddItemSheetState extends State<_AddItemSheet> {
+  final _supabase = Supabase.instance.client;
+  final _nameCtrl = TextEditingController();
+  final _memoCtrl = TextEditingController();
+  String _category = 'トップス';
+  String _color = 'ブラック';
+  bool _isSaving = false;
+
+  static const List<String> _categories = [
+    'トップス',
+    'ボトムス',
+    'アウター',
+    'スーツ',
+    'シューズ',
+    'バッグ',
+    'アクセサリー',
+    'その他',
+  ];
+  static const List<String> _colors = [
+    'ブラック',
+    'ホワイト',
+    'グレー',
+    'ネイビー',
+    'ブルー',
+    'グリーン',
+    'レッド',
+    'ブラウン',
+    'ベージュ',
+    'ピンク',
+    'その他',
+  ];
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _memoCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('名前を入力してください')));
+      return;
+    }
+    setState(() => _isSaving = true);
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      await _supabase.from('wardrobe_items').insert({
+        'user_id': userId,
+        'name': _nameCtrl.text.trim(),
+        'category': _category,
+        'color': _color,
+        'status': 'keep',
+        'memo': _memoCtrl.text.trim().isEmpty ? null : _memoCtrl.text.trim(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      widget.onSaved();
+    } catch (e) {
+      debugPrint('Error adding item: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('エラー: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('衣類を追加',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _nameCtrl,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: '名前 (例: ネイビーのトレンチコート)',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _category,
+                  decoration: const InputDecoration(
+                      labelText: 'カテゴリ',
+                      border: OutlineInputBorder(),
+                      isDense: true),
+                  items: _categories
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _category = v!),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _color,
+                  decoration: const InputDecoration(
+                      labelText: 'カラー',
+                      border: OutlineInputBorder(),
+                      isDense: true),
+                  items: _colors
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _color = v!),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _memoCtrl,
+            decoration: const InputDecoration(
+              labelText: 'メモ (任意)',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSaving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.brown[700],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('追加する',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

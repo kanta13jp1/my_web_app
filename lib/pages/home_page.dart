@@ -28,6 +28,7 @@ import 'mind_map_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
+import 'wardrobe_page.dart'; // 先頭のimport群に追加
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -242,6 +243,12 @@ class _HomePageState extends State<HomePage> {
                   Colors.indigo,
                   () => _nav(context, const MindlessTaskPage()),
                 ),
+                _MenuData(
+                  'ワードローブ整理',
+                  Icons.checkroom,
+                  Colors.brown,
+                  () => _nav(context, const WardrobePage()),
+                ),
               ]),
               const SizedBox(height: 24),
               _buildSectionHeader(
@@ -271,7 +278,10 @@ class _HomePageState extends State<HomePage> {
               ]),
               const SizedBox(height: 24),
               _buildSectionHeader(
-                  'CMO/CKO OFFICE', Icons.analytics, Colors.blue,),
+                'CMO/CKO OFFICE',
+                Icons.analytics,
+                Colors.blue,
+              ),
               _buildGridMenu(context, [
                 _MenuData(
                   '市場分析 (CMO)',
