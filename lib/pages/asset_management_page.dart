@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
 import 'package:flutter/services.dart';
 
 class AssetManagementPage extends StatefulWidget {
@@ -201,10 +201,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('upsert closing error: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('チェック保存に失敗: $e'), backgroundColor: Colors.red),
-      );
     }
   }
 
@@ -241,7 +237,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-// データ状況から「自動チェック」を提案（押したらチェックが入る）
   Future<void> _autoCheckFromData() async {
     final todayStr = _dateOnly(DateTime.now());
 
@@ -258,7 +253,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _recentFlows.where((r) => r['action_type'] == 'conquer').length;
     final expenseCount =
         _recentFlows.where((r) => r['action_type'] == 'expense').length;
-    final flowsOk = (incomeCount + expenseCount) > 0; // “今月分を把握した”最小条件
+    final flowsOk = (incomeCount + expenseCount) > 0;
 
     final now = DateTime.now();
     final mustThisMonth = _mustTasks.where((t) {
@@ -279,16 +274,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('自動チェックを反映しました（不足があれば手動でONできます）')),
+      const SnackBar(content: Text('自動チェックを反映しました（不足があれば手動でONできます）')),
     );
   }
 
-// ①〜⑤まとめて投稿/提出できるMarkdownを生成してコピー
   Future<void> _copyDailySummary() async {
     final now = DateTime.now();
     final todayStr = _dateOnly(now);
 
-    // ストックは今日があれば今日、なければ最新日
     String? snapshotDate;
     if (_assetData.containsKey(todayStr)) {
       snapshotDate = todayStr;
@@ -396,6 +389,663 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SnackBar(content: Text('サマリーをコピーしました（投稿用）')),
     );
   }
+
+  // ==========================================
+  // 1 & 2. 資産・負債の記録（ストック）
+  // ==========================================
+  Future<void> _loadDataFromSupabase() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final data = await _supabase
+          .from('cfo_assets')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
+      final Map<String, Map<String, double>> loadedData = {};
+      final Set<String> loadedTypes = {'現金'};
+      for (var item in data) {
+        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
+        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final String title = item['title'];
+        final double amount = (item['amount'] as num).toDouble();
+        loadedTypes.add(title);
+        if (!loadedData.containsKey(dateKey)) {
+          loadedData[dateKey] = {};
+        }
+        loadedData[dateKey]![title] = amount;
+      }
+      if (mounted) {
+        setState(() {
+          _assetTypes = loadedTypes.toList();
+          _assetData = loadedData;
+          _updateLastUpdatedDates();
+          _sortAssetTypes(); // ★ ここで降順ソート
+          _initControllers();
+          _updateChartData();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading assets: $e');
+    }
+  }
+
+  // ★ 資産項目を金額の降順（資産→負債）で並び替える
+  void _sortAssetTypes() {
+    _assetTypes.sort((a, b) {
+      final lastDateA = _lastUpdatedDates[a];
+      final lastDateB = _lastUpdatedDates[b];
+
+      // データがないものは -infinity として一番下へ
+      final amountA = lastDateA != null
+          ? (_assetData[lastDateA]?[a] ?? -double.infinity)
+          : -double.infinity;
+      final amountB = lastDateB != null
+          ? (_assetData[lastDateB]?[b] ?? -double.infinity)
+          : -double.infinity;
+
+      // 降順（大きい順）
+      return amountB.compareTo(amountA);
+    });
+  }
+
+  void _initControllers() {
+    final newControllers = <String, TextEditingController>{};
+    for (var type in _assetTypes) {
+      if (_controllers.containsKey(type)) {
+        newControllers[type] = _controllers[type]!;
+      } else {
+        newControllers[type] = TextEditingController();
+      }
+    }
+    _controllers = newControllers;
+  }
+
+  void _updateLastUpdatedDates() {
+    _lastUpdatedDates = {};
+    final sortedDates = _assetData.keys.toList()..sort();
+    for (var type in _assetTypes) {
+      String? lastDate;
+      for (var date in sortedDates.reversed) {
+        if (_assetData[date]?.containsKey(type) ?? false) {
+          lastDate = date;
+          break;
+        }
+      }
+      _lastUpdatedDates[type] = lastDate;
+    }
+  }
+
+  Future<void> _saveSingleAssetData(String type) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final controller = _controllers[type];
+    if (controller == null || controller.text.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$type の金額を入力してください')));
+      return;
+    }
+
+    final cleanText = controller.text.replaceAll(',', '');
+    final double amount = double.tryParse(cleanText) ?? 0.0;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    try {
+      await _supabase.from('cfo_assets').insert({
+        'user_id': userId,
+        'title': type,
+        'amount': amount,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      setState(() {
+        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        _assetData[today]![type] = amount;
+        _updateLastUpdatedDates();
+        _sortAssetTypes(); // ★ 更新後にも並び替えを実行
+        _updateChartData();
+      });
+      controller.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('✅ $type を記録しました'),
+            backgroundColor: Colors.green[700]));
+      }
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('Error saving $type: $e');
+    }
+  }
+
+  Future<void> _saveAssetData() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final Map<String, double> todayData = {};
+    bool hasData = false;
+
+    _controllers.forEach((assetType, controller) {
+      if (controller.text.isNotEmpty) {
+        final cleanText = controller.text.replaceAll(',', '');
+        final double amount = double.tryParse(cleanText) ?? 0.0;
+        todayData[assetType] = amount;
+        hasData = true;
+      }
+    });
+
+    if (!hasData) return;
+
+    try {
+      for (var entry in todayData.entries) {
+        await _supabase.from('cfo_assets').insert({
+          'user_id': userId,
+          'title': entry.key,
+          'amount': entry.value,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+      setState(() {
+        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        _assetData[today]!.addAll(todayData);
+        _updateLastUpdatedDates();
+        _sortAssetTypes(); // ★ 一括更新後にも並び替え
+        _updateChartData();
+      });
+      _controllers.forEach((_, controller) => controller.clear());
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('Error saving assets: $e');
+    }
+  }
+
+  void _showAddAssetDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('項目を追加'),
+        content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: '資産・負債名 (例: 住宅ローン)')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty &&
+                  !_assetTypes.contains(controller.text)) {
+                setState(() {
+                  _assetTypes.add(controller.text);
+                  _initControllers();
+                  _updateLastUpdatedDates();
+                  _sortAssetTypes(); // ★ 追加時にも並び替え
+                });
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('追加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveAssetDialog(String type) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('「$type」を削除'),
+        content: const Text('この項目を削除しますか？'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () async {
+              final userId = _supabase.auth.currentUser?.id;
+              if (userId != null) {
+                await _supabase
+                    .from('cfo_assets')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('title', type);
+                setState(() {
+                  _assetTypes.remove(type);
+                  _controllers.remove(type)?.dispose();
+                  _assetData.forEach((date, assets) {
+                    assets.remove(type);
+                  });
+                  _initControllers();
+                  _updateLastUpdatedDates();
+                  _sortAssetTypes(); // ★ 削除時にも並び替え
+                  _updateChartData();
+                });
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 3. 固定費の記録（サブスク）
+  // ==========================================
+  Future<void> _fetchSubscriptions() async {
+    setState(() => _isLoadingSubscriptions = true);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await _supabase
+          .from('subscriptions')
+          .select()
+          .eq('user_id', userId)
+          .order('price', ascending: false);
+      if (mounted) {
+        setState(() {
+          _subscriptions = List<Map<String, dynamic>>.from(data);
+          _isLoadingSubscriptions = false;
+        });
+      }
+    } catch (e) {
+      if (mounted)
+        setState(() {
+          _subscriptions = [];
+          _isLoadingSubscriptions = false;
+        });
+    }
+  }
+
+  Future<void> _addSubscription() async {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('固定費を追加'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+                controller: nameController,
+                decoration:
+                    const InputDecoration(labelText: '名称 (例: 家賃, Netflix)')),
+            TextField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: '月額 (円)'),
+                keyboardType: TextInputType.number),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              final price = int.tryParse(priceController.text.trim()) ?? 0;
+              if (name.isEmpty) return;
+              final userId = _supabase.auth.currentUser?.id;
+              if (userId != null) {
+                await _supabase.from('subscriptions').insert(
+                    {'user_id': userId, 'service_name': name, 'price': price});
+                if (context.mounted) Navigator.pop(context);
+                _fetchSubscriptions();
+              }
+            },
+            child: const Text('追加'),
+          ),
+        ],
+      ),
+    );
+    await _fetchTodayClosing();
+  }
+
+  Future<void> _deleteSubscription(String id) async {
+    await _supabase.from('subscriptions').delete().eq('id', id);
+    _fetchSubscriptions();
+    await _fetchTodayClosing();
+  }
+
+  // ==========================================
+  // 4. 今月の支出と収入の記録（フロー）
+  // ==========================================
+  Future<void> _fetchRecentFlows() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final now = DateTime.now();
+      final firstDayOfMonth =
+          DateTime(now.year, now.month, 1).toUtc().toIso8601String();
+
+      final data = await _supabase
+          .from('wealth_struggles')
+          .select()
+          .eq('user_id', userId)
+          .gte('occurred_at', firstDayOfMonth)
+          .order('occurred_at', ascending: false);
+
+      if (mounted) {
+        setState(() {
+          _recentFlows = List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching flows: $e');
+    }
+  }
+
+  Future<void> _recordFlow() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final memo = _flowMemoController.text.trim();
+    final amountStr = _flowAmountController.text.replaceAll(',', '');
+    final amount = int.tryParse(amountStr);
+
+    if (amount == null || amount <= 0 || memo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')));
+      return;
+    }
+
+    final actionType = _selectedFlowType == '収入' ? 'conquer' : 'expense';
+
+    try {
+      await _supabase.from('wealth_struggles').insert({
+        'user_id': userId,
+        'action_type': actionType,
+        'amount': amount,
+        'description': '$_selectedSource $memo',
+        'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
+      });
+
+      _flowMemoController.clear();
+      _flowAmountController.clear();
+      await _fetchRecentFlows();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('収支を記録しました'), backgroundColor: Colors.black87));
+      }
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('Error recording flow: $e');
+    }
+  }
+
+  // ==========================================
+  // 5. 必須タスクの記録と把握
+  // ==========================================
+  Future<void> _fetchMustTasks() async {
+    setState(() => _isLoadingTasks = true);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await _supabase
+          .from('must_tasks')
+          .select()
+          .eq('user_id', userId)
+          .order('deadline', ascending: true);
+
+      if (mounted)
+        setState(() {
+          _mustTasks = List<Map<String, dynamic>>.from(data);
+          _isLoadingTasks = false;
+        });
+    } catch (e) {
+      if (mounted)
+        setState(() {
+          _mustTasks = [];
+          _isLoadingTasks = false;
+        });
+    }
+  }
+
+  Future<void> _addMustTask() async {
+    final titleController = TextEditingController();
+    DateTime selectedDeadline = DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          title: const Text('必須タスクを追加'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                  controller: titleController,
+                  decoration:
+                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)')),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDeadline,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2030),
+                  );
+                  if (date != null)
+                    setDialogState(() => selectedDeadline = date);
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[400]!),
+                      borderRadius: BorderRadius.circular(4)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          '締切: ${DateFormat('yyyy/MM/dd').format(selectedDeadline)}'),
+                      Icon(Icons.calendar_today,
+                          size: 16, color: Colors.grey[600]),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル')),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
+                final userId = _supabase.auth.currentUser?.id;
+                if (userId != null) {
+                  try {
+                    await _supabase.from('must_tasks').insert({
+                      'user_id': userId,
+                      'title': title,
+                      'deadline': selectedDeadline.toUtc().toIso8601String(),
+                      'is_completed': false,
+                    });
+                    if (context.mounted) Navigator.pop(context);
+                    _fetchMustTasks();
+                  } catch (e) {
+                    debugPrint('Error adding task: $e');
+                    setState(() {
+                      _mustTasks.add({
+                        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                        'title': title,
+                        'deadline': selectedDeadline.toUtc().toIso8601String(),
+                        'is_completed': false,
+                      });
+                    });
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                }
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      }),
+    );
+    await _fetchTodayClosing();
+  }
+
+  Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
+    try {
+      await _supabase
+          .from('must_tasks')
+          .update({'is_completed': !currentStatus}).eq('id', id);
+      _fetchMustTasks();
+    } catch (e) {
+      setState(() {
+        final index = _mustTasks.indexWhere((t) => t['id'] == id);
+        if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
+      });
+    }
+    await _fetchTodayClosing();
+  }
+
+  // ==========================================
+  // グラフ描画ロジック
+  // ==========================================
+  void _updateChartData() {
+    _sortedDates = _assetData.keys.toList()..sort();
+    if (_sortedDates.isEmpty) {
+      _lineChartBars = [];
+      _barChartGroups = [];
+      return;
+    }
+    final Map<String, List<FlSpot>> spotsData = {
+      for (var type in _assetTypes) type: [],
+    };
+    List<double> dailyTotals = [];
+
+    for (int i = 0; i < _sortedDates.length; i++) {
+      final String date = _sortedDates[i];
+      double currentDayTotal = 0;
+      double cumulativeValue = 0;
+
+      if (i > 0) {
+        final prevDate = _sortedDates[i - 1];
+        for (var type in _assetTypes) {
+          if (!_assetData[date]!.containsKey(type) &&
+              _assetData[prevDate]!.containsKey(type)) {
+            _assetData[date]![type] = _assetData[prevDate]![type]!;
+          }
+        }
+      }
+
+      for (var type in _assetTypes) {
+        final double value = _assetData[date]?[type] ?? 0;
+        currentDayTotal += value;
+        if (_isStacked) {
+          cumulativeValue += value;
+          spotsData[type]!.add(FlSpot(i.toDouble(), cumulativeValue));
+        } else {
+          spotsData[type]!.add(FlSpot(i.toDouble(), value));
+        }
+      }
+      dailyTotals.add(currentDayTotal);
+    }
+
+    _lineChartBars = _assetTypes
+        .asMap()
+        .entries
+        .map((entry) {
+          final index = entry.key;
+          final type = entry.value;
+          final color = _colors[index % _colors.length];
+          final spots = spotsData[type] ?? [];
+          if (spots.isEmpty) return null;
+          return LineChartBarData(
+            spots: spots,
+            isCurved: false,
+            color: color,
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData:
+                BarAreaData(show: _isStacked, color: color.withOpacity(0.5)),
+          );
+        })
+        .whereType<LineChartBarData>()
+        .toList();
+
+    if (_isStacked) _lineChartBars = _lineChartBars.reversed.toList();
+
+    _barChartGroups = [];
+    _maxDailyChange = 0;
+    for (int i = 0; i < dailyTotals.length; i++) {
+      double diff = 0;
+      if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
+      if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
+      final color = diff >= 0 ? Colors.green : Colors.red;
+      _barChartGroups.add(BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+              toY: diff,
+              color: color,
+              width: 12,
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4), topRight: Radius.circular(4)))
+        ],
+      ));
+    }
+    if (_maxDailyChange == 0) _maxDailyChange = 1000;
+    _maxDailyChange *= 1.2;
+  }
+
+  // ==========================================
+  // UI構築 (エラーが起きていた箇所)
+  // ==========================================
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('資産管理闘争'),
+        backgroundColor: const Color(0xFF1B5E20),
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.blueGrey[50],
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildDeadlineChecklistCard(), // 締切チェックリスト
+            const SizedBox(height: 16),
+            Container(
+                key: _keyStock, child: _buildAssetLiabilityCard()), // ①②資産負債
+            const SizedBox(height: 24),
+            Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
+            const SizedBox(height: 24),
+            Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
+            const SizedBox(height: 24),
+            Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
+            const SizedBox(height: 24),
+            _buildChartCard(), // グラフ
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------------
+  // 各カードUIコンポーネント
+  // -------------------------
 
   Widget _buildDeadlineChecklistCard() {
     final remainText = _remainingToDeadlineText();
@@ -525,643 +1175,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // ==========================================
-  // 1 & 2. 資産・負債の記録（ストック）
-  // ==========================================
-  Future<void> _loadDataFromSupabase() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      final data = await _supabase
-          .from('cfo_assets')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: true);
-      final Map<String, Map<String, double>> loadedData = {};
-      final Set<String> loadedTypes = {'現金'};
-      for (var item in data) {
-        final DateTime createdAt = DateTime.parse(item['created_at']).toLocal();
-        final String dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
-        final String title = item['title'];
-        final double amount = (item['amount'] as num).toDouble();
-        loadedTypes.add(title);
-        if (!loadedData.containsKey(dateKey)) {
-          loadedData[dateKey] = {};
-        }
-        loadedData[dateKey]![title] = amount;
-      }
-      if (mounted) {
-        setState(() {
-          _assetTypes = loadedTypes.toList();
-          _assetData = loadedData;
-          _initControllers();
-          _updateChartData();
-          _updateLastUpdatedDates();
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading assets: $e');
-    }
-  }
-
-  void _initControllers() {
-    final newControllers = <String, TextEditingController>{};
-    for (var type in _assetTypes) {
-      if (_controllers.containsKey(type)) {
-        newControllers[type] = _controllers[type]!;
-      } else {
-        newControllers[type] = TextEditingController();
-      }
-    }
-    _controllers = newControllers;
-  }
-
-  void _updateLastUpdatedDates() {
-    _lastUpdatedDates = {};
-    final sortedDates = _assetData.keys.toList()..sort();
-    for (var type in _assetTypes) {
-      String? lastDate;
-      for (var date in sortedDates.reversed) {
-        if (_assetData[date]?.containsKey(type) ?? false) {
-          lastDate = date;
-          break;
-        }
-      }
-      _lastUpdatedDates[type] = lastDate;
-    }
-  }
-
-  Future<void> _saveSingleAssetData(String type) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    final controller = _controllers[type];
-    if (controller == null || controller.text.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$type の金額を入力してください')));
-      return;
-    }
-
-    final cleanText = controller.text.replaceAll(',', '');
-    final double amount = double.tryParse(cleanText) ?? 0.0;
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    try {
-      await _supabase.from('cfo_assets').insert({
-        'user_id': userId,
-        'title': type,
-        'amount': amount,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      setState(() {
-        if (!_assetData.containsKey(today)) _assetData[today] = {};
-        _assetData[today]![type] = amount;
-        _updateChartData();
-        _updateLastUpdatedDates();
-      });
-      controller.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('✅ $type を記録しました'),
-            backgroundColor: Colors.green[700]));
-      }
-      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-    } catch (e) {
-      debugPrint('Error saving $type: $e');
-    }
-  }
-
-  Future<void> _saveAssetData() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final Map<String, double> todayData = {};
-    bool hasData = false;
-
-    _controllers.forEach((assetType, controller) {
-      if (controller.text.isNotEmpty) {
-        final cleanText = controller.text.replaceAll(',', '');
-        final double amount = double.tryParse(cleanText) ?? 0.0;
-        todayData[assetType] = amount;
-        hasData = true;
-      }
-    });
-
-    if (!hasData) return;
-
-    try {
-      for (var entry in todayData.entries) {
-        await _supabase.from('cfo_assets').insert({
-          'user_id': userId,
-          'title': entry.key,
-          'amount': entry.value,
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
-      setState(() {
-        if (!_assetData.containsKey(today)) _assetData[today] = {};
-        _assetData[today]!.addAll(todayData);
-        _updateChartData();
-        _updateLastUpdatedDates();
-      });
-      _controllers.forEach((_, controller) => controller.clear());
-      if (mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
-      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-    } catch (e) {
-      debugPrint('Error saving assets: $e');
-    }
-  }
-
-  void _showAddAssetDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('項目を追加'),
-        content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: '資産・負債名 (例: 住宅ローン)')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty &&
-                  !_assetTypes.contains(controller.text)) {
-                setState(() {
-                  _assetTypes.add(controller.text);
-                  _initControllers();
-                  _updateLastUpdatedDates();
-                });
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('追加'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRemoveAssetDialog(String type) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('「$type」を削除'),
-        content: const Text('この項目を削除しますか？'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
-          ElevatedButton(
-            onPressed: () async {
-              final userId = _supabase.auth.currentUser?.id;
-              if (userId != null) {
-                await _supabase
-                    .from('cfo_assets')
-                    .delete()
-                    .eq('user_id', userId)
-                    .eq('title', type);
-                setState(() {
-                  _assetTypes.remove(type);
-                  _controllers.remove(type)?.dispose();
-                  _assetData.forEach((date, assets) {
-                    assets.remove(type);
-                  });
-                  _initControllers();
-                  _updateChartData();
-                  _updateLastUpdatedDates();
-                });
-              }
-              if (context.mounted) Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // 3. 固定費の記録（サブスク）
-  // ==========================================
-  Future<void> _fetchSubscriptions() async {
-    setState(() => _isLoadingSubscriptions = true);
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final data = await _supabase
-          .from('subscriptions')
-          .select()
-          .eq('user_id', userId)
-          .order('price', ascending: false);
-      if (mounted) {
-        setState(() {
-          _subscriptions = List<Map<String, dynamic>>.from(data);
-          _isLoadingSubscriptions = false;
-        });
-      }
-    } catch (e) {
-      if (mounted)
-        setState(() {
-          _subscriptions = [];
-          _isLoadingSubscriptions = false;
-        });
-    }
-  }
-
-  Future<void> _addSubscription() async {
-    final nameController = TextEditingController();
-    final priceController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('固定費を追加'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: nameController,
-                decoration:
-                    const InputDecoration(labelText: '名称 (例: 家賃, Netflix)')),
-            TextField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: '月額 (円)'),
-                keyboardType: TextInputType.number),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameController.text.trim();
-              final price = int.tryParse(priceController.text.trim()) ?? 0;
-              if (name.isEmpty) return;
-              final userId = _supabase.auth.currentUser?.id;
-              if (userId != null) {
-                await _supabase.from('subscriptions').insert(
-                    {'user_id': userId, 'service_name': name, 'price': price});
-                if (context.mounted) Navigator.pop(context);
-                _fetchSubscriptions();
-              }
-            },
-            child: const Text('追加'),
-          ),
-        ],
-      ),
-    );
-    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-  }
-
-  Future<void> _deleteSubscription(String id) async {
-    await _supabase.from('subscriptions').delete().eq('id', id);
-    _fetchSubscriptions();
-    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-  }
-
-  // ==========================================
-  // 4. 今月の支出と収入の記録（フロー）
-  // ==========================================
-  Future<void> _fetchRecentFlows() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      // 当月の初日を計算
-      final now = DateTime.now();
-      final firstDayOfMonth =
-          DateTime(now.year, now.month, 1).toUtc().toIso8601String();
-
-      final data = await _supabase
-          .from('wealth_struggles')
-          .select()
-          .eq('user_id', userId)
-          .gte('occurred_at', firstDayOfMonth)
-          .order('occurred_at', ascending: false);
-
-      if (mounted) {
-        setState(() {
-          _recentFlows = List<Map<String, dynamic>>.from(data);
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching flows: $e');
-    }
-  }
-
-  Future<void> _recordFlow() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    final memo = _flowMemoController.text.trim();
-    final amountStr = _flowAmountController.text.replaceAll(',', '');
-    final amount = int.tryParse(amountStr);
-
-    if (amount == null || amount <= 0 || memo.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')));
-      return;
-    }
-
-    // 収入は conquer(奪取)、支出は expense(浪費) として記録
-    final actionType = _selectedFlowType == '収入' ? 'conquer' : 'expense';
-
-    try {
-      await _supabase.from('wealth_struggles').insert({
-        'user_id': userId,
-        'action_type': actionType,
-        'amount': amount,
-        'description': '$_selectedSource $memo',
-        'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
-      });
-
-      _flowMemoController.clear();
-      _flowAmountController.clear();
-      await _fetchRecentFlows();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('収支を記録しました'), backgroundColor: Colors.black87));
-      }
-      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-    } catch (e) {
-      debugPrint('Error recording flow: $e');
-    }
-  }
-
-  // ==========================================
-  // 5. 必須タスクの記録と把握
-  // ==========================================
-  Future<void> _fetchMustTasks() async {
-    setState(() => _isLoadingTasks = true);
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      // テーブルがない場合はエラーになるためcatchで空配列に
-      final data = await _supabase
-          .from('must_tasks')
-          .select()
-          .eq('user_id', userId)
-          .order('deadline', ascending: true);
-
-      if (mounted)
-        setState(() {
-          _mustTasks = List<Map<String, dynamic>>.from(data);
-          _isLoadingTasks = false;
-        });
-    } catch (e) {
-      if (mounted)
-        setState(() {
-          _mustTasks = [];
-          _isLoadingTasks = false;
-        });
-    }
-  }
-
-  Future<void> _addMustTask() async {
-    final titleController = TextEditingController();
-    DateTime selectedDeadline = DateTime.now();
-
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-          title: const Text('必須タスクを追加'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                  controller: titleController,
-                  decoration:
-                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)')),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDeadline,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2030),
-                  );
-                  if (date != null)
-                    setDialogState(() => selectedDeadline = date);
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(4)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                          '締切: ${DateFormat('yyyy/MM/dd').format(selectedDeadline)}'),
-                      Icon(Icons.calendar_today,
-                          size: 16, color: Colors.grey[600]),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル')),
-            ElevatedButton(
-              onPressed: () async {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
-                final userId = _supabase.auth.currentUser?.id;
-                if (userId != null) {
-                  try {
-                    await _supabase.from('must_tasks').insert({
-                      'user_id': userId,
-                      'title': title,
-                      'deadline': selectedDeadline.toUtc().toIso8601String(),
-                      'is_completed': false,
-                    });
-                    if (context.mounted) Navigator.pop(context);
-                    _fetchMustTasks();
-                  } catch (e) {
-                    debugPrint('Error adding task: $e');
-                    // テーブルがない場合のフォールバック（画面上だけ追加）
-                    setState(() {
-                      _mustTasks.add({
-                        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                        'title': title,
-                        'deadline': selectedDeadline.toUtc().toIso8601String(),
-                        'is_completed': false,
-                      });
-                    });
-                    if (context.mounted) Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text('追加'),
-            ),
-          ],
-        );
-      }),
-    );
-    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-  }
-
-  Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
-    try {
-      await _supabase
-          .from('must_tasks')
-          .update({'is_completed': !currentStatus}).eq('id', id);
-      _fetchMustTasks();
-    } catch (e) {
-      // テーブルがない場合のモック処理
-      setState(() {
-        final index = _mustTasks.indexWhere((t) => t['id'] == id);
-        if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
-      });
-    }
-    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
-  }
-
-  // ==========================================
-  // グラフ描画ロジック
-  // ==========================================
-  void _updateChartData() {
-    _sortedDates = _assetData.keys.toList()..sort();
-    if (_sortedDates.isEmpty) {
-      _lineChartBars = [];
-      _barChartGroups = [];
-      return;
-    }
-    final Map<String, List<FlSpot>> spotsData = {
-      for (var type in _assetTypes) type: [],
-    };
-    List<double> dailyTotals = [];
-
-    for (int i = 0; i < _sortedDates.length; i++) {
-      final String date = _sortedDates[i];
-      double currentDayTotal = 0;
-      double cumulativeValue = 0;
-
-      if (i > 0) {
-        final prevDate = _sortedDates[i - 1];
-        for (var type in _assetTypes) {
-          if (!_assetData[date]!.containsKey(type) &&
-              _assetData[prevDate]!.containsKey(type)) {
-            _assetData[date]![type] = _assetData[prevDate]![type]!;
-          }
-        }
-      }
-
-      for (var type in _assetTypes) {
-        final double value = _assetData[date]?[type] ?? 0;
-        currentDayTotal += value;
-        if (_isStacked) {
-          cumulativeValue += value;
-          spotsData[type]!.add(FlSpot(i.toDouble(), cumulativeValue));
-        } else {
-          spotsData[type]!.add(FlSpot(i.toDouble(), value));
-        }
-      }
-      dailyTotals.add(currentDayTotal);
-    }
-
-    _lineChartBars = _assetTypes
-        .asMap()
-        .entries
-        .map((entry) {
-          final index = entry.key;
-          final type = entry.value;
-          final color = _colors[index % _colors.length];
-          final spots = spotsData[type] ?? [];
-          if (spots.isEmpty) return null;
-          return LineChartBarData(
-            spots: spots,
-            isCurved: false,
-            color: color,
-            barWidth: 2,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData:
-                BarAreaData(show: _isStacked, color: color.withOpacity(0.5)),
-          );
-        })
-        .whereType<LineChartBarData>()
-        .toList();
-
-    if (_isStacked) _lineChartBars = _lineChartBars.reversed.toList();
-
-    _barChartGroups = [];
-    _maxDailyChange = 0;
-    for (int i = 0; i < dailyTotals.length; i++) {
-      double diff = 0;
-      if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
-      if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
-      final color = diff >= 0 ? Colors.green : Colors.red;
-      _barChartGroups.add(BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-              toY: diff,
-              color: color,
-              width: 12,
-              borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4), topRight: Radius.circular(4)))
-        ],
-      ));
-    }
-    if (_maxDailyChange == 0) _maxDailyChange = 1000;
-    _maxDailyChange *= 1.2;
-  }
-
-  // ==========================================
-  // UI構築
-  // ==========================================
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: const Text('資産管理闘争'),
-          backgroundColor: const Color(0xFF1B5E20),
-          foregroundColor: Colors.white),
-      backgroundColor: Colors.blueGrey[50],
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildDeadlineChecklistCard(), // ✅ 追加（最上部）
-            const SizedBox(height: 16),
-
-            Container(key: _keyStock, child: _buildAssetLiabilityCard()),
-            const SizedBox(height: 24),
-
-            Container(key: _keyFlow, child: _buildFlowCard()),
-            const SizedBox(height: 24),
-
-            Container(key: _keySubs, child: _buildSubscriptionCard()),
-            const SizedBox(height: 24),
-
-            Container(key: _keyMust, child: _buildMustTasksCard()),
-            const SizedBox(height: 24),
-
-            _buildChartCard(),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ①資産 ②負債 の入力カード
   Widget _buildAssetLiabilityCard() {
     return Card(
@@ -1262,7 +1275,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     onPressed: () => _showRemoveAssetDialog(type)),
             ],
           ),
-          // ▼ 最新残高の表示
           if (lastAmount != null)
             Padding(
               padding: const EdgeInsets.only(left: 4, top: 3),
@@ -1379,8 +1391,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const Text('お金の流れをすべてリスト化する。',
                 style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
-
-            // 入力フォーム
             Row(
               children: [
                 Expanded(
@@ -1493,8 +1503,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // 今月のサマリー
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -1534,7 +1542,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 8),
-            // リスト表示
             _recentFlows.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(16),
@@ -1710,7 +1717,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         itemBuilder: (context, index) {
                           final task = _mustTasks[index];
                           final isCompleted =
-                              (task['is_completed'] as bool?) == true; // ← ここ
+                              (task['is_completed'] as bool?) == true;
                           final deadline =
                               DateTime.parse(task['deadline']).toLocal();
                           final isOverdue =
@@ -1748,7 +1755,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // --- グラフ (既存のまま維持) ---
+  // --- グラフ ---
   Widget _buildChartCard() {
     return Card(
       elevation: 4,
