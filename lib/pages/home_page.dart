@@ -98,12 +98,15 @@ class _HomePageState extends State<HomePage> {
     final themeService = Provider.of<ThemeService>(context);
     final isDark = themeService.isDarkMode;
     final primaryColor = themeService.primaryColor;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 390;
 
     return Scaffold(
       backgroundColor:
           isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
       appBar: AppBar(
         title: const Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text('自分株式会社 経営コックピット'),
             // 時計部分を独立したウィジェットとして配置（パフォーマンス改善）
@@ -141,7 +144,7 @@ class _HomePageState extends State<HomePage> {
         child: SingleChildScrollView(
           physics:
               const AlwaysScrollableScrollPhysics(), // Pull-to-Refreshを効かせる
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -159,7 +162,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.show_chart,
                 Colors.purple,
               ),
-              _buildKpiSummary(context, isDark),
+              _buildKpiSummary(context, isDark, isCompact),
               const SizedBox(height: 24),
               _buildSectionHeader(
                 'SPECIAL PROJECT',
@@ -207,7 +210,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 24),
               _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
-              _buildGridMenu(context, [
+              _buildGridMenu(context, isCompact, [
                 _MenuData(
                   '断捨離 (デジタル)',
                   Icons.cleaning_services,
@@ -256,7 +259,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.balance,
                 Colors.teal,
               ),
-              _buildGridMenu(context, [
+              _buildGridMenu(context, isCompact, [
                 _MenuData(
                   '財務管理 (CFO)',
                   Icons.account_balance_wallet,
@@ -282,7 +285,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.analytics,
                 Colors.blue,
               ),
-              _buildGridMenu(context, [
+              _buildGridMenu(context, isCompact, [
                 _MenuData(
                   '市場分析 (CMO)',
                   Icons.trending_up,
@@ -402,15 +405,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildGridMenu(BuildContext context, List<_MenuData> items) {
+  Widget _buildGridMenu(
+    BuildContext context,
+    bool isCompact,
+    List<_MenuData> items,
+  ) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isCompact ? 1 : 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 2.5,
+        childAspectRatio: isCompact ? 3.3 : 2.5,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -434,7 +441,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: Icon(item.icon, color: item.color, size: 20),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isCompact ? 10 : 12),
                   Expanded(
                     child: Text(
                       item.title,
@@ -456,14 +463,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   // KPIサマリー
-  Widget _buildKpiSummary(BuildContext context, bool isDark) {
+  Widget _buildKpiSummary(BuildContext context, bool isDark, bool isCompact) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
+      crossAxisCount: isCompact ? 1 : 2,
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.8,
+      childAspectRatio: isCompact ? 2.4 : 1.8,
       children: [
         // ✅ 総資産（Futureキャッシュを渡す）
         _buildAsyncKpiCard(
