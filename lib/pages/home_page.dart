@@ -1,3 +1,4 @@
+// home_page.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
-import 'mindless_task_page.dart'; // インポート
+import 'mindless_task_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,7 +37,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 時計ロジックは _ClockWidget に分離したため、ここでの Timer は不要になりました
+  // ✅ 改善ポイント:
+  // build() のたびに _fetchTotalAssets() が走るのを防ぐため Future をキャッシュする
+  late Future<String> _totalAssetsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _totalAssetsFuture = _fetchTotalAssets();
+  }
 
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
@@ -48,18 +57,31 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-// ▼ 修正: 各資産の「最新の残高」を取得して合計する正しいロジック
+  // ✅ Pull-to-Refresh 用（必要なときだけKPIを再取得）
+  Future<void> _refreshKpis() async {
+    setState(() {
+      _totalAssetsFuture = _fetchTotalAssets();
+    });
+  }
+
+  // ▼ 各資産の「最新の残高」を取得して合計するロジック（現状維持 + 例外対策）
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return '¥0';
+    if (userId == null) {
+      return NumberFormat.currency(
+        locale: 'ja_JP',
+        symbol: '¥',
+        decimalDigits: 0,
+      ).format(0);
+    }
 
     try {
-      // 1. まず、ユーザーの全資産データを取得（日付の古い順）
+      // 1. ユーザーの全資産データを取得（日付の古い順）
       final data = await Supabase.instance.client
           .from('cfo_assets')
           .select('title, amount, created_at')
           .eq('user_id', userId)
-          .order('created_at', ascending: true); // 古い順で取得
+          .order('created_at', ascending: true);
 
       if (data.isEmpty) {
         return NumberFormat.currency(
@@ -72,22 +94,25 @@ class _HomePageState extends State<HomePage> {
       // 2. 各資産ごとの「最新の金額」を保持するMap
       final Map<String, double> latestAssets = {};
 
-      // 古い順でループを回すため、同じ名前(title)の資産は最新の金額で上書きされ続ける
-      for (var item in data) {
-        final String title = item['title'];
-        final double amount = (item['amount'] as num).toDouble();
-        latestAssets[title] = amount; 
+      // 古い順でループ → 同じtitleは最新で上書きされ続ける
+      for (final item in data) {
+        final String title = (item['title'] ?? '').toString();
+        final num rawAmount = (item['amount'] as num?) ?? 0;
+        latestAssets[title] = rawAmount.toDouble();
       }
 
-      // 3. 最終的に残った各資産の最新残高をすべて合計する
+      // 3. 各資産の最新残高を合計
       double total = 0;
-      latestAssets.forEach((_, amount) {
+      for (final amount in latestAssets.values) {
         total += amount;
-      });
+      }
 
-      // 通貨フォーマット (例: ¥1,234,567, マイナスも対応)
-      final formatter =
-          NumberFormat.currency(locale: 'ja_JP', symbol: '¥', decimalDigits: 0);
+      // 4. 通貨フォーマット（マイナスも対応）
+      final formatter = NumberFormat.currency(
+        locale: 'ja_JP',
+        symbol: '¥',
+        decimalDigits: 0,
+      );
       return formatter.format(total);
     } catch (e) {
       debugPrint('Error fetching total assets: $e');
@@ -136,174 +161,180 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader(
-              'CEO OFFICE',
-              Icons.business_center,
-              Colors.redAccent,
-            ),
-            _buildCeoCard(context),
-            const SizedBox(height: 12),
-            _buildMorningBriefingCard(context),
-            const SizedBox(height: 24),
-            _buildSectionHeader(
-              'KPI SUMMARY',
-              Icons.show_chart,
-              Colors.purple,
-            ),
-            // コンテキスト(テーマ情報)を渡して色を適切に処理
-            _buildKpiSummary(context, isDark),
-            const SizedBox(height: 24),
-            _buildSectionHeader(
-              'SPECIAL PROJECT',
-              Icons.rocket_launch,
-              Colors.indigo,
-            ),
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+
+      // ✅ 改善: RefreshIndicator を追加（KPIのみ再取得できる）
+      body: RefreshIndicator(
+        onRefresh: _refreshKpis,
+        child: SingleChildScrollView(
+          physics:
+              const AlwaysScrollableScrollPhysics(), // Pull-to-Refreshを効かせる
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionHeader(
+                'CEO OFFICE',
+                Icons.business_center,
+                Colors.redAccent,
               ),
-              color: Colors.indigo,
-              child: ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 28,
-                  child: Icon(Icons.campaign, color: Colors.indigo, size: 30),
+              _buildCeoCard(context),
+              const SizedBox(height: 12),
+              _buildMorningBriefingCard(context),
+              const SizedBox(height: 24),
+              _buildSectionHeader(
+                'KPI SUMMARY',
+                Icons.show_chart,
+                Colors.purple,
+              ),
+              _buildKpiSummary(context, isDark),
+              const SizedBox(height: 24),
+              _buildSectionHeader(
+                'SPECIAL PROJECT',
+                Icons.rocket_launch,
+                Colors.indigo,
+              ),
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: const Text(
-                  '2026 衆院選 勝利戦略室',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                color: Colors.indigo,
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 28,
+                    child: Icon(Icons.campaign, color: Colors.indigo, size: 30),
+                  ),
+                  title: const Text(
+                    '2026 衆院選 勝利戦略室',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
                     color: Colors.white,
                   ),
-                ),
-                subtitle: const Text(
-                  'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.white,
-                ),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ElectionStrategyPage(),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ElectionStrategyPage(),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
-            _buildGridMenu(context, [
-              _MenuData(
-                '断捨離 (デジタル)',
-                Icons.cleaning_services,
-                Colors.orange,
-                () => _nav(context, const DanshariPage()),
-              ),
-              _MenuData(
-                '断捨離 (リアル)',
-                Icons.camera_alt,
-                Colors.deepOrange,
-                () => _nav(
-                  context,
-                  RealWorldDanshariPage(
-                    supabaseClient: Supabase.instance.client,
+              const SizedBox(height: 24),
+              _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
+              _buildGridMenu(context, [
+                _MenuData(
+                  '断捨離 (デジタル)',
+                  Icons.cleaning_services,
+                  Colors.orange,
+                  () => _nav(context, const DanshariPage()),
+                ),
+                _MenuData(
+                  '断捨離 (リアル)',
+                  Icons.camera_alt,
+                  Colors.deepOrange,
+                  () => _nav(
+                    context,
+                    RealWorldDanshariPage(
+                      supabaseClient: Supabase.instance.client,
+                    ),
                   ),
                 ),
-              ),
-              _MenuData(
-                'AI稼働モニター',
-                Icons.monitor_heart,
-                Colors.orange,
-                () => _nav(context, const AiStatusPage()),
-              ),
-              _MenuData(
-                '週末ストック',
-                Icons.check_circle_outline, // アイコン
+                _MenuData(
+                  'AI稼働モニター',
+                  Icons.monitor_heart,
+                  Colors.orange,
+                  () => _nav(context, const AiStatusPage()),
+                ),
+                _MenuData(
+                  '週末ストック',
+                  Icons.check_circle_outline,
+                  Colors.teal,
+                  () => _nav(context, const StockTasksPage()),
+                ),
+                _MenuData(
+                  '思考停止ログ',
+                  Icons.access_time_filled,
+                  Colors.indigo,
+                  () => _nav(context, const MindlessTaskPage()),
+                ),
+              ]),
+              const SizedBox(height: 24),
+              _buildSectionHeader(
+                'CFO/CHO/CHRO OFFICE',
+                Icons.balance,
                 Colors.teal,
-                () => _nav(context, const StockTasksPage()),
               ),
-              _MenuData(
-                '思考停止ログ',
-                Icons.access_time_filled,
-                Colors.indigo,
-                () => _nav(context, const MindlessTaskPage()),
-              ),
-            ]),
-            const SizedBox(height: 24),
-            _buildSectionHeader(
-              'CFO/CHO/CHRO OFFICE',
-              Icons.balance,
-              Colors.teal,
-            ),
-            _buildGridMenu(context, [
-              _MenuData(
-                '財務管理 (CFO)',
-                Icons.account_balance_wallet,
-                Colors.green,
-                () => _nav(context, const CfoOfficePage()),
-              ),
-              _MenuData(
-                '健康管理 (CHO)',
-                Icons.medical_services,
-                Colors.teal,
-                () => _nav(context, const ChoOfficePage()),
-              ),
-              _MenuData(
-                '人事厚生 (CHRO)',
-                Icons.diversity_3,
-                Colors.indigo,
-                () => _nav(context, const ChroOfficePage()),
-              ),
-            ]),
-            const SizedBox(height: 24),
-            _buildSectionHeader('CMO/CKO OFFICE', Icons.analytics, Colors.blue),
-            _buildGridMenu(context, [
-              _MenuData(
-                '市場分析 (CMO)',
-                Icons.trending_up,
-                Colors.pink,
-                () => _nav(context, const CmoOfficePage()),
-              ),
-              _MenuData(
-                'メモ一覧 (CKO)',
-                Icons.list_alt,
-                Colors.blue,
-                () => _nav(context, const NoteListPage()),
-              ),
-              _MenuData(
-                '新規事業起案',
-                Icons.edit_note,
-                Colors.blue,
-                () => _nav(context, const NoteEditorPage()),
-              ),
-              _MenuData(
-                'Gemini大学',
-                Icons.menu_book,
-                Colors.blue,
-                () => _nav(context, const GeminiUniversityV2Page()),
-              ),
-              _MenuData(
-                'マインドマップ (思考整理)',
-                Icons.hub,
-                Colors.blue,
-                () => _nav(context, const MindMapPage()),
-              ),
-            ]),
-            // 下部の余白を追加
-            const SizedBox(height: 40),
-          ],
+              _buildGridMenu(context, [
+                _MenuData(
+                  '財務管理 (CFO)',
+                  Icons.account_balance_wallet,
+                  Colors.green,
+                  () => _nav(context, const CfoOfficePage()),
+                ),
+                _MenuData(
+                  '健康管理 (CHO)',
+                  Icons.medical_services,
+                  Colors.teal,
+                  () => _nav(context, const ChoOfficePage()),
+                ),
+                _MenuData(
+                  '人事厚生 (CHRO)',
+                  Icons.diversity_3,
+                  Colors.indigo,
+                  () => _nav(context, const ChroOfficePage()),
+                ),
+              ]),
+              const SizedBox(height: 24),
+              _buildSectionHeader(
+                  'CMO/CKO OFFICE', Icons.analytics, Colors.blue),
+              _buildGridMenu(context, [
+                _MenuData(
+                  '市場分析 (CMO)',
+                  Icons.trending_up,
+                  Colors.pink,
+                  () => _nav(context, const CmoOfficePage()),
+                ),
+                _MenuData(
+                  'メモ一覧 (CKO)',
+                  Icons.list_alt,
+                  Colors.blue,
+                  () => _nav(context, const NoteListPage()),
+                ),
+                _MenuData(
+                  '新規事業起案',
+                  Icons.edit_note,
+                  Colors.blue,
+                  () => _nav(context, const NoteEditorPage()),
+                ),
+                _MenuData(
+                  'Gemini大学',
+                  Icons.menu_book,
+                  Colors.blue,
+                  () => _nav(context, const GeminiUniversityV2Page()),
+                ),
+                _MenuData(
+                  'マインドマップ (思考整理)',
+                  Icons.hub,
+                  Colors.blue,
+                  () => _nav(context, const MindMapPage()),
+                ),
+              ]),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -403,7 +434,7 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index) {
         final item = items[index];
         return Material(
-          color: Theme.of(context).cardColor, // テーマに合わせたカード色
+          color: Theme.of(context).cardColor,
           elevation: 2,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
@@ -442,9 +473,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ▼ 変更: KPIサマリー構築メソッドを刷新
+  // KPIサマリー
   Widget _buildKpiSummary(BuildContext context, bool isDark) {
-    // GridView.builder から GridView.count に変更し、個別のカードを配置
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -453,16 +483,16 @@ class _HomePageState extends State<HomePage> {
       mainAxisSpacing: 12,
       childAspectRatio: 1.8,
       children: [
-        // 1. 総資産 (非同期で取得)
+        // ✅ 総資産（Futureキャッシュを渡す）
         _buildAsyncKpiCard(
           context,
           isDark,
           '総資産 (CFO)',
           Icons.account_balance,
           Colors.green,
-          _fetchTotalAssets(), // 将来の値を渡す
+          _totalAssetsFuture,
         ),
-        // 2. 睡眠時間 (ダミー)
+        // ダミー
         _buildKpiCard(
           context,
           isDark,
@@ -471,7 +501,6 @@ class _HomePageState extends State<HomePage> {
           Icons.bedtime,
           Colors.blue,
         ),
-        // 3. 訪問者数 (ダミー)
         _buildKpiCard(
           context,
           isDark,
@@ -480,7 +509,6 @@ class _HomePageState extends State<HomePage> {
           Icons.people,
           Colors.pink,
         ),
-        // 4. 新規メモ (ダミー)
         _buildKpiCard(
           context,
           isDark,
@@ -493,7 +521,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ▼ 追加: 非同期データ用のKPIカード構築メソッド
+  // 非同期データ用KPIカード
   Widget _buildAsyncKpiCard(
     BuildContext context,
     bool isDark,
@@ -505,16 +533,7 @@ class _HomePageState extends State<HomePage> {
     return FutureBuilder<String>(
       future: futureValue,
       builder: (context, snapshot) {
-        String displayValue;
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          displayValue = 'Loading...';
-        } else if (snapshot.hasError) {
-          displayValue = 'Error';
-        } else {
-          displayValue = snapshot.data ?? '¥0';
-        }
-
-        // ローディング中はインジケータを表示
+        // ローディング中はインジケータ
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Card(
             elevation: 2,
@@ -523,6 +542,12 @@ class _HomePageState extends State<HomePage> {
             child: const Center(child: CircularProgressIndicator()),
           );
         }
+
+        final displayValue = snapshot.hasError
+            ? 'Error'
+            : (snapshot.data == null || snapshot.data!.isEmpty)
+                ? '¥0'
+                : snapshot.data!;
 
         return _buildKpiCard(
           context,
@@ -536,7 +561,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ▼ 追加: 通常のKPIカード構築メソッド (元のロジックを切り出し)
+  // 通常のKPIカード
   Widget _buildKpiCard(
     BuildContext context,
     bool isDark,
@@ -588,11 +613,9 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  // ▲ 変更・追加ここまで
 }
 
-// 時計表示用の独立したウィジェット（パフォーマンス改善のため分離）
-// ... (以下、元のコードと同じ_ClockWidget, _MenuData, _KpiDataクラス)
+// 時計表示（独立Widget）
 class _ClockWidget extends StatefulWidget {
   const _ClockWidget();
 
@@ -609,11 +632,10 @@ class _ClockWidgetState extends State<_ClockWidget> {
     super.initState();
     _dateTime = DateTime.now();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _dateTime = DateTime.now();
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _dateTime = DateTime.now();
+      });
     });
   }
 
