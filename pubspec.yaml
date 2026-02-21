@@ -15,28 +15,31 @@ dependencies:
   supabase_flutter: ^2.0.0
   cupertino_icons: ^1.0.6
   web: ^1.1.0
-  intl: ^0.20.2                    # 隴鯉ｽ･闔牙･繝ｵ郢ｧ・ｩ郢晢ｽｼ郢晄ｧｭ繝｣郢昴・
-  flutter_markdown: ^0.7.4+1       # 郢晄ｧｭ繝ｻ郢ｧ・ｯ郢敖郢ｧ・ｦ郢晢ｽｳ郢晢ｽｬ郢晢ｽｳ郢敖郢晢ｽｪ郢晢ｽｳ郢ｧ・ｰ
-  url_launcher: ^6.3.2             # 郢晢ｽｪ郢晢ｽｳ郢ｧ・ｯ郢ｧ・ｯ郢晢ｽｪ郢昴・縺題汞・ｾ陟｢繝ｻ
-  markdown: ^7.2.2                 # 郢晄ｧｭ繝ｻ郢ｧ・ｯ郢敖郢ｧ・ｦ郢晢ｽｳ郢昜ｻ｣繝ｻ郢ｧ・ｹ
-  highlight: ^0.7.0                # 郢ｧ・ｷ郢晢ｽｳ郢ｧ・ｿ郢昴・縺醍ｹｧ・ｹ郢昜ｸ翫≧郢晢ｽｩ郢ｧ・､郢昴・
-  shared_preferences: ^2.3.3       # 髴托ｽｽ陷会｣ｰ繝ｻ螢ｹﾎ溽ｹ晢ｽｼ郢ｧ・ｫ郢晢ｽｫ郢ｧ・ｹ郢晏現ﾎ樒ｹ晢ｽｼ郢ｧ・ｸ
-  provider: ^6.1.2  # 髴托ｽｽ陷会｣ｰ
-  file_picker: ^9.2.3  # Web霑壼現縲定楜迚呻ｽｮ螢ｼ陌夊抄諛岩・郢ｧ荵昴Σ郢晢ｽｼ郢ｧ・ｸ郢晢ｽｧ郢晢ｽｳ
-  mime: ^1.0.6  # 髴托ｽｽ陷会｣ｰ
-  path: ^1.9.0  # 髴托ｽｽ陷会｣ｰ
-  google_fonts: ^6.1.0  # 髴托ｽｽ陷会｣ｰ
-  # 隴・ｽｰ髫募臆・ｿ・ｽ陷会｣ｰ繝ｻ蛹ｻﾎ鍋ｹ晢ｽ｢郢ｧ・ｫ郢晢ｽｼ郢晉判・ｩ貅ｯ繝ｻ騾包ｽｨ繝ｻ繝ｻ
-  screenshot: ^3.0.0          # Widget to Image陞溽判驪､
-  share_plus: ^12.0.1         # SNS陷茨ｽｱ隴帙・
-  path_provider: ^2.1.5       # 郢晁ｼ斐＜郢ｧ・､郢晢ｽｫ郢昜ｻ｣縺幄愾髢・ｾ繝ｻ
-  image_gallery_saver: ^2.0.3 # 郢ｧ・ｮ郢晢ｽ｣郢晢ｽｩ郢晢ｽｪ郢晢ｽｼ闖ｫ譎擾ｽｭ蛛・ｽｼ蛹ｻ縺檎ｹ晏干縺咏ｹ晢ｽｧ郢晢ｽｳ繝ｻ繝ｻ
-  logger: ^2.0.2              # 郢晢ｽｭ郢ｧ・ｮ郢晢ｽｳ郢ｧ・ｰ
-  timeago: ^3.7.0             # 騾ｶ・ｸ陝・ｽｾ隴弱ｋ菫｣髯ｦ・ｨ驕会ｽｺ
-  fl_chart: ^0.69.0           # 郢昶・ﾎ慕ｹ晢ｽｼ郢晞メ・｡・ｨ驕会ｽｺ
-  package_info_plus: ^8.0.0   # 﨟槫惺 髴托ｽｽ陷会｣ｰ: 郢晁・繝ｻ郢ｧ・ｸ郢晢ｽｧ郢晢ｽｳ隲繝ｻ・ｰ・ｱ陷ｿ髢・ｾ繝ｻ
-  device_info_plus: ^12.3.0
-  uuid: ^4.3.3               # UUID騾墓ｻ薙・騾包ｽｨ
+
+  intl: ^0.20.2                    # 日付・通貨フォーマット
+  flutter_markdown: ^0.7.4+1       # Markdown表示
+  url_launcher: ^6.3.2             # URLを開く（ブラウザ/外部アプリ起動）
+  markdown: ^7.2.2                 # Markdownパーサー
+  highlight: ^0.7.0                # シンタックスハイライト
+  shared_preferences: ^2.3.3       # 簡易ストレージ（端末内保存）
+  provider: ^6.1.2                 # 状態管理
+  file_picker: ^9.2.3              # ファイル選択（Web含む）
+  mime: ^1.0.6                     # MIMEタイプ判定
+  path: ^1.9.0                     # パス操作
+  google_fonts: ^6.1.0             # Google Fonts
+
+  # 画像保存・共有などの周辺機能
+  screenshot: ^3.0.0               # Widgetを画像化
+  share_plus: ^12.0.1              # 共有（SNS/共有シート）
+  path_provider: ^2.1.5            # 保存先パス取得
+  image_gallery_saver: ^2.0.3      # ギャラリーへ保存
+
+  logger: ^2.0.2                   # ログ出力
+  timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
+  fl_chart: ^0.69.0                # グラフ描画
+  package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
+  device_info_plus: ^12.3.0        # デバイス情報
+  uuid: ^4.3.3                     # UUID生成
   image_picker: ^1.2.1
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
@@ -48,18 +51,21 @@ dependencies:
   latlong2: ^0.9.1
   http: any
   graphview: ^1.2.0
+  flutter_secure_storage: ^9.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   integration_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  test: ^1.25.8  # <--- Change to this
+  test: ^1.25.8
   mockito: ^5.6.1
   build_runner: ^2.10.4
 
   supabase: any
   image_picker_platform_interface: any
+
 flutter:
   uses-material-design: true
 

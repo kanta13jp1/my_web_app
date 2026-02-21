@@ -89,7 +89,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+              child: const Text('キャンセル'),),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
             child: const Text('追加'),
@@ -153,7 +153,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 Text(
                   DateFormat('yyyy/MM/dd (E)', 'ja').format(_selectedDate),
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18, fontWeight: FontWeight.bold,),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -223,7 +223,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                           '＋ タスクを追加',
                                           style: TextStyle(
                                               color: Colors.grey.shade400,
-                                              fontSize: 12),
+                                              fontSize: 12,),
                                         ),
                                       ),
                                     )
@@ -238,12 +238,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                             _toggleTask(task['id'], isDone),
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
-                                              vertical: 8, horizontal: 4),
+                                              vertical: 8, horizontal: 4,),
                                           decoration: BoxDecoration(
                                             border: Border(
                                                 bottom: BorderSide(
                                                     color:
-                                                        Colors.grey.shade100)),
+                                                        Colors.grey.shade100,),),
                                           ),
                                           child: Row(
                                             children: [
@@ -282,11 +282,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       onTap: () => _addTask(hour),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: 4),
+                                            vertical: 4,),
                                         alignment: Alignment.centerLeft,
                                         child: Icon(Icons.add,
                                             size: 16,
-                                            color: Colors.grey.shade400),
+                                            color: Colors.grey.shade400,),
                                       ),
                                     ),
                                 ],

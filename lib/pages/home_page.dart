@@ -271,7 +271,7 @@ class _HomePageState extends State<HomePage> {
               ]),
               const SizedBox(height: 24),
               _buildSectionHeader(
-                  'CMO/CKO OFFICE', Icons.analytics, Colors.blue),
+                  'CMO/CKO OFFICE', Icons.analytics, Colors.blue,),
               _buildGridMenu(context, [
                 _MenuData(
                   '市場分析 (CMO)',

@@ -45,7 +45,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final List<String> _sourceOptions = [
     '[三井住友銀行大塚支店]',
     '[PayPayカード]',
-    '[横浜銀行]'
+    '[横浜銀行]',
   ]; // 横浜銀行を追加
 
   final TextEditingController _gradualMemoController = TextEditingController();
@@ -211,10 +211,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _updateLastUpdatedDates();
       });
       _controllers.forEach((_, controller) => controller.clear());
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('入力された項目を一括更新しました。')),
         );
+      }
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
@@ -366,13 +367,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(desc,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
@@ -398,7 +399,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('撤退')),
+              onPressed: () => Navigator.pop(context), child: const Text('撤退'),),
           ElevatedButton.icon(
             onPressed: () async {
               final amountStr = amountController.text.replaceAll(',', '');
@@ -408,7 +409,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               await _recordStruggle(actionType, amount, memoController.text);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: color, foregroundColor: Colors.white),
+                backgroundColor: color, foregroundColor: Colors.white,),
             icon: Icon(icon),
             label: const Text('記録する'),
           ),
@@ -419,7 +420,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _recordStruggle(
       String actionType, int amount, String description,
-      {DateTime? occurredAt}) async {
+      {DateTime? occurredAt,}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
@@ -441,7 +442,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (actionType == 'expense') msg = '明細を1件把握し、前進しました。';
 
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.black87));
+            SnackBar(content: Text(msg), backgroundColor: Colors.black87),);
       }
     } catch (e) {
       debugPrint('Error: $e');
@@ -503,7 +504,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+              child: const Text('キャンセル'),),
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
@@ -582,7 +583,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final Map<String, List<FlSpot>> spotsData = {
       for (var type in _assetTypes) type: [],
     };
-    List<double> dailyTotals = [];
+    final List<double> dailyTotals = [];
 
     for (int i = 0; i < _sortedDates.length; i++) {
       final String date = _sortedDates[i];
@@ -664,7 +665,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: color,
               width: 12,
               borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4), topRight: Radius.circular(4)),
+                  topLeft: Radius.circular(4), topRight: Radius.circular(4),),
             ),
           ],
         ),
@@ -735,13 +736,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueGrey[900])),
+                        color: Colors.blueGrey[900],),),
               ],
             ),
             const SizedBox(height: 8),
             const Text('一歩でもいいから毎日前進する。\n銀行・カードの取引明細を確認し、1件ずつ記録せよ。',
                 style: TextStyle(
-                    fontSize: 12, color: Colors.black87, height: 1.4)),
+                    fontSize: 12, color: Colors.black87, height: 1.4,),),
             const SizedBox(height: 12),
 
             // スマホでの表示崩れを防ぐためにWrapを使用
@@ -759,14 +760,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         color: _isSmbcMissionDoneToday
                             ? Colors.green
                             : Colors.grey,
-                        size: 16),
+                        size: 16,),
                     const SizedBox(width: 4),
                     Text('三井住友',
                         style: TextStyle(
                             fontSize: 12,
                             color: _isSmbcMissionDoneToday
                                 ? Colors.green[700]
-                                : Colors.grey[700])),
+                                : Colors.grey[700],),),
                   ],
                 ),
                 Row(
@@ -779,14 +780,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         color: _isPaypayMissionDoneToday
                             ? Colors.green
                             : Colors.grey,
-                        size: 16),
+                        size: 16,),
                     const SizedBox(width: 4),
                     Text('PayPay',
                         style: TextStyle(
                             fontSize: 12,
                             color: _isPaypayMissionDoneToday
                                 ? Colors.green[700]
-                                : Colors.grey[700])),
+                                : Colors.grey[700],),),
                   ],
                 ),
                 Row(
@@ -799,14 +800,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         color: _isYokohamaMissionDoneToday
                             ? Colors.green
                             : Colors.grey,
-                        size: 16),
+                        size: 16,),
                     const SizedBox(width: 4),
                     Text('横浜銀行',
                         style: TextStyle(
                             fontSize: 12,
                             color: _isYokohamaMissionDoneToday
                                 ? Colors.green[700]
-                                : Colors.grey[700])),
+                                : Colors.grey[700],),),
                   ],
                 ),
               ],
@@ -822,7 +823,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 decoration: BoxDecoration(
                     color: Colors.green[50],
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green[200]!)),
+                    border: Border.all(color: Colors.green[200]!),),
                 child: const Row(
                   children: [
                     Icon(Icons.emoji_events, color: Colors.green),
@@ -832,7 +833,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             style: TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12))),
+                                fontSize: 12,),),),
                   ],
                 ),
               )
@@ -845,13 +846,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     child: Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value: _selectedSource,
+                          initialValue: _selectedSource,
                           isExpanded: true,
                           decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8)),
+                                  horizontal: 12, vertical: 8,),),
                           items: _sourceOptions.map((String source) {
                             return DropdownMenuItem<String>(
                                 value: source,
@@ -859,11 +860,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                     source
                                         .replaceAll('[', '')
                                         .replaceAll(']', ''),
-                                    style: const TextStyle(fontSize: 13)));
+                                    style: const TextStyle(fontSize: 13),),);
                           }).toList(),
                           onChanged: (String? newValue) {
-                            if (newValue != null)
+                            if (newValue != null) {
                               setState(() => _selectedSource = newValue);
+                            }
                           },
                         ),
                         const SizedBox(height: 8),
@@ -875,24 +877,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               firstDate: DateTime(2020),
                               lastDate: DateTime.now(),
                             );
-                            if (date != null)
+                            if (date != null) {
                               setState(() => _selectedGradualDate = date);
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                                horizontal: 12, vertical: 12,),
                             decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey[400]!),
-                                borderRadius: BorderRadius.circular(4)),
+                                borderRadius: BorderRadius.circular(4),),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                     DateFormat('yyyy/MM/dd')
                                         .format(_selectedGradualDate),
-                                    style: const TextStyle(fontSize: 13)),
+                                    style: const TextStyle(fontSize: 13),),
                                 Icon(Icons.calendar_today,
-                                    size: 16, color: Colors.grey[600]),
+                                    size: 16, color: Colors.grey[600],),
                               ],
                             ),
                           ),
@@ -903,7 +906,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           decoration: const InputDecoration(
                               labelText: '内容 (例: Amazon)',
                               border: OutlineInputBorder(),
-                              isDense: true),
+                              isDense: true,),
                           style: const TextStyle(fontSize: 13),
                         ),
                         const SizedBox(height: 8),
@@ -913,7 +916,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           decoration: const InputDecoration(
                               labelText: '金額 (円)',
                               border: OutlineInputBorder(),
-                              isDense: true),
+                              isDense: true,),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ],
@@ -933,20 +936,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           if (amount != null && amount > 0 && memo.isNotEmpty) {
                             await _recordStruggle(
                                 'expense', amount, '$_selectedSource $memo',
-                                occurredAt: _selectedGradualDate);
+                                occurredAt: _selectedGradualDate,);
                             _gradualMemoController.clear();
                             _gradualAmountController.clear();
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('内容と金額(1円以上)を正しく入力してください')));
+                                    content: Text('内容と金額(1円以上)を正しく入力してください'),),);
                           }
                         },
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueGrey[800],
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8))),
+                                borderRadius: BorderRadius.circular(8),),),
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -954,7 +957,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             SizedBox(height: 4),
                             Text('記録して\n前進する',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 12)),
+                                style: TextStyle(fontSize: 12),),
                           ],
                         ),
                       ),
@@ -977,12 +980,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.grey[900]!, Colors.blueGrey[800]!]),
+            colors: [Colors.grey[900]!, Colors.blueGrey[800]!],),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.3),
               blurRadius: 8,
-              offset: const Offset(0, 4))
+              offset: const Offset(0, 4),),
         ],
       ),
       child: Padding(
@@ -994,17 +997,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+                    fontWeight: FontWeight.bold,),),
             const SizedBox(height: 8),
             const Text('毎日1円を守るために必死で生き、1円を奪うために必死で生きなければならない。',
                 style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
-                    fontStyle: FontStyle.italic)),
+                    fontStyle: FontStyle.italic,),),
             const Divider(color: Colors.white24, height: 24),
             _isLoadingStruggle
                 ? const Center(
-                    child: CircularProgressIndicator(color: Colors.white))
+                    child: CircularProgressIndicator(color: Colors.white),)
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -1012,17 +1015,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           title: '今日の防衛 (節約)',
                           amount: currencyFormat.format(_todayDefended),
                           icon: Icons.shield,
-                          color: Colors.blueAccent),
+                          color: Colors.blueAccent,),
                       _buildStruggleScore(
                           title: '未来へ投資',
                           amount: currencyFormat.format(_todayInvested),
                           icon: Icons.auto_graph,
-                          color: Colors.purpleAccent),
+                          color: Colors.purpleAccent,),
                       _buildStruggleScore(
                           title: '今日の奪取 (稼ぎ)',
                           amount: currencyFormat.format(_todayConquered),
                           icon: Icons.colorize,
-                          color: Colors.orangeAccent),
+                          color: Colors.orangeAccent,),
                     ],
                   ),
             const SizedBox(height: 24),
@@ -1034,10 +1037,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue[800],
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),),
                         icon: const Icon(Icons.shield_outlined),
                         label:
-                            const Text('死守', style: TextStyle(fontSize: 12)))),
+                            const Text('死守', style: TextStyle(fontSize: 12)),),),
                 const SizedBox(width: 8),
                 Expanded(
                     child: ElevatedButton.icon(
@@ -1045,10 +1048,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.purple[800],
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),),
                         icon: const Icon(Icons.auto_graph),
                         label:
-                            const Text('投資', style: TextStyle(fontSize: 12)))),
+                            const Text('投資', style: TextStyle(fontSize: 12)),),),
                 const SizedBox(width: 8),
                 Expanded(
                     child: ElevatedButton.icon(
@@ -1056,10 +1059,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange[900],
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),),
                         icon: const Icon(Icons.colorize_outlined),
                         label:
-                            const Text('奪取', style: TextStyle(fontSize: 12)))),
+                            const Text('奪取', style: TextStyle(fontSize: 12)),),),
               ],
             ),
           ],
@@ -1072,16 +1075,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       {required String title,
       required String amount,
       required IconData icon,
-      required Color color}) {
+      required Color color,}) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
         const SizedBox(height: 4),
         Text(title,
-            style: TextStyle(color: color.withOpacity(0.8), fontSize: 10)),
+            style: TextStyle(color: color.withOpacity(0.8), fontSize: 10),),
         Text(amount,
             style: TextStyle(
-                color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+                color: color, fontSize: 16, fontWeight: FontWeight.bold,),),
       ],
     );
   }
@@ -1103,10 +1106,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Text(_showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                            fontSize: 16, fontWeight: FontWeight.bold,),),
                     Text(_showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
                         style:
-                            const TextStyle(fontSize: 10, color: Colors.grey)),
+                            const TextStyle(fontSize: 10, color: Colors.grey),),
                   ],
                 ),
                 Row(
@@ -1114,12 +1117,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     const Icon(Icons.show_chart, size: 16),
                     Switch(
                         value: _showDailyChange,
-                        activeColor: Colors.redAccent,
+                        activeThumbColor: Colors.redAccent,
                         onChanged: (value) {
                           setState(() {
                             _showDailyChange = value;
                           });
-                        }),
+                        },),
                     const Icon(Icons.bar_chart, size: 16),
                   ],
                 ),
@@ -1132,13 +1135,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const Text('個別', style: TextStyle(fontSize: 10)),
                   Switch(
                       value: _isStacked,
-                      activeColor: Colors.green,
+                      activeThumbColor: Colors.green,
                       onChanged: (value) {
                         setState(() {
                           _isStacked = value;
                           _updateChartData();
                         });
-                      }),
+                      },),
                   const Text('合計', style: TextStyle(fontSize: 10)),
                 ],
               ),
@@ -1174,7 +1177,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             decoration: BoxDecoration(
               color: Colors.red[50],
               borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                  topLeft: Radius.circular(12), topRight: Radius.circular(12),),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1190,38 +1193,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red[900])),
+                                color: Colors.red[900],),),
                       ],
                     ),
                     const Text('毎月自動で奪われる富を監視せよ。',
-                        style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        style: TextStyle(fontSize: 11, color: Colors.grey),),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     const Text('月額流出額',
-                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                        style: TextStyle(fontSize: 10, color: Colors.grey),),
                     Text(
                       '¥${NumberFormat('#,###').format(totalCost)}',
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red[800]),
+                          color: Colors.red[800],),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),
           _isLoadingSubscriptions
               ? const Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()))
+                  child: Center(child: CircularProgressIndicator()),)
               : _subscriptions.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.all(32),
-                      child: Center(child: Text('登録された穴(サブスク)はありません')))
+                      child: Center(child: Text('登録された穴(サブスク)はありません')),)
                   : ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -1232,17 +1235,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           leading:
                               const Icon(Icons.payment, color: Colors.grey),
                           title: Text(item['service_name'] ?? '',
-                              style: const TextStyle(fontSize: 14)),
+                              style: const TextStyle(fontSize: 14),),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                   '¥${NumberFormat('#,###').format(item['price'])}',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                                      fontWeight: FontWeight.bold,),),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
-                                    color: Colors.grey, size: 20),
+                                    color: Colors.grey, size: 20,),
                                 onPressed: () =>
                                     _deleteSubscription(item['id']),
                               ),
@@ -1259,7 +1262,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               label: const Text('サブスク(穴)を追加'),
               style: TextButton.styleFrom(foregroundColor: Colors.red[800]),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -1282,9 +1285,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('現状確認 (残高更新)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
             const Text('現実を直視せよ。1つずつ個別に更新できます。',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
+                style: TextStyle(fontSize: 11, color: Colors.grey),),
             const SizedBox(height: 16),
             if (unupdatedCount > 0)
               Padding(
@@ -1293,7 +1296,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     style: TextStyle(
                         color: Colors.red[800],
                         fontWeight: FontWeight.bold,
-                        fontSize: 13)),
+                        fontSize: 13,),),
               )
             else
               Padding(
@@ -1301,13 +1304,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: Row(
                   children: [
                     const Icon(Icons.check_circle,
-                        color: Colors.green, size: 16),
+                        color: Colors.green, size: 16,),
                     const SizedBox(width: 4),
                     Text('全ての戦線で本日の報告が完了しています。',
                         style: TextStyle(
                             color: Colors.green[800],
                             fontWeight: FontWeight.bold,
-                            fontSize: 13)),
+                            fontSize: 13,),),
                   ],
                 ),
               ),
@@ -1318,7 +1321,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 TextButton.icon(
                     onPressed: _showAddAssetDialog,
                     icon: const Icon(Icons.add),
-                    label: const Text('管理項目を追加')),
+                    label: const Text('管理項目を追加'),),
               ],
             ),
             const SizedBox(height: 16),
@@ -1403,7 +1406,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   child: TextField(
                     controller: _controllers[type],
                     keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true, signed: true),
+                        decimal: true, signed: true,),
                     decoration: InputDecoration(
                       hintText: '最新の残高',
                       filled: true,
@@ -1422,7 +1425,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         isUpdatedToday ? Colors.green[700] : Colors.red[700],
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                        horizontal: 16, vertical: 14,),
                   ),
                   child: const Text('更新'),
                 ),
@@ -1441,21 +1444,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildLastUpdatedText(String type) {
     final lastDateStr = _lastUpdatedDates[type];
-    if (lastDateStr == null)
+    if (lastDateStr == null) {
       return const Text('データなし',
-          style: TextStyle(color: Colors.grey, fontSize: 11));
+          style: TextStyle(color: Colors.grey, fontSize: 11),);
+    }
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (lastDateStr == todayStr) {
       return Text('✅ 本日報告済み',
           style: TextStyle(
               color: Colors.green[700],
               fontSize: 11,
-              fontWeight: FontWeight.bold));
+              fontWeight: FontWeight.bold,),);
     }
     final formattedDate =
         DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
     return Text('最終更新: $formattedDate',
-        style: const TextStyle(color: Colors.grey, fontSize: 11));
+        style: const TextStyle(color: Colors.grey, fontSize: 11),);
   }
 
   Widget _buildHistoryCard() {
@@ -1473,7 +1477,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text('戦歴 (直近の明細)',
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
               ],
             ),
             const SizedBox(height: 16),
@@ -1526,17 +1530,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
                         backgroundColor: color.withOpacity(0.1),
-                        child: Icon(icon, color: color, size: 20)),
+                        child: Icon(icon, color: color, size: 20),),
                     title:
                         Text(displayDesc, style: const TextStyle(fontSize: 13)),
                     subtitle: Text(DateFormat('yyyy/MM/dd').format(occurredAt),
                         style:
-                            const TextStyle(fontSize: 11, color: Colors.grey)),
+                            const TextStyle(fontSize: 11, color: Colors.grey),),
                     trailing: Text('¥${NumberFormat('#,###').format(amount)}',
                         style: TextStyle(
                             color: color,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14)),
+                            fontSize: 14,),),
                   );
                 },
               ),
@@ -1560,7 +1564,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       borderData:
           FlBorderData(show: true, border: Border.all(color: Colors.black12)),
       lineBarsData: _lineChartBars,
-    ));
+    ),);
   }
 
   Widget _buildDailyChangeChart() {
@@ -1585,7 +1589,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               TextStyle(
                   color:
                       rod.toY >= 0 ? Colors.lightGreenAccent : Colors.redAccent,
-                  fontWeight: FontWeight.bold),
+                  fontWeight: FontWeight.bold,),
             );
           },
         ),
@@ -1595,14 +1599,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         show: true,
         checkToShowHorizontalLine: (value) => value == 0,
         getDrawingHorizontalLine: (value) {
-          if (value == 0)
+          if (value == 0) {
             return const FlLine(color: Colors.black54, strokeWidth: 1);
+          }
           return const FlLine(color: Colors.black12, strokeWidth: 1);
         },
       ),
       borderData: FlBorderData(show: false),
       barGroups: _barChartGroups,
-    ));
+    ),);
   }
 
   FlTitlesData _buildChartTitles() {
@@ -1641,7 +1646,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('内訳 (戦力分析)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
             const SizedBox(height: 12),
             Wrap(
               spacing: 16,
@@ -1660,12 +1665,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                            color: color, shape: BoxShape.circle)),
+                            color: color, shape: BoxShape.circle,),),
                     const SizedBox(width: 8),
                     Text('$type: $formattedValue',
                         style: TextStyle(
                             fontSize: 13,
-                            color: value < 0 ? Colors.red : Colors.black)),
+                            color: value < 0 ? Colors.red : Colors.black,),),
                   ],
                 );
               }).toList(),
@@ -1685,17 +1690,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(labelText: '資産名')),
+            decoration: const InputDecoration(labelText: '資産名'),),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+              child: const Text('キャンセル'),),
           ElevatedButton(
               onPressed: () {
                 _addAssetType(controller.text);
                 Navigator.pop(context);
               },
-              child: const Text('追加')),
+              child: const Text('追加'),),
         ],
       ),
     );
@@ -1710,14 +1715,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+              child: const Text('キャンセル'),),
           ElevatedButton(
               onPressed: () {
                 _removeAssetType(type);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('削除')),
+              child: const Text('削除'),),
         ],
       ),
     );
@@ -1739,7 +1744,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
-        axisSide: meta.axisSide, child: Text(text, style: style));
+        axisSide: meta.axisSide, child: Text(text, style: style),);
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
@@ -1748,7 +1753,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         axisSide: meta.axisSide,
         space: 8,
         child:
-            Text(format.format(value), style: const TextStyle(fontSize: 10)));
+            Text(format.format(value), style: const TextStyle(fontSize: 10)),);
   }
 
   List<LineTooltipItem> _getTooltipItems(List<LineBarSpot> spots) {
@@ -1763,14 +1768,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         NumberFormat.simpleCurrency(locale: 'ja_JP').format(total);
     final tooltips = <LineTooltipItem>[
       LineTooltipItem('$formattedDate\n',
-          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
       if (_isStacked)
         LineTooltipItem(
             '総資産: $formattedTotal\n',
             const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 14)),
+                fontSize: 14,),),
     ];
     final sortedAssets = assetsOnDate.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -1779,7 +1784,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final formattedValue =
           NumberFormat.simpleCurrency(locale: 'ja_JP').format(entry.value);
       tooltips.add(LineTooltipItem('${entry.key}: $formattedValue',
-          TextStyle(color: color, fontWeight: FontWeight.bold)));
+          TextStyle(color: color, fontWeight: FontWeight.bold),),);
     }
     return tooltips;
   }

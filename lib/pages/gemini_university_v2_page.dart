@@ -194,7 +194,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         {
           'title': 'Media',
           'url':
-              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)'
+              '[https://ai.google.dev/docs/media](https://ai.google.dev/docs/media)',
         },
       ],
     ),
@@ -761,7 +761,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                     ),
                     child: const Text('PRO',
                         style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold)),
+                            fontSize: 10, fontWeight: FontWeight.bold,),),
                   ),
                 ],
               ],
@@ -819,7 +819,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                             color: Colors.orange.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.orange.withOpacity(0.3)),
+                                color: Colors.orange.withOpacity(0.3),),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,8 +830,8 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                                 Text('実践ラボ',
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.orange))
-                              ]),
+                                        color: Colors.orange,),),
+                              ],),
                               const SizedBox(height: 8),
                               MarkdownBody(data: module.labContent!),
                             ],
