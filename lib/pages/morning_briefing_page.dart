@@ -15,6 +15,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/gamification_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MorningBriefingPage extends StatefulWidget {
   const MorningBriefingPage({super.key});
@@ -131,6 +132,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     'normal': 10,
     'hard': 20,
   };
+
+  static const _secureStorage = FlutterSecureStorage();
+  static const String _secureKeyGeminiApiKey = 'gemini_api_key';
+
+// 保存
+  Future<void> _saveGeminiApiKey(String key) async {
+    await _secureStorage.write(key: _secureKeyGeminiApiKey, value: key);
+  }
+
+// 読み込み
+  Future<String?> _loadGeminiApiKey() async {
+    return _secureStorage.read(key: _secureKeyGeminiApiKey);
+  }
+
+// 削除（必要なら使う）
+  Future<void> _deleteGeminiApiKey() async {
+    await _secureStorage.delete(key: _secureKeyGeminiApiKey);
+  }
 
   @override
   void initState() {
@@ -277,20 +296,35 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _customPromptInstructions = prefs.getString('daily_report_prompt') ??
-            _defaultPromptInstructions;
 
-        // gemini-pro は 404 エラーになる可能性があるため、デフォルトを gemini-1.5-flash に変更
-        String? savedModel = prefs.getString('gemini_model');
-        if (savedModel == 'gemini-pro' || savedModel == null) {
-          savedModel = 'gemini-1.5-flash';
-        }
-        _selectedModel = savedModel;
-        _geminiApiKey = prefs.getString('gemini_api_key');
-      });
+    // 1) Prompt / Model は今まで通り SharedPreferences
+    String? savedModel = prefs.getString('gemini_model');
+    if (savedModel == 'gemini-pro' || savedModel == null) {
+      savedModel = 'gemini-1.5-flash';
     }
+
+    final prompt =
+        prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
+
+    // 2) APIキーは SecureStorage から読む
+    String? secureKey = await _loadGeminiApiKey();
+
+    // 3) 旧: SharedPreferences に残っている場合は移行
+    final legacyKey = prefs.getString('gemini_api_key');
+    if ((secureKey == null || secureKey.isEmpty) &&
+        legacyKey != null &&
+        legacyKey.isNotEmpty) {
+      await _saveGeminiApiKey(legacyKey);
+      await prefs.remove('gemini_api_key'); // ✅ 平文を消す
+      secureKey = legacyKey;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _customPromptInstructions = prompt;
+      _selectedModel = savedModel!;
+      _geminiApiKey = secureKey; // ✅ SecureStorage由来
+    });
   }
 
   Future<void> _fetchWeather() async {
@@ -1420,9 +1454,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                setState(() => _geminiApiKey = controller.text);
+            onPressed: () async {
+              final key = controller.text.trim();
+              if (key.isNotEmpty) {
+                await _saveGeminiApiKey(key);
+                if (!mounted) return;
+                setState(() => _geminiApiKey = key);
                 Navigator.pop(context);
               }
             },
@@ -1642,6 +1679,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 onPressed: () => Navigator.pop(context),
                 child: const Text('キャンセル'),
               ),
+              TextButton(
+                onPressed: () async {
+                  await _deleteGeminiApiKey();
+                  apiKeyController.clear();
+                  if (!mounted) return;
+                  setState(() => _geminiApiKey = null);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('APIキーを削除しました')),
+                  );
+                },
+                child: const Text('APIキー削除'),
+              ),
               FilledButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
@@ -1650,18 +1699,16 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     controller.text,
                   );
                   await prefs.setString('gemini_model', tempSelectedModel);
-                  if (apiKeyController.text.isNotEmpty) {
-                    await prefs.setString(
-                      'gemini_api_key',
-                      apiKeyController.text,
-                    );
+                  final apiKey = apiKeyController.text.trim();
+                  if (apiKey.isNotEmpty) {
+                    await _saveGeminiApiKey(apiKey);
                   }
                   if (mounted) {
                     setState(() {
                       _customPromptInstructions = controller.text;
                       _selectedModel = tempSelectedModel;
-                      if (apiKeyController.text.isNotEmpty) {
-                        _geminiApiKey = apiKeyController.text;
+                      if (apiKey.isNotEmpty) {
+                        _geminiApiKey = apiKey;
                       }
                       // 取得したモデルリストを保存
                       _selectableModels = currentSelectableModels;
