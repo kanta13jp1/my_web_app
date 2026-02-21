@@ -1122,45 +1122,40 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   void onReorder(int oldIndex, int newIndex) {
-    if (_sortOrder != 'manual') return; // 手動ソート時のみ実行
+    if (_sortOrder != 'manual') return;
 
-    // The `ReorderableListView` is built from a filtered and sorted list of active todos.
-    // We must replicate that list here to correctly map the indices from the callback.
+    // ✅ ① 変更前の order_index をスナップショット
+    final oldOrderById = <String, int>{
+      for (final t in _todos)
+        (t['id'] as String): ((t['order_index'] as num?)?.toInt() ?? 0),
+    };
+
+    // UIに表示されている activeTodos を再現（既存ロジック踏襲）
     final activeTodos =
         _todos.where((todo) => todo['is_completed'] == false).toList();
 
-    // Apply the same sorting as in the build method to get the identical list that the user sees.
     activeTodos.sort((a, b) {
       final aImp = a['is_important'] as bool? ?? false;
       final bImp = b['is_important'] as bool? ?? false;
-      if (aImp != bImp) {
-        return aImp ? -1 : 1;
-      }
+      if (aImp != bImp) return aImp ? -1 : 1;
+
       final aOrder = a['order_index'] as num? ?? 0;
       final bOrder = b['order_index'] as num? ?? 0;
       return aOrder.compareTo(bOrder);
     });
 
     setState(() {
-      // This adjustment is needed because the item is still at `oldIndex`
-      // in the list when `newIndex` is calculated by the framework.
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
+      if (oldIndex < newIndex) newIndex -= 1;
 
-      // 1. Reorder the temporary `activeTodos` list to match the user's action.
       final movedItem = activeTodos.removeAt(oldIndex);
       activeTodos.insert(newIndex, movedItem);
 
-      // 2. Now that `activeTodos` is correctly ordered, we update the `order_index`
-      //    on the master `_todos` list. This ensures the order persists across rebuilds.
-      //    Active tasks get the lowest indices, followed by completed tasks.
+      // ✅ ② active → completed の順に連番を振り直す（あなたの方針を維持）
       final completedTodos =
           _todos.where((t) => t['is_completed'] == true).toList();
 
       int newOrderIndex = 0;
       for (final todo in activeTodos) {
-        // Find the corresponding item in the master list and update its order.
         final masterTodo = _todos.firstWhere((t) => t['id'] == todo['id']);
         masterTodo['order_index'] = newOrderIndex++;
       }
@@ -1168,25 +1163,46 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         final masterTodo = _todos.firstWhere((t) => t['id'] == todo['id']);
         masterTodo['order_index'] = newOrderIndex++;
       }
-
-      // We don't need to re-order `_todos` here. The `build` method will sort it
-      // using the updated `order_index`, which is the source of truth for ordering.
     });
 
-    // The database update can be slow, so run it after the UI state has been updated.
-    updateOrderInDb();
+    // ✅ ③ DB保存はUI更新後に“一括”で（失敗率↓ / 体感↑）
+    // unawaited が使える環境ならこれでOK（dart:async）
+    unawaited(updateOrderInDbBatch(oldOrderById));
   }
 
-  Future<void> updateOrderInDb() async {
-    // 変更された順序をDBに保存
-    // ※本来はバッチ更新が望ましいですが、簡易的にループで更新します
-    for (int i = 0; i < _todos.length; i++) {
-      final item = _todos[i];
-      if (item['order_index'] != i) {
-        await Supabase.instance.client
-            .from('daily_todos')
-            .update({'order_index': i}).eq('id', item['id']);
+  Future<void> updateOrderInDbBatch(Map<String, int> oldOrderById) async {
+    try {
+      // 変更があった行だけまとめる（id, order_index）
+      final updates = <Map<String, dynamic>>[];
+
+      for (final t in _todos) {
+        final id = t['id'] as String;
+        final newOrder = (t['order_index'] as num? ?? 0).toInt();
+        final oldOrder = oldOrderById[id];
+
+        if (oldOrder == null || oldOrder != newOrder) {
+          updates.add({
+            'id': id,
+            'order_index': newOrder,
+          });
+        }
       }
+
+      if (updates.isEmpty) return;
+
+      // ✅ 1回で更新（onConflict: 'id' が重要）
+      await Supabase.instance.client
+          .from('daily_todos')
+          .upsert(updates, onConflict: 'id');
+    } catch (e) {
+      debugPrint('updateOrderInDbBatch error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('並び替え保存に失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
