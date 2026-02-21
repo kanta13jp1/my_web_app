@@ -645,76 +645,157 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
+
+      final now = DateTime.now();
+      final first = DateTime(now.year, now.month, 1);
+      final next = DateTime(now.year, now.month + 1, 1);
+
+      final firstStr = DateFormat('yyyy-MM-dd').format(first);
+      final nextStr = DateFormat('yyyy-MM-dd').format(next);
+
       final data = await _supabase
           .from('subscriptions')
           .select()
           .eq('user_id', userId)
+          .gte('due_date', firstStr)
+          .lt('due_date', nextStr)
+          .order('due_date', ascending: true)
           .order('price', ascending: false);
-      if (mounted) {
-        setState(() {
-          _subscriptions = List<Map<String, dynamic>>.from(data);
-          _isLoadingSubscriptions = false;
-        });
-      }
+
+      if (!mounted) return;
+      setState(() {
+        _subscriptions = List<Map<String, dynamic>>.from(data);
+        _isLoadingSubscriptions = false;
+      });
     } catch (e) {
-      if (mounted)
-        setState(() {
-          _subscriptions = [];
-          _isLoadingSubscriptions = false;
-        });
+      if (!mounted) return;
+      setState(() {
+        _subscriptions = [];
+        _isLoadingSubscriptions = false;
+      });
     }
   }
 
   Future<void> _addSubscription() async {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
+    DateTime dueDate = DateTime.now();
+    bool isPaid = false;
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('固定費を追加'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: nameController,
-                decoration:
-                    const InputDecoration(labelText: '名称 (例: 家賃, Netflix)')),
-            TextField(
-                controller: priceController,
-                decoration: const InputDecoration(labelText: '月額 (円)'),
-                keyboardType: TextInputType.number),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameController.text.trim();
-              final price = int.tryParse(priceController.text.trim()) ?? 0;
-              if (name.isEmpty) return;
-              final userId = _supabase.auth.currentUser?.id;
-              if (userId != null) {
-                await _supabase.from('subscriptions').insert(
-                    {'user_id': userId, 'service_name': name, 'price': price});
-                if (context.mounted) Navigator.pop(context);
-                _fetchSubscriptions();
-              }
-            },
-            child: const Text('追加'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('固定費を追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration:
+                      const InputDecoration(labelText: '名称 (例: モビット, 家賃)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: '金額 (円)'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: dueDate,
+                      firstDate: DateTime(DateTime.now().year - 1, 1, 1),
+                      lastDate: DateTime(DateTime.now().year + 5, 12, 31),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => dueDate = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                            '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'),
+                        Icon(Icons.calendar_today,
+                            size: 16, color: Colors.grey.shade600),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  value: isPaid,
+                  onChanged: (v) => setDialogState(() => isPaid = v ?? false),
+                  title: const Text('支払い済みにする'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final userId = _supabase.auth.currentUser?.id;
+                  if (userId == null) return;
+
+                  final name = nameController.text.trim();
+                  final price = int.tryParse(priceController.text.trim()) ?? 0;
+                  if (name.isEmpty || price <= 0) return;
+
+                  final dueDateStr = DateFormat('yyyy-MM-dd').format(dueDate);
+
+                  await _supabase.from('subscriptions').insert({
+                    'user_id': userId,
+                    'service_name': name,
+                    'price': price,
+                    'due_date': dueDateStr,
+                    'is_paid': isPaid,
+                  });
+
+                  if (context.mounted) Navigator.pop(context);
+                  await _fetchSubscriptions();
+                  await _fetchTodayClosing();
+                },
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
       ),
     );
-    await _fetchTodayClosing();
   }
 
   Future<void> _deleteSubscription(String id) async {
     await _supabase.from('subscriptions').delete().eq('id', id);
     _fetchSubscriptions();
     await _fetchTodayClosing();
+  }
+
+  Future<void> _toggleSubscriptionPaid(String id, bool current) async {
+    try {
+      await _supabase
+          .from('subscriptions')
+          .update({'is_paid': !current}).eq('id', id);
+      await _fetchSubscriptions();
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('toggle paid error: $e');
+    }
   }
 
   // ==========================================
@@ -1585,8 +1666,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ③ 固定費
   Widget _buildSubscriptionCard() {
     int totalCost = 0;
-    for (var sub in _subscriptions) {
-      totalCost += (sub['price'] as num).toInt();
+    int unpaidCost = 0;
+    for (final sub in _subscriptions) {
+      final price = (sub['price'] as num?)?.toInt() ?? 0;
+      totalCost += price;
+      final isPaid = (sub['is_paid'] as bool?) == true;
+      if (!isPaid) unpaidCost += price;
     }
     return Card(
       elevation: 2,
@@ -1624,11 +1709,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     const Text('月額合計',
                         style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('¥${NumberFormat('#,###').format(totalCost)}',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red[800]))
+                    Text(
+                      '¥${NumberFormat('#,###').format(totalCost)}',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[800],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '未払い: ¥${NumberFormat('#,###').format(unpaidCost)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: unpaidCost > 0
+                            ? Colors.red[700]
+                            : Colors.green[700],
+                      ),
+                    ),
                   ],
                 )
               ],
@@ -1648,23 +1747,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       itemCount: _subscriptions.length,
                       itemBuilder: (context, index) {
                         final item = _subscriptions[index];
+                        final due = item['due_date'] as String?;
+                        final dueDate =
+                            due != null ? DateTime.parse(due) : null;
+                        final isPaid = (item['is_paid'] as bool?) == true;
+
                         return ListTile(
                           dense: true,
-                          leading:
-                              const Icon(Icons.payment, color: Colors.grey),
-                          title: Text(item['service_name'] ?? ''),
+                          leading: Checkbox(
+                            value: isPaid,
+                            onChanged: (_) =>
+                                _toggleSubscriptionPaid(item['id'], isPaid),
+                          ),
+                          title: Text(
+                            item['service_name'] ?? '',
+                            style: TextStyle(
+                              decoration:
+                                  isPaid ? TextDecoration.lineThrough : null,
+                              color: isPaid ? Colors.grey : null,
+                              fontWeight:
+                                  isPaid ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            dueDate != null
+                                ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                                : '支払日: 未設定',
+                            style: TextStyle(
+                              color: isPaid ? Colors.grey : Colors.red.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                  '¥${NumberFormat('#,###').format(item['price'])}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                                '¥${NumberFormat('#,###').format(item['price'])}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isPaid ? Colors.grey : Colors.black87,
+                                ),
+                              ),
                               IconButton(
-                                  icon: const Icon(Icons.delete_outline,
-                                      color: Colors.grey, size: 20),
-                                  onPressed: () =>
-                                      _deleteSubscription(item['id'])),
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.grey, size: 20),
+                                onPressed: () =>
+                                    _deleteSubscription(item['id']),
+                              ),
                             ],
                           ),
                         );
