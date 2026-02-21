@@ -14,50 +14,42 @@ class AssetManagementPage extends StatefulWidget {
 class _AssetManagementPageState extends State<AssetManagementPage> {
   final _supabase = Supabase.instance.client;
 
-  // 既存の変数
+  // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
   List<String> _assetTypes = ['現金'];
   Map<String, Map<String, double>> _assetData = {};
+  Map<String, String?> _lastUpdatedDates = {};
 
-  // グラフデータ
+  // --- グラフデータ ---
   List<LineChartBarData> _lineChartBars = [];
   List<BarChartGroupData> _barChartGroups = [];
   double _maxDailyChange = 0;
-
   List<String> _sortedDates = [];
-  Map<String, String?> _lastUpdatedDates = {};
-
   bool _isStacked = true;
   bool _showDailyChange = false;
 
-  // 富の攻防戦用State
-  int _todayDefended = 0;
-  int _todayConquered = 0;
-  int _todayInvested = 0;
-  bool _isLoadingStruggle = false;
-
-  // ▼ 追加・変更: 漸進主義（明細確認）用State
-  bool _isSmbcMissionDoneToday = false;
-  bool _isPaypayMissionDoneToday = false;
-  bool _isYokohamaMissionDoneToday = false; // 横浜銀行を追加
-  DateTime _selectedGradualDate = DateTime.now();
+  // --- 収支（フロー）記録用変数 ---
+  DateTime _selectedFlowDate = DateTime.now();
   String _selectedSource = '[三井住友銀行大塚支店]';
+  String _selectedFlowType = '支出'; // 収入 or 支出
   final List<String> _sourceOptions = [
     '[三井住友銀行大塚支店]',
     '[PayPayカード]',
     '[横浜銀行]',
-  ]; // 横浜銀行を追加
+    '[現金]',
+    '[その他]'
+  ];
+  final TextEditingController _flowMemoController = TextEditingController();
+  final TextEditingController _flowAmountController = TextEditingController();
+  List<Map<String, dynamic>> _recentFlows = []; // 今月の収支履歴
 
-  final TextEditingController _gradualMemoController = TextEditingController();
-  final TextEditingController _gradualAmountController =
-      TextEditingController();
-
-  // 戦歴（明細）リスト
-  List<Map<String, dynamic>> _recentStruggles = [];
-
-  // サブスクリプション管理用変数
+  // --- サブスク（固定費）用変数 ---
   List<Map<String, dynamic>> _subscriptions = [];
   bool _isLoadingSubscriptions = false;
+
+  // --- 必須タスク用変数 ---
+  List<Map<String, dynamic>> _mustTasks = [];
+  bool _isLoadingTasks = false;
 
   final List<Color> _colors = [
     Colors.blue,
@@ -76,20 +68,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void initState() {
     super.initState();
     _loadDataFromSupabase();
-    _fetchTodayStruggleData();
-    _fetchRecentStruggles();
+    _fetchRecentFlows();
     _fetchSubscriptions();
+    _fetchMustTasks();
   }
 
   @override
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
-    _gradualMemoController.dispose();
-    _gradualAmountController.dispose();
+    _flowMemoController.dispose();
+    _flowAmountController.dispose();
     super.dispose();
   }
 
-  // #region Data Persistence (Assets)
+  // ==========================================
+  // 1 & 2. 資産・負債の記録（ストック）
+  // ==========================================
   Future<void> _loadDataFromSupabase() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -126,15 +120,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  void _initControllers() {
+    final newControllers = <String, TextEditingController>{};
+    for (var type in _assetTypes) {
+      if (_controllers.containsKey(type)) {
+        newControllers[type] = _controllers[type]!;
+      } else {
+        newControllers[type] = TextEditingController();
+      }
+    }
+    _controllers = newControllers;
+  }
+
+  void _updateLastUpdatedDates() {
+    _lastUpdatedDates = {};
+    final sortedDates = _assetData.keys.toList()..sort();
+    for (var type in _assetTypes) {
+      String? lastDate;
+      for (var date in sortedDates.reversed) {
+        if (_assetData[date]?.containsKey(type) ?? false) {
+          lastDate = date;
+          break;
+        }
+      }
+      _lastUpdatedDates[type] = lastDate;
+    }
+  }
+
   Future<void> _saveSingleAssetData(String type) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
 
     final controller = _controllers[type];
     if (controller == null || controller.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$type の金額を入力してください')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$type の金額を入力してください')));
       return;
     }
 
@@ -156,24 +176,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _updateChartData();
         _updateLastUpdatedDates();
       });
-
       controller.clear();
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ $type の戦況を更新しました'),
-            backgroundColor: Colors.green[700],
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('✅ $type を記録しました'),
+            backgroundColor: Colors.green[700]));
       }
     } catch (e) {
       debugPrint('Error saving $type: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存エラー: $e'), backgroundColor: Colors.red),
-        );
-      }
     }
   }
 
@@ -211,246 +221,90 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _updateLastUpdatedDates();
       });
       _controllers.forEach((_, controller) => controller.clear());
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('入力された項目を一括更新しました。')),
-        );
-      }
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
   }
 
-  Future<void> _removeAssetType(String name) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      await _supabase
-          .from('cfo_assets')
-          .delete()
-          .eq('user_id', userId)
-          .eq('title', name);
-      setState(() {
-        _assetTypes.remove(name);
-        _controllers.remove(name)?.dispose();
-        _assetData.forEach((date, assets) {
-          assets.remove(name);
-        });
-        _initControllers();
-        _updateChartData();
-        _updateLastUpdatedDates();
-      });
-    } catch (e) {
-      debugPrint('Error deleting asset type: $e');
-    }
-  }
-  // #endregion
-
-  // #region Struggle Logic
-  Future<void> _fetchTodayStruggleData() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    setState(() => _isLoadingStruggle = true);
-    try {
-      final now = DateTime.now();
-      final startOfDay =
-          DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
-      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59)
-          .toUtc()
-          .toIso8601String();
-
-      final data = await _supabase
-          .from('wealth_struggles')
-          .select('action_type, amount')
-          .eq('user_id', userId)
-          .gte('occurred_at', startOfDay)
-          .lte('occurred_at', endOfDay);
-
-      int defended = 0;
-      int conquered = 0;
-      int invested = 0;
-
-      for (var item in data) {
-        final amount = item['amount'] as int;
-        final type = item['action_type'];
-        if (type == 'defend') {
-          defended += amount;
-        } else if (type == 'conquer') {
-          conquered += amount;
-        } else if (type == 'invest') {
-          invested += amount;
-        }
-      }
-      if (mounted) {
-        setState(() {
-          _todayDefended = defended;
-          _todayConquered = conquered;
-          _todayInvested = invested;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingStruggle = false);
-    }
-  }
-
-  Future<void> _fetchRecentStruggles() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      final data = await _supabase
-          .from('wealth_struggles')
-          .select()
-          .eq('user_id', userId)
-          .order('occurred_at', ascending: false)
-          .limit(30);
-
-      final now = DateTime.now();
-      final todayStr = DateFormat('yyyy-MM-dd').format(now);
-
-      bool smbcDone = false;
-      bool paypayDone = false;
-      bool yokohamaDone = false;
-
-      for (var item in data) {
-        final createdAtStr = item['created_at'] as String;
-        final createdLocal = DateTime.parse(createdAtStr).toLocal();
-        if (DateFormat('yyyy-MM-dd').format(createdLocal) == todayStr) {
-          if (item['action_type'] == 'expense') {
-            final desc = item['description']?.toString() ?? '';
-            if (desc.contains('[三井住友銀行大塚支店]')) smbcDone = true;
-            if (desc.contains('[PayPayカード]')) paypayDone = true;
-            if (desc.contains('[横浜銀行]')) yokohamaDone = true;
-          }
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _recentStruggles = List<Map<String, dynamic>>.from(data);
-          _isSmbcMissionDoneToday = smbcDone;
-          _isPaypayMissionDoneToday = paypayDone;
-          _isYokohamaMissionDoneToday = yokohamaDone;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching history: $e');
-    }
-  }
-
-  void _showStruggleDialog(String actionType) {
-    final isDefend = actionType == 'defend';
-    final isInvest = actionType == 'invest';
-
-    String title = '富の奪取 (稼ぎ)';
-    Color color = Colors.orange[800]!;
-    IconData icon = Icons.colorize;
-    String desc = '1円稼いだ＝誰かの富を奪った。\n市場から富を奪取せよ。';
-
-    if (isDefend) {
-      title = '富の防衛 (節約)';
-      color = Colors.blue[800]!;
-      icon = Icons.shield;
-      desc = '1円を節約した＝1円の富を守り切った。\n敵から富を死守せよ。';
-    } else if (isInvest) {
-      title = '未来へ投資 (本・体験)';
-      color = Colors.purple[800]!;
-      icon = Icons.auto_graph;
-      desc = '数千円を惜しむな。\nその規律が5年後の景色を激変させる。';
-    }
-
-    final amountController = TextEditingController();
-    final memoController = TextEditingController();
-
+  void _showAddAssetDialog() {
+    final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(desc,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),),
-              const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: '金額 (円)',
-                  prefixIcon: Icon(Icons.currency_yen, color: color),
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: memoController,
-                decoration: const InputDecoration(
-                  labelText: '戦況詳細',
-                  prefixIcon: Icon(Icons.notes),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
+        title: const Text('項目を追加'),
+        content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: '資産・負債名 (例: 住宅ローン)')),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('撤退'),),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final amountStr = amountController.text.replaceAll(',', '');
-              final amount = int.tryParse(amountStr);
-              if (amount == null || amount <= 0) return;
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty &&
+                  !_assetTypes.contains(controller.text)) {
+                setState(() {
+                  _assetTypes.add(controller.text);
+                  _initControllers();
+                  _updateLastUpdatedDates();
+                });
+              }
               Navigator.pop(context);
-              await _recordStruggle(actionType, amount, memoController.text);
             },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: color, foregroundColor: Colors.white,),
-            icon: Icon(icon),
-            label: const Text('記録する'),
+            child: const Text('追加'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _recordStruggle(
-      String actionType, int amount, String description,
-      {DateTime? occurredAt,}) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      await _supabase.from('wealth_struggles').insert({
-        'user_id': userId,
-        'action_type': actionType,
-        'amount': amount,
-        'description': description.isEmpty ? null : description,
-        'occurred_at': (occurredAt ?? DateTime.now()).toUtc().toIso8601String(),
-      });
-      await _fetchTodayStruggleData();
-      await _fetchRecentStruggles();
-
-      if (mounted) {
-        String msg = '記録しました。';
-        if (actionType == 'defend') msg = '¥$amount の富を死守しました。';
-        if (actionType == 'conquer') msg = '¥$amount の富を奪取しました。';
-        if (actionType == 'invest') msg = '¥$amount を未来へ投資しました。';
-        if (actionType == 'expense') msg = '明細を1件把握し、前進しました。';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.black87),);
-      }
-    } catch (e) {
-      debugPrint('Error: $e');
-    }
+  void _showRemoveAssetDialog(String type) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('「$type」を削除'),
+        content: const Text('この項目を削除しますか？'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル')),
+          ElevatedButton(
+            onPressed: () async {
+              final userId = _supabase.auth.currentUser?.id;
+              if (userId != null) {
+                await _supabase
+                    .from('cfo_assets')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('title', type);
+                setState(() {
+                  _assetTypes.remove(type);
+                  _controllers.remove(type)?.dispose();
+                  _assetData.forEach((date, assets) {
+                    assets.remove(type);
+                  });
+                  _initControllers();
+                  _updateChartData();
+                  _updateLastUpdatedDates();
+                });
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
   }
-  // #endregion
 
-  // #region Subscriptions Logic
+  // ==========================================
+  // 3. 固定費の記録（サブスク）
+  // ==========================================
   Future<void> _fetchSubscriptions() async {
     setState(() => _isLoadingSubscriptions = true);
     try {
@@ -461,7 +315,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .select()
           .eq('user_id', userId)
           .order('price', ascending: false);
-
       if (mounted) {
         setState(() {
           _subscriptions = List<Map<String, dynamic>>.from(data);
@@ -469,12 +322,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted)
         setState(() {
           _subscriptions = [];
           _isLoadingSubscriptions = false;
         });
-      }
     }
   }
 
@@ -485,39 +337,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('サブスク(穴)を追加'),
+        title: const Text('固定費を追加'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: nameController,
-              decoration:
-                  const InputDecoration(labelText: 'サービス名 (例: Netflix)'),
-            ),
+                controller: nameController,
+                decoration:
+                    const InputDecoration(labelText: '名称 (例: 家賃, Netflix)')),
             TextField(
-              controller: priceController,
-              decoration: const InputDecoration(labelText: '月額料金 (円)'),
-              keyboardType: TextInputType.number,
-            ),
+                controller: priceController,
+                decoration: const InputDecoration(labelText: '月額 (円)'),
+                keyboardType: TextInputType.number),
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル'),),
+              child: const Text('キャンセル')),
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
               final price = int.tryParse(priceController.text.trim()) ?? 0;
               if (name.isEmpty) return;
-
               final userId = _supabase.auth.currentUser?.id;
               if (userId != null) {
-                await _supabase.from('subscriptions').insert({
-                  'user_id': userId,
-                  'service_name': name,
-                  'price': price,
-                });
+                await _supabase.from('subscriptions').insert(
+                    {'user_id': userId, 'service_name': name, 'price': price});
                 if (context.mounted) Navigator.pop(context);
                 _fetchSubscriptions();
               }
@@ -533,45 +379,211 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _supabase.from('subscriptions').delete().eq('id', id);
     _fetchSubscriptions();
   }
-  // #endregion
 
-  // #region Logic Helpers (Chart & Assets)
-  void _initControllers() {
-    final newControllers = <String, TextEditingController>{};
-    for (var type in _assetTypes) {
-      if (_controllers.containsKey(type)) {
-        newControllers[type] = _controllers[type]!;
-      } else {
-        newControllers[type] = TextEditingController();
+  // ==========================================
+  // 4. 今月の支出と収入の記録（フロー）
+  // ==========================================
+  Future<void> _fetchRecentFlows() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      // 当月の初日を計算
+      final now = DateTime.now();
+      final firstDayOfMonth =
+          DateTime(now.year, now.month, 1).toUtc().toIso8601String();
+
+      final data = await _supabase
+          .from('wealth_struggles')
+          .select()
+          .eq('user_id', userId)
+          .gte('occurred_at', firstDayOfMonth)
+          .order('occurred_at', ascending: false);
+
+      if (mounted) {
+        setState(() {
+          _recentFlows = List<Map<String, dynamic>>.from(data);
+        });
       }
-    }
-    _controllers = newControllers;
-  }
-
-  void _addAssetType(String name) {
-    if (name.isEmpty || _assetTypes.contains(name)) return;
-    setState(() {
-      _assetTypes.add(name);
-      _initControllers();
-      _updateLastUpdatedDates();
-    });
-  }
-
-  void _updateLastUpdatedDates() {
-    _lastUpdatedDates = {};
-    final sortedDates = _assetData.keys.toList()..sort();
-    for (var type in _assetTypes) {
-      String? lastDate;
-      for (var date in sortedDates.reversed) {
-        if (_assetData[date]?.containsKey(type) ?? false) {
-          lastDate = date;
-          break;
-        }
-      }
-      _lastUpdatedDates[type] = lastDate;
+    } catch (e) {
+      debugPrint('Error fetching flows: $e');
     }
   }
 
+  Future<void> _recordFlow() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final memo = _flowMemoController.text.trim();
+    final amountStr = _flowAmountController.text.replaceAll(',', '');
+    final amount = int.tryParse(amountStr);
+
+    if (amount == null || amount <= 0 || memo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')));
+      return;
+    }
+
+    // 収入は conquer(奪取)、支出は expense(浪費) として記録
+    final actionType = _selectedFlowType == '収入' ? 'conquer' : 'expense';
+
+    try {
+      await _supabase.from('wealth_struggles').insert({
+        'user_id': userId,
+        'action_type': actionType,
+        'amount': amount,
+        'description': '$_selectedSource $memo',
+        'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
+      });
+
+      _flowMemoController.clear();
+      _flowAmountController.clear();
+      await _fetchRecentFlows();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('収支を記録しました'), backgroundColor: Colors.black87));
+      }
+    } catch (e) {
+      debugPrint('Error recording flow: $e');
+    }
+  }
+
+  // ==========================================
+  // 5. 必須タスクの記録と把握
+  // ==========================================
+  Future<void> _fetchMustTasks() async {
+    setState(() => _isLoadingTasks = true);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      // テーブルがない場合はエラーになるためcatchで空配列に
+      final data = await _supabase
+          .from('must_tasks')
+          .select()
+          .eq('user_id', userId)
+          .order('deadline', ascending: true);
+
+      if (mounted)
+        setState(() {
+          _mustTasks = List<Map<String, dynamic>>.from(data);
+          _isLoadingTasks = false;
+        });
+    } catch (e) {
+      if (mounted)
+        setState(() {
+          _mustTasks = [];
+          _isLoadingTasks = false;
+        });
+    }
+  }
+
+  Future<void> _addMustTask() async {
+    final titleController = TextEditingController();
+    DateTime selectedDeadline = DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          title: const Text('必須タスクを追加'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                  controller: titleController,
+                  decoration:
+                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)')),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDeadline,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2030),
+                  );
+                  if (date != null)
+                    setDialogState(() => selectedDeadline = date);
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[400]!),
+                      borderRadius: BorderRadius.circular(4)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          '締切: ${DateFormat('yyyy/MM/dd').format(selectedDeadline)}'),
+                      Icon(Icons.calendar_today,
+                          size: 16, color: Colors.grey[600]),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル')),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
+                final userId = _supabase.auth.currentUser?.id;
+                if (userId != null) {
+                  try {
+                    await _supabase.from('must_tasks').insert({
+                      'user_id': userId,
+                      'title': title,
+                      'deadline': selectedDeadline.toUtc().toIso8601String(),
+                      'is_completed': false,
+                    });
+                    if (context.mounted) Navigator.pop(context);
+                    _fetchMustTasks();
+                  } catch (e) {
+                    debugPrint('Error adding task: $e');
+                    // テーブルがない場合のフォールバック（画面上だけ追加）
+                    setState(() {
+                      _mustTasks.add({
+                        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                        'title': title,
+                        'deadline': selectedDeadline.toUtc().toIso8601String(),
+                        'is_completed': false,
+                      });
+                    });
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                }
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
+    try {
+      await _supabase
+          .from('must_tasks')
+          .update({'is_completed': !currentStatus}).eq('id', id);
+      _fetchMustTasks();
+    } catch (e) {
+      // テーブルがない場合のモック処理
+      setState(() {
+        final index = _mustTasks.indexWhere((t) => t['id'] == id);
+        if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
+      });
+    }
+  }
+
+  // ==========================================
+  // グラフ描画ロジック
+  // ==========================================
   void _updateChartData() {
     _sortedDates = _assetData.keys.toList()..sort();
     if (_sortedDates.isEmpty) {
@@ -579,11 +591,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _barChartGroups = [];
       return;
     }
-
     final Map<String, List<FlSpot>> spotsData = {
       for (var type in _assetTypes) type: [],
     };
-    final List<double> dailyTotals = [];
+    List<double> dailyTotals = [];
 
     for (int i = 0; i < _sortedDates.length; i++) {
       final String date = _sortedDates[i];
@@ -603,7 +614,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       for (var type in _assetTypes) {
         final double value = _assetData[date]?[type] ?? 0;
         currentDayTotal += value;
-
         if (_isStacked) {
           cumulativeValue += value;
           spotsData[type]!.add(FlSpot(i.toDouble(), cumulativeValue));
@@ -623,7 +633,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final color = _colors[index % _colors.length];
           final spots = spotsData[type] ?? [];
           if (spots.isEmpty) return null;
-
           return LineChartBarData(
             spots: spots,
             isCurved: false,
@@ -631,464 +640,603 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             barWidth: 2,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: _isStacked,
-              color: color.withOpacity(0.5),
-            ),
+            belowBarData:
+                BarAreaData(show: _isStacked, color: color.withOpacity(0.5)),
           );
         })
         .whereType<LineChartBarData>()
         .toList();
 
-    if (_isStacked) {
-      _lineChartBars = _lineChartBars.reversed.toList();
-    }
+    if (_isStacked) _lineChartBars = _lineChartBars.reversed.toList();
 
     _barChartGroups = [];
     _maxDailyChange = 0;
-
     for (int i = 0; i < dailyTotals.length; i++) {
       double diff = 0;
-      if (i > 0) {
-        diff = dailyTotals[i] - dailyTotals[i - 1];
-      }
-      if (diff.abs() > _maxDailyChange) {
-        _maxDailyChange = diff.abs();
-      }
+      if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
+      if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
       final color = diff >= 0 ? Colors.green : Colors.red;
-      _barChartGroups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
+      _barChartGroups.add(BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
               toY: diff,
               color: color,
               width: 12,
               borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4), topRight: Radius.circular(4),),
-            ),
-          ],
-        ),
-      );
+                  topLeft: Radius.circular(4), topRight: Radius.circular(4)))
+        ],
+      ));
     }
     if (_maxDailyChange == 0) _maxDailyChange = 1000;
     _maxDailyChange *= 1.2;
   }
-  // #endregion
 
-  // #region UI Building
+  // ==========================================
+  // UI構築
+  // ==========================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('資産管理闘争'),
-        backgroundColor: const Color(0xFF1B5E20),
-        foregroundColor: Colors.white,
-      ),
+          title: const Text('資産管理闘争'),
+          backgroundColor: const Color(0xFF1B5E20),
+          foregroundColor: Colors.white),
       backgroundColor: Colors.blueGrey[50],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGradualismCard(), // 漸進主義
+            _buildAssetLiabilityCard(), // ①全資産 ②全負債
             const SizedBox(height: 24),
-            _buildStruggleCard(), // 富の奪い合い
+            _buildFlowCard(), // ④支出・収入の記録
+            const SizedBox(height: 24),
+            _buildSubscriptionCard(), // ③固定費
+            const SizedBox(height: 24),
+            _buildMustTasksCard(), // ⑤必須タスク
             const SizedBox(height: 24),
             _buildChartCard(), // グラフ
-            const SizedBox(height: 16),
-            if (!_showDailyChange) _buildLegendCard(), // 内訳
-            const SizedBox(height: 24),
-            _buildSubscriptionCard(), // 固定費
-            const SizedBox(height: 24),
-            _buildInputCard(), // 個別更新UI
-            const SizedBox(height: 24),
-            _buildHistoryCard(), // 戦歴
           ],
         ),
       ),
     );
   }
 
-  // -------------------------
-  // 各カードUIコンポーネント
-  // -------------------------
-
-  // ▼ 変更: 横浜銀行を追加
-  Widget _buildGradualismCard() {
+  // ①資産 ②負債 の入力カード
+  Widget _buildAssetLiabilityCard() {
     return Card(
       elevation: 2,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.blueGrey[300]!, width: 1),
-        borderRadius: BorderRadius.circular(12),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Row(
+              children: [
+                Icon(Icons.account_balance, color: Colors.green),
+                SizedBox(width: 8),
+                Text('①資産・②負債の全容把握',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Text('現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
+                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 16),
+            ..._assetTypes.map((type) => _buildAssetInputRow(type)),
+            const SizedBox(height: 8),
+            Row(children: [
+              TextButton.icon(
+                  onPressed: _showAddAssetDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('項目を追加'))
+            ]),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _saveAssetData,
+                icon: const Icon(Icons.done_all),
+                label: const Text('全体状況を保存'),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[800],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildLegendCard(), // 内訳表示
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetInputRow(String type) {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controllers[type],
+              keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true, signed: true),
+              decoration: InputDecoration(
+                labelText: type,
+                hintText: '負債はマイナス(-)をつける',
+                border: const OutlineInputBorder(),
+                isDense: true,
+                filled: isUpdatedToday,
+                fillColor: isUpdatedToday ? Colors.green[50] : null,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => _saveSingleAssetData(type),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUpdatedToday ? Colors.grey : Colors.green[700],
+              foregroundColor: Colors.white,
+            ),
+            child: Text(isUpdatedToday ? '済' : '記録'),
+          ),
+          if (type != '現金')
+            IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                onPressed: () => _showRemoveAssetDialog(type)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendCard() {
+    if (_sortedDates.isEmpty) return const SizedBox.shrink();
+    final latestDate = _sortedDates.last;
+    final latestData = _assetData[latestDate] ?? {};
+    double totalAssets = 0;
+    double totalLiabilities = 0;
+
+    latestData.forEach((key, value) {
+      if (value >= 0)
+        totalAssets += value;
+      else
+        totalLiabilities += value;
+    });
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('総資産:'),
+            Text('¥${NumberFormat('#,###').format(totalAssets)}',
+                style: const TextStyle(
+                    color: Colors.green, fontWeight: FontWeight.bold))
+          ]),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('総負債:'),
+            Text('¥${NumberFormat('#,###').format(totalLiabilities)}',
+                style: const TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold))
+          ]),
+          const Divider(),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('純資産:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+                '¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))
+          ]),
+        ],
+      ),
+    );
+  }
+
+  // ④ 今月の支出と収入
+  Widget _buildFlowCard() {
+    int totalIncome = 0;
+    int totalExpense = 0;
+
+    for (var item in _recentFlows) {
+      final amount = item['amount'] as int;
+      if (item['action_type'] == 'conquer') totalIncome += amount; // 収入
+      if (item['action_type'] == 'expense') totalExpense += amount; // 支出
+    }
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.receipt_long, color: Colors.blue),
+                SizedBox(width: 8),
+                Text('④今月の収支の記録',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Text('お金の流れをすべてリスト化する。',
+                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 16),
+
+            // 入力フォーム
             Row(
               children: [
-                Icon(Icons.directions_walk, color: Colors.blueGrey[800]),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedFlowType,
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                    items: ['支出', '収入']
+                        .map((String val) => DropdownMenuItem(
+                            value: val,
+                            child: Text(val,
+                                style: const TextStyle(fontSize: 13))))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedFlowType = val);
+                    },
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Text('漸進主義ミッション',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueGrey[900],),),
+                Expanded(
+                  flex: 3,
+                  child: InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedFlowDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now());
+                      if (date != null)
+                        setState(() => _selectedFlowDate = date);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[400]!),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(DateFormat('MM/dd').format(_selectedFlowDate)),
+                            Icon(Icons.calendar_today,
+                                size: 16, color: Colors.grey[600])
+                          ]),
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text('一歩でもいいから毎日前進する。\n銀行・カードの取引明細を確認し、1件ずつ記録せよ。',
-                style: TextStyle(
-                    fontSize: 12, color: Colors.black87, height: 1.4,),),
-            const SizedBox(height: 12),
-
-            // スマホでの表示崩れを防ぐためにWrapを使用
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
+            Row(
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                        _isSmbcMissionDoneToday
-                            ? Icons.check_circle
-                            : Icons.circle_outlined,
-                        color: _isSmbcMissionDoneToday
-                            ? Colors.green
-                            : Colors.grey,
-                        size: 16,),
-                    const SizedBox(width: 4),
-                    Text('三井住友',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: _isSmbcMissionDoneToday
-                                ? Colors.green[700]
-                                : Colors.grey[700],),),
-                  ],
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedSource,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                    items: _sourceOptions
+                        .map((String source) => DropdownMenuItem(
+                            value: source,
+                            child: Text(
+                                source.replaceAll('[', '').replaceAll(']', ''),
+                                style: const TextStyle(fontSize: 13))))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedSource = val);
+                    },
+                  ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                        _isPaypayMissionDoneToday
-                            ? Icons.check_circle
-                            : Icons.circle_outlined,
-                        color: _isPaypayMissionDoneToday
-                            ? Colors.green
-                            : Colors.grey,
-                        size: 16,),
-                    const SizedBox(width: 4),
-                    Text('PayPay',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: _isPaypayMissionDoneToday
-                                ? Colors.green[700]
-                                : Colors.grey[700],),),
-                  ],
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                      controller: _flowMemoController,
+                      decoration: const InputDecoration(
+                          labelText: '内容',
+                          border: OutlineInputBorder(),
+                          isDense: true)),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                        _isYokohamaMissionDoneToday
-                            ? Icons.check_circle
-                            : Icons.circle_outlined,
-                        color: _isYokohamaMissionDoneToday
-                            ? Colors.green
-                            : Colors.grey,
-                        size: 16,),
-                    const SizedBox(width: 4),
-                    Text('横浜銀行',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: _isYokohamaMissionDoneToday
-                                ? Colors.green[700]
-                                : Colors.grey[700],),),
-                  ],
-                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                    child: TextField(
+                        controller: _flowAmountController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                            labelText: '金額 (円)',
+                            border: OutlineInputBorder(),
+                            isDense: true))),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                    onPressed: _recordFlow,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                    child: const Text('追加')),
               ],
             ),
             const SizedBox(height: 16),
 
-            // 全達成時のメッセージ
-            if (_isSmbcMissionDoneToday &&
-                _isPaypayMissionDoneToday &&
-                _isYokohamaMissionDoneToday)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green[200]!),),
-                child: const Row(
-                  children: [
-                    Icon(Icons.emoji_events, color: Colors.green),
-                    SizedBox(width: 8),
-                    Expanded(
-                        child: Text('本日の明細確認は全て完了しました。財布の穴を監視する習慣が身についています。',
-                            style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,),),),
-                  ],
-                ),
-              )
-            else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // 今月のサマリー
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      children: [
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedSource,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8,),),
-                          items: _sourceOptions.map((String source) {
-                            return DropdownMenuItem<String>(
-                                value: source,
-                                child: Text(
-                                    source
-                                        .replaceAll('[', '')
-                                        .replaceAll(']', ''),
-                                    style: const TextStyle(fontSize: 13),),);
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() => _selectedSource = newValue);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _selectedGradualDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                            );
-                            if (date != null) {
-                              setState(() => _selectedGradualDate = date);
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12,),
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[400]!),
-                                borderRadius: BorderRadius.circular(4),),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    DateFormat('yyyy/MM/dd')
-                                        .format(_selectedGradualDate),
-                                    style: const TextStyle(fontSize: 13),),
-                                Icon(Icons.calendar_today,
-                                    size: 16, color: Colors.grey[600],),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _gradualMemoController,
-                          decoration: const InputDecoration(
-                              labelText: '内容 (例: Amazon)',
-                              border: OutlineInputBorder(),
-                              isDense: true,),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _gradualAmountController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                              labelText: '金額 (円)',
-                              border: OutlineInputBorder(),
-                              isDense: true,),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 196,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final memo = _gradualMemoController.text.trim();
-                          final amountStr =
-                              _gradualAmountController.text.replaceAll(',', '');
-                          final amount = int.tryParse(amountStr);
-                          if (amount != null && amount > 0 && memo.isNotEmpty) {
-                            await _recordStruggle(
-                                'expense', amount, '$_selectedSource $memo',
-                                occurredAt: _selectedGradualDate,);
-                            _gradualMemoController.clear();
-                            _gradualAmountController.clear();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('内容と金額(1円以上)を正しく入力してください'),),);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey[800],
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),),),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check),
-                            SizedBox(height: 4),
-                            Text('記録して\n前進する',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 12),),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  Column(children: [
+                    const Text('今月収入', style: TextStyle(fontSize: 10)),
+                    Text('¥${NumberFormat('#,###').format(totalIncome)}',
+                        style: TextStyle(
+                            color: Colors.green[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16))
+                  ]),
+                  Column(children: [
+                    const Text('今月支出', style: TextStyle(fontSize: 10)),
+                    Text('¥${NumberFormat('#,###').format(totalExpense)}',
+                        style: TextStyle(
+                            color: Colors.red[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16))
+                  ]),
+                  Column(children: [
+                    const Text('収支差額', style: TextStyle(fontSize: 10)),
+                    Text(
+                        '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
+                        style: TextStyle(
+                            color: (totalIncome - totalExpense) >= 0
+                                ? Colors.green[800]
+                                : Colors.red[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16))
+                  ]),
                 ],
               ),
+            ),
+            const SizedBox(height: 8),
+            // リスト表示
+            _recentFlows.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: Text('今月の記録はありません')))
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _recentFlows.length,
+                    itemBuilder: (context, index) {
+                      final item = _recentFlows[index];
+                      final isIncome = item['action_type'] == 'conquer';
+                      final amount = item['amount'] as int;
+                      final desc = item['description']?.toString() ?? '';
+                      final date =
+                          DateTime.parse(item['occurred_at']).toLocal();
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                            isIncome ? Icons.add_circle : Icons.remove_circle,
+                            color: isIncome ? Colors.green : Colors.red,
+                            size: 20),
+                        title: Text(desc, style: const TextStyle(fontSize: 13)),
+                        subtitle: Text(DateFormat('MM/dd').format(date),
+                            style: const TextStyle(fontSize: 11)),
+                        trailing: Text(
+                            '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
+                            style: TextStyle(
+                                color: isIncome ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.bold)),
+                      );
+                    },
+                  )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStruggleCard() {
-    final currencyFormat =
-        NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0);
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.grey[900]!, Colors.blueGrey[800]!],),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),),
+  // ③ 固定費
+  Widget _buildSubscriptionCard() {
+    int totalCost = 0;
+    for (var sub in _subscriptions) {
+      totalCost += (sub['price'] as num).toInt();
+    }
+    return Card(
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Icon(Icons.credit_card_off, color: Colors.red[800]),
+                      const SizedBox(width: 8),
+                      Text('③固定費をすべて把握',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[900]))
+                    ]),
+                    const Text('毎月自動で奪われる富を監視せよ。',
+                        style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text('月額合計',
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('¥${NumberFormat('#,###').format(totalCost)}',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[800]))
+                  ],
+                )
+              ],
+            ),
+          ),
+          _isLoadingSubscriptions
+              ? const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()))
+              : _subscriptions.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: Text('登録された固定費はありません')))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _subscriptions.length,
+                      itemBuilder: (context, index) {
+                        final item = _subscriptions[index];
+                        return ListTile(
+                          dense: true,
+                          leading:
+                              const Icon(Icons.payment, color: Colors.grey),
+                          title: Text(item['service_name'] ?? ''),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                  '¥${NumberFormat('#,###').format(item['price'])}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              IconButton(
+                                  icon: const Icon(Icons.delete_outline,
+                                      color: Colors.grey, size: 20),
+                                  onPressed: () =>
+                                      _deleteSubscription(item['id'])),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextButton.icon(
+                onPressed: _addSubscription,
+                icon: const Icon(Icons.add),
+                label: const Text('固定費を追加'),
+                style: TextButton.styleFrom(foregroundColor: Colors.red[800])),
+          )
         ],
       ),
+    );
+  }
+
+  // ⑤ 必須タスク
+  Widget _buildMustTasksCard() {
+    return Card(
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('人生とは富の奪い合いである。',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,),),
-            const SizedBox(height: 8),
-            const Text('毎日1円を守るために必死で生き、1円を奪うために必死で生きなければならない。',
-                style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,),),
-            const Divider(color: Colors.white24, height: 24),
-            _isLoadingStruggle
-                ? const Center(
-                    child: CircularProgressIndicator(color: Colors.white),)
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStruggleScore(
-                          title: '今日の防衛 (節約)',
-                          amount: currencyFormat.format(_todayDefended),
-                          icon: Icons.shield,
-                          color: Colors.blueAccent,),
-                      _buildStruggleScore(
-                          title: '未来へ投資',
-                          amount: currencyFormat.format(_todayInvested),
-                          icon: Icons.auto_graph,
-                          color: Colors.purpleAccent,),
-                      _buildStruggleScore(
-                          title: '今日の奪取 (稼ぎ)',
-                          amount: currencyFormat.format(_todayConquered),
-                          icon: Icons.colorize,
-                          color: Colors.orangeAccent,),
-                    ],
-                  ),
-            const SizedBox(height: 24),
-            Row(
+            const Row(
               children: [
-                Expanded(
-                    child: ElevatedButton.icon(
-                        onPressed: () => _showStruggleDialog('defend'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[800],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),),
-                        icon: const Icon(Icons.shield_outlined),
-                        label:
-                            const Text('死守', style: TextStyle(fontSize: 12)),),),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: ElevatedButton.icon(
-                        onPressed: () => _showStruggleDialog('invest'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple[800],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),),
-                        icon: const Icon(Icons.auto_graph),
-                        label:
-                            const Text('投資', style: TextStyle(fontSize: 12)),),),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: ElevatedButton.icon(
-                        onPressed: () => _showStruggleDialog('conquer'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange[900],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),),
-                        icon: const Icon(Icons.colorize_outlined),
-                        label:
-                            const Text('奪取', style: TextStyle(fontSize: 12)),),),
+                Icon(Icons.assignment_late, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('⑤今月の必須タスク',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
+            const Text('今月中に必ず処理すべき事務手続き等を記録せよ。',
+                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 16),
+            _isLoadingTasks
+                ? const Center(child: CircularProgressIndicator())
+                : _mustTasks.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: Text('登録されたタスクはありません')))
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _mustTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = _mustTasks[index];
+                          final isCompleted = task['is_completed'] == true;
+                          final deadline =
+                              DateTime.parse(task['deadline']).toLocal();
+                          final isOverdue =
+                              !isCompleted && deadline.isBefore(DateTime.now());
+
+                          return CheckboxListTile(
+                            value: isCompleted,
+                            onChanged: (val) =>
+                                _toggleTaskStatus(task['id'], isCompleted),
+                            title: Text(task['title'],
+                                style: TextStyle(
+                                    decoration: isCompleted
+                                        ? TextDecoration.lineThrough
+                                        : null)),
+                            subtitle: Text(
+                                '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
+                                style: TextStyle(
+                                    color:
+                                        isOverdue ? Colors.red : Colors.grey)),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          );
+                        },
+                      ),
+            TextButton.icon(
+                onPressed: _addMustTask,
+                icon: const Icon(Icons.add),
+                label: const Text('タスクを追加'),
+                style:
+                    TextButton.styleFrom(foregroundColor: Colors.orange[800])),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStruggleScore(
-      {required String title,
-      required String amount,
-      required IconData icon,
-      required Color color,}) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(title,
-            style: TextStyle(color: color.withOpacity(0.8), fontSize: 10),),
-        Text(amount,
-            style: TextStyle(
-                color: color, fontSize: 16, fontWeight: FontWeight.bold,),),
-      ],
-    );
-  }
-
+  // --- グラフ (既存のまま維持) ---
   Widget _buildChartCard() {
     return Card(
       elevation: 4,
@@ -1106,10 +1254,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   children: [
                     Text(_showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold,),),
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                     Text(_showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
                         style:
-                            const TextStyle(fontSize: 10, color: Colors.grey),),
+                            const TextStyle(fontSize: 10, color: Colors.grey)),
                   ],
                 ),
                 Row(
@@ -1117,12 +1265,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     const Icon(Icons.show_chart, size: 16),
                     Switch(
                         value: _showDailyChange,
-                        activeThumbColor: Colors.redAccent,
+                        activeColor: Colors.redAccent,
                         onChanged: (value) {
                           setState(() {
                             _showDailyChange = value;
                           });
-                        },),
+                        }),
                     const Icon(Icons.bar_chart, size: 16),
                   ],
                 ),
@@ -1135,13 +1283,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const Text('個別', style: TextStyle(fontSize: 10)),
                   Switch(
                       value: _isStacked,
-                      activeThumbColor: Colors.green,
+                      activeColor: Colors.green,
                       onChanged: (value) {
                         setState(() {
                           _isStacked = value;
                           _updateChartData();
                         });
-                      },),
+                      }),
                   const Text('合計', style: TextStyle(fontSize: 10)),
                 ],
               ),
@@ -1149,7 +1297,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             SizedBox(
               height: 300,
               child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
-                  ? const Center(child: Text('戦況データなし。記録を開始せよ。'))
+                  ? const Center(child: Text('戦況データなし。'))
                   : _showDailyChange
                       ? _buildDailyChangeChart()
                       : _buildAssetTrendChart(),
@@ -1160,397 +1308,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildSubscriptionCard() {
-    int totalCost = 0;
-    for (var sub in _subscriptions) {
-      totalCost += (sub['price'] as num).toInt();
-    }
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red[50],
-              borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12), topRight: Radius.circular(12),),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.credit_card_off, color: Colors.red[800]),
-                        const SizedBox(width: 8),
-                        Text('固定費削減室 (サブスク)',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red[900],),),
-                      ],
-                    ),
-                    const Text('毎月自動で奪われる富を監視せよ。',
-                        style: TextStyle(fontSize: 11, color: Colors.grey),),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('月額流出額',
-                        style: TextStyle(fontSize: 10, color: Colors.grey),),
-                    Text(
-                      '¥${NumberFormat('#,###').format(totalCost)}',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red[800],),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          _isLoadingSubscriptions
-              ? const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),)
-              : _subscriptions.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('登録された穴(サブスク)はありません')),)
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _subscriptions.length,
-                      itemBuilder: (context, index) {
-                        final item = _subscriptions[index];
-                        return ListTile(
-                          leading:
-                              const Icon(Icons.payment, color: Colors.grey),
-                          title: Text(item['service_name'] ?? '',
-                              style: const TextStyle(fontSize: 14),),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                  '¥${NumberFormat('#,###').format(item['price'])}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,),),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.grey, size: 20,),
-                                onPressed: () =>
-                                    _deleteSubscription(item['id']),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextButton.icon(
-              onPressed: _addSubscription,
-              icon: const Icon(Icons.add),
-              label: const Text('サブスク(穴)を追加'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red[800]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInputCard() {
-    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    int unupdatedCount = 0;
-    if (_assetTypes.isNotEmpty) {
-      unupdatedCount = _assetTypes
-          .where((type) => _lastUpdatedDates[type] != todayStr)
-          .length;
-    }
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('現状確認 (残高更新)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-            const Text('現実を直視せよ。1つずつ個別に更新できます。',
-                style: TextStyle(fontSize: 11, color: Colors.grey),),
-            const SizedBox(height: 16),
-            if (unupdatedCount > 0)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Text('⚠️ 本日未報告の戦線が $unupdatedCount 箇所あります。',
-                    style: TextStyle(
-                        color: Colors.red[800],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,),),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle,
-                        color: Colors.green, size: 16,),
-                    const SizedBox(width: 4),
-                    Text('全ての戦線で本日の報告が完了しています。',
-                        style: TextStyle(
-                            color: Colors.green[800],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,),),
-                  ],
-                ),
-              ),
-            ..._assetTypes.map((type) => _buildAssetInputRow(type)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                TextButton.icon(
-                    onPressed: _showAddAssetDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('管理項目を追加'),),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _saveAssetData,
-                icon: const Icon(Icons.done_all),
-                label: const Text('入力した項目を一括更新'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.green[800],
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAssetInputRow(String type) {
-    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: isUpdatedToday ? Colors.green[50] : Colors.red[50],
-          border: Border.all(
-            color: isUpdatedToday ? Colors.green[200]! : Colors.red[300]!,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isUpdatedToday
-                          ? Icons.check_circle
-                          : Icons.warning_amber_rounded,
-                      color:
-                          isUpdatedToday ? Colors.green[700] : Colors.red[700],
-                      size: 18,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      type,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: isUpdatedToday
-                            ? Colors.green[800]
-                            : Colors.red[900],
-                      ),
-                    ),
-                  ],
-                ),
-                _buildLastUpdatedText(type),
-              ],
-            ),
-            if (!isUpdatedToday)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
-                child: Text(
-                  '⚠️ $type の残高が未報告です。前線を直視してください。',
-                  style: TextStyle(fontSize: 11, color: Colors.red[800]),
-                ),
-              ),
-            if (isUpdatedToday) const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controllers[type],
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true, signed: true,),
-                    decoration: InputDecoration(
-                      hintText: '最新の残高',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: const OutlineInputBorder(),
-                      prefixIcon: Icon(_getIconForAsset(type)),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () => _saveSingleAssetData(type),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isUpdatedToday ? Colors.green[700] : Colors.red[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14,),
-                  ),
-                  child: const Text('更新'),
-                ),
-                if (type != '現金')
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.grey),
-                    onPressed: () => _showRemoveAssetDialog(type),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLastUpdatedText(String type) {
-    final lastDateStr = _lastUpdatedDates[type];
-    if (lastDateStr == null) {
-      return const Text('データなし',
-          style: TextStyle(color: Colors.grey, fontSize: 11),);
-    }
-    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    if (lastDateStr == todayStr) {
-      return Text('✅ 本日報告済み',
-          style: TextStyle(
-              color: Colors.green[700],
-              fontSize: 11,
-              fontWeight: FontWeight.bold,),);
-    }
-    final formattedDate =
-        DateFormat('yyyy/MM/dd').format(DateTime.parse(lastDateStr));
-    return Text('最終更新: $formattedDate',
-        style: const TextStyle(color: Colors.grey, fontSize: 11),);
-  }
-
-  Widget _buildHistoryCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.history),
-                SizedBox(width: 8),
-                Text('戦歴 (直近の明細)',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_recentStruggles.isEmpty)
-              const Text('記録がありません。', style: TextStyle(color: Colors.grey))
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _recentStruggles.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = _recentStruggles[index];
-                  final type = item['action_type'];
-                  final amount = item['amount'] as int;
-                  final desc = item['description']?.toString() ?? '';
-                  final occurredAtStr = item['occurred_at'] as String;
-                  final occurredAt = DateTime.parse(occurredAtStr).toLocal();
-
-                  IconData icon = Icons.help;
-                  Color color = Colors.grey;
-                  String typeLabel = '';
-
-                  switch (type) {
-                    case 'defend':
-                      icon = Icons.shield;
-                      color = Colors.blue[800]!;
-                      typeLabel = '防衛';
-                      break;
-                    case 'invest':
-                      icon = Icons.auto_graph;
-                      color = Colors.purple[800]!;
-                      typeLabel = '投資';
-                      break;
-                    case 'conquer':
-                      icon = Icons.colorize;
-                      color = Colors.orange[800]!;
-                      typeLabel = '奪取';
-                      break;
-                    case 'expense':
-                      icon = Icons.money_off;
-                      color = Colors.red[800]!;
-                      typeLabel = '支出';
-                      break;
-                  }
-
-                  final displayDesc = desc.isNotEmpty ? desc : typeLabel;
-
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                        backgroundColor: color.withOpacity(0.1),
-                        child: Icon(icon, color: color, size: 20),),
-                    title:
-                        Text(displayDesc, style: const TextStyle(fontSize: 13)),
-                    subtitle: Text(DateFormat('yyyy/MM/dd').format(occurredAt),
-                        style:
-                            const TextStyle(fontSize: 11, color: Colors.grey),),
-                    trailing: Text('¥${NumberFormat('#,###').format(amount)}',
-                        style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,),),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- 以下ヘルパーUI (変更なし) ---
   Widget _buildAssetTrendChart() {
     return LineChart(LineChartData(
       lineTouchData: LineTouchData(
@@ -1564,7 +1321,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       borderData:
           FlBorderData(show: true, border: Border.all(color: Colors.black12)),
       lineBarsData: _lineChartBars,
-    ),);
+    ));
   }
 
   Widget _buildDailyChangeChart() {
@@ -1589,7 +1346,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               TextStyle(
                   color:
                       rod.toY >= 0 ? Colors.lightGreenAccent : Colors.redAccent,
-                  fontWeight: FontWeight.bold,),
+                  fontWeight: FontWeight.bold),
             );
           },
         ),
@@ -1599,15 +1356,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         show: true,
         checkToShowHorizontalLine: (value) => value == 0,
         getDrawingHorizontalLine: (value) {
-          if (value == 0) {
+          if (value == 0)
             return const FlLine(color: Colors.black54, strokeWidth: 1);
-          }
           return const FlLine(color: Colors.black12, strokeWidth: 1);
         },
       ),
       borderData: FlBorderData(show: false),
       barGroups: _barChartGroups,
-    ),);
+    ));
   }
 
   FlTitlesData _buildChartTitles() {
@@ -1632,110 +1388,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildLegendCard() {
-    if (_sortedDates.isEmpty) return const SizedBox.shrink();
-    final latestDate = _sortedDates.last;
-    final latestData = _assetData[latestDate] ?? {};
-    final sortedAssets = _assetTypes.toList()
-      ..sort((a, b) => (latestData[b] ?? 0).compareTo(latestData[a] ?? 0));
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('内訳 (戦力分析)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: sortedAssets.asMap().entries.map((entry) {
-                final type = entry.value;
-                final originalIndex = _assetTypes.indexOf(type);
-                final color = _colors[originalIndex % _colors.length];
-                final value = latestData[type] ?? 0;
-                final formattedValue =
-                    NumberFormat.simpleCurrency(locale: 'ja_JP').format(value);
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                            color: color, shape: BoxShape.circle,),),
-                    const SizedBox(width: 8),
-                    Text('$type: $formattedValue',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: value < 0 ? Colors.red : Colors.black,),),
-                  ],
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAddAssetDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('資産項目を追加'),
-        content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: '資産名'),),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル'),),
-          ElevatedButton(
-              onPressed: () {
-                _addAssetType(controller.text);
-                Navigator.pop(context);
-              },
-              child: const Text('追加'),),
-        ],
-      ),
-    );
-  }
-
-  void _showRemoveAssetDialog(String type) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('「$type」を削除'),
-        content: const Text('この項目を削除しますか？'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル'),),
-          ElevatedButton(
-              onPressed: () {
-                _removeAssetType(type);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('削除'),),
-        ],
-      ),
-    );
-  }
-
-  IconData _getIconForAsset(String type) {
-    if (type.contains('現金')) return Icons.wallet;
-    if (type.contains('銀行')) return Icons.account_balance;
-    if (type.contains('証券')) return Icons.trending_up;
-    if (type.contains('カード')) return Icons.credit_card;
-    return Icons.monetization_on;
-  }
-
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
     const style = TextStyle(fontSize: 10);
     String text = '';
@@ -1744,7 +1396,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
-        axisSide: meta.axisSide, child: Text(text, style: style),);
+        axisSide: meta.axisSide, child: Text(text, style: style));
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
@@ -1753,7 +1405,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         axisSide: meta.axisSide,
         space: 8,
         child:
-            Text(format.format(value), style: const TextStyle(fontSize: 10)),);
+            Text(format.format(value), style: const TextStyle(fontSize: 10)));
   }
 
   List<LineTooltipItem> _getTooltipItems(List<LineBarSpot> spots) {
@@ -1768,14 +1420,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         NumberFormat.simpleCurrency(locale: 'ja_JP').format(total);
     final tooltips = <LineTooltipItem>[
       LineTooltipItem('$formattedDate\n',
-          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       if (_isStacked)
         LineTooltipItem(
             '総資産: $formattedTotal\n',
             const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,),),
+                fontSize: 14)),
     ];
     final sortedAssets = assetsOnDate.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -1784,8 +1436,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final formattedValue =
           NumberFormat.simpleCurrency(locale: 'ja_JP').format(entry.value);
       tooltips.add(LineTooltipItem('${entry.key}: $formattedValue',
-          TextStyle(color: color, fontWeight: FontWeight.bold),),);
+          TextStyle(color: color, fontWeight: FontWeight.bold)));
     }
     return tooltips;
+  }
+
+  IconData _getIconForAsset(String type) {
+    if (type.contains('現金')) return Icons.wallet;
+    if (type.contains('銀行')) return Icons.account_balance;
+    if (type.contains('証券')) return Icons.trending_up;
+    if (type.contains('ローン') || type.contains('カード')) return Icons.credit_card;
+    return Icons.monetization_on;
   }
 }
