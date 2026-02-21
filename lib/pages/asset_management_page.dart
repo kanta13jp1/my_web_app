@@ -757,38 +757,88 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
 
+    // 最新残高を取得
+    final lastDate = _lastUpdatedDates[type];
+    double? lastAmount;
+    if (lastDate != null) {
+      lastAmount = _assetData[lastDate]?[type];
+    }
+    final isLiability = (lastAmount ?? 0) < 0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _controllers[type],
-              keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true, signed: true),
-              decoration: InputDecoration(
-                labelText: type,
-                hintText: '負債はマイナス(-)をつける',
-                border: const OutlineInputBorder(),
-                isDense: true,
-                filled: isUpdatedToday,
-                fillColor: isUpdatedToday ? Colors.green[50] : null,
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controllers[type],
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                  decoration: InputDecoration(
+                    labelText: type,
+                    hintText: '負債はマイナス(-)をつける',
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    filled: isUpdatedToday,
+                    fillColor: isUpdatedToday ? Colors.green[50] : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => _saveSingleAssetData(type),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      isUpdatedToday ? Colors.grey : Colors.green[700],
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(isUpdatedToday ? '済' : '記録'),
+              ),
+              if (type != '現金')
+                IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                    onPressed: () => _showRemoveAssetDialog(type)),
+            ],
+          ),
+          // ▼ 最新残高の表示
+          if (lastAmount != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 3),
+              child: Row(
+                children: [
+                  Icon(
+                    _getIconForAsset(type),
+                    size: 11,
+                    color: isLiability ? Colors.red[400] : Colors.green[600],
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '現在: ¥${NumberFormat('#,###').format(lastAmount)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isLiability ? Colors.red[600] : Colors.green[700],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '(${lastDate == todayStr ? "本日更新" : "最終更新: $lastDate"})',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 3),
+              child: Text(
+                '未記録',
+                style: TextStyle(fontSize: 11, color: Colors.grey[400]),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: () => _saveSingleAssetData(type),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isUpdatedToday ? Colors.grey : Colors.green[700],
-              foregroundColor: Colors.white,
-            ),
-            child: Text(isUpdatedToday ? '済' : '記録'),
-          ),
-          if (type != '現金')
-            IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.grey),
-                onPressed: () => _showRemoveAssetDialog(type)),
         ],
       ),
     );
@@ -846,8 +896,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     for (var item in _recentFlows) {
       final amount = item['amount'] as int;
-      if (item['action_type'] == 'conquer') totalIncome += amount; // 収入
-      if (item['action_type'] == 'expense') totalExpense += amount; // 支出
+      final actionType = item['action_type'] as String? ?? '';
+      if (actionType == 'conquer') totalIncome += amount; // 収入
+      if (actionType == 'expense') totalExpense += amount; // 支出
     }
 
     return Card(
@@ -1035,7 +1086,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     itemCount: _recentFlows.length,
                     itemBuilder: (context, index) {
                       final item = _recentFlows[index];
-                      final isIncome = item['action_type'] == 'conquer';
+                      final isIncome =
+                          (item['action_type'] as String?) == 'conquer';
                       final amount = item['amount'] as int;
                       final desc = item['description']?.toString() ?? '';
                       final date =
@@ -1198,7 +1250,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         itemCount: _mustTasks.length,
                         itemBuilder: (context, index) {
                           final task = _mustTasks[index];
-                          final isCompleted = task['is_completed'] == true;
+                          final isCompleted =
+                              (task['is_completed'] as bool?) == true; // ← ここ
                           final deadline =
                               DateTime.parse(task['deadline']).toLocal();
                           final isOverdue =
