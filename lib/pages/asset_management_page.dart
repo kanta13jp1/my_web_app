@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
+import 'package:flutter/services.dart';
 
 class AssetManagementPage extends StatefulWidget {
   const AssetManagementPage({super.key});
@@ -13,6 +15,24 @@ class AssetManagementPage extends StatefulWidget {
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
   final _supabase = Supabase.instance.client;
+
+  // --- 今日18:00締切のためのチェックリスト ---
+  final ScrollController _scrollController = ScrollController();
+  final _keyStock = GlobalKey();
+  final _keyFlow = GlobalKey();
+  final _keySubs = GlobalKey();
+  final _keyMust = GlobalKey();
+
+  Timer? _deadlineTimer;
+  DateTime _now = DateTime.now();
+
+  // Supabaseに保存する「今日の締め」状態
+  bool _assetsDone = false;
+  bool _liabilitiesDone = false;
+  bool _fixedCostsDone = false;
+  bool _flowsDone = false;
+  bool _mustTasksDone = false;
+  bool _isLoadingClosing = false;
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -71,6 +91,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
+    _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+    _fetchTodayClosing();
   }
 
   @override
@@ -78,7 +103,426 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _controllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
+    _deadlineTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  String _dateOnly(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  DateTime _deadlineToday() => DateTime(_now.year, _now.month, _now.day, 18, 0);
+
+  String _remainingToDeadlineText() {
+    final diff = _deadlineToday().difference(_now);
+    if (diff.isNegative) return '⚠️ 締切(18:00)を過ぎています';
+    final h = diff.inHours;
+    final m = diff.inMinutes % 60;
+    final s = diff.inSeconds % 60;
+    return '締切まで ${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  double _progress() {
+    int done = 0;
+    if (_assetsDone) done++;
+    if (_liabilitiesDone) done++;
+    if (_fixedCostsDone) done++;
+    if (_flowsDone) done++;
+    if (_mustTasksDone) done++;
+    return done / 5.0;
+  }
+
+  Future<void> _fetchTodayClosing() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    setState(() => _isLoadingClosing = true);
+    final todayStr = _dateOnly(DateTime.now());
+
+    try {
+      final rows = await _supabase
+          .from('cfo_daily_closings')
+          .select()
+          .eq('user_id', userId)
+          .eq('date', todayStr)
+          .limit(1);
+
+      if (!mounted) return;
+
+      if (rows is List && rows.isNotEmpty) {
+        final r = rows.first as Map<String, dynamic>;
+        setState(() {
+          _assetsDone = r['assets_done'] == true;
+          _liabilitiesDone = r['liabilities_done'] == true;
+          _fixedCostsDone = r['fixed_costs_done'] == true;
+          _flowsDone = r['flows_done'] == true;
+          _mustTasksDone = r['must_tasks_done'] == true;
+          _isLoadingClosing = false;
+        });
+      } else {
+        setState(() {
+          _assetsDone = false;
+          _liabilitiesDone = false;
+          _fixedCostsDone = false;
+          _flowsDone = false;
+          _mustTasksDone = false;
+          _isLoadingClosing = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('fetch closing error: $e');
+      if (!mounted) return;
+      setState(() => _isLoadingClosing = false);
+    }
+  }
+
+  Future<void> _upsertTodayClosing() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final todayStr = _dateOnly(DateTime.now());
+
+    try {
+      await _supabase.from('cfo_daily_closings').upsert(
+        {
+          'user_id': userId,
+          'date': todayStr,
+          'assets_done': _assetsDone,
+          'liabilities_done': _liabilitiesDone,
+          'fixed_costs_done': _fixedCostsDone,
+          'flows_done': _flowsDone,
+          'must_tasks_done': _mustTasksDone,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        },
+        onConflict: 'user_id,date',
+      );
+    } catch (e) {
+      debugPrint('upsert closing error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('チェック保存に失敗: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _toggleClosing(String key, bool value) async {
+    setState(() {
+      switch (key) {
+        case 'assets':
+          _assetsDone = value;
+          break;
+        case 'liabilities':
+          _liabilitiesDone = value;
+          break;
+        case 'fixed':
+          _fixedCostsDone = value;
+          break;
+        case 'flows':
+          _flowsDone = value;
+          break;
+        case 'must':
+          _mustTasksDone = value;
+          break;
+      }
+    });
+    await _upsertTodayClosing();
+  }
+
+  void _scrollTo(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
+  }
+
+// データ状況から「自動チェック」を提案（押したらチェックが入る）
+  Future<void> _autoCheckFromData() async {
+    final todayStr = _dateOnly(DateTime.now());
+
+    final todayStock = _assetData[todayStr] ?? {};
+    final allTypesFilledToday = _assetTypes.isNotEmpty &&
+        _assetTypes.every((t) => todayStock.containsKey(t));
+
+    final hasAnyPositive = todayStock.values.any((v) => v >= 0);
+    final hasAnyNegative = todayStock.values.any((v) => v < 0);
+
+    final subsOk = _subscriptions.isNotEmpty;
+
+    final incomeCount =
+        _recentFlows.where((r) => r['action_type'] == 'conquer').length;
+    final expenseCount =
+        _recentFlows.where((r) => r['action_type'] == 'expense').length;
+    final flowsOk = (incomeCount + expenseCount) > 0; // “今月分を把握した”最小条件
+
+    final now = DateTime.now();
+    final mustThisMonth = _mustTasks.where((t) {
+      final d = DateTime.parse(t['deadline']).toLocal();
+      return d.year == now.year && d.month == now.month;
+    }).toList();
+    final mustOk = mustThisMonth.isNotEmpty;
+
+    setState(() {
+      if (allTypesFilledToday && hasAnyPositive) _assetsDone = true;
+      if (allTypesFilledToday && hasAnyNegative) _liabilitiesDone = true;
+      if (subsOk) _fixedCostsDone = true;
+      if (flowsOk) _flowsDone = true;
+      if (mustOk) _mustTasksDone = true;
+    });
+
+    await _upsertTodayClosing();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('自動チェックを反映しました（不足があれば手動でONできます）')),
+    );
+  }
+
+// ①〜⑤まとめて投稿/提出できるMarkdownを生成してコピー
+  Future<void> _copyDailySummary() async {
+    final now = DateTime.now();
+    final todayStr = _dateOnly(now);
+
+    // ストックは今日があれば今日、なければ最新日
+    String? snapshotDate;
+    if (_assetData.containsKey(todayStr)) {
+      snapshotDate = todayStr;
+    } else if (_sortedDates.isNotEmpty) {
+      snapshotDate = _sortedDates.last;
+    }
+
+    double totalAssets = 0;
+    double totalLiabilities = 0;
+
+    final snap = snapshotDate != null ? (_assetData[snapshotDate] ?? {}) : {};
+    snap.forEach((_, v) {
+      if (v >= 0) totalAssets += v;
+      if (v < 0) totalLiabilities += v;
+    });
+
+    int totalFixed = 0;
+    for (final s in _subscriptions) {
+      totalFixed += (s['price'] as num?)?.toInt() ?? 0;
+    }
+
+    int totalIncome = 0;
+    int totalExpense = 0;
+    for (final f in _recentFlows) {
+      final amt = (f['amount'] as num?)?.toInt() ?? 0;
+      if (f['action_type'] == 'conquer') totalIncome += amt;
+      if (f['action_type'] == 'expense') totalExpense += amt;
+    }
+
+    final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
+    final mustThisMonth = _mustTasks.where((t) {
+      final d = DateTime.parse(t['deadline']).toLocal();
+      return d.year == now.year && d.month == now.month;
+    }).toList()
+      ..sort((a, b) =>
+          (a['deadline'] as String).compareTo(b['deadline'] as String));
+
+    final done = [
+      _assetsDone,
+      _liabilitiesDone,
+      _fixedCostsDone,
+      _flowsDone,
+      _mustTasksDone
+    ].where((x) => x).length;
+
+    final buf = StringBuffer();
+    buf.writeln('## 本日18:00 CFO締め（$todayStr）');
+    buf.writeln('- 進捗: **$done/5 完了**');
+    buf.writeln('- ①資産: ${_assetsDone ? "✅" : "⬜️"}');
+    buf.writeln('- ②負債: ${_liabilitiesDone ? "✅" : "⬜️"}');
+    buf.writeln('- ③固定費: ${_fixedCostsDone ? "✅" : "⬜️"}');
+    buf.writeln('- ④収支: ${_flowsDone ? "✅" : "⬜️"}');
+    buf.writeln('- ⑤必須タスク: ${_mustTasksDone ? "✅" : "⬜️"}');
+    buf.writeln('');
+
+    buf.writeln('### ①② ストック（スナップショット: ${snapshotDate ?? "未記録"}）');
+    buf.writeln('- 総資産: ¥${NumberFormat('#,###').format(totalAssets)}');
+    buf.writeln('- 総負債: ¥${NumberFormat('#,###').format(totalLiabilities)}');
+    buf.writeln(
+        '- 純資産: ¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}');
+    if (snap.isNotEmpty) {
+      buf.writeln('- 内訳:');
+      final entries = snap.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      for (final e in entries) {
+        buf.writeln('  - ${e.key}: ¥${NumberFormat('#,###').format(e.value)}');
+      }
+    }
+    buf.writeln('');
+
+    buf.writeln('### ③ 固定費（$monthLabel）');
+    buf.writeln('- 月額合計: ¥${NumberFormat('#,###').format(totalFixed)}');
+    if (_subscriptions.isNotEmpty) {
+      for (final s in _subscriptions) {
+        buf.writeln(
+            '  - ${s["service_name"]}: ¥${NumberFormat('#,###').format(s["price"])}');
+      }
+    } else {
+      buf.writeln('  - （未登録）');
+    }
+    buf.writeln('');
+
+    buf.writeln('### ④ 収支（$monthLabel）');
+    buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
+    buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
+    buf.writeln(
+        '- 差額: ¥${NumberFormat('#,###').format(totalIncome - totalExpense)}');
+    buf.writeln('');
+
+    buf.writeln('### ⑤ 必須タスク（$monthLabel）');
+    if (mustThisMonth.isEmpty) {
+      buf.writeln('- （未登録）');
+    } else {
+      for (final t in mustThisMonth) {
+        final d = DateTime.parse(t['deadline']).toLocal();
+        final done = (t['is_completed'] as bool?) == true;
+        buf.writeln(
+            '- ${done ? "✅" : "⬜️"} ${t["title"]}（締切 ${DateFormat('MM/dd').format(d)}）');
+      }
+    }
+
+    await Clipboard.setData(ClipboardData(text: buf.toString()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('サマリーをコピーしました（投稿用）')),
+    );
+  }
+
+  Widget _buildDeadlineChecklistCard() {
+    final remainText = _remainingToDeadlineText();
+    final p = _progress();
+
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.flag, color: Colors.deepOrange),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '本日18:00までに必ず完了（①〜⑤）',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (_isLoadingClosing)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(remainText,
+                style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: p,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            const SizedBox(height: 8),
+            Text('${(p * 100).toInt()}% 完了',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _assetsDone,
+              onChanged: (v) => _toggleClosing('assets', v ?? false),
+              title: const Text('① 全資産額を記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyStock),
+                tooltip: '資産・負債へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _liabilitiesDone,
+              onChanged: (v) => _toggleClosing('liabilities', v ?? false),
+              title: const Text('② 全負債額を記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyStock),
+                tooltip: '資産・負債へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _fixedCostsDone,
+              onChanged: (v) => _toggleClosing('fixed', v ?? false),
+              title: const Text('③ 今月の固定費をすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keySubs),
+                tooltip: '固定費へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _flowsDone,
+              onChanged: (v) => _toggleClosing('flows', v ?? false),
+              title: const Text('④ 今月の支出と収入をすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyFlow),
+                tooltip: '収支へ移動',
+              ),
+            ),
+            CheckboxListTile(
+              value: _mustTasksDone,
+              onChanged: (v) => _toggleClosing('must', v ?? false),
+              title: const Text('⑤ 今月の必須タスクをすべて記録して把握'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: IconButton(
+                icon: const Icon(Icons.arrow_downward),
+                onPressed: () => _scrollTo(_keyMust),
+                tooltip: '必須タスクへ移動',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _autoCheckFromData,
+                    icon: const Icon(Icons.auto_fix_high),
+                    label: const Text('記録状況から自動チェック'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _copyDailySummary,
+                    icon: const Icon(Icons.copy),
+                    label: const Text('提出用サマリーをコピー'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ==========================================
@@ -182,6 +626,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             content: Text('✅ $type を記録しました'),
             backgroundColor: Colors.green[700]));
       }
+      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
     } catch (e) {
       debugPrint('Error saving $type: $e');
     }
@@ -224,6 +669,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted)
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
+      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
@@ -373,11 +819,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
   }
 
   Future<void> _deleteSubscription(String id) async {
     await _supabase.from('subscriptions').delete().eq('id', id);
     _fetchSubscriptions();
+    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
   }
 
   // ==========================================
@@ -443,6 +891,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('収支を記録しました'), backgroundColor: Colors.black87));
       }
+      await _fetchTodayClosing(); // あるいは _autoCheckFromData();
     } catch (e) {
       debugPrint('Error recording flow: $e');
     }
@@ -564,6 +1013,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }),
     );
+    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
   }
 
   Future<void> _toggleTaskStatus(String id, bool currentStatus) async {
@@ -579,6 +1029,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
       });
     }
+    await _fetchTodayClosing(); // あるいは _autoCheckFromData();
   }
 
   // ==========================================
@@ -684,19 +1135,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           foregroundColor: Colors.white),
       backgroundColor: Colors.blueGrey[50],
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildAssetLiabilityCard(), // ①全資産 ②全負債
+            _buildDeadlineChecklistCard(), // ✅ 追加（最上部）
+            const SizedBox(height: 16),
+
+            Container(key: _keyStock, child: _buildAssetLiabilityCard()),
             const SizedBox(height: 24),
-            _buildFlowCard(), // ④支出・収入の記録
+
+            Container(key: _keyFlow, child: _buildFlowCard()),
             const SizedBox(height: 24),
-            _buildSubscriptionCard(), // ③固定費
+
+            Container(key: _keySubs, child: _buildSubscriptionCard()),
             const SizedBox(height: 24),
-            _buildMustTasksCard(), // ⑤必須タスク
+
+            Container(key: _keyMust, child: _buildMustTasksCard()),
             const SizedBox(height: 24),
-            _buildChartCard(), // グラフ
+
+            _buildChartCard(),
           ],
         ),
       ),
