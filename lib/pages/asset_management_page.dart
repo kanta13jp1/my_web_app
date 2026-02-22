@@ -66,6 +66,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- サブスク（固定費）用変数 ---
   List<Map<String, dynamic>> _subscriptions = [];
+  List<Map<String, dynamic>> _subscriptionsThreeMonths = [];
   bool _isLoadingSubscriptions = false;
 
   // --- 必須タスク用変数 ---
@@ -136,6 +137,125 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final m = dt.month.toString().padLeft(2, '0');
     final d = dt.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+
+  DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
+
+  bool _isSameMonth(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month;
+
+  String _monthKey(DateTime monthStart) =>
+      DateFormat('yyyy-MM').format(_monthStart(monthStart));
+
+  List<DateTime> _overviewMonthStarts() {
+    final current = _monthStart(DateTime.now());
+    return [
+      DateTime(current.year, current.month - 1, 1),
+      current,
+      DateTime(current.year, current.month + 1, 1),
+    ];
+  }
+
+  String _monthLabelWithRole(DateTime monthStart) {
+    final current = _monthStart(DateTime.now());
+    final prev = DateTime(current.year, current.month - 1, 1);
+    final next = DateTime(current.year, current.month + 1, 1);
+    final monthLabel = DateFormat('yyyy/MM').format(monthStart);
+
+    if (_isSameMonth(monthStart, prev)) return '先月 ($monthLabel)';
+    if (_isSameMonth(monthStart, current)) return '今月 ($monthLabel)';
+    if (_isSameMonth(monthStart, next)) return '来月 ($monthLabel)';
+    return monthLabel;
+  }
+
+  String _formatYen(num value) =>
+      '¥${NumberFormat('#,###').format(value.round())}';
+
+  String _formatSignedYen(num value) {
+    final sign = value >= 0 ? '+' : '-';
+    return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+  }
+
+  Map<String, double?> _netWorthByOverviewMonth(List<DateTime> months) {
+    final result = <String, double?>{
+      for (final month in months) _monthKey(month): null,
+    };
+    if (_sortedDates.isEmpty) return result;
+
+    for (final month in months) {
+      final monthEnd = DateTime(month.year, month.month + 1, 0);
+      final monthEndKey = DateFormat('yyyy-MM-dd').format(monthEnd);
+      String? latestDateKey;
+
+      for (final dateKey in _sortedDates) {
+        if (dateKey.compareTo(monthEndKey) <= 0) {
+          latestDateKey = dateKey;
+        } else {
+          break;
+        }
+      }
+
+      if (latestDateKey == null) continue;
+      final snapshot = _effectiveAssetDataByDate[latestDateKey] ??
+          _assetData[latestDateKey] ??
+          {};
+      double total = 0;
+      snapshot.forEach((_, value) => total += value);
+      result[_monthKey(month)] = total;
+    }
+
+    return result;
+  }
+
+  Map<String, int> _fixedCostByOverviewMonth(List<DateTime> months) {
+    final totals = <String, int>{
+      for (final month in months) _monthKey(month): 0,
+    };
+
+    for (final sub in _subscriptionsThreeMonths) {
+      final dueStr = sub['due_date']?.toString();
+      if (dueStr == null || dueStr.isEmpty) continue;
+      final dueDate = DateTime.tryParse(dueStr);
+      if (dueDate == null) continue;
+      final key = _monthKey(DateTime(dueDate.year, dueDate.month, 1));
+      if (!totals.containsKey(key)) continue;
+      totals[key] = (totals[key] ?? 0) + ((sub['price'] as num?)?.toInt() ?? 0);
+    }
+
+    return totals;
+  }
+
+  Map<String, Map<String, int>> _taskStatsByOverviewMonth(
+      List<DateTime> months) {
+    final stats = <String, Map<String, int>>{
+      for (final month in months)
+        _monthKey(month): {
+          'total': 0,
+          'completed': 0,
+          'pending': 0,
+        },
+    };
+
+    for (final task in _mustTasks) {
+      final deadlineStr = task['deadline']?.toString();
+      if (deadlineStr == null || deadlineStr.isEmpty) continue;
+      final deadline = DateTime.tryParse(deadlineStr)?.toLocal();
+      if (deadline == null) continue;
+
+      final key = _monthKey(DateTime(deadline.year, deadline.month, 1));
+      final bucket = stats[key];
+      if (bucket == null) continue;
+
+      bucket['total'] = (bucket['total'] ?? 0) + 1;
+      final isCompleted = (task['is_completed'] as bool?) == true;
+      if (isCompleted) {
+        bucket['completed'] = (bucket['completed'] ?? 0) + 1;
+      } else {
+        bucket['pending'] = (bucket['pending'] ?? 0) + 1;
+      }
+    }
+
+    return stats;
   }
 
   DateTime _deadlineToday() => DateTime(_now.year, _now.month, _now.day, 18, 0);
@@ -714,33 +834,55 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() => _isLoadingSubscriptions = true);
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (!mounted) return;
+        setState(() {
+          _subscriptions = [];
+          _subscriptionsThreeMonths = [];
+          _isLoadingSubscriptions = false;
+        });
+        return;
+      }
 
       final now = DateTime.now();
-      final first = DateTime(now.year, now.month, 1);
-      final next = DateTime(now.year, now.month + 1, 1);
+      final currentMonth = DateTime(now.year, now.month, 1);
+      final rangeStart = DateTime(currentMonth.year, currentMonth.month - 1, 1);
+      final rangeEnd = DateTime(currentMonth.year, currentMonth.month + 2, 1);
 
-      final firstStr = DateFormat('yyyy-MM-dd').format(first);
-      final nextStr = DateFormat('yyyy-MM-dd').format(next);
+      final startStr = DateFormat('yyyy-MM-dd').format(rangeStart);
+      final endStr = DateFormat('yyyy-MM-dd').format(rangeEnd);
 
       final data = await _supabase
           .from('subscriptions')
           .select()
           .eq('user_id', userId)
-          .gte('due_date', firstStr)
-          .lt('due_date', nextStr)
+          .gte('due_date', startStr)
+          .lt('due_date', endStr)
           .order('due_date', ascending: true)
           .order('price', ascending: false);
 
+      final allThreeMonths = List<Map<String, dynamic>>.from(data);
+      final currentMonthKey = _monthKey(currentMonth);
+      final currentMonthOnly = allThreeMonths.where((row) {
+        final dueStr = row['due_date']?.toString();
+        if (dueStr == null || dueStr.isEmpty) return false;
+        final dueDate = DateTime.tryParse(dueStr);
+        if (dueDate == null) return false;
+        return _monthKey(DateTime(dueDate.year, dueDate.month, 1)) ==
+            currentMonthKey;
+      }).toList();
+
       if (!mounted) return;
       setState(() {
-        _subscriptions = List<Map<String, dynamic>>.from(data);
+        _subscriptions = currentMonthOnly;
+        _subscriptionsThreeMonths = allThreeMonths;
         _isLoadingSubscriptions = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _subscriptions = [];
+        _subscriptionsThreeMonths = [];
         _isLoadingSubscriptions = false;
       });
     }
@@ -1387,6 +1529,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             _buildDeadlineChecklistCard(), // 締切チェックリスト
             const SizedBox(height: 16),
+            _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+            const SizedBox(height: 16),
             Container(
                 key: _keyStock, child: _buildAssetLiabilityCard()), // ①②資産負債
             const SizedBox(height: 24),
@@ -1552,6 +1696,221 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                     ],
                   ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverviewStatChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThreeMonthOverviewTile({
+    required DateTime month,
+    required double? netWorth,
+    required int fixedCost,
+    required int totalTasks,
+    required int completedTasks,
+    required int pendingTasks,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blueGrey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _monthLabelWithRole(month),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '純資産: ${netWorth == null ? "未記録" : _formatYen(netWorth)}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          Text(
+            '固定費: ${_formatYen(fixedCost)}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          Text(
+            'タスク: $completedTasks/$totalTasks 完了',
+            style: const TextStyle(fontSize: 12),
+          ),
+          Text(
+            '未完了: $pendingTasks',
+            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThreeMonthOverviewCard() {
+    final months = _overviewMonthStarts();
+    final monthKeys = months.map(_monthKey).toList();
+    final netWorthByMonth = _netWorthByOverviewMonth(months);
+    final fixedCostByMonth = _fixedCostByOverviewMonth(months);
+    final taskStatsByMonth = _taskStatsByOverviewMonth(months);
+
+    final prevKey = monthKeys[0];
+    final currentKey = monthKeys[1];
+    final nextKey = monthKeys[2];
+
+    final prevNet = netWorthByMonth[prevKey];
+    final currentNet = netWorthByMonth[currentKey];
+    final netDiffText = (prevNet != null && currentNet != null)
+        ? _formatSignedYen(currentNet - prevNet)
+        : 'データ不足';
+    final netDiffColor = (prevNet != null && currentNet != null)
+        ? ((currentNet - prevNet) >= 0 ? Colors.green : Colors.red)
+        : Colors.grey;
+
+    final fixedDiff =
+        (fixedCostByMonth[currentKey] ?? 0) - (fixedCostByMonth[prevKey] ?? 0);
+    final fixedDiffColor = fixedDiff <= 0 ? Colors.green : Colors.red;
+
+    final currentTask = taskStatsByMonth[currentKey] ??
+        {
+          'total': 0,
+          'completed': 0,
+          'pending': 0,
+        };
+    final nextTask = taskStatsByMonth[nextKey] ??
+        {
+          'total': 0,
+          'completed': 0,
+          'pending': 0,
+        };
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.view_timeline, color: Colors.indigo),
+                SizedBox(width: 8),
+                Text(
+                  '3ヶ月俯瞰（先月・今月・来月）',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '口座残高・固定費・必須タスクを3ヶ月単位で比較します。',
+              style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 12),
+            _isCompact
+                ? Column(
+                    children: [
+                      for (int i = 0; i < months.length; i++) ...[
+                        _buildThreeMonthOverviewTile(
+                          month: months[i],
+                          netWorth: netWorthByMonth[monthKeys[i]],
+                          fixedCost: fixedCostByMonth[monthKeys[i]] ?? 0,
+                          totalTasks:
+                              taskStatsByMonth[monthKeys[i]]?['total'] ?? 0,
+                          completedTasks:
+                              taskStatsByMonth[monthKeys[i]]?['completed'] ?? 0,
+                          pendingTasks:
+                              taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
+                        ),
+                        if (i != months.length - 1) const SizedBox(height: 8),
+                      ]
+                    ],
+                  )
+                : Row(
+                    children: [
+                      for (int i = 0; i < months.length; i++) ...[
+                        Expanded(
+                          child: _buildThreeMonthOverviewTile(
+                            month: months[i],
+                            netWorth: netWorthByMonth[monthKeys[i]],
+                            fixedCost: fixedCostByMonth[monthKeys[i]] ?? 0,
+                            totalTasks:
+                                taskStatsByMonth[monthKeys[i]]?['total'] ?? 0,
+                            completedTasks: taskStatsByMonth[monthKeys[i]]
+                                    ?['completed'] ??
+                                0,
+                            pendingTasks:
+                                taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
+                          ),
+                        ),
+                        if (i != months.length - 1) const SizedBox(width: 8),
+                      ]
+                    ],
+                  ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOverviewStatChip(
+                  label: '純資産 先月比',
+                  value: netDiffText,
+                  color: netDiffColor,
+                ),
+                _buildOverviewStatChip(
+                  label: '固定費 先月比',
+                  value: _formatSignedYen(fixedDiff),
+                  color: fixedDiffColor,
+                ),
+                _buildOverviewStatChip(
+                  label: '今月タスク進捗',
+                  value:
+                      '${currentTask['completed'] ?? 0}/${currentTask['total'] ?? 0}',
+                  color: Colors.blue,
+                ),
+                _buildOverviewStatChip(
+                  label: '来月タスク件数',
+                  value: '${nextTask['total'] ?? 0}件',
+                  color: Colors.orange,
+                ),
+              ],
+            ),
           ],
         ),
       ),
