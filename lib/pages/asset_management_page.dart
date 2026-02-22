@@ -6,9 +6,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:my_web_app/services/ai_service.dart';
+import 'package:my_web_app/models/debt_repayment_plan.dart';
+import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 
 class AssetManagementPage extends StatefulWidget {
   const AssetManagementPage({super.key});
@@ -78,8 +77,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isLoadingTasks = false;
 
   // --- AI返済計画用 ---
-  static const _secureStorage = FlutterSecureStorage();
-  static const String _secureKeyGeminiApiKey = 'gemini_api_key';
+  final DebtRepaymentPlannerService _debtRepaymentPlanner =
+      const DebtRepaymentPlannerService();
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;
@@ -270,68 +269,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return stats;
   }
 
-  Future<void> _saveGeminiApiKey(String key) async {
-    await _secureStorage.write(key: _secureKeyGeminiApiKey, value: key);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('gemini_api_key');
-  }
-
-  Future<String?> _loadGeminiApiKey() async {
-    final secureKey = await _secureStorage.read(key: _secureKeyGeminiApiKey);
-    if (secureKey != null && secureKey.trim().isNotEmpty) {
-      return secureKey.trim();
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    final legacyKey = prefs.getString('gemini_api_key');
-    if (legacyKey == null || legacyKey.trim().isEmpty) {
-      return null;
-    }
-
-    final migrated = legacyKey.trim();
-    await _saveGeminiApiKey(migrated);
-    return migrated;
-  }
-
-  Future<String?> _showGeminiApiKeyDialog() async {
-    final controller = TextEditingController();
-    try {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Gemini APIキー設定'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Gemini API Key',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
-            obscureText: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('保存'),
-            ),
-          ],
-        ),
-      );
-
-      if (ok != true) return null;
-      final key = controller.text.trim();
-      if (key.isEmpty) return null;
-      await _saveGeminiApiKey(key);
-      return key;
-    } finally {
-      controller.dispose();
-    }
-  }
-
   void _ensureEffectiveSnapshotsReady() {
     if (_effectiveAssetDataByDate.isEmpty && _assetData.isNotEmpty) {
       _updateChartData();
@@ -368,74 +305,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return liabilities;
   }
 
-  String _buildDebtPlanPrompt({
-    required List<Map<String, dynamic>> liabilities,
-    required String strategy,
-    required int monthlyBudget,
-    required int extraBudget,
-    required int targetMonths,
-    required int monthlyIncome,
-    required int monthlyExpense,
-    required int currentFixedCost,
-    required double netWorth,
-    required String userMemo,
-  }) {
-    final liabilityLines = liabilities
-        .map(
-          (l) =>
-              '- ${l['name']}: 残高 ¥${NumberFormat('#,###').format(l['balance'])}',
-        )
-        .join('\n');
-
-    return '''
-あなたは家計再建に強いファイナンシャルコーチです。
-以下のデータを使って、借金返済計画を日本語で作成してください。
-
-[前提データ]
-- 純資産: ¥${NumberFormat('#,###').format(netWorth)}
-- 今月の収入合計: ¥${NumberFormat('#,###').format(monthlyIncome)}
-- 今月の支出合計: ¥${NumberFormat('#,###').format(monthlyExpense)}
-- 今月の固定費合計: ¥${NumberFormat('#,###').format(currentFixedCost)}
-- 毎月の返済予算: ¥${NumberFormat('#,###').format(monthlyBudget)}
-- 臨時返済予算: ¥${NumberFormat('#,###').format(extraBudget)}
-- 返済方針: $strategy
-- 目標完済期間: $targetMonthsヶ月
-- 追加メモ: ${userMemo.isEmpty ? 'なし' : userMemo}
-
-[借金一覧]
-$liabilityLines
-
-[出力要件]
-1. まず「現状診断」を3〜5行。
-2. 次に「返済優先順位（理由付き）」を箇条書き。
-3. 次に「3ヶ月アクションプラン（先月振り返り・今月・来月）」を表形式で。
-4. 次に「完済までのロードマップ（月次）」を簡潔に。
-5. 最後に「今週やること」を3つだけ提示。
-6. 金額はすべて円表記（¥）で、現実的・保守的に提案。
-7. 不明な金利情報は仮定を明示する。
-8. 医療・法律・税務の断定は避け、必要なら専門家相談を一言添える。
-''';
-  }
-
   Future<void> _showDebtPlanDialog() async {
     final monthlyBudgetController = TextEditingController();
     final extraBudgetController = TextEditingController(text: '0');
     final targetMonthsController = TextEditingController(text: '12');
     final memoController = TextEditingController();
-    String strategy = '高金利優先（アバランチ）';
+    String strategyKey = DebtRepaymentStrategy.snowball.name;
 
     try {
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
-            title: const Text('AI借金返済プラン作成'),
+            title: const Text('借金返済プラン作成'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: strategy,
+                    initialValue: strategyKey,
                     decoration: const InputDecoration(
                       labelText: '返済方針',
                       border: OutlineInputBorder(),
@@ -443,17 +331,21 @@ $liabilityLines
                     ),
                     items: const [
                       DropdownMenuItem(
-                        value: '高金利優先（アバランチ）',
+                        value: 'snowball',
+                        child: Text('少額優先（スノーボール）'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'avalanche',
                         child: Text('高金利優先（アバランチ）'),
                       ),
                       DropdownMenuItem(
-                        value: '少額優先（スノーボール）',
-                        child: Text('少額優先（スノーボール）'),
+                        value: 'hybrid',
+                        child: Text('ハイブリッド（高金利×少額）'),
                       ),
                     ],
                     onChanged: (v) {
                       if (v == null) return;
-                      setDialogState(() => strategy = v);
+                      setDialogState(() => strategyKey = v);
                     },
                   ),
                   const SizedBox(height: 8),
@@ -524,7 +416,8 @@ $liabilityLines
           int.tryParse(extraBudgetController.text.replaceAll(',', '').trim()) ??
               0;
       final targetMonths = int.tryParse(
-              targetMonthsController.text.replaceAll(',', '').trim(),) ??
+            targetMonthsController.text.replaceAll(',', '').trim(),
+          ) ??
           12;
       final userMemo = memoController.text.trim();
 
@@ -537,7 +430,7 @@ $liabilityLines
       }
 
       await _generateDebtRepaymentPlan(
-        strategy: strategy,
+        strategyKey: strategyKey,
         monthlyBudget: monthlyBudget,
         extraBudget: extraBudget,
         targetMonths: targetMonths,
@@ -551,8 +444,15 @@ $liabilityLines
     }
   }
 
+  DebtRepaymentStrategy _strategyFromKey(String strategyKey) {
+    for (final strategy in DebtRepaymentStrategy.values) {
+      if (strategy.name == strategyKey) return strategy;
+    }
+    return DebtRepaymentStrategy.snowball;
+  }
+
   Future<void> _generateDebtRepaymentPlan({
-    required String strategy,
+    required String strategyKey,
     required int monthlyBudget,
     required int extraBudget,
     required int targetMonths,
@@ -568,13 +468,6 @@ $liabilityLines
       return;
     }
 
-    var apiKey = await _loadGeminiApiKey();
-    if (apiKey == null || apiKey.isEmpty) {
-      if (!mounted) return;
-      apiKey = await _showGeminiApiKeyDialog();
-      if (apiKey == null || apiKey.isEmpty) return;
-    }
-
     int monthlyIncome = 0;
     int monthlyExpense = 0;
     for (final f in _recentFlows) {
@@ -588,58 +481,64 @@ $liabilityLines
       (sum, s) => sum + ((s['price'] as num?)?.toInt() ?? 0),
     );
     final netWorth = snapshot.values.fold<double>(0, (sum, v) => sum + v);
+    final strategy = _strategyFromKey(strategyKey);
+    final inputDebts = liabilities
+        .map((l) {
+          final name = l['name']?.toString() ?? '';
+          final balance = (l['balance'] as num?)?.toDouble() ?? 0;
+          return _debtRepaymentPlanner.normalizeDebt(
+            name: name,
+            balance: balance,
+          );
+        })
+        .where((d) => d.name.isNotEmpty && d.balance > 0)
+        .toList();
 
-    final prompt = _buildDebtPlanPrompt(
-      liabilities: liabilities,
+    if (inputDebts.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('返済対象の負債データを作成できませんでした')),
+      );
+      return;
+    }
+
+    final input = DebtRepaymentPlanInput(
+      debts: inputDebts,
       strategy: strategy,
       monthlyBudget: monthlyBudget,
       extraBudget: extraBudget,
       targetMonths: targetMonths,
       monthlyIncome: monthlyIncome,
       monthlyExpense: monthlyExpense,
-      currentFixedCost: currentFixedCost,
+      fixedCost: currentFixedCost,
       netWorth: netWorth,
-      userMemo: userMemo,
+      note: userMemo,
+      baseMonth: _monthStart(DateTime.now()),
     );
 
     setState(() => _isGeneratingDebtPlan = true);
     try {
-      final aiService = AIService(null, apiKey);
-      const fallbackModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
-      String? generated;
-      Object? lastError;
-
-      for (final model in fallbackModels) {
-        try {
-          final text = await aiService.generateContent(
-            model: model,
-            prompt: prompt,
-          );
-          if (text != null && text.trim().isNotEmpty) {
-            generated = text.trim();
-            break;
-          }
-        } catch (e) {
-          lastError = e;
-        }
-      }
-
-      if (generated == null || generated.isEmpty) {
-        throw Exception(lastError?.toString() ?? 'AIから返済計画を取得できませんでした');
-      }
+      final result = _debtRepaymentPlanner.generatePlan(input: input);
 
       if (!mounted) return;
       setState(() {
-        _debtPlanMarkdown = generated;
+        _debtPlanMarkdown = result.markdown;
         _debtPlanGeneratedAt = DateTime.now();
       });
+      final warningCount = result.warnings.length;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI返済計画を作成しました')),
+        SnackBar(
+          content: Text(
+            warningCount == 0
+                ? '返済計画を作成しました'
+                : '返済計画を作成しました（注意点 $warningCount 件）',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI返済計画の作成に失敗しました: $e')),
+        SnackBar(content: Text('返済計画の作成に失敗しました: $e')),
       );
     } finally {
       if (mounted) {
@@ -1624,7 +1523,9 @@ $liabilityLines
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12,),
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey[400]!),
                       borderRadius: BorderRadius.circular(4),
@@ -1907,7 +1808,9 @@ $liabilityLines
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
-                show: _isStacked, color: color.withValues(alpha: 0.5),),
+              show: _isStacked,
+              color: color.withValues(alpha: 0.5),
+            ),
           );
         })
         .whereType<LineChartBarData>()
@@ -3160,8 +3063,10 @@ $liabilityLines
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.credit_card_off,
-                                  color: Colors.red[800],),
+                              Icon(
+                                Icons.credit_card_off,
+                                color: Colors.red[800],
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 '③固定費をすべて把握',
