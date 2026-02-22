@@ -28,6 +28,11 @@ analyzer:
     unnecessary_type_check: error
     unnecessary_brace_in_string_interps: error
     unnecessary_lambdas: error
+    unused_field: error
+    unused_element: error
+    deprecated_member_use: error
+    deprecated_member_use_from_same_package: error
+    avoid_dynamic_calls: error
     library_private_types_in_public_api: error
     require_trailing_commas: error
     prefer_const_constructors: error

@@ -14,7 +14,7 @@ class AssetManagementPage extends StatefulWidget {
   const AssetManagementPage({super.key});
 
   @override
-  _AssetManagementPageState createState() => _AssetManagementPageState();
+  State<AssetManagementPage> createState() => _AssetManagementPageState();
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
@@ -62,7 +62,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     '[PayPayカード]',
     '[横浜銀行]',
     '[現金]',
-    '[その他]'
+    '[その他]',
   ];
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
