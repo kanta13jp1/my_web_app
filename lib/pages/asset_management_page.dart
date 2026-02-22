@@ -888,12 +888,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _fetchTodayClosing();
   }
 
-  Future<bool> _confirmDeleteSubscription() async {
+  Future<bool> _confirmDeleteSubscription({String serviceName = ''}) async {
+    final targetName = serviceName.trim();
+    final targetLabel = targetName.isEmpty ? 'この固定費' : '「$targetName」';
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('削除の確認'),
-        content: const Text('この固定費を削除しますか？'),
+        content: Text('$targetLabelを削除しますか？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -2190,12 +2192,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             icon: const Icon(Icons.more_vert),
                             onSelected: (value) async {
                               if (value == 'due') {
-                                _editSubscriptionDueDate(item);
+                                await _editSubscriptionDueDate(item);
                               } else if (value == 'source') {
-                                _editSubscriptionPaymentSource(item);
+                                await _editSubscriptionPaymentSource(item);
                               } else if (value == 'delete') {
+                                final serviceName =
+                                    (item['service_name'] ?? '').toString();
                                 final shouldDelete =
-                                    await _confirmDeleteSubscription();
+                                    await _confirmDeleteSubscription(
+                                        serviceName: serviceName);
                                 if (!shouldDelete) return;
                                 await _deleteSubscription(item['id']);
                               }
@@ -2209,9 +2214,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 value: 'source',
                                 child: Text('引落先を編集'),
                               ),
-                              PopupMenuItem<String>(
+                              const PopupMenuItem<String>(
                                 value: 'delete',
-                                child: Text('削除'),
+                                child: Text(
+                                  '削除',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ),
                             ],
                           ),
