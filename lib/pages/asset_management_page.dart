@@ -76,7 +76,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<Map<String, dynamic>> _mustTasks = [];
   bool _isLoadingTasks = false;
 
-  // --- AI返済計画用 ---
+  // --- 返済計画用 ---
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
   bool _isGeneratingDebtPlan = false;
@@ -1869,7 +1869,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
             const SizedBox(height: 16),
-            _buildDebtPlannerCard(), // AI借金返済プラン
+            _buildDebtPlannerCard(), // 借金返済プラン
             const SizedBox(height: 16),
             Container(
               key: _keyStock,
@@ -2263,7 +2263,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  // AI借金返済プランカード
+  // 借金返済プランカード
   Widget _buildDebtPlannerCard() {
     final latestSnapshot = _sortedDates.isEmpty
         ? const <String, double>{}
@@ -2290,14 +2290,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Icon(Icons.auto_awesome, color: Colors.deepPurple),
                 SizedBox(width: 8),
                 Text(
-                  'AI借金返済プラン',
+                  '借金返済プラン',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              '負債データをもとに、返済優先順位と3ヶ月アクションをAIが提案します。',
+              '負債データをもとに、返済優先順位と3ヶ月アクションを自動生成します。',
               style: TextStyle(fontSize: 11, color: Colors.grey[700]),
             ),
             const SizedBox(height: 10),
@@ -2336,7 +2336,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               )
                             : const Icon(Icons.play_arrow),
                         label: Text(
-                          _isGeneratingDebtPlan ? '返済プラン作成中...' : 'AIで返済プラン作成',
+                          _isGeneratingDebtPlan ? '返済プラン作成中...' : '返済プランを作成',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -2377,9 +2377,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 )
                               : const Icon(Icons.play_arrow),
                           label: Text(
-                            _isGeneratingDebtPlan
-                                ? '返済プラン作成中...'
-                                : 'AIで返済プラン作成',
+                            _isGeneratingDebtPlan ? '返済プラン作成中...' : '返済プランを作成',
                           ),
                         ),
                       ),
