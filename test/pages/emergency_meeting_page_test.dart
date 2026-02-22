@@ -24,11 +24,12 @@ class FakeSupabaseClient extends Fake implements SupabaseClient {
 class FakeGoTrueClient extends Fake implements GoTrueClient {
   @override
   User? get currentUser => const User(
-      id: 'test-user-id',
-      appMetadata: {},
-      userMetadata: {},
-      aud: 'authenticated',
-      createdAt: '2023-01-01',);
+        id: 'test-user-id',
+        appMetadata: {},
+        userMetadata: {},
+        aud: 'authenticated',
+        createdAt: '2023-01-01',
+      );
 }
 
 class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
@@ -40,14 +41,18 @@ class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
       FakePostgrestFilterBuilder<int>(_data as int? ?? 0);
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select(
-          [String? columns = '*',]) =>
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String? columns = '*',
+  ]) =>
       FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(
-          _data as List<Map<String, dynamic>>? ?? [],);
+        _data as List<Map<String, dynamic>>? ?? [],
+      );
 
   @override
-  PostgrestFilterBuilder<dynamic> insert(Object? values,
-          {bool? defaultToNull = true,}) =>
+  PostgrestFilterBuilder<dynamic> insert(
+    Object? values, {
+    bool? defaultToNull = true,
+  }) =>
       FakePostgrestFilterBuilder<dynamic>(_data);
 }
 
@@ -60,8 +65,10 @@ class FakePostgrestFilterBuilder<T> extends Fake
   PostgrestFilterBuilder<T> eq(String column, Object value) => this;
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-          {Function? onError,}) =>
+  Future<U> then<U>(
+    FutureOr<U> Function(T value) onValue, {
+    Function? onError,
+  }) =>
       Future.value(_value).then(onValue, onError: onError);
 
   @override
@@ -72,16 +79,19 @@ class FakePostgrestFilterBuilder<T> extends Fake
   PostgrestTransformBuilder<Map<String, dynamic>?> maybeSingle() {
     if (_value is List && (_value as List).isNotEmpty) {
       return FakePostgrestTransformBuilder<Map<String, dynamic>?>(
-          (_value as List).first as Map<String, dynamic>,);
+        (_value as List).first as Map<String, dynamic>,
+      );
     }
     return FakePostgrestTransformBuilder<Map<String, dynamic>?>(null);
   }
 
   @override
-  PostgrestTransformBuilder<List<Map<String, dynamic>>> select(
-      [String? columns = '*',]) {
+  PostgrestTransformBuilder<List<Map<String, dynamic>>> select([
+    String? columns = '*',
+  ]) {
     return FakePostgrestTransformBuilder<List<Map<String, dynamic>>>(
-        _value as List<Map<String, dynamic>>,);
+      _value as List<Map<String, dynamic>>,
+    );
   }
 }
 
@@ -91,17 +101,21 @@ class FakePostgrestTransformBuilder<T> extends Fake
   FakePostgrestTransformBuilder(this._value);
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-          {Function? onError,}) =>
+  Future<U> then<U>(
+    FutureOr<U> Function(T value) onValue, {
+    Function? onError,
+  }) =>
       Future.value(_value).then(onValue, onError: onError);
   @override
   PostgrestTransformBuilder<Map<String, dynamic>> single() {
     if (_value is List && (_value as List).isNotEmpty) {
       return FakePostgrestTransformBuilder<Map<String, dynamic>>(
-          (_value as List).first as Map<String, dynamic>,);
+        (_value as List).first as Map<String, dynamic>,
+      );
     }
     return FakePostgrestTransformBuilder<Map<String, dynamic>>(
-        _value as Map<String, dynamic>,);
+      _value as Map<String, dynamic>,
+    );
   }
 }
 
@@ -122,6 +136,7 @@ void main() {
     });
   });
 
+  // ignore: unused_element
   Widget createTestWidget() {
     return MaterialApp(
       home: EmergencyMeetingPage(supabaseClient: fakeSupabaseClient),

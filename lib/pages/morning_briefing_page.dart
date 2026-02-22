@@ -1458,7 +1458,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               final key = controller.text.trim();
               if (key.isNotEmpty) {
                 await _saveGeminiApiKey(key);
-                if (!mounted) return;
+                if (!mounted || !context.mounted) return;
                 setState(() => _geminiApiKey = key);
                 Navigator.pop(context);
               }
@@ -1477,24 +1477,29 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       );
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['models'] != null) {
-          return (data['models'] as List)
-              .where(
-                (m) =>
-                    (m['supportedGenerationMethods'] as List?)
-                        ?.contains('generateContent') ??
-                    false,
-              )
-              .map<Map<String, dynamic>>(
-                (m) => {
-                  'name': m['name'].toString().replaceFirst('models/', ''),
-                  'methods': (m['supportedGenerationMethods'] as List<dynamic>)
-                      .cast<String>()
-                      .toList(),
-                },
-              )
-              .toList();
+        final Map<String, dynamic> data =
+            json.decode(response.body) as Map<String, dynamic>;
+        final modelsRaw = data['models'];
+        if (modelsRaw is List) {
+          return modelsRaw
+              .whereType<Map>()
+              .map((m) => Map<String, dynamic>.from(m))
+              .where((m) {
+            final methods = m['supportedGenerationMethods'];
+            return methods is List && methods.contains('generateContent');
+          }).map<Map<String, dynamic>>((m) {
+            final methods = (m['supportedGenerationMethods'] as List)
+                .cast<Object>()
+                .map((v) => v.toString())
+                .toList();
+            return {
+              'name': (m['name'] ?? '').toString().replaceFirst(
+                    'models/',
+                    '',
+                  ),
+              'methods': methods,
+            };
+          }).toList();
         }
       }
     } catch (e) {
@@ -1609,7 +1614,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     padding: const EdgeInsets.all(12),
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
@@ -1683,7 +1688,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 onPressed: () async {
                   await _deleteGeminiApiKey();
                   apiKeyController.clear();
-                  if (!mounted) return;
+                  if (!mounted || !context.mounted) return;
                   setState(() => _geminiApiKey = null);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('APIキーを削除しました')),
@@ -2215,7 +2220,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               border: Border.all(color: Colors.grey.shade300),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
+                                  color: Colors.grey.withValues(alpha: 0.1),
                                   spreadRadius: 1,
                                   blurRadius: 3,
                                   offset: const Offset(0, 1),

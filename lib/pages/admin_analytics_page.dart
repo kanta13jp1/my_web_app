@@ -58,7 +58,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       builder: (context) => AlertDialog(
         title: const Text('データのリセット'),
         content: const Text(
-            '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',),
+          '分析データ(app_analytics)をすべて削除します。\nこの操作は元に戻せません。\n本当によろしいですか？',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -92,7 +93,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラーが発生しました: $e'), backgroundColor: Colors.red,),
+            content: Text('エラーが発生しました: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -174,7 +177,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildKpiSummaryCard(
-                        totalCvr, totalViews, _actualUserCount, totalShares,),
+                      totalCvr,
+                      totalViews,
+                      _actualUserCount,
+                      totalShares,
+                    ),
                     const SizedBox(height: 24),
                     const Text(
                       '過去30日間の推移 (閲覧 vs 登録)',
@@ -190,7 +197,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -234,8 +241,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const Text('現在のコンバージョン率 (CVR)',
-                style: TextStyle(fontSize: 14, color: Colors.grey),),
+            const Text(
+              '現在のコンバージョン率 (CVR)',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -253,11 +262,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
-                  child: Text('%',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: _getCvrColor(cvr),),),
+                  child: Text(
+                    '%',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: _getCvrColor(cvr),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -285,13 +297,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildStatItem(
-      String label, String value, IconData icon, Color color,) {
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 20, color: color),
@@ -311,85 +327,90 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return const Center(child: Text('データがありません'));
     }
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final width = constraints.maxWidth;
-      final barWidth = (width / (data.length * 2.5)).clamp(6.0, 16.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final barWidth = (width / (data.length * 2.5)).clamp(6.0, 16.0);
 
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: data.map((stat) {
-          final views = stat['landing_views'] as int? ?? 0;
-          final conv = stat['conversions'] as int? ?? 0;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: data.map((stat) {
+            final views = stat['landing_views'] as int? ?? 0;
+            final conv = stat['conversions'] as int? ?? 0;
 
-          final double viewHeightRatio =
-              maxViews == 0 ? 0 : (views / maxViews).clamp(0.0, 1.0);
-          final double convHeightRatio =
-              maxViews == 0 ? 0 : (conv / maxViews).clamp(0.0, 1.0);
+            final double viewHeightRatio =
+                maxViews == 0 ? 0 : (views / maxViews).clamp(0.0, 1.0);
+            final double convHeightRatio =
+                maxViews == 0 ? 0 : (conv / maxViews).clamp(0.0, 1.0);
 
-          String label = '';
-          try {
-            final date = DateTime.parse(stat['date'].toString());
-            label = '${date.month}/${date.day}';
-          } catch (_) {
-            label = '';
-          }
+            String label = '';
+            try {
+              final date = DateTime.parse(stat['date'].toString());
+              label = '${date.month}/${date.day}';
+            } catch (_) {
+              label = '';
+            }
 
-          final shouldShowLabel = data.length <= 7 ||
-              data.indexOf(stat) % (data.length ~/ 5) == 0 ||
-              data.indexOf(stat) == data.length - 1;
+            final shouldShowLabel = data.length <= 7 ||
+                data.indexOf(stat) % (data.length ~/ 5) == 0 ||
+                data.indexOf(stat) == data.length - 1;
 
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    FractionallySizedBox(
-                      heightFactor: viewHeightRatio,
-                      child: Container(
-                        width: barWidth,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(4),
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      FractionallySizedBox(
+                        heightFactor: viewHeightRatio,
+                        child: Container(
+                          width: barWidth,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
-                    ),
-                    FractionallySizedBox(
-                      heightFactor: convHeightRatio,
-                      child: Container(
-                        width: barWidth,
-                        decoration: BoxDecoration(
-                          color: Colors.indigo,
-                          borderRadius: BorderRadius.circular(4),
+                      FractionallySizedBox(
+                        heightFactor: convHeightRatio,
+                        child: Container(
+                          width: barWidth,
+                          decoration: BoxDecoration(
+                            color: Colors.indigo,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                shouldShowLabel ? label : '',
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
-          );
-        }).toList(),
-      );
-    },);
+                const SizedBox(height: 8),
+                Text(
+                  shouldShowLabel ? label : '',
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+              ],
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
   Widget _buildSourceDistribution(Map<String, int> sources) {
     if (sources.isEmpty) {
       return const Card(
-          elevation: 0,
-          color: Colors.white,
-          child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
-                  child: Text('データなし', style: TextStyle(color: Colors.grey)),),),);
+        elevation: 0,
+        color: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(
+            child: Text('データなし', style: TextStyle(color: Colors.grey)),
+          ),
+        ),
+      );
     }
 
     final int total = sources.values.fold(0, (sum, count) => sum + count);
@@ -449,9 +470,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     Text(
                       ' $percent%',
                       style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[600],),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 );
@@ -524,9 +546,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: ListTile(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-            title: Text(dateStr,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
+            title: Text(
+              dateStr,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
             subtitle: Row(
               children: [
                 _miniStat(Icons.visibility, '$views', Colors.blue),
@@ -537,7 +560,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getCvrColor(cvr).withOpacity(0.1),
+                color: _getCvrColor(cvr).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
@@ -553,8 +576,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       color: _getCvrColor(cvr),
                     ),
                   ),
-                  Text('CVR',
-                      style: TextStyle(fontSize: 10, color: _getCvrColor(cvr)),),
+                  Text(
+                    'CVR',
+                    style: TextStyle(fontSize: 10, color: _getCvrColor(cvr)),
+                  ),
                 ],
               ),
             ),
@@ -569,9 +594,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w500, color: color,),),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
       ],
     );
   }

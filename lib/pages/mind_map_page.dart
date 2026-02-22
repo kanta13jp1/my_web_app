@@ -14,7 +14,8 @@ class MindMapPage extends StatefulWidget {
 class _MindMapPageState extends State<MindMapPage> {
   final _topicController = TextEditingController();
   final Graph _graph = Graph();
-  final BuchheimWalkerConfiguration _algorithmConfig = BuchheimWalkerConfiguration();
+  final BuchheimWalkerConfiguration _algorithmConfig =
+      BuchheimWalkerConfiguration();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -38,7 +39,8 @@ class _MindMapPageState extends State<MindMapPage> {
     if (mounted) {
       setState(() {
         _geminiApiKey = prefs.getString('gemini_api_key');
-        _selectedModel = prefs.getString('gemini_model_mind_map') ?? 'gemini-1.5-flash';
+        _selectedModel =
+            prefs.getString('gemini_model_mind_map') ?? 'gemini-1.5-flash';
       });
     }
   }
@@ -51,9 +53,9 @@ class _MindMapPageState extends State<MindMapPage> {
       );
       return;
     }
-    
+
     if (_geminiApiKey == null || _geminiApiKey!.isEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gemini APIキーが設定されていません。')),
       );
       // Here we could open the settings dialog
@@ -88,11 +90,10 @@ class _MindMapPageState extends State<MindMapPage> {
       setState(() {
         _buildGraphFromJson(decoded, null);
       });
-      
     } catch (e) {
-        _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
+      _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
     } finally {
-        setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
   }
 
@@ -109,14 +110,13 @@ class _MindMapPageState extends State<MindMapPage> {
       if (parent != null) {
         _graph.addEdge(parent, node);
       }
-      
+
       final children = json[key] as Map<String, dynamic>;
       if (children.isNotEmpty) {
         _buildGraphFromJson(children, node);
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -135,13 +135,14 @@ class _MindMapPageState extends State<MindMapPage> {
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.psychology_alt),
               ),
-               onSubmitted: (_) => _generateMindMap(),
+              onSubmitted: (_) => _generateMindMap(),
             ),
           ),
           if (_errorMessage != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              child: Text(_errorMessage!,
+                  style: const TextStyle(color: Colors.red),),
             ),
           Expanded(
             child: _isLoading
@@ -153,7 +154,8 @@ class _MindMapPageState extends State<MindMapPage> {
                     maxScale: 5.6,
                     child: GraphView(
                       graph: _graph,
-                      algorithm: BuchheimWalkerAlgorithm(_algorithmConfig, TreeEdgeRenderer(_algorithmConfig)),
+                      algorithm: BuchheimWalkerAlgorithm(
+                          _algorithmConfig, TreeEdgeRenderer(_algorithmConfig),),
                       builder: (Node node) {
                         final a = node.key!.value as String?;
                         return _buildNode(a!);
@@ -179,7 +181,7 @@ class _MindMapPageState extends State<MindMapPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             spreadRadius: 1,
             blurRadius: 3,
           ),

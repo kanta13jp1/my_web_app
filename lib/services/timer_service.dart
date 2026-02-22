@@ -207,6 +207,7 @@ class TimerService extends ChangeNotifier {
   }
 
   /// サウンド通知
+  // ignore: unused_element
   void _playSoundNotification() {
     // Web環境でHTML AudioElementを使用してサウンドを再生
     // assets/sounds/timer_complete.mp3 が必要
@@ -215,6 +216,7 @@ class TimerService extends ChangeNotifier {
   }
 
   /// ブラウザ通知
+  // ignore: unused_element
   Future<void> _showBrowserNotification() async {
     // Web Notification API を使用
     // 警告回避のため、Web通知は無効化されました。

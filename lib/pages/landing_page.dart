@@ -134,8 +134,10 @@ class _LandingPageState extends State<LandingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('LP Views',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'LP Views',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
 
             // 3指標
@@ -165,12 +167,16 @@ class _LandingPageState extends State<LandingPage> {
                             borderData: FlBorderData(show: true),
                             titlesData: FlTitlesData(
                               topTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false)),
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
                               rightTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false)),
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
                               leftTitles: const AxisTitles(
                                 sideTitles: SideTitles(
-                                    showTitles: true, reservedSize: 36),
+                                  showTitles: true,
+                                  reservedSize: 36,
+                                ),
                               ),
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
@@ -186,10 +192,12 @@ class _LandingPageState extends State<LandingPage> {
                                             ? _pvLabels[i]
                                             : '';
                                     return SideTitleWidget(
-                                        axisSide: meta.axisSide,
-                                        child: Text(label,
-                                            style:
-                                                const TextStyle(fontSize: 10)));
+                                      axisSide: meta.axisSide,
+                                      child: Text(
+                                        label,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    );
                                   },
                                 ),
                               ),
@@ -206,8 +214,10 @@ class _LandingPageState extends State<LandingPage> {
                         )),
             ),
             const SizedBox(height: 6),
-            const Text('※グラフは今月の日次View（0埋め）',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const Text(
+              '※グラフは今月の日次View（0埋め）',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
           ],
         ),
       ),
@@ -222,9 +232,10 @@ class _LandingPageState extends State<LandingPage> {
         children: [
           Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );

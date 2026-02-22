@@ -8,7 +8,7 @@ class FinancialReportPage extends StatefulWidget {
   const FinancialReportPage({super.key});
 
   @override
-  _FinancialReportPageState createState() => _FinancialReportPageState();
+  State<FinancialReportPage> createState() => _FinancialReportPageState();
 }
 
 class _FinancialReportPageState extends State<FinancialReportPage>
@@ -40,7 +40,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
           return MapEntry(
             date,
             (assets as Map<String, dynamic>)
-                .map((k, v) => MapEntry(k, v.toDouble())),
+                .map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0)),
           );
         });
         _sortedDates = _assetData.keys.toList()..sort();

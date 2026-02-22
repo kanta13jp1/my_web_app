@@ -19,6 +19,8 @@ analyzer:
     missing_required_param: error
     missing_return: error
     # 軽微な警告もエラーとして扱う
+    curly_braces_in_flow_control_structures: error
+    avoid_print: error
     unnecessary_cast: error
     unnecessary_new: error
     unnecessary_this: error
@@ -28,6 +30,11 @@ analyzer:
     unnecessary_type_check: error
     unnecessary_brace_in_string_interps: error
     unnecessary_lambdas: error
+    unnecessary_statements: error
+    unnecessary_getters_setters: error
+    unnecessary_null_aware_assignments: error
+    unnecessary_await_in_return: error
+    unnecessary_const: error
     unused_field: error
     unused_element: error
     deprecated_member_use: error
@@ -39,6 +46,27 @@ analyzer:
     prefer_const_literals_to_create_immutables: error
     prefer_final_fields: error
     null_closures: error
+    prefer_final_locals: error
+    prefer_single_quotes: error
+    prefer_const_declarations: error
+    prefer_const_constructors_in_immutables: error
+    only_throw_errors: error
+    use_build_context_synchronously: error
+    prefer_void_to_null: error
+    avoid_null_checks_in_equality_operators: error
+    prefer_null_aware_operators: error
+    must_be_immutable: error
+    avoid_web_libraries_in_flutter: error
+    avoid_positional_boolean_parameters: error
+    avoid_unnecessary_containers: error
+    sized_box_for_whitespace: error
+    use_key_in_widget_constructors: error
+    sort_child_properties_last: error
+    use_rethrow_when_possible: error
+    override_on_non_overriding_member: error
+    prefer_final_parameters: error
+    constant_identifier_names: error
+    non_constant_identifier_names: error
   exclude:
     # 自動生成ファイルを除外
     - "**/*.g.dart"

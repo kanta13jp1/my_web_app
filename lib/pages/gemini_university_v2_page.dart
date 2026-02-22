@@ -759,9 +759,13 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                       color: Colors.amber,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('PRO',
-                        style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold,),),
+                    child: const Text(
+                      'PRO',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -816,22 +820,28 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.05),
+                            color: Colors.orange.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.orange.withOpacity(0.3),),
+                              color: Colors.orange.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(children: [
-                                Icon(Icons.biotech, color: Colors.orange),
-                                SizedBox(width: 8),
-                                Text('実践ラボ',
+                              const Row(
+                                children: [
+                                  Icon(Icons.biotech, color: Colors.orange),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '実践ラボ',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.orange,),),
-                              ],),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 8),
                               MarkdownBody(data: module.labContent!),
                             ],
@@ -846,7 +856,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Center(
@@ -1021,7 +1031,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
         border: Border.all(color: Colors.orange, width: 4),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.2),
+            color: Colors.orange.withValues(alpha: 0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),

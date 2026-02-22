@@ -51,7 +51,7 @@ class NotificationService {
       '「いつかやる」タストを見直して、来週の計画を立てませんか？',
       _nextInstanceOfSaturdayTenAM(),
       platformChannelSpecifics,
-      androidAllowWhileIdle: true,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,

@@ -3,6 +3,7 @@ enum TaskType {
   daily, // B. 毎日実施する必要があるタスク
   routine, // C. 定期的な自己研鑽・開発
   reward, // D. 完了後の快楽
+  // ignore: constant_identifier_names
   daily_accumulation, // E. 毎日の積み上げ
 }
 

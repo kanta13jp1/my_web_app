@@ -152,7 +152,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             ),
           );
         } else {
-          throw 'Status Code: ${response.status}';
+          throw Exception('Status Code: ${response.status}');
         }
       }
       await Future.delayed(const Duration(seconds: 3)); // ログ書き込み待ち
@@ -255,10 +255,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       final prompt =
           'あなたは選挙アナリストです。「$district」の国民民主党の情勢(候補者、勝利条件)を分析しJSON({candidate, condition})で出力してください。';
       final response = await model.generateContent([Content.text(prompt)]);
-      final json = jsonDecode(response.text ?? '{}');
+      final Map<String, dynamic> json =
+          jsonDecode(response.text ?? '{}') as Map<String, dynamic>;
       setState(() {
-        _candidateInfo = json['candidate'] ?? '情報なし';
-        _victoryCondition = json['condition'] ?? '分析不能';
+        _candidateInfo = (json['candidate'] as String?)?.isNotEmpty == true
+            ? json['candidate'] as String
+            : '情報なし';
+        _victoryCondition = (json['condition'] as String?)?.isNotEmpty == true
+            ? json['condition'] as String
+            : '分析不能';
       });
       await _supabase.from('district_analytics').upsert({
         'district_name': district,
@@ -287,11 +292,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       const prompt =
           '2026年1月現在の最新世論調査に基づき、国民民主党の支持率(support_rate)、若年投票率(youth_turnout)、無党派獲得率(swing_potential)を推計しJSONで出力せよ。';
       final response = await model.generateContent([Content.text(prompt)]);
-      final data = jsonDecode(response.text ?? '{}');
+      final Map<String, dynamic> data =
+          jsonDecode(response.text ?? '{}') as Map<String, dynamic>;
       setState(() {
-        _supportRate = (data['support_rate'] as num).toDouble();
-        _youthTurnout = (data['youth_turnout'] as num).toDouble();
-        _swingCapture = (data['swing_potential'] as num).toDouble();
+        _supportRate = ((data['support_rate'] as num?) ?? 0).toDouble();
+        _youthTurnout = ((data['youth_turnout'] as num?) ?? 0).toDouble();
+        _swingCapture = ((data['swing_potential'] as num?) ?? 0).toDouble();
       });
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -688,7 +694,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(color: Colors.black26, blurRadius: 4),
@@ -844,14 +850,18 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               color: Colors.grey.shade100,
-              child: Text(_lastBatchLog!['message'] ?? '',
-                  style: const TextStyle(fontSize: 12),),
+              child: Text(
+                _lastBatchLog!['message'] ?? '',
+                style: const TextStyle(fontSize: 12),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('閉じる'),),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
         ],
       ),
     );
@@ -863,11 +873,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       child: Row(
         children: [
           SizedBox(
-              width: 80,
-              child: Text(label, style: const TextStyle(color: Colors.grey)),),
+            width: 80,
+            child: Text(label, style: const TextStyle(color: Colors.grey)),
+          ),
           Expanded(
-              child: Text(value,
-                  style: const TextStyle(fontWeight: FontWeight.bold),),),
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
@@ -1186,8 +1200,10 @@ class _ManualItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 4),
                 Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),
               ],

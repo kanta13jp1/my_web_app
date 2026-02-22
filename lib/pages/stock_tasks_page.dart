@@ -54,6 +54,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
   }
 
   // ※ flutter_local_notifications の導入が必要です
+  // ignore: unused_element
   Future<void> _scheduleSaturdayReminder() async {
     // 1. 通知プラグインの初期化 (main.dart等で行うのが一般的)
     // 2. タイムゾーンの初期化
@@ -88,6 +89,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
       _taskController.clear();
       _loadTasks(); // リロード
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('エラー: $e')),
       );
@@ -150,9 +152,11 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           const Padding(
                             padding: EdgeInsets.only(top: 50),
                             child: Center(
-                              child: Text('時間ができたらやりたいことを\n書き留めましょう',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey),),
+                              child: Text(
+                                '時間ができたらやりたいことを\n書き留めましょう',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey),
+                              ),
                             ),
                           ),
 
@@ -163,8 +167,10 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           const SizedBox(height: 20),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text('完了済み',
-                                style: TextStyle(color: Colors.grey),),
+                            child: Text(
+                              '完了済み',
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           ),
                           const Divider(),
                           // 完了済みタスク
@@ -183,7 +189,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -202,8 +208,11 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add_circle,
-                      size: 32, color: Colors.teal,),
+                  icon: const Icon(
+                    Icons.add_circle,
+                    size: 32,
+                    color: Colors.teal,
+                  ),
                   onPressed: _addTask,
                 ),
               ],

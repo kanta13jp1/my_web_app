@@ -237,7 +237,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Map<String, Map<String, int>> _taskStatsByOverviewMonth(
-      List<DateTime> months) {
+    List<DateTime> months,
+  ) {
     final stats = <String, Map<String, int>>{
       for (final month in months)
         _monthKey(month): {
@@ -349,13 +350,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<Map<String, dynamic>> _liabilitiesFromSnapshot(
-      Map<String, double> snapshot) {
+    Map<String, double> snapshot,
+  ) {
     final liabilities = snapshot.entries
         .where((e) => e.value < 0)
-        .map((e) => <String, dynamic>{
-              'name': e.key,
-              'balance': e.value.abs(),
-            })
+        .map(
+          (e) => <String, dynamic>{
+            'name': e.key,
+            'balance': e.value.abs(),
+          },
+        )
         .toList();
 
     liabilities.sort(
@@ -377,8 +381,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String userMemo,
   }) {
     final liabilityLines = liabilities
-        .map((l) =>
-            '- ${l['name']}: 残高 ¥${NumberFormat('#,###').format(l['balance'])}')
+        .map(
+          (l) =>
+              '- ${l['name']}: 残高 ¥${NumberFormat('#,###').format(l['balance'])}',
+        )
         .join('\n');
 
     return '''
@@ -393,7 +399,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 - 毎月の返済予算: ¥${NumberFormat('#,###').format(monthlyBudget)}
 - 臨時返済予算: ¥${NumberFormat('#,###').format(extraBudget)}
 - 返済方針: $strategy
-- 目標完済期間: ${targetMonths}ヶ月
+- 目標完済期間: $targetMonthsヶ月
 - 追加メモ: ${userMemo.isEmpty ? 'なし' : userMemo}
 
 [借金一覧]
@@ -429,7 +435,7 @@ $liabilityLines
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: strategy,
+                    initialValue: strategy,
                     decoration: const InputDecoration(
                       labelText: '返済方針',
                       border: OutlineInputBorder(),
@@ -517,9 +523,9 @@ $liabilityLines
       final extraBudget =
           int.tryParse(extraBudgetController.text.replaceAll(',', '').trim()) ??
               0;
-      final targetMonths =
-          int.tryParse(targetMonthsController.text.replaceAll(',', '').trim()) ??
-              12;
+      final targetMonths = int.tryParse(
+              targetMonthsController.text.replaceAll(',', '').trim(),) ??
+          12;
       final userMemo = memoController.text.trim();
 
       if (monthlyBudget <= 0 || targetMonths <= 0) {
@@ -680,8 +686,8 @@ $liabilityLines
 
       if (!mounted) return;
 
-      if (rows is List && rows.isNotEmpty) {
-        final r = rows.first as Map<String, dynamic>;
+      if (rows.isNotEmpty) {
+        final r = rows.first;
         setState(() {
           _assetsDone = r['assets_done'] == true;
           _liabilitiesDone = r['liabilities_done'] == true;
@@ -825,11 +831,13 @@ $liabilityLines
     double totalAssets = 0;
     double totalLiabilities = 0;
 
-    final snap = snapshotDate != null
-        ? (_effectiveAssetDataByDate[snapshotDate] ??
-            _assetData[snapshotDate] ??
-            {})
-        : {};
+    final Map<String, double> snap = snapshotDate != null
+        ? Map<String, double>.from(
+            _effectiveAssetDataByDate[snapshotDate] ??
+                _assetData[snapshotDate] ??
+                const <String, double>{},
+          )
+        : <String, double>{};
     snap.forEach((_, v) {
       if (v >= 0) totalAssets += v;
       if (v < 0) totalLiabilities += v;
@@ -853,15 +861,16 @@ $liabilityLines
       final d = DateTime.parse(t['deadline']).toLocal();
       return d.year == now.year && d.month == now.month;
     }).toList()
-      ..sort((a, b) =>
-          (a['deadline'] as String).compareTo(b['deadline'] as String));
+      ..sort(
+        (a, b) => (a['deadline'] as String).compareTo(b['deadline'] as String),
+      );
 
     final done = [
       _assetsDone,
       _liabilitiesDone,
       _fixedCostsDone,
       _flowsDone,
-      _mustTasksDone
+      _mustTasksDone,
     ].where((x) => x).length;
 
     final buf = StringBuffer();
@@ -878,7 +887,8 @@ $liabilityLines
     buf.writeln('- 総資産: ¥${NumberFormat('#,###').format(totalAssets)}');
     buf.writeln('- 総負債: ¥${NumberFormat('#,###').format(totalLiabilities)}');
     buf.writeln(
-        '- 純資産: ¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}');
+      '- 純資産: ¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}',
+    );
     if (snap.isNotEmpty) {
       buf.writeln('- 内訳:');
       final entries = snap.entries.toList()
@@ -894,7 +904,8 @@ $liabilityLines
     if (_subscriptions.isNotEmpty) {
       for (final s in _subscriptions) {
         buf.writeln(
-            '  - ${s["service_name"]}: ¥${NumberFormat('#,###').format(s["price"])}');
+          '  - ${s["service_name"]}: ¥${NumberFormat('#,###').format(s["price"])}',
+        );
       }
     } else {
       buf.writeln('  - （未登録）');
@@ -905,7 +916,8 @@ $liabilityLines
     buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
     buf.writeln(
-        '- 差額: ¥${NumberFormat('#,###').format(totalIncome - totalExpense)}');
+      '- 差額: ¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
+    );
     buf.writeln('');
 
     buf.writeln('### ⑤ 必須タスク（$monthLabel）');
@@ -916,7 +928,8 @@ $liabilityLines
         final d = DateTime.parse(t['deadline']).toLocal();
         final done = (t['is_completed'] as bool?) == true;
         buf.writeln(
-            '- ${done ? "✅" : "⬜️"} ${t["title"]}（締切 ${DateFormat('MM/dd').format(d)}）');
+          '- ${done ? "✅" : "⬜️"} ${t["title"]}（締切 ${DateFormat('MM/dd').format(d)}）',
+        );
       }
     }
 
@@ -1069,9 +1082,12 @@ $liabilityLines
       });
       controller.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
             content: Text('✅ $type を記録しました'),
-            backgroundColor: Colors.green[700]));
+            backgroundColor: Colors.green[700],
+          ),
+        );
       }
       await _fetchTodayClosing();
     } catch (e) {
@@ -1127,9 +1143,10 @@ $liabilityLines
         _updateChartData();
       });
       _controllers.forEach((_, controller) => controller.clear());
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
+      }
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error saving assets: $e');
@@ -1143,13 +1160,15 @@ $liabilityLines
       builder: (context) => AlertDialog(
         title: const Text('項目を追加'),
         content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: '資産・負債名 (例: 住宅ローン)')),
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: '資産・負債名 (例: 住宅ローン)'),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () {
               if (controller.text.isNotEmpty &&
@@ -1178,8 +1197,9 @@ $liabilityLines
         content: const Text('この項目を削除しますか？'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final userId = _supabase.auth.currentUser?.id;
@@ -1283,134 +1303,142 @@ $liabilityLines
 
     try {
       await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text('固定費を追加'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration:
-                      const InputDecoration(labelText: '名称 (例: モビット, 家賃)'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: priceController,
-                  decoration: const InputDecoration(labelText: '金額 (円)'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: dueDate,
-                      firstDate: DateTime(DateTime.now().year - 1, 1, 1),
-                      lastDate: DateTime(DateTime.now().year + 5, 12, 31),
-                    );
-                    if (picked != null) {
-                      setDialogState(() => dueDate = picked);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                            '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'),
-                        Icon(Icons.calendar_today,
-                            size: 16, color: Colors.grey.shade600),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: paymentSource,
-                  decoration: const InputDecoration(
-                    labelText: '引落先（資産・負債から選択）',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: candidates
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setDialogState(() => paymentSource = v);
-                  },
-                ),
-                const SizedBox(height: 8),
-                if (paymentSource == 'その他')
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('固定費を追加'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   TextField(
-                    controller: customPaymentSourceController,
+                    controller: nameController,
+                    decoration:
+                        const InputDecoration(labelText: '名称 (例: モビット, 家賃)'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: priceController,
+                    decoration: const InputDecoration(labelText: '金額 (円)'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: dueDate,
+                        firstDate: DateTime(DateTime.now().year - 1, 1, 1),
+                        lastDate: DateTime(DateTime.now().year + 5, 12, 31),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => dueDate = picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}',
+                          ),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: paymentSource,
                     decoration: const InputDecoration(
-                      labelText: '引落先（自由入力）',
+                      labelText: '引落先（資産・負債から選択）',
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
+                    items: candidates
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setDialogState(() => paymentSource = v);
+                    },
                   ),
-                const SizedBox(height: 8),
-                CheckboxListTile(
-                  value: isPaid,
-                  onChanged: (v) => setDialogState(() => isPaid = v ?? false),
-                  title: const Text('支払い済みにする'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
+                  const SizedBox(height: 8),
+                  if (paymentSource == 'その他')
+                    TextField(
+                      controller: customPaymentSourceController,
+                      decoration: const InputDecoration(
+                        labelText: '引落先（自由入力）',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    value: isPaid,
+                    onChanged: (v) => setDialogState(() => isPaid = v ?? false),
+                    title: const Text('支払い済みにする'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('キャンセル'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final userId = _supabase.auth.currentUser?.id;
+                    if (userId == null) return;
+
+                    final name = nameController.text.trim();
+                    final price =
+                        int.tryParse(priceController.text.trim()) ?? 0;
+                    if (name.isEmpty || price <= 0) return;
+
+                    final dueDateStr = DateFormat('yyyy-MM-dd').format(dueDate);
+                    final sourceText = paymentSource == '（未設定）'
+                        ? null
+                        : (paymentSource == 'その他'
+                            ? customPaymentSourceController.text.trim()
+                            : paymentSource);
+
+                    await _supabase.from('subscriptions').insert({
+                      'user_id': userId,
+                      'service_name': name,
+                      'price': price,
+                      'due_date': dueDateStr,
+                      'is_paid': isPaid,
+                      'payment_source':
+                          (sourceText == null || sourceText.isEmpty)
+                              ? null
+                              : sourceText,
+                    });
+
+                    if (context.mounted) Navigator.pop(context);
+                    await _fetchSubscriptions();
+                    await _fetchTodayClosing();
+                  },
+                  child: const Text('追加'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final userId = _supabase.auth.currentUser?.id;
-                  if (userId == null) return;
-
-                  final name = nameController.text.trim();
-                  final price = int.tryParse(priceController.text.trim()) ?? 0;
-                  if (name.isEmpty || price <= 0) return;
-
-                  final dueDateStr = DateFormat('yyyy-MM-dd').format(dueDate);
-                  final sourceText = paymentSource == '（未設定）'
-                      ? null
-                      : (paymentSource == 'その他'
-                          ? customPaymentSourceController.text.trim()
-                          : paymentSource);
-
-                  await _supabase.from('subscriptions').insert({
-                    'user_id': userId,
-                    'service_name': name,
-                    'price': price,
-                    'due_date': dueDateStr,
-                    'is_paid': isPaid,
-                    'payment_source': (sourceText == null || sourceText.isEmpty)
-                        ? null
-                        : sourceText,
-                  });
-
-                  if (context.mounted) Navigator.pop(context);
-                  await _fetchSubscriptions();
-                  await _fetchTodayClosing();
-                },
-                child: const Text('追加'),
-              ),
-            ],
-          );
-        },
-      ),
+            );
+          },
+        ),
       );
     } finally {
       nameController.dispose();
@@ -1499,7 +1527,8 @@ $liabilityLines
 
     if (amount == null || amount <= 0 || memo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')));
+        const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')),
+      );
       return;
     }
 
@@ -1519,8 +1548,12 @@ $liabilityLines
       await _fetchRecentFlows();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('収支を記録しました'), backgroundColor: Colors.black87));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('収支を記録しました'),
+            backgroundColor: Colors.black87,
+          ),
+        );
       }
       await _fetchTodayClosing();
     } catch (e) {
@@ -1542,17 +1575,19 @@ $liabilityLines
           .eq('user_id', userId)
           .order('deadline', ascending: true);
 
-      if (mounted)
+      if (mounted) {
         setState(() {
           _mustTasks = List<Map<String, dynamic>>.from(data);
           _isLoadingTasks = false;
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _mustTasks = [];
           _isLoadingTasks = false;
         });
+      }
     }
   }
 
@@ -1562,85 +1597,96 @@ $liabilityLines
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-          title: const Text('必須タスクを追加'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('必須タスクを追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
                   controller: titleController,
                   decoration:
-                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)')),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDeadline,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2030),
-                  );
-                  if (date != null)
-                    setDialogState(() => selectedDeadline = date);
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  decoration: BoxDecoration(
+                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)'),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDeadline,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setDialogState(() => selectedDeadline = date);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12,),
+                    decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey[400]!),
-                      borderRadius: BorderRadius.circular(4)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                          '締切: ${DateFormat('yyyy/MM/dd').format(selectedDeadline)}'),
-                      Icon(Icons.calendar_today,
-                          size: 16, color: Colors.grey[600]),
-                    ],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '締切: ${DateFormat('yyyy/MM/dd').format(selectedDeadline)}',
+                        ),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
+              ],
+            ),
+            actions: [
+              TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル')),
-            ElevatedButton(
-              onPressed: () async {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
-                final userId = _supabase.auth.currentUser?.id;
-                if (userId != null) {
-                  try {
-                    await _supabase.from('must_tasks').insert({
-                      'user_id': userId,
-                      'title': title,
-                      'deadline': selectedDeadline.toUtc().toIso8601String(),
-                      'is_completed': false,
-                    });
-                    if (context.mounted) Navigator.pop(context);
-                    _fetchMustTasks();
-                  } catch (e) {
-                    debugPrint('Error adding task: $e');
-                    setState(() {
-                      _mustTasks.add({
-                        'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  if (title.isEmpty) return;
+                  final userId = _supabase.auth.currentUser?.id;
+                  if (userId != null) {
+                    try {
+                      await _supabase.from('must_tasks').insert({
+                        'user_id': userId,
                         'title': title,
                         'deadline': selectedDeadline.toUtc().toIso8601String(),
                         'is_completed': false,
                       });
-                    });
-                    if (context.mounted) Navigator.pop(context);
+                      if (context.mounted) Navigator.pop(context);
+                      _fetchMustTasks();
+                    } catch (e) {
+                      debugPrint('Error adding task: $e');
+                      setState(() {
+                        _mustTasks.add({
+                          'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                          'title': title,
+                          'deadline':
+                              selectedDeadline.toUtc().toIso8601String(),
+                          'is_completed': false,
+                        });
+                      });
+                      if (context.mounted) Navigator.pop(context);
+                    }
                   }
-                }
-              },
-              child: const Text('追加'),
-            ),
-          ],
-        );
-      }),
+                },
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
+      ),
     );
     await _fetchTodayClosing();
   }
@@ -1730,7 +1776,7 @@ $liabilityLines
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: selected,
+                initialValue: selected,
                 decoration: const InputDecoration(
                   labelText: '引落先（資産・負債から選択）',
                   border: OutlineInputBorder(),
@@ -1784,7 +1830,7 @@ $liabilityLines
     try {
       await _supabase.from('subscriptions').update({
         'payment_source':
-            (sourceText == null || sourceText.isEmpty) ? null : sourceText
+            (sourceText == null || sourceText.isEmpty) ? null : sourceText,
       }).eq('id', id);
 
       await _fetchSubscriptions();
@@ -1860,8 +1906,8 @@ $liabilityLines
             barWidth: 2,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
-            belowBarData:
-                BarAreaData(show: _isStacked, color: color.withValues(alpha: 0.5)),
+            belowBarData: BarAreaData(
+                show: _isStacked, color: color.withValues(alpha: 0.5),),
           );
         })
         .whereType<LineChartBarData>()
@@ -1876,17 +1922,22 @@ $liabilityLines
       if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
       if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
       final color = diff >= 0 ? Colors.green : Colors.red;
-      _barChartGroups.add(BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
+      _barChartGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
               toY: diff,
               color: color,
               width: 12,
               borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4), topRight: Radius.circular(4)))
-        ],
-      ));
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      );
     }
     if (_maxDailyChange == 0) _maxDailyChange = 1000;
     _maxDailyChange *= 1.2;
@@ -1918,7 +1969,9 @@ $liabilityLines
             _buildDebtPlannerCard(), // AI借金返済プラン
             const SizedBox(height: 16),
             Container(
-                key: _keyStock, child: _buildAssetLiabilityCard()), // ①②資産負債
+              key: _keyStock,
+              child: _buildAssetLiabilityCard(),
+            ), // ①②資産負債
             const SizedBox(height: 24),
             Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
             const SizedBox(height: 24),
@@ -1968,8 +2021,10 @@ $liabilityLines
               ],
             ),
             const SizedBox(height: 6),
-            Text(remainText,
-                style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+            Text(
+              remainText,
+              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+            ),
             const SizedBox(height: 10),
             LinearProgressIndicator(
               value: p,
@@ -1977,8 +2032,10 @@ $liabilityLines
               borderRadius: BorderRadius.circular(6),
             ),
             const SizedBox(height: 8),
-            Text('${(p * 100).toInt()}% 完了',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '${(p * 100).toInt()}% 完了',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             CheckboxListTile(
               value: _assetsDone,
@@ -2245,7 +2302,7 @@ $liabilityLines
                               taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
                         ),
                         if (i != months.length - 1) const SizedBox(height: 8),
-                      ]
+                      ],
                     ],
                   )
                 : Row(
@@ -2266,7 +2323,7 @@ $liabilityLines
                           ),
                         ),
                         if (i != months.length - 1) const SizedBox(width: 8),
-                      ]
+                      ],
                     ],
                   ),
             const SizedBox(height: 12),
@@ -2311,7 +2368,9 @@ $liabilityLines
             _assetData[_sortedDates.last] ??
             const <String, double>{});
 
-    final liabilities = latestSnapshot.entries.where((e) => e.value < 0).toList()
+    final liabilities = latestSnapshot.entries
+        .where((e) => e.value < 0)
+        .toList()
       ..sort((a, b) => a.value.compareTo(b.value));
     final totalDebt =
         liabilities.fold<double>(0, (sum, e) => sum + e.value.abs());
@@ -2374,9 +2433,7 @@ $liabilityLines
                               )
                             : const Icon(Icons.play_arrow),
                         label: Text(
-                          _isGeneratingDebtPlan
-                              ? '返済プラン作成中...'
-                              : 'AIで返済プラン作成',
+                          _isGeneratingDebtPlan ? '返済プラン作成中...' : 'AIで返済プラン作成',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -2403,8 +2460,9 @@ $liabilityLines
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed:
-                              _isGeneratingDebtPlan ? null : _showDebtPlanDialog,
+                          onPressed: _isGeneratingDebtPlan
+                              ? null
+                              : _showDebtPlanDialog,
                           icon: _isGeneratingDebtPlan
                               ? const SizedBox(
                                   width: 14,
@@ -2489,22 +2547,28 @@ $liabilityLines
               children: [
                 Icon(Icons.account_balance, color: Colors.green),
                 SizedBox(width: 8),
-                Text('①資産・②負債の全容把握',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  '①資産・②負債の全容把握',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            const Text('現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const Text(
+              '現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
             const SizedBox(height: 16),
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
-            Row(children: [
-              TextButton.icon(
+            Row(
+              children: [
+                TextButton.icon(
                   onPressed: _showAddAssetDialog,
                   icon: const Icon(Icons.add),
-                  label: const Text('項目を追加'))
-            ]),
+                  label: const Text('項目を追加'),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -2513,9 +2577,10 @@ $liabilityLines
                 icon: const Icon(Icons.done_all),
                 label: const Text('全体状況を保存'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[800],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
+                  backgroundColor: Colors.green[800],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -2550,7 +2615,9 @@ $liabilityLines
                     TextField(
                       controller: _controllers[type],
                       keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true, signed: true),
+                        decimal: true,
+                        signed: true,
+                      ),
                       decoration: InputDecoration(
                         labelText: type,
                         hintText: '負債はマイナス(-)をつける',
@@ -2572,17 +2639,21 @@ $liabilityLines
                         ElevatedButton(
                           onPressed: () => _saveSingleAssetData(type),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isUpdatedToday ? Colors.grey : Colors.green[700],
+                            backgroundColor: isUpdatedToday
+                                ? Colors.grey
+                                : Colors.green[700],
                             foregroundColor: Colors.white,
                           ),
                           child: Text(isUpdatedToday ? '済' : '記録'),
                         ),
                         if (type != '現金')
                           IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.grey),
-                              onPressed: () => _showRemoveAssetDialog(type)),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => _showRemoveAssetDialog(type),
+                          ),
                       ],
                     ),
                   ],
@@ -2593,7 +2664,9 @@ $liabilityLines
                       child: TextField(
                         controller: _controllers[type],
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true, signed: true),
+                          decimal: true,
+                          signed: true,
+                        ),
                         decoration: InputDecoration(
                           labelText: type,
                           hintText: '負債はマイナス(-)をつける',
@@ -2621,9 +2694,12 @@ $liabilityLines
                     ),
                     if (type != '現金')
                       IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.grey),
-                          onPressed: () => _showRemoveAssetDialog(type)),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () => _showRemoveAssetDialog(type),
+                      ),
                   ],
                 ),
           if (lastAmount != null)
@@ -2675,38 +2751,59 @@ $liabilityLines
     double totalLiabilities = 0;
 
     latestData.forEach((key, value) {
-      if (value >= 0)
+      if (value >= 0) {
         totalAssets += value;
-      else
+      } else {
         totalLiabilities += value;
+      }
     });
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('総資産:'),
-            Text('¥${NumberFormat('#,###').format(totalAssets)}',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('総資産:'),
+              Text(
+                '¥${NumberFormat('#,###').format(totalAssets)}',
                 style: const TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold))
-          ]),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('総負債:'),
-            Text('¥${NumberFormat('#,###').format(totalLiabilities)}',
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('総負債:'),
+              Text(
+                '¥${NumberFormat('#,###').format(totalLiabilities)}',
                 style: const TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.bold))
-          ]),
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
           const Divider(),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('純資産:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('純資産:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
                 '¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}',
                 style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))
-          ]),
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -2735,30 +2832,39 @@ $liabilityLines
               children: [
                 Icon(Icons.receipt_long, color: Colors.blue),
                 SizedBox(width: 8),
-                Text('④今月の収支の記録',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  '④今月の収支の記録',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            const Text('お金の流れをすべてリスト化する。',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const Text(
+              'お金の流れをすべてリスト化する。',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedFlowType,
+                    initialValue: _selectedFlowType,
                     decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
                     items: ['支出', '収入']
-                        .map((String val) => DropdownMenuItem(
+                        .map(
+                          (String val) => DropdownMenuItem(
                             value: val,
-                            child: Text(val,
-                                style: const TextStyle(fontSize: 13))))
+                            child: Text(
+                              val,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedFlowType = val);
@@ -2771,26 +2877,35 @@ $liabilityLines
                   child: InkWell(
                     onTap: () async {
                       final date = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedFlowDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime.now());
-                      if (date != null)
+                        context: context,
+                        initialDate: _selectedFlowDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) {
                         setState(() => _selectedFlowDate = date);
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[400]!),
-                          borderRadius: BorderRadius.circular(4)),
+                        border: Border.all(color: Colors.grey[400]!),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                       child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(DateFormat('MM/dd').format(_selectedFlowDate)),
-                            Icon(Icons.calendar_today,
-                                size: 16, color: Colors.grey[600])
-                          ]),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(DateFormat('MM/dd').format(_selectedFlowDate)),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2802,19 +2917,24 @@ $liabilityLines
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedSource,
+                    initialValue: _selectedSource,
                     isExpanded: true,
                     decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
                     items: _sourceOptions
-                        .map((String source) => DropdownMenuItem(
+                        .map(
+                          (String source) => DropdownMenuItem(
                             value: source,
                             child: Text(
-                                source.replaceAll('[', '').replaceAll(']', ''),
-                                style: const TextStyle(fontSize: 13))))
+                              source.replaceAll('[', '').replaceAll(']', ''),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedSource = val);
@@ -2825,11 +2945,13 @@ $liabilityLines
                 Expanded(
                   flex: 3,
                   child: TextField(
-                      controller: _flowMemoController,
-                      decoration: const InputDecoration(
-                          labelText: '内容',
-                          border: OutlineInputBorder(),
-                          isDense: true)),
+                    controller: _flowMemoController,
+                    decoration: const InputDecoration(
+                      labelText: '内容',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -2837,59 +2959,79 @@ $liabilityLines
             Row(
               children: [
                 Expanded(
-                    child: TextField(
-                        controller: _flowAmountController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                            labelText: '金額 (円)',
-                            border: OutlineInputBorder(),
-                            isDense: true))),
+                  child: TextField(
+                    controller: _flowAmountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '金額 (円)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                    onPressed: _recordFlow,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[800],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: const Text('追加')),
+                  onPressed: _recordFlow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[800],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('追加'),
+                ),
               ],
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8)),
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Column(children: [
-                    const Text('今月収入', style: TextStyle(fontSize: 10)),
-                    Text('¥${NumberFormat('#,###').format(totalIncome)}',
+                  Column(
+                    children: [
+                      const Text('今月収入', style: TextStyle(fontSize: 10)),
+                      Text(
+                        '¥${NumberFormat('#,###').format(totalIncome)}',
                         style: TextStyle(
-                            color: Colors.green[800],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16))
-                  ]),
-                  Column(children: [
-                    const Text('今月支出', style: TextStyle(fontSize: 10)),
-                    Text('¥${NumberFormat('#,###').format(totalExpense)}',
+                          color: Colors.green[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text('今月支出', style: TextStyle(fontSize: 10)),
+                      Text(
+                        '¥${NumberFormat('#,###').format(totalExpense)}',
                         style: TextStyle(
-                            color: Colors.red[800],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16))
-                  ]),
-                  Column(children: [
-                    const Text('収支差額', style: TextStyle(fontSize: 10)),
-                    Text(
+                          color: Colors.red[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text('収支差額', style: TextStyle(fontSize: 10)),
+                      Text(
                         '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
-                            color: (totalIncome - totalExpense) >= 0
-                                ? Colors.green[800]
-                                : Colors.red[800],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16))
-                  ]),
+                          color: (totalIncome - totalExpense) >= 0
+                              ? Colors.green[800]
+                              : Colors.red[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -2897,7 +3039,8 @@ $liabilityLines
             _recentFlows.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: Text('今月の記録はありません')))
+                    child: Center(child: Text('今月の記録はありません')),
+                  )
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -2914,20 +3057,25 @@ $liabilityLines
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                            isIncome ? Icons.add_circle : Icons.remove_circle,
-                            color: isIncome ? Colors.green : Colors.red,
-                            size: 20),
+                          isIncome ? Icons.add_circle : Icons.remove_circle,
+                          color: isIncome ? Colors.green : Colors.red,
+                          size: 20,
+                        ),
                         title: Text(desc, style: const TextStyle(fontSize: 13)),
-                        subtitle: Text(DateFormat('MM/dd').format(date),
-                            style: const TextStyle(fontSize: 11)),
+                        subtitle: Text(
+                          DateFormat('MM/dd').format(date),
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         trailing: Text(
-                            '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
-                            style: TextStyle(
-                                color: isIncome ? Colors.green : Colors.red,
-                                fontWeight: FontWeight.bold)),
+                          '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
+                          style: TextStyle(
+                            color: isIncome ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       );
                     },
-                  )
+                  ),
           ],
         ),
       ),
@@ -2953,26 +3101,35 @@ $liabilityLines
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12))),
+              color: Colors.red[50],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
             child: isCompact
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Icon(Icons.credit_card_off, color: Colors.red[800]),
-                        const SizedBox(width: 8),
-                        Text('③固定費をすべて把握',
+                      Row(
+                        children: [
+                          Icon(Icons.credit_card_off, color: Colors.red[800]),
+                          const SizedBox(width: 8),
+                          Text(
+                            '③固定費をすべて把握',
                             style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red[900]))
-                      ]),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[900],
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 6),
-                      const Text('毎月自動で奪われる富を監視せよ。',
-                          style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      const Text(
+                        '毎月自動で奪われる富を監視せよ。',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         '¥${NumberFormat('#,###').format(totalCost)}',
@@ -3001,26 +3158,34 @@ $liabilityLines
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(children: [
-                            Icon(Icons.credit_card_off, color: Colors.red[800]),
-                            const SizedBox(width: 8),
-                            Text('③固定費をすべて把握',
+                          Row(
+                            children: [
+                              Icon(Icons.credit_card_off,
+                                  color: Colors.red[800],),
+                              const SizedBox(width: 8),
+                              Text(
+                                '③固定費をすべて把握',
                                 style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red[900]))
-                          ]),
-                          const Text('毎月自動で奪われる富を監視せよ。',
-                              style:
-                                  TextStyle(fontSize: 11, color: Colors.grey)),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red[900],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Text(
+                            '毎月自動で奪われる富を監視せよ。',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
                         ],
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('月額合計',
-                              style:
-                                  TextStyle(fontSize: 10, color: Colors.grey)),
+                          const Text(
+                            '月額合計',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
                           Text(
                             '¥${NumberFormat('#,###').format(totalCost)}',
                             style: TextStyle(
@@ -3041,18 +3206,20 @@ $liabilityLines
                             ),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
           ),
           _isLoadingSubscriptions
               ? const Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()))
+                  child: Center(child: CircularProgressIndicator()),
+                )
               : _subscriptions.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.all(32),
-                      child: Center(child: Text('登録された固定費はありません')))
+                      child: Center(child: Text('登録された固定費はありません')),
+                    )
                   : ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -3093,8 +3260,7 @@ $liabilityLines
                                 '¥${NumberFormat('#,###').format(item['price'])}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color:
-                                      isPaid ? Colors.grey : Colors.black87,
+                                  color: isPaid ? Colors.grey : Colors.black87,
                                 ),
                               ),
                             ],
@@ -3137,7 +3303,8 @@ $liabilityLines
                                     (item['service_name'] ?? '').toString();
                                 final shouldDelete =
                                     await _confirmDeleteSubscription(
-                                        serviceName: serviceName);
+                                  serviceName: serviceName,
+                                );
                                 if (!shouldDelete) return;
                                 await _deleteSubscription(item['id']);
                               }
@@ -3166,11 +3333,12 @@ $liabilityLines
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextButton.icon(
-                onPressed: _addSubscription,
-                icon: const Icon(Icons.add),
-                label: const Text('固定費を追加'),
-                style: TextButton.styleFrom(foregroundColor: Colors.red[800])),
-          )
+              onPressed: _addSubscription,
+              icon: const Icon(Icons.add),
+              label: const Text('固定費を追加'),
+              style: TextButton.styleFrom(foregroundColor: Colors.red[800]),
+            ),
+          ),
         ],
       ),
     );
@@ -3189,20 +3357,24 @@ $liabilityLines
               children: [
                 Icon(Icons.assignment_late, color: Colors.orange),
                 SizedBox(width: 8),
-                Text('⑤今月の必須タスク',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  '⑤今月の必須タスク',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            const Text('今月中に必ず処理すべき事務手続き等を記録せよ。',
-                style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const Text(
+              '今月中に必ず処理すべき事務手続き等を記録せよ。',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
             const SizedBox(height: 16),
             _isLoadingTasks
                 ? const Center(child: CircularProgressIndicator())
                 : _mustTasks.isEmpty
                     ? const Padding(
                         padding: EdgeInsets.all(16),
-                        child: Center(child: Text('登録されたタスクはありません')))
+                        child: Center(child: Text('登録されたタスクはありません')),
+                      )
                     : ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -3220,16 +3392,20 @@ $liabilityLines
                             value: isCompleted,
                             onChanged: (val) =>
                                 _toggleTaskStatus(task['id'], isCompleted),
-                            title: Text(task['title'],
-                                style: TextStyle(
-                                    decoration: isCompleted
-                                        ? TextDecoration.lineThrough
-                                        : null)),
+                            title: Text(
+                              task['title'],
+                              style: TextStyle(
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                            ),
                             subtitle: Text(
-                                '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
-                                style: TextStyle(
-                                    color:
-                                        isOverdue ? Colors.red : Colors.grey)),
+                              '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
+                              style: TextStyle(
+                                color: isOverdue ? Colors.red : Colors.grey,
+                              ),
+                            ),
                             controlAffinity: ListTileControlAffinity.leading,
                             contentPadding: EdgeInsets.zero,
                             dense: true,
@@ -3237,11 +3413,11 @@ $liabilityLines
                         },
                       ),
             TextButton.icon(
-                onPressed: _addMustTask,
-                icon: const Icon(Icons.add),
-                label: const Text('タスクを追加'),
-                style:
-                    TextButton.styleFrom(foregroundColor: Colors.orange[800])),
+              onPressed: _addMustTask,
+              icon: const Icon(Icons.add),
+              label: const Text('タスクを追加'),
+              style: TextButton.styleFrom(foregroundColor: Colors.orange[800]),
+            ),
           ],
         ),
       ),
@@ -3264,25 +3440,31 @@ $liabilityLines
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(_showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
-                        style:
-                            const TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(
+                      _showDailyChange ? '戦果レポート (日次損益)' : '戦略マップ (資産推移)',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      _showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
+                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
                     const Icon(Icons.show_chart, size: 16),
                     Switch(
-                        value: _showDailyChange,
-                        activeColor: Colors.redAccent,
-                        onChanged: (value) {
-                          setState(() {
-                            _showDailyChange = value;
-                          });
-                        }),
+                      value: _showDailyChange,
+                      activeThumbColor: Colors.redAccent,
+                      onChanged: (value) {
+                        setState(() {
+                          _showDailyChange = value;
+                        });
+                      },
+                    ),
                     const Icon(Icons.bar_chart, size: 16),
                   ],
                 ),
@@ -3294,14 +3476,15 @@ $liabilityLines
                 children: [
                   const Text('個別', style: TextStyle(fontSize: 10)),
                   Switch(
-                      value: _isStacked,
-                      activeColor: Colors.green,
-                      onChanged: (value) {
-                        setState(() {
-                          _isStacked = value;
-                          _updateChartData();
-                        });
-                      }),
+                    value: _isStacked,
+                    activeThumbColor: Colors.green,
+                    onChanged: (value) {
+                      setState(() {
+                        _isStacked = value;
+                        _updateChartData();
+                      });
+                    },
+                  ),
                   const Text('合計', style: TextStyle(fontSize: 10)),
                 ],
               ),
@@ -3321,61 +3504,68 @@ $liabilityLines
   }
 
   Widget _buildAssetTrendChart() {
-    return LineChart(LineChartData(
-      lineTouchData: LineTouchData(
-        touchTooltipData: LineTouchTooltipData(
-          getTooltipItems: _getTooltipItems,
+    return LineChart(
+      LineChartData(
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: _getTooltipItems,
+          ),
+          handleBuiltInTouches: true,
         ),
-        handleBuiltInTouches: true,
+        gridData: const FlGridData(show: true),
+        titlesData: _buildChartTitles(),
+        borderData:
+            FlBorderData(show: true, border: Border.all(color: Colors.black12)),
+        lineBarsData: _lineChartBars,
       ),
-      gridData: const FlGridData(show: true),
-      titlesData: _buildChartTitles(),
-      borderData:
-          FlBorderData(show: true, border: Border.all(color: Colors.black12)),
-      lineBarsData: _lineChartBars,
-    ));
+    );
   }
 
   Widget _buildDailyChangeChart() {
-    return BarChart(BarChartData(
-      alignment: BarChartAlignment.spaceAround,
-      maxY: _maxDailyChange,
-      minY: -_maxDailyChange,
-      barTouchData: BarTouchData(
-        touchTooltipData: BarTouchTooltipData(
-          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-            final dateIndex = group.x.toInt();
-            final dateStr =
-                dateIndex < _sortedDates.length ? _sortedDates[dateIndex] : '';
-            final date = dateStr.isNotEmpty
-                ? DateFormat('MM/dd').format(DateTime.parse(dateStr))
-                : '';
-            final val =
-                NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0)
-                    .format(rod.toY);
-            return BarTooltipItem(
-              '$date\n$val',
-              TextStyle(
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: _maxDailyChange,
+        minY: -_maxDailyChange,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final dateIndex = group.x.toInt();
+              final dateStr = dateIndex < _sortedDates.length
+                  ? _sortedDates[dateIndex]
+                  : '';
+              final date = dateStr.isNotEmpty
+                  ? DateFormat('MM/dd').format(DateTime.parse(dateStr))
+                  : '';
+              final val =
+                  NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0)
+                      .format(rod.toY);
+              return BarTooltipItem(
+                '$date\n$val',
+                TextStyle(
                   color:
                       rod.toY >= 0 ? Colors.lightGreenAccent : Colors.redAccent,
-                  fontWeight: FontWeight.bold),
-            );
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
+          ),
+        ),
+        titlesData: _buildChartTitles(),
+        gridData: FlGridData(
+          show: true,
+          checkToShowHorizontalLine: (value) => value == 0,
+          getDrawingHorizontalLine: (value) {
+            if (value == 0) {
+              return const FlLine(color: Colors.black54, strokeWidth: 1);
+            }
+            return const FlLine(color: Colors.black12, strokeWidth: 1);
           },
         ),
+        borderData: FlBorderData(show: false),
+        barGroups: _barChartGroups,
       ),
-      titlesData: _buildChartTitles(),
-      gridData: FlGridData(
-        show: true,
-        checkToShowHorizontalLine: (value) => value == 0,
-        getDrawingHorizontalLine: (value) {
-          if (value == 0)
-            return const FlLine(color: Colors.black54, strokeWidth: 1);
-          return const FlLine(color: Colors.black12, strokeWidth: 1);
-        },
-      ),
-      borderData: FlBorderData(show: false),
-      barGroups: _barChartGroups,
-    ));
+    );
   }
 
   FlTitlesData _buildChartTitles() {
@@ -3408,16 +3598,18 @@ $liabilityLines
           .format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
-        axisSide: meta.axisSide, child: Text(text, style: style));
+      axisSide: meta.axisSide,
+      child: Text(text, style: style),
+    );
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
     final format = NumberFormat.compact(locale: 'ja_JP');
     return SideTitleWidget(
-        axisSide: meta.axisSide,
-        space: 8,
-        child:
-            Text(format.format(value), style: const TextStyle(fontSize: 10)));
+      axisSide: meta.axisSide,
+      space: 8,
+      child: Text(format.format(value), style: const TextStyle(fontSize: 10)),
+    );
   }
 
   List<LineTooltipItem> _getTooltipItems(List<LineBarSpot> spots) {
@@ -3432,15 +3624,19 @@ $liabilityLines
     final formattedTotal =
         NumberFormat.simpleCurrency(locale: 'ja_JP').format(total);
     final tooltips = <LineTooltipItem>[
-      LineTooltipItem('$formattedDate\n',
-          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      LineTooltipItem(
+        '$formattedDate\n',
+        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
       if (_isStacked)
         LineTooltipItem(
-            '総資産: $formattedTotal\n',
-            const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14)),
+          '総資産: $formattedTotal\n',
+          const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
     ];
     final sortedAssets = assetsOnDate.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -3448,8 +3644,12 @@ $liabilityLines
       final color = _colors[_assetTypes.indexOf(entry.key) % _colors.length];
       final formattedValue =
           NumberFormat.simpleCurrency(locale: 'ja_JP').format(entry.value);
-      tooltips.add(LineTooltipItem('${entry.key}: $formattedValue',
-          TextStyle(color: color, fontWeight: FontWeight.bold)));
+      tooltips.add(
+        LineTooltipItem(
+          '${entry.key}: $formattedValue',
+          TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+      );
     }
     return tooltips;
   }

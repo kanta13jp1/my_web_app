@@ -12,7 +12,7 @@ class ApiPlaygroundPage extends StatefulWidget {
 
 class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
   String? _apiKey;
-  List<dynamic> _models = [];
+  List<Map<String, dynamic>> _models = [];
   Map<String, dynamic>? _selectedModel;
   String? _selectedMethod;
   final TextEditingController _inputController = TextEditingController();
@@ -46,9 +46,14 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final Map<String, dynamic> data =
+            json.decode(response.body) as Map<String, dynamic>;
+        final models = (data['models'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((model) => Map<String, dynamic>.from(model))
+            .toList();
         setState(() {
-          _models = data['models'] ?? [];
+          _models = models;
           // デフォルトでリストの先頭を選択（もしあれば）
           if (_models.isNotEmpty) {
             _onModelSelected(_models.first);
@@ -67,11 +72,14 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
     }
   }
 
-  void _onModelSelected(dynamic model) {
+  void _onModelSelected(Map<String, dynamic> model) {
     setState(() {
       _selectedModel = model;
       // モデルを変更したら、そのモデルがサポートするメソッドのリストを取得して、最初のものをデフォルト選択
-      final List<dynamic> methods = model['supportedGenerationMethods'] ?? [];
+      final methodsRaw = model['supportedGenerationMethods'];
+      final List<String> methods = methodsRaw is List
+          ? methodsRaw.cast<Object>().map((m) => m.toString()).toList()
+          : <String>[];
       // 利用頻度の高いメソッドを優先的にデフォルトにするロジック
       if (methods.contains('generateContent')) {
         _selectedMethod = 'generateContent';
@@ -98,7 +106,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
     });
 
     try {
-      final modelName = _selectedModel!['name']; // 例: models/gemini-pro
+      final modelName = (_selectedModel!['name'] ?? '').toString();
       final method = _selectedMethod!;
 
       // エンドポイントの構築
@@ -203,18 +211,22 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                       EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 initialValue: _selectedModel?['name'],
-                items: _models.map<DropdownMenuItem<String>>((dynamic model) {
+                items: _models.map<DropdownMenuItem<String>>((model) {
+                  final modelName = (model['name'] ?? '').toString();
                   return DropdownMenuItem<String>(
-                    value: model['name'],
+                    value: modelName,
                     child: Text(
-                      model['name'].toString().replaceAll('models/', ''),
+                      modelName.replaceAll('models/', ''),
                       overflow: TextOverflow.ellipsis,
                     ),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
-                  final model =
-                      _models.firstWhere((m) => m['name'] == newValue);
+                  if (newValue == null) return;
+                  final model = _models.firstWhere(
+                    (m) => (m['name'] ?? '').toString() == newValue,
+                    orElse: () => _models.first,
+                  );
                   _onModelSelected(model);
                 },
                 isExpanded: true,
@@ -231,12 +243,15 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                       EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 initialValue: _selectedMethod,
-                items: (_selectedModel!['supportedGenerationMethods']
-                        as List<dynamic>?)
-                    ?.map<DropdownMenuItem<String>>((dynamic method) {
+                items: ((_selectedModel!['supportedGenerationMethods']
+                            as List<dynamic>?) ??
+                        const <dynamic>[])
+                    .cast<Object>()
+                    .map<DropdownMenuItem<String>>((method) {
+                  final methodName = method.toString();
                   return DropdownMenuItem<String>(
-                    value: method.toString(),
-                    child: Text(method.toString()),
+                    value: methodName,
+                    child: Text(methodName),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {

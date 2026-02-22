@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// ignore_for_file: must_be_immutable
+
 class FakeSupabaseClient extends Fake implements SupabaseClient {
   final _queryBuilder = FakeSupabaseQueryBuilder();
-  
+
   FakeSupabaseQueryBuilder get queryBuilder => _queryBuilder;
 
   @override
@@ -23,31 +25,35 @@ class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
     _data = data;
     _shouldThrow = false;
   }
-  
+
   void setShouldThrow(bool should) {
     _shouldThrow = should;
   }
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([String? columns = '*']) {
-    return FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(_data, _shouldThrow);
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select(
+      [String? columns = '*',]) {
+    return FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(
+        _data, _shouldThrow,);
   }
 
-  @override
-  SupabaseQueryBuilder order(String column, {bool ascending = false, bool nullsFirst = false}) => this;
+  SupabaseQueryBuilder order(String column,
+          {bool ascending = false, bool nullsFirst = false,}) =>
+      this;
 
-  @override
   SupabaseQueryBuilder limit(int count) => this;
 }
 
-class FakePostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
+class FakePostgrestFilterBuilder<T> extends Fake
+    implements PostgrestFilterBuilder<T> {
   final T _value;
   final bool _shouldThrow;
 
   FakePostgrestFilterBuilder(this._value, this._shouldThrow);
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue, {Function? onError}) {
+  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
+      {Function? onError,}) {
     return Future.delayed(const Duration(milliseconds: 1), () {
       if (_shouldThrow) {
         throw Exception('Supabase error');
@@ -56,7 +62,6 @@ class FakePostgrestFilterBuilder<T> extends Fake implements PostgrestFilterBuild
     }).then(onValue, onError: onError);
   }
 }
-
 
 void main() {
   late FakeSupabaseClient fakeSupabaseClient;
@@ -88,7 +93,8 @@ void main() {
     },
   ];
 
-  testWidgets('AdminAnalyticsPage shows data after loading', (WidgetTester tester) async {
+  testWidgets('AdminAnalyticsPage shows data after loading',
+      (WidgetTester tester) async {
     // Setup mock data
     fakeSupabaseClient.queryBuilder.setData(sampleData);
 
@@ -105,37 +111,38 @@ void main() {
     expect(find.text('20 人'), findsOneWidget);
     expect(find.text('10 人'), findsOneWidget);
   });
-  
-    testWidgets('Refresh button reloads the data', (WidgetTester tester) async {
-      // Initial data
-      fakeSupabaseClient.queryBuilder.setData(sampleData);
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
 
-      // Verify initial data
-      expect(find.text('180'), findsOneWidget);
+  testWidgets('Refresh button reloads the data', (WidgetTester tester) async {
+    // Initial data
+    fakeSupabaseClient.queryBuilder.setData(sampleData);
+    await tester.pumpWidget(createTestWidget());
+    await tester.pumpAndSettle();
 
-      // New data for refresh
-      final newData = [
-        {
-          'date': '2023-10-28',
-          'landing_views': 50,
-          'conversions': 5,
-          'share_count': 2,
-          'source_details': {'direct': 50},
-        },
-      ];
-      fakeSupabaseClient.queryBuilder.setData(newData);
-      
-      // Tap refresh button
-      await tester.tap(find.byIcon(Icons.refresh));
-      await tester.pumpAndSettle();
+    // Verify initial data
+    expect(find.text('180'), findsOneWidget);
 
-      // Verify new data
-      expect(find.text('50'), findsOneWidget);
+    // New data for refresh
+    final newData = [
+      {
+        'date': '2023-10-28',
+        'landing_views': 50,
+        'conversions': 5,
+        'share_count': 2,
+        'source_details': {'direct': 50},
+      },
+    ];
+    fakeSupabaseClient.queryBuilder.setData(newData);
+
+    // Tap refresh button
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+
+    // Verify new data
+    expect(find.text('50'), findsOneWidget);
   });
 
-    testWidgets('Shows empty state when there is no data', (WidgetTester tester) async {
+  testWidgets('Shows empty state when there is no data',
+      (WidgetTester tester) async {
     // Setup empty data
     fakeSupabaseClient.queryBuilder.setData([]);
 

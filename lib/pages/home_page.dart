@@ -436,7 +436,7 @@ class _HomePageState extends State<HomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: item.color.withOpacity(0.1),
+                      color: item.color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(item.icon, color: item.color, size: 20),
@@ -559,7 +559,8 @@ class _HomePageState extends State<HomePage> {
     IconData icon,
     Color color,
   ) {
-    final labelColor = isDark ? Colors.white70 : Colors.black.withOpacity(0.6);
+    final labelColor =
+        isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.6);
 
     return Card(
       elevation: 2,

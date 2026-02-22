@@ -78,6 +78,7 @@ class _WardrobePageState extends State<WardrobePage>
     'sell',
     'discard',
   ];
+  // ignore: unused_field
   static const List<String> _colors = [
     'ブラック',
     'ホワイト',
@@ -152,7 +153,8 @@ class _WardrobePageState extends State<WardrobePage>
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => _AddItemSheet(
         onSaved: () {
           Navigator.pop(context);
@@ -181,8 +183,9 @@ class _WardrobePageState extends State<WardrobePage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('「${item.name}」を着用記録しました'),
-              backgroundColor: Colors.green[700]),
+            content: Text('「${item.name}」を着用記録しました'),
+            backgroundColor: Colors.green[700],
+          ),
         );
       }
       _fetchItems();
@@ -199,8 +202,9 @@ class _WardrobePageState extends State<WardrobePage>
         content: const Text('この衣類を削除しますか？'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -296,10 +300,12 @@ class _WardrobePageState extends State<WardrobePage>
                     final st = _statusFilters[i];
                     final selected = _filterStatus == st;
                     return FilterChip(
-                      label: Text(_statusLabel(st),
-                          style: const TextStyle(fontSize: 11)),
+                      label: Text(
+                        _statusLabel(st),
+                        style: const TextStyle(fontSize: 11),
+                      ),
                       selected: selected,
-                      selectedColor: _statusColor(st).withOpacity(0.3),
+                      selectedColor: _statusColor(st).withValues(alpha: 0.3),
                       onSelected: (_) => setState(() => _filterStatus = st),
                     );
                   },
@@ -313,8 +319,10 @@ class _WardrobePageState extends State<WardrobePage>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(
             children: [
-              Text('${filtered.length}件',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text(
+                '${filtered.length}件',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -327,11 +335,16 @@ class _WardrobePageState extends State<WardrobePage>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.checkroom,
-                              size: 60, color: Colors.grey[300]),
+                          Icon(
+                            Icons.checkroom,
+                            size: 60,
+                            color: Colors.grey[300],
+                          ),
                           const SizedBox(height: 16),
-                          Text('衣類を追加してください',
-                              style: TextStyle(color: Colors.grey[500])),
+                          Text(
+                            '衣類を追加してください',
+                            style: TextStyle(color: Colors.grey[500]),
+                          ),
                         ],
                       ),
                     )
@@ -383,9 +396,13 @@ class _WardrobePageState extends State<WardrobePage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                       Row(
                         children: [
                           _chip(item.category, Colors.brown[100]!),
@@ -401,37 +418,44 @@ class _WardrobePageState extends State<WardrobePage>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _statusColor(item.status).withOpacity(0.15),
+                    color: _statusColor(item.status).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _statusLabel(item.status),
                     style: TextStyle(
-                        color: _statusColor(item.status),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12),
+                      color: _statusColor(item.status),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
             ),
             if (item.memo != null && item.memo!.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(item.memo!,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text(
+                item.memo!,
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
             ],
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.schedule,
-                    size: 12, color: isOld ? Colors.red : Colors.grey),
+                Icon(
+                  Icons.schedule,
+                  size: 12,
+                  color: isOld ? Colors.red : Colors.grey,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   item.lastWornAt != null
-                      ? '最終着用: ${DateFormat('yyyy/MM/dd').format(item.lastWornAt!)}（${daysSinceWorn}日前）'
+                      ? '最終着用: ${DateFormat('yyyy/MM/dd').format(item.lastWornAt!)}（$daysSinceWorn日前）'
                       : '着用記録なし',
                   style: TextStyle(
-                      fontSize: 11,
-                      color: isOld ? Colors.red : Colors.grey[500]),
+                    fontSize: 11,
+                    color: isOld ? Colors.red : Colors.grey[500],
+                  ),
                 ),
                 if (isOld) ...[
                   const SizedBox(width: 4),
@@ -439,10 +463,13 @@ class _WardrobePageState extends State<WardrobePage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(4)),
-                    child: const Text('長期未使用',
-                        style: TextStyle(color: Colors.red, fontSize: 10)),
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '長期未使用',
+                      style: TextStyle(color: Colors.red, fontSize: 10),
+                    ),
                   ),
                 ],
               ],
@@ -452,16 +479,32 @@ class _WardrobePageState extends State<WardrobePage>
             Row(
               children: [
                 _actionBtn(
-                    '着用', Icons.check, Colors.green, () => _markWorn(item)),
+                  '着用',
+                  Icons.check,
+                  Colors.green,
+                  () => _markWorn(item),
+                ),
                 const SizedBox(width: 6),
-                _actionBtn('寄付', Icons.favorite, Colors.blue,
-                    () => _updateStatus(item, 'donate')),
+                _actionBtn(
+                  '寄付',
+                  Icons.favorite,
+                  Colors.blue,
+                  () => _updateStatus(item, 'donate'),
+                ),
                 const SizedBox(width: 6),
-                _actionBtn('売却', Icons.sell, Colors.orange,
-                    () => _updateStatus(item, 'sell')),
+                _actionBtn(
+                  '売却',
+                  Icons.sell,
+                  Colors.orange,
+                  () => _updateStatus(item, 'sell'),
+                ),
                 const SizedBox(width: 6),
-                _actionBtn('処分', Icons.delete_outline, Colors.red,
-                    () => _updateStatus(item, 'discard')),
+                _actionBtn(
+                  '処分',
+                  Icons.delete_outline,
+                  Colors.red,
+                  () => _updateStatus(item, 'discard'),
+                ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete, size: 18, color: Colors.grey),
@@ -478,14 +521,18 @@ class _WardrobePageState extends State<WardrobePage>
   }
 
   Widget _actionBtn(
-      String label, IconData icon, Color color, VoidCallback onTap) {
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -493,9 +540,14 @@ class _WardrobePageState extends State<WardrobePage>
           children: [
             Icon(icon, size: 12, color: color),
             const SizedBox(width: 2),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 11, color: color, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -516,10 +568,12 @@ class _WardrobePageState extends State<WardrobePage>
     final total = _items.length;
     // 180日以上着用なし
     final longUnused = _items
-        .where((i) =>
-            i.status == 'keep' &&
-            (i.lastWornAt == null ||
-                DateTime.now().difference(i.lastWornAt!).inDays > 180))
+        .where(
+          (i) =>
+              i.status == 'keep' &&
+              (i.lastWornAt == null ||
+                  DateTime.now().difference(i.lastWornAt!).inDays > 180),
+        )
         .toList();
 
     return SingleChildScrollView(
@@ -534,9 +588,10 @@ class _WardrobePageState extends State<WardrobePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('ワードローブサマリー',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    'ワードローブサマリー',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -568,61 +623,81 @@ class _WardrobePageState extends State<WardrobePage>
                     children: [
                       Icon(Icons.warning_amber, color: Colors.orange[700]),
                       const SizedBox(width: 8),
-                      Text('断捨離候補（180日以上未着用）',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange[800])),
+                      Text(
+                        '断捨離候補（180日以上未着用）',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[800],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('${longUnused.length}件の衣類が半年以上着用されていません',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  Text(
+                    '${longUnused.length}件の衣類が半年以上着用されていません',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
                   if (longUnused.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    ...longUnused.take(5).map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                    color: _colorToFlutter(item.color),
-                                    shape: BoxShape.circle),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(item.name,
-                                    style: const TextStyle(fontSize: 13)),
-                              ),
-                              Text(
-                                item.lastWornAt != null
-                                    ? '${DateTime.now().difference(item.lastWornAt!).inDays}日前'
-                                    : '記録なし',
-                                style: TextStyle(
-                                    color: Colors.red[400], fontSize: 12),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => _updateStatus(item, 'donate'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
+                    ...longUnused.take(5).map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
                                   decoration: BoxDecoration(
-                                      color: Colors.blue[50],
-                                      borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('寄付',
-                                      style: TextStyle(
-                                          color: Colors.blue, fontSize: 11)),
+                                    color: _colorToFlutter(item.color),
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    item.name,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                Text(
+                                  item.lastWornAt != null
+                                      ? '${DateTime.now().difference(item.lastWornAt!).inDays}日前'
+                                      : '記録なし',
+                                  style: TextStyle(
+                                    color: Colors.red[400],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => _updateStatus(item, 'donate'),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '寄付',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        )),
+                        ),
                     if (longUnused.length > 5)
-                      Text('+${longUnused.length - 5}件...',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 12)),
+                      Text(
+                        '+${longUnused.length - 5}件...',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
                   ],
                 ],
               ),
@@ -636,9 +711,10 @@ class _WardrobePageState extends State<WardrobePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('カテゴリ別内訳',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    'カテゴリ別内訳',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 12),
                   ..._categories.skip(1).map((cat) {
                     final count = _items.where((i) => i.category == cat).length;
@@ -649,9 +725,12 @@ class _WardrobePageState extends State<WardrobePage>
                       child: Row(
                         children: [
                           SizedBox(
-                              width: 70,
-                              child: Text(cat,
-                                  style: const TextStyle(fontSize: 12))),
+                            width: 70,
+                            child: Text(
+                              cat,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
                           Expanded(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
@@ -664,9 +743,13 @@ class _WardrobePageState extends State<WardrobePage>
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text('$count件',
-                              style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text(
+                            '$count件',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -683,9 +766,14 @@ class _WardrobePageState extends State<WardrobePage>
 
   Widget _summaryItem(String label, String value, Color color) => Column(
         children: [
-          Text(value,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: color,
+            ),
+          ),
           Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
         ],
       );
@@ -845,8 +933,10 @@ class _AddItemSheetState extends State<_AddItemSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('衣類を追加',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const Text(
+            '衣類を追加',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _nameCtrl,
@@ -862,11 +952,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _category,
+                  initialValue: _category,
                   decoration: const InputDecoration(
-                      labelText: 'カテゴリ',
-                      border: OutlineInputBorder(),
-                      isDense: true),
+                    labelText: 'カテゴリ',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
                   items: _categories
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
@@ -876,11 +967,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _color,
+                  initialValue: _color,
                   decoration: const InputDecoration(
-                      labelText: 'カラー',
-                      border: OutlineInputBorder(),
-                      isDense: true),
+                    labelText: 'カラー',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
                   items: _colors
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
@@ -913,9 +1005,14 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text('追加する',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      '追加する',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],

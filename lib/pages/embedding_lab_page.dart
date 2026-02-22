@@ -53,13 +53,15 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final Map<String, dynamic> data =
+            jsonDecode(response.body) as Map<String, dynamic>;
         // レスポンス形式: { "embedding": { "value": [0.1, 0.2, ...] } }
         final embeddingData = data['embedding'];
         List<dynamic> vector = [];
 
-        if (embeddingData != null && embeddingData['value'] != null) {
-          vector = embeddingData['value'];
+        if (embeddingData is Map<String, dynamic> &&
+            embeddingData['value'] is List) {
+          vector = List<dynamic>.from(embeddingData['value'] as List);
         }
 
         if (mounted) {
