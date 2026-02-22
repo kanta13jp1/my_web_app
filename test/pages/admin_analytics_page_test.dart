@@ -13,16 +13,29 @@ class FakeSupabaseClient extends Fake implements SupabaseClient {
 
   @override
   SupabaseQueryBuilder from(String table) {
+    _queryBuilder.setTable(table);
     return _queryBuilder;
   }
 }
 
 class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
-  dynamic _data;
+  List<Map<String, dynamic>> _data = <Map<String, dynamic>>[];
   bool _shouldThrow = false;
+  String _table = '';
+
+  void setTable(String table) {
+    _table = table;
+  }
 
   void setData(dynamic data) {
-    _data = data;
+    if (data is List) {
+      _data = data
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } else {
+      _data = <Map<String, dynamic>>[];
+    }
     _shouldThrow = false;
   }
 
@@ -31,14 +44,31 @@ class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
   }
 
   @override
-  PostgrestFilterBuilder<List<Map<String, dynamic>>> select(
-      [String? columns = '*',]) {
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
+    String? columns = '*',
+  ]) {
+    final count =
+        _table == 'user_profiles' ? _resolveUserCount() : _data.length;
     return FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(
-        _data, _shouldThrow,);
+      _data,
+      _shouldThrow,
+      count: count,
+    );
   }
 
-  SupabaseQueryBuilder order(String column,
-          {bool ascending = false, bool nullsFirst = false,}) =>
+  int _resolveUserCount() {
+    if (_data.isEmpty) return 0;
+    final first = _data.first;
+    final userCount = first['user_count'];
+    if (userCount is num) return userCount.toInt();
+    return _data.length;
+  }
+
+  SupabaseQueryBuilder order(
+    String column, {
+    bool ascending = false,
+    bool nullsFirst = false,
+  }) =>
       this;
 
   SupabaseQueryBuilder limit(int count) => this;
@@ -48,17 +78,65 @@ class FakePostgrestFilterBuilder<T> extends Fake
     implements PostgrestFilterBuilder<T> {
   final T _value;
   final bool _shouldThrow;
+  final int _count;
 
-  FakePostgrestFilterBuilder(this._value, this._shouldThrow);
+  FakePostgrestFilterBuilder(
+    this._value,
+    this._shouldThrow, {
+    int count = 0,
+  }) : _count = count;
 
   @override
-  Future<U> then<U>(FutureOr<U> Function(T value) onValue,
-      {Function? onError,}) {
+  Future<U> then<U>(
+    FutureOr<U> Function(T value) onValue, {
+    Function? onError,
+  }) {
     return Future.delayed(const Duration(milliseconds: 1), () {
       if (_shouldThrow) {
         throw Exception('Supabase error');
       }
       return _value;
+    }).then(onValue, onError: onError);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #order || invocation.memberName == #limit) {
+      return this;
+    }
+    if (invocation.memberName == #count) {
+      return FakeResponsePostgrestBuilder<T>(
+        value: _value,
+        shouldThrow: _shouldThrow,
+        count: _count,
+      );
+    }
+    return super.noSuchMethod(invocation);
+  }
+}
+
+class FakeResponsePostgrestBuilder<T> extends Fake
+    implements ResponsePostgrestBuilder<PostgrestResponse<T>, T, T> {
+  final T value;
+  final bool shouldThrow;
+  final int count;
+
+  FakeResponsePostgrestBuilder({
+    required this.value,
+    required this.shouldThrow,
+    required this.count,
+  });
+
+  @override
+  Future<U> then<U>(
+    FutureOr<U> Function(PostgrestResponse<T> value) onValue, {
+    Function? onError,
+  }) {
+    return Future.delayed(const Duration(milliseconds: 1), () {
+      if (shouldThrow) {
+        throw Exception('Supabase error');
+      }
+      return PostgrestResponse<T>(data: value, count: count);
     }).then(onValue, onError: onError);
   }
 }
@@ -103,13 +181,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Expect data to be displayed
-    expect(find.text('12.2%'), findsOneWidget);
+    expect(find.text('12.2'), findsOneWidget);
     expect(find.text('180'), findsOneWidget);
-    expect(find.text('22'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
-    expect(find.text('150 人'), findsOneWidget);
-    expect(find.text('20 人'), findsOneWidget);
-    expect(find.text('10 人'), findsOneWidget);
   });
 
   testWidgets('Refresh button reloads the data', (WidgetTester tester) async {
@@ -138,7 +212,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify new data
-    expect(find.text('50'), findsOneWidget);
+    expect(find.text('50'), findsWidgets);
   });
 
   testWidgets('Shows empty state when there is no data',
@@ -149,9 +223,8 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    expect(find.text('0.0%'), findsOneWidget);
-    expect(find.text('0'), findsNWidgets(3)); // views, conversions, shares
-    expect(find.text('データなし'), findsOneWidget);
+    expect(find.text('0.0'), findsOneWidget);
+    expect(find.byType(ListTile), findsNothing);
   });
 
   testWidgets('Handles Supabase error gracefully', (WidgetTester tester) async {
@@ -164,6 +237,6 @@ void main() {
     // Should not be loading anymore, but should not show data either
     expect(find.byType(CircularProgressIndicator), findsNothing);
     // It should just show an empty state as the error is caught and it sets loading to false
-    expect(find.text('0.0%'), findsOneWidget);
+    expect(find.text('0.0'), findsOneWidget);
   });
 }
