@@ -263,6 +263,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _autoCheckFromData() async {
     final todayStr = _dateOnly(DateTime.now());
 
+    // NOTE: Closing checks intentionally use raw inputs recorded today.
+    // Do not use display-complemented values here.
     final todayStock = _assetData[todayStr] ?? {};
     final allTypesFilledToday = _assetTypes.isNotEmpty &&
         _assetTypes.every((t) => todayStock.containsKey(t));
@@ -302,6 +304,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _copyDailySummary() async {
+    if (_sortedDates.isNotEmpty && _effectiveAssetDataByDate.isEmpty) {
+      _updateChartData();
+    }
+
     final now = DateTime.now();
     final todayStr = _dateOnly(now);
 
