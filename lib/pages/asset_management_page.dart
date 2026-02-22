@@ -38,6 +38,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, TextEditingController> _controllers = {};
   List<String> _assetTypes = ['現金'];
   Map<String, Map<String, double>> _assetData = {};
+  Map<String, Map<String, double>> _effectiveAssetDataByDate = {};
   Map<String, String?> _lastUpdatedDates = {};
 
   // --- グラフデータ ---
@@ -314,7 +315,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     double totalAssets = 0;
     double totalLiabilities = 0;
 
-    final snap = snapshotDate != null ? (_assetData[snapshotDate] ?? {}) : {};
+    final snap = snapshotDate != null
+        ? (_effectiveAssetDataByDate[snapshotDate] ??
+            _assetData[snapshotDate] ??
+            {})
+        : {};
     snap.forEach((_, v) {
       if (v >= 0) totalAssets += v;
       if (v < 0) totalLiabilities += v;
@@ -1262,6 +1267,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   void _updateChartData() {
     _sortedDates = _assetData.keys.toList()..sort();
+    _effectiveAssetDataByDate = {};
     if (_sortedDates.isEmpty) {
       _lineChartBars = [];
       _barChartGroups = [];
@@ -1270,25 +1276,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final Map<String, List<FlSpot>> spotsData = {
       for (var type in _assetTypes) type: [],
     };
-    List<double> dailyTotals = [];
+    final lastKnownValues = <String, double>{
+      for (var type in _assetTypes) type: 0,
+    };
+    final initializedTypes = <String>{};
+    final dailyTotals = <double>[];
 
     for (int i = 0; i < _sortedDates.length; i++) {
       final String date = _sortedDates[i];
+      final rawOnDate = _assetData[date] ?? const <String, double>{};
+      final snapshotOnDate = <String, double>{};
       double currentDayTotal = 0;
       double cumulativeValue = 0;
 
-      if (i > 0) {
-        final prevDate = _sortedDates[i - 1];
-        for (var type in _assetTypes) {
-          if (!_assetData[date]!.containsKey(type) &&
-              _assetData[prevDate]!.containsKey(type)) {
-            _assetData[date]![type] = _assetData[prevDate]![type]!;
-          }
-        }
-      }
-
       for (var type in _assetTypes) {
-        final double value = _assetData[date]?[type] ?? 0;
+        if (rawOnDate.containsKey(type)) {
+          lastKnownValues[type] = rawOnDate[type]!;
+          initializedTypes.add(type);
+        }
+        final double value = initializedTypes.contains(type)
+            ? (lastKnownValues[type] ?? 0.0)
+            : 0.0;
+        snapshotOnDate[type] = value;
         currentDayTotal += value;
         if (_isStacked) {
           cumulativeValue += value;
@@ -1297,6 +1306,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           spotsData[type]!.add(FlSpot(i.toDouble(), value));
         }
       }
+      _effectiveAssetDataByDate[date] = snapshotOnDate;
       dailyTotals.add(currentDayTotal);
     }
 
@@ -1733,7 +1743,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildLegendCard() {
     if (_sortedDates.isEmpty) return const SizedBox.shrink();
     final latestDate = _sortedDates.last;
-    final latestData = _assetData[latestDate] ?? {};
+    final latestData =
+        _effectiveAssetDataByDate[latestDate] ?? _assetData[latestDate] ?? {};
     double totalAssets = 0;
     double totalLiabilities = 0;
 
@@ -2487,7 +2498,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dateIndex = spots.first.spotIndex;
     if (dateIndex >= _sortedDates.length) return [];
     final date = _sortedDates[dateIndex];
-    final assetsOnDate = _assetData[date]!;
+    final assetsOnDate =
+        _effectiveAssetDataByDate[date] ?? _assetData[date] ?? {};
     double total = 0;
     assetsOnDate.forEach((_, value) => total += value);
     final formattedDate = DateFormat('yyyy/MM/dd').format(DateTime.parse(date));
