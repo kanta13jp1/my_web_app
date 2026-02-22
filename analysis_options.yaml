@@ -18,6 +18,22 @@ analyzer:
     # その他の重要な警告もエラーとして扱う
     missing_required_param: error
     missing_return: error
+    # 軽微な警告もエラーとして扱う
+    unnecessary_cast: error
+    unnecessary_new: error
+    unnecessary_this: error
+    unnecessary_overrides: error
+    unnecessary_parenthesis: error
+    unnecessary_string_interpolations: error
+    unnecessary_type_check: error
+    unnecessary_brace_in_string_interps: error
+    unnecessary_lambdas: error
+    library_private_types_in_public_api: error
+    require_trailing_commas: error
+    prefer_const_constructors: error
+    prefer_const_literals_to_create_immutables: error
+    prefer_final_fields: error
+    null_closures: error
   exclude:
     # 自動生成ファイルを除外
     - "**/*.g.dart"
