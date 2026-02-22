@@ -304,7 +304,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _copyDailySummary() async {
-    if (_sortedDates.isNotEmpty && _effectiveAssetDataByDate.isEmpty) {
+    if (_effectiveAssetDataByDate.isEmpty) {
       _updateChartData();
     }
 
@@ -1272,6 +1272,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // グラフ描画ロジック
   // ==========================================
   void _updateChartData() {
+    // NOTE: Builds UI-only complemented snapshots for charts/tooltips.
+    // Never mutate _assetData here; it is the source of truth persisted to Supabase.
     _sortedDates = _assetData.keys.toList()..sort();
     _effectiveAssetDataByDate = {};
     if (_sortedDates.isEmpty) {
