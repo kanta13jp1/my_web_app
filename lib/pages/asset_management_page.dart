@@ -494,6 +494,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  void _toggleMinusForType(String type) {
+    final controller = _controllers[type];
+    if (controller == null) return;
+
+    final current = controller.text.trim();
+    if (current.isEmpty) {
+      controller.text = '-';
+    } else if (current.startsWith('-')) {
+      controller.text = current.substring(1);
+    } else {
+      controller.text = '-$current';
+    }
+
+    controller.selection =
+        TextSelection.collapsed(offset: controller.text.length);
+  }
+
   Future<void> _saveSingleAssetData(String type) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -506,7 +523,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final cleanText = controller.text.replaceAll(',', '');
-    final double amount = double.tryParse(cleanText) ?? 0.0;
+    final parsedAmount = double.tryParse(cleanText);
+    if (parsedAmount == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type の金額形式が不正です')),
+      );
+      return;
+    }
+    final double amount = parsedAmount;
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     try {
@@ -542,15 +566,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final Map<String, double> todayData = {};
     bool hasData = false;
+    final List<String> invalidTypes = [];
 
     _controllers.forEach((assetType, controller) {
       if (controller.text.isNotEmpty) {
         final cleanText = controller.text.replaceAll(',', '');
-        final double amount = double.tryParse(cleanText) ?? 0.0;
+        final parsedAmount = double.tryParse(cleanText);
+        if (parsedAmount == null) {
+          invalidTypes.add(assetType);
+          return;
+        }
+        final double amount = parsedAmount;
         todayData[assetType] = amount;
         hasData = true;
       }
     });
+
+    if (invalidTypes.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('金額形式を確認してください: ${invalidTypes.join(', ')}')),
+      );
+      return;
+    }
 
     if (!hasData) return;
 
@@ -1551,6 +1588,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         labelText: type,
                         hintText: '負債はマイナス(-)をつける',
                         border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          tooltip: '符号切替',
+                          onPressed: () => _toggleMinusForType(type),
+                          icon: const Icon(Icons.exposure_neg_1),
+                        ),
                         isDense: true,
                         filled: isUpdatedToday,
                         fillColor: isUpdatedToday ? Colors.green[50] : null,
@@ -1589,6 +1631,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           labelText: type,
                           hintText: '負債はマイナス(-)をつける',
                           border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            tooltip: '符号切替',
+                            onPressed: () => _toggleMinusForType(type),
+                            icon: const Icon(Icons.exposure_neg_1),
+                          ),
                           isDense: true,
                           filled: isUpdatedToday,
                           fillColor: isUpdatedToday ? Colors.green[50] : null,
