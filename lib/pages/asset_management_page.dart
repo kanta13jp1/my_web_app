@@ -84,6 +84,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     Colors.brown,
   ];
 
+  static const double _compactWidthBreakpoint = 420;
+  bool get _isCompact =>
+      MediaQuery.sizeOf(context).width < _compactWidthBreakpoint;
+
   @override
   void initState() {
     super.initState();
@@ -740,7 +744,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String paymentSource = candidates.first; // （未設定）
     final customPaymentSourceController = TextEditingController();
 
-    await showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -869,16 +874,40 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           );
         },
       ),
-    );
-    nameController.dispose();
-    priceController.dispose();
-    customPaymentSourceController.dispose();
+      );
+    } finally {
+      nameController.dispose();
+      priceController.dispose();
+      customPaymentSourceController.dispose();
+    }
   }
 
   Future<void> _deleteSubscription(String id) async {
     await _supabase.from('subscriptions').delete().eq('id', id);
     _fetchSubscriptions();
     await _fetchTodayClosing();
+  }
+
+  Future<bool> _confirmDeleteSubscription() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('削除の確認'),
+        content: const Text('この固定費を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   Future<void> _toggleSubscriptionPaid(String id, bool current) async {
@@ -1286,7 +1315,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData:
-                BarAreaData(show: _isStacked, color: color.withOpacity(0.5)),
+                BarAreaData(show: _isStacked, color: color.withValues(alpha: 0.5)),
           );
         })
         .whereType<LineChartBarData>()
@@ -1322,7 +1351,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   @override
   Widget build(BuildContext context) {
-    final isCompact = MediaQuery.of(context).size.width < 420;
+    final isCompact = _isCompact;
     return Scaffold(
       appBar: AppBar(
         title: const Text('資産管理闘争'),
@@ -1361,7 +1390,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildDeadlineChecklistCard() {
     final remainText = _remainingToDeadlineText();
     final p = _progress();
-    final isCompact = MediaQuery.of(context).size.width < 420;
+    final isCompact = _isCompact;
 
     return Card(
       elevation: 3,
@@ -1562,7 +1591,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetInputRow(String type) {
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
-    final isCompact = MediaQuery.of(context).size.width < 420;
+    final isCompact = _isCompact;
 
     // 最新残高を取得
     final lastDate = _lastUpdatedDates[type];
@@ -1970,7 +1999,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildSubscriptionCard() {
     int totalCost = 0;
     int unpaidCost = 0;
-    final isCompact = MediaQuery.of(context).size.width < 420;
+    final isCompact = _isCompact;
     for (final sub in _subscriptions) {
       final price = (sub['price'] as num?)?.toInt() ?? 0;
       totalCost += price;
@@ -2145,7 +2174,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   fontSize: 12,
                                 ),
                               ),
-                              if (src != null && src.isNotEmpty)
+                              if (src.isNotEmpty)
                                 Text(
                                   '引落先: $src',
                                   style: TextStyle(
@@ -2159,21 +2188,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           trailing: PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert),
-                            onSelected: (value) {
+                            onSelected: (value) async {
                               if (value == 'due') {
                                 _editSubscriptionDueDate(item);
                               } else if (value == 'source') {
                                 _editSubscriptionPaymentSource(item);
                               } else if (value == 'delete') {
-                                _deleteSubscription(item['id']);
+                                final shouldDelete =
+                                    await _confirmDeleteSubscription();
+                                if (!shouldDelete) return;
+                                await _deleteSubscription(item['id']);
                               }
                             },
-                            itemBuilder: (context) => const [
-                              PopupMenuItem<String>(
+                            itemBuilder: (context) => [
+                              const PopupMenuItem<String>(
                                 value: 'due',
                                 child: Text('支払日を編集'),
                               ),
-                              PopupMenuItem<String>(
+                              const PopupMenuItem<String>(
                                 value: 'source',
                                 child: Text('引落先を編集'),
                               ),
