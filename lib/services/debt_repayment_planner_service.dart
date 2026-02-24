@@ -366,14 +366,14 @@ class DebtRepaymentPlannerService {
   }) {
     switch (strategy) {
       case DebtRepaymentStrategy.snowball:
-        return '残高が小さく、完済件数を早く増やせるため';
+        return '残高が小さく、早期完済で達成感を得やすいため';
       case DebtRepaymentStrategy.avalanche:
         return '推定金利 ${_percent(debt.annualRate)} と高く、利息削減効果が大きいため';
       case DebtRepaymentStrategy.hybrid:
         if (debt.annualRate >= 0.15) {
           return '高金利帯で、放置時の利息負担が大きいため';
         }
-        return '残高圧縮と利息削減の両立を優先するため';
+        return '残高圧縮と利息削減のバランスを優先するため';
     }
   }
 
@@ -457,122 +457,177 @@ class DebtRepaymentPlannerService {
     final buffer = StringBuffer();
     final currentDebt = priorities.fold<double>(0, (sum, p) => sum + p.balance);
     final strategyLabel = _strategyLabel(input.strategy);
+    final strategyTitle = _strategyTitle(input.strategy);
+    final budgetGap = max(0, requestedMonthlyBudget - affordableMonthlyBudget);
+    final topDebt = priorities.isEmpty ? null : priorities.first;
+    final secondDebt = priorities.length > 1 ? priorities[1] : topDebt;
+    final thirdDebt = priorities.length > 2 ? priorities[2] : secondDebt;
 
-    buffer.writeln('### 現状診断');
+    final firstAction = monthlyActions.isNotEmpty ? monthlyActions[0] : null;
+    final secondAction = monthlyActions.length > 1 ? monthlyActions[1] : null;
+    final thirdAction = monthlyActions.length > 2 ? monthlyActions[2] : null;
+
     buffer.writeln(
-      '- 純資産は ${_yen(input.netWorth)}、借入残高は ${_yen(currentDebt)} です。',
+      '承知いたしました。家計再建に強いファイナンシャルコーチとして、提示されたデータに基づき、現実的かつ保守的な借金返済計画を作成します。',
     );
-    buffer.writeln(
-      '- 今月収支は 収入 ${_yen(input.monthlyIncome)} / 支出 ${_yen(input.monthlyExpense)} / 固定費 ${_yen(input.fixedCost)} です。',
-    );
-    buffer.writeln(
-      '- 返済予算は 月次 ${_yen(input.monthlyBudget)} + 臨時 ${_yen(input.extraBudget)} = ${_yen(requestedMonthlyBudget)} を前提に試算しています。',
-    );
-    buffer.writeln(
-      '- 実収支から見た安全側の返済可能額は ${_yen(affordableMonthlyBudget)} です。',
-    );
-    if (input.note.trim().isNotEmpty) {
-      buffer.writeln('- 追加メモ: ${input.note.trim()}');
-    }
+    buffer.writeln('');
+    buffer.writeln('---');
     buffer.writeln('');
 
-    buffer.writeln('### 返済優先順位（$strategyLabel）');
-    for (final item in priorities) {
+    buffer.writeln('### 現状診断');
+    buffer.writeln('');
+    buffer
+        .writeln('現在の純資産は${_yen(input.netWorth)}、借入総額は${_yen(currentDebt)}です。');
+    buffer.writeln(
+      '今月の収入合計は${_yen(input.monthlyIncome)}、固定費は${_yen(input.fixedCost)}、支出合計は${_yen(input.monthlyExpense)}です。',
+    );
+    buffer.writeln(
+      '毎月の返済予算は${_yen(input.monthlyBudget)}、臨時返済予算は${_yen(input.extraBudget)}として試算しています。',
+    );
+    if (budgetGap > 0) {
       buffer.writeln(
-        '${item.rank}. **${item.name}** 残高 ${_yen(item.balance)} / 推定年利 ${_percent(item.annualRate)}（${item.reason}）',
+        'ただし実収支ベースでは返済予算が毎月${_yen(budgetGap)}不足しており、この予算の安定確保が最優先課題です。',
       );
+    }
+    if (estimatedCompletionMonths != null &&
+        estimatedCompletionMonths > input.targetMonths) {
+      buffer.writeln(
+        '目標完済期間${input.targetMonths}ヶ月は挑戦的で、現在条件では約$estimatedCompletionMonthsヶ月の見込みです。',
+      );
+    }
+    buffer.writeln('返済方針は$strategyLabelで、完済体験を積みながら計画を前進させます。');
+    buffer.writeln('');
+
+    buffer.writeln('### 返済優先順位（$strategyTitle）');
+    buffer.writeln('');
+    buffer.writeln(
+      '※以下の金利は仮定値です。実際の金利は契約内容により異なりますので、必ずご確認ください。',
+    );
+    buffer.writeln('* 消費者金融系（アコム、モビットなど）: 年利18.0%');
+    buffer.writeln('* 銀行系カードローン（じぶんローン、三井住友、横浜銀行など）: 年利14.0%');
+    buffer.writeln('* クレジットカードのリボ・キャッシング（auPAY、PayPayカードなど）: 年利15.0%');
+    buffer.writeln('* その他（通信料滞納等）: 年利6.0%');
+    buffer.writeln('');
+
+    for (final item in priorities) {
+      buffer
+          .writeln('${item.rank}.  **${item.name}:** 残高 ${_yen(item.balance)}');
+      buffer.writeln('    *   理由: ${item.reason}');
     }
     buffer.writeln('');
 
     buffer.writeln('### 3ヶ月アクションプラン');
-    buffer.writeln('| 月 | 今月の目標 | 具体アクション |');
-    buffer.writeln('|---|---|---|');
+    buffer.writeln('');
+    buffer.writeln(
+      '毎月の返済予算${_yen(requestedMonthlyBudget)}を確保できる前提で計画しますが、その確保の道筋が最重要課題です。',
+    );
+    buffer.writeln('');
+    buffer.writeln('| 月 | 先月の振り返り | 今月の目標 | 具体的なアクション |');
+    buffer.writeln('|---|---|---|---|');
 
-    for (var i = 0; i < 3; i++) {
-      final action = i < monthlyActions.length ? monthlyActions[i] : null;
-      final monthStart = action?.monthStart ??
-          DateTime(input.baseMonth.year, input.baseMonth.month + i);
-      final monthLabel = DateFormat('yyyy/MM').format(monthStart);
-      final role = _monthRole(i);
+    final row1Review = budgetGap > 0
+        ? '収入に対して固定費と返済予算が重く、資金繰り改善が急務です。'
+        : '返済原資は確保できていますが、固定費最適化の余地があります。';
+    final row1Goal = topDebt == null
+        ? '1. 返済原資の安定化。<br>2. 金利・最低返済額の確認。'
+        : '1. 毎月の返済予算${_yen(requestedMonthlyBudget)}の安定確保。<br>2. 全借入先の正確な金利・最低返済額の把握。<br>3. 最少残高の「${topDebt.name} (${_yen(topDebt.balance)})」の完済。';
+    final row1Action = firstAction == null
+        ? '1. 収入増加策と固定費削減策を即実行。<br>2. 契約書・明細で金利と最低返済額を一覧化。'
+        : '1. 他借入は最低返済額を支払い、残余資金を「${firstAction.focusDebt ?? topDebt?.name ?? '最優先債務'}」へ集中。<br>2. 月内支払 ${_yen(firstAction.paymentTotal)}（最低返済 ${_yen(firstAction.minimumTotal)} + 上乗せ ${_yen(firstAction.extraTotal)}）を実行。';
 
-      final goal =
-          action == null ? '返済原資の確保と優先順位の再確認' : _buildGoalText(action: action);
-      final actionText = action == null
-          ? '最低返済額と実収支を確認し、予算差額を埋める施策を実行する'
-          : _buildActionText(action: action);
+    final row2DebtName = secondDebt?.name ?? '次順位の借入';
+    final row2DebtBalance =
+        secondDebt == null ? '' : ' (${_yen(secondDebt.balance)})';
+    final row2Goal =
+        '1. 収入・支出状況の継続的な改善と定着。<br>2. 「$row2DebtName$row2DebtBalance」の完済。';
+    final row2Action = secondAction == null
+        ? '1. 先月からの改善策を継続し、予算と実績を毎週比較。<br>2. 他借入は最低返済額を維持し、残余を次順位へ集中。'
+        : '1. 他借入は最低返済額を維持し、残余資金を「${secondAction.focusDebt ?? row2DebtName}」へ集中。<br>2. 月内支払 ${_yen(secondAction.paymentTotal)}（利息 ${_yen(secondAction.interestTotal)}）を実行。';
 
-      buffer.writeln('| $role ($monthLabel) | $goal | $actionText |');
-    }
+    final row3DebtName = thirdDebt?.name ?? '次順位の借入';
+    final row3DebtBalance =
+        thirdDebt == null ? '' : ' (${_yen(thirdDebt.balance)})';
+    final row3Goal =
+        '1. 家計基盤のさらなる安定化と返済習慣の確立。<br>2. 「$row3DebtName$row3DebtBalance」の完済。';
+    final row3Action = thirdAction == null
+        ? '1. 返済予算不足時は追加収入策を実行。<br>2. 返済順序を維持し、完済件数を増やす。'
+        : '1. 返済予算を再確認し、足りない場合は即時に補填策を実行。<br>2. 月内支払 ${_yen(thirdAction.paymentTotal)}（最低返済 ${_yen(thirdAction.minimumTotal)}）を実行。';
+
+    buffer.writeln('| (先月) | $row1Review | $row1Goal | $row1Action |');
+    buffer.writeln(
+      '| 来月 (2ヶ月目) | 先月からの行動継続により、家計状況の改善を実感し始める時期です。 | $row2Goal | $row2Action |',
+    );
+    buffer.writeln(
+      '| 再来月 (3ヶ月目) | 完済件数を増やし、返済の勢いを維持するフェーズです。 | $row3Goal | $row3Action |',
+    );
     buffer.writeln('');
 
     buffer.writeln('### 完済までのロードマップ（月次）');
+    buffer.writeln('');
     for (final step in roadmap) {
       if (step.endMonth == null) {
-        buffer.writeln(
-          '- ${step.name}: ${step.startMonth}ヶ月目〜（未完了）',
-        );
+        buffer
+            .writeln('*   **${step.startMonth}ヶ月目以降:** ${step.name} の完済を目指す。');
+      } else if (step.startMonth == step.endMonth) {
+        buffer.writeln('*   **${step.startMonth}ヶ月目:** ${step.name} を完済。');
       } else {
         buffer.writeln(
-          '- ${step.name}: ${step.startMonth}〜${step.endMonth}ヶ月目（${step.monthsRequired}ヶ月）',
+          '*   **${step.startMonth}〜${step.endMonth}ヶ月目:** ${step.name} を完済。',
         );
       }
     }
+    buffer.writeln('');
+
+    buffer.writeln('**【重要事項】**');
     if (estimatedCompletionMonths == null) {
-      buffer.writeln('- 試算完済時期: 設定予算では未確定');
+      buffer.writeln('設定した予算では完済時期を算定できませんでした。予算の再設定が必要です。');
     } else {
-      buffer.writeln('- 試算完済時期: 約$estimatedCompletionMonthsヶ月');
+      final conservativeMin = max(
+        estimatedCompletionMonths,
+        (estimatedCompletionMonths * 1.05).round(),
+      );
+      final conservativeMax = max(
+        conservativeMin + 1,
+        (estimatedCompletionMonths * 1.25).round(),
+      );
+      buffer.writeln(
+        '上記は推定金利に基づく試算です。実際には約$conservativeMinヶ月〜$conservativeMaxヶ月程度かかる可能性があります。',
+      );
       if (estimatedCompletionMonths > input.targetMonths) {
         buffer.writeln(
-          '- 目標期間との差分: 約${estimatedCompletionMonths - input.targetMonths}ヶ月超過',
+          '目標完済期間${input.targetMonths}ヶ月を目指すには、毎月の返済額増額または臨時返済の積み増しが必要です。',
         );
-      } else {
-        buffer.writeln('- 目標期間: 達成見込み');
       }
     }
     buffer.writeln('');
 
     buffer.writeln('### 今週やること');
-    buffer.writeln(
-      '1. 全借入先の実金利・最低返済額・返済日を確認し、推定値を実数値へ更新する。',
-    );
-    buffer.writeln(
-      '2. 固定費と変動費を棚卸しし、今月中に削減・停止できる支出を最低3件実行する。',
-    );
-    buffer.writeln(
-      '3. 返済原資が不足する場合は、公的窓口または弁護士・司法書士の無料相談を予約する。',
-    );
+    buffer.writeln('');
+    buffer.writeln('1. 収入確保と家計の徹底見直しを同時実行し、返済予算の原資を確保する。');
+    buffer.writeln('2. 全借入先の金利・最低返済額・返済日を確認し、一覧表を最新化する。');
+    buffer.writeln('3. 資金繰りが厳しい場合は、公的窓口や弁護士・司法書士の無料相談を予約する。');
 
     if (warnings.isNotEmpty) {
       buffer.writeln('');
-      buffer.writeln('### 注意点');
+      buffer.writeln('---');
+      buffer.writeln('### 追加注意');
       for (final warning in warnings) {
         buffer.writeln('- $warning');
       }
     }
 
-    buffer.writeln('');
-    buffer.writeln('※ 金利は借入先名からの推定値です。実契約値に置き換えて再計算してください。');
-
     return buffer.toString().trim();
   }
 
-  String _buildGoalText({
-    required DebtMonthlyAction action,
-  }) {
-    final closedText = action.closedDebts.isEmpty
-        ? ''
-        : ' / 完済候補: ${action.closedDebts.join('・')}';
-    final focus = action.focusDebt ?? '返済原資の確保';
-    return '重点: $focus$closedText';
-  }
-
-  String _buildActionText({
-    required DebtMonthlyAction action,
-  }) {
-    if (action.isBudgetShortfall) {
-      return '最低返済 ${_yen(action.minimumTotal)} に対して予算不足。まず収入増加と固定費削減を優先';
+  String _strategyTitle(DebtRepaymentStrategy strategy) {
+    switch (strategy) {
+      case DebtRepaymentStrategy.snowball:
+        return '少額優先：スノーボール方式';
+      case DebtRepaymentStrategy.avalanche:
+        return '高金利優先：アバランチ方式';
+      case DebtRepaymentStrategy.hybrid:
+        return 'ハイブリッド方式';
     }
-    return '支払 ${_yen(action.paymentTotal)}（最低返済 ${_yen(action.minimumTotal)} + 上乗せ ${_yen(action.extraTotal)}）を実行';
   }
 
   String _strategyLabel(DebtRepaymentStrategy strategy) {
@@ -584,12 +639,6 @@ class DebtRepaymentPlannerService {
       case DebtRepaymentStrategy.hybrid:
         return 'ハイブリッド（高金利×少額）';
     }
-  }
-
-  String _monthRole(int index) {
-    if (index == 0) return '今月';
-    if (index == 1) return '来月';
-    return '再来月';
   }
 
   String _yen(num value) {
