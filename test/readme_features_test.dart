@@ -56,9 +56,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // UIの確認
-      expect(find.text('緊急役員会議 (経営分析)'), findsOneWidget);
+      expect(find.text('緊急役員会議 (継続・禁欲)'), findsOneWidget);
       // ボタンがあるか確認
-      expect(find.text('緊急招集する'), findsOneWidget);
+      expect(find.text('継続・禁欲プランを作成'), findsOneWidget);
     });
 
     testWidgets('Feature: NoteListPage renders correctly',

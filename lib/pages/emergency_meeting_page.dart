@@ -1,11 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:my_web_app/models/board_meeting.dart';
 import 'package:my_web_app/services/ai_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+
+enum MeetingFocus {
+  balanced,
+  continuation,
+  abstinence,
+}
 
 class EmergencyMeetingPage extends StatefulWidget {
   // テスト用にSupabaseClientを注入できるようにする
@@ -23,10 +30,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _isLoading = false;
   String _loadingStatus = '';
 
-  // --- Start of new state variables ---
   String? _geminiApiKey;
-  String _selectedModel =
-      'gemma-3-4b-it'; // Default model, similar to morning briefing
+  String _selectedModel = 'gemma-3-4b-it';
+  MeetingFocus _selectedFocus = MeetingFocus.balanced;
+  List<String> _continuationPlan = <String>[];
+  List<String> _abstinenceRules = <String>[];
+  String? _riskAlert;
   List<String> _selectableModels = [
     'gemma-3-1b-it',
     'gemma-3-4b-it',
@@ -35,60 +44,46 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   ];
   final String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
-      'あなたは「自分株式会社」の役員会のファシリテーターです。\n'
-      '以下の【現状データ】と【役員構成】に基づき、緊急役員会議の議事録をJSON形式で生成してください。\n\n'
-      '【役員構成と専門分野】\n'
-      '- CEO: 最高経営責任者 (ユーザー自身)\n'
-      '- CSO: 最高戦略責任者 (全体戦略、目標達成)\n'
-      '- CFO: 最高財務責任者 (コスト、サブスクリプション)\n'
-      '- CKO: 最高知識責任者 (メモ、知識蓄積)\n'
-      '- CHRO: 最高人事責任者 (ユーザーのモチベーション、ポイント、レベル)\n'
-      '- CHO: 最高健康責任者 (健康状態、運動)\n'
-      '- CMO: 最高マーケティング責任者 (アプリ利用頻度、市場での立ち位置)\n'
-      '- M&A: 合併・買収担当 (外部連携、データインポート)\n\n'
+      'あなたは「自分株式会社」の緊急役員会議ファシリテーターです。\n'
+      'テーマは必ず「継続」と「禁欲」。感情論ではなく、実行しやすい行動に落とし込んでください。\n\n'
+      '【会議フォーカス】\n'
+      '- focusTheme: {focusTheme}\n'
+      '- focusInstruction: {focusInstruction}\n\n'
       '【現状データ】\n'
       '- userId: {userId}\n'
       '- noteCount: {noteCount}\n'
       '- subCount: {subCount}\n'
       '- points: {points}\n'
       '- level: {level}\n'
+      '- currentStreak: {currentStreak}\n'
       '- danshariCount: {danshariCount}\n'
       '- healthData: "データ未連携"\n'
       '- marketData: "データ未連携"\n'
       '- importUsed: "未確認"\n\n'
-      '【指示】\n'
-      '1. 各役員に、担当分野のデータに基づいて辛口な現状分析と報告をさせてください。データが未連携の場合は、仮説に基づいて報告させてください。\n'
-      '2. 数字が少ない場合は「怠慢」、多い場合は「リソースの無駄遣いや管理不足」の観点から指摘させてください。\n'
-      '3. 最後に、CSOに全体の状況を要約させ、CEOが今週末に実行すべき具体的なアクションプランを3つ提案させてください。\n'
-      '4. 出力は必ず以下のJSON形式に従ってください。他のテキストは一切含めないでください。\n\n'
-      '```json\n'
+      '【役員構成】\n'
+      '- CFO: 支出とサブスクの最適化\n'
+      '- CKO: 学習と記録の継続設計\n'
+      '- CHRO: 習慣維持とモチベーション管理\n'
+      '- CSO: 全体戦略と実行計画の統合\n\n'
+      '【出力ルール】\n'
+      '1. messages は4〜6件。各役員が数字に触れて短く提言する。\n'
+      '2. continuation_plan は「48時間以内に実行する継続アクション」を3件。\n'
+      '3. abstinence_rules は「誘惑を断つ禁欲ルール」を3件。\n'
+      '4. risk_alert は最大リスクを1文で示す。\n'
+      '5. conclusion は CEO が今週やる最優先アクションを1〜2文で示す。\n'
+      '6. 返答はJSONのみ。Markdownや説明文は不要。\n\n'
       '{\n'
       '  "messages": [\n'
-      '    {\n'
-      '      "role": "CKO",\n'
-      '      "speaker_name": "AI CKO",\n'
-      '      "content": "(ここにCKOの報告内容)"\n'
-      '    },\n'
-      '    {\n'
-      '      "role": "CFO",\n'
-      '      "speaker_name": "AI CFO",\n'
-      '      "content": "(ここにCFOの報告内容)"\n'
-      '    },\n'
-      '    {\n'
-      '      "role": "CHRO",\n'
-      '      "speaker_name": "AI CHRO",\n'
-      '      "content": "(ここにCHROの報告内容)"\n'
-      '    },\n'
-      '    {\n'
-      '      "role": "CSO",\n'
-      '      "speaker_name": "AI CSO",\n'
-      '      "content": "(ここにCSOの最終提案内容)"\n'
-      '    }\n'
+      '    {"role":"CFO","speaker_name":"AI CFO","content":"..."},\n'
+      '    {"role":"CKO","speaker_name":"AI CKO","content":"..."},\n'
+      '    {"role":"CHRO","speaker_name":"AI CHRO","content":"..."},\n'
+      '    {"role":"CSO","speaker_name":"AI CSO","content":"..."}\n'
       '  ],\n'
-      '  "conclusion": "(ここにCSOが提案するアクションプラン3つをまとめた結論)"\n'
-      '}\n'
-      '```';
-  // --- End of new state variables ---
+      '  "continuation_plan": ["...", "...", "..."],\n'
+      '  "abstinence_rules": ["...", "...", "..."],\n'
+      '  "risk_alert": "...",\n'
+      '  "conclusion": "..."\n'
+      '}';
 
   // Supabase client getter
   SupabaseClient get _supabase =>
@@ -294,9 +289,114 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     );
   }
 
-  // --- End of new functions ---
-
   String? _errorMessage;
+
+  String _focusLabel(MeetingFocus focus) {
+    switch (focus) {
+      case MeetingFocus.balanced:
+        return '継続 + 禁欲（両立）';
+      case MeetingFocus.continuation:
+        return '継続強化';
+      case MeetingFocus.abstinence:
+        return '禁欲強化';
+    }
+  }
+
+  String _focusShortLabel(MeetingFocus focus) {
+    switch (focus) {
+      case MeetingFocus.balanced:
+        return '両立';
+      case MeetingFocus.continuation:
+        return '継続';
+      case MeetingFocus.abstinence:
+        return '禁欲';
+    }
+  }
+
+  String _focusInstruction(MeetingFocus focus) {
+    switch (focus) {
+      case MeetingFocus.balanced:
+        return '継続と禁欲のバランスを重視し、両方の改善策を同じ優先度で提案する。';
+      case MeetingFocus.continuation:
+        return '継続率の改善を最優先。習慣化・再開しやすさ・反復設計に集中する。';
+      case MeetingFocus.abstinence:
+        return '禁欲の成功率を最優先。誘惑遮断・トリガー回避・事前ルール化に集中する。';
+    }
+  }
+
+  Color _focusColor(MeetingFocus focus) {
+    switch (focus) {
+      case MeetingFocus.balanced:
+        return Colors.blueGrey;
+      case MeetingFocus.continuation:
+        return Colors.blue;
+      case MeetingFocus.abstinence:
+        return Colors.redAccent;
+    }
+  }
+
+  List<String> _extractStringList(dynamic value) {
+    if (value is! List) return <String>[];
+    return value
+        .whereType<Object>()
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  String _buildCodexCopyText() {
+    final log = _currentLog;
+    if (log == null) return '';
+
+    final payload = <String, dynamic>{
+      'meeting_id': log.id,
+      'created_at': log.createdAt.toIso8601String(),
+      'topic': log.topic,
+      'focus': _focusLabel(_selectedFocus),
+      'model': _selectedModel,
+      'messages': log.messages
+          .map(
+            (msg) => <String, dynamic>{
+              'role': msg.role,
+              'speaker_name': msg.speakerName,
+              'content': msg.content,
+            },
+          )
+          .toList(),
+      'continuation_plan': _continuationPlan,
+      'abstinence_rules': _abstinenceRules,
+      'risk_alert': _riskAlert,
+      'conclusion': log.conclusion,
+    };
+    final jsonPayload = const JsonEncoder.withIndent('  ').convert(payload);
+
+    return '''
+【緊急役員会議 → Codex 連携データ】
+この内容をもとに、次のPDCA改善（実装 + テスト）を提案・実装してください。
+
+1. 継続アクションが実行しやすくなるUI/導線改善
+2. 禁欲ルールの実行率を上げる抑止設計（通知・制限・可視化）
+3. 次回会議で検証できる計測項目の追加
+
+--- Meeting Result JSON ---
+$jsonPayload
+''';
+  }
+
+  Future<void> _copyMeetingForCodex() async {
+    if (_currentLog == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('コピーする会議結果がありません。')));
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: _buildCodexCopyText()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('会議結果をCodex貼り付け形式でコピーしました。')),
+    );
+  }
 
   // ... (initState and _fetchModels remain the same)
 
@@ -311,8 +411,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
     setState(() {
       _isLoading = true;
-      _loadingStatus = '各部門からデータを収集中...';
-      _errorMessage = null; // Clear previous errors
+      _loadingStatus = '継続と禁欲に関するデータを収集中...';
+      _errorMessage = null;
+      _continuationPlan = <String>[];
+      _abstinenceRules = <String>[];
+      _riskAlert = null;
     });
 
     try {
@@ -352,6 +455,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final danshariCount = results[3] as int;
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
+      final currentStreak = userStats?['current_streak'] ?? 0;
 
       final contextPrompt = _customPromptInstructions
           .replaceFirst('{userId}', userId)
@@ -359,9 +463,15 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           .replaceFirst('{subCount}', subCount.toString())
           .replaceFirst('{points}', points.toString())
           .replaceFirst('{level}', level.toString())
-          .replaceFirst('{danshariCount}', danshariCount.toString());
+          .replaceFirst('{currentStreak}', currentStreak.toString())
+          .replaceFirst('{danshariCount}', danshariCount.toString())
+          .replaceFirst('{focusTheme}', _focusLabel(_selectedFocus))
+          .replaceFirst(
+            '{focusInstruction}',
+            _focusInstruction(_selectedFocus),
+          );
 
-      setState(() => _loadingStatus = 'AI役員が分析中...');
+      setState(() => _loadingStatus = 'AI役員が継続・禁欲の改善策を議論中...');
 
       final aiService = AIService(null, _geminiApiKey);
       final responseText = await aiService.generateContent(
@@ -373,7 +483,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         throw Exception('AIからの応答がありません。');
       }
 
-      setState(() => _loadingStatus = '議事録を解析中...');
+      setState(() => _loadingStatus = '会議結果を統合中...');
 
       // Clean up potential markdown code block
       var responseJson = responseText.trim();
@@ -389,6 +499,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final decoded = jsonDecode(responseJson) as Map<String, dynamic>;
       final messageList = decoded['messages'] as List<dynamic>;
       final conclusion = decoded['conclusion'] as String;
+      final continuationPlan = _extractStringList(decoded['continuation_plan']);
+      final abstinenceRules = _extractStringList(decoded['abstinence_rules']);
+      final riskAlert = decoded['risk_alert']?.toString();
+      final normalizedRiskAlert = riskAlert?.trim();
 
       final messages = messageList.map((item) {
         final msg = item as Map<String, dynamic>;
@@ -404,13 +518,21 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final log = BoardMeetingLog(
         id: const Uuid().v4(),
         userId: userId,
-        topic: '定期現状分析報告会',
+        topic: '緊急役員会議（${_focusLabel(_selectedFocus)}）',
         conclusion: conclusion,
         messages: messages,
         createdAt: DateTime.now(),
       );
 
-      setState(() => _currentLog = log);
+      setState(() {
+        _currentLog = log;
+        _continuationPlan = continuationPlan;
+        _abstinenceRules = abstinenceRules;
+        _riskAlert =
+            (normalizedRiskAlert == null || normalizedRiskAlert.isEmpty)
+                ? null
+                : normalizedRiskAlert;
+      });
       await _saveMeetingToDb(log);
     } catch (e, s) {
       if (mounted) {
@@ -469,10 +591,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('緊急役員会議 (経営分析)'),
+        title: const Text('緊急役員会議 (継続・禁欲)'),
         backgroundColor: Colors.red[900],
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.content_copy),
+            onPressed: (_isLoading || _currentLog == null)
+                ? null
+                : _copyMeetingForCodex,
+            tooltip: 'Codex用にコピー',
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: showSettingsDialog,
@@ -498,7 +627,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        '各部門からの報告を受理しますか？',
+                        '継続と禁欲を立て直す緊急会議を開始しますか？',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -507,9 +636,58 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'CFO, CKO, CSOなどの全AI役員が最新情報を分析し、CEOであるあなたに現状報告と次の一手を提案します。',
+                        'AI役員が継続率と誘惑リスクを分析し、48時間で実行できる再建プランを提示します。',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '会議フォーカス: ${_focusLabel(_selectedFocus)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: MeetingFocus.values.map((focus) {
+                          final isSelected = _selectedFocus == focus;
+                          final chipColor = _focusColor(focus);
+                          return ChoiceChip(
+                            label: Text(_focusShortLabel(focus)),
+                            selected: isSelected,
+                            selectedColor: chipColor.withValues(alpha: 0.18),
+                            side: BorderSide(
+                              color:
+                                  isSelected ? chipColor : Colors.grey.shade400,
+                            ),
+                            labelStyle: TextStyle(
+                              color:
+                                  isSelected ? chipColor : Colors.grey.shade800,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            onSelected: (selected) {
+                              if (!selected) return;
+                              setState(() => _selectedFocus = focus);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _focusInstruction(_selectedFocus),
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            height: 1.45,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 40),
                       Container(
@@ -564,7 +742,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           onPressed: _isLoading ? null : _conveneBoard,
                           icon: const Icon(Icons.notifications_active),
                           label: const Text(
-                            '緊急招集する',
+                            '継続・禁欲プランを作成',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -600,7 +778,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '各部門のデータを集計しています...',
+                      '継続と禁欲の打ち手を組み立てています...',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ],
@@ -719,28 +897,163 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.rocket_launch, color: Colors.yellowAccent),
-              SizedBox(width: 12),
-              Text(
-                'STRATEGIC DECISION',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.white,
-                  letterSpacing: 1.2,
+              const Icon(Icons.task_alt, color: Colors.lightGreenAccent),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '継続・禁欲 EXECUTION PLAN',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _copyMeetingForCodex,
+                tooltip: '会議結果をコピー',
+                icon: const Icon(
+                  Icons.content_copy,
+                  color: Colors.white70,
+                  size: 20,
                 ),
               ),
             ],
           ),
           const Divider(color: Colors.white24, height: 30),
+          if (_riskAlert != null) ...[
+            _buildAlertChip(_riskAlert!),
+            const SizedBox(height: 14),
+          ],
+          if (_continuationPlan.isNotEmpty) ...[
+            _buildActionList(
+              title: '継続アクション（48時間）',
+              icon: Icons.trending_up,
+              accentColor: Colors.lightBlueAccent,
+              actions: _continuationPlan,
+            ),
+            const SizedBox(height: 14),
+          ],
+          if (_abstinenceRules.isNotEmpty) ...[
+            _buildActionList(
+              title: '禁欲ルール（誘惑遮断）',
+              icon: Icons.block,
+              accentColor: Colors.pinkAccent,
+              actions: _abstinenceRules,
+            ),
+            const SizedBox(height: 14),
+          ],
+          const Text(
+            '最終決定',
+            style: TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             _currentLog!.conclusion,
             style: const TextStyle(
               fontSize: 16,
               color: Colors.white,
               height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _copyMeetingForCodex,
+              icon: const Icon(Icons.copy_all),
+              label: const Text('Codexに貼り付ける結果をコピー'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white54),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionList({
+    required String title,
+    required IconData icon,
+    required Color accentColor,
+    required List<String> actions,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentColor.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: accentColor, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final action in actions.take(3))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '・$action',
+                style: const TextStyle(
+                  color: Colors.white,
+                  height: 1.4,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlertChip(String alertText) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orangeAccent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orangeAccent),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.orangeAccent,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              alertText,
+              style: const TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
             ),
           ),
         ],
