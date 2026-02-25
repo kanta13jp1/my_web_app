@@ -58,6 +58,41 @@ class NotificationService {
     );
   }
 
+  Future<void> scheduleDailyAbstinenceReminder({
+    int id = 1001,
+    int hour = 21,
+    int minute = 0,
+  }) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'abstinence_guard_reminder_channel',
+      'Abstinence Guard Reminder',
+      channelDescription:
+          'Daily reminder for abstinence rules and continuation review.',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      '禁欲ガード チェック',
+      '今日の禁欲ルール実行と継続アクションの進捗を確認しましょう。',
+      _nextInstanceOfTime(hour, minute),
+      platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  Future<void> cancelAbstinenceReminder({int id = 1001}) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
+  }
+
   tz.TZDateTime _nextInstanceOfSaturdayTenAM() {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
@@ -71,6 +106,24 @@ class NotificationService {
 
     // Find the next Saturday
     while (scheduledDate.weekday != DateTime.saturday) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    return scheduledDate;
+  }
+
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+
+    if (!scheduledDate.isAfter(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 

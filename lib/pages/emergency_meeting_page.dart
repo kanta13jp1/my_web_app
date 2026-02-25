@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_web_app/models/board_meeting.dart';
 import 'package:my_web_app/services/ai_service.dart';
+import 'package:my_web_app/services/emergency_meeting_pdca_service.dart';
+import 'package:my_web_app/services/notification_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -35,7 +38,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   MeetingFocus _selectedFocus = MeetingFocus.balanced;
   List<String> _continuationPlan = <String>[];
   List<String> _abstinenceRules = <String>[];
+  List<bool> _continuationChecks = <bool>[];
+  List<bool> _abstinenceChecks = <bool>[];
   String? _riskAlert;
+  int _abstinenceViolationCount = 0;
+  int _abstinenceNoViolationDays = 0;
+  int _lastContinuationCompletionRate = 0;
+  bool _dailyReminderEnabled = false;
+  bool _lockImpulsePurchase = false;
+  bool _lockNewProjects = false;
+  bool _lockSubscriptionAdditions = false;
+  DateTime? _lastReviewAt;
   List<String> _selectableModels = [
     'gemma-3-1b-it',
     'gemma-3-4b-it',
@@ -43,6 +56,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     'gemini-1.5-pro',
   ];
   final String _customPromptInstructions = _defaultPromptInstructions;
+  static const String _prefsAbstinenceViolationCount =
+      'emergency_abstinence_violation_count';
+  static const String _prefsAbstinenceNoViolationDays =
+      'emergency_abstinence_no_violation_days';
+  static const String _prefsContinuationCompletionRate =
+      'emergency_continuation_completion_rate';
+  static const String _prefsDailyReminderEnabled =
+      'emergency_daily_reminder_enabled';
+  static const String _prefsLockImpulsePurchase = 'emergency_lock_impulse';
+  static const String _prefsLockNewProjects = 'emergency_lock_new_projects';
+  static const String _prefsLockSubscriptionAdditions =
+      'emergency_lock_subscription_additions';
+  static const String _prefsLastReviewAt = 'emergency_last_review_at';
   static const String _defaultPromptInstructions =
       'あなたは「自分株式会社」の緊急役員会議ファシリテーターです。\n'
       'テーマは必ず「継続」と「禁欲」。感情論ではなく、実行しやすい行動に落とし込んでください。\n\n'
@@ -57,6 +83,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- level: {level}\n'
       '- currentStreak: {currentStreak}\n'
       '- danshariCount: {danshariCount}\n'
+      '- continuationCompletionRate: {continuationCompletionRate}\n'
+      '- abstinenceViolationCount: {abstinenceViolationCount}\n'
+      '- abstinenceNoViolationDays: {abstinenceNoViolationDays}\n'
+      '- activeDeterrenceLocks: {activeDeterrenceLocks}\n'
       '- healthData: "データ未連携"\n'
       '- marketData: "データ未連携"\n'
       '- importUsed: "未確認"\n\n'
@@ -93,6 +123,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   void initState() {
     super.initState();
     _loadSettings(); // Changed from _fetchModels
+    _loadPdcaState();
   }
 
   // --- Start of new functions ---
@@ -114,6 +145,167 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         }
       });
     }
+  }
+
+  Future<void> _loadPdcaState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedReviewAt = prefs.getString(_prefsLastReviewAt);
+    if (!mounted) return;
+
+    setState(() {
+      _abstinenceViolationCount =
+          prefs.getInt(_prefsAbstinenceViolationCount) ?? 0;
+      _abstinenceNoViolationDays =
+          prefs.getInt(_prefsAbstinenceNoViolationDays) ?? 0;
+      _lastContinuationCompletionRate =
+          prefs.getInt(_prefsContinuationCompletionRate) ?? 0;
+      _dailyReminderEnabled =
+          prefs.getBool(_prefsDailyReminderEnabled) ?? false;
+      _lockImpulsePurchase = prefs.getBool(_prefsLockImpulsePurchase) ?? false;
+      _lockNewProjects = prefs.getBool(_prefsLockNewProjects) ?? false;
+      _lockSubscriptionAdditions =
+          prefs.getBool(_prefsLockSubscriptionAdditions) ?? false;
+      _lastReviewAt =
+          savedReviewAt == null ? null : DateTime.tryParse(savedReviewAt);
+    });
+  }
+
+  Future<void> _persistPdcaState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _prefsAbstinenceViolationCount,
+      _abstinenceViolationCount,
+    );
+    await prefs.setInt(
+      _prefsAbstinenceNoViolationDays,
+      _abstinenceNoViolationDays,
+    );
+    await prefs.setInt(
+      _prefsContinuationCompletionRate,
+      _lastContinuationCompletionRate,
+    );
+    await prefs.setBool(_prefsDailyReminderEnabled, _dailyReminderEnabled);
+    await prefs.setBool(_prefsLockImpulsePurchase, _lockImpulsePurchase);
+    await prefs.setBool(_prefsLockNewProjects, _lockNewProjects);
+    await prefs.setBool(
+      _prefsLockSubscriptionAdditions,
+      _lockSubscriptionAdditions,
+    );
+    if (_lastReviewAt != null) {
+      await prefs.setString(
+        _prefsLastReviewAt,
+        _lastReviewAt!.toIso8601String(),
+      );
+    } else {
+      await prefs.remove(_prefsLastReviewAt);
+    }
+  }
+
+  int _currentContinuationRatePercent() {
+    if (_continuationChecks.isEmpty) return _lastContinuationCompletionRate;
+    final completed = _continuationChecks.where((isDone) => isDone).length;
+    return ((completed / _continuationChecks.length) * 100).round();
+  }
+
+  List<String> _activeDeterrenceLocks() {
+    final locks = <String>[];
+    if (_lockImpulsePurchase) locks.add('衝動買いロック');
+    if (_lockNewProjects) locks.add('新規プロジェクト着手ロック');
+    if (_lockSubscriptionAdditions) locks.add('サブスク追加ロック');
+    return locks;
+  }
+
+  EmergencyMeetingPdcaMetrics _buildPdcaMetrics() {
+    final continuationTotal = _continuationChecks.isEmpty
+        ? _continuationPlan.length
+        : _continuationChecks.length;
+    final continuationCompleted =
+        _continuationChecks.where((isDone) => isDone).length;
+    return EmergencyMeetingPdcaMetrics(
+      continuationCompletedCount: continuationCompleted,
+      continuationTotalCount: continuationTotal,
+      continuationCompletionRatePercent: _currentContinuationRatePercent(),
+      abstinenceViolationCount: _abstinenceViolationCount,
+      abstinenceNoViolationDays: _abstinenceNoViolationDays,
+      reminderEnabled: _dailyReminderEnabled,
+      activeDeterrenceLocks: _activeDeterrenceLocks(),
+      lastReviewAt: _lastReviewAt,
+    );
+  }
+
+  void _toggleContinuationCheck(int index, bool? value) {
+    if (index < 0 || index >= _continuationChecks.length || value == null) {
+      return;
+    }
+    setState(() {
+      _continuationChecks[index] = value;
+      _lastContinuationCompletionRate = _currentContinuationRatePercent();
+    });
+    _persistPdcaState();
+  }
+
+  void _toggleAbstinenceCheck(int index, bool? value) {
+    if (index < 0 || index >= _abstinenceChecks.length || value == null) return;
+    setState(() => _abstinenceChecks[index] = value);
+  }
+
+  void _setDeterrenceLock({
+    required bool value,
+    required void Function(bool) setter,
+  }) {
+    setState(() => setter(value));
+    _persistPdcaState();
+  }
+
+  Future<void> _toggleDailyReminder(bool enabled) async {
+    setState(() => _dailyReminderEnabled = enabled);
+    await _persistPdcaState();
+    if (!mounted) return;
+
+    try {
+      final notificationService = context.read<NotificationService>();
+      if (enabled) {
+        await notificationService.scheduleDailyAbstinenceReminder();
+      } else {
+        await notificationService.cancelAbstinenceReminder();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            enabled
+                ? '通知サービスに接続できないため、リマインドは保存のみ行いました。'
+                : '通知サービスに接続できないため、設定のみ更新しました。',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _recordAbstinenceViolation() async {
+    setState(() {
+      _abstinenceViolationCount += 1;
+      _abstinenceNoViolationDays = 0;
+    });
+    await _persistPdcaState();
+  }
+
+  Future<void> _recordAbstinenceCleanDay() async {
+    setState(() => _abstinenceNoViolationDays += 1);
+    await _persistPdcaState();
+  }
+
+  Future<void> _recordPdcaReview() async {
+    setState(() {
+      _lastContinuationCompletionRate = _currentContinuationRatePercent();
+      _lastReviewAt = DateTime.now();
+    });
+    await _persistPdcaState();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('次回会議の検証指標を保存しました。')),
+    );
   }
 
   Future<List<String>> fetchGeminiModels(String apiKey) async {
@@ -347,40 +539,15 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   String _buildCodexCopyText() {
     final log = _currentLog;
     if (log == null) return '';
-
-    final payload = <String, dynamic>{
-      'meeting_id': log.id,
-      'created_at': log.createdAt.toIso8601String(),
-      'topic': log.topic,
-      'focus': _focusLabel(_selectedFocus),
-      'model': _selectedModel,
-      'messages': log.messages
-          .map(
-            (msg) => <String, dynamic>{
-              'role': msg.role,
-              'speaker_name': msg.speakerName,
-              'content': msg.content,
-            },
-          )
-          .toList(),
-      'continuation_plan': _continuationPlan,
-      'abstinence_rules': _abstinenceRules,
-      'risk_alert': _riskAlert,
-      'conclusion': log.conclusion,
-    };
-    final jsonPayload = const JsonEncoder.withIndent('  ').convert(payload);
-
-    return '''
-【緊急役員会議 → Codex 連携データ】
-この内容をもとに、次のPDCA改善（実装 + テスト）を提案・実装してください。
-
-1. 継続アクションが実行しやすくなるUI/導線改善
-2. 禁欲ルールの実行率を上げる抑止設計（通知・制限・可視化）
-3. 次回会議で検証できる計測項目の追加
-
---- Meeting Result JSON ---
-$jsonPayload
-''';
+    return EmergencyMeetingCodexFormatter.formatForCodex(
+      log: log,
+      focusLabel: _focusLabel(_selectedFocus),
+      model: _selectedModel,
+      continuationPlan: _continuationPlan,
+      abstinenceRules: _abstinenceRules,
+      riskAlert: _riskAlert,
+      metrics: _buildPdcaMetrics(),
+    );
   }
 
   Future<void> _copyMeetingForCodex() async {
@@ -415,6 +582,8 @@ $jsonPayload
       _errorMessage = null;
       _continuationPlan = <String>[];
       _abstinenceRules = <String>[];
+      _continuationChecks = <bool>[];
+      _abstinenceChecks = <bool>[];
       _riskAlert = null;
     });
 
@@ -456,6 +625,10 @@ $jsonPayload
       final points = userStats?['total_points'] ?? 0;
       final level = userStats?['current_level'] ?? 1;
       final currentStreak = userStats?['current_streak'] ?? 0;
+      final currentMetrics = _buildPdcaMetrics();
+      final activeLocksText = currentMetrics.activeDeterrenceLocks.isEmpty
+          ? 'なし'
+          : currentMetrics.activeDeterrenceLocks.join(', ');
 
       final contextPrompt = _customPromptInstructions
           .replaceFirst('{userId}', userId)
@@ -465,6 +638,19 @@ $jsonPayload
           .replaceFirst('{level}', level.toString())
           .replaceFirst('{currentStreak}', currentStreak.toString())
           .replaceFirst('{danshariCount}', danshariCount.toString())
+          .replaceFirst(
+            '{continuationCompletionRate}',
+            currentMetrics.continuationCompletionRatePercent.toString(),
+          )
+          .replaceFirst(
+            '{abstinenceViolationCount}',
+            currentMetrics.abstinenceViolationCount.toString(),
+          )
+          .replaceFirst(
+            '{abstinenceNoViolationDays}',
+            currentMetrics.abstinenceNoViolationDays.toString(),
+          )
+          .replaceFirst('{activeDeterrenceLocks}', activeLocksText)
           .replaceFirst('{focusTheme}', _focusLabel(_selectedFocus))
           .replaceFirst(
             '{focusInstruction}',
@@ -528,6 +714,8 @@ $jsonPayload
         _currentLog = log;
         _continuationPlan = continuationPlan;
         _abstinenceRules = abstinenceRules;
+        _continuationChecks = List<bool>.filled(continuationPlan.length, false);
+        _abstinenceChecks = List<bool>.filled(abstinenceRules.length, false);
         _riskAlert =
             (normalizedRiskAlert == null || normalizedRiskAlert.isEmpty)
                 ? null
@@ -929,23 +1117,45 @@ $jsonPayload
             const SizedBox(height: 14),
           ],
           if (_continuationPlan.isNotEmpty) ...[
-            _buildActionList(
-              title: '継続アクション（48時間）',
-              icon: Icons.trending_up,
-              accentColor: Colors.lightBlueAccent,
-              actions: _continuationPlan,
-            ),
+            _buildContinuationExecutionPanel(),
             const SizedBox(height: 14),
           ],
           if (_abstinenceRules.isNotEmpty) ...[
-            _buildActionList(
-              title: '禁欲ルール（誘惑遮断）',
-              icon: Icons.block,
-              accentColor: Colors.pinkAccent,
-              actions: _abstinenceRules,
-            ),
+            _buildAbstinenceGuardPanel(),
             const SizedBox(height: 14),
           ],
+          _buildNextMeetingMetricsPanel(),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _recordPdcaReview,
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('指標を保存'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _copyMeetingForCodex,
+                  icon: const Icon(Icons.copy_all),
+                  label: const Text('Codexにコピー'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           const Text(
             '最終決定',
             style: TextStyle(
@@ -982,48 +1192,264 @@ $jsonPayload
     );
   }
 
-  Widget _buildActionList({
-    required String title,
-    required IconData icon,
-    required Color accentColor,
-    required List<String> actions,
-  }) {
+  Widget _buildContinuationExecutionPanel() {
+    final completed = _continuationChecks.where((isDone) => isDone).length;
+    final total = _continuationChecks.length;
+    final progress = total == 0 ? 0.0 : completed / total;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withValues(alpha: 0.8)),
+        border:
+            Border.all(color: Colors.lightBlueAccent.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: accentColor, size: 18),
+              const Icon(
+                Icons.trending_up,
+                color: Colors.lightBlueAccent,
+                size: 18,
+              ),
               const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '継続アクション（48時間）',
+                  style: TextStyle(
+                    color: Colors.lightBlueAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               Text(
-                title,
-                style: TextStyle(
-                  color: accentColor,
+                '$completed / $total',
+                style: const TextStyle(
+                  color: Colors.white70,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          for (final action in actions.take(3))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                '・$action',
-                style: const TextStyle(
-                  color: Colors.white,
-                  height: 1.4,
-                ),
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              Colors.lightBlueAccent,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < _continuationPlan.length; i++)
+            CheckboxListTile(
+              value: i < _continuationChecks.length && _continuationChecks[i],
+              onChanged: (value) => _toggleContinuationCheck(i, value),
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              activeColor: Colors.lightBlueAccent,
+              checkColor: Colors.black,
+              title: Text(
+                _continuationPlan[i],
+                style: const TextStyle(color: Colors.white, height: 1.35),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbstinenceGuardPanel() {
+    final deterrenceScore =
+        (_abstinenceNoViolationDays - _abstinenceViolationCount)
+            .clamp(0, 10)
+            .toDouble();
+    final deterrenceProgress = deterrenceScore / 10;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.pinkAccent.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.block, color: Colors.pinkAccent, size: 18),
+              SizedBox(width: 8),
+              Text(
+                '禁欲ガード（通知・制限・可視化）',
+                style: TextStyle(
+                  color: Colors.pinkAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '違反: $_abstinenceViolationCount回 / 連続無違反: $_abstinenceNoViolationDays日',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: deterrenceProgress,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('衝動買いロック'),
+                selected: _lockImpulsePurchase,
+                onSelected: (selected) => _setDeterrenceLock(
+                  value: selected,
+                  setter: (value) => _lockImpulsePurchase = value,
+                ),
+                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+              ),
+              FilterChip(
+                label: const Text('新規PJ着手ロック'),
+                selected: _lockNewProjects,
+                onSelected: (selected) => _setDeterrenceLock(
+                  value: selected,
+                  setter: (value) => _lockNewProjects = value,
+                ),
+                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+              ),
+              FilterChip(
+                label: const Text('サブスク追加ロック'),
+                selected: _lockSubscriptionAdditions,
+                onSelected: (selected) => _setDeterrenceLock(
+                  value: selected,
+                  setter: (value) => _lockSubscriptionAdditions = value,
+                ),
+                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _dailyReminderEnabled,
+            onChanged: _toggleDailyReminder,
+            title: const Text(
+              '毎日21:00に禁欲チェック通知',
+              style: TextStyle(color: Colors.white),
+            ),
+            subtitle: const Text(
+              '通知で衝動行動を先回り抑止',
+              style: TextStyle(color: Colors.white70),
+            ),
+            activeThumbColor: Colors.pinkAccent,
+            activeTrackColor: Colors.pinkAccent.withValues(alpha: 0.4),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _recordAbstinenceViolation,
+                  icon: const Icon(Icons.report_problem_outlined),
+                  label: const Text('違反を記録'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _recordAbstinenceCleanDay,
+                  icon: const Icon(Icons.verified),
+                  label: const Text('本日違反なし'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (var i = 0; i < _abstinenceRules.length; i++)
+            CheckboxListTile(
+              value: i < _abstinenceChecks.length && _abstinenceChecks[i],
+              onChanged: (value) => _toggleAbstinenceCheck(i, value),
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              activeColor: Colors.pinkAccent,
+              checkColor: Colors.black,
+              title: Text(
+                _abstinenceRules[i],
+                style: const TextStyle(color: Colors.white, height: 1.35),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextMeetingMetricsPanel() {
+    final metrics = _buildPdcaMetrics();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.85)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.query_stats, color: Colors.amber, size: 18),
+              SizedBox(width: 8),
+              Text(
+                '次回会議の検証指標',
+                style: TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '継続完了率: ${metrics.continuationCompletionRatePercent}% '
+            '(${metrics.continuationCompletedCount}/${metrics.continuationTotalCount})',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '禁欲違反回数: ${metrics.abstinenceViolationCount} / 連続無違反日数: ${metrics.abstinenceNoViolationDays}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '有効ロック: ${metrics.activeDeterrenceLocks.isEmpty ? 'なし' : metrics.activeDeterrenceLocks.join(', ')}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '最終指標保存: ${metrics.lastReviewAt?.toIso8601String() ?? '未保存'}',
+            style: const TextStyle(color: Colors.white70),
+          ),
         ],
       ),
     );
