@@ -16,21 +16,39 @@ void main() {
     });
 
     test('pointsForNextLevel calculates correctly', () {
-      final stats = UserStats(userId: 'test', currentLevel: 5, totalPoints: 1650);
-      expect(stats.pointsForNextLevel, 2500); // Level 6 needs (6-1)^2 * 100 = 2500
+      final stats = UserStats(
+        userId: 'test',
+        currentLevel: 5,
+        totalPoints: 1650,
+      );
+      expect(
+        stats.pointsForNextLevel,
+        2500,
+      ); // Level 6 needs (6-1)^2 * 100 = 2500
     });
 
     test('pointsForCurrentLevel calculates correctly', () {
-      final stats = UserStats(userId: 'test', currentLevel: 5, totalPoints: 1650);
-      expect(stats.pointsForCurrentLevel, 1600); // Level 5 starts at (5-1)^2 * 100 = 1600
+      final stats = UserStats(
+        userId: 'test',
+        currentLevel: 5,
+        totalPoints: 1650,
+      );
+      expect(
+        stats.pointsForCurrentLevel,
+        1600,
+      ); // Level 5 starts at (5-1)^2 * 100 = 1600
     });
 
     test('levelProgress calculates correctly', () {
-      final stats = UserStats(userId: 'test', currentLevel: 5, totalPoints: 2050); // 1600 for lv5, 2500 for lv6
+      final stats = UserStats(
+        userId: 'test',
+        currentLevel: 5,
+        totalPoints: 2050,
+      ); // 1600 for lv5, 2500 for lv6
       // Progress = (2050 - 1600) / (2500 - 1600) = 450 / 900 = 0.5
       expect(stats.levelProgress, 0.5);
     });
-    
+
     test('levelProgress handles level 1 correctly', () {
       final stats = UserStats(userId: 'test', currentLevel: 1, totalPoints: 50);
       // Progress = (50 - 0) / (100 - 0) = 0.5
@@ -55,7 +73,7 @@ void main() {
       expect(copied.currentStreak, 5);
       expect(copied.notesCreated, original.notesCreated);
     });
-    
+
     test('Serialization and Deserialization (toJson/fromJson)', () {
       final now = DateTime.now();
       final original = UserStats(
@@ -72,7 +90,10 @@ void main() {
       expect(fromJson.userId, original.userId);
       expect(fromJson.totalPoints, original.totalPoints);
       expect(fromJson.currentLevel, original.currentLevel);
-      expect(fromJson.lastActivityDate?.toIso8601String(), original.lastActivityDate?.toIso8601String());
+      expect(
+        fromJson.lastActivityDate?.toIso8601String(),
+        original.lastActivityDate?.toIso8601String(),
+      );
     });
   });
 
@@ -94,16 +115,19 @@ void main() {
       expect(fromJson.userId, original.userId);
       expect(fromJson.achievementId, original.achievementId);
       expect(fromJson.isUnlocked, isTrue);
-      expect(fromJson.unlockedAt?.toIso8601String(), original.unlockedAt?.toIso8601String());
+      expect(
+        fromJson.unlockedAt?.toIso8601String(),
+        original.unlockedAt?.toIso8601String(),
+      );
     });
-    
+
     test('toJson handles null id', () {
-       final original = UserAchievement(
+      final original = UserAchievement(
         userId: 'user1',
         achievementId: 'first_note',
       );
       final json = original.toJson();
-      
+
       expect(json.containsKey('id'), isFalse);
     });
   });

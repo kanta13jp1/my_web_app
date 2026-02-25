@@ -3,7 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-serve(async (req) => {
+serve(async (_req) => {
   // 1. ランダムに1〜3の番号を決定
   const variant = Math.floor(Math.random() * 3) + 1;
   
@@ -24,7 +24,7 @@ serve(async (req) => {
         "Cache-Control": "no-cache, no-store, must-revalidate", // キャッシュ抑制を試みるヘッダー
       },
     });
-  } catch (error) {
+  } catch (_error) {
     return new Response("Image not found", { status: 404 });
   }
 })

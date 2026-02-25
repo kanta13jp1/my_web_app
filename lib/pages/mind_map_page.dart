@@ -141,8 +141,10 @@ class _MindMapPageState extends State<MindMapPage> {
           if (_errorMessage != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(_errorMessage!,
-                  style: const TextStyle(color: Colors.red),),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           Expanded(
             child: _isLoading
@@ -155,7 +157,9 @@ class _MindMapPageState extends State<MindMapPage> {
                     child: GraphView(
                       graph: _graph,
                       algorithm: BuchheimWalkerAlgorithm(
-                          _algorithmConfig, TreeEdgeRenderer(_algorithmConfig),),
+                        _algorithmConfig,
+                        TreeEdgeRenderer(_algorithmConfig),
+                      ),
                       builder: (Node node) {
                         final a = node.key!.value as String?;
                         return _buildNode(a!);

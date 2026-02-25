@@ -85,9 +85,12 @@ void main() {
       (WidgetTester tester) async {
     String? appliedResult;
 
-    when(mockFunctionsClient.invoke('ai-assistant',
-            body: {'action': 'improve', 'content': 'Initial content'},),)
-        .thenAnswer((_) async {
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'improve', 'content': 'Initial content'},
+      ),
+    ).thenAnswer((_) async {
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 100));
       return FunctionResponse(
@@ -96,9 +99,13 @@ void main() {
       );
     });
 
-    await tester.pumpWidget(buildTestWidget(onApply: (result) {
-      appliedResult = result;
-    },),);
+    await tester.pumpWidget(
+      buildTestWidget(
+        onApply: (result) {
+          appliedResult = result;
+        },
+      ),
+    );
 
     // Open menu
     await tester.tap(find.byIcon(Icons.auto_awesome));
@@ -110,11 +117,12 @@ void main() {
 
     // Verify loading state
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 150)); // Wait for future to complete
+    await tester
+        .pump(const Duration(milliseconds: 150)); // Wait for future to complete
 
     // Verify loading is gone
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    
+
     // Verify onApply was called
     expect(appliedResult, 'Improved content');
 
@@ -123,12 +131,14 @@ void main() {
     expect(find.text('AIがimproveを実行しました。'), findsOneWidget);
   });
 
-   testWidgets('shows error snackbar when function call fails with non-200 status', (WidgetTester tester) async {
+  testWidgets(
+      'shows error snackbar when function call fails with non-200 status',
+      (WidgetTester tester) async {
     when(mockFunctionsClient.invoke(any, body: anyNamed('body')))
         .thenAnswer((_) async {
-          await Future.delayed(const Duration(milliseconds: 10));
-          return FunctionResponse(status: 500, data: 'Server Error');
-        });
+      await Future.delayed(const Duration(milliseconds: 10));
+      return FunctionResponse(status: 500, data: 'Server Error');
+    });
 
     await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
 
@@ -145,13 +155,14 @@ void main() {
     expect(find.text('AI機能の呼び出しに失敗しました: Server Error'), findsOneWidget);
   });
 
-  testWidgets('shows error snackbar when function call throws an exception', (WidgetTester tester) async {
+  testWidgets('shows error snackbar when function call throws an exception',
+      (WidgetTester tester) async {
     final exception = Exception('Network Error');
     when(mockFunctionsClient.invoke(any, body: anyNamed('body')))
         .thenAnswer((_) async {
-          await Future.delayed(const Duration(milliseconds: 10));
-          throw exception;
-        });
+      await Future.delayed(const Duration(milliseconds: 10));
+      throw exception;
+    });
 
     await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
 

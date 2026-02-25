@@ -21,7 +21,10 @@ void main() {
 
       expect(paymentSource.id, 'ps_123');
       expect(paymentSource.name, 'Test Bank');
-      expect(paymentSource.lastAuditedAt, DateTime.parse(now.toIso8601String()));
+      expect(
+        paymentSource.lastAuditedAt,
+        DateTime.parse(now.toIso8601String()),
+      );
     });
 
     test('PaymentSource handles null last_audited_at from map', () {

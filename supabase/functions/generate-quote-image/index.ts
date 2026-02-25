@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve((req) => {
   // CORSプリフライトリクエストへの対応
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -128,11 +128,12 @@ serve(async (req) => {
         'Cache-Control': 'public, max-age=31536000', // 1年間キャッシュ
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Error in generate-quote-image function:', error);
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: {

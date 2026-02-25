@@ -236,7 +236,6 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
-
   /// 要約生成
   Future<String> summarizeText(String content) async {
     return await _retryWithBackoff(

@@ -13,6 +13,26 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SERVICE_ROLE_KEY')!
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') // メール送信サービスのAPIキー（設定推奨）
 
+interface UserProfile {
+    display_name: string | null
+    trust_score: number | null
+}
+
+interface StagnantUser {
+    user_id: string
+    current_streak: number
+    last_output_at: string | null
+    user_profiles: UserProfile[] | UserProfile | null
+}
+
+interface SendAlertEmailParams {
+    apiKey: string
+    to: string
+    supporterName?: string | null
+    userName: string
+    newTrustScore: number
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -54,10 +74,11 @@ serve(async (req) => {
         const results = []
 
         // 2. ペナルティ＆通報執行ループ
-        for (const user of stagnantUsers || []) {
+        for (const user of (stagnantUsers as StagnantUser[] | null) || []) {
             const userId = user.user_id
-            const userName = user.user_profiles?.display_name || '名無しのユーザー'
-            const currentTrustScore = user.user_profiles?.trust_score || 100
+            const profile = Array.isArray(user.user_profiles) ? user.user_profiles[0] : user.user_profiles
+            const userName = profile?.display_name ?? 'Unknown user'
+            const currentTrustScore = profile?.trust_score ?? 100
 
             // --- A. ストリークリセット（既存処理） ---
             const { error: updateError } = await supabaseAdmin
@@ -152,10 +173,11 @@ serve(async (req) => {
             }
         )
 
-    } catch (error) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
         console.error('Judgment error:', error)
         return new Response(
-            JSON.stringify({ success: false, error: error.message }),
+            JSON.stringify({ success: false, error: errorMessage }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 500,
@@ -165,7 +187,7 @@ serve(async (req) => {
 })
 
 // ヘルパー関数: 通報メール送信 (Resend API使用例)
-async function sendAlertEmail({ apiKey, to, supporterName, userName, newTrustScore }: any) {
+async function sendAlertEmail({ apiKey, to, supporterName, userName, newTrustScore }: SendAlertEmailParams) {
     const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -184,7 +206,7 @@ async function sendAlertEmail({ apiKey, to, supporterName, userName, newTrustSco
                 <div style="border: 1px solid #d1d5db; padding: 16px; margin: 16px 0; border-radius: 8px; background-color: #f9fafb;">
                     <p><strong>対象ユーザー:</strong> ${userName}</p>
                     <p><strong>違反内容:</strong> 日次ストリークの放置（24時間経過）</p>
-                    <p><strong>現在の信用スコア:</strong> <span style="color: #ef4444; font-weight: bold; font-size: 1.2em;">${newScore}点</span> (前回比 -10)</p>
+                    <p><strong>現在の信用スコア:</strong> <span style="color: #ef4444; font-weight: bold; font-size: 1.2em;">${newTrustScore}点</span> (前回比 -10)</p>
                 </div>
 
                 <p>次回面談時に、この件について厳しく追求をお願いいたします。<br>

@@ -17,7 +17,7 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
-serve(async (req) => {
+serve((req) => {
   // CORSプリフライトリクエストへの対応
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -229,11 +229,12 @@ serve(async (req) => {
         'Cache-Control': 'no-cache', // キャッシュを無効化してテスト
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Error in share-quote function:', error);
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: {
