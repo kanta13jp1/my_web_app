@@ -52,6 +52,52 @@ void main() {
       expect(find.text('CSO OFFICE'), findsOneWidget);
     });
 
+    testWidgets('Feature: HomePage prioritizes morning briefing before noon',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('モーニング・ブリーフィングを先に実施'), findsOneWidget);
+      expect(find.text('モーニング・ブリーフィング（最優先）'), findsOneWidget);
+    });
+
+    testWidgets('Feature: HomePage prioritizes balance check after briefing',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'home_morning_briefing_done_2026-02-26': true,
+      });
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 10, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('今日の口座残高を確認'), findsOneWidget);
+      expect(find.text('NEXT'), findsOneWidget);
+    });
+
+    testWidgets('Feature: HomePage shows normal mode when core flow is done',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'home_morning_briefing_done_2026-02-26': true,
+        'home_balance_check_done_2026-02-26': true,
+      });
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('今日の必須導線は完了済み'), findsOneWidget);
+    });
+
     testWidgets('Feature: EmergencyMeetingPage renders correctly',
         (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: EmergencyMeetingPage()));

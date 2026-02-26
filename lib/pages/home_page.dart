@@ -3,11 +3,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 // Services
+import '../services/ai_service.dart';
 import '../services/theme_service.dart';
 
 // Pages
@@ -32,7 +34,9 @@ import 'mindless_task_page.dart';
 import 'wardrobe_page.dart'; // 先頭のimport群に追加
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final DateTime Function()? nowProvider;
+
+  const HomePage({super.key, this.nowProvider});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -43,12 +47,24 @@ class _HomePageState extends State<HomePage> {
   // build() のたびに _fetchTotalAssets() が走るのを防ぐため Future をキャッシュする
   late Future<String> _totalAssetsFuture;
   late Future<_HomeOpsSnapshot> _opsSnapshotFuture;
+  late Future<String?> _aiNudgeFuture;
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
+    _reloadHomeSignals();
+  }
+
+  DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
+
+  void _reloadHomeSignals() {
     _totalAssetsFuture = _fetchTotalAssets();
     _opsSnapshotFuture = _loadOpsSnapshot();
+    _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
+      final command = _resolveNextAction(snapshot);
+      return _loadAiNudgeIfNeeded(command, snapshot);
+    });
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -64,39 +80,37 @@ class _HomePageState extends State<HomePage> {
   // ✅ Pull-to-Refresh 用（必要なときだけKPIを再取得）
   Future<void> _refreshKpis() async {
     setState(() {
-      _totalAssetsFuture = _fetchTotalAssets();
-      _opsSnapshotFuture = _loadOpsSnapshot();
+      _reloadHomeSignals();
     });
     await _totalAssetsFuture;
     await _opsSnapshotFuture;
+    await _aiNudgeFuture;
   }
 
-  String get _todayKey => DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String get _todayKey => DateFormat('yyyy-MM-dd').format(_now());
 
   String get _morningBriefingDoneKey => 'home_morning_briefing_done_$_todayKey';
 
   String get _balanceCheckDoneKey => 'home_balance_check_done_$_todayKey';
 
+  String _aiNudgeCacheKey(_HomeActionType type) =>
+      'home_ai_nudge_${_todayKey}_${type.name}';
+
   Future<int> _fetchPendingCriticalTaskCount() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return 0;
 
-    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final dateStr = DateFormat('yyyy-MM-dd').format(_now());
     try {
       final dynamic rowsRaw = await Supabase.instance.client
           .from('mindless_tasks')
-          .select('content,is_completed')
+          .select('id')
           .eq('user_id', userId)
-          .eq('task_date', dateStr);
+          .eq('task_date', dateStr)
+          .eq('is_completed', false)
+          .ilike('content', '%必須:%');
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
-
-      return rows.whereType<Map<String, dynamic>>().where((row) {
-        final raw = row['content'] as String? ?? '';
-        final content = raw.replaceFirst(RegExp(r'^\[(A|B|C)\]\s*'), '');
-        final isCriticalTask = content.startsWith('必須: ');
-        final isCompleted = row['is_completed'] == true;
-        return isCriticalTask && !isCompleted;
-      }).length;
+      return rows.length;
     } catch (e) {
       debugPrint('Error fetching critical task count: $e');
       return 0;
@@ -124,8 +138,95 @@ class _HomePageState extends State<HomePage> {
     await prefs.setBool(_balanceCheckDoneKey, true);
   }
 
+  String _resolveHomeModel(SharedPreferences prefs) {
+    final candidates = <String?>[
+      prefs.getString('gemini_model_home'),
+      prefs.getString('gemini_model_emergency_meeting'),
+      prefs.getString('gemini_model'),
+    ];
+    for (final candidate in candidates) {
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
+    }
+    return 'gemini-1.5-flash';
+  }
+
+  Future<String?> _loadHomeApiKey(SharedPreferences prefs) async {
+    final secureKey = await _secureStorage.read(key: 'gemini_api_key');
+    if (secureKey != null && secureKey.trim().isNotEmpty) {
+      return secureKey.trim();
+    }
+    final legacyKey = prefs.getString('gemini_api_key');
+    if (legacyKey != null && legacyKey.trim().isNotEmpty) {
+      return legacyKey.trim();
+    }
+    return null;
+  }
+
+  String? _normalizeAiNudge(String? rawText) {
+    final text = rawText?.replaceAll('\n', ' ').trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    if (text.length <= 80) {
+      return text;
+    }
+    return '${text.substring(0, 80)}...';
+  }
+
+  Future<String?> _loadAiNudgeIfNeeded(
+    _HomeActionCommand command,
+    _HomeOpsSnapshot snapshot,
+  ) async {
+    if (command.type == _HomeActionType.none) {
+      return null;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = _aiNudgeCacheKey(command.type);
+    final cached = prefs.getString(cacheKey);
+    if (cached != null && cached.trim().isNotEmpty) {
+      return cached.trim();
+    }
+
+    try {
+      final apiKey = await _loadHomeApiKey(prefs);
+      if (apiKey == null) {
+        return null;
+      }
+
+      final model = _resolveHomeModel(prefs);
+      final aiService = AIService(null, apiKey);
+      final prompt = '''
+あなたはホーム画面の運用アシスタントです。
+次アクションに対して、実行を後押しする短い補足を日本語で1文だけ返してください。
+出力は1文のみ（句点あり、絵文字なし）。
+
+action_title: ${command.title}
+action_detail: ${command.detail}
+pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
+''';
+
+      final generated = await aiService.generateContent(
+        model: model,
+        prompt: prompt,
+      );
+      final nudge = _normalizeAiNudge(generated);
+      if (nudge == null) {
+        return null;
+      }
+
+      await prefs.setString(cacheKey, nudge);
+      return nudge;
+    } catch (e) {
+      debugPrint('Home AI nudge generation failed: $e');
+      return null;
+    }
+  }
+
   _HomeActionCommand _resolveNextAction(_HomeOpsSnapshot snapshot) {
-    final hour = DateTime.now().hour;
+    final hour = _now().hour;
     if (!snapshot.morningBriefingDone && hour < 12) {
       return const _HomeActionCommand(
         type: _HomeActionType.morningBriefing,
@@ -194,8 +295,10 @@ class _HomePageState extends State<HomePage> {
   Widget _buildNextActionBubble(
     BuildContext context,
     _HomeActionCommand command,
-    _HomeOpsSnapshot snapshot,
-  ) {
+    _HomeOpsSnapshot snapshot, {
+    String? aiNudge,
+    bool isAiNudgeLoading = false,
+  }) {
     String buttonLabel = '最新化';
     VoidCallback? onPressed = () {
       _refreshKpis();
@@ -256,6 +359,21 @@ class _HomePageState extends State<HomePage> {
                   'AI推奨: ${command.detail}',
                   style: const TextStyle(fontSize: 12, color: Colors.black87),
                 ),
+                if (isAiNudgeLoading &&
+                    command.type != _HomeActionType.none) ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'AI補足を生成中...',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+                if (aiNudge != null && aiNudge.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'AI補足: $aiNudge',
+                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  ),
+                ],
                 if (snapshot.pendingCriticalTaskCount > 0) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -371,200 +489,219 @@ class _HomePageState extends State<HomePage> {
             final highlightCritical =
                 nextAction.type == _HomeActionType.criticalTasks;
 
-            return SingleChildScrollView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(), // Pull-to-Refreshを効かせる
-              padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildNextActionBubble(context, nextAction, opsSnapshot),
-                  const SizedBox(height: 20),
-                  _buildSectionHeader(
-                    'CEO OFFICE',
-                    Icons.business_center,
-                    Colors.redAccent,
-                  ),
-                  _buildCeoCard(context),
-                  const SizedBox(height: 12),
-                  _buildMorningBriefingCard(
-                    context,
-                    isHighlighted: highlightMorning,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    'KPI SUMMARY',
-                    Icons.show_chart,
-                    Colors.purple,
-                  ),
-                  _buildKpiSummary(context, isDark, isCompact),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    'SPECIAL PROJECT',
-                    Icons.rocket_launch,
-                    Colors.indigo,
-                  ),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    color: Colors.indigo,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      leading: const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 28,
-                        child: Icon(
-                          Icons.campaign,
-                          color: Colors.indigo,
-                          size: 30,
-                        ),
-                      ),
-                      title: const Text(
-                        '2026 衆院選 勝利戦略室',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      onTap: () => Navigator.push(
+            return FutureBuilder<String?>(
+              future: _aiNudgeFuture,
+              builder: (context, aiNudgeSnapshot) {
+                final aiNudge = aiNudgeSnapshot.data;
+                final isAiLoading =
+                    aiNudgeSnapshot.connectionState == ConnectionState.waiting;
+
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildNextActionBubble(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const ElectionStrategyPage(),
-                        ),
+                        nextAction,
+                        opsSnapshot,
+                        aiNudge: aiNudge,
+                        isAiNudgeLoading: isAiLoading,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader('CSO OFFICE', Icons.flag, Colors.orange),
-                  _buildGridMenu(context, isCompact, [
-                    _MenuData(
-                      '断捨離 (デジタル)',
-                      Icons.cleaning_services,
-                      Colors.orange,
-                      () => _nav(context, const DanshariPage()),
-                    ),
-                    _MenuData(
-                      '断捨離 (リアル)',
-                      Icons.camera_alt,
-                      Colors.deepOrange,
-                      () => _nav(
+                      const SizedBox(height: 20),
+                      _buildSectionHeader(
+                        'CEO OFFICE',
+                        Icons.business_center,
+                        Colors.redAccent,
+                      ),
+                      _buildCeoCard(context),
+                      const SizedBox(height: 12),
+                      _buildMorningBriefingCard(
                         context,
-                        RealWorldDanshariPage(
-                          supabaseClient: Supabase.instance.client,
+                        isHighlighted: highlightMorning,
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        'KPI SUMMARY',
+                        Icons.show_chart,
+                        Colors.purple,
+                      ),
+                      _buildKpiSummary(context, isDark, isCompact),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        'SPECIAL PROJECT',
+                        Icons.rocket_launch,
+                        Colors.indigo,
+                      ),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        color: Colors.indigo,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          leading: const CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 28,
+                            child: Icon(
+                              Icons.campaign,
+                              color: Colors.indigo,
+                              size: 30,
+                            ),
+                          ),
+                          title: const Text(
+                            '2026 衆院選 勝利戦略室',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ElectionStrategyPage(),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    _MenuData(
-                      'AI稼働モニター',
-                      Icons.monitor_heart,
-                      Colors.orange,
-                      () => _nav(context, const AiStatusPage()),
-                    ),
-                    _MenuData(
-                      '週末ストック',
-                      Icons.check_circle_outline,
-                      Colors.teal,
-                      () => _nav(context, const StockTasksPage()),
-                    ),
-                    _MenuData(
-                      '思考停止ログ（読書ループ）',
-                      Icons.access_time_filled,
-                      Colors.indigo,
-                      () => _nav(context, const MindlessTaskPage()),
-                      isHighlighted: highlightCritical,
-                      badgeLabel: highlightCritical ? 'NEXT' : null,
-                    ),
-                    _MenuData(
-                      'ワードローブ整理',
-                      Icons.checkroom,
-                      Colors.brown,
-                      () => _nav(context, const WardrobePage()),
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    'CFO/CHO/CHRO OFFICE',
-                    Icons.balance,
-                    Colors.teal,
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        'CSO OFFICE',
+                        Icons.flag,
+                        Colors.orange,
+                      ),
+                      _buildGridMenu(context, isCompact, [
+                        _MenuData(
+                          '断捨離 (デジタル)',
+                          Icons.cleaning_services,
+                          Colors.orange,
+                          () => _nav(context, const DanshariPage()),
+                        ),
+                        _MenuData(
+                          '断捨離 (リアル)',
+                          Icons.camera_alt,
+                          Colors.deepOrange,
+                          () => _nav(
+                            context,
+                            RealWorldDanshariPage(
+                              supabaseClient: Supabase.instance.client,
+                            ),
+                          ),
+                        ),
+                        _MenuData(
+                          'AI稼働モニター',
+                          Icons.monitor_heart,
+                          Colors.orange,
+                          () => _nav(context, const AiStatusPage()),
+                        ),
+                        _MenuData(
+                          '週末ストック',
+                          Icons.check_circle_outline,
+                          Colors.teal,
+                          () => _nav(context, const StockTasksPage()),
+                        ),
+                        _MenuData(
+                          '思考停止ログ（読書ループ）',
+                          Icons.access_time_filled,
+                          Colors.indigo,
+                          () => _nav(context, const MindlessTaskPage()),
+                          isHighlighted: highlightCritical,
+                          badgeLabel: highlightCritical ? 'NEXT' : null,
+                        ),
+                        _MenuData(
+                          'ワードローブ整理',
+                          Icons.checkroom,
+                          Colors.brown,
+                          () => _nav(context, const WardrobePage()),
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        'CFO/CHO/CHRO OFFICE',
+                        Icons.balance,
+                        Colors.teal,
+                      ),
+                      _buildGridMenu(context, isCompact, [
+                        _MenuData(
+                          '財務管理 (CFO)',
+                          Icons.account_balance_wallet,
+                          Colors.green,
+                          () => _openCfoOffice(context),
+                          isHighlighted: highlightBalance,
+                          badgeLabel: highlightBalance ? 'NEXT' : null,
+                        ),
+                        _MenuData(
+                          '健康管理 (CHO)',
+                          Icons.medical_services,
+                          Colors.teal,
+                          () => _nav(context, const ChoOfficePage()),
+                        ),
+                        _MenuData(
+                          '人事厚生 (CHRO)',
+                          Icons.diversity_3,
+                          Colors.indigo,
+                          () => _nav(context, const ChroOfficePage()),
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        'CMO/CKO OFFICE',
+                        Icons.analytics,
+                        Colors.blue,
+                      ),
+                      _buildGridMenu(context, isCompact, [
+                        _MenuData(
+                          '市場分析 (CMO)',
+                          Icons.trending_up,
+                          Colors.pink,
+                          () => _nav(context, const CmoOfficePage()),
+                        ),
+                        _MenuData(
+                          'メモ一覧 (CKO)',
+                          Icons.list_alt,
+                          Colors.blue,
+                          () => _nav(context, const NoteListPage()),
+                        ),
+                        _MenuData(
+                          '新規事業起案',
+                          Icons.edit_note,
+                          Colors.blue,
+                          () => _nav(context, const NoteEditorPage()),
+                        ),
+                        _MenuData(
+                          'Gemini大学',
+                          Icons.menu_book,
+                          Colors.blue,
+                          () => _nav(context, const GeminiUniversityV2Page()),
+                        ),
+                        _MenuData(
+                          'マインドマップ (思考整理)',
+                          Icons.hub,
+                          Colors.blue,
+                          () => _nav(context, const MindMapPage()),
+                        ),
+                      ]),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                  _buildGridMenu(context, isCompact, [
-                    _MenuData(
-                      '財務管理 (CFO)',
-                      Icons.account_balance_wallet,
-                      Colors.green,
-                      () => _openCfoOffice(context),
-                      isHighlighted: highlightBalance,
-                      badgeLabel: highlightBalance ? 'NEXT' : null,
-                    ),
-                    _MenuData(
-                      '健康管理 (CHO)',
-                      Icons.medical_services,
-                      Colors.teal,
-                      () => _nav(context, const ChoOfficePage()),
-                    ),
-                    _MenuData(
-                      '人事厚生 (CHRO)',
-                      Icons.diversity_3,
-                      Colors.indigo,
-                      () => _nav(context, const ChroOfficePage()),
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    'CMO/CKO OFFICE',
-                    Icons.analytics,
-                    Colors.blue,
-                  ),
-                  _buildGridMenu(context, isCompact, [
-                    _MenuData(
-                      '市場分析 (CMO)',
-                      Icons.trending_up,
-                      Colors.pink,
-                      () => _nav(context, const CmoOfficePage()),
-                    ),
-                    _MenuData(
-                      'メモ一覧 (CKO)',
-                      Icons.list_alt,
-                      Colors.blue,
-                      () => _nav(context, const NoteListPage()),
-                    ),
-                    _MenuData(
-                      '新規事業起案',
-                      Icons.edit_note,
-                      Colors.blue,
-                      () => _nav(context, const NoteEditorPage()),
-                    ),
-                    _MenuData(
-                      'Gemini大学',
-                      Icons.menu_book,
-                      Colors.blue,
-                      () => _nav(context, const GeminiUniversityV2Page()),
-                    ),
-                    _MenuData(
-                      'マインドマップ (思考整理)',
-                      Icons.hub,
-                      Colors.blue,
-                      () => _nav(context, const MindMapPage()),
-                    ),
-                  ]),
-                  const SizedBox(height: 40),
-                ],
-              ),
+                );
+              },
             );
           },
         ),
