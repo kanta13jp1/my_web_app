@@ -415,62 +415,73 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               ),
               FilledButton(
                 onPressed: () async {
-                  final dateStr =
-                      DateFormat('yyyy-MM-dd').format(_selectedDate);
-                  final existingRows = await _supabase
-                      .from('mindless_tasks')
-                      .select('content')
-                      .eq('user_id', userId)
-                      .eq('task_date', dateStr);
+                  try {
+                    final dateStr =
+                        DateFormat('yyyy-MM-dd').format(_selectedDate);
+                    final existingRows = await _supabase
+                        .from('mindless_tasks')
+                        .select('content')
+                        .eq('user_id', userId)
+                        .eq('task_date', dateStr);
 
-                  final existingDetoxTitles = existingRows
-                      .whereType<Map<String, dynamic>>()
-                      .map(
-                        (row) =>
-                            _stripPriorityTag(row['content'] as String? ?? ''),
-                      )
-                      .where(
-                        (content) => content.startsWith('スマホ禁欲: '),
-                      )
-                      .toSet();
+                    final existingDetoxTitles = existingRows
+                        .whereType<Map<String, dynamic>>()
+                        .map(
+                          (row) => _stripPriorityTag(
+                            row['content'] as String? ?? '',
+                          ),
+                        )
+                        .where(
+                          (content) => content.startsWith('スマホ禁欲: '),
+                        )
+                        .toSet();
 
-                  final actionsToInsert = _phoneDetoxActions.where((action) {
-                    return !existingDetoxTitles
-                        .contains(_detoxTaskTitle(action));
-                  }).toList();
+                    final actionsToInsert = _phoneDetoxActions.where((action) {
+                      return !existingDetoxTitles.contains(
+                        _detoxTaskTitle(action),
+                      );
+                    }).toList();
 
-                  if (actionsToInsert.isEmpty) {
+                    if (actionsToInsert.isEmpty) {
+                      if (!mounted) return;
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('すでに追加済みです。')),
+                      );
+                      return;
+                    }
+
+                    final inserts = actionsToInsert.map((action) {
+                      return <String, dynamic>{
+                        'user_id': userId,
+                        'task_date': dateStr,
+                        'hour_slot': selectedHour,
+                        'content':
+                            '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
+                        'is_completed': false,
+                      };
+                    }).toList();
+
+                    await _supabase.from('mindless_tasks').insert(inserts);
                     if (!mounted) return;
                     Navigator.of(context).pop();
+                    await _loadTasks();
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('すでに追加済みです。')),
-                    );
-                    return;
-                  }
-
-                  final inserts = actionsToInsert.map((action) {
-                    return <String, dynamic>{
-                      'user_id': userId,
-                      'task_date': dateStr,
-                      'hour_slot': selectedHour,
-                      'content':
-                          '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
-                      'is_completed': false,
-                    };
-                  }).toList();
-
-                  await _supabase.from('mindless_tasks').insert(inserts);
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                  await _loadTasks();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'スマホ禁欲項目を${actionsToInsert.length}件追加しました。',
+                      SnackBar(
+                        content: Text(
+                          'スマホ禁欲項目を${actionsToInsert.length}件追加しました。',
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('追加に失敗しました（通信/認証）: $e'),
+                      ),
+                    );
+                  }
                 },
                 child: const Text('追加'),
               ),
