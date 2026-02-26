@@ -29,6 +29,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   String _timeboxMode = '動く';
   String _timeboxGoal = '';
   int _completedTimeboxCount = 0;
+  int _completedReadingSessions = 0;
+  int _completedWalkBreaks = 0;
+  int _phoneSlipCount = 0;
+  int _currentReadingStreak = 0;
+  bool _phoneShieldEnabled = true;
 
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
 
@@ -165,6 +170,13 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           _isTimeboxRunning = false;
           _timeboxRemaining = Duration.zero;
           _completedTimeboxCount += 1;
+          if (_timeboxMode == '読書') {
+            _completedReadingSessions += 1;
+            _currentReadingStreak += 1;
+          } else if (_timeboxMode == '散歩') {
+            _completedWalkBreaks += 1;
+            _currentReadingStreak = 0;
+          }
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -178,6 +190,33 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       setState(() {
         _timeboxRemaining = Duration(seconds: _timeboxRemaining.inSeconds - 1);
       });
+    });
+  }
+
+  void _startReadingAlbum() {
+    if (_isTimeboxRunning) return;
+    _startTimebox(
+      mode: '読書',
+      goal: '読書に没頭（スマホを見ない）',
+      minutes: 60,
+    );
+  }
+
+  void _startWalkBreak(int minutes) {
+    if (_isTimeboxRunning) return;
+    _startTimebox(
+      mode: '散歩',
+      goal: '喫茶店を出て歩く',
+      minutes: minutes,
+    );
+  }
+
+  void _logPhoneSlip() {
+    if (!_isTimeboxRunning || _timeboxMode != '読書' || !_phoneShieldEnabled) {
+      return;
+    }
+    setState(() {
+      _phoneSlipCount += 1;
     });
   }
 
@@ -288,6 +327,149 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orange.shade100),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.menu_book, size: 18, color: Colors.brown),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '読書ルーティン（喫茶店 + アルバム）',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'アルバム1枚=60分で読書。2枚集中したら30〜60分散歩して、次の店で繰り返す。',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed:
+                            _isTimeboxRunning ? null : _startReadingAlbum,
+                        icon: const Icon(Icons.library_music),
+                        label: const Text('アルバム1枚読書'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isTimeboxRunning
+                            ? null
+                            : () => _startWalkBreak(30),
+                        icon: const Icon(Icons.directions_walk),
+                        label: const Text('散歩30分'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isTimeboxRunning
+                            ? null
+                            : () => _startWalkBreak(60),
+                        icon: const Icon(Icons.route),
+                        label: const Text('散歩60分'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            _isTimeboxRunning ? null : _startReadingAlbum,
+                        icon: const Icon(Icons.replay),
+                        label: const Text('もう1枚読む'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: _phoneShieldEnabled,
+                  onChanged: (value) {
+                    setState(() => _phoneShieldEnabled = value);
+                  },
+                  title: const Text('読書中はスマホを見ないモード'),
+                ),
+                if (_phoneShieldEnabled)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.phone_android,
+                          size: 16,
+                          color: Colors.redAccent,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'スマホ逸脱 $phoneSlipLabel',
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: _isTimeboxRunning && _timeboxMode == '読書'
+                              ? _logPhoneSlip
+                              : null,
+                          child: const Text('見てしまった +1'),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildMetricChip(
+                      icon: Icons.menu_book,
+                      label: '読書',
+                      value: _completedReadingSessions.toString(),
+                    ),
+                    _buildMetricChip(
+                      icon: Icons.directions_walk,
+                      label: '散歩',
+                      value: _completedWalkBreaks.toString(),
+                    ),
+                    _buildMetricChip(
+                      icon: Icons.local_fire_department,
+                      label: '連続読書',
+                      value: _currentReadingStreak.toString(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -384,6 +566,36 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
+  String get phoneSlipLabel => '$_phoneSlipCount 回';
+
+  Widget _buildMetricChip({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.blueGrey.shade700),
+          const SizedBox(width: 4),
+          Text(
+            '$label $value',
+            style: TextStyle(
+              color: Colors.blueGrey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -420,7 +632,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               ],
             ),
           ),
-          _buildTimeboxPanel(),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.38,
+            ),
+            child: SingleChildScrollView(
+              child: _buildTimeboxPanel(),
+            ),
+          ),
 
           // タイムライン
           Expanded(

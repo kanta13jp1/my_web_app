@@ -241,7 +241,7 @@ class _HomePageState extends State<HomePage> {
                   () => _nav(context, const StockTasksPage()),
                 ),
                 _MenuData(
-                  '思考停止ログ',
+                  '思考停止ログ（読書ループ）',
                   Icons.access_time_filled,
                   Colors.indigo,
                   () => _nav(context, const MindlessTaskPage()),

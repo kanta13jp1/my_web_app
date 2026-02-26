@@ -92,6 +92,8 @@ void main() {
     expect(find.byIcon(Icons.hourglass_bottom), findsOneWidget);
     expect(find.byIcon(Icons.directions_run), findsOneWidget);
 
+    await tester.ensureVisible(find.byIcon(Icons.directions_run));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.directions_run));
     await tester.pumpAndSettle();
 
@@ -106,5 +108,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining(': Write post'), findsOneWidget);
+  });
+
+  testWidgets('can quick start reading album session', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: FakeSupabaseClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.library_music), findsOneWidget);
+
+    await tester.ensureVisible(find.byIcon(Icons.library_music));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.library_music));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.stop_circle_outlined), findsOneWidget);
+    expect(find.textContaining('読書:'), findsOneWidget);
   });
 }
