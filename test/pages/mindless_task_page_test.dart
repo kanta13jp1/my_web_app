@@ -156,4 +156,28 @@ void main() {
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('5件バッチを追加'), findsOneWidget);
   });
+
+  testWidgets('shows phone detox panel and opens detox template dialog', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: FakeSupabaseClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('スマホ禁欲プロトコル'), findsOneWidget);
+    expect(find.textContaining('8項目を追加'), findsOneWidget);
+
+    await tester.ensureVisible(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('スマホ禁欲8項目を追加'), findsOneWidget);
+  });
 }

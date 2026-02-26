@@ -10,6 +10,16 @@ enum TaskPriority {
   c,
 }
 
+class _PhoneDetoxAction {
+  final String label;
+  final TaskPriority priority;
+
+  const _PhoneDetoxAction({
+    required this.label,
+    required this.priority,
+  });
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -45,6 +55,16 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
   static const int _dailyTaskTarget = 100;
   static const int _batchTaskCount = 5;
+  static const List<_PhoneDetoxAction> _phoneDetoxActions = [
+    _PhoneDetoxAction(label: '朝に触らない', priority: TaskPriority.a),
+    _PhoneDetoxAction(label: '仕事に没頭する', priority: TaskPriority.a),
+    _PhoneDetoxAction(label: 'グレースケール', priority: TaskPriority.c),
+    _PhoneDetoxAction(label: 'SNSをPCに移行', priority: TaskPriority.b),
+    _PhoneDetoxAction(label: 'スマホなしで散歩', priority: TaskPriority.b),
+    _PhoneDetoxAction(label: '連絡をまとめて返す', priority: TaskPriority.b),
+    _PhoneDetoxAction(label: 'ゲームのデータ削除', priority: TaskPriority.a),
+    _PhoneDetoxAction(label: 'タイムロッキングコンテナ', priority: TaskPriority.a),
+  ];
 
   @override
   void initState() {
@@ -132,8 +152,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   int _priorityTotal(TaskPriority priority) {
     return _allTasks
-        .where((task) =>
-            _parsePriority(task['content'] as String? ?? '') == priority)
+        .where(
+          (task) =>
+              _parsePriority(task['content'] as String? ?? '') == priority,
+        )
         .length;
   }
 
@@ -190,6 +212,29 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   String _stripPriorityTag(String content) {
     return content.replaceFirst(RegExp(r'^\[(A|B|C)\]\s*'), '').trim();
+  }
+
+  String _detoxTaskTitle(_PhoneDetoxAction action) {
+    return 'スマホ禁欲: ${action.label}';
+  }
+
+  bool _isDetoxTask(Map<String, dynamic> task, _PhoneDetoxAction action) {
+    final content = _stripPriorityTag(task['content'] as String? ?? '');
+    return content == _detoxTaskTitle(action);
+  }
+
+  int get _detoxScheduledCount {
+    return _phoneDetoxActions.where((action) {
+      return _allTasks.any((task) => _isDetoxTask(task, action));
+    }).length;
+  }
+
+  int get _detoxCompletedCount {
+    return _phoneDetoxActions.where((action) {
+      return _allTasks.any(
+        (task) => _isDetoxTask(task, action) && task['is_completed'] == true,
+      );
+    }).length;
   }
 
   String _formatRemaining(Duration duration) {
@@ -314,6 +359,90 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       mode: '5件バッチ',
       goal: '15分で5件を終わらせる',
       minutes: 15,
+    );
+  }
+
+  void _startPhoneLockFocus() {
+    if (_isTimeboxRunning) return;
+    _startTimebox(
+      mode: '物理ロック',
+      goal: 'スマホを封印して他のことに没頭する',
+      minutes: 90,
+    );
+  }
+
+  Future<void> _showPhoneDetoxTemplateDialog() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    int selectedHour = DateTime.now().hour;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('スマホ禁欲8項目を追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('今日のタスクとして8項目を一括追加します。'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  initialValue: selectedHour,
+                  decoration: const InputDecoration(
+                    labelText: '配置する時間帯',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: List.generate(24, (hour) {
+                    return DropdownMenuItem<int>(
+                      value: hour,
+                      child: Text('$hour:00'),
+                    );
+                  }),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => selectedHour = value);
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final dateStr =
+                      DateFormat('yyyy-MM-dd').format(_selectedDate);
+                  final inserts = _phoneDetoxActions.map((action) {
+                    return <String, dynamic>{
+                      'user_id': userId,
+                      'task_date': dateStr,
+                      'hour_slot': selectedHour,
+                      'content':
+                          '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
+                      'is_completed': false,
+                    };
+                  }).toList();
+
+                  await _supabase.from('mindless_tasks').insert(inserts);
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
+                  await _loadTasks();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('スマホ禁欲8項目を追加しました。')),
+                  );
+                },
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -622,6 +751,113 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
+  Widget _buildPhoneDetoxPanel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.phonelink_erase, color: Colors.red.shade700),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'スマホ禁欲プロトコル',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                '$_detoxCompletedCount/${_phoneDetoxActions.length}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '物理的に使えなくして、他のことに没頭する。',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _phoneDetoxActions
+                .map((action) => _buildDetoxActionChip(action))
+                .toList(),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showPhoneDetoxTemplateDialog,
+                  icon: const Icon(Icons.checklist_rtl),
+                  label: Text('8項目を追加 ($_detoxScheduledCount済み)'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _isTimeboxRunning ? null : _startPhoneLockFocus,
+                  icon: const Icon(Icons.lock_clock),
+                  label: const Text('物理ロック90分'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetoxActionChip(_PhoneDetoxAction action) {
+    final scheduled = _allTasks.any((task) => _isDetoxTask(task, action));
+    final completed = _allTasks.any(
+      (task) => _isDetoxTask(task, action) && task['is_completed'] == true,
+    );
+
+    final chipColor = completed
+        ? Colors.green
+        : scheduled
+            ? _priorityColor(action.priority)
+            : Colors.grey;
+    final icon = completed
+        ? Icons.check_circle
+        : scheduled
+            ? Icons.radio_button_checked
+            : Icons.radio_button_unchecked;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: chipColor),
+          const SizedBox(width: 4),
+          Text(
+            action.label,
+            style: TextStyle(
+              color: chipColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleTask(int id, bool currentVal) async {
     // 楽観的UI更新（待たずに切り替え）
     setState(() {
@@ -675,6 +911,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           ),
           const SizedBox(height: 10),
           _buildHundredTaskPanel(),
+          const SizedBox(height: 10),
+          _buildPhoneDetoxPanel(),
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -1124,7 +1362,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                   color:
                                                       _priorityColor(priority)
                                                           .withValues(
-                                                              alpha: 0.14),
+                                                    alpha: 0.14,
+                                                  ),
                                                   borderRadius:
                                                       BorderRadius.circular(6),
                                                 ),
@@ -1132,7 +1371,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                   _priorityLabel(priority),
                                                   style: TextStyle(
                                                     color: _priorityColor(
-                                                        priority),
+                                                      priority,
+                                                    ),
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w700,
                                                   ),
