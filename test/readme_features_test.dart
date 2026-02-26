@@ -46,6 +46,8 @@ void main() {
       await tester.pumpWidget(createTestWidget(const HomePage()));
       await tester.pumpAndSettle();
 
+      expect(find.text('次に実施すべきアクション'), findsOneWidget);
+      expect(find.textContaining('AI推奨:'), findsOneWidget);
       expect(find.text('CEO OFFICE'), findsOneWidget);
       expect(find.text('CSO OFFICE'), findsOneWidget);
     });
