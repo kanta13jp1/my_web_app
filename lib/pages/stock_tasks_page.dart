@@ -5,6 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/notification_service.dart';
 
+enum _StockTaskViewMode {
+  all,
+  thinkingOnly,
+  actionOnly,
+}
+
 class StockTasksPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
   final NotificationService? notificationService;
@@ -25,6 +31,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
   final _taskController = TextEditingController();
   static const String _saturdayReminderKey =
       'stock_tasks_saturday_reminder_enabled';
+  static const String _categoryThinking = 'thinking_topic';
+  static const String _categoryAction = 'action_task';
 
   SupabaseClient get _supabase =>
       widget.supabaseClient ?? Supabase.instance.client;
@@ -39,6 +47,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
   List<Map<String, dynamic>> _completedTasks = [];
   bool _isLoading = true;
   bool _saturdayReminderEnabled = true;
+  bool _composeAsThinking = true;
+  _StockTaskViewMode _viewMode = _StockTaskViewMode.all;
 
   @override
   void initState() {
@@ -56,6 +66,43 @@ class _StockTasksPageState extends State<StockTasksPage> {
   bool get _isSaturday => _now().weekday == DateTime.saturday;
 
   int get _pendingCount => _incompleteTasks.length;
+
+  String _categoryOfTask(Map<String, dynamic> task) {
+    final category = (task['category'] as String?)?.trim();
+    if (category == _categoryThinking || category == _categoryAction) {
+      return category!;
+    }
+    return _categoryAction;
+  }
+
+  bool _isThinkingTask(Map<String, dynamic> task) {
+    return _categoryOfTask(task) == _categoryThinking;
+  }
+
+  bool _isActionTask(Map<String, dynamic> task) {
+    return _categoryOfTask(task) == _categoryAction;
+  }
+
+  int get _thinkingTaskCount =>
+      _incompleteTasks.where(_isThinkingTask).length +
+      _completedTasks.where(_isThinkingTask).length;
+
+  int get _actionTaskCount =>
+      _incompleteTasks.where(_isActionTask).length +
+      _completedTasks.where(_isActionTask).length;
+
+  List<Map<String, dynamic>> _applyViewMode(
+    List<Map<String, dynamic>> tasks,
+  ) {
+    switch (_viewMode) {
+      case _StockTaskViewMode.all:
+        return tasks;
+      case _StockTaskViewMode.thinkingOnly:
+        return tasks.where(_isThinkingTask).toList();
+      case _StockTaskViewMode.actionOnly:
+        return tasks.where(_isActionTask).toList();
+    }
+  }
 
   Future<void> _loadReminderPreference() async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,7 +124,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
 
       final data = await _supabase
           .from('someday_tasks')
-          .select('id, task, is_completed, created_at')
+          .select('id, task, is_completed, created_at, category')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
@@ -147,6 +194,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
         'task': taskText,
         'is_completed': false,
         'is_important': false,
+        'category': _composeAsThinking ? _categoryThinking : _categoryAction,
       });
       _taskController.clear();
       await _loadTasks();
@@ -229,6 +277,46 @@ class _StockTasksPageState extends State<StockTasksPage> {
                       : '土曜10:00にリマインドされます（${_saturdayReminderEnabled ? 'ON' : 'OFF'}）。',
                   style: const TextStyle(fontSize: 12, color: Colors.black87),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  '思考ネタ $_thinkingTaskCount 件 / 行動タスク $_actionTaskCount 件',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('すべて'),
+                      selected: _viewMode == _StockTaskViewMode.all,
+                      onSelected: (_) {
+                        setState(() => _viewMode = _StockTaskViewMode.all);
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('思考ネタ'),
+                      selected: _viewMode == _StockTaskViewMode.thinkingOnly,
+                      onSelected: (_) {
+                        setState(
+                          () => _viewMode = _StockTaskViewMode.thinkingOnly,
+                        );
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('行動タスク'),
+                      selected: _viewMode == _StockTaskViewMode.actionOnly,
+                      onSelected: (_) {
+                        setState(
+                          () => _viewMode = _StockTaskViewMode.actionOnly,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -241,12 +329,13 @@ class _StockTasksPageState extends State<StockTasksPage> {
                     child: ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        if (_incompleteTasks.isEmpty && _completedTasks.isEmpty)
+                        if (_applyViewMode(_incompleteTasks).isEmpty &&
+                            _applyViewMode(_completedTasks).isEmpty)
                           const Padding(
                             padding: EdgeInsets.only(top: 50),
                             child: Center(
                               child: Text(
-                                '時間ができたらやりたいことを\nストックしておきましょう',
+                                '思考ネタや行動タスクを\nストックしておきましょう',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.grey),
                               ),
@@ -254,9 +343,10 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           ),
 
                         // 未完了タスク
-                        ..._incompleteTasks.map((task) => _buildTaskTile(task)),
+                        ..._applyViewMode(_incompleteTasks)
+                            .map((task) => _buildTaskTile(task)),
 
-                        if (_completedTasks.isNotEmpty) ...[
+                        if (_applyViewMode(_completedTasks).isNotEmpty) ...[
                           const SizedBox(height: 20),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 8),
@@ -267,7 +357,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           ),
                           const Divider(),
                           // 完了済みタスク
-                          ..._completedTasks
+                          ..._applyViewMode(_completedTasks)
                               .map((task) => _buildTaskTile(task)),
                         ],
                       ],
@@ -290,11 +380,34 @@ class _StockTasksPageState extends State<StockTasksPage> {
             ),
             child: Row(
               children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('思考ネタ'),
+                      selected: _composeAsThinking,
+                      onSelected: (_) {
+                        setState(() => _composeAsThinking = true);
+                      },
+                    ),
+                    ChoiceChip(
+                      label: const Text('行動タスク'),
+                      selected: !_composeAsThinking,
+                      onSelected: (_) {
+                        setState(() => _composeAsThinking = false);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Expanded(
                   child: TextField(
                     controller: _taskController,
-                    decoration: const InputDecoration(
-                      hintText: '次に時間があるときにやること',
+                    decoration: InputDecoration(
+                      hintText: _composeAsThinking
+                          ? '脳に余裕があるときに考えるネタ'
+                          : '次に時間があるときにやること',
                       border: InputBorder.none,
                     ),
                     onSubmitted: (_) => _addTask(),
@@ -320,6 +433,9 @@ class _StockTasksPageState extends State<StockTasksPage> {
     final String id = task['id'].toString();
     final bool isCompleted = task['is_completed'] == true;
     final String text = task['task'] as String? ?? '';
+    final bool isThinking = _isThinkingTask(task);
+    final badgeColor = isThinking ? Colors.deepPurple : Colors.teal;
+    final badgeText = isThinking ? '思考ネタ' : '行動';
     return Dismissible(
       key: ValueKey(id),
       direction: DismissDirection.endToStart,
@@ -352,6 +468,27 @@ class _StockTasksPageState extends State<StockTasksPage> {
               fontSize: 16,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
               color: isCompleted ? Colors.grey : Colors.black87,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

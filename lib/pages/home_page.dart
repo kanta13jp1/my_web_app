@@ -661,7 +661,7 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                           () => _nav(context, const AiStatusPage()),
                         ),
                         _MenuData(
-                          '週末ストック',
+                          '週末ストック / 思考ネタ',
                           Icons.check_circle_outline,
                           Colors.teal,
                           () => _nav(context, const StockTasksPage()),
