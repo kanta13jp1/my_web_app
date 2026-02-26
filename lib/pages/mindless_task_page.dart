@@ -418,11 +418,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                   try {
                     final dateStr =
                         DateFormat('yyyy-MM-dd').format(_selectedDate);
-                    final existingRows = await _supabase
+                    final dynamic existingRowsRaw = await _supabase
                         .from('mindless_tasks')
                         .select('content')
                         .eq('user_id', userId)
                         .eq('task_date', dateStr);
+                    final existingRows = existingRowsRaw is List
+                        ? existingRowsRaw
+                        : const <dynamic>[];
 
                     final existingDetoxTitles = existingRows
                         .whereType<Map<String, dynamic>>()
@@ -475,11 +478,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       ),
                     );
                   } catch (e) {
+                    debugPrint('PhoneDetox insert failed: $e');
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('追加に失敗しました（通信/認証）: $e'),
-                      ),
+                      const SnackBar(content: Text('追加に失敗しました（通信/認証）')),
                     );
                   }
                 },

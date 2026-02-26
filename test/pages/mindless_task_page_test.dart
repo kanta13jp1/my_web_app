@@ -70,6 +70,117 @@ class FakePostgrestFilterBuilder<T> extends Fake
   }
 }
 
+class StatefulSupabaseClient extends Fake implements SupabaseClient {
+  @override
+  final FakeGoTrueClient auth = FakeGoTrueClient();
+
+  final List<Map<String, dynamic>> _mindlessTasks = <Map<String, dynamic>>[];
+
+  int _idSeed = 1;
+  int get taskCount => _mindlessTasks.length;
+
+  @override
+  SupabaseQueryBuilder from(String table) {
+    if (table == 'mindless_tasks') {
+      return StatefulSupabaseQueryBuilder(
+        rows: _mindlessTasks,
+        nextId: () => _idSeed++,
+      );
+    }
+    return FakeSupabaseQueryBuilder();
+  }
+}
+
+class StatefulSupabaseQueryBuilder extends Fake
+    implements SupabaseQueryBuilder {
+  final List<Map<String, dynamic>> rows;
+  final int Function() nextId;
+
+  StatefulSupabaseQueryBuilder({
+    required this.rows,
+    required this.nextId,
+  });
+
+  @override
+  StatefulPostgrestFilterBuilder select([
+    String? columns = '*',
+  ]) {
+    return StatefulPostgrestFilterBuilder(rows);
+  }
+
+  @override
+  PostgrestFilterBuilder<dynamic> insert(
+    Object values, {
+    bool defaultToNull = true,
+  }) {
+    final List<Map<String, dynamic>> inserts;
+    if (values is List) {
+      inserts = values.whereType<Map<String, dynamic>>().toList();
+    } else if (values is Map<String, dynamic>) {
+      inserts = <Map<String, dynamic>>[values];
+    } else {
+      inserts = <Map<String, dynamic>>[];
+    }
+
+    for (final row in inserts) {
+      final copy = Map<String, dynamic>.from(row);
+      copy.putIfAbsent('id', nextId);
+      rows.add(copy);
+    }
+    return StatefulPostgrestFilterBuilder(rows);
+  }
+}
+
+class StatefulPostgrestFilterBuilder extends Fake
+    implements PostgrestFilterBuilder<List<Map<String, dynamic>>> {
+  final List<Map<String, dynamic>> _sourceRows;
+  final Map<String, Object> _filters = <String, Object>{};
+
+  StatefulPostgrestFilterBuilder(this._sourceRows);
+
+  @override
+  StatefulPostgrestFilterBuilder eq(String column, Object value) {
+    _filters[column] = value;
+    return this;
+  }
+
+  @override
+  StatefulPostgrestFilterBuilder order(
+    String column, {
+    bool ascending = false,
+    bool nullsFirst = false,
+    String? referencedTable,
+  }) {
+    return this;
+  }
+
+  List<Map<String, dynamic>> _filtered() {
+    return _sourceRows
+        .where((row) {
+          return _filters.entries
+              .every((entry) => row[entry.key] == entry.value);
+        })
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  @override
+  Future<U> then<U>(
+    FutureOr<U> Function(List<Map<String, dynamic>> value) onValue, {
+    Function? onError,
+  }) {
+    return Future.value(_filtered()).then(onValue, onError: onError);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> catchError(
+    Function onError, {
+    bool Function(Object)? test,
+  }) {
+    return Future.value(_filtered()).catchError(onError, test: test);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -179,5 +290,51 @@ void main() {
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('スマホ禁欲8項目を追加'), findsOneWidget);
+  });
+
+  testWidgets('detox template insert is diff-based across repeated runs', (
+    WidgetTester tester,
+  ) async {
+    final client = StatefulSupabaseClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: client,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+
+    final addInDialogFirst = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('追加'),
+    );
+    await tester.tap(addInDialogFirst.first);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('スマホ禁欲項目を8件追加しました。'), findsOneWidget);
+    expect(client.taskCount, 8);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('8項目を追加'));
+    await tester.pumpAndSettle();
+
+    final addInDialogSecond = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('追加'),
+    );
+    await tester.tap(addInDialogSecond.first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('すでに追加済みです。'), findsOneWidget);
+    expect(client.taskCount, 8);
   });
 }
