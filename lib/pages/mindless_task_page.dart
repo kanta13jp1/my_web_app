@@ -1,26 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 class MindlessTaskPage extends StatefulWidget {
-  const MindlessTaskPage({super.key});
+  final SupabaseClient? supabaseClient;
+
+  const MindlessTaskPage({super.key, this.supabaseClient});
 
   @override
   State<MindlessTaskPage> createState() => _MindlessTaskPageState();
 }
 
 class _MindlessTaskPageState extends State<MindlessTaskPage> {
-  final _supabase = Supabase.instance.client;
+  SupabaseClient get _supabase =>
+      widget.supabaseClient ?? Supabase.instance.client;
   DateTime _selectedDate = DateTime.now();
 
   // データ構造: { 6: [Task1, Task2], 7: [Task3] } のように時間ごとのリスト
   Map<int, List<Map<String, dynamic>>> _tasksByHour = {};
   bool _isLoading = true;
+  Timer? _timeboxTimer;
+  bool _isTimeboxRunning = false;
+  int _selectedMinutes = 50;
+  Duration _timeboxTotal = Duration.zero;
+  Duration _timeboxRemaining = Duration.zero;
+  String _timeboxMode = '動く';
+  String _timeboxGoal = '';
+  int _completedTimeboxCount = 0;
+
+  static const List<int> _timeboxPresets = [15, 30, 50, 90];
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+  }
+
+  @override
+  void dispose() {
+    _timeboxTimer?.cancel();
+    super.dispose();
   }
 
   // 日付が変わったら再ロード
@@ -43,7 +64,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   Future<void> _loadTasks() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
@@ -73,6 +97,105 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       debugPrint('Error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatRemaining(Duration duration) {
+    final mm = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final ss = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$mm:$ss';
+  }
+
+  double _timeboxProgress() {
+    if (_timeboxTotal.inSeconds <= 0) return 0;
+    final value =
+        1 - (_timeboxRemaining.inSeconds / _timeboxTotal.inSeconds.toDouble());
+    return value.clamp(0, 1);
+  }
+
+  Future<void> _startTimeboxFlow(String mode) async {
+    final controller = TextEditingController();
+    final goal = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$modeモードを開始'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'この時間でやることを1行で書く',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('開始'),
+          ),
+        ],
+      ),
+    );
+
+    if (goal == null || goal.isEmpty) return;
+    _startTimebox(mode: mode, goal: goal, minutes: _selectedMinutes);
+  }
+
+  void _startTimebox({
+    required String mode,
+    required String goal,
+    required int minutes,
+  }) {
+    _timeboxTimer?.cancel();
+    final total = Duration(minutes: minutes);
+    setState(() {
+      _isTimeboxRunning = true;
+      _timeboxMode = mode;
+      _timeboxGoal = goal;
+      _timeboxTotal = total;
+      _timeboxRemaining = total;
+    });
+
+    _timeboxTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_timeboxRemaining.inSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _isTimeboxRunning = false;
+          _timeboxRemaining = Duration.zero;
+          _completedTimeboxCount += 1;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '時間終了: $_timeboxMode「$_timeboxGoal」',
+            ),
+          ),
+        );
+        return;
+      }
+      setState(() {
+        _timeboxRemaining = Duration(seconds: _timeboxRemaining.inSeconds - 1);
+      });
+    });
+  }
+
+  void _extendTimebox(int minutes) {
+    if (!_isTimeboxRunning) return;
+    setState(() {
+      final extend = Duration(minutes: minutes);
+      _timeboxTotal += extend;
+      _timeboxRemaining += extend;
+    });
+  }
+
+  void _stopTimebox() {
+    _timeboxTimer?.cancel();
+    setState(() {
+      _isTimeboxRunning = false;
+      _timeboxRemaining = Duration.zero;
+    });
   }
 
   Future<void> _addTask(int hour) async {
@@ -130,11 +253,142 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     _loadTasks();
   }
 
+  Widget _buildTimeboxPanel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        border: Border(
+          top: BorderSide(color: Colors.amber.shade200),
+          bottom: BorderSide(color: Colors.amber.shade200),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hourglass_bottom, color: Colors.orange.shade800),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '先に時間制限を決める（1つの手間）',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                '完了 $_completedTimeboxCount 回',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _timeboxPresets.map((minutes) {
+              return ChoiceChip(
+                label: Text('$minutes分'),
+                selected: _selectedMinutes == minutes,
+                onSelected: (_) {
+                  setState(() => _selectedMinutes = minutes);
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed:
+                      _isTimeboxRunning ? null : () => _startTimeboxFlow('動く'),
+                  icon: const Icon(Icons.directions_run),
+                  label: const Text('動くを開始'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed:
+                      _isTimeboxRunning ? null : () => _startTimeboxFlow('考える'),
+                  icon: const Icon(Icons.psychology),
+                  label: const Text('考えるを開始'),
+                ),
+              ),
+            ],
+          ),
+          if (_isTimeboxRunning || _timeboxRemaining.inSeconds > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade100),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$_timeboxMode: $_timeboxGoal',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatRemaining(_timeboxRemaining),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(value: _timeboxProgress()),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isTimeboxRunning
+                              ? () => _extendTimebox(5)
+                              : null,
+                          icon: const Icon(Icons.add_alarm),
+                          label: const Text('5分延長'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isTimeboxRunning ? _stopTimebox : null,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                          label: const Text('終了'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('思考停止タスクロガー'),
+        title: const Text('思考停止脱出ログ'),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -160,12 +414,13 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '「やる気は出ない。とにかく思考停止して手を動かす」',
+                  '「脱線したら、時間制限を合図に元の目的へ戻る」',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
           ),
+          _buildTimeboxPanel(),
 
           // タイムライン
           Expanded(
@@ -179,6 +434,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       final isCurrentHour =
                           _selectedDate.day == DateTime.now().day &&
                               _selectedDate.month == DateTime.now().month &&
+                              _selectedDate.year == DateTime.now().year &&
                               hour == DateTime.now().hour;
 
                       return Container(
