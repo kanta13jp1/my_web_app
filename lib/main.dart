@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
 import 'pages/home_page.dart';
@@ -26,7 +27,14 @@ Future<void> main() async {
 
   final NotificationService notificationService = NotificationService();
   await notificationService.init();
-  await notificationService.scheduleSaturdayReminder();
+  final prefs = await SharedPreferences.getInstance();
+  final saturdayReminderEnabled =
+      prefs.getBool('stock_tasks_saturday_reminder_enabled') ?? true;
+  if (saturdayReminderEnabled) {
+    await notificationService.scheduleSaturdayReminder();
+  } else {
+    await notificationService.cancelSaturdayReminder();
+  }
 
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',

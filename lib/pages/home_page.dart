@@ -117,14 +117,34 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<int> _fetchPendingStockTaskCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return 0;
+
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('someday_tasks')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('is_completed', false);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      return rows.length;
+    } catch (e) {
+      debugPrint('Error fetching pending stock task count: $e');
+      return 0;
+    }
+  }
+
   Future<_HomeOpsSnapshot> _loadOpsSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
     final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
+    final pendingStockTaskCount = await _fetchPendingStockTaskCount();
 
     return _HomeOpsSnapshot(
       morningBriefingDone: prefs.getBool(_morningBriefingDoneKey) ?? false,
       balanceCheckDone: prefs.getBool(_balanceCheckDoneKey) ?? false,
       pendingCriticalTaskCount: pendingCriticalTaskCount,
+      pendingStockTaskCount: pendingStockTaskCount,
     );
   }
 
@@ -257,6 +277,18 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       );
     }
 
+    if (hour >= 6 &&
+        snapshot.pendingStockTaskCount > 0 &&
+        _now().weekday == DateTime.saturday) {
+      return _HomeActionCommand(
+        type: _HomeActionType.stockReview,
+        title: '週末ストックを見直す',
+        detail: '土曜リマインド: 未完了ストックが${snapshot.pendingStockTaskCount}件あります。',
+        icon: Icons.inventory_2,
+        color: Colors.teal,
+      );
+    }
+
     return const _HomeActionCommand(
       type: _HomeActionType.none,
       title: '今日の必須導線は完了済み',
@@ -319,6 +351,11 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       onPressed = () {
         _nav(context, const MindlessTaskPage());
       };
+    } else if (command.type == _HomeActionType.stockReview) {
+      buttonLabel = '週末ストックへ';
+      onPressed = () {
+        _nav(context, const StockTasksPage());
+      };
     }
 
     return Container(
@@ -378,6 +415,17 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                   const SizedBox(height: 4),
                   Text(
                     '未完了の必須タスク: ${snapshot.pendingCriticalTaskCount}件',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (command.type == _HomeActionType.stockReview &&
+                    snapshot.pendingStockTaskCount > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '未完了の週末ストック: ${snapshot.pendingStockTaskCount}件',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -488,6 +536,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                 nextAction.type == _HomeActionType.balanceCheck;
             final highlightCritical =
                 nextAction.type == _HomeActionType.criticalTasks;
+            final highlightStock =
+                nextAction.type == _HomeActionType.stockReview;
 
             return FutureBuilder<String?>(
               future: _aiNudgeFuture,
@@ -615,6 +665,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                           Icons.check_circle_outline,
                           Colors.teal,
                           () => _nav(context, const StockTasksPage()),
+                          isHighlighted: highlightStock,
+                          badgeLabel: highlightStock ? 'SAT' : null,
                         ),
                         _MenuData(
                           '思考停止ログ（読書ループ）',
@@ -1073,6 +1125,7 @@ enum _HomeActionType {
   morningBriefing,
   balanceCheck,
   criticalTasks,
+  stockReview,
   none,
 }
 
@@ -1096,10 +1149,12 @@ class _HomeOpsSnapshot {
   final bool morningBriefingDone;
   final bool balanceCheckDone;
   final int pendingCriticalTaskCount;
+  final int pendingStockTaskCount;
 
   const _HomeOpsSnapshot({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
     this.pendingCriticalTaskCount = 0,
+    this.pendingStockTaskCount = 0,
   });
 }

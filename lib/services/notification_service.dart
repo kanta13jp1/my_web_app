@@ -5,6 +5,8 @@ import 'package:timezone/data/latest.dart' as tz;
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static const int saturdayReminderId = 0;
+  static const int abstinenceReminderId = 1001;
 
   Future<void> init() async {
     // Initialize timezone
@@ -46,9 +48,9 @@ class NotificationService {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
+      saturdayReminderId,
       '今週もお疲れ様でした！',
-      '「いつかやる」タストを見直して、来週の計画を立てませんか？',
+      '「いつかやる」タスクを見直して、来週の計画を立てませんか？',
       _nextInstanceOfSaturdayTenAM(),
       platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -58,8 +60,12 @@ class NotificationService {
     );
   }
 
+  Future<void> cancelSaturdayReminder() async {
+    await flutterLocalNotificationsPlugin.cancel(saturdayReminderId);
+  }
+
   Future<void> scheduleDailyAbstinenceReminder({
-    int id = 1001,
+    int id = abstinenceReminderId,
     int hour = 21,
     int minute = 0,
   }) async {
@@ -89,7 +95,7 @@ class NotificationService {
     );
   }
 
-  Future<void> cancelAbstinenceReminder({int id = 1001}) async {
+  Future<void> cancelAbstinenceReminder({int id = abstinenceReminderId}) async {
     await flutterLocalNotificationsPlugin.cancel(id);
   }
 
