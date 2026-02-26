@@ -132,4 +132,28 @@ void main() {
     expect(find.byIcon(Icons.stop_circle_outlined), findsOneWidget);
     expect(find.textContaining('読書:'), findsOneWidget);
   });
+
+  testWidgets('shows 100-task controls and opens batch add dialog', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: FakeSupabaseClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('100タスク量産モード'), findsOneWidget);
+    expect(find.textContaining('/ 100 完了'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('5件バッチ追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('5件バッチ追加'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('5件バッチを追加'), findsOneWidget);
+  });
 }

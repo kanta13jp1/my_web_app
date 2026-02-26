@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
+enum TaskPriority {
+  a,
+  b,
+  c,
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -34,8 +40,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   int _phoneSlipCount = 0;
   int _currentReadingStreak = 0;
   bool _phoneShieldEnabled = true;
+  TaskPriority _defaultTaskPriority = TaskPriority.c;
 
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
+  static const int _dailyTaskTarget = 100;
+  static const int _batchTaskCount = 5;
 
   @override
   void initState() {
@@ -102,6 +111,85 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       debugPrint('Error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  List<Map<String, dynamic>> get _allTasks {
+    return _tasksByHour.values.expand((tasks) => tasks).toList();
+  }
+
+  int get _completedTasksToday {
+    return _allTasks.where((task) => task['is_completed'] == true).length;
+  }
+
+  int get _remainingTasksToTarget {
+    final remaining = _dailyTaskTarget - _completedTasksToday;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  double get _dailyTargetProgress {
+    return (_completedTasksToday / _dailyTaskTarget).clamp(0, 1);
+  }
+
+  int _priorityTotal(TaskPriority priority) {
+    return _allTasks
+        .where((task) =>
+            _parsePriority(task['content'] as String? ?? '') == priority)
+        .length;
+  }
+
+  int _priorityCompleted(TaskPriority priority) {
+    return _allTasks
+        .where(
+          (task) =>
+              _parsePriority(task['content'] as String? ?? '') == priority &&
+              task['is_completed'] == true,
+        )
+        .length;
+  }
+
+  bool get _aPriorityMinimumDone => _priorityCompleted(TaskPriority.a) >= 3;
+
+  TaskPriority _parsePriority(String content) {
+    if (content.startsWith('[A]')) return TaskPriority.a;
+    if (content.startsWith('[B]')) return TaskPriority.b;
+    return TaskPriority.c;
+  }
+
+  String _priorityTag(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.a:
+        return '[A]';
+      case TaskPriority.b:
+        return '[B]';
+      case TaskPriority.c:
+        return '[C]';
+    }
+  }
+
+  String _priorityLabel(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.a:
+        return 'A';
+      case TaskPriority.b:
+        return 'B';
+      case TaskPriority.c:
+        return 'C';
+    }
+  }
+
+  Color _priorityColor(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.a:
+        return Colors.redAccent;
+      case TaskPriority.b:
+        return Colors.orange;
+      case TaskPriority.c:
+        return Colors.blueGrey;
+    }
+  }
+
+  String _stripPriorityTag(String content) {
+    return content.replaceFirst(RegExp(r'^\[(A|B|C)\]\s*'), '').trim();
   }
 
   String _formatRemaining(Duration duration) {
@@ -220,6 +308,138 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     });
   }
 
+  void _startFiveTaskSprint() {
+    if (_isTimeboxRunning) return;
+    _startTimebox(
+      mode: '5件バッチ',
+      goal: '15分で5件を終わらせる',
+      minutes: 15,
+    );
+  }
+
+  Future<void> _showBatchAddDialog() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final controller = TextEditingController();
+    TaskPriority selectedPriority = _defaultTaskPriority;
+    int selectedHour = DateTime.now().hour;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('5件バッチを追加'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: 'タスクの共通名',
+                      hintText: '例: 見積もりメール返信',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('優先度'),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: TaskPriority.values.map((priority) {
+                      final selected = selectedPriority == priority;
+                      final color = _priorityColor(priority);
+                      return ChoiceChip(
+                        label: Text(_priorityLabel(priority)),
+                        selected: selected,
+                        selectedColor: color.withValues(alpha: 0.18),
+                        side: BorderSide(
+                          color: selected ? color : Colors.grey.shade400,
+                        ),
+                        onSelected: (_) {
+                          setDialogState(() => selectedPriority = priority);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedHour,
+                    decoration: const InputDecoration(
+                      labelText: '配置する時間帯',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: List.generate(24, (hour) {
+                      return DropdownMenuItem<int>(
+                        value: hour,
+                        child: Text('$hour:00'),
+                      );
+                    }),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setDialogState(() => selectedHour = value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final raw = controller.text.trim();
+                  if (raw.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('タスク名を入力してください。')),
+                    );
+                    return;
+                  }
+
+                  final base = _stripPriorityTag(raw);
+                  final dateStr =
+                      DateFormat('yyyy-MM-dd').format(_selectedDate);
+                  final tag = _priorityTag(selectedPriority);
+                  final inserts = List.generate(_batchTaskCount, (index) {
+                    return <String, dynamic>{
+                      'user_id': userId,
+                      'task_date': dateStr,
+                      'hour_slot': selectedHour,
+                      'content': '$tag $base ${index + 1}/$_batchTaskCount',
+                      'is_completed': false,
+                    };
+                  });
+
+                  await _supabase.from('mindless_tasks').insert(inserts);
+                  if (!mounted) return;
+                  setState(() => _defaultTaskPriority = selectedPriority);
+                  Navigator.of(context).pop();
+                  await _loadTasks();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '$_batchTaskCount件のバッチを追加しました（${_priorityLabel(selectedPriority)}）。',
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   void _extendTimebox(int minutes) {
     if (!_isTimeboxRunning) return;
     setState(() {
@@ -239,41 +459,167 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   Future<void> _addTask(int hour) async {
     final controller = TextEditingController();
+    TaskPriority selectedPriority = _defaultTaskPriority;
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$hour時のタスクを追加'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: '例: お湯を沸かす'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('追加'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text('$hour時のタスクを追加'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: const InputDecoration(hintText: '例: お湯を沸かす'),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('優先度'),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: TaskPriority.values.map((priority) {
+                      final selected = selectedPriority == priority;
+                      final color = _priorityColor(priority);
+                      return ChoiceChip(
+                        label: Text(_priorityLabel(priority)),
+                        selected: selected,
+                        selectedColor: color.withValues(alpha: 0.18),
+                        side: BorderSide(
+                          color: selected ? color : Colors.grey.shade400,
+                        ),
+                        onSelected: (_) {
+                          setDialogState(() => selectedPriority = priority);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, controller.text.trim()),
+                child: const Text('追加'),
+              ),
+            ],
+          );
+        },
       ),
     );
 
     if (result != null && result.isNotEmpty) {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
+      final cleanedContent = _stripPriorityTag(result);
+      final taggedContent = '${_priorityTag(selectedPriority)} $cleanedContent';
 
       await _supabase.from('mindless_tasks').insert({
         'user_id': userId,
         'task_date': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'hour_slot': hour,
-        'content': result,
+        'content': taggedContent,
         'is_completed': false,
       });
+      setState(() => _defaultTaskPriority = selectedPriority);
       _loadTasks();
     }
+  }
+
+  Widget _buildHundredTaskPanel() {
+    final done = _completedTasksToday;
+    final ratioText = '$done / $_dailyTaskTarget 完了';
+    final remainingText = _remainingTasksToTarget == 0
+        ? '今日の100件達成'
+        : '残り $_remainingTasksToTarget 件';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.lightBlue.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bolt, color: Colors.blue.shade700),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  '100タスク量産モード',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                ratioText,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: _dailyTargetProgress),
+          const SizedBox(height: 6),
+          Text(
+            remainingText,
+            style: TextStyle(
+              color:
+                  _remainingTasksToTarget == 0 ? Colors.green : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildPriorityProgressChip(TaskPriority.a),
+              _buildPriorityProgressChip(TaskPriority.b),
+              _buildPriorityProgressChip(TaskPriority.c),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showBatchAddDialog,
+                  icon: const Icon(Icons.playlist_add),
+                  label: const Text('5件バッチ追加'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _isTimeboxRunning ? null : _startFiveTaskSprint,
+                  icon: const Icon(Icons.timer),
+                  label: const Text('15分で5件'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _aPriorityMinimumDone ? 'Aタスク3件以上を達成済み' : 'Aタスクは最低3件を先に完了',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _aPriorityMinimumDone ? Colors.green : Colors.redAccent,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _toggleTask(int id, bool currentVal) async {
@@ -327,6 +673,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
+          const SizedBox(height: 10),
+          _buildHundredTaskPanel(),
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -568,6 +916,27 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   String get phoneSlipLabel => '$_phoneSlipCount 回';
 
+  Widget _buildPriorityProgressChip(TaskPriority priority) {
+    final total = _priorityTotal(priority);
+    final done = _priorityCompleted(priority);
+    final color = _priorityColor(priority);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '${_priorityLabel(priority)} $done/$total',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildMetricChip({
     required IconData icon,
     required String label,
@@ -710,6 +1079,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                     ...tasks.map((task) {
                                       final isDone =
                                           task['is_completed'] as bool;
+                                      final rawContent =
+                                          task['content'] as String? ?? '';
+                                      final priority =
+                                          _parsePriority(rawContent);
+                                      final displayContent =
+                                          _stripPriorityTag(rawContent);
                                       return InkWell(
                                         onLongPress: () =>
                                             _deleteTask(task['id']),
@@ -739,9 +1114,34 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                 size: 20,
                                               ),
                                               const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _priorityColor(priority)
+                                                          .withValues(
+                                                              alpha: 0.14),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  _priorityLabel(priority),
+                                                  style: TextStyle(
+                                                    color: _priorityColor(
+                                                        priority),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(
-                                                  task['content'],
+                                                  displayContent,
                                                   style: TextStyle(
                                                     decoration: isDone
                                                         ? TextDecoration
