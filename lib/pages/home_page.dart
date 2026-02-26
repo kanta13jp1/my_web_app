@@ -10,9 +10,11 @@ import 'package:intl/intl.dart';
 
 // Services
 import '../services/ai_service.dart';
+import '../services/abstinence_guard_store.dart';
 import '../services/theme_service.dart';
 
 // Pages
+import 'abstinence_guard_page.dart';
 import 'note_editor_page.dart';
 import 'note_list_page.dart';
 import 'ai_status_page.dart';
@@ -139,12 +141,19 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
     final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
     final pendingStockTaskCount = await _fetchPendingStockTaskCount();
+    final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: _now(),
+    );
 
     return _HomeOpsSnapshot(
       morningBriefingDone: prefs.getBool(_morningBriefingDoneKey) ?? false,
       balanceCheckDone: prefs.getBool(_balanceCheckDoneKey) ?? false,
       pendingCriticalTaskCount: pendingCriticalTaskCount,
       pendingStockTaskCount: pendingStockTaskCount,
+      abstinenceFocusCount: abstinenceSnapshot.enabledCount,
+      abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
+      abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
     );
   }
 
@@ -318,6 +327,18 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const CfoOfficePage()),
+    );
+    if (mounted) {
+      await _refreshKpis();
+    }
+  }
+
+  Future<void> _openAbstinenceGuard(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AbstinenceGuardPage(nowProvider: widget.nowProvider),
+      ),
     );
     if (mounted) {
       await _refreshKpis();
@@ -499,6 +520,117 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     );
   }
 
+  Widget _buildAbstinenceGuardPanel(
+    BuildContext context,
+    _HomeOpsSnapshot snapshot,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeLabels = snapshot.abstinenceTopLabels;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? const [Color(0xFF1F2937), Color(0xFF111827)]
+              : const [Color(0xFFFFFBFB), Color(0xFFFFF3F2)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.shield_moon, color: Colors.redAccent),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'やらないことガード',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () => _openAbstinenceGuard(context),
+                child: const Text('設定'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '今日の害悪行動を先に禁止して、逸脱は回数で管理する。',
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusPill(
+                label: '禁止中',
+                value: '${snapshot.abstinenceFocusCount}件',
+                color: Colors.redAccent,
+              ),
+              _buildStatusPill(
+                label: '逸脱',
+                value: '${snapshot.abstinenceSlipCount}回',
+                color: snapshot.abstinenceSlipCount > 0
+                    ? Colors.orange
+                    : Colors.green,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            activeLabels.isEmpty
+                ? 'まだ今日の禁止対象が固定されていません。酒・スマホ・動画などから先に封鎖してください。'
+                : '今日の禁止対象: ${activeLabels.join(' / ')}'
+                    '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほか' : ''}',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusPill({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$label $value',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Future<String> _fetchTotalAssets() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
@@ -656,6 +788,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                               aiNudge: aiNudge,
                               isAiNudgeLoading: isAiLoading,
                             ),
+                            const SizedBox(height: 14),
+                            _buildAbstinenceGuardPanel(context, opsSnapshot),
                             const SizedBox(height: 20),
                             _buildSectionHeader(
                               'CEO OFFICE',
@@ -754,6 +888,16 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                               Colors.orange,
                             ),
                             _buildGridMenu(context, isCompact, [
+                              _MenuData(
+                                '禁欲ガード',
+                                Icons.shield_moon,
+                                Colors.redAccent,
+                                () => _openAbstinenceGuard(context),
+                                isHighlighted: opsSnapshot.abstinenceSlipCount > 0,
+                                badgeLabel: opsSnapshot.abstinenceSlipCount > 0
+                                    ? 'WARN'
+                                    : null,
+                              ),
                               _MenuData(
                                 '断捨離 (デジタル)',
                                 Icons.cleaning_services,
@@ -1389,11 +1533,17 @@ class _HomeOpsSnapshot {
   final bool balanceCheckDone;
   final int pendingCriticalTaskCount;
   final int pendingStockTaskCount;
+  final int abstinenceFocusCount;
+  final int abstinenceSlipCount;
+  final List<String> abstinenceTopLabels;
 
   const _HomeOpsSnapshot({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
     this.pendingCriticalTaskCount = 0,
     this.pendingStockTaskCount = 0,
+    this.abstinenceFocusCount = 0,
+    this.abstinenceSlipCount = 0,
+    this.abstinenceTopLabels = const [],
   });
 }
