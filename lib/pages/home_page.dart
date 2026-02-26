@@ -358,66 +358,110 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       };
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = Color.alphaBlend(
+      command.color.withValues(alpha: isDark ? 0.2 : 0.12),
+      isDark ? const Color(0xFF0F172A) : Colors.white,
+    );
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: command.color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: command.color.withValues(alpha: 0.75)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            baseColor,
+            Color.alphaBlend(
+              Colors.white.withValues(alpha: isDark ? 0.02 : 0.55),
+              baseColor,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: command.color.withValues(alpha: 0.65)),
+        boxShadow: [
+          BoxShadow(
+            color: command.color.withValues(alpha: isDark ? 0.16 : 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.white,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: isDark ? 0.14 : 0.92),
+              shape: BoxShape.circle,
+              border: Border.all(color: command.color.withValues(alpha: 0.35)),
+            ),
             child: Icon(command.icon, color: command.color),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '次に実施すべきアクション',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: textColor.withValues(alpha: 0.8),
+                  ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   command.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontSize: 16,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'AI推奨: ${command.detail}',
-                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textColor.withValues(alpha: 0.88),
+                  ),
                 ),
                 if (isAiNudgeLoading &&
                     command.type != _HomeActionType.none) ...[
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'AI補足を生成中...',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor.withValues(alpha: 0.72),
+                    ),
                   ),
                 ],
                 if (aiNudge != null && aiNudge.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     'AI補足: $aiNudge',
-                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor.withValues(alpha: 0.9),
+                    ),
                   ),
                 ],
                 if (snapshot.pendingCriticalTaskCount > 0) ...[
                   const SizedBox(height: 4),
                   Text(
                     '未完了の必須タスク: ${snapshot.pendingCriticalTaskCount}件',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      color: textColor,
                     ),
                   ),
                 ],
@@ -426,23 +470,29 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                   const SizedBox(height: 4),
                   Text(
                     '未完了の週末ストック: ${snapshot.pendingStockTaskCount}件',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      color: textColor,
                     ),
                   ),
                 ],
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: command.color,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                  ),
+                  onPressed: onPressed,
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: Text(buttonLabel),
+                ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: command.color,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: onPressed,
-            child: Text(buttonLabel),
           ),
         ],
       ),
@@ -484,11 +534,14 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     final primaryColor = themeService.primaryColor;
     final screenWidth = MediaQuery.of(context).size.width;
     final isCompact = screenWidth < 390;
+    final isWide = screenWidth >= 1200;
+    final contentHorizontalPadding = isCompact ? 12.0 : (isWide ? 24.0 : 16.0);
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
+          isDark ? const Color(0xFF0B1220) : const Color(0xFFF3F7FF),
       appBar: AppBar(
+        toolbarHeight: 74,
         title: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -496,6 +549,24 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
             // 時計部分を独立したウィジェットとして配置（パフォーマンス改善）
             _ClockWidget(),
           ],
+        ),
+        flexibleSpace: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.alphaBlend(
+                  Colors.white.withValues(alpha: 0.08),
+                  primaryColor,
+                ),
+                Color.alphaBlend(
+                  Colors.black.withValues(alpha: 0.2),
+                  primaryColor,
+                ),
+              ],
+            ),
+          ),
         ),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
@@ -523,239 +594,291 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       ),
 
       // ✅ 改善: RefreshIndicator を追加（KPIのみ再取得できる）
-      body: RefreshIndicator(
-        onRefresh: _refreshKpis,
-        child: FutureBuilder<_HomeOpsSnapshot>(
-          future: _opsSnapshotFuture,
-          builder: (context, snapshot) {
-            final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
-            final nextAction = _resolveNextAction(opsSnapshot);
-            final highlightMorning =
-                nextAction.type == _HomeActionType.morningBriefing;
-            final highlightBalance =
-                nextAction.type == _HomeActionType.balanceCheck;
-            final highlightCritical =
-                nextAction.type == _HomeActionType.criticalTasks;
-            final highlightStock =
-                nextAction.type == _HomeActionType.stockReview;
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? const [
+                    Color(0xFF0B1220),
+                    Color(0xFF111827),
+                    Color(0xFF0F172A),
+                  ]
+                : const [
+                    Color(0xFFF8FAFF),
+                    Color(0xFFF1F5F9),
+                    Color(0xFFE8EFF8),
+                  ],
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: _refreshKpis,
+          child: FutureBuilder<_HomeOpsSnapshot>(
+            future: _opsSnapshotFuture,
+            builder: (context, snapshot) {
+              final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
+              final nextAction = _resolveNextAction(opsSnapshot);
+              final highlightMorning =
+                  nextAction.type == _HomeActionType.morningBriefing;
+              final highlightBalance =
+                  nextAction.type == _HomeActionType.balanceCheck;
+              final highlightCritical =
+                  nextAction.type == _HomeActionType.criticalTasks;
+              final highlightStock =
+                  nextAction.type == _HomeActionType.stockReview;
 
-            return FutureBuilder<String?>(
-              future: _aiNudgeFuture,
-              builder: (context, aiNudgeSnapshot) {
-                final aiNudge = aiNudgeSnapshot.data;
-                final isAiLoading =
-                    aiNudgeSnapshot.connectionState == ConnectionState.waiting;
+              return FutureBuilder<String?>(
+                future: _aiNudgeFuture,
+                builder: (context, aiNudgeSnapshot) {
+                  final aiNudge = aiNudgeSnapshot.data;
+                  final isAiLoading =
+                      aiNudgeSnapshot.connectionState == ConnectionState.waiting;
 
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildNextActionBubble(
-                        context,
-                        nextAction,
-                        opsSnapshot,
-                        aiNudge: aiNudge,
-                        isAiNudgeLoading: isAiLoading,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSectionHeader(
-                        'CEO OFFICE',
-                        Icons.business_center,
-                        Colors.redAccent,
-                      ),
-                      _buildCeoCard(context),
-                      const SizedBox(height: 12),
-                      _buildMorningBriefingCard(
-                        context,
-                        isHighlighted: highlightMorning,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        'KPI SUMMARY',
-                        Icons.show_chart,
-                        Colors.purple,
-                      ),
-                      _buildKpiSummary(context, isDark, isCompact),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        'SPECIAL PROJECT',
-                        Icons.rocket_launch,
-                        Colors.indigo,
-                      ),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        color: Colors.indigo,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          leading: const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 28,
-                            child: Icon(
-                              Icons.campaign,
-                              color: Colors.indigo,
-                              size: 30,
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      contentHorizontalPadding,
+                      16,
+                      contentHorizontalPadding,
+                      24,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1140),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildNextActionBubble(
+                              context,
+                              nextAction,
+                              opsSnapshot,
+                              aiNudge: aiNudge,
+                              isAiNudgeLoading: isAiLoading,
                             ),
-                          ),
-                          title: const Text(
-                            '2026 衆院選 勝利戦略室',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
+                            const SizedBox(height: 20),
+                            _buildSectionHeader(
+                              'CEO OFFICE',
+                              Icons.business_center,
+                              Colors.redAccent,
                             ),
-                          ),
-                          subtitle: const Text(
-                            'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ElectionStrategyPage(),
+                            _buildCeoCard(context),
+                            const SizedBox(height: 12),
+                            _buildMorningBriefingCard(
+                              context,
+                              isHighlighted: highlightMorning,
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        'CSO OFFICE',
-                        Icons.flag,
-                        Colors.orange,
-                      ),
-                      _buildGridMenu(context, isCompact, [
-                        _MenuData(
-                          '断捨離 (デジタル)',
-                          Icons.cleaning_services,
-                          Colors.orange,
-                          () => _nav(context, const DanshariPage()),
-                        ),
-                        _MenuData(
-                          '断捨離 (リアル)',
-                          Icons.camera_alt,
-                          Colors.deepOrange,
-                          () => _nav(
-                            context,
-                            RealWorldDanshariPage(
-                              supabaseClient: Supabase.instance.client,
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'KPI SUMMARY',
+                              Icons.show_chart,
+                              Colors.purple,
                             ),
-                          ),
+                            _buildKpiSummary(context, isDark, isCompact),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'SPECIAL PROJECT',
+                              Icons.rocket_launch,
+                              Colors.indigo,
+                            ),
+                            Card(
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              color: Colors.transparent,
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFF3F46CC),
+                                      Color(0xFF4F46E5),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.indigo.withValues(alpha: 0.25),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    radius: 28,
+                                    child: Icon(
+                                      Icons.campaign,
+                                      color: Colors.indigo,
+                                      size: 30,
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    '2026 衆院選 勝利戦略室',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                  trailing: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ElectionStrategyPage(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'CSO OFFICE',
+                              Icons.flag,
+                              Colors.orange,
+                            ),
+                            _buildGridMenu(context, isCompact, [
+                              _MenuData(
+                                '断捨離 (デジタル)',
+                                Icons.cleaning_services,
+                                Colors.orange,
+                                () => _nav(context, const DanshariPage()),
+                              ),
+                              _MenuData(
+                                '断捨離 (リアル)',
+                                Icons.camera_alt,
+                                Colors.deepOrange,
+                                () => _nav(
+                                  context,
+                                  RealWorldDanshariPage(
+                                    supabaseClient: Supabase.instance.client,
+                                  ),
+                                ),
+                              ),
+                              _MenuData(
+                                'AI稼働モニター',
+                                Icons.monitor_heart,
+                                Colors.orange,
+                                () => _nav(context, const AiStatusPage()),
+                              ),
+                              _MenuData(
+                                '週末ストック / 思考ネタ',
+                                Icons.check_circle_outline,
+                                Colors.teal,
+                                () => _nav(context, const StockTasksPage()),
+                                isHighlighted: highlightStock,
+                                badgeLabel: highlightStock ? 'SAT' : null,
+                              ),
+                              _MenuData(
+                                '思考停止ログ（読書ループ）',
+                                Icons.access_time_filled,
+                                Colors.indigo,
+                                () => _nav(context, const MindlessTaskPage()),
+                                isHighlighted: highlightCritical,
+                                badgeLabel: highlightCritical ? 'NEXT' : null,
+                              ),
+                              _MenuData(
+                                'ワードローブ整理',
+                                Icons.checkroom,
+                                Colors.brown,
+                                () => _nav(context, const WardrobePage()),
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'CFO/CHO/CHRO OFFICE',
+                              Icons.balance,
+                              Colors.teal,
+                            ),
+                            _buildGridMenu(context, isCompact, [
+                              _MenuData(
+                                '財務管理 (CFO)',
+                                Icons.account_balance_wallet,
+                                Colors.green,
+                                () => _openCfoOffice(context),
+                                isHighlighted: highlightBalance,
+                                badgeLabel: highlightBalance ? 'NEXT' : null,
+                              ),
+                              _MenuData(
+                                '健康管理 (CHO)',
+                                Icons.medical_services,
+                                Colors.teal,
+                                () => _nav(context, const ChoOfficePage()),
+                              ),
+                              _MenuData(
+                                '人事厚生 (CHRO)',
+                                Icons.diversity_3,
+                                Colors.indigo,
+                                () => _nav(context, const ChroOfficePage()),
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'CMO/CKO OFFICE',
+                              Icons.analytics,
+                              Colors.blue,
+                            ),
+                            _buildGridMenu(context, isCompact, [
+                              _MenuData(
+                                '市場分析 (CMO)',
+                                Icons.trending_up,
+                                Colors.pink,
+                                () => _nav(context, const CmoOfficePage()),
+                              ),
+                              _MenuData(
+                                'メモ一覧 (CKO)',
+                                Icons.list_alt,
+                                Colors.blue,
+                                () => _nav(context, const NoteListPage()),
+                              ),
+                              _MenuData(
+                                '新規事業起案',
+                                Icons.edit_note,
+                                Colors.blue,
+                                () => _nav(context, const NoteEditorPage()),
+                              ),
+                              _MenuData(
+                                'Gemini大学',
+                                Icons.menu_book,
+                                Colors.blue,
+                                () => _nav(
+                                  context,
+                                  const GeminiUniversityV2Page(),
+                                ),
+                              ),
+                              _MenuData(
+                                'マインドマップ (思考整理)',
+                                Icons.hub,
+                                Colors.blue,
+                                () => _nav(context, const MindMapPage()),
+                              ),
+                            ]),
+                            const SizedBox(height: 40),
+                          ],
                         ),
-                        _MenuData(
-                          'AI稼働モニター',
-                          Icons.monitor_heart,
-                          Colors.orange,
-                          () => _nav(context, const AiStatusPage()),
-                        ),
-                        _MenuData(
-                          '週末ストック / 思考ネタ',
-                          Icons.check_circle_outline,
-                          Colors.teal,
-                          () => _nav(context, const StockTasksPage()),
-                          isHighlighted: highlightStock,
-                          badgeLabel: highlightStock ? 'SAT' : null,
-                        ),
-                        _MenuData(
-                          '思考停止ログ（読書ループ）',
-                          Icons.access_time_filled,
-                          Colors.indigo,
-                          () => _nav(context, const MindlessTaskPage()),
-                          isHighlighted: highlightCritical,
-                          badgeLabel: highlightCritical ? 'NEXT' : null,
-                        ),
-                        _MenuData(
-                          'ワードローブ整理',
-                          Icons.checkroom,
-                          Colors.brown,
-                          () => _nav(context, const WardrobePage()),
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        'CFO/CHO/CHRO OFFICE',
-                        Icons.balance,
-                        Colors.teal,
                       ),
-                      _buildGridMenu(context, isCompact, [
-                        _MenuData(
-                          '財務管理 (CFO)',
-                          Icons.account_balance_wallet,
-                          Colors.green,
-                          () => _openCfoOffice(context),
-                          isHighlighted: highlightBalance,
-                          badgeLabel: highlightBalance ? 'NEXT' : null,
-                        ),
-                        _MenuData(
-                          '健康管理 (CHO)',
-                          Icons.medical_services,
-                          Colors.teal,
-                          () => _nav(context, const ChoOfficePage()),
-                        ),
-                        _MenuData(
-                          '人事厚生 (CHRO)',
-                          Icons.diversity_3,
-                          Colors.indigo,
-                          () => _nav(context, const ChroOfficePage()),
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                        'CMO/CKO OFFICE',
-                        Icons.analytics,
-                        Colors.blue,
-                      ),
-                      _buildGridMenu(context, isCompact, [
-                        _MenuData(
-                          '市場分析 (CMO)',
-                          Icons.trending_up,
-                          Colors.pink,
-                          () => _nav(context, const CmoOfficePage()),
-                        ),
-                        _MenuData(
-                          'メモ一覧 (CKO)',
-                          Icons.list_alt,
-                          Colors.blue,
-                          () => _nav(context, const NoteListPage()),
-                        ),
-                        _MenuData(
-                          '新規事業起案',
-                          Icons.edit_note,
-                          Colors.blue,
-                          () => _nav(context, const NoteEditorPage()),
-                        ),
-                        _MenuData(
-                          'Gemini大学',
-                          Icons.menu_book,
-                          Colors.blue,
-                          () => _nav(context, const GeminiUniversityV2Page()),
-                        ),
-                        _MenuData(
-                          'マインドマップ (思考整理)',
-                          Icons.hub,
-                          Colors.blue,
-                          () => _nav(context, const MindMapPage()),
-                        ),
-                      ]),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -767,17 +890,32 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
 
   Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, left: 4),
+      padding: const EdgeInsets.only(bottom: 12.0, left: 2, right: 2),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(width: 8),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(width: 10),
           Text(
             title,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 1,
+              color: color.withValues(alpha: 0.35),
             ),
           ),
         ],
@@ -786,16 +924,38 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
   }
 
   Widget _buildCeoCard(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            baseColor,
+            Color.alphaBlend(
+              Colors.redAccent.withValues(alpha: isDark ? 0.16 : 0.07),
+              baseColor,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.redAccent.withValues(alpha: isDark ? 0.16 : 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         leading: const CircleAvatar(
           backgroundColor: Colors.redAccent,
-          radius: 28,
-          child: Icon(Icons.emergency, color: Colors.white, size: 30),
+          radius: 26,
+          child: Icon(Icons.emergency, color: Colors.white, size: 28),
         ),
         title: const Text(
           '緊急役員会議',
@@ -817,17 +977,39 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     BuildContext context, {
     bool isHighlighted = false,
   }) {
-    return Card(
-      elevation: isHighlighted ? 6 : 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isHighlighted ? Colors.amber.shade50 : null,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final accent = isHighlighted ? Colors.amber.shade700 : Colors.amber;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            baseColor,
+            Color.alphaBlend(
+              Colors.amber.withValues(alpha: isHighlighted ? 0.2 : 0.09),
+              baseColor,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.32)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: isHighlighted ? 0.18 : 0.1),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         leading: CircleAvatar(
-          backgroundColor: isHighlighted ? Colors.amber.shade700 : Colors.amber,
-          radius: 28,
-          child: const Icon(Icons.wb_sunny, color: Colors.white, size: 30),
+          backgroundColor: accent,
+          radius: 26,
+          child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
         ),
         title: Text(
           isHighlighted ? 'モーニング・ブリーフィング（最優先）' : 'モーニング・ブリーフィング',
@@ -847,6 +1029,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     bool isCompact,
     List<_MenuData> items,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -854,65 +1038,91 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
         crossAxisCount: isCompact ? 1 : 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: isCompact ? 3.3 : 2.5,
+        childAspectRatio: isCompact ? 3.2 : 2.7,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return Material(
-          color: item.isHighlighted
-              ? item.color.withValues(alpha: 0.12)
-              : Theme.of(context).cardColor,
-          elevation: item.isHighlighted ? 4 : 2,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: item.onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: item.color.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(item.icon, color: item.color, size: 20),
-                  ),
-                  SizedBox(width: isCompact ? 10 : 12),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: item.isHighlighted ? item.color : null,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (item.badgeLabel != null)
+        final cardColor = item.isHighlighted
+            ? Color.alphaBlend(
+                item.color.withValues(alpha: isDark ? 0.24 : 0.14),
+                Theme.of(context).cardColor,
+              )
+            : Theme.of(context).cardColor;
+        final borderColor = item.isHighlighted
+            ? item.color.withValues(alpha: 0.65)
+            : Theme.of(context).dividerColor.withValues(alpha: 0.25);
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: item.onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        item.badgeLabel!,
-                        style: TextStyle(
-                          color: item.color,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
+                        color: item.color.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: item.color.withValues(alpha: 0.35),
                         ),
                       ),
+                      child: Icon(item.icon, color: item.color, size: 18),
                     ),
-                ],
+                    SizedBox(width: isCompact ? 10 : 12),
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: item.isHighlighted ? item.color : null,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (item.badgeLabel != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          item.badgeLabel!,
+                          style: TextStyle(
+                            color: item.color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -923,13 +1133,15 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
 
   // KPIサマリー
   Widget _buildKpiSummary(BuildContext context, bool isDark, bool isCompact) {
-    return GridView.count(
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: isCompact ? 1 : 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: isCompact ? 2.4 : 1.8,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isCompact ? 1 : 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: isCompact ? 130 : 150,
+      ),
       children: [
         // ✅ 総資産（Futureキャッシュを渡す）
         _buildAsyncKpiCard(
@@ -986,7 +1198,7 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
           return Card(
             elevation: 2,
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -1020,18 +1232,34 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
   ) {
     final labelColor =
         isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.6);
+    final base = isDark ? const Color(0xFF111827) : Colors.white;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            base,
+            Color.alphaBlend(color.withValues(alpha: isDark ? 0.14 : 0.08), base),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
@@ -1045,17 +1273,28 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(icon, color: color, size: 20),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 16),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
+            const Spacer(),
             Text(
               value,
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
                 color: color,
+                height: 1.0,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
