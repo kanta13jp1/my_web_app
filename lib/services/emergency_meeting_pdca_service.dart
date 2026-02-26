@@ -8,6 +8,9 @@ class EmergencyMeetingPdcaMetrics {
   final int continuationCompletionRatePercent;
   final int abstinenceViolationCount;
   final int abstinenceNoViolationDays;
+  final int deepWorkSessionCount;
+  final int weeklyPriorityReviewCount;
+  final int accountabilityShareCount;
   final bool reminderEnabled;
   final List<String> activeDeterrenceLocks;
   final DateTime? lastReviewAt;
@@ -18,6 +21,9 @@ class EmergencyMeetingPdcaMetrics {
     required this.continuationCompletionRatePercent,
     required this.abstinenceViolationCount,
     required this.abstinenceNoViolationDays,
+    this.deepWorkSessionCount = 0,
+    this.weeklyPriorityReviewCount = 0,
+    this.accountabilityShareCount = 0,
     required this.reminderEnabled,
     required this.activeDeterrenceLocks,
     this.lastReviewAt,
@@ -30,6 +36,9 @@ class EmergencyMeetingPdcaMetrics {
       'continuation_completion_rate_percent': continuationCompletionRatePercent,
       'abstinence_violation_count': abstinenceViolationCount,
       'abstinence_no_violation_days': abstinenceNoViolationDays,
+      'deep_work_session_count': deepWorkSessionCount,
+      'weekly_priority_review_count': weeklyPriorityReviewCount,
+      'accountability_share_count': accountabilityShareCount,
       'reminder_enabled': reminderEnabled,
       'active_deterrence_locks': activeDeterrenceLocks,
       'last_review_at': lastReviewAt?.toIso8601String(),

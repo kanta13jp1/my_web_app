@@ -44,6 +44,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   int _abstinenceViolationCount = 0;
   int _abstinenceNoViolationDays = 0;
   int _lastContinuationCompletionRate = 0;
+  int _deepWorkSessionCount = 0;
+  int _weeklyPriorityReviewCount = 0;
+  int _accountabilityShareCount = 0;
   bool _dailyReminderEnabled = false;
   bool _lockImpulsePurchase = false;
   bool _lockNewProjects = false;
@@ -62,6 +65,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       'emergency_abstinence_no_violation_days';
   static const String _prefsContinuationCompletionRate =
       'emergency_continuation_completion_rate';
+  static const String _prefsDeepWorkSessionCount =
+      'emergency_deep_work_session_count';
+  static const String _prefsWeeklyPriorityReviewCount =
+      'emergency_weekly_priority_review_count';
+  static const String _prefsAccountabilityShareCount =
+      'emergency_accountability_share_count';
   static const String _prefsDailyReminderEnabled =
       'emergency_daily_reminder_enabled';
   static const String _prefsLockImpulsePurchase = 'emergency_lock_impulse';
@@ -86,6 +95,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- continuationCompletionRate: {continuationCompletionRate}\n'
       '- abstinenceViolationCount: {abstinenceViolationCount}\n'
       '- abstinenceNoViolationDays: {abstinenceNoViolationDays}\n'
+      '- deepWorkSessionCount: {deepWorkSessionCount}\n'
+      '- weeklyPriorityReviewCount: {weeklyPriorityReviewCount}\n'
+      '- accountabilityShareCount: {accountabilityShareCount}\n'
       '- activeDeterrenceLocks: {activeDeterrenceLocks}\n'
       '- healthData: "データ未連携"\n'
       '- marketData: "データ未連携"\n'
@@ -159,6 +171,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           prefs.getInt(_prefsAbstinenceNoViolationDays) ?? 0;
       _lastContinuationCompletionRate =
           prefs.getInt(_prefsContinuationCompletionRate) ?? 0;
+      _deepWorkSessionCount = prefs.getInt(_prefsDeepWorkSessionCount) ?? 0;
+      _weeklyPriorityReviewCount =
+          prefs.getInt(_prefsWeeklyPriorityReviewCount) ?? 0;
+      _accountabilityShareCount =
+          prefs.getInt(_prefsAccountabilityShareCount) ?? 0;
       _dailyReminderEnabled =
           prefs.getBool(_prefsDailyReminderEnabled) ?? false;
       _lockImpulsePurchase = prefs.getBool(_prefsLockImpulsePurchase) ?? false;
@@ -183,6 +200,15 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     await prefs.setInt(
       _prefsContinuationCompletionRate,
       _lastContinuationCompletionRate,
+    );
+    await prefs.setInt(_prefsDeepWorkSessionCount, _deepWorkSessionCount);
+    await prefs.setInt(
+      _prefsWeeklyPriorityReviewCount,
+      _weeklyPriorityReviewCount,
+    );
+    await prefs.setInt(
+      _prefsAccountabilityShareCount,
+      _accountabilityShareCount,
     );
     await prefs.setBool(_prefsDailyReminderEnabled, _dailyReminderEnabled);
     await prefs.setBool(_prefsLockImpulsePurchase, _lockImpulsePurchase);
@@ -209,10 +235,31 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   List<String> _activeDeterrenceLocks() {
     final locks = <String>[];
-    if (_lockImpulsePurchase) locks.add('衝動買いロック');
-    if (_lockNewProjects) locks.add('新規プロジェクト着手ロック');
-    if (_lockSubscriptionAdditions) locks.add('サブスク追加ロック');
+    if (_lockImpulsePurchase) locks.add('SNS制限ロック');
+    if (_lockNewProjects) locks.add('90分タイムボックス');
+    if (_lockSubscriptionAdditions) locks.add('週次共有リマインド');
     return locks;
+  }
+
+  int _toInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is double) return value.round();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
+  bool _toBool(dynamic value, {bool fallback = false}) {
+    if (value is bool) return value;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+    }
+    return fallback;
+  }
+
+  DateTime? _toDateTime(dynamic value) {
+    if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
+    return null;
   }
 
   EmergencyMeetingPdcaMetrics _buildPdcaMetrics() {
@@ -227,6 +274,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       continuationCompletionRatePercent: _currentContinuationRatePercent(),
       abstinenceViolationCount: _abstinenceViolationCount,
       abstinenceNoViolationDays: _abstinenceNoViolationDays,
+      deepWorkSessionCount: _deepWorkSessionCount,
+      weeklyPriorityReviewCount: _weeklyPriorityReviewCount,
+      accountabilityShareCount: _accountabilityShareCount,
       reminderEnabled: _dailyReminderEnabled,
       activeDeterrenceLocks: _activeDeterrenceLocks(),
       lastReviewAt: _lastReviewAt,
@@ -293,6 +343,21 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Future<void> _recordAbstinenceCleanDay() async {
     setState(() => _abstinenceNoViolationDays += 1);
+    await _persistPdcaState();
+  }
+
+  Future<void> _recordDeepWorkSession() async {
+    setState(() => _deepWorkSessionCount += 1);
+    await _persistPdcaState();
+  }
+
+  Future<void> _recordPriorityReview() async {
+    setState(() => _weeklyPriorityReviewCount += 1);
+    await _persistPdcaState();
+  }
+
+  Future<void> _recordAccountabilityShare() async {
+    setState(() => _accountabilityShareCount += 1);
     await _persistPdcaState();
   }
 
@@ -650,6 +715,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             '{abstinenceNoViolationDays}',
             currentMetrics.abstinenceNoViolationDays.toString(),
           )
+          .replaceFirst(
+            '{deepWorkSessionCount}',
+            currentMetrics.deepWorkSessionCount.toString(),
+          )
+          .replaceFirst(
+            '{weeklyPriorityReviewCount}',
+            currentMetrics.weeklyPriorityReviewCount.toString(),
+          )
+          .replaceFirst(
+            '{accountabilityShareCount}',
+            currentMetrics.accountabilityShareCount.toString(),
+          )
           .replaceFirst('{activeDeterrenceLocks}', activeLocksText)
           .replaceFirst('{focusTheme}', _focusLabel(_selectedFocus))
           .replaceFirst(
@@ -689,6 +766,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final abstinenceRules = _extractStringList(decoded['abstinence_rules']);
       final riskAlert = decoded['risk_alert']?.toString();
       final normalizedRiskAlert = riskAlert?.trim();
+      final rawNextMetrics = decoded['next_meeting_metrics'];
+      final nextMetrics = rawNextMetrics is Map<String, dynamic>
+          ? rawNextMetrics
+          : (rawNextMetrics is Map
+              ? Map<String, dynamic>.from(rawNextMetrics)
+              : null);
 
       final messages = messageList.map((item) {
         final msg = item as Map<String, dynamic>;
@@ -720,7 +803,54 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             (normalizedRiskAlert == null || normalizedRiskAlert.isEmpty)
                 ? null
                 : normalizedRiskAlert;
+        if (nextMetrics != null) {
+          _abstinenceViolationCount = _toInt(
+            nextMetrics['abstinence_violation_count'],
+            fallback: _abstinenceViolationCount,
+          );
+          _abstinenceNoViolationDays = _toInt(
+            nextMetrics['abstinence_no_violation_days'],
+            fallback: _abstinenceNoViolationDays,
+          );
+          _lastContinuationCompletionRate = _toInt(
+            nextMetrics['continuation_completion_rate_percent'],
+            fallback: _lastContinuationCompletionRate,
+          );
+          _dailyReminderEnabled = _toBool(
+            nextMetrics['reminder_enabled'],
+            fallback: _dailyReminderEnabled,
+          );
+
+          final parsedLocks = _extractStringList(
+            nextMetrics['active_deterrence_locks'],
+          );
+          if (nextMetrics.containsKey('active_deterrence_locks')) {
+            _lockImpulsePurchase = parsedLocks.contains('SNS制限ロック') ||
+                parsedLocks.contains('衝動買いロック');
+            _lockNewProjects = parsedLocks.contains('90分タイムボックス') ||
+                parsedLocks.contains('新規PJ着手ロック');
+            _lockSubscriptionAdditions = parsedLocks.contains('週次共有リマインド') ||
+                parsedLocks.contains('サブスク追加ロック');
+          }
+
+          _deepWorkSessionCount = _toInt(
+            nextMetrics['deep_work_session_count'],
+            fallback: _deepWorkSessionCount,
+          );
+          _weeklyPriorityReviewCount = _toInt(
+            nextMetrics['weekly_priority_review_count'],
+            fallback: _weeklyPriorityReviewCount,
+          );
+          _accountabilityShareCount = _toInt(
+            nextMetrics['accountability_share_count'],
+            fallback: _accountabilityShareCount,
+          );
+
+          final parsedReviewAt = _toDateTime(nextMetrics['last_review_at']);
+          _lastReviewAt = parsedReviewAt ?? _lastReviewAt;
+        }
       });
+      await _persistPdcaState();
       await _saveMeetingToDb(log);
     } catch (e, s) {
       if (mounted) {
@@ -1244,6 +1374,39 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ),
           ),
           const SizedBox(height: 8),
+          Text(
+            '30分深掘り実施: $_deepWorkSessionCount回 / 週次優先レビュー: $_weeklyPriorityReviewCount回',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _recordDeepWorkSession,
+                  icon: const Icon(Icons.timer),
+                  label: const Text('30分深掘り完了'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _recordPriorityReview,
+                  icon: const Icon(Icons.event_available),
+                  label: const Text('優先レビュー完了'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           for (var i = 0; i < _continuationPlan.length; i++)
             CheckboxListTile(
               value: i < _continuationChecks.length && _continuationChecks[i],
@@ -1311,7 +1474,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             runSpacing: 8,
             children: [
               FilterChip(
-                label: const Text('衝動買いロック'),
+                label: const Text('SNS制限ロック'),
                 selected: _lockImpulsePurchase,
                 onSelected: (selected) => _setDeterrenceLock(
                   value: selected,
@@ -1320,7 +1483,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
               ),
               FilterChip(
-                label: const Text('新規PJ着手ロック'),
+                label: const Text('90分タイムボックス'),
                 selected: _lockNewProjects,
                 onSelected: (selected) => _setDeterrenceLock(
                   value: selected,
@@ -1329,7 +1492,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
               ),
               FilterChip(
-                label: const Text('サブスク追加ロック'),
+                label: const Text('週次共有リマインド'),
                 selected: _lockSubscriptionAdditions,
                 onSelected: (selected) => _setDeterrenceLock(
                   value: selected,
@@ -1354,6 +1517,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ),
             activeThumbColor: Colors.pinkAccent,
             activeTrackColor: Colors.pinkAccent.withValues(alpha: 0.4),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '進捗共有記録: $_accountabilityShareCount回',
+            style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 6),
           Row(
@@ -1382,6 +1550,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _recordAccountabilityShare,
+              icon: const Icon(Icons.group),
+              label: const Text('週次共有を記録'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white54),
+              ),
+            ),
           ),
           const SizedBox(height: 6),
           for (var i = 0; i < _abstinenceRules.length; i++)
@@ -1438,6 +1619,21 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 4),
           Text(
             '禁欲違反回数: ${metrics.abstinenceViolationCount} / 連続無違反日数: ${metrics.abstinenceNoViolationDays}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '深掘り実施回数: ${metrics.deepWorkSessionCount} / 優先レビュー回数: ${metrics.weeklyPriorityReviewCount}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '進捗共有回数: ${metrics.accountabilityShareCount}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '禁欲チェック通知: ${metrics.reminderEnabled ? '有効' : '無効'}',
             style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 4),

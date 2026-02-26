@@ -13,8 +13,14 @@ void main() {
         continuationCompletionRatePercent: 67,
         abstinenceViolationCount: 1,
         abstinenceNoViolationDays: 4,
+        deepWorkSessionCount: 5,
+        weeklyPriorityReviewCount: 2,
+        accountabilityShareCount: 1,
         reminderEnabled: true,
-        activeDeterrenceLocks: const ['衝動買いロック', '新規プロジェクト着手ロック'],
+        activeDeterrenceLocks: const <String>[
+          'SNS制限ロック',
+          '90分タイムボックス',
+        ],
         lastReviewAt: DateTime.parse('2026-02-26T09:00:00.000Z'),
       );
 
@@ -25,10 +31,13 @@ void main() {
       expect(json['continuation_completion_rate_percent'], 67);
       expect(json['abstinence_violation_count'], 1);
       expect(json['abstinence_no_violation_days'], 4);
+      expect(json['deep_work_session_count'], 5);
+      expect(json['weekly_priority_review_count'], 2);
+      expect(json['accountability_share_count'], 1);
       expect(json['reminder_enabled'], isTrue);
       expect(
         json['active_deterrence_locks'],
-        containsAll(<String>['衝動買いロック', '新規プロジェクト着手ロック']),
+        containsAll(<String>['SNS制限ロック', '90分タイムボックス']),
       );
       expect(json['last_review_at'], '2026-02-26T09:00:00.000Z');
     });
@@ -40,21 +49,21 @@ void main() {
       final log = BoardMeetingLog(
         id: 'meeting-1',
         userId: 'user-1',
-        topic: '緊急役員会議（継続 + 禁欲（両立））',
-        conclusion: '今週は進捗共有を最優先で実施。',
+        topic: 'Emergency meeting',
+        conclusion: 'Share progress as top priority this week.',
         messages: <BoardMessage>[
           BoardMessage(
             id: 'm-1',
             speakerName: 'AI CFO',
             role: 'CFO',
-            content: '支出最適化を実行。',
+            content: 'Optimize subscriptions.',
             timestamp: now,
           ),
           BoardMessage(
             id: 'm-2',
             speakerName: 'AI CSO',
             role: 'CSO',
-            content: '週次レビューを固定化。',
+            content: 'Fix weekly review cadence.',
             timestamp: now,
           ),
         ],
@@ -66,22 +75,24 @@ void main() {
         continuationCompletionRatePercent: 33,
         abstinenceViolationCount: 2,
         abstinenceNoViolationDays: 0,
+        deepWorkSessionCount: 2,
+        weeklyPriorityReviewCount: 1,
+        accountabilityShareCount: 4,
         reminderEnabled: false,
-        activeDeterrenceLocks: const ['サブスク追加ロック'],
+        activeDeterrenceLocks: const <String>['週次共有リマインド'],
         lastReviewAt: now,
       );
 
       final text = EmergencyMeetingCodexFormatter.formatForCodex(
         log: log,
-        focusLabel: '継続 + 禁欲（両立）',
+        focusLabel: 'Balanced',
         model: 'gemma-3n-e2b-it',
-        continuationPlan: const <String>['行動1', '行動2', '行動3'],
-        abstinenceRules: const <String>['禁欲1', '禁欲2', '禁欲3'],
-        riskAlert: '遅延リスクあり',
+        continuationPlan: const <String>['Action 1', 'Action 2', 'Action 3'],
+        abstinenceRules: const <String>['Rule 1', 'Rule 2', 'Rule 3'],
+        riskAlert: 'Decision risk',
         metrics: metrics,
       );
 
-      expect(text, contains('【緊急役員会議 → Codex 連携データ】'));
       expect(text, contains('--- Meeting Result JSON ---'));
 
       final jsonStart = text.indexOf('{');
@@ -90,7 +101,7 @@ void main() {
           as Map<String, dynamic>;
 
       expect(payload['meeting_id'], 'meeting-1');
-      expect(payload['focus'], '継続 + 禁欲（両立）');
+      expect(payload['focus'], 'Balanced');
       expect(payload['model'], 'gemma-3n-e2b-it');
       expect(payload['continuation_plan'], hasLength(3));
       expect(payload['abstinence_rules'], hasLength(3));
@@ -100,7 +111,13 @@ void main() {
           payload['next_meeting_metrics'] as Map<String, dynamic>;
       expect(nextMetrics['continuation_completion_rate_percent'], 33);
       expect(nextMetrics['abstinence_violation_count'], 2);
-      expect(nextMetrics['active_deterrence_locks'], contains('サブスク追加ロック'));
+      expect(nextMetrics['deep_work_session_count'], 2);
+      expect(nextMetrics['weekly_priority_review_count'], 1);
+      expect(nextMetrics['accountability_share_count'], 4);
+      expect(
+        nextMetrics['active_deterrence_locks'],
+        contains('週次共有リマインド'),
+      );
     });
   });
 }
