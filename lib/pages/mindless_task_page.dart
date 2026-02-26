@@ -20,6 +20,16 @@ class _PhoneDetoxAction {
   });
 }
 
+class _CriticalTaskTemplate {
+  final String label;
+  final TaskPriority priority;
+
+  const _CriticalTaskTemplate({
+    required this.label,
+    required this.priority,
+  });
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -64,6 +74,24 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     _PhoneDetoxAction(label: '連絡をまとめて返す', priority: TaskPriority.b),
     _PhoneDetoxAction(label: 'ゲームのデータ削除', priority: TaskPriority.a),
     _PhoneDetoxAction(label: 'タイムロッキングコンテナ', priority: TaskPriority.a),
+  ];
+  static const List<_CriticalTaskTemplate> _criticalTaskTemplates = [
+    _CriticalTaskTemplate(
+      label: '朝10分の防衛チェック（不審リンク/請求/認証）',
+      priority: TaskPriority.a,
+    ),
+    _CriticalTaskTemplate(
+      label: '今日の最重要タスクを1件完了',
+      priority: TaskPriority.a,
+    ),
+    _CriticalTaskTemplate(
+      label: '1円収益アクションを1件実行',
+      priority: TaskPriority.a,
+    ),
+    _CriticalTaskTemplate(
+      label: '終了前に資産・アカウント記録を更新',
+      priority: TaskPriority.a,
+    ),
   ];
 
   @override
@@ -237,6 +265,41 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     }).length;
   }
 
+  String _criticalTaskTitle(_CriticalTaskTemplate template) {
+    return '必須: ${template.label}';
+  }
+
+  bool _isCriticalTaskRow(Map<String, dynamic> task) {
+    final content = _stripPriorityTag(task['content'] as String? ?? '');
+    return content.startsWith('必須: ');
+  }
+
+  int get _criticalTotalCount {
+    return _allTasks.where(_isCriticalTaskRow).length;
+  }
+
+  int get _criticalCompletedCount {
+    return _allTasks
+        .where((task) => _isCriticalTaskRow(task) && task['is_completed'] == true)
+        .length;
+  }
+
+  int get _criticalRemainingCount {
+    final remaining = _criticalTotalCount - _criticalCompletedCount;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  bool get _isCriticalLockActive {
+    return _criticalTotalCount > 0 && _criticalRemainingCount > 0;
+  }
+
+  List<String> get _pendingCriticalTitles {
+    return _allTasks
+        .where((task) => _isCriticalTaskRow(task) && task['is_completed'] != true)
+        .map((task) => _stripPriorityTag(task['content'] as String? ?? ''))
+        .toList();
+  }
+
   String _formatRemaining(Duration duration) {
     final mm = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -250,7 +313,128 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return value.clamp(0, 1);
   }
 
+  bool _canStartOptionalFlow() {
+    if (_isCriticalLockActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('先に必須タスクを完了してください。')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<int> _addMissingPhoneDetoxTasks({
+    required String userId,
+    required int hourSlot,
+  }) async {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final dynamic existingRowsRaw = await _supabase
+        .from('mindless_tasks')
+        .select('content')
+        .eq('user_id', userId)
+        .eq('task_date', dateStr);
+    final existingRows = existingRowsRaw is List
+        ? existingRowsRaw
+        : const <dynamic>[];
+
+    final existingDetoxTitles = existingRows
+        .whereType<Map<String, dynamic>>()
+        .map((row) => _stripPriorityTag(row['content'] as String? ?? ''))
+        .where((content) => content.startsWith('スマホ禁欲: '))
+        .toSet();
+
+    final actionsToInsert = _phoneDetoxActions.where((action) {
+      return !existingDetoxTitles.contains(_detoxTaskTitle(action));
+    }).toList();
+
+    if (actionsToInsert.isEmpty) {
+      return 0;
+    }
+
+    final inserts = actionsToInsert.map((action) {
+      return <String, dynamic>{
+        'user_id': userId,
+        'task_date': dateStr,
+        'hour_slot': hourSlot,
+        'content': '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
+        'is_completed': false,
+      };
+    }).toList();
+
+    await _supabase.from('mindless_tasks').insert(inserts);
+    return actionsToInsert.length;
+  }
+
+  void _startCriticalFocusSprint() {
+    if (_isTimeboxRunning) return;
+    _startTimebox(
+      mode: '必須遂行',
+      goal: '今日の必須タスクを進める',
+      minutes: 25,
+    );
+  }
+
+  Future<void> _syncCriticalTasks() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      final dynamic rowsRaw = await _supabase
+          .from('mindless_tasks')
+          .select('content')
+          .eq('user_id', userId)
+          .eq('task_date', dateStr);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+
+      final existingTitles = rows
+          .whereType<Map<String, dynamic>>()
+          .map((row) => _stripPriorityTag(row['content'] as String? ?? ''))
+          .toSet();
+
+      final templatesToInsert = _criticalTaskTemplates.where((template) {
+        return !existingTitles.contains(_criticalTaskTitle(template));
+      }).toList();
+
+      if (templatesToInsert.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('必須タスクは展開済みです。')));
+        return;
+      }
+
+      final nowHour = DateTime.now().hour;
+      final inserts = templatesToInsert.map((template) {
+        return <String, dynamic>{
+          'user_id': userId,
+          'task_date': dateStr,
+          'hour_slot': nowHour,
+          'content': '${_priorityTag(template.priority)} ${_criticalTaskTitle(template)}',
+          'is_completed': false,
+        };
+      }).toList();
+
+      await _supabase.from('mindless_tasks').insert(inserts);
+      await _loadTasks();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('必須タスクを${templatesToInsert.length}件追加しました。'),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Critical task sync failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('必須タスクの追加に失敗しました。')));
+    }
+  }
+
   Future<void> _startTimeboxFlow(String mode) async {
+    if (!_canStartOptionalFlow()) return;
+
     final controller = TextEditingController();
     final goal = await showDialog<String>(
       context: context,
@@ -327,7 +511,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   void _startReadingAlbum() {
-    if (_isTimeboxRunning) return;
+    if (_isTimeboxRunning || !_canStartOptionalFlow()) return;
     _startTimebox(
       mode: '読書',
       goal: '読書に没頭（スマホを見ない）',
@@ -336,7 +520,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   void _startWalkBreak(int minutes) {
-    if (_isTimeboxRunning) return;
+    if (_isTimeboxRunning || !_canStartOptionalFlow()) return;
     _startTimebox(
       mode: '散歩',
       goal: '喫茶店を出て歩く',
@@ -354,7 +538,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   void _startFiveTaskSprint() {
-    if (_isTimeboxRunning) return;
+    if (_isTimeboxRunning || !_canStartOptionalFlow()) return;
     _startTimebox(
       mode: '5件バッチ',
       goal: '15分で5件を終わらせる',
@@ -362,13 +546,45 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
-  void _startPhoneLockFocus() {
-    if (_isTimeboxRunning) return;
-    _startTimebox(
-      mode: '物理ロック',
-      goal: 'スマホを封印して他のことに没頭する',
-      minutes: 90,
-    );
+  Future<void> _startPhoneLockFocus() async {
+    if (_isTimeboxRunning || !_canStartOptionalFlow()) return;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final insertedCount = await _addMissingPhoneDetoxTasks(
+        userId: userId,
+        hourSlot: DateTime.now().hour,
+      );
+
+      if (mounted) {
+        setState(() {
+          _phoneShieldEnabled = true;
+        });
+      }
+      await _loadTasks();
+      if (!mounted) return;
+
+      if (insertedCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('スマホ禁欲項目を$insertedCount件自動追加しました。'),
+          ),
+        );
+      }
+
+      _startTimebox(
+        mode: '物理ロック',
+        goal: 'スマホを封印して他のことに没頭する',
+        minutes: 90,
+      );
+    } catch (e) {
+      debugPrint('Phone lock start failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('物理ロック開始に失敗しました（通信/認証）')));
+    }
   }
 
   Future<void> _showPhoneDetoxTemplateDialog() async {
@@ -416,36 +632,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               FilledButton(
                 onPressed: () async {
                   try {
-                    final dateStr =
-                        DateFormat('yyyy-MM-dd').format(_selectedDate);
-                    final dynamic existingRowsRaw = await _supabase
-                        .from('mindless_tasks')
-                        .select('content')
-                        .eq('user_id', userId)
-                        .eq('task_date', dateStr);
-                    final existingRows = existingRowsRaw is List
-                        ? existingRowsRaw
-                        : const <dynamic>[];
+                    final insertedCount = await _addMissingPhoneDetoxTasks(
+                      userId: userId,
+                      hourSlot: selectedHour,
+                    );
 
-                    final existingDetoxTitles = existingRows
-                        .whereType<Map<String, dynamic>>()
-                        .map(
-                          (row) => _stripPriorityTag(
-                            row['content'] as String? ?? '',
-                          ),
-                        )
-                        .where(
-                          (content) => content.startsWith('スマホ禁欲: '),
-                        )
-                        .toSet();
-
-                    final actionsToInsert = _phoneDetoxActions.where((action) {
-                      return !existingDetoxTitles.contains(
-                        _detoxTaskTitle(action),
-                      );
-                    }).toList();
-
-                    if (actionsToInsert.isEmpty) {
+                    if (insertedCount == 0) {
                       if (!mounted) return;
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -453,19 +645,6 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       );
                       return;
                     }
-
-                    final inserts = actionsToInsert.map((action) {
-                      return <String, dynamic>{
-                        'user_id': userId,
-                        'task_date': dateStr,
-                        'hour_slot': selectedHour,
-                        'content':
-                            '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
-                        'is_completed': false,
-                      };
-                    }).toList();
-
-                    await _supabase.from('mindless_tasks').insert(inserts);
                     if (!mounted) return;
                     Navigator.of(context).pop();
                     await _loadTasks();
@@ -473,7 +652,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'スマホ禁欲項目を${actionsToInsert.length}件追加しました。',
+                          'スマホ禁欲項目を$insertedCount件追加しました。',
                         ),
                       ),
                     );
@@ -799,6 +978,100 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
+  Widget _buildCriticalLockPanel() {
+    final total = _criticalTotalCount;
+    final done = _criticalCompletedCount;
+    final statusText = total == 0
+        ? 'まず「必須タスクを展開」を押して開始'
+        : _isCriticalLockActive
+            ? 'ロック中: 残り$_criticalRemainingCount件'
+            : 'ロック解除: 必須タスク完了';
+    final progress = total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0).toDouble();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _isCriticalLockActive ? Colors.red.shade300 : Colors.green.shade300,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _isCriticalLockActive ? Icons.lock : Icons.lock_open,
+                color: _isCriticalLockActive ? Colors.redAccent : Colors.green,
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  '今日の必須タスク・ロック',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                '$done/$total',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(value: progress),
+          const SizedBox(height: 6),
+          Text(
+            statusText,
+            style: TextStyle(
+              fontSize: 12,
+              color: _isCriticalLockActive ? Colors.redAccent : Colors.green,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (_pendingCriticalTitles.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _pendingCriticalTitles.take(3).map((title) {
+                return Chip(
+                  label: Text(
+                    title,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                );
+              }).toList(),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _syncCriticalTasks,
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('必須タスクを展開'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _isTimeboxRunning ? null : _startCriticalFocusSprint,
+                  icon: const Icon(Icons.gpp_good),
+                  label: const Text('必須25分集中'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPhoneDetoxPanel() {
     return Container(
       width: double.infinity,
@@ -957,6 +1230,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
+          const SizedBox(height: 10),
+          _buildCriticalLockPanel(),
           const SizedBox(height: 10),
           _buildHundredTaskPanel(),
           const SizedBox(height: 10),

@@ -337,4 +337,61 @@ void main() {
     expect(find.text('すでに追加済みです。'), findsOneWidget);
     expect(client.taskCount, 8);
   });
+
+  testWidgets('critical lock blocks optional start flows until completion', (
+    WidgetTester tester,
+  ) async {
+    final client = StatefulSupabaseClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: client,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('今日の必須タスク・ロック'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('必須タスクを4件追加しました。'), findsOneWidget);
+    expect(client.taskCount, 4);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('動くを開始'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('動くを開始'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('先に必須タスクを完了してください。'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('phone lock auto-syncs detox tasks and starts lock timer', (
+    WidgetTester tester,
+  ) async {
+    final client = StatefulSupabaseClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: client,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('物理ロック90分'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('物理ロック90分'));
+    await tester.pump();
+
+    expect(find.textContaining('スマホ禁欲項目を8件自動追加しました。'), findsOneWidget);
+    expect(find.textContaining('物理ロック:'), findsOneWidget);
+    expect(client.taskCount, 8);
+  });
 }
