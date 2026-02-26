@@ -417,7 +417,38 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 onPressed: () async {
                   final dateStr =
                       DateFormat('yyyy-MM-dd').format(_selectedDate);
-                  final inserts = _phoneDetoxActions.map((action) {
+                  final existingRows = await _supabase
+                      .from('mindless_tasks')
+                      .select('content')
+                      .eq('user_id', userId)
+                      .eq('task_date', dateStr);
+
+                  final existingDetoxTitles = existingRows
+                      .whereType<Map<String, dynamic>>()
+                      .map(
+                        (row) =>
+                            _stripPriorityTag(row['content'] as String? ?? ''),
+                      )
+                      .where(
+                        (content) => content.startsWith('スマホ禁欲: '),
+                      )
+                      .toSet();
+
+                  final actionsToInsert = _phoneDetoxActions.where((action) {
+                    return !existingDetoxTitles
+                        .contains(_detoxTaskTitle(action));
+                  }).toList();
+
+                  if (actionsToInsert.isEmpty) {
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('すでに追加済みです。')),
+                    );
+                    return;
+                  }
+
+                  final inserts = actionsToInsert.map((action) {
                     return <String, dynamic>{
                       'user_id': userId,
                       'task_date': dateStr,
@@ -434,7 +465,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                   await _loadTasks();
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('スマホ禁欲8項目を追加しました。')),
+                    SnackBar(
+                      content: Text(
+                        'スマホ禁欲項目を${actionsToInsert.length}件追加しました。',
+                      ),
+                    ),
                   );
                 },
                 child: const Text('追加'),
