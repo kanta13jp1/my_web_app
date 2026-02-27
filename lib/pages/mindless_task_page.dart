@@ -30,6 +30,20 @@ class _CriticalTaskTemplate {
   });
 }
 
+class _CriticalTaskGuide {
+  final String label;
+  final String purpose;
+  final List<String> steps;
+  final String doneCriteria;
+
+  const _CriticalTaskGuide({
+    required this.label,
+    required this.purpose,
+    required this.steps,
+    required this.doneCriteria,
+  });
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -65,6 +79,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
   static const int _dailyTaskTarget = 100;
   static const int _batchTaskCount = 5;
+  static const String _defenseCheckTemplateLabel =
+      '朝10分の防衛チェック（不審リンク/請求/認証）';
   static const List<_PhoneDetoxAction> _phoneDetoxActions = [
     _PhoneDetoxAction(label: '朝に触らない', priority: TaskPriority.a),
     _PhoneDetoxAction(label: '仕事に没頭する', priority: TaskPriority.a),
@@ -77,7 +93,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   ];
   static const List<_CriticalTaskTemplate> _criticalTaskTemplates = [
     _CriticalTaskTemplate(
-      label: '朝10分の防衛チェック（不審リンク/請求/認証）',
+      label: _defenseCheckTemplateLabel,
       priority: TaskPriority.a,
     ),
     _CriticalTaskTemplate(
@@ -91,6 +107,48 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     _CriticalTaskTemplate(
       label: '終了前に資産・アカウント記録を更新',
       priority: TaskPriority.a,
+    ),
+  ];
+  static const List<_CriticalTaskGuide> _criticalTaskGuides = [
+    _CriticalTaskGuide(
+      label: _defenseCheckTemplateLabel,
+      purpose: '詐欺・不正課金・乗っ取りを朝のうちに早期発見する。',
+      steps: [
+        '不審リンク確認（3分）: メール/SMS/DMの怪しいURLは開かず削除',
+        '請求確認（3分）: カード明細・Apple/Google課金・銀行引落の直近1日分を確認',
+        '認証確認（4分）: 主要アカウントのログイン履歴を確認し、不審端末はログアウト',
+      ],
+      doneCriteria: '怪しいリンクなし・不明請求なし・不審ログインなしを確認したら完了',
+    ),
+    _CriticalTaskGuide(
+      label: '今日の最重要タスクを1件完了',
+      purpose: '今日の成果を最低1つ確定させ、先送りを防ぐ。',
+      steps: [
+        '今日の成果に直結するタスクを1件だけ選ぶ',
+        '25分集中を1〜2セット回して、その1件だけを進める',
+        '完了したら成果を一行で記録する（何を終えたか）',
+      ],
+      doneCriteria: '「最重要タスク1件が完了」し、記録が残っていれば完了',
+    ),
+    _CriticalTaskGuide(
+      label: '1円収益アクションを1件実行',
+      purpose: '売上ゼロ日を減らし、毎日の収益行動を習慣化する。',
+      steps: [
+        '販売・提案・見積・既存客フォローのどれか1件を選ぶ',
+        '5分以内に送信/出品/提案を実行して、未送信で止めない',
+        '送った証跡（送信先・商品名・提案先）を一行で残す',
+      ],
+      doneCriteria: '収益につながる行動を1件「実行済み」で記録できたら完了',
+    ),
+    _CriticalTaskGuide(
+      label: '終了前に資産・アカウント記録を更新',
+      purpose: '日次のズレを翌日に持ち越さず、意思決定を数字に戻す。',
+      steps: [
+        '総資産・主要口座残高・保有状況を更新する',
+        'ログイン履歴や重要通知の異常有無を確認する',
+        '未処理があれば翌日の最初の対応タスクとして1件だけ登録する',
+      ],
+      doneCriteria: '資産・アカウント記録が当日分に更新され、翌日の初手が1件決まれば完了',
     ),
   ];
 
@@ -269,6 +327,36 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return '必須: ${template.label}';
   }
 
+  String _normalizeCriticalTitle(String content) {
+    return content
+        .replaceFirst(RegExp(r'^\[(A|B|C)\]\s*'), '')
+        .replaceFirst(RegExp(r'^必須:\s*'), '')
+        .trim();
+  }
+
+  _CriticalTaskGuide? _criticalGuideForTitle(String content) {
+    final normalized = _normalizeCriticalTitle(content);
+    for (final guide in _criticalTaskGuides) {
+      if (normalized.startsWith(guide.label)) {
+        return guide;
+      }
+    }
+    return null;
+  }
+
+  List<_CriticalTaskGuide> get _pendingCriticalGuides {
+    final seen = <String>{};
+    final guides = <_CriticalTaskGuide>[];
+    for (final title in _pendingCriticalTitles) {
+      final guide = _criticalGuideForTitle(title);
+      if (guide == null) continue;
+      if (seen.add(guide.label)) {
+        guides.add(guide);
+      }
+    }
+    return guides;
+  }
+
   bool _isCriticalTaskRow(Map<String, dynamic> task) {
     final content = _stripPriorityTag(task['content'] as String? ?? '');
     return content.startsWith('必須: ');
@@ -298,6 +386,57 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         .where((task) => _isCriticalTaskRow(task) && task['is_completed'] != true)
         .map((task) => _stripPriorityTag(task['content'] as String? ?? ''))
         .toList();
+  }
+
+  Future<void> _showCriticalTaskGuide(_CriticalTaskGuide guide) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${guide.label} のやり方',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '目的: ${guide.purpose}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  ...List.generate(guide.steps.length, (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == guide.steps.length - 1 ? 0 : 8,
+                      ),
+                      child: Text('${index + 1}. ${guide.steps[index]}'),
+                    );
+                  }),
+                  const SizedBox(height: 10),
+                  Text(
+                    '完了条件: ${guide.doneCriteria}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   String _formatRemaining(Duration duration) {
@@ -1047,6 +1186,48 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               }).toList(),
             ),
           ],
+          if (_pendingCriticalGuides.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.blueGrey.withValues(alpha: 0.2),
+                ),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.shield_outlined, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '未達の必須タスクは手順ガイドを開いて、そのまま実行まで進める。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _pendingCriticalGuides.take(3).map((guide) {
+                return OutlinedButton.icon(
+                  onPressed: () => _showCriticalTaskGuide(guide),
+                  icon: const Icon(Icons.help_outline, size: 16),
+                  label: Text('「${guide.label}」の手順'),
+                );
+              }).toList(),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -1646,6 +1827,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                           _parsePriority(rawContent);
                                       final displayContent =
                                           _stripPriorityTag(rawContent);
+                                      final criticalGuide =
+                                          _criticalGuideForTitle(displayContent);
                                       return InkWell(
                                         onLongPress: () =>
                                             _deleteTask(task['id']),
@@ -1716,6 +1899,19 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                   ),
                                                 ),
                                               ),
+                                              if (criticalGuide != null)
+                                                IconButton(
+                                                  tooltip: 'やり方を表示',
+                                                  onPressed: () =>
+                                                      _showCriticalTaskGuide(
+                                                        criticalGuide,
+                                                      ),
+                                                  icon: Icon(
+                                                    Icons.help_outline,
+                                                    color: Colors.blueGrey.shade500,
+                                                    size: 18,
+                                                  ),
+                                                ),
                                             ],
                                           ),
                                         ),
