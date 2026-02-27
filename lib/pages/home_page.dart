@@ -1,5 +1,6 @@
 // home_page.dart
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -99,8 +100,15 @@ class _HomePageState extends State<HomePage> {
   String _balanceCheckDoneKeyFor(DateTime date) =>
       'home_balance_check_done_${DateFormat('yyyy-MM-dd').format(date)}';
 
-  String _aiNudgeCacheKey(_HomeActionType type) =>
-      'home_ai_nudge_${_todayKey}_${type.name}';
+  String _aiNudgeCacheKey(_HomeActionType type, _HomeOpsSnapshot snapshot) {
+    final slipSeed = snapshot.abstinenceSlipDetails.take(3).join('|');
+    final seed =
+        '${snapshot.pendingCriticalTaskCount}|${snapshot.pendingStockTaskCount}|'
+        '${snapshot.abstinenceSlipCount}|$slipSeed';
+    final encoded = base64Url.encode(utf8.encode(seed)).replaceAll('=', '');
+    final token = encoded.length > 40 ? encoded.substring(0, 40) : encoded;
+    return 'home_ai_nudge_${_todayKey}_${type.name}_$token';
+  }
 
   Future<int> _fetchPendingCriticalTaskCount() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -246,6 +254,7 @@ class _HomePageState extends State<HomePage> {
       pendingStockTaskCount: pendingStockTaskCount,
       abstinenceFocusCount: abstinenceSnapshot.enabledCount,
       abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
+      abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
       abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
       calendarDays: calendarDays,
     );
@@ -481,7 +490,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    final cacheKey = _aiNudgeCacheKey(command.type);
+    final cacheKey = _aiNudgeCacheKey(command.type, snapshot);
     final cached = prefs.getString(cacheKey);
     if (cached != null && cached.trim().isNotEmpty) {
       return cached.trim();
@@ -495,14 +504,20 @@ class _HomePageState extends State<HomePage> {
 
       final model = _resolveHomeModel(prefs);
       final aiService = AIService(null, apiKey);
+      final slipDetailsText = snapshot.abstinenceSlipDetails.isEmpty
+          ? 'none'
+          : snapshot.abstinenceSlipDetails.join(' / ');
       final prompt = '''
 あなたはホーム画面の運用アシスタントです。
 次アクションに対して、実行を後押しする短い補足を日本語で1文だけ返してください。
 出力は1文のみ（句点あり、絵文字なし）。
+abstinence_slip_details がある場合は、逸脱項目を1つ具体的に入れてください。
 
 action_title: ${command.title}
 action_detail: ${command.detail}
 pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
+abstinence_slip_count: ${snapshot.abstinenceSlipCount}
+abstinence_slip_details: $slipDetailsText
 ''';
 
       final generated = await aiService.generateContent(
@@ -2491,6 +2506,7 @@ class _HomeOpsSnapshot {
   final int pendingStockTaskCount;
   final int abstinenceFocusCount;
   final int abstinenceSlipCount;
+  final List<String> abstinenceSlipDetails;
   final List<String> abstinenceTopLabels;
   final List<_HomeCalendarDay> calendarDays;
 
@@ -2501,6 +2517,7 @@ class _HomeOpsSnapshot {
     this.pendingStockTaskCount = 0,
     this.abstinenceFocusCount = 0,
     this.abstinenceSlipCount = 0,
+    this.abstinenceSlipDetails = const [],
     this.abstinenceTopLabels = const [],
     this.calendarDays = const [],
   });
