@@ -709,6 +709,11 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     final cleanDaysCount = recentDays
         .where((day) => day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
         .length;
+    final slipDaysCount =
+        recentDays.where((day) => day.hasAbstinenceSlip).length;
+    final unsetDaysCount = recentDays
+        .where((day) => !day.hasAbstinenceProtection)
+        .length;
 
     return Container(
       width: double.infinity,
@@ -741,6 +746,29 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.end,
+                children: [
+                  _buildCalendarSummaryPill(
+                    label: '逸脱日数',
+                    value: '$slipDaysCount日',
+                    color: Colors.orange,
+                  ),
+                  _buildCalendarSummaryPill(
+                    label: '無傷日数',
+                    value: '$cleanDaysCount日',
+                    color: Colors.green,
+                  ),
+                  _buildCalendarSummaryPill(
+                    label: '未設定日数',
+                    value: '$unsetDaysCount日',
+                    color: Colors.blueGrey,
+                  ),
+                ],
               ),
             ],
           ),
@@ -903,6 +931,29 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Widget _buildCalendarSummaryPill({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        '$label $value',
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
