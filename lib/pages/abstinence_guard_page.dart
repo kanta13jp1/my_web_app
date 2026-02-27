@@ -78,6 +78,26 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     await _loadSnapshot();
   }
 
+  Future<void> _pickDate() async {
+    final today = _startOfDay(_currentDate());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2024, 1, 1),
+      lastDate: today,
+    );
+    if (picked == null) return;
+
+    final candidate = _startOfDay(picked);
+    if (_isSameDay(candidate, _selectedDate)) return;
+
+    setState(() {
+      _isLoading = true;
+      _selectedDate = candidate;
+    });
+    await _loadSnapshot();
+  }
+
   @override
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
@@ -126,14 +146,30 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                             ),
                             Expanded(
                               child: Center(
-                                child: Text(
-                                  '対象日: $targetDateLabel',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: _pickDate,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 6,
+                                    ),
+                                    child: Text(
+                                      '対象日: $targetDateLabel',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                            IconButton.outlined(
+                              tooltip: '日付を選択',
+                              onPressed: _pickDate,
+                              icon: const Icon(Icons.calendar_today_outlined),
+                            ),
+                            const SizedBox(width: 4),
                             IconButton.outlined(
                               tooltip: '翌日',
                               onPressed: canMoveToNextDay

@@ -76,6 +76,36 @@ void main() {
     expect(find.text('対象日: 2026/02/26'), findsOneWidget);
     expect(find.text('煙草'), findsOneWidget);
   });
+
+  testWidgets('AbstinenceGuardPage can jump to arbitrary day with date picker',
+      (WidgetTester tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'alcohol',
+      isEnabled: true,
+      prefs: prefs,
+      now: DateTime(2026, 2, 24),
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AbstinenceGuardPage(
+          nowProvider: _fixedNow,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('日付を選択'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('24').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('対象日: 2026/02/24'), findsOneWidget);
+    expect(find.text('酒'), findsOneWidget);
+  });
 }
 
 DateTime _fixedNow() => DateTime(2026, 2, 26, 9, 0);
