@@ -146,6 +146,36 @@ void main() {
       expect(find.text('対象日: 2026/02/26'), findsOneWidget);
     });
 
+    testWidgets('Feature: HomePage calendar summary pills filter highlights',
+        (WidgetTester tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await AbstinenceGuardStore.setEnabled(
+        itemId: 'alcohol',
+        isEnabled: true,
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+      await AbstinenceGuardStore.incrementSlip(
+        itemId: 'alcohol',
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final slipSummaryPill = find.textContaining('逸脱日数');
+      await tester.ensureVisible(slipSummaryPill);
+      await tester.tap(slipSummaryPill);
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示中: 逸脱日数のみハイライト'), findsOneWidget);
+    });
+
     testWidgets('Feature: EmergencyMeetingPage renders correctly',
         (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: EmergencyMeetingPage()));

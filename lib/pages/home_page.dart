@@ -51,6 +51,8 @@ class _HomePageState extends State<HomePage> {
   late Future<_HomeOpsSnapshot> _opsSnapshotFuture;
   late Future<String?> _aiNudgeFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  _CalendarHighlightFilter _calendarHighlightFilter =
+      _CalendarHighlightFilter.all;
 
   @override
   void initState() {
@@ -714,6 +716,12 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     final unsetDaysCount = recentDays
         .where((day) => !day.hasAbstinenceProtection)
         .length;
+    final filterLabel = switch (_calendarHighlightFilter) {
+      _CalendarHighlightFilter.all => null,
+      _CalendarHighlightFilter.slip => '表示中: 逸脱日数のみハイライト',
+      _CalendarHighlightFilter.clean => '表示中: 無傷日数のみハイライト',
+      _CalendarHighlightFilter.unset => '表示中: 未設定日数のみハイライト',
+    };
 
     return Container(
       width: double.infinity,
@@ -757,16 +765,19 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                     label: '逸脱日数',
                     value: '$slipDaysCount日',
                     color: Colors.orange,
+                    filter: _CalendarHighlightFilter.slip,
                   ),
                   _buildCalendarSummaryPill(
                     label: '無傷日数',
                     value: '$cleanDaysCount日',
                     color: Colors.green,
+                    filter: _CalendarHighlightFilter.clean,
                   ),
                   _buildCalendarSummaryPill(
                     label: '未設定日数',
                     value: '$unsetDaysCount日',
                     color: Colors.blueGrey,
+                    filter: _CalendarHighlightFilter.unset,
                   ),
                 ],
               ),
@@ -776,6 +787,17 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
           const Text(
             '朝の固定、残高確認、禁欲の安定を月単位で見る。',
           ),
+          if (filterLabel != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              filterLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.blueGrey.shade600,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -829,19 +851,22 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
             itemBuilder: (context, index) {
               final day = snapshot.calendarDays[index];
               final status = _resolveCalendarDayStatus(day);
+              final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor = day.isCurrentMonth
                   ? status.color
                   : Colors.blueGrey;
               final backgroundColor = day.isCurrentMonth
-                  ? accentColor.withValues(
-                      alpha: day.hasAbstinenceSlip
-                          ? 0.18
-                          : status.label == '無傷'
-                              ? 0.14
-                              : status.label == '未設定'
-                                  ? 0.08
-                                  : 0.1,
-                    )
+                  ? matchesFilter
+                      ? accentColor.withValues(
+                          alpha: day.hasAbstinenceSlip
+                              ? 0.18
+                              : status.label == '無傷'
+                                  ? 0.14
+                                  : status.label == '未設定'
+                                      ? 0.08
+                                      : 0.1,
+                        )
+                      : Colors.blueGrey.withValues(alpha: 0.035)
                   : Colors.blueGrey.withValues(alpha: 0.05);
 
               return Material(
@@ -860,7 +885,9 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                         color: day.isToday
                             ? Colors.blue.shade400
                             : day.isCurrentMonth
-                                ? accentColor.withValues(alpha: 0.22)
+                                ? matchesFilter
+                                    ? accentColor.withValues(alpha: 0.22)
+                                    : Colors.blueGrey.withValues(alpha: 0.08)
                                 : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
                       ),
@@ -875,9 +902,13 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               color: day.isCurrentMonth
-                                  ? (status.label == '未設定'
-                                      ? (isDark ? Colors.white70 : Colors.black87)
-                                      : accentColor)
+                                  ? matchesFilter
+                                      ? (status.label == '未設定'
+                                          ? (isDark
+                                              ? Colors.white70
+                                              : Colors.black87)
+                                          : accentColor)
+                                      : Colors.blueGrey.shade400
                                   : Colors.blueGrey.shade300,
                             ),
                           ),
@@ -892,9 +923,17 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                                 _buildCalendarDot(Colors.green),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
-                                _buildCalendarDot(Colors.redAccent),
+                                _buildCalendarDot(
+                                  matchesFilter
+                                      ? Colors.redAccent
+                                      : Colors.redAccent.withValues(alpha: 0.3),
+                                ),
                               if (day.hasAbstinenceSlip)
-                                _buildCalendarDot(Colors.orange),
+                                _buildCalendarDot(
+                                  matchesFilter
+                                      ? Colors.orange
+                                      : Colors.orange.withValues(alpha: 0.3),
+                                ),
                               if (day.isSaturday)
                                 _buildCalendarDot(Colors.teal),
                             ],
@@ -939,23 +978,72 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     required String label,
     required String value,
     required Color color,
+    required _CalendarHighlightFilter filter,
   }) {
+    final isSelected = _calendarHighlightFilter == filter;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.14),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : null,
       ),
-      child: Text(
-        '$label $value',
-        style: TextStyle(
-          fontSize: 11,
-          color: color,
-          fontWeight: FontWeight.w700,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () {
+            setState(() {
+              _calendarHighlightFilter = isSelected
+                  ? _CalendarHighlightFilter.all
+                  : filter;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isSelected ? 0.24 : 0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: color.withValues(alpha: isSelected ? 0.38 : 0.18),
+              ),
+            ),
+            child: Text(
+              '$label $value',
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  bool _matchesCalendarHighlightFilter(_HomeCalendarDay day) {
+    if (_calendarHighlightFilter == _CalendarHighlightFilter.all) {
+      return true;
+    }
+    if (!day.isCurrentMonth || day.isFuture) {
+      return false;
+    }
+
+    return switch (_calendarHighlightFilter) {
+      _CalendarHighlightFilter.all => true,
+      _CalendarHighlightFilter.slip => day.hasAbstinenceSlip,
+      _CalendarHighlightFilter.clean =>
+        day.hasAbstinenceProtection && !day.hasAbstinenceSlip,
+      _CalendarHighlightFilter.unset => !day.hasAbstinenceProtection,
+    };
   }
 
   _CalendarDayStatus _resolveCalendarDayStatus(_HomeCalendarDay day) {
@@ -2091,6 +2179,13 @@ enum _HomeActionType {
   criticalTasks,
   stockReview,
   none,
+}
+
+enum _CalendarHighlightFilter {
+  all,
+  slip,
+  clean,
+  unset,
 }
 
 class _HomeActionCommand {
