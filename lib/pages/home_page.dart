@@ -918,24 +918,41 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                             runSpacing: 3,
                             children: [
                               if (day.morningDone)
-                                _buildCalendarDot(Colors.amber),
+                                _buildCalendarDot(
+                                  _calendarDotDisplayColor(
+                                    Colors.amber,
+                                    isEmphasized: matchesFilter,
+                                  ),
+                                ),
                               if (day.balanceDone)
-                                _buildCalendarDot(Colors.green),
+                                _buildCalendarDot(
+                                  _calendarDotDisplayColor(
+                                    Colors.green,
+                                    isEmphasized: matchesFilter,
+                                  ),
+                                ),
                               if (day.hasAbstinenceProtection &&
                                   !day.hasAbstinenceSlip)
                                 _buildCalendarDot(
-                                  matchesFilter
-                                      ? Colors.redAccent
-                                      : Colors.redAccent.withValues(alpha: 0.3),
+                                  _calendarDotDisplayColor(
+                                    Colors.redAccent,
+                                    isEmphasized: matchesFilter,
+                                  ),
                                 ),
                               if (day.hasAbstinenceSlip)
                                 _buildCalendarDot(
-                                  matchesFilter
-                                      ? Colors.orange
-                                      : Colors.orange.withValues(alpha: 0.3),
+                                  _calendarDotDisplayColor(
+                                    Colors.orange,
+                                    isEmphasized: matchesFilter,
+                                  ),
                                 ),
                               if (day.isSaturday)
-                                _buildCalendarDot(Colors.teal),
+                                _buildCalendarDot(
+                                  _calendarDotDisplayColor(
+                                    Colors.teal,
+                                    isEmphasized: matchesFilter,
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -972,6 +989,14 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
         shape: BoxShape.circle,
       ),
     );
+  }
+
+  Color _calendarDotDisplayColor(
+    Color color, {
+    required bool isEmphasized,
+  }) {
+    if (isEmphasized) return color;
+    return color.withValues(alpha: 0.22);
   }
 
   Widget _buildCalendarSummaryPill({
