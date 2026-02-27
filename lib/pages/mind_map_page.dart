@@ -21,7 +21,12 @@ class _MindMapPageState extends State<MindMapPage> {
   String? _errorMessage;
 
   String? _geminiApiKey;
-  String _selectedModel = 'gemini-1.5-flash';
+  String _selectedModel = 'gemini-2.0-flash';
+  static const List<String> _mindMapFallbackModels = <String>[
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-pro',
+  ];
 
   @override
   void initState() {
@@ -36,13 +41,97 @@ class _MindMapPageState extends State<MindMapPage> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final savedCandidates = <String?>[
+      prefs.getString('gemini_model_mind_map'),
+      prefs.getString('gemini_model'),
+      prefs.getString('gemini_model_emergency_meeting'),
+      ..._mindMapFallbackModels,
+    ];
+
+    final resolvedModel =
+        savedCandidates.whereType<String>().map((v) => v.trim()).firstWhere(
+              (v) => v.isNotEmpty,
+              orElse: () => 'gemini-2.0-flash',
+            );
+
     if (mounted) {
       setState(() {
         _geminiApiKey = prefs.getString('gemini_api_key');
-        _selectedModel =
-            prefs.getString('gemini_model_mind_map') ?? 'gemini-1.5-flash';
+        _selectedModel = resolvedModel;
       });
     }
+  }
+
+  List<String> _modelCandidatesForMindMap() {
+    final candidates = <String>[
+      _selectedModel,
+      ..._mindMapFallbackModels,
+    ];
+    final unique = <String>[];
+    final seen = <String>{};
+    for (final model in candidates) {
+      final normalized = model.trim();
+      if (normalized.isEmpty || seen.contains(normalized)) continue;
+      seen.add(normalized);
+      unique.add(normalized);
+    }
+    return unique;
+  }
+
+  bool _isUnrecoverableModelError(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('api key not valid') ||
+        lower.contains('permission denied') ||
+        lower.contains('unauthorized') ||
+        lower.contains('401') ||
+        lower.contains('403');
+  }
+
+  String _extractFirstJsonObject(String text) {
+    final trimmed = text.trim();
+    final firstBrace = trimmed.indexOf('{');
+    if (firstBrace == -1) return trimmed;
+
+    var inString = false;
+    var escaped = false;
+    var depth = 0;
+    var start = firstBrace;
+
+    for (var i = firstBrace; i < trimmed.length; i++) {
+      final ch = trimmed[i];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (ch == r'\') {
+          escaped = true;
+        } else if (ch == '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (ch == '"') {
+        inString = true;
+        continue;
+      }
+      if (ch == '{') {
+        if (depth == 0) start = i;
+        depth++;
+      } else if (ch == '}') {
+        depth--;
+        if (depth == 0) {
+          return trimmed.substring(start, i + 1);
+        }
+      }
+    }
+    return trimmed.substring(start);
+  }
+
+  Map<String, dynamic> _decodeMindMapJson(String responseText) {
+    final extracted = _extractFirstJsonObject(responseText);
+    final dynamic decoded = jsonDecode(extracted);
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    throw const FormatException('マインドマップJSONがオブジェクトではありません。');
   }
 
   Future<void> _generateMindMap() async {
@@ -69,31 +158,56 @@ class _MindMapPageState extends State<MindMapPage> {
 
     try {
       final aiService = AIService(null, _geminiApiKey);
-      final responseText = await aiService.generateMindMap(
-        model: _selectedModel,
-        topic: topic,
-      );
+      final candidates = _modelCandidatesForMindMap();
+      String? responseText;
+      String? usedModel;
+      Object? lastError;
+
+      for (final model in candidates) {
+        try {
+          final result = await aiService.generateMindMap(
+            model: model,
+            topic: topic,
+          );
+          if (result == null || result.trim().isEmpty) {
+            throw Exception('AIからの応答がありません。');
+          }
+          responseText = result;
+          usedModel = model;
+          break;
+        } catch (e) {
+          lastError = e;
+          if (_isUnrecoverableModelError(e.toString())) {
+            rethrow;
+          }
+        }
+      }
 
       if (responseText == null) {
-        throw Exception('AIからの応答がありません。');
+        throw Exception(lastError?.toString() ?? 'AIからの応答がありません。');
       }
 
-      var responseJson = responseText.trim();
-      final jsonStartIndex = responseJson.indexOf('{');
-      final jsonEndIndex = responseJson.lastIndexOf('}');
-      if (jsonStartIndex != -1 && jsonEndIndex != -1) {
-        responseJson = responseJson.substring(jsonStartIndex, jsonEndIndex + 1);
-      }
+      final decoded = _decodeMindMapJson(responseText);
 
-      final decoded = jsonDecode(responseJson) as Map<String, dynamic>;
+      if (usedModel != null && usedModel != _selectedModel) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('gemini_model_mind_map', usedModel);
+      }
 
       setState(() {
+        if (usedModel != null) {
+          _selectedModel = usedModel;
+        }
         _buildGraphFromJson(decoded, null);
       });
     } catch (e) {
-      _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
+      setState(() {
+        _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
+      });
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -111,8 +225,13 @@ class _MindMapPageState extends State<MindMapPage> {
         _graph.addEdge(parent, node);
       }
 
-      final children = json[key] as Map<String, dynamic>;
-      if (children.isNotEmpty) {
+      final rawChildren = json[key];
+      final children = rawChildren is Map<String, dynamic>
+          ? rawChildren
+          : (rawChildren is Map
+              ? Map<String, dynamic>.from(rawChildren)
+              : null);
+      if (children != null && children.isNotEmpty) {
         _buildGraphFromJson(children, node);
       }
     }

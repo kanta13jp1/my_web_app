@@ -430,6 +430,45 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     return <Map<String, dynamic>>[];
   }
 
+  Future<void> _ensureSelectedModelIsAvailable() async {
+    final apiKey = _geminiApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return;
+
+    final fetchedModels = await fetchGeminiModels(apiKey);
+    if (fetchedModels.isEmpty) return;
+
+    final names = fetchedModels
+        .map((m) => m['name']?.toString() ?? '')
+        .where((name) => name.trim().isNotEmpty)
+        .toList();
+    if (names.isEmpty) return;
+
+    final current = _selectedModel;
+    var next = current;
+    if (!names.contains(current)) {
+      next = names.first;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _selectableModels = fetchedModels;
+      _selectedModel = next;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('gemini_model_emergency_meeting', next);
+
+    if (next != current && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '選択モデル「$current」が利用不可のため「$next」に切り替えました。',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> showSettingsDialog() async {
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
@@ -815,6 +854,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       if (_geminiApiKey == null || _geminiApiKey!.isEmpty) return;
     }
 
+    await _ensureSelectedModelIsAvailable();
+
     setState(() {
       _isLoading = true;
       _loadingStatus = '継続と禁欲に関するデータを収集中...';
@@ -911,10 +952,51 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       setState(() => _loadingStatus = 'AI役員が継続・禁欲の改善策を議論中...');
 
       final aiService = AIService(null, _geminiApiKey);
-      final responseText = await aiService.generateContent(
-        model: _selectedModel,
-        prompt: contextPrompt,
-      );
+      String? responseText;
+      try {
+        responseText = await aiService.generateContent(
+          model: _selectedModel,
+          prompt: contextPrompt,
+        );
+      } catch (e) {
+        final err = e.toString();
+        final hasModel404 =
+            err.contains('404') && err.contains(':generateContent');
+        if (!hasModel404) rethrow;
+
+        final apiKey = _geminiApiKey?.trim();
+        final latestModels = (apiKey == null || apiKey.isEmpty)
+            ? const <Map<String, dynamic>>[]
+            : await fetchGeminiModels(apiKey);
+        final candidateSource =
+            latestModels.isNotEmpty ? latestModels : _selectableModels;
+
+        String? fallbackModel;
+        for (final item in candidateSource) {
+          final candidate = item['name']?.toString() ?? '';
+          if (candidate.trim().isEmpty || candidate == _selectedModel) continue;
+          fallbackModel = candidate;
+          break;
+        }
+
+        if (fallbackModel == null) rethrow;
+
+        if (mounted) {
+          setState(() {
+            _selectedModel = fallbackModel!;
+            if (latestModels.isNotEmpty) {
+              _selectableModels = latestModels;
+            }
+          });
+        }
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('gemini_model_emergency_meeting', fallbackModel);
+
+        responseText = await aiService.generateContent(
+          model: fallbackModel,
+          prompt: contextPrompt,
+        );
+      }
 
       if (responseText == null) {
         throw Exception('AIからの応答がありません。');
@@ -1055,31 +1137,44 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
-    final meetingRes = await _supabase
-        .from('board_meetings')
-        .insert({
-          'id': log.id,
-          'user_id': log.userId,
-          'topic': log.topic,
-          'conclusion': log.conclusion,
-          'created_at': log.createdAt.toIso8601String(),
-        })
-        .select()
-        .single();
+    try {
+      final dynamic inserted = await _supabase
+          .from('board_meetings')
+          .insert({
+            'id': log.id,
+            'user_id': log.userId,
+            'topic': log.topic,
+            'conclusion': log.conclusion,
+            'created_at': log.createdAt.toIso8601String(),
+          })
+          .select('id');
 
-    final meetingId = meetingRes['id'];
+      String meetingId = log.id;
+      if (inserted is List && inserted.isNotEmpty) {
+        final first = inserted.first;
+        if (first is Map && first['id'] != null) {
+          meetingId = first['id'].toString();
+        }
+      } else if (inserted is Map && inserted['id'] != null) {
+        meetingId = inserted['id'].toString();
+      }
 
-    final messagesToInsert = log.messages.map((msg) {
-      return {
-        'meeting_id': meetingId,
-        'speaker_name': msg.speakerName,
-        'role': msg.role,
-        'content': msg.content,
-        'created_at': msg.timestamp.toIso8601String(),
-      };
-    }).toList();
+      final messagesToInsert = log.messages.map((msg) {
+        return {
+          'meeting_id': meetingId,
+          'speaker_name': msg.speakerName,
+          'role': msg.role,
+          'content': msg.content,
+          'created_at': msg.timestamp.toIso8601String(),
+        };
+      }).toList();
 
-    await _supabase.from('board_messages').insert(messagesToInsert);
+      if (messagesToInsert.isNotEmpty) {
+        await _supabase.from('board_messages').insert(messagesToInsert);
+      }
+    } catch (e) {
+      debugPrint('Failed to save meeting log: $e');
+    }
   }
 
   @override
