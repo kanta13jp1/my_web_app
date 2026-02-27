@@ -406,6 +406,23 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     }
   }
 
+  Future<void> _openAbstinenceGuardForDate(
+    BuildContext context,
+    DateTime date,
+  ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AbstinenceGuardPage(
+          nowProvider: () => date,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _refreshKpis();
+    }
+  }
+
   Widget _buildNextActionBubble(
     BuildContext context,
     _HomeActionCommand command,
@@ -886,6 +903,7 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     _HomeCalendarDay day,
   ) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final parentContext = context;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -927,11 +945,22 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _openAbstinenceGuardForDate(
+                        parentContext,
+                        day.date,
+                      );
+                    },
+                    icon: const Icon(Icons.shield_moon, size: 18),
+                    label: const Text('その日の禁欲ガードへ'),
+                  ),
+                  const SizedBox(height: 8),
                   if (day.isFuture) ...[
-                    const SizedBox(height: 4),
                     const Text('未来の日付です。まだ実績はありません。'),
                   ] else ...[
-                    const SizedBox(height: 4),
                     Text(
                       day.isCurrentMonth
                           ? 'その日の継続状態と逸脱内容を確認できます。'

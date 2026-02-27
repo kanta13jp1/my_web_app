@@ -136,6 +136,12 @@ void main() {
       expect(find.text('未達成項目'), findsOneWidget);
       expect(find.textContaining('酒: 1回'), findsOneWidget);
       expect(find.textContaining('口座残高確認'), findsOneWidget);
+
+      await tester.tap(find.text('その日の禁欲ガードへ'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('禁欲ガード'), findsOneWidget);
+      expect(find.text('対象日: 2026/02/26'), findsOneWidget);
     });
 
     testWidgets('Feature: EmergencyMeetingPage renders correctly',

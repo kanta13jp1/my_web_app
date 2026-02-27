@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../services/abstinence_guard_store.dart';
 
@@ -54,6 +55,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   @override
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
+    final targetDateLabel = DateFormat('yyyy/MM/dd').format(_now());
 
     return Scaffold(
       appBar: AppBar(
@@ -85,6 +87,13 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '対象日: $targetDateLabel',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 6),
