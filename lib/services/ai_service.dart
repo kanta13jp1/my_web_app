@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import '../main.dart';
@@ -23,13 +25,40 @@ class AIServiceException implements Exception {
 class AIService {
   final SupabaseClient _supabase;
   final String? _googleAIApiKey;
+  final String? _openAIApiKey;
+  final String? _anthropicApiKey;
+  final http.Client _httpClient;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
   static const bool _magiDefaultEnabled = true;
   static const int _magiOpinionMaxLength = 900;
+  static const String _defaultOpenAIModel = 'gpt-4o-mini';
+  static const String _defaultAnthropicModel = 'claude-3-5-sonnet-latest';
 
-  AIService([SupabaseClient? supabaseClient, this._googleAIApiKey])
-      : _supabase = supabaseClient ?? supabase;
+  AIService([
+    SupabaseClient? supabaseClient,
+    this._googleAIApiKey,
+    String? openAIApiKey,
+    String? anthropicApiKey,
+    http.Client? httpClient,
+  ])  : _supabase = supabaseClient ?? supabase,
+        _openAIApiKey = openAIApiKey,
+        _anthropicApiKey = anthropicApiKey,
+        _httpClient = httpClient ?? http.Client();
+
+  AIService.withMagiKeys({
+    SupabaseClient? supabaseClient,
+    String? geminiApiKey,
+    String? openAIApiKey,
+    String? anthropicApiKey,
+    http.Client? httpClient,
+  }) : this(
+          supabaseClient,
+          geminiApiKey,
+          openAIApiKey,
+          anthropicApiKey,
+          httpClient,
+        );
 
   /// 指数バックオフでリトライを実行するヘルパーメソッド
   Future<T> _retryWithBackoff<T>(
@@ -158,22 +187,30 @@ class AIService {
   }
 
   // =========================================================================
-  // Google Generative AI direct methods
+  // Direct model methods (OpenAI / Anthropic / Gemini)
   // =========================================================================
 
   Future<String?> generateContent({
     required String model,
     required String prompt,
     bool useMagi = _magiDefaultEnabled,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+    String? synthesisModel,
   }) async {
-    if (_googleAIApiKey == null) {
-      throw AIServiceException('Google AI API key is not configured.');
+    if (useMagi && !_hasAnyMagiProvider) {
+      throw AIServiceException(
+        'MAGI providers are not configured. Set at least one API key.',
+      );
     }
 
     return _retryWithBackoff(
       () async {
         if (!useMagi) {
-          return _generateSingleGeminiContent(
+          final provider = _inferProviderFromModel(model);
+          return _generateSingleContentByProvider(
+            provider: provider,
             model: model,
             prompt: prompt,
           );
@@ -181,10 +218,61 @@ class AIService {
         return _generateContentWithMagi(
           model: model,
           prompt: prompt,
+          melchiorModel: melchiorModel,
+          balthasarModel: balthasarModel,
+          casperModel: casperModel,
+          synthesisModel: synthesisModel,
         );
       },
       operationName: useMagi ? 'generateContent(MAGI)' : 'generateContent',
     );
+  }
+
+  bool get _hasAnyMagiProvider {
+    return _isProviderConfigured(_MagiProvider.openai) ||
+        _isProviderConfigured(_MagiProvider.anthropic) ||
+        _isProviderConfigured(_MagiProvider.gemini);
+  }
+
+  bool _isProviderConfigured(_MagiProvider provider) {
+    final key = switch (provider) {
+      _MagiProvider.openai => _openAIApiKey,
+      _MagiProvider.anthropic => _anthropicApiKey,
+      _MagiProvider.gemini => _googleAIApiKey,
+    };
+    return key != null && key.trim().isNotEmpty;
+  }
+
+  _MagiProvider _inferProviderFromModel(String model) {
+    final lower = model.toLowerCase();
+    if (lower.contains('gpt') || lower.contains('o1') || lower.contains('o3')) {
+      return _MagiProvider.openai;
+    }
+    if (lower.contains('claude') || lower.contains('anthropic')) {
+      return _MagiProvider.anthropic;
+    }
+    return _MagiProvider.gemini;
+  }
+
+  Future<String?> _generateSingleContentByProvider({
+    required _MagiProvider provider,
+    required String model,
+    required String prompt,
+  }) async {
+    return switch (provider) {
+      _MagiProvider.openai => _generateSingleOpenAIContent(
+          model: model,
+          prompt: prompt,
+        ),
+      _MagiProvider.anthropic => _generateSingleAnthropicContent(
+          model: model,
+          prompt: prompt,
+        ),
+      _MagiProvider.gemini => _generateSingleGeminiContent(
+          model: model,
+          prompt: prompt,
+        ),
+    };
   }
 
   Future<String?> _generateSingleGeminiContent({
@@ -205,27 +293,197 @@ class AIService {
     }
   }
 
-  Future<String?> _generateContentWithMagi({
+  Future<String?> _generateSingleOpenAIContent({
     required String model,
     required String prompt,
   }) async {
+    final apiKey = _openAIApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      throw AIServiceException('OpenAI API key is not configured.');
+    }
+    try {
+      final response = await _httpClient.post(
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        headers: <String, String>{
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'model': model,
+          'messages': <Map<String, String>>[
+            <String, String>{'role': 'user', 'content': prompt},
+          ],
+        }),
+      );
+      if (response.statusCode >= 400) {
+        throw _mapHttpApiError('OpenAI', response);
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      final choices = decoded['choices'];
+      if (choices is! List || choices.isEmpty) {
+        return null;
+      }
+      final firstChoice = choices.first;
+      if (firstChoice is! Map<String, dynamic>) {
+        return null;
+      }
+      final message = firstChoice['message'];
+      if (message is! Map<String, dynamic>) {
+        return null;
+      }
+      final content = message['content'];
+      if (content is String) {
+        return content;
+      }
+      if (content is List) {
+        final text = content
+            .whereType<Map<String, dynamic>>()
+            .map((part) => part['text']?.toString() ?? '')
+            .where((part) => part.trim().isNotEmpty)
+            .join('\n')
+            .trim();
+        return text.isEmpty ? null : text;
+      }
+      return null;
+    } catch (e) {
+      if (e is AIServiceException) rethrow;
+      throw _mapAiModelError(e);
+    }
+  }
+
+  Future<String?> _generateSingleAnthropicContent({
+    required String model,
+    required String prompt,
+  }) async {
+    final apiKey = _anthropicApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      throw AIServiceException('Anthropic API key is not configured.');
+    }
+    try {
+      final response = await _httpClient.post(
+        Uri.parse('https://api.anthropic.com/v1/messages'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'model': model,
+          'max_tokens': 1024,
+          'messages': <Map<String, String>>[
+            <String, String>{'role': 'user', 'content': prompt},
+          ],
+        }),
+      );
+      if (response.statusCode >= 400) {
+        throw _mapHttpApiError('Anthropic', response);
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      final content = decoded['content'];
+      if (content is! List || content.isEmpty) {
+        return null;
+      }
+      final text = content
+          .whereType<Map<String, dynamic>>()
+          .map((part) => part['text']?.toString() ?? '')
+          .where((part) => part.trim().isNotEmpty)
+          .join('\n')
+          .trim();
+      return text.isEmpty ? null : text;
+    } catch (e) {
+      if (e is AIServiceException) rethrow;
+      throw _mapAiModelError(e);
+    }
+  }
+
+  AIServiceException _mapHttpApiError(String provider, http.Response response) {
+    final retryAfter = response.headers['retry-after'];
+    final detail = _extractApiErrorMessage(response.body);
+    final status = response.statusCode;
+    if (status == 429) {
+      return AIServiceException(
+        '$provider API rate limit exceeded.',
+        errorType: 'RATE_LIMIT',
+        retryAfter: retryAfter,
+      );
+    }
+    return AIServiceException(
+      '$provider API error ($status): $detail',
+    );
+  }
+
+  String _extractApiErrorMessage(String body) {
+    try {
+      final dynamic decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        final error = decoded['error'];
+        if (error is String && error.trim().isNotEmpty) {
+          return error;
+        }
+        if (error is Map<String, dynamic>) {
+          final message = error['message']?.toString();
+          if (message != null && message.trim().isNotEmpty) {
+            return message;
+          }
+          final type = error['type']?.toString();
+          if (type != null && type.trim().isNotEmpty) {
+            return type;
+          }
+        }
+        final message = decoded['message']?.toString();
+        if (message != null && message.trim().isNotEmpty) {
+          return message;
+        }
+      }
+    } catch (_) {}
+    final trimmed = body.trim();
+    return trimmed.isEmpty ? 'Unknown error' : trimmed;
+  }
+
+  Future<String?> _generateContentWithMagi({
+    required String model,
+    required String prompt,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+    String? synthesisModel,
+  }) async {
     final profiles = _magiProfiles;
     final results = await Future.wait<_MagiOpinion?>(
-      profiles.map(
-        (profile) => _runMagiNode(
-          model: model,
+      profiles.map((profile) {
+        final nodeModel = _resolveMagiNodeModel(
+          profile: profile,
+          fallbackGeminiModel: model,
+          melchiorModel: melchiorModel,
+          balthasarModel: balthasarModel,
+          casperModel: casperModel,
+        );
+        return _runMagiNode(
+          model: nodeModel,
           prompt: prompt,
           profile: profile,
-        ),
-      ),
+        );
+      }),
     );
 
     final validOpinions = results.whereType<_MagiOpinion>().toList();
     if (validOpinions.isEmpty) {
-      // 全ノードが失敗した場合は単発呼び出しへフォールバック
-      return _generateSingleGeminiContent(
-        model: model,
+      // 全ノード失敗時は、利用可能なプロバイダで単発実行にフォールバック
+      return _generateBestEffortSingle(
+        fallbackGeminiModel: model,
         prompt: prompt,
+        melchiorModel: melchiorModel,
+        balthasarModel: balthasarModel,
+        casperModel: casperModel,
+        synthesisModel: synthesisModel,
       );
     }
 
@@ -237,10 +495,159 @@ class AIService {
       originalPrompt: prompt,
       opinions: validOpinions,
     );
-    return _generateSingleGeminiContent(
-      model: model,
+    return _synthesizeMagiOpinions(
+      fallbackGeminiModel: model,
       prompt: synthesisPrompt,
+      opinions: validOpinions,
+      melchiorModel: melchiorModel,
+      balthasarModel: balthasarModel,
+      casperModel: casperModel,
+      synthesisModel: synthesisModel,
     );
+  }
+
+  String _resolveMagiNodeModel({
+    required _MagiNodeProfile profile,
+    required String fallbackGeminiModel,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+  }) {
+    return switch (profile.provider) {
+      _MagiProvider.openai =>
+        (melchiorModel != null && melchiorModel.trim().isNotEmpty)
+            ? melchiorModel.trim()
+            : profile.defaultModel,
+      _MagiProvider.anthropic =>
+        (balthasarModel != null && balthasarModel.trim().isNotEmpty)
+            ? balthasarModel.trim()
+            : profile.defaultModel,
+      _MagiProvider.gemini =>
+        (casperModel != null && casperModel.trim().isNotEmpty)
+            ? casperModel.trim()
+            : fallbackGeminiModel,
+    };
+  }
+
+  List<_MagiSynthesisPlan> _buildMagiSynthesisPlans({
+    required String fallbackGeminiModel,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+    String? synthesisModel,
+  }) {
+    final plans = <_MagiSynthesisPlan>[];
+    final addedProviders = <_MagiProvider>{};
+
+    void addPlan(_MagiProvider provider, String model) {
+      if (addedProviders.contains(provider) || !_isProviderConfigured(provider)) {
+        return;
+      }
+      plans.add(_MagiSynthesisPlan(provider: provider, model: model));
+      addedProviders.add(provider);
+    }
+
+    if (synthesisModel != null && synthesisModel.trim().isNotEmpty) {
+      final synthesisModelValue = synthesisModel.trim();
+      addPlan(_inferProviderFromModel(synthesisModelValue), synthesisModelValue);
+    }
+
+    addPlan(
+      _MagiProvider.gemini,
+      (casperModel != null && casperModel.trim().isNotEmpty)
+          ? casperModel.trim()
+          : fallbackGeminiModel,
+    );
+    addPlan(
+      _MagiProvider.openai,
+      (melchiorModel != null && melchiorModel.trim().isNotEmpty)
+          ? melchiorModel.trim()
+          : _defaultOpenAIModel,
+    );
+    addPlan(
+      _MagiProvider.anthropic,
+      (balthasarModel != null && balthasarModel.trim().isNotEmpty)
+          ? balthasarModel.trim()
+          : _defaultAnthropicModel,
+    );
+
+    return plans;
+  }
+
+  Future<String?> _generateBestEffortSingle({
+    required String fallbackGeminiModel,
+    required String prompt,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+    String? synthesisModel,
+  }) async {
+    final plans = _buildMagiSynthesisPlans(
+      fallbackGeminiModel: fallbackGeminiModel,
+      melchiorModel: melchiorModel,
+      balthasarModel: balthasarModel,
+      casperModel: casperModel,
+      synthesisModel: synthesisModel,
+    );
+    for (final plan in plans) {
+      try {
+        final response = await _generateSingleContentByProvider(
+          provider: plan.provider,
+          model: plan.model,
+          prompt: prompt,
+        );
+        final normalized = _normalizeMagiOpinion(response);
+        if (normalized != null) {
+          return normalized;
+        }
+      } catch (e, stackTrace) {
+        AppLogger.warning(
+          'MAGI fallback single failed: ${plan.provider.name}',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+    return null;
+  }
+
+  Future<String?> _synthesizeMagiOpinions({
+    required String fallbackGeminiModel,
+    required String prompt,
+    required List<_MagiOpinion> opinions,
+    String? melchiorModel,
+    String? balthasarModel,
+    String? casperModel,
+    String? synthesisModel,
+  }) async {
+    final plans = _buildMagiSynthesisPlans(
+      fallbackGeminiModel: fallbackGeminiModel,
+      melchiorModel: melchiorModel,
+      balthasarModel: balthasarModel,
+      casperModel: casperModel,
+      synthesisModel: synthesisModel,
+    );
+    for (final plan in plans) {
+      try {
+        final response = await _generateSingleContentByProvider(
+          provider: plan.provider,
+          model: plan.model,
+          prompt: prompt,
+        );
+        final normalized = _normalizeMagiOpinion(response);
+        if (normalized != null) {
+          return normalized;
+        }
+      } catch (e, stackTrace) {
+        AppLogger.warning(
+          'MAGI synthesis failed: ${plan.provider.name}',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+    // 統合が全滅した場合は、先頭意見を返して無回答化を防ぐ
+    return opinions.first.content;
   }
 
   Future<_MagiOpinion?> _runMagiNode({
@@ -248,12 +655,18 @@ class AIService {
     required String prompt,
     required _MagiNodeProfile profile,
   }) async {
+    if (!_isProviderConfigured(profile.provider)) {
+      AppLogger.info('MAGI node skipped: ${profile.nodeName} (no API key)');
+      return null;
+    }
+
     final nodePrompt = _buildMagiNodePrompt(
       originalPrompt: prompt,
       profile: profile,
     );
     try {
-      final text = await _generateSingleGeminiContent(
+      final text = await _generateSingleContentByProvider(
+        provider: profile.provider,
         model: model,
         prompt: nodePrompt,
       );
@@ -334,6 +747,7 @@ $originalPrompt
     final lower = message.toLowerCase();
     if (lower.contains('rate') ||
         lower.contains('429') ||
+        lower.contains('too many requests') ||
         lower.contains('quota')) {
       return AIServiceException(
         'AI rate limit exceeded.',
@@ -348,16 +762,22 @@ $originalPrompt
       nodeName: 'MELCHIOR',
       viewpoint: '論理・整合性',
       instruction: '要件を分解し、矛盾を排除し、結論を短く明確にする。',
+      provider: _MagiProvider.openai,
+      defaultModel: _defaultOpenAIModel,
     ),
     _MagiNodeProfile(
       nodeName: 'BALTHASAR',
       viewpoint: '実務・実行可能性',
       instruction: 'すぐ実行できる手順、制約、リスクを重視する。',
+      provider: _MagiProvider.anthropic,
+      defaultModel: _defaultAnthropicModel,
     ),
     _MagiNodeProfile(
       nodeName: 'CASPER',
       viewpoint: '継続性・心理',
       instruction: '受け手が動ける表現、負荷の低い実践性、継続性を最適化する。',
+      provider: _MagiProvider.gemini,
+      defaultModel: '',
     ),
   ];
 
@@ -724,15 +1144,35 @@ Generate a mind map for the following topic: **"{topic}"**
 }
 
 // ... (クラス定義はそのまま)
+enum _MagiProvider {
+  openai,
+  anthropic,
+  gemini,
+}
+
+class _MagiSynthesisPlan {
+  final _MagiProvider provider;
+  final String model;
+
+  const _MagiSynthesisPlan({
+    required this.provider,
+    required this.model,
+  });
+}
+
 class _MagiNodeProfile {
   final String nodeName;
   final String viewpoint;
   final String instruction;
+  final _MagiProvider provider;
+  final String defaultModel;
 
   const _MagiNodeProfile({
     required this.nodeName,
     required this.viewpoint,
     required this.instruction,
+    required this.provider,
+    required this.defaultModel,
   });
 }
 
