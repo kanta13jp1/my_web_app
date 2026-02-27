@@ -800,13 +800,21 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
             itemCount: snapshot.calendarDays.length,
             itemBuilder: (context, index) {
               final day = snapshot.calendarDays[index];
-              final baseColor = day.hasAbstinenceSlip
-                  ? Colors.orange
-                  : day.morningDone && day.balanceDone
-                      ? Colors.green
-                      : day.morningDone || day.balanceDone
-                          ? Colors.blueGrey
-                          : Colors.transparent;
+              final status = _resolveCalendarDayStatus(day);
+              final accentColor = day.isCurrentMonth
+                  ? status.color
+                  : Colors.blueGrey;
+              final backgroundColor = day.isCurrentMonth
+                  ? accentColor.withValues(
+                      alpha: day.hasAbstinenceSlip
+                          ? 0.18
+                          : status.label == '無傷'
+                              ? 0.14
+                              : status.label == '未設定'
+                                  ? 0.08
+                                  : 0.1,
+                    )
+                  : Colors.blueGrey.withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -818,17 +826,13 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                   onTap: () => _showCalendarDayDetails(context, day),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: day.isCurrentMonth
-                          ? baseColor.withValues(
-                              alpha: baseColor == Colors.transparent ? 0 : 0.12,
-                            )
-                          : Colors.blueGrey.withValues(alpha: 0.05),
+                      color: backgroundColor,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: day.isToday
                             ? Colors.blue.shade400
                             : day.isCurrentMonth
-                                ? Colors.blueGrey.withValues(alpha: 0.14)
+                                ? accentColor.withValues(alpha: 0.22)
                                 : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
                       ),
@@ -843,7 +847,9 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               color: day.isCurrentMonth
-                                  ? (isDark ? Colors.white : Colors.black87)
+                                  ? (status.label == '未設定'
+                                      ? (isDark ? Colors.white70 : Colors.black87)
+                                      : accentColor)
                                   : Colors.blueGrey.shade300,
                             ),
                           ),
