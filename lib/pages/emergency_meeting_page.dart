@@ -783,15 +783,203 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     fixed = fixed.replaceAll(RegExp(r'}\s*{'), '},{');
     fixed = fixed.replaceAll(RegExp(r'"\s*\n\s*"'), '",\n"');
     fixed = fixed.replaceAll(RegExp(r',\s*([\]}])'), r'$1');
+    fixed = _escapeBrokenJsonStringContent(fixed);
 
     return fixed;
+  }
+
+  String? _nextNonWhitespaceChar(String text, int startIndex) {
+    for (var i = startIndex; i < text.length; i++) {
+      final char = text[i];
+      if (char.trim().isEmpty) continue;
+      return char;
+    }
+    return null;
+  }
+
+  String _escapeBrokenJsonStringContent(String input) {
+    final buffer = StringBuffer();
+    var inString = false;
+    var isEscaped = false;
+
+    for (var i = 0; i < input.length; i++) {
+      final char = input[i];
+
+      if (!inString) {
+        if (char == '"') {
+          inString = true;
+        }
+        buffer.write(char);
+        continue;
+      }
+
+      if (isEscaped) {
+        buffer.write(char);
+        isEscaped = false;
+        continue;
+      }
+
+      if (char == r'\') {
+        buffer.write(char);
+        isEscaped = true;
+        continue;
+      }
+
+      if (char == '"') {
+        final next = _nextNonWhitespaceChar(input, i + 1);
+        final canClose = next == null ||
+            next == ',' ||
+            next == '}' ||
+            next == ']' ||
+            next == ':';
+        if (canClose) {
+          inString = false;
+          buffer.write(char);
+        } else {
+          buffer.write(r'\"');
+        }
+        continue;
+      }
+
+      if (char == '\n') {
+        buffer.write(r'\n');
+        continue;
+      }
+      if (char == '\r') {
+        buffer.write(r'\r');
+        continue;
+      }
+      if (char == '\t') {
+        buffer.write(r'\t');
+        continue;
+      }
+
+      final codeUnit = char.codeUnitAt(0);
+      if (codeUnit < 0x20) {
+        buffer.write(' ');
+        continue;
+      }
+
+      buffer.write(char);
+    }
+
+    if (inString) {
+      buffer.write('"');
+    }
+
+    return buffer.toString();
+  }
+
+  String _decodeJsonStringFragment(String value) {
+    return value
+        .replaceAll(r'\"', '"')
+        .replaceAll(r'\\', r'\')
+        .replaceAll(r'\/', '/')
+        .replaceAll(r'\n', ' ')
+        .replaceAll(r'\r', ' ')
+        .replaceAll(r'\t', ' ')
+        .trim();
+  }
+
+  List<String> _extractQuotedArrayItems(String source, String fieldName) {
+    final fieldPattern = RegExp(
+      '"$fieldName"\\s*:\\s*\\[(.*?)\\]',
+      dotAll: true,
+    );
+    final fieldMatch = fieldPattern.firstMatch(source);
+    if (fieldMatch == null) return const <String>[];
+
+    final body = fieldMatch.group(1) ?? '';
+    final itemPattern = RegExp(r'"((?:\\.|[^"\\])*)"');
+    return itemPattern
+        .allMatches(body)
+        .map((m) => _decodeJsonStringFragment(m.group(1) ?? ''))
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  String? _extractQuotedFieldValue(String source, String fieldName) {
+    final pattern = RegExp(
+      '"$fieldName"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"',
+      dotAll: true,
+    );
+    final match = pattern.firstMatch(source);
+    if (match == null) return null;
+    final value = _decodeJsonStringFragment(match.group(1) ?? '');
+    return value.isEmpty ? null : value;
+  }
+
+  String _truncateText(String text, {int maxChars = 140}) {
+    final normalized = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= maxChars) return normalized;
+    return '${normalized.substring(0, maxChars)}...';
+  }
+
+  Map<String, dynamic> _buildFallbackMeetingResponseJson(String responseText) {
+    final normalized = responseText
+        .replaceAll('\u201c', '"')
+        .replaceAll('\u201d', '"')
+        .replaceAll(RegExp(r'^```(?:json)?\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'\s*```$', multiLine: true), '')
+        .trim();
+
+    final continuationPlan =
+        _extractQuotedArrayItems(normalized, 'continuation_plan');
+    final abstinenceRules =
+        _extractQuotedArrayItems(normalized, 'abstinence_rules');
+    final extractedConclusion =
+        _extractQuotedFieldValue(normalized, 'conclusion');
+    final extractedMessage = _extractQuotedFieldValue(normalized, 'content');
+
+    final fallbackSeed = extractedConclusion ??
+        extractedMessage ??
+        normalized.replaceAll(RegExp(r'[\{\}\[\]"]'), ' ');
+    final fallbackConclusion = _truncateText(
+      fallbackSeed.isEmpty ? '継続と禁欲の両立を最優先し、48時間の再建プランを実行する。' : fallbackSeed,
+      maxChars: 140,
+    );
+
+    return <String, dynamic>{
+      'messages': <Map<String, String>>[
+        <String, String>{
+          'role': 'CSO',
+          'speaker_name': 'AI CSO',
+          'content': extractedMessage != null && extractedMessage.isNotEmpty
+              ? _truncateText(extractedMessage, maxChars: 180)
+              : fallbackConclusion,
+        },
+      ],
+      'continuation_plan': continuationPlan.isNotEmpty
+          ? continuationPlan
+          : const <String>[
+              '今日中に継続タスクを1件だけ完了する。',
+              '明朝の実行時間を15分ブロックで先に予約する。',
+              '48時間後に進捗を記録して次の改善点を1つ決める。',
+            ],
+      'abstinence_rules': abstinenceRules.isNotEmpty
+          ? abstinenceRules
+          : const <String>[
+              '誘惑トリガーを1つ遮断する。',
+              '代替行動を1つ先に決める。',
+              '逸脱したら10分以内に再設定する。',
+            ],
+      'risk_alert': 'AI応答のJSONが崩れていたため、内容を簡易復元しました。',
+      'conclusion': fallbackConclusion,
+    };
   }
 
   Map<String, dynamic> _decodeMeetingResponseJson(String responseText) {
     final raw = responseText.trim();
     final extracted = _extractFirstJsonObject(raw);
     final repaired = _repairJsonCandidate(extracted);
-    final candidates = <String>[extracted, repaired];
+    final escapedExtracted = _escapeBrokenJsonStringContent(extracted);
+    final escapedRepaired = _escapeBrokenJsonStringContent(repaired);
+    final candidates = <String>{
+      extracted,
+      repaired,
+      escapedExtracted,
+      escapedRepaired,
+    }.where((candidate) => candidate.trim().isNotEmpty).toList();
 
     FormatException? lastError;
     for (final candidate in candidates) {
@@ -808,10 +996,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       }
     }
 
-    throw FormatException(
-      '会議レスポンスJSONの解析に失敗しました: '
+    debugPrint(
+      'Meeting JSON decode failed. Falling back to tolerant parser. '
       '${lastError?.message ?? 'unknown format error'}',
     );
+    return _buildFallbackMeetingResponseJson(raw);
   }
 
   String _buildCodexCopyText() {
@@ -1025,16 +1214,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ? Map<String, dynamic>.from(rawNextMetrics)
               : null);
 
-      final messages = messageList.whereType<Map>().map((item) {
-        final msg = Map<String, dynamic>.from(item);
-        return BoardMessage(
-          id: const Uuid().v4(),
-          speakerName: (msg['speaker_name'] ?? 'AI').toString(),
-          role: (msg['role'] ?? 'Advisor').toString(),
-          content: (msg['content'] ?? '').toString(),
-          timestamp: DateTime.now(),
-        );
-      }).where((msg) => msg.content.trim().isNotEmpty).toList();
+      final messages = messageList
+          .whereType<Map>()
+          .map((item) {
+            final msg = Map<String, dynamic>.from(item);
+            return BoardMessage(
+              id: const Uuid().v4(),
+              speakerName: (msg['speaker_name'] ?? 'AI').toString(),
+              role: (msg['role'] ?? 'Advisor').toString(),
+              content: (msg['content'] ?? '').toString(),
+              timestamp: DateTime.now(),
+            );
+          })
+          .where((msg) => msg.content.trim().isNotEmpty)
+          .toList();
 
       if (messages.isEmpty) {
         throw const FormatException('messages が空です');
@@ -1121,8 +1314,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             errString.contains('rate limit')) {
           _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
         } else if (errString.contains('FormatException')) {
-          _errorMessage =
-              'AI応答のJSON形式が崩れていました。再試行するか、別モデルに切り替えてください。';
+          _errorMessage = 'AI応答のJSON形式が崩れていました。再試行するか、別モデルに切り替えてください。';
         } else if (errString.contains('400') &&
             errString.contains('API key not valid')) {
           _errorMessage = 'APIキーが無効です。設定を確認してください。';
@@ -1138,16 +1330,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
     try {
-      final dynamic inserted = await _supabase
-          .from('board_meetings')
-          .insert({
-            'id': log.id,
-            'user_id': log.userId,
-            'topic': log.topic,
-            'conclusion': log.conclusion,
-            'created_at': log.createdAt.toIso8601String(),
-          })
-          .select('id');
+      final dynamic inserted = await _supabase.from('board_meetings').insert({
+        'id': log.id,
+        'user_id': log.userId,
+        'topic': log.topic,
+        'conclusion': log.conclusion,
+        'created_at': log.createdAt.toIso8601String(),
+      }).select('id');
 
       String meetingId = log.id;
       if (inserted is List && inserted.isNotEmpty) {
