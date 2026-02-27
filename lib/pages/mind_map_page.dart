@@ -129,9 +129,39 @@ class _MindMapPageState extends State<MindMapPage> {
   Map<String, dynamic> _decodeMindMapJson(String responseText) {
     final extracted = _extractFirstJsonObject(responseText);
     final dynamic decoded = jsonDecode(extracted);
-    if (decoded is Map<String, dynamic>) return decoded;
-    if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    throw const FormatException('マインドマップJSONがオブジェクトではありません。');
+    final map = decoded is Map<String, dynamic>
+        ? decoded
+        : (decoded is Map ? Map<String, dynamic>.from(decoded) : null);
+    if (map == null) {
+      throw const FormatException('マインドマップJSONがオブジェクトではありません。');
+    }
+
+    final embeddedText = _extractTextFromGeminiEnvelope(map);
+    if (embeddedText != null && embeddedText.trim().isNotEmpty) {
+      return _decodeMindMapJson(embeddedText);
+    }
+
+    return map;
+  }
+
+  String? _extractTextFromGeminiEnvelope(Map<String, dynamic> payload) {
+    final candidates = payload['candidates'];
+    if (candidates is! List) return null;
+
+    for (final candidate in candidates.whereType<Map>()) {
+      final content = candidate['content'];
+      if (content is! Map) continue;
+      final parts = content['parts'];
+      if (parts is! List) continue;
+      for (final part in parts.whereType<Map>()) {
+        final text = part['text']?.toString();
+        if (text != null && text.trim().isNotEmpty) {
+          return text;
+        }
+      }
+    }
+
+    return null;
   }
 
   Future<void> _generateMindMap() async {
