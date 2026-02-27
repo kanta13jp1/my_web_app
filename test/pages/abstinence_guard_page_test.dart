@@ -51,14 +51,14 @@ void main() {
       now: DateTime(2026, 2, 25),
     );
     await AbstinenceGuardStore.setEnabled(
-      itemId: 'smartphone',
+      itemId: 'smoking',
       isEnabled: true,
       prefs: prefs,
       now: DateTime(2026, 2, 26),
     );
 
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: AbstinenceGuardPage(
           nowProvider: _fixedNow,
           initialDate: DateTime(2026, 2, 25),
@@ -74,7 +74,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('対象日: 2026/02/26'), findsOneWidget);
-    expect(find.text('スマホ'), findsOneWidget);
+    expect(find.text('煙草'), findsOneWidget);
   });
 }
 
