@@ -29,6 +29,31 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  _DailyGuardStatus _resolveDailyStatus(AbstinenceGuardSnapshot snapshot) {
+    if (snapshot.totalSlipCount > 0) {
+      return const _DailyGuardStatus(
+        label: '逸脱あり',
+        detail: 'その日は抑止ラインを突破しています。',
+        color: Colors.orange,
+        icon: Icons.warning_amber_rounded,
+      );
+    }
+    if (snapshot.enabledCount == 0) {
+      return const _DailyGuardStatus(
+        label: '未設定',
+        detail: 'その日の禁止対象が固定されていません。',
+        color: Colors.blueGrey,
+        icon: Icons.radio_button_unchecked,
+      );
+    }
+    return const _DailyGuardStatus(
+      label: '無傷',
+      detail: '禁止対象を保ったまま終えています。',
+      color: Colors.green,
+      icon: Icons.verified,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -103,6 +128,14 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     final snapshot = _snapshot;
     final targetDateLabel = DateFormat('yyyy/MM/dd').format(_selectedDate);
     final canMoveToNextDay = !_isSameDay(_selectedDate, _currentDate());
+    final dailyStatus = snapshot == null
+        ? const _DailyGuardStatus(
+            label: '読込中',
+            detail: '',
+            color: Colors.blueGrey,
+            icon: Icons.more_horiz,
+          )
+        : _resolveDailyStatus(snapshot);
 
     return Scaffold(
       appBar: AppBar(
@@ -120,10 +153,10 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.08),
+                      color: dailyStatus.color.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Colors.redAccent.withValues(alpha: 0.24),
+                        color: dailyStatus.color.withValues(alpha: 0.24),
                       ),
                     ),
                     child: Column(
@@ -180,6 +213,47 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           ],
                         ),
                         const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: dailyStatus.color.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    dailyStatus.icon,
+                                    size: 16,
+                                    color: dailyStatus.color,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    dailyStatus.label,
+                                    style: TextStyle(
+                                      color: dailyStatus.color,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          dailyStatus.detail,
+                          style: TextStyle(
+                            color: dailyStatus.color.withValues(alpha: 0.92),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         const Text(
                           '害悪行動を「意思」ではなく「先に禁止する設定」に変える。',
                         ),
@@ -325,4 +399,18 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       ),
     );
   }
+}
+
+class _DailyGuardStatus {
+  final String label;
+  final String detail;
+  final Color color;
+  final IconData icon;
+
+  const _DailyGuardStatus({
+    required this.label,
+    required this.detail,
+    required this.color,
+    required this.icon,
+  });
 }
