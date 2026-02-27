@@ -1,4 +1,4 @@
-# 自動保存 & UNDO/REDO機能設計ドキュメント 💾
+﻿# 自動保存 & UNDO/REDO機能設計ドキュメント 💾
 
 **作成日**: 2025年11月10日
 **最終更新**: 2025年11月11日
@@ -10,6 +10,7 @@
 ## 📋 要件定義
 
 ### ユーザーからの要望
+
 > NOTIONのように自動保存にするか？
 > そうするならUNDO、REDO機能が必須
 > まずは、画面遷移しないで保存できる保存ボタンの追加でよいか？
@@ -18,16 +19,19 @@
 ### 段階的実装アプローチ
 
 #### フェーズ1: 画面遷移しない保存ボタン ✅ 完了
+
 - ✅ **実装済み**: `_saveNoteWithoutClosing()`
 - ✅ **最終保存日時表示**: タイトル付近に表示済み
 
 #### フェーズ2: 自動保存機能 ✅ 完了（2025-11-11）
+
 - ✅ **実装済み**: `AutoSaveService` クラス
 - ✅ **デバウンス付き自動保存**: 入力停止後2秒で自動保存
 - ✅ **保存状態の視覚的フィードバック**: 「保存中...」「保存済み」「未保存」「エラー」
 - ✅ **保存状態インジケーター**: AppBarに表示
 
 #### フェーズ3: UNDO/REDO機能 ✅ 完了（2025-11-11）
+
 - ✅ **実装済み**: `UndoRedoService` クラス
 - ✅ **編集履歴の管理**: 最大50回の履歴
 - ✅ **ショートカットキー**: Ctrl+Z (Undo)、Ctrl+Y/Ctrl+Shift+Z (Redo)
@@ -39,12 +43,14 @@
 ## 🎯 機能要件
 
 ### 1. 自動保存機能
+
 - **デバウンス**: 入力停止後2秒で自動保存
 - **ローカルストレージ**: オフライン時もローカルに保存
 - **保存状態表示**: 「保存中...」「保存済み」の表示
 - **エラー処理**: 保存失敗時にリトライ
 
 ### 2. UNDO/REDO機能
+
 - **編集履歴管理**: 最大50回まで
 - **ショートカットキー**:
   - Ctrl+Z (Cmd+Z): Undo
@@ -56,6 +62,7 @@
   - カテゴリ変更
 
 ### 3. 最終保存日時表示 ✅ 完了
+
 - ✅ タイトル付近に大きく表示
 - ✅ リアルタイム更新
 
@@ -66,6 +73,7 @@
 ### データモデル
 
 #### 1. NoteSnapshot（編集履歴）
+
 ```dart
 class NoteSnapshot {
   final String title;
@@ -103,6 +111,7 @@ class NoteSnapshot {
 ```
 
 #### 2. SaveState（保存状態）
+
 ```dart
 enum SaveState {
   saved,      // 保存済み
@@ -117,6 +126,7 @@ enum SaveState {
 ### サービス設計
 
 #### AutoSaveService
+
 ```dart
 // lib/services/auto_save_service.dart
 
@@ -191,6 +201,7 @@ class AutoSaveService extends ChangeNotifier {
 ---
 
 #### UndoRedoService
+
 ```dart
 // lib/services/undo_redo_service.dart
 
@@ -431,7 +442,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ### 保存状態インジケーター
 
 #### パターン1: ヘッダー表示（現在の実装）
-```
+
+```text
 ┌─────────────────────────────────────┐
 │ メモを編集                          │
 │ 保存済み ✓  最終保存: 14:30        │ ← 保存状態 + 最終保存日時
@@ -445,7 +457,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ```
 
 #### パターン2: フローティング表示
-```
+
+```text
 ┌─────────────────────────────────────┐
 │ タイトル                            │
 │─────────────────────────────────────│
@@ -464,7 +477,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
 ### UNDO/REDOボタン
 
-```
+```text
 ┌─────────────────────────────────────┐
 │ [←] メモを編集        [↶] [↷] [💾] │
 │─────────────────────────────────────│
@@ -483,16 +496,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ## 🧪 テスト計画
 
 ### 自動保存のテスト
+
 1. **デバウンステスト**: 2秒以内の連続入力で1回だけ保存
 2. **ネットワークエラーテスト**: 保存失敗時のリトライ
 3. **オフラインテスト**: ローカルストレージへの保存
 
 ### UNDO/REDOのテスト
+
 1. **基本動作テスト**: Undo → Redo で元に戻る
 2. **履歴制限テスト**: 51回目の編集で最古の履歴が削除される
 3. **分岐テスト**: Undo後に新規編集で Redo 不可
 
 ### ショートカットキーのテスト
+
 1. **Ctrl+Z**: Undo実行
 2. **Ctrl+Y**: Redo実行
 3. **Ctrl+S**: 手動保存（オプション）
@@ -502,10 +518,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ## 📊 パフォーマンス考慮
 
 ### メモリ使用量
+
 - **履歴サイズ制限**: 最大50スナップショット
 - **スナップショット圧縮**: 大きなメモの場合は差分保存を検討
 
 ### ネットワーク負荷
+
 - **デバウンス**: 2秒間隔で保存回数を削減
 - **バッチ保存**: 複数の変更をまとめて保存
 
@@ -514,6 +532,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ## 🎯 実装計画
 
 ### フェーズ1: 自動保存機能 ✅ 完了（2025-11-11）
+
 - [x] ✅ 画面遷移しない保存ボタン（完了）
 - [x] ✅ 最終保存日時表示（完了）
 - [x] ✅ AutoSaveServiceクラス作成
@@ -521,6 +540,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 - [x] ✅ 保存状態インジケーター実装
 
 ### フェーズ2: UNDO/REDO機能 ✅ 完了（2025-11-11）
+
 - [x] ✅ UndoRedoServiceクラス作成
 - [x] ✅ NoteSnapshotモデル作成
 - [x] ✅ 編集履歴管理実装
@@ -528,6 +548,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 - [x] ✅ ショートカットキー実装（Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z）
 
 ### フェーズ3: 統合テスト & 最適化（次のステップ）
+
 - [ ] E2Eテスト
 - [ ] パフォーマンス最適化
 - [ ] エラーハンドリング改善
@@ -536,13 +557,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
 ## 🔄 Notionとの比較
 
-| 機能 | Notion | マイメモ（目標） |
+|機能|Notion|マイメモ（目標）|
 |:-----|:-------|:----------------|
-| 自動保存 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| UNDO/REDO | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| 保存状態表示 | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| オフライン対応 | ⭐⭐⭐ | ⭐⭐⭐（将来的に） |
-| 履歴管理 | ⭐⭐⭐⭐⭐（無制限） | ⭐⭐⭐（50回） |
+|自動保存|⭐⭐⭐⭐⭐|⭐⭐⭐⭐|
+|UNDO/REDO|⭐⭐⭐⭐⭐|⭐⭐⭐⭐|
+|保存状態表示|⭐⭐⭐|⭐⭐⭐⭐|
+|オフライン対応|⭐⭐⭐|⭐⭐⭐（将来的に）|
+|履歴管理|⭐⭐⭐⭐⭐（無制限）|⭐⭐⭐（50回）|
 
 **目標**: Notionの90%の機能性を目指す
 
@@ -551,11 +572,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 ## 📚 参考資料
 
 ### 参考アプリ
+
 - **Notion**: 自動保存のベストプラクティス
 - **Google Docs**: リアルタイム保存
 - **Obsidian**: ローカルファースト、UNDO/REDO
 
 ### 技術参考
+
 - [Debouncing in Flutter](https://medium.com/flutter-community/debouncing-in-flutter-36b8b4e59aaf)
 - [Implementing Undo/Redo in Flutter](https://stackoverflow.com/questions/58341532/how-to-implement-undo-redo-in-flutter)
 
