@@ -908,7 +908,9 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                                               ? Colors.white70
                                               : Colors.black87)
                                           : accentColor)
-                                      : Colors.blueGrey.shade400
+                                      : isDark
+                                          ? Colors.blueGrey.shade700
+                                          : Colors.blueGrey.shade300
                                   : Colors.blueGrey.shade300,
                             ),
                           ),
