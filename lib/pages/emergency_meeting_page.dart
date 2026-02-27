@@ -52,11 +52,23 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _lockNewProjects = false;
   bool _lockSubscriptionAdditions = false;
   DateTime? _lastReviewAt;
-  List<String> _selectableModels = [
-    'gemma-3-1b-it',
-    'gemma-3-4b-it',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
+  List<Map<String, dynamic>> _selectableModels = [
+    {
+      'name': 'gemma-3-1b-it',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemma-3-4b-it',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-1.5-flash',
+      'methods': ['generateContent'],
+    },
+    {
+      'name': 'gemini-1.5-pro',
+      'methods': ['generateContent'],
+    },
   ];
   final String _customPromptInstructions = _defaultPromptInstructions;
   static const String _prefsAbstinenceViolationCount =
@@ -147,13 +159,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _geminiApiKey = prefs.getString('gemini_api_key');
         // A model saved for the daily report can be reused here for consistency
         final String? savedModel =
-            prefs.getString('gemini_model_emergency_meeting');
+            prefs.getString('gemini_model_emergency_meeting') ??
+                prefs.getString('gemini_model');
         if (savedModel != null) {
           _selectedModel = savedModel;
         }
         // Ensure the selected model is in the list, if not, add it.
-        if (!_selectableModels.contains(_selectedModel)) {
-          _selectableModels.insert(0, _selectedModel);
+        if (!_selectableModels.any((m) => m['name'] == _selectedModel)) {
+          _selectableModels.insert(0, {
+            'name': _selectedModel,
+            'methods': ['generateContent'],
+          });
         }
       });
     }
@@ -373,7 +389,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     );
   }
 
-  Future<List<String>> fetchGeminiModels(String apiKey) async {
+  Future<List<Map<String, dynamic>>> fetchGeminiModels(String apiKey) async {
     try {
       final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
@@ -382,38 +398,50 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data =
             json.decode(response.body) as Map<String, dynamic>;
-        if (data['models'] != null) {
-          return (data['models'] as List)
-              .whereType<Map<String, dynamic>>()
-              .where(
-                (m) =>
-                    (m['supportedGenerationMethods'] as List?)
-                        ?.contains('generateContent') ??
-                    false,
-              )
-              .map<String>(
-                (m) => m['name'].toString().replaceFirst('models/', ''),
-              )
-              .where(
-                (name) => !name.contains('tts') && !name.contains('embedding'),
-              )
-              .toList();
+        final modelsRaw = data['models'];
+        if (modelsRaw is List) {
+          return modelsRaw
+              .whereType<Map>()
+              .map((m) => Map<String, dynamic>.from(m))
+              .where((m) {
+            final methods = m['supportedGenerationMethods'];
+            return methods is List && methods.contains('generateContent');
+          }).map<Map<String, dynamic>>((m) {
+            final methods = (m['supportedGenerationMethods'] as List)
+                .cast<Object>()
+                .map((v) => v.toString())
+                .toList();
+            return {
+              'name': (m['name'] ?? '').toString().replaceFirst(
+                    'models/',
+                    '',
+                  ),
+              'methods': methods,
+            };
+          }).where((m) {
+            final name = (m['name'] ?? '').toString();
+            return !name.contains('tts') && !name.contains('embedding');
+          }).toList();
         }
       }
     } catch (e) {
       debugPrint('Failed to fetch models: $e');
     }
-    return [];
+    return <Map<String, dynamic>>[];
   }
 
   Future<void> showSettingsDialog() async {
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
-    List<String> currentSelectableModels = List.from(_selectableModels);
+    List<Map<String, dynamic>> currentSelectableModels =
+        List.from(_selectableModels);
 
-    if (!currentSelectableModels.contains(tempSelectedModel)) {
-      currentSelectableModels.add(tempSelectedModel);
+    if (!currentSelectableModels.any((m) => m['name'] == tempSelectedModel)) {
+      currentSelectableModels.add({
+        'name': tempSelectedModel,
+        'methods': ['generateContent'],
+      });
     }
 
     await showDialog(
@@ -460,9 +488,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             if (models.isNotEmpty) {
                               currentSelectableModels = models;
                               if (!currentSelectableModels
-                                  .contains(tempSelectedModel)) {
+                                  .any((m) => m['name'] == tempSelectedModel)) {
                                 tempSelectedModel =
-                                    currentSelectableModels.first;
+                                    models.first['name'] as String;
                               }
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -490,11 +518,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       border: OutlineInputBorder(),
                     ),
                     isExpanded: true,
-                    items: currentSelectableModels.toSet().map((m) {
+                    items: currentSelectableModels.map((m) {
+                      final name = m['name'] as String;
                       return DropdownMenuItem(
-                        value: m,
+                        value: name,
                         child: Text(
-                          m,
+                          name,
                           overflow: TextOverflow.ellipsis,
                         ),
                       );
@@ -504,6 +533,56 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         setDialogState(() => tempSelectedModel = val);
                       }
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '現在のモデル: ',
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                            Expanded(
+                              child: Text(
+                                tempSelectedModel,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 16),
+                        Text(
+                          '利用可能なモデル一覧 (サポートメソッド):',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          currentSelectableModels.map((m) {
+                            final name = m['name'] as String;
+                            final methods =
+                                (m['methods'] as List? ?? []).join(', ');
+                            return '$name ($methods)';
+                          }).join('\n'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
