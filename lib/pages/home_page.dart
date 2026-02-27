@@ -398,7 +398,9 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AbstinenceGuardPage(nowProvider: widget.nowProvider),
+        builder: (_) => AbstinenceGuardPage(
+          nowProvider: widget.nowProvider,
+        ),
       ),
     );
     if (mounted) {
@@ -414,7 +416,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       context,
       MaterialPageRoute(
         builder: (_) => AbstinenceGuardPage(
-          nowProvider: () => date,
+          nowProvider: widget.nowProvider,
+          initialDate: date,
         ),
       ),
     );

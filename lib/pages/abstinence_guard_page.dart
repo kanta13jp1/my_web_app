@@ -5,8 +5,13 @@ import '../services/abstinence_guard_store.dart';
 
 class AbstinenceGuardPage extends StatefulWidget {
   final DateTime Function()? nowProvider;
+  final DateTime? initialDate;
 
-  const AbstinenceGuardPage({super.key, this.nowProvider});
+  const AbstinenceGuardPage({
+    super.key,
+    this.nowProvider,
+    this.initialDate,
+  });
 
   @override
   State<AbstinenceGuardPage> createState() => _AbstinenceGuardPageState();
@@ -15,17 +20,24 @@ class AbstinenceGuardPage extends StatefulWidget {
 class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   AbstinenceGuardSnapshot? _snapshot;
   bool _isLoading = true;
+  late DateTime _selectedDate;
 
-  DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
+  DateTime _currentDate() => widget.nowProvider?.call() ?? DateTime.now();
+
+  DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = _startOfDay(widget.initialDate ?? _currentDate());
     _loadSnapshot();
   }
 
   Future<void> _loadSnapshot() async {
-    final snapshot = await AbstinenceGuardStore.loadSnapshot(now: _now());
+    final snapshot = await AbstinenceGuardStore.loadSnapshot(now: _selectedDate);
     if (!mounted) return;
     setState(() {
       _snapshot = snapshot;
@@ -37,25 +49,40 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     await AbstinenceGuardStore.setEnabled(
       itemId: itemId,
       isEnabled: isEnabled,
-      now: _now(),
+      now: _selectedDate,
     );
     await _loadSnapshot();
   }
 
   Future<void> _incrementSlip(String itemId) async {
-    await AbstinenceGuardStore.incrementSlip(itemId: itemId, now: _now());
+    await AbstinenceGuardStore.incrementSlip(itemId: itemId, now: _selectedDate);
     await _loadSnapshot();
   }
 
   Future<void> _clearSlip(String itemId) async {
-    await AbstinenceGuardStore.clearSlip(itemId: itemId, now: _now());
+    await AbstinenceGuardStore.clearSlip(itemId: itemId, now: _selectedDate);
+    await _loadSnapshot();
+  }
+
+  Future<void> _moveDay(int offset) async {
+    final candidate = _startOfDay(
+      _selectedDate.add(Duration(days: offset)),
+    );
+    final today = _startOfDay(_currentDate());
+    if (candidate.isAfter(today)) return;
+
+    setState(() {
+      _isLoading = true;
+      _selectedDate = candidate;
+    });
     await _loadSnapshot();
   }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = _snapshot;
-    final targetDateLabel = DateFormat('yyyy/MM/dd').format(_now());
+    final targetDateLabel = DateFormat('yyyy/MM/dd').format(_selectedDate);
+    final canMoveToNextDay = !_isSameDay(_selectedDate, _currentDate());
 
     return Scaffold(
       appBar: AppBar(
@@ -90,11 +117,31 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          '対象日: $targetDateLabel',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Row(
+                          children: [
+                            IconButton.outlined(
+                              tooltip: '前日',
+                              onPressed: () => _moveDay(-1),
+                              icon: const Icon(Icons.chevron_left),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  '対象日: $targetDateLabel',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton.outlined(
+                              tooltip: '翌日',
+                              onPressed: canMoveToNextDay
+                                  ? () => _moveDay(1)
+                                  : null,
+                              icon: const Icon(Icons.chevron_right),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 6),
                         const Text(
