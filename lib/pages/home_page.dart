@@ -901,6 +901,39 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     );
   }
 
+  _CalendarDayStatus _resolveCalendarDayStatus(_HomeCalendarDay day) {
+    if (day.isFuture) {
+      return const _CalendarDayStatus(
+        label: '未設定',
+        detail: '未来の日付です。まだ運用状態は確定していません。',
+        color: Colors.blueGrey,
+        icon: Icons.radio_button_unchecked,
+      );
+    }
+    if (day.hasAbstinenceSlip) {
+      return const _CalendarDayStatus(
+        label: '逸脱あり',
+        detail: 'その日は抑止ラインを突破しています。',
+        color: Colors.orange,
+        icon: Icons.warning_amber_rounded,
+      );
+    }
+    if (!day.hasAbstinenceProtection) {
+      return const _CalendarDayStatus(
+        label: '未設定',
+        detail: 'その日の禁止対象が固定されていません。',
+        color: Colors.blueGrey,
+        icon: Icons.radio_button_unchecked,
+      );
+    }
+    return const _CalendarDayStatus(
+      label: '無傷',
+      detail: '禁止対象を保ったまま終えています。',
+      color: Colors.green,
+      icon: Icons.verified,
+    );
+  }
+
   Future<void> _showCalendarDayDetails(
     BuildContext context,
     _HomeCalendarDay day,
@@ -917,6 +950,7 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       ),
       builder: (context) {
         final title = DateFormat('yyyy/MM/dd').format(day.date);
+        final status = _resolveCalendarDayStatus(day);
         final completedItems = <String>[
           if (day.morningDone) 'モーニング・ブリーフィング',
           if (day.balanceDone) '口座残高確認',
@@ -947,6 +981,43 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                         icon: const Icon(Icons.close),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: status.color.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(status.icon, size: 16, color: status.color),
+                            const SizedBox(width: 6),
+                            Text(
+                              status.label,
+                              style: TextStyle(
+                                color: status.color,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    status.detail,
+                    style: TextStyle(
+                      color: status.color.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.icon(
@@ -2067,4 +2138,18 @@ class _CalendarLegend extends StatelessWidget {
       ],
     );
   }
+}
+
+class _CalendarDayStatus {
+  final String label;
+  final String detail;
+  final Color color;
+  final IconData icon;
+
+  const _CalendarDayStatus({
+    required this.label,
+    required this.detail,
+    required this.color,
+    required this.icon,
+  });
 }
