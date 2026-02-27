@@ -134,6 +134,7 @@ void main() {
 
       expect(find.text('2026/02/26 の状態'), findsOneWidget);
       expect(find.text('逸脱あり'), findsOneWidget);
+      expect(find.textContaining('再発防止アクション:'), findsOneWidget);
       expect(find.text('逸脱内容'), findsOneWidget);
       expect(find.text('未達成項目'), findsOneWidget);
       expect(find.textContaining('酒: 1回'), findsOneWidget);

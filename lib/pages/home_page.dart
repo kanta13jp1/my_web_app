@@ -199,6 +199,14 @@ class _HomePageState extends State<HomePage> {
         if (!isFuture && !balanceDone) '口座残高確認',
         if (!isFuture && !hasProtection) '禁欲ガード設定',
       ];
+      final relapsePreventionAction = _buildRelapsePreventionAction(
+        abstinence: abstinence,
+        isFuture: isFuture,
+        morningDone: morningDone,
+        balanceDone: balanceDone,
+        hasProtection: hasProtection,
+        hasSlip: hasSlip,
+      );
 
       days.add(
         _HomeCalendarDay(
@@ -214,10 +222,45 @@ class _HomePageState extends State<HomePage> {
           enabledLabels: abstinence.enabledLabels,
           slipDetails: abstinence.slipDetails,
           missingItems: missingItems,
+          relapsePreventionAction: relapsePreventionAction,
         ),
       );
     }
     return days;
+  }
+
+  String _buildRelapsePreventionAction({
+    required AbstinenceGuardSnapshot abstinence,
+    required bool isFuture,
+    required bool morningDone,
+    required bool balanceDone,
+    required bool hasProtection,
+    required bool hasSlip,
+  }) {
+    if (isFuture) {
+      return '前日までの逸脱傾向を見て、禁止対象を1件だけ先に固定する。';
+    }
+
+    if (hasSlip) {
+      final sortedSlips = abstinence.slippedStates.toList()
+        ..sort((a, b) => b.slipCount.compareTo(a.slipCount));
+      if (sortedSlips.isNotEmpty) {
+        final top = sortedSlips.first;
+        return '${top.item.label}が崩れやすい日。${top.item.replacementAction}';
+      }
+    }
+
+    if (!hasProtection) {
+      return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
+    }
+    if (!morningDone) {
+      return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
+    }
+    if (!balanceDone) {
+      return '口座残高確認を先に終えて、意思決定を数字に戻す。';
+    }
+
+    return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる。';
   }
 
   Future<void> _markMorningBriefingDone() async {
@@ -1189,6 +1232,22 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                     style: TextStyle(
                       color: status.color.withValues(alpha: 0.92),
                       fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: status.color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: status.color.withValues(alpha: 0.16),
+                      ),
+                    ),
+                    child: Text(
+                      '再発防止アクション: ${day.relapsePreventionAction}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -2266,6 +2325,7 @@ class _HomeCalendarDay {
   final List<String> enabledLabels;
   final List<String> slipDetails;
   final List<String> missingItems;
+  final String relapsePreventionAction;
 
   const _HomeCalendarDay({
     required this.date,
@@ -2280,6 +2340,7 @@ class _HomeCalendarDay {
     required this.enabledLabels,
     required this.slipDetails,
     required this.missingItems,
+    required this.relapsePreventionAction,
   });
 }
 
