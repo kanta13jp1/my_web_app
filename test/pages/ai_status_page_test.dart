@@ -53,9 +53,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('gemini-pro'), findsOneWidget);
-    expect(find.text('Provider: GEMINI'), findsOneWidget);
+    expect(find.text('MAGI Node: CASPER (GEMINI)'), findsOneWidget);
     expect(find.text('80'), findsOneWidget);
     expect(find.text('gpt-4'), findsOneWidget);
+    expect(find.text('MAGI Node: MELCHIOR (GPT)'), findsOneWidget);
     expect(find.text('0'), findsOneWidget);
   });
 

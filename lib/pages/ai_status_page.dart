@@ -62,11 +62,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
               modelMap['name'] as String? ??
               'Unknown';
 
-          // プロバイダー名の表記ゆれ吸収 (Google -> gemini)
-          String provider = modelMap['provider'] as String? ?? 'Unknown';
-          if (provider.toLowerCase() == 'google') {
-            provider = 'gemini';
-          }
+          // プロバイダー表記ゆれを吸収し、MAGIで扱うエンジン名へ正規化
+          final rawProvider = modelMap['provider'] as String? ?? '';
+          final provider = _normalizeEngine(rawProvider, name);
 
           return {
             'model': name,
@@ -178,14 +176,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('AI稼働モニター'),
+        title: const Text('MAGI稼働モニター'),
         backgroundColor: navy,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
             onPressed: _runAllTests,
-            tooltip: '全モデルをテスト',
+            tooltip: '全ノードをテスト',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -217,6 +215,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     final score = modelMap['score'] as int? ?? 0;
                     final modelName = modelMap['model'] as String? ?? 'Unknown';
                     final status = _testResults[modelName];
+                    final nodeCode = _resolveMagiNode(provider, modelName);
 
                     return Card(
                       key: ValueKey(modelName),
@@ -240,7 +239,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                   Stack(
                                     alignment: Alignment.bottomRight,
                                     children: [
-                                      _buildProviderBadge(provider),
+                                      _buildProviderBadge(provider, modelName),
                                       if (status != null)
                                         Container(
                                           width: 14,
@@ -274,7 +273,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                           ),
                                         ),
                                         Text(
-                                          'Provider: ${provider.toUpperCase()}',
+                                          'MAGI Node: $nodeCode (${provider.toUpperCase()})',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey.shade600,
@@ -555,29 +554,58 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
-  Widget _buildProviderBadge(String provider) {
+  Widget _buildProviderBadge(String provider, String modelName) {
+    final node = _resolveMagiNode(provider, modelName);
     Color color;
     IconData icon;
-    switch (provider.toLowerCase()) {
-      case 'openai':
-        color = Colors.green;
-        icon = Icons.bolt;
+    switch (node) {
+      case 'MELCHIOR':
+        color = Colors.lightBlue;
+        icon = Icons.psychology_alt;
         break;
-      case 'anthropic':
-        color = Colors.orange;
+      case 'BALTHASAR':
+        color = Colors.deepOrange;
         icon = Icons.auto_awesome;
         break;
-      case 'gemini':
-        color = Colors.blue;
+      case 'CASPER':
+        color = Colors.indigo;
         icon = Icons.auto_graph;
         break;
       default:
         color = Colors.grey;
-        icon = Icons.help_outline;
+        icon = Icons.hub;
     }
     return CircleAvatar(
       backgroundColor: color.withValues(alpha: 0.1),
       child: Icon(icon, color: color, size: 20),
     );
+  }
+
+  String _normalizeEngine(String provider, String modelName) {
+    final source = '${provider.toLowerCase()} ${modelName.toLowerCase()}';
+    if (source.contains('openai') || source.contains('gpt')) {
+      return 'gpt';
+    }
+    if (source.contains('anthropic') || source.contains('claude')) {
+      return 'claude';
+    }
+    if (source.contains('google') || source.contains('gemini')) {
+      return 'gemini';
+    }
+    return provider.trim().isEmpty ? 'unknown' : provider.toLowerCase();
+  }
+
+  String _resolveMagiNode(String provider, String modelName) {
+    final engine = _normalizeEngine(provider, modelName);
+    switch (engine) {
+      case 'gpt':
+        return 'MELCHIOR';
+      case 'claude':
+        return 'BALTHASAR';
+      case 'gemini':
+        return 'CASPER';
+      default:
+        return 'AUX';
+    }
   }
 }
