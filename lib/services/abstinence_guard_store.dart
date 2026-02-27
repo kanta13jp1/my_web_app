@@ -301,10 +301,28 @@ class AbstinenceGuardStore {
     final userId = _currentUserId();
     if (userId != null) {
       try {
-        return await _loadStatesFromSupabase(
+        final supabaseStates = await _loadStatesFromSupabase(
           userId: userId,
           date: date,
         );
+        if (supabaseStates.isNotEmpty) {
+          return supabaseStates;
+        }
+
+        final store = await SharedPreferences.getInstance();
+        final localStates = _loadStatesFromPrefs(store, date);
+        final meaningfulLocalStates = _meaningfulStatesOnly(localStates);
+        if (meaningfulLocalStates.isNotEmpty) {
+          // Backfill legacy local records so they survive across devices.
+          await _writeSupabaseStatesBatch(
+            userId: userId,
+            date: date,
+            statesByItemId: meaningfulLocalStates,
+          );
+          return localStates;
+        }
+
+        return supabaseStates;
       } catch (e) {
         debugPrint('AbstinenceGuardStore.loadSnapshot supabase fallback: $e');
       }
@@ -429,6 +447,42 @@ class AbstinenceGuardStore {
         'slip_count': state.slipCount,
         'updated_at': DateTime.now().toIso8601String(),
       },
+      onConflict: 'user_id,status_date,item_id',
+    );
+  }
+
+  static Map<String, _StoredAbstinenceState> _meaningfulStatesOnly(
+    Map<String, _StoredAbstinenceState> source,
+  ) {
+    final result = <String, _StoredAbstinenceState>{};
+    source.forEach((itemId, state) {
+      if (state.isEnabled || state.slipCount > 0) {
+        result[itemId] = state;
+      }
+    });
+    return result;
+  }
+
+  static Future<void> _writeSupabaseStatesBatch({
+    required String userId,
+    required DateTime date,
+    required Map<String, _StoredAbstinenceState> statesByItemId,
+  }) async {
+    if (statesByItemId.isEmpty) return;
+    final rows = statesByItemId.entries
+        .map(
+          (entry) => <String, dynamic>{
+            'user_id': userId,
+            'status_date': todayKey(date),
+            'item_id': entry.key,
+            'is_enabled': entry.value.isEnabled,
+            'slip_count': entry.value.slipCount,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+        )
+        .toList();
+    await Supabase.instance.client.from('abstinence_daily_status').upsert(
+      rows,
       onConflict: 'user_id,status_date,item_id',
     );
   }
