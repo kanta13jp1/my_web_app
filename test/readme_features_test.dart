@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
+import 'package:my_web_app/services/abstinence_guard_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/services/theme_service.dart';
@@ -98,6 +99,43 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('今日の必須導線は完了済み'), findsOneWidget);
+    });
+
+    testWidgets('Feature: HomePage calendar day shows slips and missing items',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'home_morning_briefing_done_2026-02-26': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await AbstinenceGuardStore.setEnabled(
+        itemId: 'alcohol',
+        isEnabled: true,
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+      await AbstinenceGuardStore.incrementSlip(
+        itemId: 'alcohol',
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final calendarDay = find.byKey(const Key('calendar_day_2026-02-26'));
+      await tester.ensureVisible(calendarDay);
+      await tester.tap(calendarDay);
+      await tester.pumpAndSettle();
+
+      expect(find.text('2026/02/26 の状態'), findsOneWidget);
+      expect(find.text('逸脱内容'), findsOneWidget);
+      expect(find.text('未達成項目'), findsOneWidget);
+      expect(find.textContaining('酒: 1回'), findsOneWidget);
+      expect(find.textContaining('口座残高確認'), findsOneWidget);
     });
 
     testWidgets('Feature: EmergencyMeetingPage renders correctly',

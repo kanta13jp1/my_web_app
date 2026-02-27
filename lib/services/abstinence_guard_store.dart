@@ -46,8 +46,18 @@ class AbstinenceGuardSnapshot {
   List<AbstinenceGuardState> get enabledStates =>
       states.where((state) => state.isEnabled).toList();
 
+  List<AbstinenceGuardState> get slippedStates =>
+      states.where((state) => state.slipCount > 0).toList();
+
   List<String> get topEnabledLabels =>
       enabledStates.take(3).map((state) => state.item.label).toList();
+
+  List<String> get enabledLabels =>
+      enabledStates.map((state) => state.item.label).toList();
+
+  List<String> get slipDetails => slippedStates
+      .map((state) => '${state.item.label}: ${state.slipCount}回')
+      .toList();
 }
 
 class AbstinenceGuardStore {
@@ -69,7 +79,7 @@ class AbstinenceGuardStore {
     ),
     AbstinenceGuardItem(
       id: 'lust',
-      label: '女（性欲）',
+      label: '性欲',
       replacementAction: '視線を切って作業に戻る。',
     ),
     AbstinenceGuardItem(
@@ -89,7 +99,7 @@ class AbstinenceGuardStore {
     ),
     AbstinenceGuardItem(
       id: 'masturbation',
-      label: 'オナニー',
+      label: 'マスターベーション',
       replacementAction: '立ち上がって冷水で手を洗う。',
     ),
     AbstinenceGuardItem(

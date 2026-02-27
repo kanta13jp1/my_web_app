@@ -191,17 +191,27 @@ class _HomePageState extends State<HomePage> {
       final balanceDone = prefs.getBool(_balanceCheckDoneKeyFor(day)) ?? false;
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
+      final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
+      final missingItems = <String>[
+        if (!isFuture && !morningDone) 'モーニング・ブリーフィング',
+        if (!isFuture && !balanceDone) '口座残高確認',
+        if (!isFuture && !hasProtection) '禁欲ガード設定',
+      ];
 
       days.add(
         _HomeCalendarDay(
           date: day,
           isCurrentMonth: isCurrentMonth,
           isToday: isToday,
+          isFuture: isFuture,
           morningDone: morningDone,
           balanceDone: balanceDone,
           hasAbstinenceProtection: hasProtection,
           hasAbstinenceSlip: hasSlip,
           isSaturday: day.weekday == DateTime.saturday,
+          enabledLabels: abstinence.enabledLabels,
+          slipDetails: abstinence.slipDetails,
+          missingItems: missingItems,
         ),
       );
     }
@@ -778,52 +788,66 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                           ? Colors.blueGrey
                           : Colors.transparent;
 
-              return Container(
-                decoration: BoxDecoration(
-                  color: day.isCurrentMonth
-                      ? baseColor.withValues(alpha: baseColor == Colors.transparent ? 0 : 0.12)
-                      : Colors.blueGrey.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: day.isToday
-                        ? Colors.blue.shade400
-                        : day.isCurrentMonth
-                            ? Colors.blueGrey.withValues(alpha: 0.14)
-                            : Colors.transparent,
-                    width: day.isToday ? 1.6 : 1,
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  key: Key(
+                    'calendar_day_${DateFormat('yyyy-MM-dd').format(day.date)}',
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${day.date.day}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: day.isCurrentMonth
-                              ? (isDark ? Colors.white : Colors.black87)
-                              : Colors.blueGrey.shade300,
-                        ),
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _showCalendarDayDetails(context, day),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: day.isCurrentMonth
+                          ? baseColor.withValues(
+                              alpha: baseColor == Colors.transparent ? 0 : 0.12,
+                            )
+                          : Colors.blueGrey.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: day.isToday
+                            ? Colors.blue.shade400
+                            : day.isCurrentMonth
+                                ? Colors.blueGrey.withValues(alpha: 0.14)
+                                : Colors.transparent,
+                        width: day.isToday ? 1.6 : 1,
                       ),
-                      const Spacer(),
-                      Wrap(
-                        spacing: 3,
-                        runSpacing: 3,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (day.morningDone)
-                            _buildCalendarDot(Colors.amber),
-                          if (day.balanceDone)
-                            _buildCalendarDot(Colors.green),
-                          if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
-                            _buildCalendarDot(Colors.redAccent),
-                          if (day.hasAbstinenceSlip)
-                            _buildCalendarDot(Colors.orange),
-                          if (day.isSaturday) _buildCalendarDot(Colors.teal),
+                          Text(
+                            '${day.date.day}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: day.isCurrentMonth
+                                  ? (isDark ? Colors.white : Colors.black87)
+                                  : Colors.blueGrey.shade300,
+                            ),
+                          ),
+                          const Spacer(),
+                          Wrap(
+                            spacing: 3,
+                            runSpacing: 3,
+                            children: [
+                              if (day.morningDone)
+                                _buildCalendarDot(Colors.amber),
+                              if (day.balanceDone)
+                                _buildCalendarDot(Colors.green),
+                              if (day.hasAbstinenceProtection &&
+                                  !day.hasAbstinenceSlip)
+                                _buildCalendarDot(Colors.redAccent),
+                              if (day.hasAbstinenceSlip)
+                                _buildCalendarDot(Colors.orange),
+                              if (day.isSaturday)
+                                _buildCalendarDot(Colors.teal),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               );
@@ -853,6 +877,139 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Future<void> _showCalendarDayDetails(
+    BuildContext context,
+    _HomeCalendarDay day,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final title = DateFormat('yyyy/MM/dd').format(day.date);
+        final completedItems = <String>[
+          if (day.morningDone) 'モーニング・ブリーフィング',
+          if (day.balanceDone) '口座残高確認',
+          if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip) '禁欲ガード安定',
+        ];
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$title の状態',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  if (day.isFuture) ...[
+                    const SizedBox(height: 4),
+                    const Text('未来の日付です。まだ実績はありません。'),
+                  ] else ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      day.isCurrentMonth
+                          ? 'その日の継続状態と逸脱内容を確認できます。'
+                          : '前後月の補助セルです。',
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _buildCalendarDetailSection(
+                    title: '逸脱内容',
+                    accent: Colors.orange,
+                    emptyLabel: day.isFuture ? 'まだ記録はありません。' : '逸脱はありません。',
+                    items: day.slipDetails,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCalendarDetailSection(
+                    title: '未達成項目',
+                    accent: Colors.redAccent,
+                    emptyLabel: day.isFuture ? 'まだ未達成判定はありません。' : '未達成項目はありません。',
+                    items: day.missingItems,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCalendarDetailSection(
+                    title: '実施できた項目',
+                    accent: Colors.green,
+                    emptyLabel: day.isFuture ? 'まだ実施記録はありません。' : '実施項目はありません。',
+                    items: completedItems,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCalendarDetailSection(
+                    title: 'その日に設定していた禁止対象',
+                    accent: Colors.blueGrey,
+                    emptyLabel: day.isFuture ? 'まだ設定はありません。' : '禁止対象は未設定です。',
+                    items: day.enabledLabels,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCalendarDetailSection({
+    required String title,
+    required Color accent,
+    required List<String> items,
+    required String emptyLabel,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: accent,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
+            Text(emptyLabel)
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text('・$item'),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1818,21 +1975,29 @@ class _HomeCalendarDay {
   final DateTime date;
   final bool isCurrentMonth;
   final bool isToday;
+  final bool isFuture;
   final bool morningDone;
   final bool balanceDone;
   final bool hasAbstinenceProtection;
   final bool hasAbstinenceSlip;
   final bool isSaturday;
+  final List<String> enabledLabels;
+  final List<String> slipDetails;
+  final List<String> missingItems;
 
   const _HomeCalendarDay({
     required this.date,
     required this.isCurrentMonth,
     required this.isToday,
+    required this.isFuture,
     required this.morningDone,
     required this.balanceDone,
     required this.hasAbstinenceProtection,
     required this.hasAbstinenceSlip,
     required this.isSaturday,
+    required this.enabledLabels,
+    required this.slipDetails,
+    required this.missingItems,
   });
 }
 
