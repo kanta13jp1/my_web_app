@@ -188,6 +188,9 @@ class _MindMapPageState extends State<MindMapPage> {
       }
 
       final decoded = _decodeMindMapJson(responseText);
+      if (decoded.isEmpty) {
+        throw const FormatException('マインドマップJSONが空です。');
+      }
 
       if (usedModel != null && usedModel != _selectedModel) {
         final prefs = await SharedPreferences.getInstance();
@@ -268,23 +271,28 @@ class _MindMapPageState extends State<MindMapPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : InteractiveViewer(
-                    constrained: false,
-                    boundaryMargin: const EdgeInsets.all(100),
-                    minScale: 0.01,
-                    maxScale: 5.6,
-                    child: GraphView(
-                      graph: _graph,
-                      algorithm: BuchheimWalkerAlgorithm(
-                        _algorithmConfig,
-                        TreeEdgeRenderer(_algorithmConfig),
+                : _graph.nodes.isEmpty
+                    ? _buildEmptyGraphState()
+                    : InteractiveViewer(
+                        constrained: false,
+                        boundaryMargin: const EdgeInsets.all(100),
+                        minScale: 0.01,
+                        maxScale: 5.6,
+                        child: GraphView(
+                          graph: _graph,
+                          algorithm: BuchheimWalkerAlgorithm(
+                            _algorithmConfig,
+                            TreeEdgeRenderer(_algorithmConfig),
+                          ),
+                          builder: (Node node) {
+                            final value = node.key?.value;
+                            final text = value is String && value.isNotEmpty
+                                ? value
+                                : '(empty)';
+                            return _buildNode(text);
+                          },
+                        ),
                       ),
-                      builder: (Node node) {
-                        final a = node.key!.value as String?;
-                        return _buildNode(a!);
-                      },
-                    ),
-                  ),
           ),
         ],
       ),
@@ -311,6 +319,15 @@ class _MindMapPageState extends State<MindMapPage> {
         ],
       ),
       child: Text(text, textAlign: TextAlign.center),
+    );
+  }
+
+  Widget _buildEmptyGraphState() {
+    return const Center(
+      child: Text(
+        '中心トピックを入力して「生成」を押すとマインドマップを表示します。',
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }
