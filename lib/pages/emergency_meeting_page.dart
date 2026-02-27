@@ -680,6 +680,101 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         .toList();
   }
 
+  String _extractFirstJsonObject(String text) {
+    final trimmed = text.trim();
+    final firstBrace = trimmed.indexOf('{');
+    if (firstBrace == -1) return trimmed;
+
+    var inString = false;
+    var isEscaped = false;
+    var depth = 0;
+    var startIndex = firstBrace;
+
+    for (var i = firstBrace; i < trimmed.length; i++) {
+      final char = trimmed[i];
+
+      if (inString) {
+        if (isEscaped) {
+          isEscaped = false;
+        } else if (char == r'\') {
+          isEscaped = true;
+        } else if (char == '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char == '"') {
+        inString = true;
+        continue;
+      }
+      if (char == '{') {
+        if (depth == 0) {
+          startIndex = i;
+        }
+        depth++;
+        continue;
+      }
+      if (char == '}') {
+        depth--;
+        if (depth == 0) {
+          return trimmed.substring(startIndex, i + 1);
+        }
+      }
+    }
+
+    return trimmed.substring(startIndex);
+  }
+
+  String _repairJsonCandidate(String input) {
+    var fixed = input.trim();
+
+    // Smart quotes -> plain quotes
+    fixed = fixed
+        .replaceAll('\u201c', '"')
+        .replaceAll('\u201d', '"')
+        .replaceAll('\u2018', "'")
+        .replaceAll('\u2019', "'");
+
+    // Strip markdown fences if they remain
+    fixed = fixed.replaceAll(RegExp(r'^```(?:json)?\s*', multiLine: true), '');
+    fixed = fixed.replaceAll(RegExp(r'\s*```$', multiLine: true), '');
+
+    // Common comma fixes
+    fixed = fixed.replaceAll(RegExp(r'}\s*{'), '},{');
+    fixed = fixed.replaceAll(RegExp(r'"\s*\n\s*"'), '",\n"');
+    fixed = fixed.replaceAll(RegExp(r',\s*([\]}])'), r'$1');
+
+    return fixed;
+  }
+
+  Map<String, dynamic> _decodeMeetingResponseJson(String responseText) {
+    final raw = responseText.trim();
+    final extracted = _extractFirstJsonObject(raw);
+    final repaired = _repairJsonCandidate(extracted);
+    final candidates = <String>[extracted, repaired];
+
+    FormatException? lastError;
+    for (final candidate in candidates) {
+      try {
+        final decoded = jsonDecode(candidate);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      } on FormatException catch (e) {
+        lastError = e;
+      }
+    }
+
+    throw FormatException(
+      '会議レスポンスJSONの解析に失敗しました: '
+      '${lastError?.message ?? 'unknown format error'}',
+    );
+  }
+
   String _buildCodexCopyText() {
     final log = _currentLog;
     if (log == null) return '';
@@ -827,20 +922,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
       setState(() => _loadingStatus = '会議結果を統合中...');
 
-      // Clean up potential markdown code block
-      var responseJson = responseText.trim();
-      final jsonStartIndex = responseJson.indexOf('{');
-      final jsonEndIndex = responseJson.lastIndexOf('}');
-      if (jsonStartIndex != -1 && jsonEndIndex != -1) {
-        responseJson = responseJson.substring(
-          jsonStartIndex,
-          jsonEndIndex + 1,
-        );
+      final decoded = _decodeMeetingResponseJson(responseText);
+      final messageListRaw = decoded['messages'];
+      if (messageListRaw is! List) {
+        throw const FormatException('messages が配列ではありません');
       }
-
-      final decoded = jsonDecode(responseJson) as Map<String, dynamic>;
-      final messageList = decoded['messages'] as List<dynamic>;
-      final conclusion = decoded['conclusion'] as String;
+      final messageList = messageListRaw;
+      final conclusion = (decoded['conclusion'] ?? '').toString().trim();
+      if (conclusion.isEmpty) {
+        throw const FormatException('conclusion が空です');
+      }
       final continuationPlan = _extractStringList(decoded['continuation_plan']);
       final abstinenceRules = _extractStringList(decoded['abstinence_rules']);
       final riskAlert = decoded['risk_alert']?.toString();
@@ -852,16 +943,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ? Map<String, dynamic>.from(rawNextMetrics)
               : null);
 
-      final messages = messageList.map((item) {
-        final msg = item as Map<String, dynamic>;
+      final messages = messageList.whereType<Map>().map((item) {
+        final msg = Map<String, dynamic>.from(item);
         return BoardMessage(
           id: const Uuid().v4(),
-          speakerName: msg['speaker_name'] as String,
-          role: msg['role'] as String,
-          content: msg['content'] as String,
+          speakerName: (msg['speaker_name'] ?? 'AI').toString(),
+          role: (msg['role'] ?? 'Advisor').toString(),
+          content: (msg['content'] ?? '').toString(),
           timestamp: DateTime.now(),
         );
-      }).toList();
+      }).where((msg) => msg.content.trim().isNotEmpty).toList();
+
+      if (messages.isEmpty) {
+        throw const FormatException('messages が空です');
+      }
 
       final log = BoardMeetingLog(
         id: const Uuid().v4(),
@@ -943,6 +1038,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             errString.contains('Quota') ||
             errString.contains('rate limit')) {
           _errorMessage = '「$_selectedModel」は利用上限に達しました。別のモデルを試してください。';
+        } else if (errString.contains('FormatException')) {
+          _errorMessage =
+              'AI応答のJSON形式が崩れていました。再試行するか、別モデルに切り替えてください。';
         } else if (errString.contains('400') &&
             errString.contains('API key not valid')) {
           _errorMessage = 'APIキーが無効です。設定を確認してください。';
