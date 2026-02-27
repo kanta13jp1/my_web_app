@@ -111,10 +111,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<int> _fetchPendingCriticalTaskCount() async {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_now());
+    return _fetchPendingCriticalTaskCountForDateKey(dateStr);
+  }
+
+  Future<int> _fetchPendingCriticalTaskCountForDateKey(String dateStr) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return 0;
 
-    final dateStr = DateFormat('yyyy-MM-dd').format(_now());
     try {
       final dynamic rowsRaw = await Supabase.instance.client
           .from('mindless_tasks')
@@ -128,6 +132,38 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error fetching critical task count: $e');
       return 0;
+    }
+  }
+
+  Future<Map<String, int>> _fetchPendingCriticalTaskCountMap({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return <String, int>{};
+
+    final startKey = _statusDateKey(startDate);
+    final endKey = _statusDateKey(endDate);
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('mindless_tasks')
+          .select('task_date')
+          .eq('user_id', userId)
+          .eq('is_completed', false)
+          .gte('task_date', startKey)
+          .lte('task_date', endKey)
+          .ilike('content', '%必須:%');
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      final counts = <String, int>{};
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final dateKey = row['task_date']?.toString();
+        if (dateKey == null || dateKey.isEmpty) continue;
+        counts.update(dateKey, (value) => value + 1, ifAbsent: () => 1);
+      }
+      return counts;
+    } catch (e) {
+      debugPrint('Error fetching critical task map: $e');
+      return <String, int>{};
     }
   }
 
@@ -275,6 +311,10 @@ class _HomePageState extends State<HomePage> {
       startDate: startDay,
       endDate: endDay,
     );
+    final pendingCriticalTaskMap = await _fetchPendingCriticalTaskCountMap(
+      startDate: startDay,
+      endDate: endDay,
+    );
 
     final days = <_HomeCalendarDay>[];
     for (DateTime day = startDay;
@@ -290,12 +330,16 @@ class _HomePageState extends State<HomePage> {
           homeDailyMap[_statusDateKey(day)] ?? const _HomeDailyStatusRecord();
       final morningDone = dayStatus.morningBriefingDone;
       final balanceDone = dayStatus.balanceCheckDone;
+      final pendingCriticalTaskCountForDay =
+          pendingCriticalTaskMap[_statusDateKey(day)] ?? 0;
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
       final missingItems = <String>[
         if (!isFuture && !morningDone) 'モーニング・ブリーフィング',
         if (!isFuture && !balanceDone) '口座残高確認',
+        if (!isFuture && pendingCriticalTaskCountForDay > 0)
+          '必須タスク $pendingCriticalTaskCountForDay件',
         if (!isFuture && !hasProtection) '禁欲ガード設定',
       ];
       final relapsePreventionAction = _buildRelapsePreventionAction(
@@ -315,6 +359,7 @@ class _HomePageState extends State<HomePage> {
           isFuture: isFuture,
           morningDone: morningDone,
           balanceDone: balanceDone,
+          pendingCriticalTaskCount: pendingCriticalTaskCountForDay,
           hasAbstinenceProtection: hasProtection,
           hasAbstinenceSlip: hasSlip,
           isSaturday: day.weekday == DateTime.saturday,
@@ -434,14 +479,6 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error upserting home daily status: $e');
     }
-  }
-
-  Future<void> _markMorningBriefingDone() async {
-    await _upsertHomeDailyStatus(morningBriefingDone: true);
-  }
-
-  Future<void> _markBalanceCheckDone() async {
-    await _upsertHomeDailyStatus(balanceCheckDone: true);
   }
 
   String _resolveHomeModel(SharedPreferences prefs) {
@@ -601,7 +638,17 @@ abstinence_slip_details: $slipDetailsText
   }
 
   Future<void> _openMorningBriefing(BuildContext context) async {
-    await _markMorningBriefingDone();
+    await _openMorningBriefingForDate(context, _now());
+  }
+
+  Future<void> _openMorningBriefingForDate(
+    BuildContext context,
+    DateTime date,
+  ) async {
+    await _upsertHomeDailyStatus(
+      morningBriefingDone: true,
+      date: date,
+    );
     if (!context.mounted) return;
     await Navigator.push(
       context,
@@ -615,7 +662,17 @@ abstinence_slip_details: $slipDetailsText
   }
 
   Future<void> _openCfoOffice(BuildContext context) async {
-    await _markBalanceCheckDone();
+    await _openCfoOfficeForDate(context, _now());
+  }
+
+  Future<void> _openCfoOfficeForDate(
+    BuildContext context,
+    DateTime date,
+  ) async {
+    await _upsertHomeDailyStatus(
+      balanceCheckDone: true,
+      date: date,
+    );
     if (!context.mounted) return;
     await Navigator.push(
       context,
@@ -1361,8 +1418,15 @@ abstinence_slip_details: $slipDetailsText
         final completedItems = <String>[
           if (day.morningDone) 'モーニング・ブリーフィング',
           if (day.balanceDone) '口座残高確認',
+          if (day.pendingCriticalTaskCount == 0) '必須タスク完了',
           if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip) '禁欲ガード安定',
         ];
+        final needsMorning = !day.isFuture && !day.morningDone;
+        final needsBalance = !day.isFuture && !day.balanceDone;
+        final needsCriticalTask =
+            !day.isFuture && day.pendingCriticalTaskCount > 0;
+        final canQuickRecover =
+            needsMorning || needsBalance || needsCriticalTask;
 
         return SafeArea(
           child: Padding(
@@ -1454,6 +1518,60 @@ abstinence_slip_details: $slipDetailsText
                     icon: const Icon(Icons.shield_moon, size: 18),
                     label: const Text('その日の禁欲ガードへ'),
                   ),
+                  if (canQuickRecover) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      '未達項目へショートカット',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (needsMorning)
+                          FilledButton.tonalIcon(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _openMorningBriefingForDate(
+                                parentContext,
+                                day.date,
+                              );
+                            },
+                            icon: const Icon(Icons.wb_sunny, size: 18),
+                            label: const Text('朝を実施'),
+                          ),
+                        if (needsBalance)
+                          FilledButton.tonalIcon(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await _openCfoOfficeForDate(
+                                parentContext,
+                                day.date,
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.account_balance_wallet,
+                              size: 18,
+                            ),
+                            label: const Text('残高確認へ'),
+                          ),
+                        if (needsCriticalTask)
+                          FilledButton.tonalIcon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _nav(parentContext, const MindlessTaskPage());
+                            },
+                            icon: const Icon(Icons.lock_clock, size: 18),
+                            label: Text(
+                              '必須タスクへ (${day.pendingCriticalTaskCount}件)',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   if (day.isFuture) ...[
                     const Text('未来の日付です。まだ実績はありません。'),
@@ -2530,6 +2648,7 @@ class _HomeCalendarDay {
   final bool isFuture;
   final bool morningDone;
   final bool balanceDone;
+  final int pendingCriticalTaskCount;
   final bool hasAbstinenceProtection;
   final bool hasAbstinenceSlip;
   final bool isSaturday;
@@ -2545,6 +2664,7 @@ class _HomeCalendarDay {
     required this.isFuture,
     required this.morningDone,
     required this.balanceDone,
+    required this.pendingCriticalTaskCount,
     required this.hasAbstinenceProtection,
     required this.hasAbstinenceSlip,
     required this.isSaturday,
