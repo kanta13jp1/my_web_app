@@ -11,12 +11,18 @@ void main() {
         continuationCompletedCount: 2,
         continuationTotalCount: 3,
         continuationCompletionRatePercent: 67,
+        continuationQuickStartCount: 4,
         abstinenceViolationCount: 1,
         abstinenceNoViolationDays: 4,
+        abstinenceRuleCompletedCount: 2,
+        abstinenceRuleTotalCount: 3,
+        abstinenceRuleCompletionRatePercent: 67,
         deepWorkSessionCount: 5,
         weeklyPriorityReviewCount: 2,
         accountabilityShareCount: 1,
+        abstinenceRecoveryActionCount: 2,
         reminderEnabled: true,
+        deterrenceLockEnabledCount: 2,
         activeDeterrenceLocks: const <String>[
           'SNS制限ロック',
           '90分タイムボックス',
@@ -29,12 +35,18 @@ void main() {
       expect(json['continuation_completed_count'], 2);
       expect(json['continuation_total_count'], 3);
       expect(json['continuation_completion_rate_percent'], 67);
+      expect(json['continuation_quick_start_count'], 4);
       expect(json['abstinence_violation_count'], 1);
       expect(json['abstinence_no_violation_days'], 4);
+      expect(json['abstinence_rule_completed_count'], 2);
+      expect(json['abstinence_rule_total_count'], 3);
+      expect(json['abstinence_rule_completion_rate_percent'], 67);
       expect(json['deep_work_session_count'], 5);
       expect(json['weekly_priority_review_count'], 2);
       expect(json['accountability_share_count'], 1);
+      expect(json['abstinence_recovery_action_count'], 2);
       expect(json['reminder_enabled'], isTrue);
+      expect(json['deterrence_lock_enabled_count'], 2);
       expect(
         json['active_deterrence_locks'],
         containsAll(<String>['SNS制限ロック', '90分タイムボックス']),
@@ -73,12 +85,18 @@ void main() {
         continuationCompletedCount: 1,
         continuationTotalCount: 3,
         continuationCompletionRatePercent: 33,
+        continuationQuickStartCount: 2,
         abstinenceViolationCount: 2,
         abstinenceNoViolationDays: 0,
+        abstinenceRuleCompletedCount: 1,
+        abstinenceRuleTotalCount: 3,
+        abstinenceRuleCompletionRatePercent: 33,
         deepWorkSessionCount: 2,
         weeklyPriorityReviewCount: 1,
         accountabilityShareCount: 4,
+        abstinenceRecoveryActionCount: 3,
         reminderEnabled: false,
+        deterrenceLockEnabledCount: 1,
         activeDeterrenceLocks: const <String>['週次共有リマインド'],
         lastReviewAt: now,
       );
@@ -110,10 +128,14 @@ void main() {
       final nextMetrics =
           payload['next_meeting_metrics'] as Map<String, dynamic>;
       expect(nextMetrics['continuation_completion_rate_percent'], 33);
+      expect(nextMetrics['continuation_quick_start_count'], 2);
       expect(nextMetrics['abstinence_violation_count'], 2);
+      expect(nextMetrics['abstinence_rule_completion_rate_percent'], 33);
       expect(nextMetrics['deep_work_session_count'], 2);
       expect(nextMetrics['weekly_priority_review_count'], 1);
       expect(nextMetrics['accountability_share_count'], 4);
+      expect(nextMetrics['abstinence_recovery_action_count'], 3);
+      expect(nextMetrics['deterrence_lock_enabled_count'], 1);
       expect(
         nextMetrics['active_deterrence_locks'],
         contains('週次共有リマインド'),

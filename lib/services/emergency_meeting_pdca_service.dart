@@ -6,12 +6,18 @@ class EmergencyMeetingPdcaMetrics {
   final int continuationCompletedCount;
   final int continuationTotalCount;
   final int continuationCompletionRatePercent;
+  final int continuationQuickStartCount;
   final int abstinenceViolationCount;
   final int abstinenceNoViolationDays;
+  final int abstinenceRuleCompletedCount;
+  final int abstinenceRuleTotalCount;
+  final int abstinenceRuleCompletionRatePercent;
   final int deepWorkSessionCount;
   final int weeklyPriorityReviewCount;
   final int accountabilityShareCount;
+  final int abstinenceRecoveryActionCount;
   final bool reminderEnabled;
+  final int deterrenceLockEnabledCount;
   final List<String> activeDeterrenceLocks;
   final DateTime? lastReviewAt;
 
@@ -19,12 +25,18 @@ class EmergencyMeetingPdcaMetrics {
     required this.continuationCompletedCount,
     required this.continuationTotalCount,
     required this.continuationCompletionRatePercent,
+    this.continuationQuickStartCount = 0,
     required this.abstinenceViolationCount,
     required this.abstinenceNoViolationDays,
+    this.abstinenceRuleCompletedCount = 0,
+    this.abstinenceRuleTotalCount = 0,
+    this.abstinenceRuleCompletionRatePercent = 0,
     this.deepWorkSessionCount = 0,
     this.weeklyPriorityReviewCount = 0,
     this.accountabilityShareCount = 0,
+    this.abstinenceRecoveryActionCount = 0,
     required this.reminderEnabled,
+    this.deterrenceLockEnabledCount = 0,
     required this.activeDeterrenceLocks,
     this.lastReviewAt,
   });
@@ -34,12 +46,19 @@ class EmergencyMeetingPdcaMetrics {
       'continuation_completed_count': continuationCompletedCount,
       'continuation_total_count': continuationTotalCount,
       'continuation_completion_rate_percent': continuationCompletionRatePercent,
+      'continuation_quick_start_count': continuationQuickStartCount,
       'abstinence_violation_count': abstinenceViolationCount,
       'abstinence_no_violation_days': abstinenceNoViolationDays,
+      'abstinence_rule_completed_count': abstinenceRuleCompletedCount,
+      'abstinence_rule_total_count': abstinenceRuleTotalCount,
+      'abstinence_rule_completion_rate_percent':
+          abstinenceRuleCompletionRatePercent,
       'deep_work_session_count': deepWorkSessionCount,
       'weekly_priority_review_count': weeklyPriorityReviewCount,
       'accountability_share_count': accountabilityShareCount,
+      'abstinence_recovery_action_count': abstinenceRecoveryActionCount,
       'reminder_enabled': reminderEnabled,
+      'deterrence_lock_enabled_count': deterrenceLockEnabledCount,
       'active_deterrence_locks': activeDeterrenceLocks,
       'last_review_at': lastReviewAt?.toIso8601String(),
     };
