@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AbstinenceGuardItem {
   final String id;
@@ -114,7 +116,11 @@ class AbstinenceGuardStore {
     ),
   ];
 
-  static String todayKey(DateTime now) => DateFormat('yyyy-MM-dd').format(now);
+  static DateTime _startOfDay(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  static String todayKey(DateTime now) =>
+      DateFormat('yyyy-MM-dd').format(_startOfDay(now));
 
   static String _enabledKey(DateTime now, String id) =>
       'abstinence_enabled_${todayKey(now)}_$id';
@@ -122,18 +128,34 @@ class AbstinenceGuardStore {
   static String _slipKey(DateTime now, String id) =>
       'abstinence_slips_${todayKey(now)}_$id';
 
+  static String? _currentUserId() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<AbstinenceGuardSnapshot> loadSnapshot({
     SharedPreferences? prefs,
     DateTime? now,
   }) async {
-    final store = prefs ?? await SharedPreferences.getInstance();
-    final date = now ?? DateTime.now();
+    final date = _startOfDay(now ?? DateTime.now());
+    final storedStates = await _loadStatesForDate(
+      date: date,
+      prefs: prefs,
+    );
 
     final states = items.map((item) {
+      final stored = storedStates[item.id] ??
+          const _StoredAbstinenceState(
+            isEnabled: false,
+            slipCount: 0,
+          );
       return AbstinenceGuardState(
         item: item,
-        isEnabled: store.getBool(_enabledKey(date, item.id)) ?? false,
-        slipCount: store.getInt(_slipKey(date, item.id)) ?? 0,
+        isEnabled: stored.isEnabled,
+        slipCount: stored.slipCount,
       );
     }).toList();
 
@@ -146,12 +168,48 @@ class AbstinenceGuardStore {
     SharedPreferences? prefs,
     DateTime? now,
   }) async {
-    final store = prefs ?? await SharedPreferences.getInstance();
-    final date = now ?? DateTime.now();
-    await store.setBool(_enabledKey(date, itemId), isEnabled);
-    if (!isEnabled) {
-      await store.setInt(_slipKey(date, itemId), 0);
+    final date = _startOfDay(now ?? DateTime.now());
+    if (prefs != null) {
+      await _setEnabledInPrefs(
+        store: prefs,
+        date: date,
+        itemId: itemId,
+        isEnabled: isEnabled,
+      );
+      return;
     }
+
+    final userId = _currentUserId();
+    if (userId != null) {
+      try {
+        final current = await _loadSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+        );
+        final next = _StoredAbstinenceState(
+          isEnabled: isEnabled,
+          slipCount: isEnabled ? (current?.slipCount ?? 0) : 0,
+        );
+        await _writeSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+          state: next,
+        );
+        return;
+      } catch (e) {
+        debugPrint('AbstinenceGuardStore.setEnabled supabase fallback: $e');
+      }
+    }
+
+    final store = await SharedPreferences.getInstance();
+    await _setEnabledInPrefs(
+      store: store,
+      date: date,
+      itemId: itemId,
+      isEnabled: isEnabled,
+    );
   }
 
   static Future<void> incrementSlip({
@@ -159,11 +217,38 @@ class AbstinenceGuardStore {
     SharedPreferences? prefs,
     DateTime? now,
   }) async {
-    final store = prefs ?? await SharedPreferences.getInstance();
-    final date = now ?? DateTime.now();
-    final key = _slipKey(date, itemId);
-    final current = store.getInt(key) ?? 0;
-    await store.setInt(key, current + 1);
+    final date = _startOfDay(now ?? DateTime.now());
+    if (prefs != null) {
+      await _incrementSlipInPrefs(store: prefs, date: date, itemId: itemId);
+      return;
+    }
+
+    final userId = _currentUserId();
+    if (userId != null) {
+      try {
+        final current = await _loadSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+        );
+        final next = _StoredAbstinenceState(
+          isEnabled: current?.isEnabled ?? true,
+          slipCount: (current?.slipCount ?? 0) + 1,
+        );
+        await _writeSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+          state: next,
+        );
+        return;
+      } catch (e) {
+        debugPrint('AbstinenceGuardStore.incrementSlip supabase fallback: $e');
+      }
+    }
+
+    final store = await SharedPreferences.getInstance();
+    await _incrementSlipInPrefs(store: store, date: date, itemId: itemId);
   }
 
   static Future<void> clearSlip({
@@ -171,8 +256,190 @@ class AbstinenceGuardStore {
     SharedPreferences? prefs,
     DateTime? now,
   }) async {
-    final store = prefs ?? await SharedPreferences.getInstance();
-    final date = now ?? DateTime.now();
+    final date = _startOfDay(now ?? DateTime.now());
+    if (prefs != null) {
+      await _clearSlipInPrefs(store: prefs, date: date, itemId: itemId);
+      return;
+    }
+
+    final userId = _currentUserId();
+    if (userId != null) {
+      try {
+        final current = await _loadSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+        );
+        final next = _StoredAbstinenceState(
+          isEnabled: current?.isEnabled ?? false,
+          slipCount: 0,
+        );
+        await _writeSupabaseItemState(
+          userId: userId,
+          date: date,
+          itemId: itemId,
+          state: next,
+        );
+        return;
+      } catch (e) {
+        debugPrint('AbstinenceGuardStore.clearSlip supabase fallback: $e');
+      }
+    }
+
+    final store = await SharedPreferences.getInstance();
+    await _clearSlipInPrefs(store: store, date: date, itemId: itemId);
+  }
+
+  static Future<Map<String, _StoredAbstinenceState>> _loadStatesForDate({
+    required DateTime date,
+    SharedPreferences? prefs,
+  }) async {
+    if (prefs != null) {
+      return _loadStatesFromPrefs(prefs, date);
+    }
+
+    final userId = _currentUserId();
+    if (userId != null) {
+      try {
+        return await _loadStatesFromSupabase(
+          userId: userId,
+          date: date,
+        );
+      } catch (e) {
+        debugPrint('AbstinenceGuardStore.loadSnapshot supabase fallback: $e');
+      }
+    }
+
+    final store = await SharedPreferences.getInstance();
+    return _loadStatesFromPrefs(store, date);
+  }
+
+  static Map<String, _StoredAbstinenceState> _loadStatesFromPrefs(
+    SharedPreferences store,
+    DateTime date,
+  ) {
+    final map = <String, _StoredAbstinenceState>{};
+    for (final item in items) {
+      map[item.id] = _StoredAbstinenceState(
+        isEnabled: store.getBool(_enabledKey(date, item.id)) ?? false,
+        slipCount: store.getInt(_slipKey(date, item.id)) ?? 0,
+      );
+    }
+    return map;
+  }
+
+  static Future<Map<String, _StoredAbstinenceState>> _loadStatesFromSupabase({
+    required String userId,
+    required DateTime date,
+  }) async {
+    final dynamic rowsRaw = await Supabase.instance.client
+        .from('abstinence_daily_status')
+        .select('item_id,is_enabled,slip_count')
+        .eq('user_id', userId)
+        .eq('status_date', todayKey(date));
+
+    final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+    final map = <String, _StoredAbstinenceState>{};
+
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      final itemId = row['item_id']?.toString();
+      if (itemId == null || itemId.isEmpty) {
+        continue;
+      }
+      map[itemId] = _StoredAbstinenceState(
+        isEnabled: row['is_enabled'] == true,
+        slipCount: _parseSlipCount(row['slip_count']),
+      );
+    }
+
+    return map;
+  }
+
+  static int _parseSlipCount(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static Future<void> _setEnabledInPrefs({
+    required SharedPreferences store,
+    required DateTime date,
+    required String itemId,
+    required bool isEnabled,
+  }) async {
+    await store.setBool(_enabledKey(date, itemId), isEnabled);
+    if (!isEnabled) {
+      await store.setInt(_slipKey(date, itemId), 0);
+    }
+  }
+
+  static Future<void> _incrementSlipInPrefs({
+    required SharedPreferences store,
+    required DateTime date,
+    required String itemId,
+  }) async {
+    final key = _slipKey(date, itemId);
+    final current = store.getInt(key) ?? 0;
+    await store.setInt(key, current + 1);
+  }
+
+  static Future<void> _clearSlipInPrefs({
+    required SharedPreferences store,
+    required DateTime date,
+    required String itemId,
+  }) async {
     await store.setInt(_slipKey(date, itemId), 0);
   }
+
+  static Future<_StoredAbstinenceState?> _loadSupabaseItemState({
+    required String userId,
+    required DateTime date,
+    required String itemId,
+  }) async {
+    final dynamic row = await Supabase.instance.client
+        .from('abstinence_daily_status')
+        .select('is_enabled,slip_count')
+        .eq('user_id', userId)
+        .eq('status_date', todayKey(date))
+        .eq('item_id', itemId)
+        .maybeSingle();
+
+    if (row is! Map<String, dynamic>) {
+      return null;
+    }
+
+    return _StoredAbstinenceState(
+      isEnabled: row['is_enabled'] == true,
+      slipCount: _parseSlipCount(row['slip_count']),
+    );
+  }
+
+  static Future<void> _writeSupabaseItemState({
+    required String userId,
+    required DateTime date,
+    required String itemId,
+    required _StoredAbstinenceState state,
+  }) async {
+    await Supabase.instance.client.from('abstinence_daily_status').upsert(
+      {
+        'user_id': userId,
+        'status_date': todayKey(date),
+        'item_id': itemId,
+        'is_enabled': state.isEnabled,
+        'slip_count': state.slipCount,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      onConflict: 'user_id,status_date,item_id',
+    );
+  }
+}
+
+class _StoredAbstinenceState {
+  final bool isEnabled;
+  final int slipCount;
+
+  const _StoredAbstinenceState({
+    required this.isEnabled,
+    required this.slipCount,
+  });
 }

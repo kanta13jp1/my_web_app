@@ -93,10 +93,6 @@ class _HomePageState extends State<HomePage> {
 
   String get _todayKey => DateFormat('yyyy-MM-dd').format(_now());
 
-  String get _morningBriefingDoneKey => 'home_morning_briefing_done_$_todayKey';
-
-  String get _balanceCheckDoneKey => 'home_balance_check_done_$_todayKey';
-
   String _morningBriefingDoneKeyFor(DateTime date) =>
       'home_morning_briefing_done_${DateFormat('yyyy-MM-dd').format(date)}';
 
@@ -145,19 +141,107 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  String _statusDateKey(DateTime date) =>
+      DateFormat('yyyy-MM-dd').format(_startOfDay(date));
+
+  Future<Map<String, _HomeDailyStatusRecord>?> _fetchHomeDailyStatusMapFromSupabase({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return null;
+    }
+
+    final startKey = _statusDateKey(startDate);
+    final endKey = _statusDateKey(endDate);
+
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('home_daily_status')
+          .select('status_date,morning_briefing_done,balance_check_done')
+          .eq('user_id', userId)
+          .gte('status_date', startKey)
+          .lte('status_date', endKey);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      final map = <String, _HomeDailyStatusRecord>{};
+
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final dateKey = row['status_date']?.toString();
+        if (dateKey == null || dateKey.isEmpty) continue;
+        map[dateKey] = _HomeDailyStatusRecord(
+          morningBriefingDone: row['morning_briefing_done'] == true,
+          balanceCheckDone: row['balance_check_done'] == true,
+        );
+      }
+
+      return map;
+    } catch (e) {
+      debugPrint('Error fetching home daily status from supabase: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, _HomeDailyStatusRecord>> _loadHomeDailyStatusMap({
+    required SharedPreferences prefs,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final normalizedStart = _startOfDay(startDate);
+    final normalizedEnd = _startOfDay(endDate);
+    final supabaseMap = await _fetchHomeDailyStatusMapFromSupabase(
+      startDate: normalizedStart,
+      endDate: normalizedEnd,
+    );
+    final usesSupabaseSource = supabaseMap != null;
+    final map = <String, _HomeDailyStatusRecord>{
+      if (supabaseMap != null) ...supabaseMap,
+    };
+
+    for (
+      DateTime day = normalizedStart;
+      !day.isAfter(normalizedEnd);
+      day = day.add(const Duration(days: 1))
+    ) {
+      final dateKey = _statusDateKey(day);
+      map.putIfAbsent(
+        dateKey,
+        () => usesSupabaseSource
+            ? const _HomeDailyStatusRecord()
+            : _HomeDailyStatusRecord(
+                morningBriefingDone:
+                    prefs.getBool(_morningBriefingDoneKeyFor(day)) ?? false,
+                balanceCheckDone:
+                    prefs.getBool(_balanceCheckDoneKeyFor(day)) ?? false,
+              ),
+      );
+    }
+
+    return map;
+  }
+
   Future<_HomeOpsSnapshot> _loadOpsSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
+    final today = _startOfDay(_now());
     final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
     final pendingStockTaskCount = await _fetchPendingStockTaskCount();
-    final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
+    final homeDailyMap = await _loadHomeDailyStatusMap(
       prefs: prefs,
-      now: _now(),
+      startDate: today,
+      endDate: today,
     );
-    final calendarDays = await _loadCalendarDays(prefs);
+    final todayStatus =
+        homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
+    final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
+      now: today,
+    );
+    final calendarDays = await _loadCalendarDays(prefs: prefs);
 
     return _HomeOpsSnapshot(
-      morningBriefingDone: prefs.getBool(_morningBriefingDoneKey) ?? false,
-      balanceCheckDone: prefs.getBool(_balanceCheckDoneKey) ?? false,
+      morningBriefingDone: todayStatus.morningBriefingDone,
+      balanceCheckDone: todayStatus.balanceCheckDone,
       pendingCriticalTaskCount: pendingCriticalTaskCount,
       pendingStockTaskCount: pendingStockTaskCount,
       abstinenceFocusCount: abstinenceSnapshot.enabledCount,
@@ -167,9 +251,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<List<_HomeCalendarDay>> _loadCalendarDays(
-    SharedPreferences prefs,
-  ) async {
+  Future<List<_HomeCalendarDay>> _loadCalendarDays({
+    required SharedPreferences prefs,
+  }) async {
     final now = _now();
     final firstDayOfMonth = DateTime(now.year, now.month, 1);
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
@@ -177,20 +261,26 @@ class _HomePageState extends State<HomePage> {
     final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
     final endOffset = 6 - (lastDayOfMonth.weekday % 7);
     final endDay = lastDayOfMonth.add(Duration(days: endOffset));
+    final homeDailyMap = await _loadHomeDailyStatusMap(
+      prefs: prefs,
+      startDate: startDay,
+      endDate: endDay,
+    );
 
     final days = <_HomeCalendarDay>[];
     for (DateTime day = startDay;
         !day.isAfter(endDay);
         day = day.add(const Duration(days: 1))) {
       final abstinence = await AbstinenceGuardStore.loadSnapshot(
-        prefs: prefs,
         now: day,
       );
       final isCurrentMonth = day.month == now.month;
       final isToday =
           day.year == now.year && day.month == now.month && day.day == now.day;
-      final morningDone = prefs.getBool(_morningBriefingDoneKeyFor(day)) ?? false;
-      final balanceDone = prefs.getBool(_balanceCheckDoneKeyFor(day)) ?? false;
+      final dayStatus =
+          homeDailyMap[_statusDateKey(day)] ?? const _HomeDailyStatusRecord();
+      final morningDone = dayStatus.morningBriefingDone;
+      final balanceDone = dayStatus.balanceCheckDone;
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -263,14 +353,86 @@ class _HomePageState extends State<HomePage> {
     return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる。';
   }
 
-  Future<void> _markMorningBriefingDone() async {
+  Future<_HomeDailyStatusRecord?> _fetchHomeDailyStatusFromSupabase(
+    DateTime date,
+  ) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return null;
+
+    try {
+      final dynamic row = await Supabase.instance.client
+          .from('home_daily_status')
+          .select('morning_briefing_done,balance_check_done')
+          .eq('user_id', userId)
+          .eq('status_date', _statusDateKey(date))
+          .maybeSingle();
+      if (row is! Map<String, dynamic>) {
+        return null;
+      }
+      return _HomeDailyStatusRecord(
+        morningBriefingDone: row['morning_briefing_done'] == true,
+        balanceCheckDone: row['balance_check_done'] == true,
+      );
+    } catch (e) {
+      debugPrint('Error fetching home daily status (single): $e');
+      return null;
+    }
+  }
+
+  Future<void> _upsertHomeDailyStatus({
+    bool? morningBriefingDone,
+    bool? balanceCheckDone,
+    DateTime? date,
+  }) async {
+    final targetDate = _startOfDay(date ?? _now());
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_morningBriefingDoneKey, true);
+
+    // Local cache is kept as fallback for offline/testing paths.
+    if (morningBriefingDone != null) {
+      await prefs.setBool(_morningBriefingDoneKeyFor(targetDate), morningBriefingDone);
+    }
+    if (balanceCheckDone != null) {
+      await prefs.setBool(_balanceCheckDoneKeyFor(targetDate), balanceCheckDone);
+    }
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final current = await _fetchHomeDailyStatusFromSupabase(targetDate) ??
+          _HomeDailyStatusRecord(
+            morningBriefingDone:
+                prefs.getBool(_morningBriefingDoneKeyFor(targetDate)) ?? false,
+            balanceCheckDone:
+                prefs.getBool(_balanceCheckDoneKeyFor(targetDate)) ?? false,
+          );
+      final next = _HomeDailyStatusRecord(
+        morningBriefingDone:
+            morningBriefingDone ?? current.morningBriefingDone,
+        balanceCheckDone: balanceCheckDone ?? current.balanceCheckDone,
+      );
+
+      await Supabase.instance.client.from('home_daily_status').upsert(
+        {
+          'user_id': userId,
+          'status_date': _statusDateKey(targetDate),
+          'morning_briefing_done': next.morningBriefingDone,
+          'balance_check_done': next.balanceCheckDone,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        onConflict: 'user_id,status_date',
+      );
+    } catch (e) {
+      debugPrint('Error upserting home daily status: $e');
+    }
+  }
+
+  Future<void> _markMorningBriefingDone() async {
+    await _upsertHomeDailyStatus(morningBriefingDone: true);
   }
 
   Future<void> _markBalanceCheckDone() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_balanceCheckDoneKey, true);
+    await _upsertHomeDailyStatus(balanceCheckDone: true);
   }
 
   String _resolveHomeModel(SharedPreferences prefs) {
@@ -2287,6 +2449,16 @@ class _HomeActionCommand {
     required this.detail,
     required this.icon,
     required this.color,
+  });
+}
+
+class _HomeDailyStatusRecord {
+  final bool morningBriefingDone;
+  final bool balanceCheckDone;
+
+  const _HomeDailyStatusRecord({
+    this.morningBriefingDone = false,
+    this.balanceCheckDone = false,
   });
 }
 
