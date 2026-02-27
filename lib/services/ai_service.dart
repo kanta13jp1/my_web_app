@@ -25,6 +25,8 @@ class AIService {
   final String? _googleAIApiKey;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
+  static const bool _magiDefaultEnabled = true;
+  static const int _magiOpinionMaxLength = 900;
 
   AIService([SupabaseClient? supabaseClient, this._googleAIApiKey])
       : _supabase = supabaseClient ?? supabase;
@@ -162,15 +164,202 @@ class AIService {
   Future<String?> generateContent({
     required String model,
     required String prompt,
+    bool useMagi = _magiDefaultEnabled,
   }) async {
     if (_googleAIApiKey == null) {
       throw AIServiceException('Google AI API key is not configured.');
     }
-    final genModel = GenerativeModel(model: model, apiKey: _googleAIApiKey);
-    final content = [Content.text(prompt)];
-    final response = await genModel.generateContent(content);
-    return response.text;
+
+    return _retryWithBackoff(
+      () async {
+        if (!useMagi) {
+          return _generateSingleGeminiContent(
+            model: model,
+            prompt: prompt,
+          );
+        }
+        return _generateContentWithMagi(
+          model: model,
+          prompt: prompt,
+        );
+      },
+      operationName: useMagi ? 'generateContent(MAGI)' : 'generateContent',
+    );
   }
+
+  Future<String?> _generateSingleGeminiContent({
+    required String model,
+    required String prompt,
+  }) async {
+    final apiKey = _googleAIApiKey;
+    if (apiKey == null) {
+      throw AIServiceException('Google AI API key is not configured.');
+    }
+    try {
+      final genModel = GenerativeModel(model: model, apiKey: apiKey);
+      final content = [Content.text(prompt)];
+      final response = await genModel.generateContent(content);
+      return response.text;
+    } catch (e) {
+      throw _mapAiModelError(e);
+    }
+  }
+
+  Future<String?> _generateContentWithMagi({
+    required String model,
+    required String prompt,
+  }) async {
+    final profiles = _magiProfiles;
+    final results = await Future.wait<_MagiOpinion?>(
+      profiles.map(
+        (profile) => _runMagiNode(
+          model: model,
+          prompt: prompt,
+          profile: profile,
+        ),
+      ),
+    );
+
+    final validOpinions = results.whereType<_MagiOpinion>().toList();
+    if (validOpinions.isEmpty) {
+      // 全ノードが失敗した場合は単発呼び出しへフォールバック
+      return _generateSingleGeminiContent(
+        model: model,
+        prompt: prompt,
+      );
+    }
+
+    if (validOpinions.length == 1) {
+      return validOpinions.first.content;
+    }
+
+    final synthesisPrompt = _buildMagiSynthesisPrompt(
+      originalPrompt: prompt,
+      opinions: validOpinions,
+    );
+    return _generateSingleGeminiContent(
+      model: model,
+      prompt: synthesisPrompt,
+    );
+  }
+
+  Future<_MagiOpinion?> _runMagiNode({
+    required String model,
+    required String prompt,
+    required _MagiNodeProfile profile,
+  }) async {
+    final nodePrompt = _buildMagiNodePrompt(
+      originalPrompt: prompt,
+      profile: profile,
+    );
+    try {
+      final text = await _generateSingleGeminiContent(
+        model: model,
+        prompt: nodePrompt,
+      );
+      final normalized = _normalizeMagiOpinion(text);
+      if (normalized == null) {
+        return null;
+      }
+      return _MagiOpinion(
+        nodeName: profile.nodeName,
+        viewpoint: profile.viewpoint,
+        content: normalized,
+      );
+    } catch (e, stackTrace) {
+      // 単一ノード失敗は全体失敗にせず、残ノードで継続
+      AppLogger.error(
+        'MAGI node failed: ${profile.nodeName}',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  String _buildMagiNodePrompt({
+    required String originalPrompt,
+    required _MagiNodeProfile profile,
+  }) {
+    return '''
+あなたはMAGIシステムの「${profile.nodeName}」です。
+担当観点: ${profile.viewpoint}
+分析方針: ${profile.instruction}
+
+以下のユーザー依頼に対して、あなたの観点だけで回答案を作成してください。
+元依頼の制約（形式・言語・文量・JSON必須など）は厳守してください。
+余計な前置きは不要です。
+
+[USER_PROMPT]
+$originalPrompt
+''';
+  }
+
+  String _buildMagiSynthesisPrompt({
+    required String originalPrompt,
+    required List<_MagiOpinion> opinions,
+  }) {
+    final buffer = StringBuffer()
+      ..writeln('あなたはMAGI統合モジュールです。')
+      ..writeln('下記3系統の回答案を統合し、最終回答を1つだけ返してください。')
+      ..writeln('最重要: 元依頼の制約（形式・JSON・1文制約など）を厳守。')
+      ..writeln('余計な説明、前置き、Markdown装飾は不要です。')
+      ..writeln()
+      ..writeln('[ORIGINAL_PROMPT]')
+      ..writeln(originalPrompt)
+      ..writeln();
+
+    for (final opinion in opinions) {
+      buffer
+        ..writeln('[${opinion.nodeName} / ${opinion.viewpoint}]')
+        ..writeln(opinion.content)
+        ..writeln();
+    }
+    return buffer.toString();
+  }
+
+  String? _normalizeMagiOpinion(String? text) {
+    final normalized = text?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return null;
+    }
+    if (normalized.length <= _magiOpinionMaxLength) {
+      return normalized;
+    }
+    return normalized.substring(0, _magiOpinionMaxLength);
+  }
+
+  AIServiceException _mapAiModelError(Object error) {
+    final message = error.toString();
+    final lower = message.toLowerCase();
+    if (lower.contains('rate') ||
+        lower.contains('429') ||
+        lower.contains('quota')) {
+      return AIServiceException(
+        'AI rate limit exceeded.',
+        errorType: 'RATE_LIMIT',
+      );
+    }
+    return AIServiceException(message);
+  }
+
+  List<_MagiNodeProfile> get _magiProfiles => const <_MagiNodeProfile>[
+    _MagiNodeProfile(
+      nodeName: 'MELCHIOR',
+      viewpoint: '論理・整合性',
+      instruction: '要件を分解し、矛盾を排除し、結論を短く明確にする。',
+    ),
+    _MagiNodeProfile(
+      nodeName: 'BALTHASAR',
+      viewpoint: '実務・実行可能性',
+      instruction: 'すぐ実行できる手順、制約、リスクを重視する。',
+    ),
+    _MagiNodeProfile(
+      nodeName: 'CASPER',
+      viewpoint: '継続性・心理',
+      instruction: '受け手が動ける表現、負荷の低い実践性、継続性を最適化する。',
+    ),
+  ];
 
   Future<String?> generateMindMap({
     required String model,
@@ -535,6 +724,30 @@ Generate a mind map for the following topic: **"{topic}"**
 }
 
 // ... (クラス定義はそのまま)
+class _MagiNodeProfile {
+  final String nodeName;
+  final String viewpoint;
+  final String instruction;
+
+  const _MagiNodeProfile({
+    required this.nodeName,
+    required this.viewpoint,
+    required this.instruction,
+  });
+}
+
+class _MagiOpinion {
+  final String nodeName;
+  final String viewpoint;
+  final String content;
+
+  const _MagiOpinion({
+    required this.nodeName,
+    required this.viewpoint,
+    required this.content,
+  });
+}
+
 /// タグ提案の結果
 class TagSuggestion {
   final List<String> tags;
