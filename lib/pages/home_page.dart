@@ -1,7 +1,9 @@
 // home_page.dart
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -50,10 +52,12 @@ class _HomePageState extends State<HomePage> {
   // build() のたびに _fetchTotalAssets() が走るのを防ぐため Future をキャッシュする
   late Future<String> _totalAssetsFuture;
   late Future<_HomeOpsSnapshot> _opsSnapshotFuture;
+  late Future<_HomeKpiOverview> _kpiOverviewFuture;
   late Future<String?> _aiNudgeFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   _CalendarHighlightFilter _calendarHighlightFilter =
       _CalendarHighlightFilter.all;
+  _KpiTrendRange _kpiTrendRange = _KpiTrendRange.oneMonth;
 
   @override
   void initState() {
@@ -66,6 +70,7 @@ class _HomePageState extends State<HomePage> {
   void _reloadHomeSignals() {
     _totalAssetsFuture = _fetchTotalAssets();
     _opsSnapshotFuture = _loadOpsSnapshot();
+    _kpiOverviewFuture = _loadHomeKpiOverview();
     _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
@@ -89,6 +94,7 @@ class _HomePageState extends State<HomePage> {
     });
     await _totalAssetsFuture;
     await _opsSnapshotFuture;
+    await _kpiOverviewFuture;
     await _aiNudgeFuture;
   }
 
@@ -183,6 +189,145 @@ class _HomePageState extends State<HomePage> {
       debugPrint('Error fetching pending stock task count: $e');
       return 0;
     }
+  }
+
+  Future<_HomeKpiOverview> _loadHomeKpiOverview() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return const _HomeKpiOverview();
+    }
+
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('cfo_assets')
+          .select('title,amount,created_at')
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      if (rows.isEmpty) {
+        return const _HomeKpiOverview();
+      }
+
+      final rawByDate = <String, Map<String, double>>{};
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final createdAtRaw = row['created_at']?.toString();
+        final createdAt = createdAtRaw == null
+            ? null
+            : DateTime.tryParse(createdAtRaw)?.toLocal();
+        if (createdAt == null) continue;
+        final amount = (row['amount'] as num?)?.toDouble();
+        if (amount == null) continue;
+
+        final dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
+        final title = (row['title']?.toString().trim().isNotEmpty ?? false)
+            ? row['title'].toString().trim()
+            : 'その他';
+        rawByDate.putIfAbsent(dateKey, () => <String, double>{});
+        rawByDate[dateKey]![title] = amount;
+      }
+
+      if (rawByDate.isEmpty) {
+        return const _HomeKpiOverview();
+      }
+
+      final sortedDateKeys = rawByDate.keys.toList()..sort();
+      final running = <String, double>{};
+      final trendPoints = <_KpiTrendPoint>[];
+      var latestBreakdown = <String, double>{};
+
+      for (final dateKey in sortedDateKeys) {
+        final updates = rawByDate[dateKey]!;
+        updates.forEach((key, value) {
+          running[key] = value;
+        });
+        var total = 0.0;
+        for (final value in running.values) {
+          total += value;
+        }
+
+        final pointDate = DateTime.tryParse(dateKey);
+        if (pointDate == null) continue;
+        trendPoints.add(_KpiTrendPoint(date: pointDate, total: total));
+        latestBreakdown = Map<String, double>.from(running);
+      }
+
+      if (trendPoints.isEmpty) {
+        return const _HomeKpiOverview();
+      }
+
+      double? totalAtOrBefore(DateTime targetDate) {
+        for (var i = trendPoints.length - 1; i >= 0; i--) {
+          final pointDate = _startOfDay(trendPoints[i].date);
+          if (!pointDate.isAfter(targetDate)) {
+            return trendPoints[i].total;
+          }
+        }
+        return null;
+      }
+
+      final latestTotal = trendPoints.last.total;
+      final previousTotal = trendPoints.length > 1
+          ? trendPoints[trendPoints.length - 2].total
+          : latestTotal;
+      final today = _startOfDay(_now());
+      final weekBase = totalAtOrBefore(today.subtract(const Duration(days: 7)));
+      final monthBase = totalAtOrBefore(DateTime(today.year, today.month, 1));
+      final yearBase = totalAtOrBefore(DateTime(today.year, 1, 1));
+
+      var cashAndCryptoTotal = 0.0;
+      var equityTotal = 0.0;
+      var otherTotal = 0.0;
+      latestBreakdown.forEach((title, amount) {
+        switch (_resolveAssetBucket(title)) {
+          case _AssetBucket.cashAndCrypto:
+            cashAndCryptoTotal += amount;
+            break;
+          case _AssetBucket.equity:
+            equityTotal += amount;
+            break;
+          case _AssetBucket.other:
+            otherTotal += amount;
+            break;
+        }
+      });
+
+      return _HomeKpiOverview(
+        latestTotal: latestTotal,
+        previousTotal: previousTotal,
+        weekBaseTotal: weekBase,
+        monthBaseTotal: monthBase,
+        yearBaseTotal: yearBase,
+        cashAndCryptoTotal: cashAndCryptoTotal + otherTotal,
+        equityTotal: equityTotal,
+        trendPoints: trendPoints,
+      );
+    } catch (e) {
+      debugPrint('Error loading home KPI overview: $e');
+      return const _HomeKpiOverview();
+    }
+  }
+
+  _AssetBucket _resolveAssetBucket(String title) {
+    if (title.contains('株') ||
+        title.contains('証券') ||
+        title.contains('投信') ||
+        title.toUpperCase().contains('ETF') ||
+        title.toLowerCase().contains('equity') ||
+        title.toLowerCase().contains('stock')) {
+      return _AssetBucket.equity;
+    }
+
+    if (title.contains('預金') ||
+        title.contains('現金') ||
+        title.contains('銀行') ||
+        title.contains('暗号') ||
+        title.contains('仮想通貨') ||
+        title.toLowerCase().contains('crypto') ||
+        title.toLowerCase().contains('wallet')) {
+      return _AssetBucket.cashAndCrypto;
+    }
+
+    return _AssetBucket.other;
   }
 
   DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
@@ -2348,6 +2493,200 @@ abstinence_slip_details: $slipDetailsText
     bool isCompact,
     _HomeOpsSnapshot snapshot,
   ) {
+    return FutureBuilder<_HomeKpiOverview>(
+      future: _kpiOverviewFuture,
+      builder: (context, kpiSnapshot) {
+        final overview = kpiSnapshot.data;
+        if (overview == null || !overview.hasData) {
+          return _buildLegacyKpiSummary(context, isDark, isCompact, snapshot);
+        }
+
+        final latest = overview.latestTotal;
+        final dayDelta = overview.dayDelta;
+        final dayRate = _ratioFromBase(dayDelta, overview.previousTotal);
+        final weekDelta = overview.weekDelta;
+        final weekRate = _ratioFromBase(weekDelta, overview.weekBaseTotal);
+        final monthDelta = overview.monthDelta;
+        final monthRate = _ratioFromBase(monthDelta, overview.monthBaseTotal);
+        final yearDelta = overview.yearDelta;
+        final yearRate = _ratioFromBase(yearDelta, overview.yearBaseTotal);
+        final filteredTrend = _filterKpiTrendPoints(overview.trendPoints);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF111827) : const Color(0xFFF0F1F3),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '総資産',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 2,
+                color: Colors.orange.shade700,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.22)
+                      : Colors.white.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${_formatYen(latest)} (前日比) ${_formatSignedYen(dayDelta)} (${_formatSignedPercent(dayRate)})',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _buildKpiTableCard(
+                    context,
+                    title: '増減',
+                    isDark: isDark,
+                    flexes: const [1.2, 1.1, 1.5],
+                    rows: [
+                      ['今週', _formatSignedPercent(weekRate), _formatSignedYen(weekDelta)],
+                      ['今月', _formatSignedPercent(monthRate), _formatSignedYen(monthDelta)],
+                      ['今年', _formatSignedPercent(yearRate), _formatSignedYen(yearDelta)],
+                    ],
+                  ),
+                  _buildKpiTableCard(
+                    context,
+                    title: '内訳',
+                    isDark: isDark,
+                    flexes: const [2.0, 1.2, 1.0],
+                    rows: [
+                      [
+                        '預金・現金・暗号資産',
+                        _formatYen(overview.cashAndCryptoTotal),
+                        _formatPercentRatio(
+                          overview.cashAndCryptoTotal,
+                          latest,
+                        ),
+                      ],
+                      [
+                        '株式(現物)',
+                        _formatYen(overview.equityTotal),
+                        _formatPercentRatio(
+                          overview.equityTotal,
+                          latest,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _nav(context, const CfoOfficePage()),
+                  icon: const Icon(Icons.arrow_circle_right, size: 18),
+                  label: const Text('詳細(資産内訳)を見る'),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                '資産の時系列推移',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 2,
+                color: Colors.orange.shade700,
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _KpiTrendRange.values.map((range) {
+                    final isSelected = _kpiTrendRange == range;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () {
+                        setState(() {
+                          _kpiTrendRange = range;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDark
+                                  ? Colors.white.withValues(alpha: 0.16)
+                                  : Colors.white)
+                              : (isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.white.withValues(alpha: 0.74)),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.orange.withValues(alpha: 0.62)
+                                : Colors.blueGrey.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Text(
+                          _kpiTrendRangeLabel(range),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                isSelected ? FontWeight.w800 : FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildKpiTrendChart(
+                isDark: isDark,
+                points: filteredTrend,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLegacyKpiSummary(
+    BuildContext context,
+    bool isDark,
+    bool isCompact,
+    _HomeOpsSnapshot snapshot,
+  ) {
     return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -2358,7 +2697,6 @@ abstinence_slip_details: $slipDetailsText
         mainAxisExtent: isCompact ? 130 : 150,
       ),
       children: [
-        // ✅ 総資産（Futureキャッシュを渡す）
         _buildAsyncKpiCard(
           context,
           isDark,
@@ -2367,7 +2705,6 @@ abstinence_slip_details: $slipDetailsText
           Colors.green,
           _totalAssetsFuture,
         ),
-        // ダミー
         _buildKpiCard(
           context,
           isDark,
@@ -2394,6 +2731,330 @@ abstinence_slip_details: $slipDetailsText
         ),
       ],
     );
+  }
+
+  Widget _buildKpiTableCard(
+    BuildContext context, {
+    required String title,
+    required bool isDark,
+    required List<List<String>> rows,
+    required List<double> flexes,
+  }) {
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.blueGrey.withValues(alpha: 0.24);
+    final titleColor = isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 330),
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: titleColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            height: 2,
+            color: Colors.orange.shade700,
+          ),
+          const SizedBox(height: 4),
+          Table(
+            border: TableBorder.all(color: borderColor),
+            columnWidths: {
+              for (var i = 0; i < flexes.length; i++)
+                i: FlexColumnWidth(flexes[i]),
+            },
+            children: rows.map((row) {
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.white.withValues(alpha: 0.7),
+                ),
+                children: row.map((cell) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      cell,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiTrendChart({
+    required bool isDark,
+    required List<_KpiTrendPoint> points,
+  }) {
+    if (points.isEmpty) {
+      return const SizedBox(
+        height: 240,
+        child: Center(child: Text('資産推移データがありません')),
+      );
+    }
+
+    final spots = <FlSpot>[
+      for (var i = 0; i < points.length; i++)
+        FlSpot(i.toDouble(), points[i].total),
+    ];
+
+    var minY = points.first.total;
+    var maxY = points.first.total;
+    for (final point in points) {
+      minY = math.min(minY, point.total);
+      maxY = math.max(maxY, point.total);
+    }
+    final ySpan = (maxY - minY).abs();
+    final yPadding = math.max(ySpan * 0.14, 10000);
+    final chartMinY = minY - yPadding;
+    final chartMaxY = maxY + yPadding;
+
+    return SizedBox(
+      height: 260,
+      child: LineChart(
+        LineChartData(
+          minX: 0,
+          maxX: (spots.length - 1).toDouble(),
+          minY: chartMinY,
+          maxY: chartMaxY,
+          backgroundColor: isDark
+              ? Colors.black.withValues(alpha: 0.14)
+              : Colors.white.withValues(alpha: 0.72),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: _kpiChartHorizontalInterval(
+              chartMaxY - chartMinY,
+            ),
+            getDrawingHorizontalLine: (_) {
+              return FlLine(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.1),
+                strokeWidth: 1,
+              );
+            },
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 54,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    _formatManLabel(value),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  );
+                },
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 22,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index < 0 || index >= points.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final isEdge = index == 0 || index == points.length - 1;
+                  final isMiddle = index == points.length ~/ 2;
+                  if (!isEdge && !isMiddle) {
+                    return const SizedBox.shrink();
+                  }
+                  return SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    child: Text(
+                      DateFormat('M/d').format(points[index].date),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(
+              left: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.2),
+              ),
+              bottom: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.2),
+              ),
+            ),
+          ),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => isDark
+                  ? Colors.black.withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.95),
+              getTooltipItems: (touchedSpots) {
+                return touchedSpots.map((spot) {
+                  final idx = spot.x.toInt();
+                  final point = points[idx];
+                  return LineTooltipItem(
+                    '${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
+                    TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  );
+                }).toList();
+              },
+            ),
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: false,
+              color: Colors.redAccent,
+              barWidth: 2.8,
+              dotData: FlDotData(show: spots.length <= 40),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.blue.withValues(alpha: 0.6),
+                    Colors.blue.withValues(alpha: 0.18),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _kpiTrendRangeLabel(_KpiTrendRange range) {
+    return switch (range) {
+      _KpiTrendRange.oneMonth => '1ヶ月',
+      _KpiTrendRange.threeMonths => '3ヶ月',
+      _KpiTrendRange.sixMonths => '6ヶ月',
+      _KpiTrendRange.oneYear => '1年',
+      _KpiTrendRange.all => '全期間',
+    };
+  }
+
+  List<_KpiTrendPoint> _filterKpiTrendPoints(List<_KpiTrendPoint> points) {
+    if (points.isEmpty) return const <_KpiTrendPoint>[];
+
+    final today = _startOfDay(_now());
+    DateTime? lowerBound;
+    switch (_kpiTrendRange) {
+      case _KpiTrendRange.oneMonth:
+        lowerBound = today.subtract(const Duration(days: 30));
+        break;
+      case _KpiTrendRange.threeMonths:
+        lowerBound = today.subtract(const Duration(days: 90));
+        break;
+      case _KpiTrendRange.sixMonths:
+        lowerBound = today.subtract(const Duration(days: 180));
+        break;
+      case _KpiTrendRange.oneYear:
+        lowerBound = today.subtract(const Duration(days: 365));
+        break;
+      case _KpiTrendRange.all:
+        lowerBound = null;
+        break;
+    }
+
+    if (lowerBound == null) return points;
+    final filtered = points
+        .where((point) => !_startOfDay(point.date).isBefore(lowerBound!))
+        .toList();
+    if (filtered.length >= 2) return filtered;
+    if (points.length >= 2) {
+      return points.sublist(math.max(0, points.length - 2));
+    }
+    return points;
+  }
+
+  double? _ratioFromBase(double? delta, double? base) {
+    if (delta == null || base == null || base == 0) {
+      return null;
+    }
+    return delta / base.abs();
+  }
+
+  String _formatYen(double value) {
+    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
+  }
+
+  String _formatSignedYen(double? value) {
+    if (value == null) return '--';
+    final rounded = value.round();
+    if (rounded == 0) return '0円';
+    final absText = NumberFormat('#,##0', 'ja_JP').format(rounded.abs());
+    final sign = rounded > 0 ? '+' : '-';
+    return '$sign$absText円';
+  }
+
+  String _formatSignedPercent(double? ratio) {
+    if (ratio == null) return '--';
+    final percent = ratio * 100;
+    final absText = percent.abs().toStringAsFixed(1);
+    final sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
+    return '$sign$absText%';
+  }
+
+  String _formatPercentRatio(double part, double total) {
+    if (total == 0) return '--';
+    return '${(part / total * 100).toStringAsFixed(2)}%';
+  }
+
+  double _kpiChartHorizontalInterval(double range) {
+    if (range <= 80000) return 20000;
+    if (range <= 200000) return 50000;
+    if (range <= 500000) return 100000;
+    if (range <= 1000000) return 200000;
+    return 500000;
+  }
+
+  String _formatManLabel(double value) {
+    final man = value / 10000;
+    if (man.abs() >= 100) {
+      return '${man.toStringAsFixed(0)}万円';
+    }
+    return '${man.toStringAsFixed(1)}万円';
   }
 
   // 非同期データ用KPIカード
@@ -2591,6 +3252,20 @@ enum _CalendarHighlightFilter {
   unset,
 }
 
+enum _KpiTrendRange {
+  oneMonth,
+  threeMonths,
+  sixMonths,
+  oneYear,
+  all,
+}
+
+enum _AssetBucket {
+  cashAndCrypto,
+  equity,
+  other,
+}
+
 class _HomeActionCommand {
   final _HomeActionType type;
   final String title;
@@ -2615,6 +3290,47 @@ class _HomeDailyStatusRecord {
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
   });
+}
+
+class _KpiTrendPoint {
+  final DateTime date;
+  final double total;
+
+  const _KpiTrendPoint({
+    required this.date,
+    required this.total,
+  });
+}
+
+class _HomeKpiOverview {
+  final double latestTotal;
+  final double previousTotal;
+  final double? weekBaseTotal;
+  final double? monthBaseTotal;
+  final double? yearBaseTotal;
+  final double cashAndCryptoTotal;
+  final double equityTotal;
+  final List<_KpiTrendPoint> trendPoints;
+
+  const _HomeKpiOverview({
+    this.latestTotal = 0,
+    this.previousTotal = 0,
+    this.weekBaseTotal,
+    this.monthBaseTotal,
+    this.yearBaseTotal,
+    this.cashAndCryptoTotal = 0,
+    this.equityTotal = 0,
+    this.trendPoints = const [],
+  });
+
+  bool get hasData => trendPoints.isNotEmpty;
+  double get dayDelta => latestTotal - previousTotal;
+  double? get weekDelta =>
+      weekBaseTotal == null ? null : latestTotal - weekBaseTotal!;
+  double? get monthDelta =>
+      monthBaseTotal == null ? null : latestTotal - monthBaseTotal!;
+  double? get yearDelta =>
+      yearBaseTotal == null ? null : latestTotal - yearBaseTotal!;
 }
 
 class _HomeOpsSnapshot {
