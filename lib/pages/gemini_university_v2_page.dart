@@ -421,24 +421,39 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       icon: Icons.code_sharp,
       content: '''
 ### ジェミニ・コードアシストの概要
-*2026/1/21 更新*
+*2026/2/28 反映*
 
-Gemini Code Assistは、**Gemini 2.5モデル**を活用したソフトウェア開発ライフサイクル向けのAI支援を提供します。
+Gemini Code Assist は、**Gemini 2.5モデル**を活用し、ソフトウェア開発ライフサイクル全体（設計・実装・検証・運用）を支援するAIコーディングアシスタントです。
 
-#### 主な機能と特徴
-1. **AI支援**: 対応するIDEでコード生成、対話型ヘルプの提供、ソース引用などの機能を利用できます。
-2. **3つのエディション**:
-   - **個人向けGemini Code Assist**: 無料で利用いただけます。
-   - **Gemini Code Assist Standard**: Google Cloud ポートフォリオ製品。
-   - **Gemini Code Assist Enterprise**: Google Cloud ポートフォリオ製品。
-3. **クラウド連携**: Standard版とEnterprise版では、IDE以外の追加機能を提供しており、各種Google Cloudサービスとの連携が含まれます。
+#### ページ要約（overview）
+* 対応IDEで、コード生成・対話型ヘルプ・ソース引用付き回答を利用可能
+* エディションは **Free / Standard / Enterprise** の3種類
+* Standard / Enterprise は IDE外の追加機能や Google Cloud 連携を提供
+* AI出力は必ず人間が検証する前提（誤情報が生成される可能性あり）
 
-#### 注意点
-* ユーザーは、Gemini Code Assistの出力を検証する必要があります。これは初期段階の技術であり、誤った情報を生成する場合があるためです。
-* **個人開発者向けのヒント**: Google AI ProまたはUltraのサブスクリプションを購入することで、Gemini Code Assist、Gemini CLI、エージェントモードで共有される1日あたりのモデルリクエスト上限を引き上げることができます。
-* **対応IDE**: VS Code, IntelliJ IDEA (JetBrains), Android Studio など、多くの主要なIDEで利用可能です。
+#### エディション構成
+1. **Gemini Code Assist for individuals（無料）**
+2. **Gemini Code Assist Standard（Gemini for Google Cloud 製品）**
+3. **Gemini Code Assist Enterprise（Gemini for Google Cloud 製品）**
 
-ビジネス利用の場合、またはチームレベルの特典をさらにご利用になりたい場合は、Gemini Code Assist Standard または Enterprise のご利用をご検討ください。
+#### 対応IDEと主な体験
+* 対応IDE: **VS Code / JetBrains IDE / Android Studio**
+* 主機能:
+  * 入力中のコード補完
+  * コメントから関数/コードブロック生成
+  * ユニットテスト生成
+  * デバッグ補助
+  * ドキュメント理解・作成支援
+
+#### 応答の根拠と品質
+* Gemini Code Assist は、文脈に応じた回答とあわせて、参照したドキュメントやコードサンプルの**出典情報**を提示できます。
+* 使用モデル（LLM）は、公開コード・Google Cloud関連資料・関連技術情報などを含むデータで学習されています。
+
+#### 個人無料版ユーザー向けメモ
+個人向け無料版（Gemini Code Assist for individuals）利用者は、**Google AI Pro / Ultra** のサブスクリプションで、Gemini Code Assist / Gemini CLI / Agent Mode で共有される1日あたりのモデルリクエスト上限を引き上げられます。
+
+#### チーム利用を検討する場合
+ビジネス利用やチーム向けの追加特典が必要な場合は、**Standard または Enterprise** の利用を検討してください。
 ''',
       quiz: Quiz(
         question: 'Gemini Code Assistの個人開発者が1日のリクエスト上限を引き上げる方法は？',
