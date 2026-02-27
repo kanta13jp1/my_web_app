@@ -524,6 +524,16 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
 
   _HomeActionCommand _resolveNextAction(_HomeOpsSnapshot snapshot) {
     final hour = _now().hour;
+    if (snapshot.abstinenceSlipCount > 0) {
+      return _HomeActionCommand(
+        type: _HomeActionType.abstinenceGuard,
+        title: '逸脱が発生。禁欲ガードを最優先',
+        detail: '今日の逸脱は${snapshot.abstinenceSlipCount}回。先に再設定して再発を止める。',
+        icon: Icons.shield_moon,
+        color: Colors.redAccent,
+      );
+    }
+
     if (!snapshot.morningBriefingDone && hour < 12) {
       return const _HomeActionCommand(
         type: _HomeActionType.morningBriefing,
@@ -664,6 +674,11 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
       buttonLabel = '週末ストックへ';
       onPressed = () {
         _nav(context, const StockTasksPage());
+      };
+    } else if (command.type == _HomeActionType.abstinenceGuard) {
+      buttonLabel = '禁欲ガードへ';
+      onPressed = () {
+        _openAbstinenceGuard(context);
       };
     }
 
@@ -1659,6 +1674,8 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                   nextAction.type == _HomeActionType.criticalTasks;
               final highlightStock =
                   nextAction.type == _HomeActionType.stockReview;
+              final highlightAbstinence =
+                  nextAction.type == _HomeActionType.abstinenceGuard;
 
               return FutureBuilder<String?>(
                 future: _aiNudgeFuture,
@@ -1805,10 +1822,14 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                                 Icons.shield_moon,
                                 Colors.redAccent,
                                 () => _openAbstinenceGuard(context),
-                                isHighlighted: opsSnapshot.abstinenceSlipCount > 0,
-                                badgeLabel: opsSnapshot.abstinenceSlipCount > 0
-                                    ? 'WARN'
-                                    : null,
+                                isHighlighted:
+                                    highlightAbstinence ||
+                                    opsSnapshot.abstinenceSlipCount > 0,
+                                badgeLabel: highlightAbstinence
+                                    ? 'NEXT'
+                                    : opsSnapshot.abstinenceSlipCount > 0
+                                        ? 'WARN'
+                                        : null,
                               ),
                               _MenuData(
                                 '断捨離 (デジタル)',
@@ -2422,6 +2443,7 @@ class _MenuData {
 }
 
 enum _HomeActionType {
+  abstinenceGuard,
   morningBriefing,
   balanceCheck,
   criticalTasks,

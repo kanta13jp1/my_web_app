@@ -70,6 +70,34 @@ void main() {
       expect(find.text('モーニング・ブリーフィング（最優先）'), findsOneWidget);
     });
 
+    testWidgets('Feature: HomePage prioritizes abstinence guard when slips exist',
+        (WidgetTester tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await AbstinenceGuardStore.setEnabled(
+        itemId: 'alcohol',
+        isEnabled: true,
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+      await AbstinenceGuardStore.incrementSlip(
+        itemId: 'alcohol',
+        prefs: prefs,
+        now: DateTime(2026, 2, 26),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('逸脱が発生。禁欲ガードを最優先'), findsOneWidget);
+      expect(find.text('禁欲ガードへ'), findsOneWidget);
+      expect(find.text('モーニング・ブリーフィングを先に実施'), findsNothing);
+      expect(find.text('NEXT'), findsWidgets);
+    });
+
     testWidgets('Feature: HomePage prioritizes balance check after briefing',
         (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({
