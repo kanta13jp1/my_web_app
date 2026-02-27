@@ -146,7 +146,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'OpenAI, Gemini, Claude, DeepSeek, Grok...\n世界最高峰の知能（五賢帝）が、あなたの専属役員として\n24時間365日、経営をサポートします。',
+            'GPT・Claude・Geminiを統合したMAGIシステムが、\nあなたの専属役員として\n24時間365日、経営をサポートします。',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey, height: 1.5),
           ),
