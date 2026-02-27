@@ -95,6 +95,12 @@ class _HomePageState extends State<HomePage> {
 
   String get _balanceCheckDoneKey => 'home_balance_check_done_$_todayKey';
 
+  String _morningBriefingDoneKeyFor(DateTime date) =>
+      'home_morning_briefing_done_${DateFormat('yyyy-MM-dd').format(date)}';
+
+  String _balanceCheckDoneKeyFor(DateTime date) =>
+      'home_balance_check_done_${DateFormat('yyyy-MM-dd').format(date)}';
+
   String _aiNudgeCacheKey(_HomeActionType type) =>
       'home_ai_nudge_${_todayKey}_${type.name}';
 
@@ -145,6 +151,7 @@ class _HomePageState extends State<HomePage> {
       prefs: prefs,
       now: _now(),
     );
+    final calendarDays = await _loadCalendarDays(prefs);
 
     return _HomeOpsSnapshot(
       morningBriefingDone: prefs.getBool(_morningBriefingDoneKey) ?? false,
@@ -154,7 +161,51 @@ class _HomePageState extends State<HomePage> {
       abstinenceFocusCount: abstinenceSnapshot.enabledCount,
       abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
       abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
+      calendarDays: calendarDays,
     );
+  }
+
+  Future<List<_HomeCalendarDay>> _loadCalendarDays(
+    SharedPreferences prefs,
+  ) async {
+    final now = _now();
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+    final startOffset = firstDayOfMonth.weekday % 7;
+    final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
+    final endOffset = 6 - (lastDayOfMonth.weekday % 7);
+    final endDay = lastDayOfMonth.add(Duration(days: endOffset));
+
+    final days = <_HomeCalendarDay>[];
+    for (DateTime day = startDay;
+        !day.isAfter(endDay);
+        day = day.add(const Duration(days: 1))) {
+      final abstinence = await AbstinenceGuardStore.loadSnapshot(
+        prefs: prefs,
+        now: day,
+      );
+      final isCurrentMonth = day.month == now.month;
+      final isToday =
+          day.year == now.year && day.month == now.month && day.day == now.day;
+      final morningDone = prefs.getBool(_morningBriefingDoneKeyFor(day)) ?? false;
+      final balanceDone = prefs.getBool(_balanceCheckDoneKeyFor(day)) ?? false;
+      final hasProtection = abstinence.enabledCount > 0;
+      final hasSlip = abstinence.totalSlipCount > 0;
+
+      days.add(
+        _HomeCalendarDay(
+          date: day,
+          isCurrentMonth: isCurrentMonth,
+          isToday: isToday,
+          morningDone: morningDone,
+          balanceDone: balanceDone,
+          hasAbstinenceProtection: hasProtection,
+          hasAbstinenceSlip: hasSlip,
+          isSaturday: day.weekday == DateTime.saturday,
+        ),
+      );
+    }
+    return days;
   }
 
   Future<void> _markMorningBriefingDone() async {
@@ -610,6 +661,202 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
     );
   }
 
+  Widget _buildCalendarPanel(
+    BuildContext context,
+    _HomeOpsSnapshot snapshot,
+  ) {
+    final now = _now();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentMonthLabel = DateFormat('yyyy年M月').format(now);
+    const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    final recentDays = snapshot.calendarDays
+        .where((day) => !day.date.isAfter(now) && day.isCurrentMonth)
+        .toList();
+    final morningDoneCount =
+        recentDays.where((day) => day.morningDone).length;
+    final balanceDoneCount =
+        recentDays.where((day) => day.balanceDone).length;
+    final cleanDaysCount = recentDays
+        .where((day) => day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
+        .length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? const [Color(0xFF111827), Color(0xFF172033)]
+              : const [Color(0xFFFFFFFF), Color(0xFFF6FAFF)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.blueGrey.withValues(alpha: isDark ? 0.3 : 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calendar_month, color: Colors.blueGrey),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '継続カレンダー $currentMonthLabel',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '朝の固定、残高確認、禁欲の安定を月単位で見る。',
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusPill(
+                label: '朝固定',
+                value: '$morningDoneCount日',
+                color: Colors.amber,
+              ),
+              _buildStatusPill(
+                label: '残高確認',
+                value: '$balanceDoneCount日',
+                color: Colors.green,
+              ),
+              _buildStatusPill(
+                label: '禁欲安定',
+                value: '$cleanDaysCount日',
+                color: Colors.redAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: weekLabels.map((label) {
+              return Expanded(
+                child: Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.blueGrey.shade500,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              mainAxisExtent: 62,
+            ),
+            itemCount: snapshot.calendarDays.length,
+            itemBuilder: (context, index) {
+              final day = snapshot.calendarDays[index];
+              final baseColor = day.hasAbstinenceSlip
+                  ? Colors.orange
+                  : day.morningDone && day.balanceDone
+                      ? Colors.green
+                      : day.morningDone || day.balanceDone
+                          ? Colors.blueGrey
+                          : Colors.transparent;
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: day.isCurrentMonth
+                      ? baseColor.withValues(alpha: baseColor == Colors.transparent ? 0 : 0.12)
+                      : Colors.blueGrey.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: day.isToday
+                        ? Colors.blue.shade400
+                        : day.isCurrentMonth
+                            ? Colors.blueGrey.withValues(alpha: 0.14)
+                            : Colors.transparent,
+                    width: day.isToday ? 1.6 : 1,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${day.date.day}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: day.isCurrentMonth
+                              ? (isDark ? Colors.white : Colors.black87)
+                              : Colors.blueGrey.shade300,
+                        ),
+                      ),
+                      const Spacer(),
+                      Wrap(
+                        spacing: 3,
+                        runSpacing: 3,
+                        children: [
+                          if (day.morningDone)
+                            _buildCalendarDot(Colors.amber),
+                          if (day.balanceDone)
+                            _buildCalendarDot(Colors.green),
+                          if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
+                            _buildCalendarDot(Colors.redAccent),
+                          if (day.hasAbstinenceSlip)
+                            _buildCalendarDot(Colors.orange),
+                          if (day.isSaturday) _buildCalendarDot(Colors.teal),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          const Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              _CalendarLegend(color: Colors.amber, label: '朝'),
+              _CalendarLegend(color: Colors.green, label: '残高'),
+              _CalendarLegend(color: Colors.redAccent, label: '禁欲安定'),
+              _CalendarLegend(color: Colors.orange, label: '逸脱'),
+              _CalendarLegend(color: Colors.teal, label: '土曜'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarDot(Color color) {
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
   Widget _buildStatusPill({
     required String label,
     required String value,
@@ -808,7 +1055,19 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
                               Icons.show_chart,
                               Colors.purple,
                             ),
-                            _buildKpiSummary(context, isDark, isCompact),
+                            _buildKpiSummary(
+                              context,
+                              isDark,
+                              isCompact,
+                              opsSnapshot,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'OPERATIONS CALENDAR',
+                              Icons.calendar_month,
+                              Colors.blueGrey,
+                            ),
+                            _buildCalendarPanel(context, opsSnapshot),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'SPECIAL PROJECT',
@@ -1276,7 +1535,12 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
   }
 
   // KPIサマリー
-  Widget _buildKpiSummary(BuildContext context, bool isDark, bool isCompact) {
+  Widget _buildKpiSummary(
+    BuildContext context,
+    bool isDark,
+    bool isCompact,
+    _HomeOpsSnapshot snapshot,
+  ) {
     return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -1300,26 +1564,26 @@ pending_critical_tasks: ${snapshot.pendingCriticalTaskCount}
         _buildKpiCard(
           context,
           isDark,
-          '睡眠時間 (CHO)',
-          '7h 30m',
-          Icons.bedtime,
-          Colors.blue,
+          '禁欲フォーカス',
+          '${snapshot.abstinenceFocusCount}件',
+          Icons.shield_moon,
+          Colors.redAccent,
         ),
         _buildKpiCard(
           context,
           isDark,
-          '訪問者数 (CMO)',
-          '8,123',
-          Icons.people,
-          Colors.pink,
+          '必須タスク残',
+          '${snapshot.pendingCriticalTaskCount}件',
+          Icons.lock_clock,
+          Colors.indigo,
         ),
         _buildKpiCard(
           context,
           isDark,
-          '新規メモ (CKO)',
-          '3件',
-          Icons.note_add,
-          Colors.orange,
+          '週末ストック残',
+          '${snapshot.pendingStockTaskCount}件',
+          Icons.inventory_2,
+          Colors.teal,
         ),
       ],
     );
@@ -1536,6 +1800,7 @@ class _HomeOpsSnapshot {
   final int abstinenceFocusCount;
   final int abstinenceSlipCount;
   final List<String> abstinenceTopLabels;
+  final List<_HomeCalendarDay> calendarDays;
 
   const _HomeOpsSnapshot({
     this.morningBriefingDone = false,
@@ -1545,5 +1810,64 @@ class _HomeOpsSnapshot {
     this.abstinenceFocusCount = 0,
     this.abstinenceSlipCount = 0,
     this.abstinenceTopLabels = const [],
+    this.calendarDays = const [],
   });
+}
+
+class _HomeCalendarDay {
+  final DateTime date;
+  final bool isCurrentMonth;
+  final bool isToday;
+  final bool morningDone;
+  final bool balanceDone;
+  final bool hasAbstinenceProtection;
+  final bool hasAbstinenceSlip;
+  final bool isSaturday;
+
+  const _HomeCalendarDay({
+    required this.date,
+    required this.isCurrentMonth,
+    required this.isToday,
+    required this.morningDone,
+    required this.balanceDone,
+    required this.hasAbstinenceProtection,
+    required this.hasAbstinenceSlip,
+    required this.isSaturday,
+  });
+}
+
+class _CalendarLegend extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _CalendarLegend({
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.blueGrey.shade700,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
 }

@@ -51,6 +51,7 @@ void main() {
       expect(find.text('やらないことガード'), findsOneWidget);
       expect(find.text('CEO OFFICE'), findsOneWidget);
       expect(find.text('CSO OFFICE'), findsOneWidget);
+      expect(find.text('OPERATIONS CALENDAR'), findsOneWidget);
     });
 
     testWidgets('Feature: HomePage prioritizes morning briefing before noon',
