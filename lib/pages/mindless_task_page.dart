@@ -68,6 +68,10 @@ class _TodoFlowNodeData {
   });
 }
 
+const double _todoFlowNodeWidth = 268.0;
+const double _todoFlowNodeAnchorY = 44.0;
+const double _todoFlowNoteOffsetX = _todoFlowNodeWidth + 18.0;
+
 class _TodoFlowPainter extends CustomPainter {
   final List<_TodoFlowNodeData> nodes;
   final Set<String> links;
@@ -94,8 +98,11 @@ class _TodoFlowPainter extends CustomPainter {
       final to = nodeLookup[parts[1]];
       if (from == null || to == null) continue;
 
-      final start = Offset(from.position.dx + 220, from.position.dy + 36);
-      final end = Offset(to.position.dx, to.position.dy + 36);
+      final start = Offset(
+        from.position.dx + _todoFlowNodeWidth,
+        from.position.dy + _todoFlowNodeAnchorY,
+      );
+      final end = Offset(to.position.dx, to.position.dy + _todoFlowNodeAnchorY);
       final controlDx = math.max(48, (end.dx - start.dx).abs() * 0.35);
       final path = Path()
         ..moveTo(start.dx, start.dy)
@@ -192,6 +199,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   bool _phoneShieldEnabled = true;
   TaskPriority _defaultTaskPriority = TaskPriority.c;
   bool _showFlowTodoMap = false;
+  bool _todoFlowImmersiveMode = false;
   Map<String, Offset> _todoFlowPositions = <String, Offset>{};
   Set<String> _todoFlowLinks = <String>{};
   Map<String, String> _todoFlowNotes = <String, String>{};
@@ -541,8 +549,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     int branchIndex,
     int itemIndex,
   ) {
-    const columnSpacing = 340.0;
-    const rowSpacing = 132.0;
+    const columnSpacing = 392.0;
+    const rowSpacing = 156.0;
     final baseX = 80 + (branchIndex * columnSpacing);
     final baseY = 80 + (itemIndex * rowSpacing);
     return Offset(baseX, baseY);
@@ -2414,6 +2422,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             onSelected: (_) {
               setState(() {
                 _showFlowTodoMap = false;
+                _todoFlowImmersiveMode = false;
               });
             },
           ),
@@ -2438,8 +2447,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
@@ -2475,39 +2484,66 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               ),
             )
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final log in logs.take(5))
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${DateFormat('HH:mm').format(log.completedAt)} ${log.title}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final log in logs.take(5))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.indigo.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${DateFormat('HH:mm').format(log.completedAt)} ${log.title}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                if (logs.length > 5)
-                  Text(
-                    '他 ${logs.length - 5} 件',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
+                  if (logs.length > 5)
+                    Text(
+                      '他 ${logs.length - 5} 件',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTodoFlowStatPill({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        '$label $value',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }
@@ -2555,13 +2591,13 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     final maxY = nodes.isEmpty
         ? 700.0
         : nodes.map((node) => node.position.dy).reduce(math.max);
-    final canvasWidth = math.max(1200.0, maxX + 420);
-    final canvasHeight = math.max(900.0, maxY + 260);
+    final canvasWidth = math.max(1480.0, maxX + 520);
+    final canvasHeight = math.max(960.0, maxY + 320);
     final pendingCount =
         _allTasks.where((task) => task['is_completed'] != true).length;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFF),
         borderRadius: BorderRadius.circular(16),
@@ -2570,140 +2606,164 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 110),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.hub, color: Colors.indigo.shade400),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'フローチャートToDo',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                    Icon(Icons.hub, color: Colors.indigo.shade400),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'フローチャートToDo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _resetTodoFlowLayout,
-                          icon: const Icon(Icons.auto_fix_high, size: 16),
-                          label: const Text('自動整列'),
-                        ),
-                      ],
+                    FilledButton.tonalIcon(
+                      onPressed: () {
+                        setState(() {
+                          _todoFlowImmersiveMode = !_todoFlowImmersiveMode;
+                        });
+                      },
+                      icon: Icon(
+                        _todoFlowImmersiveMode
+                            ? Icons.close_fullscreen
+                            : Icons.open_in_full,
+                        size: 18,
+                      ),
+                      label: Text(
+                        _todoFlowImmersiveMode ? '通常表示' : '広く表示',
+                      ),
                     ),
-                    _buildDailyOverviewPreview(),
                   ],
                 ),
-              ),
+                const SizedBox(height: 6),
+                Text(
+                  _todoFlowImmersiveMode
+                      ? 'フローチャートに集中できるよう、上部パネルを折りたたんでいます。'
+                      : 'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildTodoFlowStatPill(
+                      label: '残り',
+                      value: '$pendingCount 件',
+                      color: Colors.redAccent,
+                    ),
+                    _buildTodoFlowStatPill(
+                      label: '完了',
+                      value: '$_completedTasksToday 件',
+                      color: Colors.green,
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _resetTodoFlowLayout,
+                      icon: const Icon(Icons.auto_fix_high, size: 16),
+                      label: const Text('自動整列'),
+                    ),
+                  ],
+                ),
+                _buildDailyOverviewPreview(),
+              ],
             ),
           ),
           const Divider(height: 1),
           Expanded(
-            child: InteractiveViewer(
-              constrained: false,
-              boundaryMargin: const EdgeInsets.all(80),
-              minScale: 0.3,
-              maxScale: 2.2,
-              child: SizedBox(
-                width: canvasWidth,
-                height: canvasHeight,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _TodoFlowPainter(
-                          nodes: nodes,
-                          links: _todoFlowLinks,
-                        ),
-                      ),
-                    ),
-                    for (final node in nodes)
-                      Positioned(
-                        left: node.position.dx,
-                        top: node.position.dy,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            final nextPosition = Offset(
-                              (node.position.dx + details.delta.dx)
-                                  .clamp(0.0, canvasWidth - 260),
-                              (node.position.dy + details.delta.dy)
-                                  .clamp(0.0, canvasHeight - 180),
-                            );
-                            setState(() {
-                              _todoFlowPositions[node.id] = nextPosition;
-                            });
-                          },
-                          onPanEnd: (_) {
-                            _persistTodoFlowState();
-                          },
-                          child: _buildTodoFlowNode(
-                            node,
-                            onEdit: () {
-                              final task = tasks.firstWhere(
-                                (task) => _taskFlowId(task) == node.id,
-                              );
-                              _showTodoFlowNodeEditor(task);
-                            },
+            child: Container(
+              color: const Color(0xFFFDFEFF),
+              child: InteractiveViewer(
+                constrained: false,
+                boundaryMargin: const EdgeInsets.all(120),
+                minScale: 0.45,
+                maxScale: 2.4,
+                child: SizedBox(
+                  width: canvasWidth,
+                  height: canvasHeight,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _TodoFlowPainter(
+                            nodes: nodes,
+                            links: _todoFlowLinks,
                           ),
                         ),
                       ),
-                    for (final node in nodes)
-                      if (node.note != null && node.note!.isNotEmpty)
+                      for (final node in nodes)
                         Positioned(
-                          left: node.position.dx + 236,
-                          top: node.position.dy + 8,
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 220),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.amber.withValues(alpha: 0.25),
-                              ),
-                            ),
-                            child: Text(
-                              node.note!,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.brown.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          left: node.position.dx,
+                          top: node.position.dy,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              final nextPosition = Offset(
+                                (node.position.dx + details.delta.dx).clamp(
+                                  0.0,
+                                  canvasWidth - (_todoFlowNodeWidth + 32),
+                                ),
+                                (node.position.dy + details.delta.dy).clamp(
+                                  0.0,
+                                  canvasHeight - 150,
+                                ),
+                              );
+                              setState(() {
+                                _todoFlowPositions[node.id] = nextPosition;
+                              });
+                            },
+                            onPanEnd: (_) {
+                              _persistTodoFlowState();
+                            },
+                            child: _buildTodoFlowNode(
+                              node,
+                              onEdit: () {
+                                final task = tasks.firstWhere(
+                                  (task) => _taskFlowId(task) == node.id,
+                                );
+                                _showTodoFlowNodeEditor(task);
+                              },
                             ),
                           ),
                         ),
-                  ],
+                      for (final node in nodes)
+                        if (node.note != null && node.note!.isNotEmpty)
+                          Positioned(
+                            left: node.position.dx + _todoFlowNoteOffsetX,
+                            top: node.position.dy + 10,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 240),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Text(
+                                node.note!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.brown.shade700,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -2725,17 +2785,20 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return Opacity(
       opacity: node.isDimmed ? 0.72 : 1,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        constraints: const BoxConstraints(
+          minWidth: 240,
+          maxWidth: _todoFlowNodeWidth,
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: node.color.withValues(alpha: 0.28)),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: node.color.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: node.color.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: node.color.withValues(alpha: 0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -2744,19 +2807,19 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: node.color.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 node.icon,
-                size: 16,
+                size: 18,
                 color: node.color,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2766,15 +2829,15 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     node.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                   ),
                   if (node.subtitle != null && node.subtitle!.isNotEmpty) ...[
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       node.subtitle!,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.grey.shade700,
                       ),
                     ),
@@ -2784,10 +2847,15 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             ),
             IconButton(
               tooltip: '接続とメモを編集',
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints.tightFor(
+                width: 32,
+                height: 32,
+              ),
               onPressed: onEdit,
               icon: Icon(
                 Icons.edit_outlined,
-                size: 16,
+                size: 18,
                 color: node.color,
               ),
             ),
@@ -3164,14 +3232,20 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               ],
             ),
           ),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.38,
+          if (!_showFlowTodoMap || !_todoFlowImmersiveMode)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: _showFlowTodoMap
+                    ? math.min(
+                        MediaQuery.of(context).size.height * 0.22,
+                        180,
+                      )
+                    : MediaQuery.of(context).size.height * 0.38,
+              ),
+              child: SingleChildScrollView(
+                child: _buildTimeboxPanel(),
+              ),
             ),
-            child: SingleChildScrollView(
-              child: _buildTimeboxPanel(),
-            ),
-          ),
           _buildTodoViewToggle(),
 
           // タイムライン
