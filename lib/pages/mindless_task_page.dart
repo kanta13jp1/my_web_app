@@ -117,6 +117,49 @@ class _TodoFlowPainter extends CustomPainter {
   }
 }
 
+class _TaskCompletionLog {
+  final String taskId;
+  final String title;
+  final int hourSlot;
+  final DateTime completedAt;
+
+  const _TaskCompletionLog({
+    required this.taskId,
+    required this.title,
+    required this.hourSlot,
+    required this.completedAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'task_id': taskId,
+      'title': title,
+      'hour_slot': hourSlot,
+      'completed_at': completedAt.toIso8601String(),
+    };
+  }
+
+  static _TaskCompletionLog? fromJson(String taskId, dynamic value) {
+    if (value is! Map) return null;
+
+    final title = value['title']?.toString();
+    final hourSlot = (value['hour_slot'] as num?)?.toInt();
+    final completedAtRaw = value['completed_at']?.toString();
+    final completedAt =
+        completedAtRaw == null ? null : DateTime.tryParse(completedAtRaw);
+    if (title == null || hourSlot == null || completedAt == null) {
+      return null;
+    }
+
+    return _TaskCompletionLog(
+      taskId: taskId,
+      title: title,
+      hourSlot: hourSlot,
+      completedAt: completedAt,
+    );
+  }
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -153,6 +196,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   Set<String> _todoFlowLinks = <String>{};
   Map<String, String> _todoFlowNotes = <String, String>{};
   String? _loadedTodoFlowDateKey;
+  Map<String, _TaskCompletionLog> _dailyCompletionLogs =
+      <String, _TaskCompletionLog>{};
+  String? _loadedCompletionLogDateKey;
   List<String> _defenseCheckTargets = List<String>.from(
     _defaultDefenseCheckTargets,
   );
@@ -265,6 +311,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         _isLoading = true;
         _loadedDefenseCheckDateKey = null;
         _loadedTodoFlowDateKey = null;
+        _loadedCompletionLogDateKey = null;
       });
       _loadTasks();
     }
@@ -302,6 +349,13 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           _isLoading = false;
         });
       }
+      await _ensureDailyCompletionLogsLoaded(
+        validTaskIds: newTasksByHour.values
+            .expand((tasks) => tasks)
+            .map((task) => task['id']?.toString())
+            .whereType<String>()
+            .toSet(),
+      );
     } catch (e) {
       debugPrint('Error: $e');
       if (mounted) setState(() => _isLoading = false);
@@ -773,6 +827,220 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
 
     noteController.dispose();
+  }
+
+  String _completionLogPrefsKey(String userId, DateTime date) =>
+      'mindless_completion_logs_${_formatDateKey(date)}_$userId';
+
+  Future<void> _persistDailyCompletionLogs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final payload = <String, Map<String, dynamic>>{
+      for (final entry in _dailyCompletionLogs.entries)
+        entry.key: entry.value.toJson(),
+    };
+    await prefs.setString(
+      _completionLogPrefsKey(userId, _selectedDate),
+      jsonEncode(payload),
+    );
+  }
+
+  Future<void> _ensureDailyCompletionLogsLoaded({
+    Set<String>? validTaskIds,
+  }) async {
+    final dateKey = _formatDateKey(_selectedDate);
+    final shouldReload = _loadedCompletionLogDateKey != dateKey;
+    if (!shouldReload && validTaskIds == null) {
+      return;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    var logs = shouldReload
+        ? <String, _TaskCompletionLog>{}
+        : Map<String, _TaskCompletionLog>.from(_dailyCompletionLogs);
+
+    if (userId != null && shouldReload) {
+      final prefs = await SharedPreferences.getInstance();
+      final raw =
+          prefs.getString(_completionLogPrefsKey(userId, _selectedDate));
+      if (raw != null && raw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map) {
+            final parsed = <String, _TaskCompletionLog>{};
+            for (final entry in decoded.entries) {
+              final parsedLog = _TaskCompletionLog.fromJson(
+                entry.key.toString(),
+                entry.value,
+              );
+              if (parsedLog != null) {
+                parsed[entry.key.toString()] = parsedLog;
+              }
+            }
+            logs = parsed;
+          }
+        } catch (_) {}
+      }
+    }
+
+    var didPrune = false;
+    if (validTaskIds != null) {
+      final beforeCount = logs.length;
+      logs.removeWhere((key, value) => !validTaskIds.contains(key));
+      didPrune = beforeCount != logs.length;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _dailyCompletionLogs = logs;
+      _loadedCompletionLogDateKey = dateKey;
+    });
+
+    if (didPrune) {
+      await _persistDailyCompletionLogs();
+    }
+  }
+
+  List<_TaskCompletionLog> get _dailyCompletionTimeline {
+    final timeline = _dailyCompletionLogs.values.toList()
+      ..sort((a, b) => a.completedAt.compareTo(b.completedAt));
+    return timeline;
+  }
+
+  Future<void> _recordCompletionForTask(
+    int taskId, {
+    required String title,
+    required int hourSlot,
+  }) async {
+    await _ensureDailyCompletionLogsLoaded();
+    if (!mounted) return;
+
+    setState(() {
+      _dailyCompletionLogs['$taskId'] = _TaskCompletionLog(
+        taskId: '$taskId',
+        title: title,
+        hourSlot: hourSlot,
+        completedAt: DateTime.now(),
+      );
+    });
+    await _persistDailyCompletionLogs();
+  }
+
+  Future<void> _removeCompletionForTask(int taskId) async {
+    await _ensureDailyCompletionLogsLoaded();
+    if (!mounted) return;
+
+    if (!_dailyCompletionLogs.containsKey('$taskId')) {
+      return;
+    }
+    setState(() {
+      _dailyCompletionLogs.remove('$taskId');
+    });
+    await _persistDailyCompletionLogs();
+  }
+
+  Future<void> _showDailyCompletionOverviewSheet() async {
+    await _ensureDailyCompletionLogsLoaded(
+      validTaskIds: _allTasks
+          .map((task) => task['id']?.toString())
+          .whereType<String>()
+          .toSet(),
+    );
+    if (!mounted) return;
+
+    final completedLogs = _dailyCompletionTimeline;
+    final pendingTasks =
+        _allTasks.where((task) => task['is_completed'] != true).toList()
+          ..sort(
+            (a, b) => ((a['hour_slot'] as int?) ?? 0).compareTo(
+              (b['hour_slot'] as int?) ?? 0,
+            ),
+          );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '一日の実行ログ俯瞰',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '完了 ${completedLogs.length} 件 / 未完 ${pendingTasks.length} 件',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '完了したタスク',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (completedLogs.isEmpty)
+                    const Text('まだ完了記録はありません。')
+                  else
+                    ...completedLogs.map((log) {
+                      final timeText =
+                          DateFormat('HH:mm').format(log.completedAt);
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading:
+                            const Icon(Icons.check_circle, color: Colors.green),
+                        title: Text(log.title),
+                        subtitle: Text('$timeText 完了 / ${log.hourSlot}:00枠'),
+                      );
+                    }),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'まだ残っているタスク',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (pendingTasks.isEmpty)
+                    const Text('未完了タスクはありません。')
+                  else
+                    ...pendingTasks.take(10).map((task) {
+                      final title =
+                          _stripPriorityTag(task['content'] as String? ?? '');
+                      final hour = (task['hour_slot'] as int?) ?? 0;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.radio_button_unchecked),
+                        title: Text(title),
+                        subtitle: Text('$hour:00枠'),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   List<Map<String, dynamic>> get _allTasks {
@@ -2095,19 +2363,35 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
-  Future<void> _toggleTask(int id, bool currentVal) async {
+  Future<void> _toggleTask(
+    int id,
+    bool currentVal, {
+    required String title,
+    required int hourSlot,
+  }) async {
     // 楽観的UI更新（待たずに切り替え）
     setState(() {
       // ローカルデータを無理やり書き換えるのは複雑なので、今回はロードし直す方式で
     });
+    final nextValue = !currentVal;
     await _supabase
         .from('mindless_tasks')
-        .update({'is_completed': !currentVal}).eq('id', id);
+        .update({'is_completed': nextValue}).eq('id', id);
+    if (nextValue) {
+      await _recordCompletionForTask(
+        id,
+        title: title,
+        hourSlot: hourSlot,
+      );
+    } else {
+      await _removeCompletionForTask(id);
+    }
     _loadTasks();
   }
 
   Future<void> _deleteTask(int id) async {
     await _supabase.from('mindless_tasks').delete().eq('id', id);
+    await _removeCompletionForTask(id);
     _loadTasks();
   }
 
@@ -2144,6 +2428,85 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               _ensureTodoFlowStateLoaded();
             },
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyOverviewPreview() {
+    final logs = _dailyCompletionTimeline;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '一日の実行ログ俯瞰',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _showDailyCompletionOverviewSheet,
+                icon: const Icon(Icons.open_in_full, size: 16),
+                label: const Text('全件表示'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (logs.isEmpty)
+            Text(
+              'まだ完了記録はありません。タスクを完了にすると、ここに時刻つきで残ります。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final log in logs.take(5))
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${DateFormat('HH:mm').format(log.completedAt)} ${log.title}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                if (logs.length > 5)
+                  Text(
+                    '他 ${logs.length - 5} 件',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -2207,53 +2570,59 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 110),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.hub, color: Colors.indigo.shade400),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'フローチャートToDo',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
+                    Row(
+                      children: [
+                        Icon(Icons.hub, color: Colors.indigo.shade400),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'フローチャートToDo',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ),
+                        OutlinedButton.icon(
+                          onPressed: _resetTodoFlowLayout,
+                          icon: const Icon(Icons.auto_fix_high, size: 16),
+                          label: const Text('自動整列'),
+                        ),
+                      ],
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _resetTodoFlowLayout,
-                      icon: const Icon(Icons.auto_fix_high, size: 16),
-                      label: const Text('自動整列'),
-                    ),
+                    _buildDailyOverviewPreview(),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
           const Divider(height: 1),
@@ -2907,7 +3276,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                 _showCompleteCriticalTasksSnackBar();
                                                 return;
                                               }
-                                              _toggleTask(task['id'], isDone);
+                                              _toggleTask(
+                                                task['id'],
+                                                isDone,
+                                                title: displayContent,
+                                                hourSlot: (task['hour_slot']
+                                                        as int?) ??
+                                                    0,
+                                              );
                                             },
                                             child: Container(
                                               padding:

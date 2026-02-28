@@ -488,6 +488,8 @@ void main() {
     await tester.tap(find.text('フローチャート'));
     await tester.pumpAndSettle();
 
+    expect(find.text('一日の実行ログ俯瞰'), findsOneWidget);
+    expect(find.text('全件表示'), findsOneWidget);
     expect(find.text('自動整列'), findsOneWidget);
     expect(find.byIcon(Icons.edit_outlined), findsWidgets);
   });
