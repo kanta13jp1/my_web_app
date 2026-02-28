@@ -466,4 +466,29 @@ void main() {
 
     expect(find.text('メール: 副業用Gmail'), findsOneWidget);
   });
+
+  testWidgets('flowchart nodes show edit controls for manual linking', (
+    WidgetTester tester,
+  ) async {
+    final client = StatefulSupabaseClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: client,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('フローチャート'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('自動整列'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsWidgets);
+  });
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:graphview/GraphView.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,19 +47,74 @@ class _CriticalTaskGuide {
 }
 
 class _TodoFlowNodeData {
+  final String id;
   final String title;
   final String? subtitle;
   final Color color;
   final IconData icon;
   final bool isDimmed;
+  final Offset position;
+  final String? note;
 
   const _TodoFlowNodeData({
+    required this.id,
     required this.title,
     this.subtitle,
     required this.color,
     required this.icon,
     this.isDimmed = false,
+    required this.position,
+    this.note,
   });
+}
+
+class _TodoFlowPainter extends CustomPainter {
+  final List<_TodoFlowNodeData> nodes;
+  final Set<String> links;
+
+  const _TodoFlowPainter({
+    required this.nodes,
+    required this.links,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final nodeLookup = <String, _TodoFlowNodeData>{
+      for (final node in nodes) node.id: node,
+    };
+    final paint = Paint()
+      ..color = Colors.blueGrey.withValues(alpha: 0.45)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    for (final link in links) {
+      final parts = link.split('=>');
+      if (parts.length != 2) continue;
+      final from = nodeLookup[parts[0]];
+      final to = nodeLookup[parts[1]];
+      if (from == null || to == null) continue;
+
+      final start = Offset(from.position.dx + 220, from.position.dy + 36);
+      final end = Offset(to.position.dx, to.position.dy + 36);
+      final controlDx = math.max(48, (end.dx - start.dx).abs() * 0.35);
+      final path = Path()
+        ..moveTo(start.dx, start.dy)
+        ..cubicTo(
+          start.dx + controlDx,
+          start.dy,
+          end.dx - controlDx,
+          end.dy,
+          end.dx,
+          end.dy,
+        );
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TodoFlowPainter oldDelegate) {
+    return oldDelegate.nodes != nodes || oldDelegate.links != links;
+  }
 }
 
 class MindlessTaskPage extends StatefulWidget {
@@ -93,6 +149,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   bool _phoneShieldEnabled = true;
   TaskPriority _defaultTaskPriority = TaskPriority.c;
   bool _showFlowTodoMap = false;
+  Map<String, Offset> _todoFlowPositions = <String, Offset>{};
+  Set<String> _todoFlowLinks = <String>{};
+  Map<String, String> _todoFlowNotes = <String, String>{};
+  String? _loadedTodoFlowDateKey;
   List<String> _defenseCheckTargets = List<String>.from(
     _defaultDefenseCheckTargets,
   );
@@ -203,6 +263,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       setState(() {
         _selectedDate = picked;
         _isLoading = true;
+        _loadedDefenseCheckDateKey = null;
+        _loadedTodoFlowDateKey = null;
       });
       _loadTasks();
     }
@@ -386,6 +448,331 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
     if (result == null) return false;
     return _addDefenseTarget(result);
+  }
+
+  String _taskFlowId(Map<String, dynamic> task) {
+    final rawId = task['id'];
+    if (rawId != null) {
+      return 'task_$rawId';
+    }
+    final hour = (task['hour_slot'] as int?) ?? 0;
+    final content = _stripPriorityTag(task['content'] as String? ?? '');
+    return 'task_${hour}_$content';
+  }
+
+  String _todoFlowPositionsPrefsKey(String userId, DateTime date) =>
+      'mindless_todo_flow_positions_${_formatDateKey(date)}_$userId';
+
+  String _todoFlowLinksPrefsKey(String userId, DateTime date) =>
+      'mindless_todo_flow_links_${_formatDateKey(date)}_$userId';
+
+  String _todoFlowNotesPrefsKey(String userId, DateTime date) =>
+      'mindless_todo_flow_notes_${_formatDateKey(date)}_$userId';
+
+  Set<String> _buildDefaultTodoFlowLinks(List<Map<String, dynamic>> tasks) {
+    final links = <String>{};
+    for (final priority in TaskPriority.values) {
+      final branch = tasks.where((task) {
+        return _parsePriority(task['content'] as String? ?? '') == priority;
+      }).toList();
+      for (var i = 0; i < branch.length - 1; i++) {
+        links.add('${_taskFlowId(branch[i])}=>${_taskFlowId(branch[i + 1])}');
+      }
+    }
+    return links;
+  }
+
+  Offset _defaultTodoFlowPositionForTask(
+    Map<String, dynamic> task,
+    int branchIndex,
+    int itemIndex,
+  ) {
+    const columnSpacing = 340.0;
+    const rowSpacing = 132.0;
+    final baseX = 80 + (branchIndex * columnSpacing);
+    final baseY = 80 + (itemIndex * rowSpacing);
+    return Offset(baseX, baseY);
+  }
+
+  Future<void> _persistTodoFlowState() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final positionsPayload = <String, Map<String, double>>{
+      for (final entry in _todoFlowPositions.entries)
+        entry.key: <String, double>{
+          'x': entry.value.dx,
+          'y': entry.value.dy,
+        },
+    };
+
+    await prefs.setString(
+      _todoFlowPositionsPrefsKey(userId, _selectedDate),
+      jsonEncode(positionsPayload),
+    );
+    await prefs.setStringList(
+      _todoFlowLinksPrefsKey(userId, _selectedDate),
+      _todoFlowLinks.toList(),
+    );
+    await prefs.setString(
+      _todoFlowNotesPrefsKey(userId, _selectedDate),
+      jsonEncode(_todoFlowNotes),
+    );
+  }
+
+  Future<void> _ensureTodoFlowStateLoaded() async {
+    final dateKey = _formatDateKey(_selectedDate);
+    if (_loadedTodoFlowDateKey == dateKey) {
+      return;
+    }
+
+    final tasks = _sortedTasksForFlow;
+    final userId = _supabase.auth.currentUser?.id;
+    final positions = <String, Offset>{};
+    var links = _buildDefaultTodoFlowLinks(tasks);
+    final notes = <String, String>{};
+
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+
+      final positionsRaw = prefs.getString(
+        _todoFlowPositionsPrefsKey(userId, _selectedDate),
+      );
+      if (positionsRaw != null && positionsRaw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(positionsRaw);
+          if (decoded is Map) {
+            for (final entry in decoded.entries) {
+              final value = entry.value;
+              if (value is Map) {
+                final x = (value['x'] as num?)?.toDouble();
+                final y = (value['y'] as num?)?.toDouble();
+                if (x != null && y != null) {
+                  positions[entry.key.toString()] = Offset(x, y);
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      final storedLinks = prefs.getStringList(
+        _todoFlowLinksPrefsKey(userId, _selectedDate),
+      );
+      if (storedLinks != null && storedLinks.isNotEmpty) {
+        links = storedLinks.toSet();
+      }
+
+      final notesRaw = prefs.getString(
+        _todoFlowNotesPrefsKey(userId, _selectedDate),
+      );
+      if (notesRaw != null && notesRaw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(notesRaw);
+          if (decoded is Map) {
+            for (final entry in decoded.entries) {
+              final value = entry.value?.toString().trim();
+              if (value != null && value.isNotEmpty) {
+                notes[entry.key.toString()] = value;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    for (var branchIndex = 0;
+        branchIndex < TaskPriority.values.length;
+        branchIndex++) {
+      final priority = TaskPriority.values[branchIndex];
+      final branchTasks = tasks.where((task) {
+        return _parsePriority(task['content'] as String? ?? '') == priority;
+      }).toList();
+      for (var itemIndex = 0; itemIndex < branchTasks.length; itemIndex++) {
+        final task = branchTasks[itemIndex];
+        final nodeId = _taskFlowId(task);
+        positions.putIfAbsent(
+          nodeId,
+          () => _defaultTodoFlowPositionForTask(task, branchIndex, itemIndex),
+        );
+      }
+    }
+
+    final validIds = tasks.map(_taskFlowId).toSet();
+    positions.removeWhere((key, value) => !validIds.contains(key));
+    links = links.where((link) {
+      final parts = link.split('=>');
+      return parts.length == 2 &&
+          validIds.contains(parts[0]) &&
+          validIds.contains(parts[1]);
+    }).toSet();
+    notes.removeWhere((key, value) => !validIds.contains(key));
+
+    if (!mounted) return;
+    setState(() {
+      _todoFlowPositions = positions;
+      _todoFlowLinks = links;
+      _todoFlowNotes = notes;
+      _loadedTodoFlowDateKey = dateKey;
+    });
+  }
+
+  Future<void> _resetTodoFlowLayout() async {
+    final tasks = _sortedTasksForFlow;
+    final nextPositions = <String, Offset>{};
+
+    for (var branchIndex = 0;
+        branchIndex < TaskPriority.values.length;
+        branchIndex++) {
+      final priority = TaskPriority.values[branchIndex];
+      final branchTasks = tasks.where((task) {
+        return _parsePriority(task['content'] as String? ?? '') == priority;
+      }).toList();
+      for (var itemIndex = 0; itemIndex < branchTasks.length; itemIndex++) {
+        final task = branchTasks[itemIndex];
+        nextPositions[_taskFlowId(task)] = _defaultTodoFlowPositionForTask(
+          task,
+          branchIndex,
+          itemIndex,
+        );
+      }
+    }
+
+    setState(() {
+      _todoFlowPositions = nextPositions;
+      _todoFlowLinks = _buildDefaultTodoFlowLinks(tasks);
+    });
+    await _persistTodoFlowState();
+  }
+
+  Future<void> _showTodoFlowNodeEditor(Map<String, dynamic> task) async {
+    await _ensureTodoFlowStateLoaded();
+    if (!mounted) return;
+
+    final nodeId = _taskFlowId(task);
+    final noteController =
+        TextEditingController(text: _todoFlowNotes[nodeId] ?? '');
+    final availableTargets = _sortedTasksForFlow
+        .where((candidate) => _taskFlowId(candidate) != nodeId)
+        .toList();
+    final selectedTargets = _todoFlowLinks
+        .where((link) => link.startsWith('$nodeId=>'))
+        .map((link) => link.split('=>').last)
+        .toSet();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  24 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '「${_stripPriorityTag(task['content'] as String? ?? '')}」の接続編集',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: noteController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: '枝メモ',
+                          hintText: '例: ここは当日中に処理。別紙メモ参照。',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'このノードからつなぐ先',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (availableTargets.isEmpty)
+                        const Text('接続先にできる他タスクはありません。')
+                      else
+                        ...availableTargets.map((candidate) {
+                          final candidateId = _taskFlowId(candidate);
+                          final candidateTitle = _stripPriorityTag(
+                            candidate['content'] as String? ?? '',
+                          );
+                          return CheckboxListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            value: selectedTargets.contains(candidateId),
+                            onChanged: (value) {
+                              setModalState(() {
+                                if (value == true) {
+                                  selectedTargets.add(candidateId);
+                                } else {
+                                  selectedTargets.remove(candidateId);
+                                }
+                              });
+                            },
+                            title: Text(candidateTitle),
+                          );
+                        }),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () async {
+                            final nextNote = noteController.text.trim();
+                            final nextLinks = _todoFlowLinks
+                                .where((link) => !link.startsWith('$nodeId=>'))
+                                .toSet();
+                            for (final targetId in selectedTargets) {
+                              nextLinks.add('$nodeId=>$targetId');
+                            }
+
+                            if (!mounted) return;
+                            setState(() {
+                              _todoFlowLinks = nextLinks;
+                              if (nextNote.isEmpty) {
+                                _todoFlowNotes.remove(nodeId);
+                              } else {
+                                _todoFlowNotes[nodeId] = nextNote;
+                              }
+                            });
+                            await _persistTodoFlowState();
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Text('保存'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    noteController.dispose();
   }
 
   List<Map<String, dynamic>> get _allTasks {
@@ -1754,6 +2141,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               setState(() {
                 _showFlowTodoMap = true;
               });
+              _ensureTodoFlowStateLoaded();
             },
           ),
         ],
@@ -1776,82 +2164,38 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         ),
       );
     }
-
-    final graph = Graph()..isTree = true;
-    final algorithmConfig = BuchheimWalkerConfiguration()
-      ..siblingSeparation = 36
-      ..levelSeparation = 96
-      ..subtreeSeparation = 84
-      ..orientation = BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT;
-
+    final tasks = _sortedTasksForFlow;
+    final nodes = <_TodoFlowNodeData>[
+      for (final task in tasks)
+        _TodoFlowNodeData(
+          id: _taskFlowId(task),
+          title: _stripPriorityTag(task['content'] as String? ?? ''),
+          subtitle:
+              '${(task['hour_slot'] as int?) ?? 0}:00 ${task['is_completed'] == true ? '完了済み' : '未完了'}',
+          color: task['is_completed'] == true
+              ? Colors.green
+              : _priorityColor(
+                  _parsePriority(task['content'] as String? ?? ''),
+                ),
+          icon: task['is_completed'] == true
+              ? Icons.check_circle
+              : Icons.radio_button_unchecked,
+          isDimmed: task['is_completed'] == true,
+          position:
+              _todoFlowPositions[_taskFlowId(task)] ?? const Offset(80, 80),
+          note: _todoFlowNotes[_taskFlowId(task)],
+        ),
+    ];
+    final maxX = nodes.isEmpty
+        ? 900.0
+        : nodes.map((node) => node.position.dx).reduce(math.max);
+    final maxY = nodes.isEmpty
+        ? 700.0
+        : nodes.map((node) => node.position.dy).reduce(math.max);
+    final canvasWidth = math.max(1200.0, maxX + 420);
+    final canvasHeight = math.max(900.0, maxY + 260);
     final pendingCount =
         _allTasks.where((task) => task['is_completed'] != true).length;
-    final root = Node.Id(
-      _TodoFlowNodeData(
-        title: '今日の導線',
-        subtitle: '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
-        color: Colors.indigo,
-        icon: Icons.alt_route,
-      ),
-    );
-    graph.addNode(root);
-
-    for (final priority in TaskPriority.values) {
-      final priorityTasks = _sortedTasksForFlow.where((task) {
-        final rawContent = task['content'] as String? ?? '';
-        return _parsePriority(rawContent) == priority;
-      }).toList();
-
-      if (priorityTasks.isEmpty) continue;
-
-      final priorityColor = _priorityColor(priority);
-      final priorityNode = Node.Id(
-        _TodoFlowNodeData(
-          title: '${_priorityLabel(priority)}導線',
-          subtitle:
-              '${priorityTasks.where((task) => task['is_completed'] != true).length} 件が未完了',
-          color: priorityColor,
-          icon: Icons.account_tree_outlined,
-        ),
-      );
-      graph.addEdge(root, priorityNode);
-
-      var previousNode = priorityNode;
-      final visibleTasks = priorityTasks.take(6).toList();
-      for (final task in visibleTasks) {
-        final isDone = task['is_completed'] == true;
-        final displayContent =
-            _stripPriorityTag(task['content'] as String? ?? '');
-        final hour = (task['hour_slot'] as int?) ?? 0;
-        final taskNode = Node.Id(
-          _TodoFlowNodeData(
-            title: displayContent,
-            subtitle: '$hour:00 ${isDone ? '完了済み' : '未完了'}',
-            color: isDone ? Colors.green : priorityColor,
-            icon: isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-            isDimmed: isDone,
-          ),
-        );
-        graph.addEdge(previousNode, taskNode);
-        previousNode = taskNode;
-      }
-
-      final hiddenCount = priorityTasks.length - visibleTasks.length;
-      if (hiddenCount > 0) {
-        graph.addEdge(
-          previousNode,
-          Node.Id(
-            _TodoFlowNodeData(
-              title: '他 $hiddenCount 件',
-              subtitle: 'この優先度に未表示のタスクあり',
-              color: Colors.blueGrey,
-              icon: Icons.more_horiz,
-              isDimmed: true,
-            ),
-          ),
-        );
-      }
-    }
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -1884,11 +2228,30 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'A/B/C の枝ごとに分け、左から順に処理する流れで見られます。',
+                  'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _resetTodoFlowLayout,
+                      icon: const Icon(Icons.auto_fix_high, size: 16),
+                      label: const Text('自動整列'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1900,21 +2263,78 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               boundaryMargin: const EdgeInsets.all(80),
               minScale: 0.3,
               maxScale: 2.2,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: GraphView(
-                  graph: graph,
-                  algorithm: BuchheimWalkerAlgorithm(
-                    algorithmConfig,
-                    TreeEdgeRenderer(algorithmConfig),
-                  ),
-                  builder: (Node node) {
-                    final value = node.key?.value;
-                    if (value is! _TodoFlowNodeData) {
-                      return const SizedBox.shrink();
-                    }
-                    return _buildTodoFlowNode(value);
-                  },
+              child: SizedBox(
+                width: canvasWidth,
+                height: canvasHeight,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _TodoFlowPainter(
+                          nodes: nodes,
+                          links: _todoFlowLinks,
+                        ),
+                      ),
+                    ),
+                    for (final node in nodes)
+                      Positioned(
+                        left: node.position.dx,
+                        top: node.position.dy,
+                        child: GestureDetector(
+                          onPanUpdate: (details) {
+                            final nextPosition = Offset(
+                              (node.position.dx + details.delta.dx)
+                                  .clamp(0.0, canvasWidth - 260),
+                              (node.position.dy + details.delta.dy)
+                                  .clamp(0.0, canvasHeight - 180),
+                            );
+                            setState(() {
+                              _todoFlowPositions[node.id] = nextPosition;
+                            });
+                          },
+                          onPanEnd: (_) {
+                            _persistTodoFlowState();
+                          },
+                          child: _buildTodoFlowNode(
+                            node,
+                            onEdit: () {
+                              final task = tasks.firstWhere(
+                                (task) => _taskFlowId(task) == node.id,
+                              );
+                              _showTodoFlowNodeEditor(task);
+                            },
+                          ),
+                        ),
+                      ),
+                    for (final node in nodes)
+                      if (node.note != null && node.note!.isNotEmpty)
+                        Positioned(
+                          left: node.position.dx + 236,
+                          top: node.position.dy + 8,
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 220),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.amber.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Text(
+                              node.note!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.brown.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                  ],
                 ),
               ),
             ),
@@ -1924,7 +2344,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
   }
 
-  Widget _buildTodoFlowNode(_TodoFlowNodeData node) {
+  Widget _buildTodoFlowNode(
+    _TodoFlowNodeData node, {
+    required VoidCallback onEdit,
+  }) {
     final backgroundColor = Color.alphaBlend(
       Colors.white.withValues(alpha: node.isDimmed ? 0.7 : 0.92),
       node.color.withValues(alpha: node.isDimmed ? 0.08 : 0.14),
@@ -1934,7 +2357,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       opacity: node.isDimmed ? 0.72 : 1,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(18),
@@ -1988,6 +2411,15 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     ),
                   ],
                 ],
+              ),
+            ),
+            IconButton(
+              tooltip: '接続とメモを編集',
+              onPressed: onEdit,
+              icon: Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: node.color,
               ),
             ),
           ],
