@@ -79,8 +79,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
   static const int _dailyTaskTarget = 100;
   static const int _batchTaskCount = 5;
-  static const String _defenseCheckTemplateLabel =
-      '朝10分の防衛チェック（不審リンク/請求/認証）';
+  static const String _defenseCheckTemplateLabel = '朝10分の防衛チェック（不審リンク/請求/認証）';
   static const List<_PhoneDetoxAction> _phoneDetoxActions = [
     _PhoneDetoxAction(label: '朝に触らない', priority: TaskPriority.a),
     _PhoneDetoxAction(label: '仕事に没頭する', priority: TaskPriority.a),
@@ -368,7 +367,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   int get _criticalCompletedCount {
     return _allTasks
-        .where((task) => _isCriticalTaskRow(task) && task['is_completed'] == true)
+        .where(
+          (task) => _isCriticalTaskRow(task) && task['is_completed'] == true,
+        )
         .length;
   }
 
@@ -383,7 +384,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   List<String> get _pendingCriticalTitles {
     return _allTasks
-        .where((task) => _isCriticalTaskRow(task) && task['is_completed'] != true)
+        .where(
+          (task) => _isCriticalTaskRow(task) && task['is_completed'] != true,
+        )
         .map((task) => _stripPriorityTag(task['content'] as String? ?? ''))
         .toList();
   }
@@ -452,11 +455,15 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return value.clamp(0, 1);
   }
 
+  void _showCompleteCriticalTasksSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('先に必須タスクを完了してください。')),
+    );
+  }
+
   bool _canStartOptionalFlow() {
     if (_isCriticalLockActive) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('先に必須タスクを完了してください。')),
-      );
+      _showCompleteCriticalTasksSnackBar();
       return false;
     }
     return true;
@@ -472,9 +479,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         .select('content')
         .eq('user_id', userId)
         .eq('task_date', dateStr);
-    final existingRows = existingRowsRaw is List
-        ? existingRowsRaw
-        : const <dynamic>[];
+    final existingRows =
+        existingRowsRaw is List ? existingRowsRaw : const <dynamic>[];
 
     final existingDetoxTitles = existingRows
         .whereType<Map<String, dynamic>>()
@@ -495,7 +501,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         'user_id': userId,
         'task_date': dateStr,
         'hour_slot': hourSlot,
-        'content': '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
+        'content':
+            '${_priorityTag(action.priority)} ${_detoxTaskTitle(action)}',
         'is_completed': false,
       };
     }).toList();
@@ -549,7 +556,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           'user_id': userId,
           'task_date': dateStr,
           'hour_slot': nowHour,
-          'content': '${_priorityTag(template.priority)} ${_criticalTaskTitle(template)}',
+          'content':
+              '${_priorityTag(template.priority)} ${_criticalTaskTitle(template)}',
           'is_completed': false,
         };
       }).toList();
@@ -953,6 +961,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   Future<void> _addTask(int hour) async {
+    if (_isCriticalLockActive) {
+      _showCompleteCriticalTasksSnackBar();
+      return;
+    }
+
     final controller = TextEditingController();
     TaskPriority selectedPriority = _defaultTaskPriority;
     final result = await showDialog<String>(
@@ -1125,7 +1138,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         : _isCriticalLockActive
             ? 'ロック中: 残り$_criticalRemainingCount件'
             : 'ロック解除: 必須タスク完了';
-    final progress = total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0).toDouble();
+    final progress =
+        total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0).toDouble();
 
     return Container(
       width: double.infinity,
@@ -1134,7 +1148,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: _isCriticalLockActive ? Colors.red.shade300 : Colors.green.shade300,
+          color: _isCriticalLockActive
+              ? Colors.red.shade300
+              : Colors.green.shade300,
         ),
       ),
       child: Column(
@@ -1241,7 +1257,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: _isTimeboxRunning ? null : _startCriticalFocusSprint,
+                  onPressed:
+                      _isTimeboxRunning ? null : _startCriticalFocusSprint,
                   icon: const Icon(Icons.gpp_good),
                   label: const Text('必須25分集中'),
                 ),
@@ -1811,7 +1828,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                         child: Text(
                                           '＋ タスクを追加',
                                           style: TextStyle(
-                                            color: Colors.grey.shade400,
+                                            color: _isCriticalLockActive
+                                                ? Colors.grey.shade300
+                                                : Colors.grey.shade400,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -1821,6 +1840,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                     ...tasks.map((task) {
                                       final isDone =
                                           task['is_completed'] as bool;
+                                      final isCriticalTask =
+                                          _isCriticalTaskRow(task);
+                                      final isSuppressedByCriticalLock =
+                                          _isCriticalLockActive &&
+                                              !isCriticalTask &&
+                                              !isDone;
                                       final rawContent =
                                           task['content'] as String? ?? '';
                                       final priority =
@@ -1828,91 +1853,150 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       final displayContent =
                                           _stripPriorityTag(rawContent);
                                       final criticalGuide =
-                                          _criticalGuideForTitle(displayContent);
+                                          _criticalGuideForTitle(
+                                        displayContent,
+                                      );
                                       return InkWell(
                                         onLongPress: () =>
                                             _deleteTask(task['id']),
-                                        onTap: () =>
-                                            _toggleTask(task['id'], isDone),
+                                        onTap: () {
+                                          if (isSuppressedByCriticalLock) {
+                                            _showCompleteCriticalTasksSnackBar();
+                                            return;
+                                          }
+                                          _toggleTask(task['id'], isDone);
+                                        },
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 8,
                                             horizontal: 4,
                                           ),
                                           decoration: BoxDecoration(
+                                            color: isSuppressedByCriticalLock
+                                                ? Colors.blueGrey.withValues(
+                                                    alpha: 0.05,
+                                                  )
+                                                : null,
                                             border: Border(
                                               bottom: BorderSide(
                                                 color: Colors.grey.shade100,
                                               ),
                                             ),
                                           ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                isDone
-                                                    ? Icons.check_circle
-                                                    : Icons.circle_outlined,
-                                                color: isDone
-                                                    ? Colors.green
-                                                    : Colors.grey,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 2,
+                                          child: Opacity(
+                                            opacity: isSuppressedByCriticalLock
+                                                ? 0.46
+                                                : 1,
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  isDone
+                                                      ? Icons.check_circle
+                                                      : isSuppressedByCriticalLock
+                                                          ? Icons.lock_outline
+                                                          : Icons
+                                                              .circle_outlined,
+                                                  color: isDone
+                                                      ? Colors.green
+                                                      : isSuppressedByCriticalLock
+                                                          ? Colors.blueGrey
+                                                          : Colors.grey,
+                                                  size: 20,
                                                 ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      _priorityColor(priority)
-                                                          .withValues(
-                                                    alpha: 0.14,
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
                                                   ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  _priorityLabel(priority),
-                                                  style: TextStyle(
+                                                  decoration: BoxDecoration(
                                                     color: _priorityColor(
                                                       priority,
+                                                    ).withValues(
+                                                      alpha: 0.14,
                                                     ),
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w700,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      6,
+                                                    ),
                                                   ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  displayContent,
-                                                  style: TextStyle(
-                                                    decoration: isDone
-                                                        ? TextDecoration
-                                                            .lineThrough
-                                                        : null,
-                                                    color: isDone
-                                                        ? Colors.grey
-                                                        : Colors.black,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (criticalGuide != null)
-                                                IconButton(
-                                                  tooltip: 'やり方を表示',
-                                                  onPressed: () =>
-                                                      _showCriticalTaskGuide(
-                                                        criticalGuide,
+                                                  child: Text(
+                                                    _priorityLabel(priority),
+                                                    style: TextStyle(
+                                                      color: _priorityColor(
+                                                        priority,
                                                       ),
-                                                  icon: Icon(
-                                                    Icons.help_outline,
-                                                    color: Colors.blueGrey.shade500,
-                                                    size: 18,
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
                                                   ),
                                                 ),
-                                            ],
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    displayContent,
+                                                    style: TextStyle(
+                                                      decoration: isDone
+                                                          ? TextDecoration
+                                                              .lineThrough
+                                                          : null,
+                                                      color: isDone
+                                                          ? Colors.grey
+                                                          : isSuppressedByCriticalLock
+                                                              ? Colors.black54
+                                                              : Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (isSuppressedByCriticalLock)
+                                                  Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                      right: 4,
+                                                    ),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.blueGrey
+                                                          .withValues(
+                                                        alpha: 0.1,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        999,
+                                                      ),
+                                                    ),
+                                                    child: const Text(
+                                                      '保留',
+                                                      style: TextStyle(
+                                                        color: Colors.blueGrey,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (criticalGuide != null)
+                                                  IconButton(
+                                                    tooltip: 'やり方を表示',
+                                                    onPressed: () =>
+                                                        _showCriticalTaskGuide(
+                                                      criticalGuide,
+                                                    ),
+                                                    icon: Icon(
+                                                      Icons.help_outline,
+                                                      color: Colors
+                                                          .blueGrey.shade500,
+                                                      size: 18,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       );

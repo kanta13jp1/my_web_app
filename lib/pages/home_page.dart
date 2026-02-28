@@ -330,12 +330,14 @@ class _HomePageState extends State<HomePage> {
     return _AssetBucket.other;
   }
 
-  DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _startOfDay(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   String _statusDateKey(DateTime date) =>
       DateFormat('yyyy-MM-dd').format(_startOfDay(date));
 
-  Future<Map<String, _HomeDailyStatusRecord>?> _fetchHomeDailyStatusMapFromSupabase({
+  Future<Map<String, _HomeDailyStatusRecord>?>
+      _fetchHomeDailyStatusMapFromSupabase({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
@@ -389,11 +391,9 @@ class _HomePageState extends State<HomePage> {
       if (supabaseMap != null) ...supabaseMap,
     };
 
-    for (
-      DateTime day = normalizedStart;
-      !day.isAfter(normalizedEnd);
-      day = day.add(const Duration(days: 1))
-    ) {
+    for (DateTime day = normalizedStart;
+        !day.isAfter(normalizedEnd);
+        day = day.add(const Duration(days: 1))) {
       final dateKey = _statusDateKey(day);
       map.putIfAbsent(
         dateKey,
@@ -588,10 +588,16 @@ class _HomePageState extends State<HomePage> {
 
     // Local cache is kept as fallback for offline/testing paths.
     if (morningBriefingDone != null) {
-      await prefs.setBool(_morningBriefingDoneKeyFor(targetDate), morningBriefingDone);
+      await prefs.setBool(
+        _morningBriefingDoneKeyFor(targetDate),
+        morningBriefingDone,
+      );
     }
     if (balanceCheckDone != null) {
-      await prefs.setBool(_balanceCheckDoneKeyFor(targetDate), balanceCheckDone);
+      await prefs.setBool(
+        _balanceCheckDoneKeyFor(targetDate),
+        balanceCheckDone,
+      );
     }
 
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -606,8 +612,7 @@ class _HomePageState extends State<HomePage> {
                 prefs.getBool(_balanceCheckDoneKeyFor(targetDate)) ?? false,
           );
       final next = _HomeDailyStatusRecord(
-        morningBriefingDone:
-            morningBriefingDone ?? current.morningBriefingDone,
+        morningBriefingDone: morningBriefingDone ?? current.morningBriefingDone,
         balanceCheckDone: balanceCheckDone ?? current.balanceCheckDone,
       );
 
@@ -1040,6 +1045,146 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
+  void _showLockedMenuSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget _buildForcedTaskPanel(
+    BuildContext context,
+    _HomeOpsSnapshot snapshot,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    var title = '嫌でも先にやる1件を固定';
+    var detail = '強制導線は解除済みです。次の通常メニューへ進めます。';
+    var buttonLabel = '状態を更新';
+    Color color = Colors.blueGrey;
+    var icon = Icons.verified;
+    VoidCallback onPressed = _refreshKpis;
+
+    if (snapshot.pendingCriticalTaskCount > 0) {
+      title = 'まず嫌な必須タスクを片付ける';
+      detail = '未完了の必須タスクが${snapshot.pendingCriticalTaskCount}件あります。'
+          ' 他メニューより先に思考停止ログを消化してください。';
+      buttonLabel = '必須タスクへ';
+      color = Colors.redAccent;
+      icon = Icons.lock_clock;
+      onPressed = () {
+        _nav(context, const MindlessTaskPage());
+      };
+    } else if (!snapshot.morningBriefingDone) {
+      title = '朝の固定を先に終える';
+      detail = '気分で動く前に、朝の優先順位を先に固定します。';
+      buttonLabel = 'ブリーフィングへ';
+      color = Colors.amber;
+      icon = Icons.wb_sunny;
+      onPressed = () {
+        _openMorningBriefing(context);
+      };
+    } else if (!snapshot.balanceCheckDone) {
+      title = '数字確認を先に終える';
+      detail = 'なんとなく触りたいメニューに行く前に、口座残高を確認します。';
+      buttonLabel = '財務管理へ';
+      color = Colors.green;
+      icon = Icons.account_balance_wallet;
+      onPressed = () {
+        _openCfoOffice(context);
+      };
+    } else if (snapshot.abstinenceSlipCount > 0) {
+      title = '逸脱復旧を先にやる';
+      detail = '今日は${snapshot.abstinenceSlipCount}回の逸脱があります。'
+          ' 先に禁欲ガードを再設定してください。';
+      buttonLabel = '禁欲ガードへ';
+      color = Colors.deepOrange;
+      icon = Icons.shield_moon;
+      onPressed = () {
+        _openAbstinenceGuard(context);
+      };
+    }
+
+    final baseColor = Color.alphaBlend(
+      color.withValues(alpha: isDark ? 0.18 : 0.1),
+      isDark ? const Color(0xFF111827) : Colors.white,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            baseColor,
+            Color.alphaBlend(
+              Colors.white.withValues(alpha: isDark ? 0.02 : 0.5),
+              baseColor,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '強制導線',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  detail,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  onPressed: onPressed,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: Text(buttonLabel),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAbstinenceGuardPanel(
     BuildContext context,
     _HomeOpsSnapshot snapshot,
@@ -1141,18 +1286,15 @@ abstinence_slip_details: $slipDetailsText
     final recentDays = snapshot.calendarDays
         .where((day) => !day.date.isAfter(now) && day.isCurrentMonth)
         .toList();
-    final morningDoneCount =
-        recentDays.where((day) => day.morningDone).length;
-    final balanceDoneCount =
-        recentDays.where((day) => day.balanceDone).length;
+    final morningDoneCount = recentDays.where((day) => day.morningDone).length;
+    final balanceDoneCount = recentDays.where((day) => day.balanceDone).length;
     final cleanDaysCount = recentDays
         .where((day) => day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
         .length;
     final slipDaysCount =
         recentDays.where((day) => day.hasAbstinenceSlip).length;
-    final unsetDaysCount = recentDays
-        .where((day) => !day.hasAbstinenceProtection)
-        .length;
+    final unsetDaysCount =
+        recentDays.where((day) => !day.hasAbstinenceProtection).length;
     final filterLabel = switch (_calendarHighlightFilter) {
       _CalendarHighlightFilter.all => null,
       _CalendarHighlightFilter.slip => '表示中: 逸脱日数のみハイライト',
@@ -1289,9 +1431,8 @@ abstinence_slip_details: $slipDetailsText
               final day = snapshot.calendarDays[index];
               final status = _resolveCalendarDayStatus(day);
               final matchesFilter = _matchesCalendarHighlightFilter(day);
-              final accentColor = day.isCurrentMonth
-                  ? status.color
-                  : Colors.blueGrey;
+              final accentColor =
+                  day.isCurrentMonth ? status.color : Colors.blueGrey;
               final backgroundColor = day.isCurrentMonth
                   ? matchesFilter
                       ? accentColor.withValues(
@@ -1465,9 +1606,8 @@ abstinence_slip_details: $slipDetailsText
           borderRadius: BorderRadius.circular(999),
           onTap: () {
             setState(() {
-              _calendarHighlightFilter = isSelected
-                  ? _CalendarHighlightFilter.all
-                  : filter;
+              _calendarHighlightFilter =
+                  isSelected ? _CalendarHighlightFilter.all : filter;
             });
           },
           child: Container(
@@ -1738,7 +1878,8 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarDetailSection(
                     title: '未達成項目',
                     accent: Colors.redAccent,
-                    emptyLabel: day.isFuture ? 'まだ未達成判定はありません。' : '未達成項目はありません。',
+                    emptyLabel:
+                        day.isFuture ? 'まだ未達成判定はありません。' : '未達成項目はありません。',
                     items: day.missingItems,
                   ),
                   const SizedBox(height: 12),
@@ -1954,13 +2095,17 @@ abstinence_slip_details: $slipDetailsText
                   nextAction.type == _HomeActionType.stockReview;
               final highlightAbstinence =
                   nextAction.type == _HomeActionType.abstinenceGuard;
+              final shouldLockExploratoryMenus =
+                  opsSnapshot.pendingCriticalTaskCount > 0 ||
+                      !opsSnapshot.morningBriefingDone ||
+                      opsSnapshot.abstinenceSlipCount > 0;
 
               return FutureBuilder<String?>(
                 future: _aiNudgeFuture,
                 builder: (context, aiNudgeSnapshot) {
                   final aiNudge = aiNudgeSnapshot.data;
-                  final isAiLoading =
-                      aiNudgeSnapshot.connectionState == ConnectionState.waiting;
+                  final isAiLoading = aiNudgeSnapshot.connectionState ==
+                      ConnectionState.waiting;
 
                   return SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -1983,6 +2128,8 @@ abstinence_slip_details: $slipDetailsText
                               aiNudge: aiNudge,
                               isAiNudgeLoading: isAiLoading,
                             ),
+                            const SizedBox(height: 14),
+                            _buildForcedTaskPanel(context, opsSnapshot),
                             const SizedBox(height: 14),
                             _buildAbstinenceGuardPanel(context, opsSnapshot),
                             const SizedBox(height: 20),
@@ -2041,7 +2188,8 @@ abstinence_slip_details: $slipDetailsText
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.indigo.withValues(alpha: 0.25),
+                                      color:
+                                          Colors.indigo.withValues(alpha: 0.25),
                                       blurRadius: 18,
                                       offset: const Offset(0, 8),
                                     ),
@@ -2100,8 +2248,7 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.shield_moon,
                                 Colors.redAccent,
                                 () => _openAbstinenceGuard(context),
-                                isHighlighted:
-                                    highlightAbstinence ||
+                                isHighlighted: highlightAbstinence ||
                                     opsSnapshot.abstinenceSlipCount > 0,
                                 badgeLabel: highlightAbstinence
                                     ? 'NEXT'
@@ -2114,6 +2261,8 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.cleaning_services,
                                 Colors.orange,
                                 () => _nav(context, const DanshariPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 '断捨離 (リアル)',
@@ -2125,12 +2274,16 @@ abstinence_slip_details: $slipDetailsText
                                     supabaseClient: Supabase.instance.client,
                                   ),
                                 ),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 'AI稼働モニター',
                                 Icons.monitor_heart,
                                 Colors.orange,
                                 () => _nav(context, const AiStatusPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 '週末ストック / 思考ネタ',
@@ -2153,6 +2306,8 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.checkroom,
                                 Colors.brown,
                                 () => _nav(context, const WardrobePage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                             ]),
                             const SizedBox(height: 24),
@@ -2195,18 +2350,24 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.trending_up,
                                 Colors.pink,
                                 () => _nav(context, const CmoOfficePage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 'メモ一覧 (CKO)',
                                 Icons.list_alt,
                                 Colors.blue,
                                 () => _nav(context, const NoteListPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 '新規事業起案',
                                 Icons.edit_note,
                                 Colors.blue,
                                 () => _nav(context, const NoteEditorPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 'Gemini大学',
@@ -2216,12 +2377,16 @@ abstinence_slip_details: $slipDetailsText
                                   context,
                                   const GeminiUniversityV2Page(),
                                 ),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
                                 'マインドマップ (思考整理)',
                                 Icons.hub,
                                 Colors.blue,
                                 () => _nav(context, const MindMapPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                             ]),
                             const SizedBox(height: 40),
@@ -2306,7 +2471,8 @@ abstinence_slip_details: $slipDetailsText
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         leading: const CircleAvatar(
           backgroundColor: Colors.redAccent,
           radius: 26,
@@ -2360,7 +2526,8 @@ abstinence_slip_details: $slipDetailsText
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         leading: CircleAvatar(
           backgroundColor: accent,
           radius: 26,
@@ -2398,15 +2565,23 @@ abstinence_slip_details: $slipDetailsText
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        final cardColor = item.isHighlighted
+        final baseCardColor = item.isHighlighted
             ? Color.alphaBlend(
                 item.color.withValues(alpha: isDark ? 0.24 : 0.14),
                 Theme.of(context).cardColor,
               )
             : Theme.of(context).cardColor;
-        final borderColor = item.isHighlighted
-            ? item.color.withValues(alpha: 0.65)
-            : Theme.of(context).dividerColor.withValues(alpha: 0.25);
+        final cardColor = item.isLocked
+            ? Color.alphaBlend(
+                Colors.blueGrey.withValues(alpha: isDark ? 0.18 : 0.12),
+                baseCardColor,
+              )
+            : baseCardColor;
+        final borderColor = item.isLocked
+            ? Colors.blueGrey.withValues(alpha: 0.22)
+            : item.isHighlighted
+                ? item.color.withValues(alpha: 0.65)
+                : Theme.of(context).dividerColor.withValues(alpha: 0.25);
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -2427,7 +2602,14 @@ abstinence_slip_details: $slipDetailsText
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: item.onTap,
+              onTap: item.isLocked
+                  ? () {
+                      _showLockedMenuSnackBar(
+                        context,
+                        item.lockedReason ?? '先に必須導線を完了してください。',
+                      );
+                    }
+                  : item.onTap,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
@@ -2436,13 +2618,19 @@ abstinence_slip_details: $slipDetailsText
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.14),
+                        color: (item.isLocked ? Colors.blueGrey : item.color)
+                            .withValues(alpha: 0.14),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: item.color.withValues(alpha: 0.35),
+                          color: (item.isLocked ? Colors.blueGrey : item.color)
+                              .withValues(alpha: 0.35),
                         ),
                       ),
-                      child: Icon(item.icon, color: item.color, size: 18),
+                      child: Icon(
+                        item.icon,
+                        color: item.isLocked ? Colors.blueGrey : item.color,
+                        size: 18,
+                      ),
                     ),
                     SizedBox(width: isCompact ? 10 : 12),
                     Expanded(
@@ -2451,12 +2639,33 @@ abstinence_slip_details: $slipDetailsText
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: item.isHighlighted ? item.color : null,
+                          color: item.isLocked
+                              ? (isDark ? Colors.white60 : Colors.black45)
+                              : item.isHighlighted
+                                  ? item.color
+                                  : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (item.isLocked)
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Icon(
+                          Icons.lock_outline,
+                          size: 14,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
                     if (item.badgeLabel != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -2542,7 +2751,8 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.22)
@@ -2568,9 +2778,21 @@ abstinence_slip_details: $slipDetailsText
                     isDark: isDark,
                     flexes: const [1.2, 1.1, 1.5],
                     rows: [
-                      ['今週', _formatSignedPercent(weekRate), _formatSignedYen(weekDelta)],
-                      ['今月', _formatSignedPercent(monthRate), _formatSignedYen(monthDelta)],
-                      ['今年', _formatSignedPercent(yearRate), _formatSignedYen(yearDelta)],
+                      [
+                        '今週',
+                        _formatSignedPercent(weekRate),
+                        _formatSignedYen(weekDelta),
+                      ],
+                      [
+                        '今月',
+                        _formatSignedPercent(monthRate),
+                        _formatSignedYen(monthDelta),
+                      ],
+                      [
+                        '今年',
+                        _formatSignedPercent(yearRate),
+                        _formatSignedYen(yearDelta),
+                      ],
                     ],
                   ),
                   _buildKpiTableCard(
@@ -2743,7 +2965,8 @@ abstinence_slip_details: $slipDetailsText
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.16)
         : Colors.blueGrey.withValues(alpha: 0.24);
-    final titleColor = isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
+    final titleColor =
+        isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
 
     return Container(
       constraints: const BoxConstraints(minWidth: 330),
@@ -3032,7 +3255,11 @@ abstinence_slip_details: $slipDetailsText
     if (ratio == null) return '--';
     final percent = ratio * 100;
     final absText = percent.abs().toStringAsFixed(1);
-    final sign = percent > 0 ? '+' : percent < 0 ? '-' : '';
+    final sign = percent > 0
+        ? '+'
+        : percent < 0
+            ? '-'
+            : '';
     return '$sign$absText%';
   }
 
@@ -3117,7 +3344,10 @@ abstinence_slip_details: $slipDetailsText
           end: Alignment.bottomRight,
           colors: [
             base,
-            Color.alphaBlend(color.withValues(alpha: isDark ? 0.14 : 0.08), base),
+            Color.alphaBlend(
+              color.withValues(alpha: isDark ? 0.14 : 0.08),
+              base,
+            ),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
@@ -3225,6 +3455,8 @@ class _MenuData {
   final VoidCallback onTap;
   final bool isHighlighted;
   final String? badgeLabel;
+  final bool isLocked;
+  final String? lockedReason;
 
   _MenuData(
     this.title,
@@ -3233,6 +3465,8 @@ class _MenuData {
     this.onTap, {
     this.isHighlighted = false,
     this.badgeLabel,
+    this.isLocked = false,
+    this.lockedReason,
   });
 }
 
