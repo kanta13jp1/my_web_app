@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:graphview/GraphView.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,22 @@ class _CriticalTaskGuide {
   });
 }
 
+class _TodoFlowNodeData {
+  final String title;
+  final String? subtitle;
+  final Color color;
+  final IconData icon;
+  final bool isDimmed;
+
+  const _TodoFlowNodeData({
+    required this.title,
+    this.subtitle,
+    required this.color,
+    required this.icon,
+    this.isDimmed = false,
+  });
+}
+
 class MindlessTaskPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
 
@@ -75,6 +92,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   int _currentReadingStreak = 0;
   bool _phoneShieldEnabled = true;
   TaskPriority _defaultTaskPriority = TaskPriority.c;
+  bool _showFlowTodoMap = false;
   List<String> _defenseCheckTargets = List<String>.from(
     _defaultDefenseCheckTargets,
   );
@@ -378,6 +396,33 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return _allTasks.where((task) => task['is_completed'] == true).length;
   }
 
+  List<Map<String, dynamic>> get _sortedTasksForFlow {
+    final tasks = List<Map<String, dynamic>>.from(_allTasks);
+    tasks.sort((a, b) {
+      final aDone = a['is_completed'] == true;
+      final bDone = b['is_completed'] == true;
+      if (aDone != bDone) {
+        return aDone ? 1 : -1;
+      }
+
+      final priorityCompare = _priorityOrder(
+        _parsePriority(a['content'] as String? ?? ''),
+      ).compareTo(
+        _priorityOrder(
+          _parsePriority(b['content'] as String? ?? ''),
+        ),
+      );
+      if (priorityCompare != 0) {
+        return priorityCompare;
+      }
+
+      final hourA = (a['hour_slot'] as int?) ?? 0;
+      final hourB = (b['hour_slot'] as int?) ?? 0;
+      return hourA.compareTo(hourB);
+    });
+    return tasks;
+  }
+
   int get _remainingTasksToTarget {
     final remaining = _dailyTaskTarget - _completedTasksToday;
     return remaining > 0 ? remaining : 0;
@@ -385,6 +430,17 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
 
   double get _dailyTargetProgress {
     return (_completedTasksToday / _dailyTaskTarget).clamp(0, 1);
+  }
+
+  int _priorityOrder(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.a:
+        return 0;
+      case TaskPriority.b:
+        return 1;
+      case TaskPriority.c:
+        return 2;
+    }
   }
 
   int _priorityTotal(TaskPriority priority) {
@@ -1668,6 +1724,278 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     _loadTasks();
   }
 
+  Widget _buildTodoViewToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              '表示形式',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          ChoiceChip(
+            label: const Text('時系列リスト'),
+            selected: !_showFlowTodoMap,
+            onSelected: (_) {
+              setState(() {
+                _showFlowTodoMap = false;
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('フローチャート'),
+            selected: _showFlowTodoMap,
+            onSelected: (_) {
+              setState(() {
+                _showFlowTodoMap = true;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoFlowMapView() {
+    if (_allTasks.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'タスクを追加すると、ここにフローチャート形式で導線を表示します。',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    final graph = Graph()..isTree = true;
+    final algorithmConfig = BuchheimWalkerConfiguration()
+      ..siblingSeparation = 36
+      ..levelSeparation = 96
+      ..subtreeSeparation = 84
+      ..orientation = BuchheimWalkerConfiguration.ORIENTATION_LEFT_RIGHT;
+
+    final pendingCount =
+        _allTasks.where((task) => task['is_completed'] != true).length;
+    final root = Node.Id(
+      _TodoFlowNodeData(
+        title: '今日の導線',
+        subtitle: '残り $pendingCount 件 / 完了 $_completedTasksToday 件',
+        color: Colors.indigo,
+        icon: Icons.alt_route,
+      ),
+    );
+    graph.addNode(root);
+
+    for (final priority in TaskPriority.values) {
+      final priorityTasks = _sortedTasksForFlow.where((task) {
+        final rawContent = task['content'] as String? ?? '';
+        return _parsePriority(rawContent) == priority;
+      }).toList();
+
+      if (priorityTasks.isEmpty) continue;
+
+      final priorityColor = _priorityColor(priority);
+      final priorityNode = Node.Id(
+        _TodoFlowNodeData(
+          title: '${_priorityLabel(priority)}導線',
+          subtitle:
+              '${priorityTasks.where((task) => task['is_completed'] != true).length} 件が未完了',
+          color: priorityColor,
+          icon: Icons.account_tree_outlined,
+        ),
+      );
+      graph.addEdge(root, priorityNode);
+
+      var previousNode = priorityNode;
+      final visibleTasks = priorityTasks.take(6).toList();
+      for (final task in visibleTasks) {
+        final isDone = task['is_completed'] == true;
+        final displayContent =
+            _stripPriorityTag(task['content'] as String? ?? '');
+        final hour = (task['hour_slot'] as int?) ?? 0;
+        final taskNode = Node.Id(
+          _TodoFlowNodeData(
+            title: displayContent,
+            subtitle: '$hour:00 ${isDone ? '完了済み' : '未完了'}',
+            color: isDone ? Colors.green : priorityColor,
+            icon: isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+            isDimmed: isDone,
+          ),
+        );
+        graph.addEdge(previousNode, taskNode);
+        previousNode = taskNode;
+      }
+
+      final hiddenCount = priorityTasks.length - visibleTasks.length;
+      if (hiddenCount > 0) {
+        graph.addEdge(
+          previousNode,
+          Node.Id(
+            _TodoFlowNodeData(
+              title: '他 $hiddenCount 件',
+              subtitle: 'この優先度に未表示のタスクあり',
+              color: Colors.blueGrey,
+              icon: Icons.more_horiz,
+              isDimmed: true,
+            ),
+          ),
+        );
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.hub, color: Colors.indigo.shade400),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'フローチャートToDo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'A/B/C の枝ごとに分け、左から順に処理する流れで見られます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: InteractiveViewer(
+              constrained: false,
+              boundaryMargin: const EdgeInsets.all(80),
+              minScale: 0.3,
+              maxScale: 2.2,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: GraphView(
+                  graph: graph,
+                  algorithm: BuchheimWalkerAlgorithm(
+                    algorithmConfig,
+                    TreeEdgeRenderer(algorithmConfig),
+                  ),
+                  builder: (Node node) {
+                    final value = node.key?.value;
+                    if (value is! _TodoFlowNodeData) {
+                      return const SizedBox.shrink();
+                    }
+                    return _buildTodoFlowNode(value);
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoFlowNode(_TodoFlowNodeData node) {
+    final backgroundColor = Color.alphaBlend(
+      Colors.white.withValues(alpha: node.isDimmed ? 0.7 : 0.92),
+      node.color.withValues(alpha: node.isDimmed ? 0.08 : 0.14),
+    );
+
+    return Opacity(
+      opacity: node.isDimmed ? 0.72 : 1,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: node.color.withValues(alpha: 0.28)),
+          boxShadow: [
+            BoxShadow(
+              color: node.color.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: node.color.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                node.icon,
+                size: 16,
+                color: node.color,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    node.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (node.subtitle != null && node.subtitle!.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      node.subtitle!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTimeboxPanel() {
     return Container(
       width: double.infinity,
@@ -2043,263 +2371,285 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               child: _buildTimeboxPanel(),
             ),
           ),
+          _buildTodoViewToggle(),
 
           // タイムライン
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    itemCount: 24, // 0時〜23時
-                    itemBuilder: (context, hour) {
-                      final tasks = _tasksByHour[hour] ?? [];
-                      // 現在時刻のハイライト
-                      final isCurrentHour =
-                          _selectedDate.day == DateTime.now().day &&
-                              _selectedDate.month == DateTime.now().month &&
-                              _selectedDate.year == DateTime.now().year &&
-                              hour == DateTime.now().hour;
+                : _showFlowTodoMap
+                    ? _buildTodoFlowMapView()
+                    : ListView.builder(
+                        itemCount: 24, // 0時〜23時
+                        itemBuilder: (context, hour) {
+                          final tasks = _tasksByHour[hour] ?? [];
+                          // 現在時刻のハイライト
+                          final isCurrentHour =
+                              _selectedDate.day == DateTime.now().day &&
+                                  _selectedDate.month == DateTime.now().month &&
+                                  _selectedDate.year == DateTime.now().year &&
+                                  hour == DateTime.now().hour;
 
-                      return Container(
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade300),
-                            left: isCurrentHour
-                                ? const BorderSide(color: Colors.blue, width: 4)
-                                : BorderSide.none,
-                          ),
-                          color: isCurrentHour
-                              ? Colors.blue.withValues(alpha: 0.05)
-                              : null,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 時間ラベル
-                            Container(
-                              width: 60,
-                              padding: const EdgeInsets.all(12),
-                              alignment: Alignment.topCenter,
-                              child: Text(
-                                '$hour:00',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      isCurrentHour ? Colors.blue : Colors.grey,
-                                ),
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                                left: isCurrentHour
+                                    ? const BorderSide(
+                                        color: Colors.blue,
+                                        width: 4,
+                                      )
+                                    : BorderSide.none,
                               ),
+                              color: isCurrentHour
+                                  ? Colors.blue.withValues(alpha: 0.05)
+                                  : null,
                             ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 時間ラベル
+                                Container(
+                                  width: 60,
+                                  padding: const EdgeInsets.all(12),
+                                  alignment: Alignment.topCenter,
+                                  child: Text(
+                                    '$hour:00',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isCurrentHour
+                                          ? Colors.blue
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ),
 
-                            // タスクリストエリア
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (tasks.isEmpty)
-                                    InkWell(
-                                      onTap: () => _addTask(hour),
-                                      child: Container(
-                                        height: 40,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          '＋ タスクを追加',
-                                          style: TextStyle(
-                                            color: _isCriticalLockActive
-                                                ? Colors.grey.shade300
-                                                : Colors.grey.shade400,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    ...tasks.map((task) {
-                                      final isDone =
-                                          task['is_completed'] as bool;
-                                      final isCriticalTask =
-                                          _isCriticalTaskRow(task);
-                                      final isSuppressedByCriticalLock =
-                                          _isCriticalLockActive &&
-                                              !isCriticalTask &&
-                                              !isDone;
-                                      final rawContent =
-                                          task['content'] as String? ?? '';
-                                      final priority =
-                                          _parsePriority(rawContent);
-                                      final displayContent =
-                                          _stripPriorityTag(rawContent);
-                                      final criticalGuide =
-                                          _criticalGuideForTitle(
-                                        displayContent,
-                                      );
-                                      return InkWell(
-                                        onLongPress: () =>
-                                            _deleteTask(task['id']),
-                                        onTap: () {
-                                          if (isSuppressedByCriticalLock) {
-                                            _showCompleteCriticalTasksSnackBar();
-                                            return;
-                                          }
-                                          _toggleTask(task['id'], isDone);
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isSuppressedByCriticalLock
-                                                ? Colors.blueGrey.withValues(
-                                                    alpha: 0.05,
-                                                  )
-                                                : null,
-                                            border: Border(
-                                              bottom: BorderSide(
-                                                color: Colors.grey.shade100,
+                                // タスクリストエリア
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (tasks.isEmpty)
+                                        InkWell(
+                                          onTap: () => _addTask(hour),
+                                          child: Container(
+                                            height: 40,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              '＋ タスクを追加',
+                                              style: TextStyle(
+                                                color: _isCriticalLockActive
+                                                    ? Colors.grey.shade300
+                                                    : Colors.grey.shade400,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ),
-                                          child: Opacity(
-                                            opacity: isSuppressedByCriticalLock
-                                                ? 0.46
-                                                : 1,
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  isDone
-                                                      ? Icons.check_circle
-                                                      : isSuppressedByCriticalLock
-                                                          ? Icons.lock_outline
-                                                          : Icons
-                                                              .circle_outlined,
-                                                  color: isDone
-                                                      ? Colors.green
-                                                      : isSuppressedByCriticalLock
-                                                          ? Colors.blueGrey
-                                                          : Colors.grey,
-                                                  size: 20,
+                                        )
+                                      else
+                                        ...tasks.map((task) {
+                                          final isDone =
+                                              task['is_completed'] as bool;
+                                          final isCriticalTask =
+                                              _isCriticalTaskRow(task);
+                                          final isSuppressedByCriticalLock =
+                                              _isCriticalLockActive &&
+                                                  !isCriticalTask &&
+                                                  !isDone;
+                                          final rawContent =
+                                              task['content'] as String? ?? '';
+                                          final priority =
+                                              _parsePriority(rawContent);
+                                          final displayContent =
+                                              _stripPriorityTag(rawContent);
+                                          final criticalGuide =
+                                              _criticalGuideForTitle(
+                                            displayContent,
+                                          );
+                                          return InkWell(
+                                            onLongPress: () =>
+                                                _deleteTask(task['id']),
+                                            onTap: () {
+                                              if (isSuppressedByCriticalLock) {
+                                                _showCompleteCriticalTasksSnackBar();
+                                                return;
+                                              }
+                                              _toggleTask(task['id'], isDone);
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 8,
+                                                horizontal: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    isSuppressedByCriticalLock
+                                                        ? Colors.blueGrey
+                                                            .withValues(
+                                                            alpha: 0.05,
+                                                          )
+                                                        : null,
+                                                border: Border(
+                                                  bottom: BorderSide(
+                                                    color: Colors.grey.shade100,
+                                                  ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: _priorityColor(
-                                                      priority,
-                                                    ).withValues(
-                                                      alpha: 0.14,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                      6,
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    _priorityLabel(priority),
-                                                    style: TextStyle(
-                                                      color: _priorityColor(
-                                                        priority,
-                                                      ),
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    displayContent,
-                                                    style: TextStyle(
-                                                      decoration: isDone
-                                                          ? TextDecoration
-                                                              .lineThrough
-                                                          : null,
-                                                      color: isDone
-                                                          ? Colors.grey
+                                              ),
+                                              child: Opacity(
+                                                opacity:
+                                                    isSuppressedByCriticalLock
+                                                        ? 0.46
+                                                        : 1,
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      isDone
+                                                          ? Icons.check_circle
                                                           : isSuppressedByCriticalLock
-                                                              ? Colors.black54
-                                                              : Colors.black,
+                                                              ? Icons
+                                                                  .lock_outline
+                                                              : Icons
+                                                                  .circle_outlined,
+                                                      color: isDone
+                                                          ? Colors.green
+                                                          : isSuppressedByCriticalLock
+                                                              ? Colors.blueGrey
+                                                              : Colors.grey,
+                                                      size: 20,
                                                     ),
-                                                  ),
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: _priorityColor(
+                                                          priority,
+                                                        ).withValues(
+                                                          alpha: 0.14,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                          6,
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        _priorityLabel(
+                                                          priority,
+                                                        ),
+                                                        style: TextStyle(
+                                                          color: _priorityColor(
+                                                            priority,
+                                                          ),
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        displayContent,
+                                                        style: TextStyle(
+                                                          decoration: isDone
+                                                              ? TextDecoration
+                                                                  .lineThrough
+                                                              : null,
+                                                          color: isDone
+                                                              ? Colors.grey
+                                                              : isSuppressedByCriticalLock
+                                                                  ? Colors
+                                                                      .black54
+                                                                  : Colors
+                                                                      .black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    if (isSuppressedByCriticalLock)
+                                                      Container(
+                                                        margin: const EdgeInsets
+                                                            .only(
+                                                          right: 4,
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.blueGrey
+                                                              .withValues(
+                                                            alpha: 0.1,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                            999,
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          '保留',
+                                                          style: TextStyle(
+                                                            color:
+                                                                Colors.blueGrey,
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    if (criticalGuide != null)
+                                                      IconButton(
+                                                        tooltip: 'やり方を表示',
+                                                        onPressed: () =>
+                                                            _showCriticalTaskGuide(
+                                                          criticalGuide,
+                                                        ),
+                                                        icon: Icon(
+                                                          Icons.help_outline,
+                                                          color: Colors.blueGrey
+                                                              .shade500,
+                                                          size: 18,
+                                                        ),
+                                                      ),
+                                                  ],
                                                 ),
-                                                if (isSuppressedByCriticalLock)
-                                                  Container(
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                      right: 4,
-                                                    ),
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.blueGrey
-                                                          .withValues(
-                                                        alpha: 0.1,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                        999,
-                                                      ),
-                                                    ),
-                                                    child: const Text(
-                                                      '保留',
-                                                      style: TextStyle(
-                                                        color: Colors.blueGrey,
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                if (criticalGuide != null)
-                                                  IconButton(
-                                                    tooltip: 'やり方を表示',
-                                                    onPressed: () =>
-                                                        _showCriticalTaskGuide(
-                                                      criticalGuide,
-                                                    ),
-                                                    icon: Icon(
-                                                      Icons.help_outline,
-                                                      color: Colors
-                                                          .blueGrey.shade500,
-                                                      size: 18,
-                                                    ),
-                                                  ),
-                                              ],
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      // タスクがある場合も追加ボタンを下部に表示
+                                      if (tasks.isNotEmpty)
+                                        InkWell(
+                                          onTap: () => _addTask(hour),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 4,
+                                            ),
+                                            alignment: Alignment.centerLeft,
+                                            child: Icon(
+                                              Icons.add,
+                                              size: 16,
+                                              color: Colors.grey.shade400,
                                             ),
                                           ),
                                         ),
-                                      );
-                                    }),
-                                  // タスクがある場合も追加ボタンを下部に表示
-                                  if (tasks.isNotEmpty)
-                                    InkWell(
-                                      onTap: () => _addTask(hour),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                        ),
-                                        alignment: Alignment.centerLeft,
-                                        child: Icon(
-                                          Icons.add,
-                                          size: 16,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),

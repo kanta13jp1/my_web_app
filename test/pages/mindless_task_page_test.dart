@@ -297,6 +297,31 @@ void main() {
     expect(find.text('スマホ禁欲8項目を追加'), findsOneWidget);
   });
 
+  testWidgets('can switch to flowchart todo view', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: FakeSupabaseClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('時系列リスト'), findsOneWidget);
+    expect(find.text('フローチャート'), findsOneWidget);
+
+    await tester.tap(find.text('フローチャート'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('フローチャートToDo'), findsNothing);
+    expect(
+      find.text('タスクを追加すると、ここにフローチャート形式で導線を表示します。'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('detox template insert is diff-based across repeated runs', (
     WidgetTester tester,
   ) async {
