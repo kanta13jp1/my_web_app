@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:my_web_app/pages/mindless_task_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FakeSupabaseClient extends Fake implements SupabaseClient {
@@ -186,6 +187,10 @@ void main() {
 
   setUpAll(() async {
     await initializeDateFormatting('ja');
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
   testWidgets('renders timebox panel and can start moving session', (
@@ -393,5 +398,47 @@ void main() {
     expect(find.textContaining('スマホ禁欲項目を8件自動追加しました。'), findsOneWidget);
     expect(find.textContaining('物理ロック:'), findsOneWidget);
     expect(client.taskCount, 8);
+  });
+
+  testWidgets('defense guide shows checklist and can add a target', (
+    WidgetTester tester,
+  ) async {
+    final client = StatefulSupabaseClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MindlessTaskPage(
+          supabaseClient: client,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('必須タスクを展開'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.textContaining('「朝10分の防衛チェック'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('「朝10分の防衛チェック'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('チェック対象TODO'), findsOneWidget);
+    expect(find.text('メール: メイン受信箱'), findsOneWidget);
+    expect(find.text('SMS'), findsOneWidget);
+    expect(find.text('DM'), findsOneWidget);
+
+    await tester.tap(find.text('チェック対象を追加'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, 'メール: 副業用Gmail');
+    final addButton = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('追加'),
+    );
+    await tester.tap(addButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('メール: 副業用Gmail'), findsOneWidget);
   });
 }

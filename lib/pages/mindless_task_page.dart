@@ -1,8 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum TaskPriority {
   a,
@@ -75,11 +75,21 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   int _currentReadingStreak = 0;
   bool _phoneShieldEnabled = true;
   TaskPriority _defaultTaskPriority = TaskPriority.c;
+  List<String> _defenseCheckTargets = List<String>.from(
+    _defaultDefenseCheckTargets,
+  );
+  Set<String> _checkedDefenseTargets = <String>{};
+  String? _loadedDefenseCheckDateKey;
 
   static const List<int> _timeboxPresets = [15, 30, 50, 90];
   static const int _dailyTaskTarget = 100;
   static const int _batchTaskCount = 5;
   static const String _defenseCheckTemplateLabel = '朝10分の防衛チェック（不審リンク/請求/認証）';
+  static const List<String> _defaultDefenseCheckTargets = [
+    'メール: メイン受信箱',
+    'SMS',
+    'DM',
+  ];
   static const List<_PhoneDetoxAction> _phoneDetoxActions = [
     _PhoneDetoxAction(label: '朝に触らない', priority: TaskPriority.a),
     _PhoneDetoxAction(label: '仕事に没頭する', priority: TaskPriority.a),
@@ -113,11 +123,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       label: _defenseCheckTemplateLabel,
       purpose: '詐欺・不正課金・乗っ取りを朝のうちに早期発見する。',
       steps: [
-        '不審リンク確認（3分）: メール/SMS/DMの怪しいURLは開かず削除',
+        '受信整理（3分）: メール/SMS/DMを確認し、未読・不要・怪しい通知を整理',
         '請求確認（3分）: カード明細・Apple/Google課金・銀行引落の直近1日分を確認',
         '認証確認（4分）: 主要アカウントのログイン履歴を確認し、不審端末はログアウト',
       ],
-      doneCriteria: '怪しいリンクなし・不明請求なし・不審ログインなしを確認したら完了',
+      doneCriteria: '登録したチェック対象をすべて確認し、不明請求なし・不審ログインなしなら完了',
     ),
     _CriticalTaskGuide(
       label: '今日の最重要タスクを1件完了',
@@ -216,6 +226,148 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       debugPrint('Error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatDateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+  String _defenseTargetsPrefsKey(String userId) =>
+      'mindless_defense_targets_$userId';
+
+  String _defenseCheckedPrefsKey(String userId, DateTime date) =>
+      'mindless_defense_checked_${_formatDateKey(date)}_$userId';
+
+  Future<void> _ensureDefenseChecklistLoaded() async {
+    final dateKey = _formatDateKey(_selectedDate);
+    if (_loadedDefenseCheckDateKey == dateKey) {
+      return;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    var targets = List<String>.from(_defaultDefenseCheckTargets);
+    var checkedTargets = <String>{};
+
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final storedTargets =
+          prefs.getStringList(_defenseTargetsPrefsKey(userId));
+      if (storedTargets != null && storedTargets.isNotEmpty) {
+        targets = storedTargets
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toList();
+      } else {
+        await prefs.setStringList(_defenseTargetsPrefsKey(userId), targets);
+      }
+
+      if (targets.isEmpty) {
+        targets = List<String>.from(_defaultDefenseCheckTargets);
+      }
+
+      checkedTargets = (prefs.getStringList(
+                _defenseCheckedPrefsKey(userId, _selectedDate),
+              ) ??
+              const <String>[])
+          .where(targets.contains)
+          .toSet();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _defenseCheckTargets = targets;
+      _checkedDefenseTargets = checkedTargets;
+      _loadedDefenseCheckDateKey = dateKey;
+    });
+  }
+
+  Future<void> _persistDefenseChecklist() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _defenseTargetsPrefsKey(userId),
+      _defenseCheckTargets,
+    );
+    await prefs.setStringList(
+      _defenseCheckedPrefsKey(userId, _selectedDate),
+      _checkedDefenseTargets.toList(),
+    );
+  }
+
+  Future<void> _toggleDefenseTargetChecked(
+    String target,
+    bool isChecked,
+  ) async {
+    setState(() {
+      if (isChecked) {
+        _checkedDefenseTargets.add(target);
+      } else {
+        _checkedDefenseTargets.remove(target);
+      }
+    });
+    await _persistDefenseChecklist();
+  }
+
+  Future<bool> _addDefenseTarget(String rawValue) async {
+    final value = rawValue.trim();
+    if (value.isEmpty) return false;
+
+    if (_defenseCheckTargets.contains(value)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('同じチェック対象はすでに登録済みです。')),
+        );
+      }
+      return false;
+    }
+
+    setState(() {
+      _defenseCheckTargets = <String>[
+        ..._defenseCheckTargets,
+        value,
+      ];
+    });
+    await _persistDefenseChecklist();
+    return true;
+  }
+
+  Future<void> _removeDefenseTarget(String target) async {
+    setState(() {
+      _defenseCheckTargets =
+          _defenseCheckTargets.where((item) => item != target).toList();
+      _checkedDefenseTargets.remove(target);
+    });
+    await _persistDefenseChecklist();
+  }
+
+  Future<bool> _showAddDefenseTargetDialog() async {
+    var draftValue = '';
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('チェック対象を追加'),
+        content: TextField(
+          autofocus: true,
+          onChanged: (value) => draftValue = value,
+          decoration: const InputDecoration(
+            hintText: '例: メール: 副業用Gmail',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, draftValue),
+            child: const Text('追加'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null) return false;
+    return _addDefenseTarget(result);
   }
 
   List<Map<String, dynamic>> get _allTasks {
@@ -392,6 +544,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   Future<void> _showCriticalTaskGuide(_CriticalTaskGuide guide) async {
+    if (guide.label == _defenseCheckTemplateLabel) {
+      await _ensureDefenseChecklistLoaded();
+    }
+    if (!mounted) return;
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -399,44 +556,162 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${guide.label} のやり方',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '目的: ${guide.purpose}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 10),
-                  ...List.generate(guide.steps.length, (index) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index == guide.steps.length - 1 ? 0 : 8,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${guide.label} のやり方',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      child: Text('${index + 1}. ${guide.steps[index]}'),
-                    );
-                  }),
-                  const SizedBox(height: 10),
-                  Text(
-                    '完了条件: ${guide.doneCriteria}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                      const SizedBox(height: 8),
+                      Text(
+                        '目的: ${guide.purpose}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      ...List.generate(guide.steps.length, (index) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == guide.steps.length - 1 ? 0 : 8,
+                          ),
+                          child: Text('${index + 1}. ${guide.steps[index]}'),
+                        );
+                      }),
+                      if (guide.label == _defenseCheckTemplateLabel) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blueGrey.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.blueGrey.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'チェック対象TODO',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_checkedDefenseTargets.length}/${_defenseCheckTargets.length} 完了',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                '普段見るメールアカウント、SMS、DMを登録して、朝の確認漏れを防ぐ。',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(height: 8),
+                              if (_defenseCheckTargets.isEmpty)
+                                const Text(
+                                  'まだチェック対象がありません。先に1件追加してください。',
+                                )
+                              else
+                                ..._defenseCheckTargets.map((target) {
+                                  final isChecked =
+                                      _checkedDefenseTargets.contains(target);
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.blueGrey.withValues(
+                                          alpha: 0.14,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: isChecked,
+                                          onChanged: (value) async {
+                                            await _toggleDefenseTargetChecked(
+                                              target,
+                                              value ?? false,
+                                            );
+                                            setModalState(() {});
+                                          },
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            target,
+                                            style: TextStyle(
+                                              decoration: isChecked
+                                                  ? TextDecoration.lineThrough
+                                                  : null,
+                                              color: isChecked
+                                                  ? Colors.black54
+                                                  : Colors.black87,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          tooltip: '削除',
+                                          onPressed: () async {
+                                            await _removeDefenseTarget(target);
+                                            setModalState(() {});
+                                          },
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              const SizedBox(height: 6),
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  final added =
+                                      await _showAddDefenseTargetDialog();
+                                  if (!added) return;
+                                  setModalState(() {});
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text('チェック対象を追加'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Text(
+                        '完了条件: ${guide.doneCriteria}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
