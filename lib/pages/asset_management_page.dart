@@ -73,6 +73,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
 
   // --- サブスク（固定費）用変数 ---
+  DateTime _selectedSubscriptionHistoryMonth =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
   List<Map<String, dynamic>> _subscriptions = [];
   List<Map<String, dynamic>> _subscriptionsThreeMonths = [];
   bool _isLoadingSubscriptions = false;
@@ -207,6 +209,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     setState(() {
       _selectedFlowHistoryMonth = _monthStart(next);
+    });
+  }
+
+  List<Map<String, dynamic>> _subscriptionsForMonth(DateTime month) {
+    final target = _monthStart(month);
+    return _subscriptionsThreeMonths.where((subscription) {
+      final dueDateRaw = subscription['due_date']?.toString();
+      if (dueDateRaw == null || dueDateRaw.isEmpty) {
+        return false;
+      }
+      final dueDate = DateTime.tryParse(dueDateRaw);
+      if (dueDate == null) {
+        return false;
+      }
+      return dueDate.year == target.year && dueDate.month == target.month;
+    }).toList();
+  }
+
+  Future<void> _pickSubscriptionHistoryMonth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedSubscriptionHistoryMonth,
+      firstDate: DateTime(2020, 1, 1),
+      lastDate: DateTime(now.year + 5, 12, 31),
+      helpText: '固定費の表示月を選択',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedSubscriptionHistoryMonth = _monthStart(picked);
+    });
+  }
+
+  void _shiftSubscriptionHistoryMonth(int delta) {
+    final next = DateTime(
+      _selectedSubscriptionHistoryMonth.year,
+      _selectedSubscriptionHistoryMonth.month + delta,
+      1,
+    );
+    final minMonth = DateTime(2020, 1, 1);
+    final maxMonth = DateTime(DateTime.now().year + 5, 12, 1);
+    if (next.isBefore(minMonth) || next.isAfter(maxMonth)) {
+      return;
+    }
+    setState(() {
+      _selectedSubscriptionHistoryMonth = _monthStart(next);
     });
   }
 
@@ -1205,24 +1253,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final now = DateTime.now();
       final currentMonth = DateTime(now.year, now.month, 1);
-      final rangeStart = DateTime(currentMonth.year, currentMonth.month - 1, 1);
-      final rangeEnd = DateTime(currentMonth.year, currentMonth.month + 2, 1);
-
-      final startStr = DateFormat('yyyy-MM-dd').format(rangeStart);
-      final endStr = DateFormat('yyyy-MM-dd').format(rangeEnd);
 
       final data = await _supabase
           .from('subscriptions')
           .select()
           .eq('user_id', userId)
-          .gte('due_date', startStr)
-          .lt('due_date', endStr)
           .order('due_date', ascending: true)
           .order('price', ascending: false);
 
-      final allThreeMonths = List<Map<String, dynamic>>.from(data);
+      final allSubscriptions = List<Map<String, dynamic>>.from(data);
       final currentMonthKey = _monthKey(currentMonth);
-      final currentMonthOnly = allThreeMonths.where((row) {
+      final currentMonthOnly = allSubscriptions.where((row) {
         final dueStr = row['due_date']?.toString();
         if (dueStr == null || dueStr.isEmpty) return false;
         final dueDate = DateTime.tryParse(dueStr);
@@ -1234,7 +1275,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       setState(() {
         _subscriptions = currentMonthOnly;
-        _subscriptionsThreeMonths = allThreeMonths;
+        _subscriptionsThreeMonths = allSubscriptions;
         _isLoadingSubscriptions = false;
       });
     } catch (e) {
@@ -1384,6 +1425,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               : sourceText,
                     });
 
+                    if (mounted) {
+                      setState(() {
+                        _selectedSubscriptionHistoryMonth =
+                            _monthStart(dueDate);
+                      });
+                    }
                     if (context.mounted) Navigator.pop(context);
                     await _fetchSubscriptions();
                     await _fetchTodayClosing();
@@ -3108,10 +3155,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // ③ 固定費
   Widget _buildSubscriptionCard() {
+    final visibleSubscriptions = _subscriptionsForMonth(
+      _selectedSubscriptionHistoryMonth,
+    );
+    final visibleMonthLabel =
+        _flowMonthLabel(_selectedSubscriptionHistoryMonth);
+    final canMoveForward = !_isSameMonth(
+      _selectedSubscriptionHistoryMonth,
+      DateTime(DateTime.now().year + 5, 12, 1),
+    );
     int totalCost = 0;
     int unpaidCost = 0;
     final isCompact = _isCompact;
-    for (final sub in _subscriptions) {
+    for (final sub in visibleSubscriptions) {
       final price = (sub['price'] as num?)?.toInt() ?? 0;
       totalCost += price;
       final isPaid = (sub['is_paid'] as bool?) == true;
@@ -3153,6 +3209,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       const Text(
                         '毎月自動で奪われる富を監視せよ。',
                         style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: _pickSubscriptionHistoryMonth,
+                        child: Text(
+                          '表示中: $visibleMonthLabel',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red[700],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -3209,6 +3277,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           const Text(
+                            '表示月',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                          Text(
+                            visibleMonthLabel,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
                             '月額合計',
                             style: TextStyle(fontSize: 10, color: Colors.grey),
                           ),
@@ -3236,22 +3317,79 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ],
                   ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: '前月',
+                    onPressed: () => _shiftSubscriptionHistoryMonth(-1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickSubscriptionHistoryMonth,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Column(
+                          children: [
+                            const Text(
+                              '固定費の表示月',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              visibleMonthLabel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '翌月',
+                    onPressed: canMoveForward
+                        ? () => _shiftSubscriptionHistoryMonth(1)
+                        : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+            ),
+          ),
           _isLoadingSubscriptions
               ? const Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : _subscriptions.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('登録された固定費はありません')),
+              : visibleSubscriptions.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Center(
+                        child: Text('$visibleMonthLabel の固定費はありません'),
+                      ),
                     )
                   : ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _subscriptions.length,
+                      itemCount: visibleSubscriptions.length,
                       itemBuilder: (context, index) {
-                        final item = _subscriptions[index];
+                        final item = visibleSubscriptions[index];
                         final due = item['due_date'] as String?;
                         final dueDate =
                             due != null ? DateTime.parse(due) : null;
