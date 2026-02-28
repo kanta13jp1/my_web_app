@@ -1508,6 +1508,158 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return [];
   }
 
+  List<String> _modelMethodsFromMap(Map<String, dynamic> modelMap) {
+    final rawMethods = modelMap['methods'];
+    if (rawMethods is! List) {
+      return const <String>[];
+    }
+    return rawMethods
+        .map((method) => method.toString().trim())
+        .where((method) => method.isNotEmpty)
+        .toList();
+  }
+
+  Widget _buildModelMethodChip(String method) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        method,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Colors.indigo.shade700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModelAvailabilityPanel({
+    required List<Map<String, dynamic>> models,
+    required String selectedModel,
+  }) {
+    final selected = models.cast<Map<String, dynamic>>().firstWhere(
+          (model) => (model['name']?.toString() ?? '') == selectedModel,
+          orElse: () => <String, dynamic>{
+            'name': selectedModel,
+            'methods': const <String>[],
+          },
+        );
+    final selectedMethods = _modelMethodsFromMap(selected);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '現在のモデル',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            selectedModel,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (selectedMethods.isEmpty)
+            Text(
+              '利用可能メソッド: 未取得',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final method in selectedMethods)
+                  _buildModelMethodChip(method),
+              ],
+            ),
+          const Divider(height: 18),
+          Text(
+            '利用可能なモデル一覧',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final model in models)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: ((model['name']?.toString() ?? '') == selectedModel)
+                        ? Colors.indigo.withValues(alpha: 0.25)
+                        : Colors.grey.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      model['name']?.toString() ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Builder(
+                      builder: (context) {
+                        final methods = _modelMethodsFromMap(model);
+                        if (methods.isEmpty) {
+                          return Text(
+                            '利用可能メソッド: 未取得',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                            ),
+                          );
+                        }
+                        return Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final method in methods)
+                              _buildModelMethodChip(method),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Future<void> showPromptSettingsDialog() async {
     final controller = TextEditingController(text: _customPromptInstructions);
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
@@ -1609,57 +1761,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     },
                   ),
                   const SizedBox(height: 16),
-                  // ★ START: Added display for current and available models
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              '現在のモデル: ',
-                              style: TextStyle(color: Colors.grey.shade600),
-                            ),
-                            Expanded(
-                              child: Text(
-                                tempSelectedModel,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 16),
-                        Text(
-                          '利用可能なモデル一覧 (サポートメソッド):',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          currentSelectableModels.map((m) {
-                            final name = m['name'] as String;
-                            final methods =
-                                (m['methods'] as List? ?? []).join(', ');
-                            return '$name ($methods)';
-                          }).join('\n'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
+                  _buildModelAvailabilityPanel(
+                    models: currentSelectableModels,
+                    selectedModel: tempSelectedModel,
                   ),
-                  // ★ END: Added display
                   const SizedBox(height: 16),
                   TextField(
                     controller: controller,
