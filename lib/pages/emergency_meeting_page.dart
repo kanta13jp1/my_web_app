@@ -470,6 +470,31 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     await _persistPdcaState();
   }
 
+  Future<void> _enableEmergencyDeterrenceMode() async {
+    setState(() {
+      _lockImpulsePurchase = true;
+      _lockNewProjects = true;
+      _lockSubscriptionAdditions = true;
+      _dailyReminderEnabled = true;
+    });
+    await _persistPdcaState();
+    if (!mounted) return;
+
+    try {
+      final notificationService = context.read<NotificationService>();
+      await notificationService.scheduleDailyAbstinenceReminder();
+    } catch (_) {
+      // Save the state even if the notification bridge is unavailable.
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('衝動遮断モードを有効化しました。なんとなくやりたい行動を先に塞ぎます。'),
+      ),
+    );
+  }
+
   Future<void> _recordPdcaReview() async {
     setState(() {
       _lastContinuationCompletionRate = _currentContinuationRatePercent();
@@ -1523,7 +1548,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        '継続と禁欲を立て直す緊急会議を開始しますか？',
+                        '衝動を止めて、嫌な必須行動に切り替えますか？',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -1532,7 +1557,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'AI役員が継続率と誘惑リスクを分析し、48時間で実行できる再建プランを提示します。',
+                        'なんとなくやりたいことへの逃避を先に塞ぎ、'
+                        'なんとなくやりたくない必須行動へ戻すための48時間プランを提示します。',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
                       ),
@@ -1638,7 +1664,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           onPressed: _isLoading ? null : _conveneBoard,
                           icon: const Icon(Icons.notifications_active),
                           label: const Text(
-                            '継続・禁欲プランを作成',
+                            '衝動を止めて、嫌な必須行動へ戻す',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -1820,6 +1846,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ],
           ),
           const Divider(color: Colors.white24, height: 30),
+          _buildDopamineDisasterPanel(),
+          const SizedBox(height: 14),
           if (_riskAlert != null) ...[
             _buildAlertChip(_riskAlert!),
             const SizedBox(height: 14),
@@ -1900,6 +1928,115 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     );
   }
 
+  Widget _buildDopamineDisasterPanel() {
+    final nextIndex = _nextPendingContinuationIndex();
+    final hasPending = nextIndex >= 0 && nextIndex < _continuationPlan.length;
+    final nextAction = hasPending
+        ? _continuationPlan[nextIndex]
+        : '未完了の必須行動はありません。現状維持を続けてください。';
+    final activeLockCount = _activeDeterrenceLocks().length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0x33FF5252), Color(0x229C27B0)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.gpp_bad, color: Colors.redAccent, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'ドーパミン災害モード',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '「なんとなくやりたいこと」に逃げるのを先に止めて、'
+            '「なんとなくやりたくない必須行動」を先に実行する。',
+            style: TextStyle(color: Colors.white, height: 1.45),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '今すぐやるべき嫌な1件: $nextAction',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '現在の衝動遮断ロック: $activeLockCount/3件',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _enableEmergencyDeterrenceMode,
+                  icon: const Icon(Icons.lock),
+                  label: const Text('衝動遮断を強制ON'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasPending) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _markContinuationQuickStart,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('嫌な1件に着手'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white54),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _completeNextContinuationAction,
+                    icon: const Icon(Icons.done_all),
+                    label: const Text('嫌な1件を完了'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white54),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildContinuationExecutionPanel() {
     final completed = _continuationChecks.where((isDone) => isDone).length;
     final total = _continuationChecks.length;
@@ -1930,7 +2067,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  '継続アクション（48時間）',
+                  'なんとなくやりたくないことをやる（48時間）',
                   style: TextStyle(
                     color: Colors.lightBlueAccent,
                     fontWeight: FontWeight.bold,
@@ -2009,7 +2146,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: FilledButton.tonalIcon(
                           onPressed: _completeNextContinuationAction,
                           icon: const Icon(Icons.check),
-                          label: const Text('次の1件を完了'),
+                          label: const Text('嫌な1件を完了'),
                         ),
                       ),
                     ],
@@ -2096,7 +2233,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               Icon(Icons.block, color: Colors.pinkAccent, size: 18),
               SizedBox(width: 8),
               Text(
-                '禁欲ガード（通知・制限・可視化）',
+                'なんとなくやりたい衝動を止める',
                 style: TextStyle(
                   color: Colors.pinkAccent,
                   fontWeight: FontWeight.bold,
