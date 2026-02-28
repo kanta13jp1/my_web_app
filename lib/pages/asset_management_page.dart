@@ -156,6 +156,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return '$y-$m-$d';
   }
 
+  String _todayDateKey() => _dateOnly(DateTime.now());
+
+  String _yesterdayDateKey() =>
+      _dateOnly(DateTime.now().subtract(const Duration(days: 1)));
+
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
 
   bool _isSameMonth(DateTime a, DateTime b) =>
@@ -1046,10 +1051,79 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         TextSelection.collapsed(offset: controller.text.length);
   }
 
-  Future<void> _saveSingleAssetData(String type) async {
+  Future<void> _recordAssetAmountForToday(
+    String type,
+    double amount, {
+    bool clearController = true,
+    String? successMessage,
+  }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
 
+    final today = _todayDateKey();
+    try {
+      await _supabase.from('cfo_assets').insert({
+        'user_id': userId,
+        'title': type,
+        'amount': amount,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      setState(() {
+        if (!_assetData.containsKey(today)) _assetData[today] = {};
+        _assetData[today]![type] = amount;
+        _updateLastUpdatedDates();
+        _sortAssetTypes();
+        _updateChartData();
+      });
+
+      if (clearController) {
+        _controllers[type]?.clear();
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successMessage ?? '✅ $type を記録しました'),
+          backgroundColor: Colors.green[700],
+        ),
+      );
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('Error saving $type: $e');
+    }
+  }
+
+  Future<void> _quickUpdateAssetData(String type) async {
+    final today = _todayDateKey();
+    final lastDate = _lastUpdatedDates[type];
+    if (lastDate == null ||
+        lastDate == today ||
+        lastDate != _yesterdayDateKey()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type は昨日の記録がある場合のみ簡易更新できます')),
+      );
+      return;
+    }
+
+    final lastAmount = _assetData[lastDate]?[type];
+    if (lastAmount == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type の前回残高が見つかりません')),
+      );
+      return;
+    }
+
+    await _recordAssetAmountForToday(
+      type,
+      lastAmount,
+      successMessage: '✅ $type を昨日と同額で簡易更新しました',
+    );
+  }
+
+  Future<void> _saveSingleAssetData(String type) async {
     final controller = _controllers[type];
     if (controller == null || controller.text.isEmpty) {
       ScaffoldMessenger.of(context)
@@ -1066,36 +1140,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final double amount = parsedAmount;
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    try {
-      await _supabase.from('cfo_assets').insert({
-        'user_id': userId,
-        'title': type,
-        'amount': amount,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      setState(() {
-        if (!_assetData.containsKey(today)) _assetData[today] = {};
-        _assetData[today]![type] = amount;
-        _updateLastUpdatedDates();
-        _sortAssetTypes(); // ★ 更新後にも並び替えを実行
-        _updateChartData();
-      });
-      controller.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ $type を記録しました'),
-            backgroundColor: Colors.green[700],
-          ),
-        );
-      }
-      await _fetchTodayClosing();
-    } catch (e) {
-      debugPrint('Error saving $type: $e');
-    }
+    await _recordAssetAmountForToday(type, amount);
   }
 
   Future<void> _saveAssetData() async {
@@ -2596,7 +2641,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAssetInputRow(String type) {
-    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final todayStr = _todayDateKey();
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
     final isCompact = _isCompact;
 
@@ -2607,6 +2652,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       lastAmount = _assetData[lastDate]?[type];
     }
     final isLiability = (lastAmount ?? 0) < 0;
+    final canQuickUpdate = lastAmount != null &&
+        !isUpdatedToday &&
+        lastDate == _yesterdayDateKey();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -2640,6 +2688,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        if (canQuickUpdate) ...[
+                          OutlinedButton.icon(
+                            onPressed: () => _quickUpdateAssetData(type),
+                            icon:
+                                const Icon(Icons.history_toggle_off, size: 16),
+                            label: const Text('同額'),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         ElevatedButton(
                           onPressed: () => _saveSingleAssetData(type),
                           style: ElevatedButton.styleFrom(
@@ -2687,6 +2744,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    if (canQuickUpdate) ...[
+                      OutlinedButton.icon(
+                        onPressed: () => _quickUpdateAssetData(type),
+                        icon: const Icon(Icons.history_toggle_off, size: 16),
+                        label: const Text('同額'),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     ElevatedButton(
                       onPressed: () => _saveSingleAssetData(type),
                       style: ElevatedButton.styleFrom(
@@ -2730,6 +2795,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     '(${lastDate == todayStr ? "本日更新" : "最終更新: $lastDate"})',
                     style: TextStyle(fontSize: 10, color: Colors.grey[500]),
                   ),
+                  if (canQuickUpdate) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '昨日と同額なら「同額」で更新',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.blueGrey[600],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             )
