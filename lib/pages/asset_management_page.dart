@@ -54,12 +54,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 収支（フロー）記録用変数 ---
   DateTime _selectedFlowDate = DateTime.now();
+  DateTime _selectedFlowHistoryMonth =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
   String _selectedSource = '[三井住友銀行大塚支店]';
   String _selectedFlowType = '支出'; // 収入 or 支出
   final List<String> _sourceOptions = [
     '[三井住友銀行大塚支店]',
     '[PayPayカード]',
     '[auPayカード]',
+    '[auかんたん決済]',
     '[アコムショッピング]',
     '[横浜銀行]',
     '[現金]',
@@ -67,7 +70,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
-  List<Map<String, dynamic>> _recentFlows = []; // 今月の収支履歴
+  List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
 
   // --- サブスク（固定費）用変数 ---
   List<Map<String, dynamic>> _subscriptions = [];
@@ -158,6 +161,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _monthKey(DateTime monthStart) =>
       DateFormat('yyyy-MM').format(_monthStart(monthStart));
+
+  String _flowMonthLabel(DateTime month) =>
+      DateFormat('yyyy/MM').format(_monthStart(month));
+
+  List<Map<String, dynamic>> _flowsForMonth(DateTime month) {
+    final target = _monthStart(month);
+    return _recentFlows.where((flow) {
+      final occurredAtRaw = flow['occurred_at']?.toString();
+      if (occurredAtRaw == null || occurredAtRaw.isEmpty) {
+        return false;
+      }
+      final occurredAt = DateTime.tryParse(occurredAtRaw)?.toLocal();
+      if (occurredAt == null) {
+        return false;
+      }
+      return occurredAt.year == target.year && occurredAt.month == target.month;
+    }).toList();
+  }
+
+  Future<void> _pickFlowHistoryMonth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedFlowHistoryMonth,
+      firstDate: DateTime(2020, 1, 1),
+      lastDate: DateTime(now.year, now.month, now.day),
+      helpText: '表示する月を選択',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedFlowHistoryMonth = _monthStart(picked);
+    });
+  }
+
+  void _shiftFlowHistoryMonth(int delta) {
+    final currentMonth = _monthStart(DateTime.now());
+    final next = DateTime(
+      _selectedFlowHistoryMonth.year,
+      _selectedFlowHistoryMonth.month + delta,
+      1,
+    );
+    if (next.isAfter(currentMonth)) {
+      return;
+    }
+    setState(() {
+      _selectedFlowHistoryMonth = _monthStart(next);
+    });
+  }
 
   List<DateTime> _overviewMonthStarts() {
     final current = _monthStart(DateTime.now());
@@ -470,9 +521,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
+    final currentMonthFlows = _flowsForMonth(DateTime.now());
     int monthlyIncome = 0;
     int monthlyExpense = 0;
-    for (final f in _recentFlows) {
+    for (final f in currentMonthFlows) {
       final amt = (f['amount'] as num?)?.toInt() ?? 0;
       if (f['action_type'] == 'conquer') monthlyIncome += amt;
       if (f['action_type'] == 'expense') monthlyExpense += amt;
@@ -685,10 +737,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final subsOk = _subscriptions.isNotEmpty;
 
+    final currentMonthFlows = _flowsForMonth(DateTime.now());
     final incomeCount =
-        _recentFlows.where((r) => r['action_type'] == 'conquer').length;
+        currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
     final expenseCount =
-        _recentFlows.where((r) => r['action_type'] == 'expense').length;
+        currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
     final flowsOk = (incomeCount + expenseCount) > 0;
 
     final now = DateTime.now();
@@ -749,9 +802,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       totalFixed += (s['price'] as num?)?.toInt() ?? 0;
     }
 
+    final currentMonthFlows = _flowsForMonth(now);
     int totalIncome = 0;
     int totalExpense = 0;
-    for (final f in _recentFlows) {
+    for (final f in currentMonthFlows) {
       final amt = (f['amount'] as num?)?.toInt() ?? 0;
       if (f['action_type'] == 'conquer') totalIncome += amt;
       if (f['action_type'] == 'expense') totalExpense += amt;
@@ -1397,15 +1451,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      final now = DateTime.now();
-      final firstDayOfMonth =
-          DateTime(now.year, now.month, 1).toUtc().toIso8601String();
-
       final data = await _supabase
           .from('wealth_struggles')
           .select()
           .eq('user_id', userId)
-          .gte('occurred_at', firstDayOfMonth)
           .order('occurred_at', ascending: false);
 
       if (mounted) {
@@ -1446,6 +1495,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       _flowMemoController.clear();
       _flowAmountController.clear();
+      if (mounted) {
+        setState(() {
+          _selectedFlowHistoryMonth = _monthStart(_selectedFlowDate);
+        });
+      }
       await _fetchRecentFlows();
 
       if (mounted) {
@@ -2714,11 +2768,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // ④ 今月の支出と収入
   Widget _buildFlowCard() {
+    final visibleFlows = _flowsForMonth(_selectedFlowHistoryMonth);
+    final visibleMonthLabel = _flowMonthLabel(_selectedFlowHistoryMonth);
+    final canMoveForward = !_isSameMonth(
+      _selectedFlowHistoryMonth,
+      DateTime.now(),
+    );
     int totalIncome = 0;
     int totalExpense = 0;
 
-    for (var item in _recentFlows) {
-      final amount = item['amount'] as int;
+    for (var item in visibleFlows) {
+      final amount = (item['amount'] as num?)?.toInt() ?? 0;
       final actionType = item['action_type'] as String? ?? '';
       if (actionType == 'conquer') totalIncome += amount; // 収入
       if (actionType == 'expense') totalExpense += amount; // 支出
@@ -2736,14 +2796,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Icon(Icons.receipt_long, color: Colors.blue),
                 SizedBox(width: 8),
                 Text(
-                  '④今月の収支の記録',
+                  '④収支の記録',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            const Text(
-              'お金の流れをすべてリスト化する。',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+            Text(
+              'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
             const SizedBox(height: 16),
             Row(
@@ -2813,6 +2873,59 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey[50],
+                borderRadius: BorderRadius.circular(10),
+                border:
+                    Border.all(color: Colors.blueGrey.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: '前月',
+                    onPressed: () => _shiftFlowHistoryMonth(-1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickFlowHistoryMonth,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Column(
+                          children: [
+                            const Text(
+                              '履歴表示月',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              visibleMonthLabel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '翌月',
+                    onPressed:
+                        canMoveForward ? () => _shiftFlowHistoryMonth(1) : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -2896,7 +3009,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 children: [
                   Column(
                     children: [
-                      const Text('今月収入', style: TextStyle(fontSize: 10)),
+                      Text(
+                        '$visibleMonthLabel 収入',
+                        style: const TextStyle(fontSize: 10),
+                      ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome)}',
                         style: TextStyle(
@@ -2909,7 +3025,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   Column(
                     children: [
-                      const Text('今月支出', style: TextStyle(fontSize: 10)),
+                      Text(
+                        '$visibleMonthLabel 支出',
+                        style: const TextStyle(fontSize: 10),
+                      ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalExpense)}',
                         style: TextStyle(
@@ -2939,23 +3058,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 8),
-            _recentFlows.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('今月の記録はありません')),
+            visibleFlows.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(child: Text('$visibleMonthLabel の記録はありません')),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _recentFlows.length,
+                    itemCount: visibleFlows.length,
                     itemBuilder: (context, index) {
-                      final item = _recentFlows[index];
+                      final item = visibleFlows[index];
                       final isIncome =
                           (item['action_type'] as String?) == 'conquer';
-                      final amount = item['amount'] as int;
+                      final amount = (item['amount'] as num?)?.toInt() ?? 0;
                       final desc = item['description']?.toString() ?? '';
-                      final date =
-                          DateTime.parse(item['occurred_at']).toLocal();
+                      final date = DateTime.tryParse(
+                            item['occurred_at']?.toString() ?? '',
+                          )?.toLocal() ??
+                          _selectedFlowHistoryMonth;
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
