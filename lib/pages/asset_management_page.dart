@@ -59,6 +59,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final List<String> _sourceOptions = [
     '[三井住友銀行大塚支店]',
     '[PayPayカード]',
+    '[auPayカード]',
+    '[アコムショッピング]',
     '[横浜銀行]',
     '[現金]',
     '[その他]',
