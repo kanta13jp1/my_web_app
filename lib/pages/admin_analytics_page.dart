@@ -16,6 +16,104 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   bool _isLoading = true;
   late final SupabaseClient _supabase;
 
+  int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  DateTime _startOfDay(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  String _dateKey(DateTime date) =>
+      DateFormat('yyyy-MM-dd').format(_startOfDay(date));
+
+  String? _normalizeDateKey(dynamic value) {
+    if (value == null) return null;
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) {
+      return _dateKey(parsed.toLocal());
+    }
+
+    // Keep plain yyyy-MM-dd values as-is if parsing fails.
+    return raw.length >= 10 ? raw.substring(0, 10) : raw;
+  }
+
+  void _mergeSourceCounts(Map<String, int> target, dynamic rawSourceDetails) {
+    if (rawSourceDetails is! Map) return;
+    rawSourceDetails.forEach((key, value) {
+      final sourceKey = key.toString();
+      final count = _toInt(value);
+      if (sourceKey.isEmpty || count <= 0) return;
+      target.update(
+        sourceKey,
+        (current) => current + count,
+        ifAbsent: () => count,
+      );
+    });
+  }
+
+  List<Map<String, dynamic>> _buildMergedDailyStats({
+    required List<dynamic> analyticsRows,
+    required List<dynamic> profileRows,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
+    final statsByDate = <String, Map<String, dynamic>>{};
+
+    Map<String, dynamic> ensureDay(String dateKey) {
+      return statsByDate.putIfAbsent(
+        dateKey,
+        () => <String, dynamic>{
+          'date': dateKey,
+          'landing_views': 0,
+          'conversions': 0,
+          'share_count': 0,
+          'source_details': <String, int>{},
+        },
+      );
+    }
+
+    for (final row in analyticsRows.whereType<Map>()) {
+      final dateKey = _normalizeDateKey(row['date']);
+      if (dateKey == null) continue;
+      final day = ensureDay(dateKey);
+      day['landing_views'] =
+          _toInt(day['landing_views']) + _toInt(row['landing_views']);
+      day['share_count'] =
+          _toInt(day['share_count']) + _toInt(row['share_count']);
+      final mergedSources = Map<String, int>.from(day['source_details'] as Map);
+      _mergeSourceCounts(mergedSources, row['source_details']);
+      day['source_details'] = mergedSources;
+    }
+
+    for (final row in profileRows.whereType<Map>()) {
+      final createdAtRaw = row['created_at'];
+      final createdAt = createdAtRaw == null
+          ? null
+          : DateTime.tryParse(createdAtRaw.toString())?.toLocal();
+      if (createdAt == null) continue;
+
+      final dateKey = _dateKey(createdAt);
+      final day = ensureDay(dateKey);
+      day['conversions'] = _toInt(day['conversions']) + 1;
+    }
+
+    for (DateTime day = _startOfDay(startDate);
+        !day.isAfter(_startOfDay(endDate));
+        day = day.add(const Duration(days: 1))) {
+      ensureDay(_dateKey(day));
+    }
+
+    final merged = statsByDate.values.toList()
+      ..sort((a, b) => (b['date'] as String).compareTo(a['date'] as String));
+    return merged;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -25,22 +123,44 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Future<void> _loadStats() async {
     try {
-      final statsResponse = await _supabase
-          .from('app_analytics')
-          .select()
-          .order('date', ascending: false)
-          .limit(30);
+      final today = _startOfDay(DateTime.now());
+      final startDate = today.subtract(const Duration(days: 29));
+      final startDateKey = _dateKey(startDate);
+      final endDateKey = _dateKey(today);
 
-      // 実際のユーザー総数を取得
-      final userCountResponse = await _supabase
-          .from('user_profiles')
-          .select()
-          .count(CountOption.exact);
+      final results = await Future.wait<dynamic>([
+        _supabase
+            .from('app_analytics')
+            .select()
+            .gte('date', startDateKey)
+            .lte('date', endDateKey)
+            .order('date', ascending: false),
+        _supabase
+            .from('user_profiles')
+            .select('created_at')
+            .gte('created_at', startDate.toIso8601String()),
+        _supabase
+            .from('user_profiles')
+            .select('user_id')
+            .count(CountOption.exact),
+      ]);
+
+      final statsResponse = results[0] as List<dynamic>;
+      final profileResponse = results[1] as List<dynamic>;
+      final userCountResponse = results[2];
+      final mergedDailyStats = _buildMergedDailyStats(
+        analyticsRows: statsResponse,
+        profileRows: profileResponse,
+        startDate: startDate,
+        endDate: today,
+      );
+      final totalUsers =
+          userCountResponse is PostgrestResponse ? userCountResponse.count : 0;
 
       if (mounted) {
         setState(() {
-          _dailyStats = List<Map<String, dynamic>>.from(statsResponse);
-          _actualUserCount = userCountResponse.count;
+          _dailyStats = mergedDailyStats;
+          _actualUserCount = totalUsers;
           _isLoading = false;
         });
       }
@@ -124,12 +244,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int maxDailyViews = 0;
 
     for (var stat in _dailyStats) {
-      final views = stat['landing_views'] as int? ?? 0;
-      final conv = stat['conversions'] as int? ?? 0;
+      final views = _toInt(stat['landing_views']);
+      final conv = _toInt(stat['conversions']);
 
       totalViews += views;
       totalConversions += conv;
-      totalShares += (stat['share_count'] as int? ?? 0);
+      totalShares += _toInt(stat['share_count']);
 
       if (views > maxDailyViews) maxDailyViews = views;
 
@@ -190,12 +310,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildKpiSummaryCard(
                       totalCvr,
                       totalViews,
+                      totalConversions,
                       _actualUserCount,
                       totalShares,
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      '過去30日間の推移 (閲覧 vs 登録)',
+                      '過去30日間の推移 (閲覧 vs 実登録)',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -242,7 +363,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   // --- 以下、既存のウィジェットメソッド ---
 
-  Widget _buildKpiSummaryCard(double cvr, int views, int users, int shares) {
+  Widget _buildKpiSummaryCard(
+    double cvr,
+    int views,
+    int registrations,
+    int users,
+    int shares,
+  ) {
     return Card(
       elevation: 4,
       shadowColor: Colors.black26,
@@ -253,7 +380,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: Column(
           children: [
             const Text(
-              '現在のコンバージョン率 (CVR)',
+              '直近30日CVR (実登録ベース)',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 4),
@@ -287,12 +414,35 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 24),
             const Divider(height: 1),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            Wrap(
+              spacing: 20,
+              runSpacing: 16,
+              alignment: WrapAlignment.spaceAround,
               children: [
-                _buildStatItem('総閲覧数', '$views', Icons.visibility, Colors.blue),
-                _buildStatItem('総ユーザー', '$users', Icons.group, Colors.indigo),
-                _buildStatItem('シェア', '$shares', Icons.share, Colors.orange),
+                _buildStatItem(
+                  '30日閲覧',
+                  '$views',
+                  Icons.visibility,
+                  Colors.blue,
+                ),
+                _buildStatItem(
+                  '30日登録',
+                  '$registrations',
+                  Icons.person_add,
+                  Colors.indigo,
+                ),
+                _buildStatItem(
+                  '累計登録者',
+                  '$users',
+                  Icons.group,
+                  Colors.deepPurple,
+                ),
+                _buildStatItem(
+                  '30日シェア',
+                  '$shares',
+                  Icons.share,
+                  Colors.orange,
+                ),
               ],
             ),
           ],
@@ -347,8 +497,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: data.map((stat) {
-            final views = stat['landing_views'] as int? ?? 0;
-            final conv = stat['conversions'] as int? ?? 0;
+            final views = _toInt(stat['landing_views']);
+            final conv = _toInt(stat['conversions']);
 
             final double viewHeightRatio =
                 maxViews == 0 ? 0 : (views / maxViews).clamp(0.0, 1.0);
@@ -537,8 +687,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       itemCount: _dailyStats.length,
       itemBuilder: (context, index) {
         final stat = _dailyStats[index];
-        final views = stat['landing_views'] as int? ?? 0;
-        final conv = stat['conversions'] as int? ?? 0;
+        final views = _toInt(stat['landing_views']);
+        final conv = _toInt(stat['conversions']);
         final cvr = views == 0 ? 0.0 : (conv / views * 100);
 
         String dateStr = stat['date'].toString();
