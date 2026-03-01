@@ -200,6 +200,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   TaskPriority _defaultTaskPriority = TaskPriority.c;
   bool _showFlowTodoMap = false;
   bool _todoFlowImmersiveMode = false;
+  bool _todoFlowLogMode = false;
   Map<String, Offset> _todoFlowPositions = <String, Offset>{};
   Set<String> _todoFlowLinks = <String>{};
   Map<String, String> _todoFlowNotes = <String, String>{};
@@ -553,6 +554,17 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     const rowSpacing = 156.0;
     final baseX = 80 + (branchIndex * columnSpacing);
     final baseY = 80 + (itemIndex * rowSpacing);
+    return Offset(baseX, baseY);
+  }
+
+  Offset _defaultTodoFlowPositionForLog(int itemIndex) {
+    const columnSpacing = 430.0;
+    const rowSpacing = 176.0;
+    final columnIndex = itemIndex.isEven ? 0 : 1;
+    final rowIndex = itemIndex ~/ 2;
+    final baseX =
+        96 + (columnIndex * columnSpacing) + (rowIndex.isOdd ? 28.0 : 0.0);
+    final baseY = 88 + (rowIndex * rowSpacing);
     return Offset(baseX, baseY);
   }
 
@@ -2423,6 +2435,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               setState(() {
                 _showFlowTodoMap = false;
                 _todoFlowImmersiveMode = false;
+                _todoFlowLogMode = false;
               });
             },
           ),
@@ -2564,27 +2577,69 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       );
     }
     final tasks = _sortedTasksForFlow;
+    final completionTimeline = _dailyCompletionTimeline;
+    final completionById = <String, _TaskCompletionLog>{
+      for (final log in completionTimeline) log.taskId: log,
+    };
+    final completedTasksForTimeline = tasks.where((task) {
+      final taskId = task['id']?.toString();
+      return task['is_completed'] == true &&
+          taskId != null &&
+          completionById.containsKey(taskId);
+    }).toList()
+      ..sort((a, b) {
+        final aLog = completionById[a['id']?.toString() ?? ''];
+        final bLog = completionById[b['id']?.toString() ?? ''];
+        if (aLog == null || bLog == null) return 0;
+        return aLog.completedAt.compareTo(bLog.completedAt);
+      });
+
+    final visibleTasks = _todoFlowLogMode ? completedTasksForTimeline : tasks;
     final nodes = <_TodoFlowNodeData>[
-      for (final task in tasks)
-        _TodoFlowNodeData(
-          id: _taskFlowId(task),
-          title: _stripPriorityTag(task['content'] as String? ?? ''),
-          subtitle:
-              '${(task['hour_slot'] as int?) ?? 0}:00 ${task['is_completed'] == true ? '完了済み' : '未完了'}',
-          color: task['is_completed'] == true
-              ? Colors.green
-              : _priorityColor(
-                  _parsePriority(task['content'] as String? ?? ''),
-                ),
-          icon: task['is_completed'] == true
-              ? Icons.check_circle
-              : Icons.radio_button_unchecked,
-          isDimmed: task['is_completed'] == true,
-          position:
-              _todoFlowPositions[_taskFlowId(task)] ?? const Offset(80, 80),
-          note: _todoFlowNotes[_taskFlowId(task)],
-        ),
+      for (var index = 0; index < visibleTasks.length; index++)
+        () {
+          final task = visibleTasks[index];
+          final taskId = _taskFlowId(task);
+          final completionLog = completionById[taskId];
+          final isCompleted = task['is_completed'] == true;
+          final baseSubtitle = '${(task['hour_slot'] as int?) ?? 0}:00';
+          final subtitle = _todoFlowLogMode
+              ? completionLog == null
+                  ? '$baseSubtitle 完了'
+                  : '${DateFormat('HH:mm').format(completionLog.completedAt)} 完了 / $baseSubtitle枠'
+              : completionLog != null && isCompleted
+                  ? '${DateFormat('HH:mm').format(completionLog.completedAt)} 完了 / $baseSubtitle枠'
+                  : '$baseSubtitle ${isCompleted ? '完了済み' : '未完了'}';
+          return _TodoFlowNodeData(
+            id: taskId,
+            title: _stripPriorityTag(task['content'] as String? ?? ''),
+            subtitle: subtitle,
+            color: _todoFlowLogMode
+                ? Colors.indigo
+                : isCompleted
+                    ? Colors.green
+                    : _priorityColor(
+                        _parsePriority(task['content'] as String? ?? ''),
+                      ),
+            icon: _todoFlowLogMode
+                ? Icons.schedule
+                : isCompleted
+                    ? Icons.check_circle
+                    : Icons.radio_button_unchecked,
+            isDimmed: !_todoFlowLogMode && isCompleted,
+            position: _todoFlowLogMode
+                ? _defaultTodoFlowPositionForLog(index)
+                : (_todoFlowPositions[taskId] ?? const Offset(80, 80)),
+            note: _todoFlowNotes[taskId],
+          );
+        }(),
     ];
+    final links = _todoFlowLogMode
+        ? <String>{
+            for (var i = 0; i < visibleTasks.length - 1; i++)
+              '${_taskFlowId(visibleTasks[i])}=>${_taskFlowId(visibleTasks[i + 1])}',
+          }
+        : _todoFlowLinks;
     final maxX = nodes.isEmpty
         ? 900.0
         : nodes.map((node) => node.position.dx).reduce(math.max);
@@ -2595,6 +2650,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     final canvasHeight = math.max(960.0, maxY + 320);
     final pendingCount =
         _allTasks.where((task) => task['is_completed'] != true).length;
+    final logCount = completionTimeline.length;
+    final modeEmpty = _todoFlowLogMode && visibleTasks.isEmpty;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
@@ -2606,76 +2663,114 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.hub, color: Colors.indigo.shade400),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'フローチャートToDo',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: _todoFlowLogMode ? 230 : 210,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.hub, color: Colors.indigo.shade400),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'フローチャートToDo',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: () {
-                        setState(() {
-                          _todoFlowImmersiveMode = !_todoFlowImmersiveMode;
-                        });
-                      },
-                      icon: Icon(
-                        _todoFlowImmersiveMode
-                            ? Icons.close_fullscreen
-                            : Icons.open_in_full,
-                        size: 18,
+                      FilledButton.tonalIcon(
+                        onPressed: () {
+                          setState(() {
+                            _todoFlowImmersiveMode = !_todoFlowImmersiveMode;
+                          });
+                        },
+                        icon: Icon(
+                          _todoFlowImmersiveMode
+                              ? Icons.close_fullscreen
+                              : Icons.open_in_full,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _todoFlowImmersiveMode ? '通常表示' : '広く表示',
+                        ),
                       ),
-                      label: Text(
-                        _todoFlowImmersiveMode ? '通常表示' : '広く表示',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _todoFlowImmersiveMode
-                      ? 'フローチャートに集中できるよう、上部パネルを折りたたんでいます。'
-                      : 'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildTodoFlowStatPill(
-                      label: '残り',
-                      value: '$pendingCount 件',
-                      color: Colors.redAccent,
+                  const SizedBox(height: 6),
+                  Text(
+                    _todoFlowImmersiveMode
+                        ? 'フローチャートに集中できるよう、上部パネルを折りたたんでいます。'
+                        : _todoFlowLogMode
+                            ? 'その日に完了したタスクを、完了時刻順に俯瞰表示します。'
+                            : 'ノードはドラッグで自由移動、編集で接続先と枝メモを設定できます。',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
                     ),
-                    _buildTodoFlowStatPill(
-                      label: '完了',
-                      value: '$_completedTasksToday 件',
-                      color: Colors.green,
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: _resetTodoFlowLayout,
-                      icon: const Icon(Icons.auto_fix_high, size: 16),
-                      label: const Text('自動整列'),
-                    ),
-                  ],
-                ),
-                _buildDailyOverviewPreview(),
-              ],
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('導線'),
+                        selected: !_todoFlowLogMode,
+                        onSelected: (_) {
+                          setState(() {
+                            _todoFlowLogMode = false;
+                          });
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('実行ログ俯瞰'),
+                        selected: _todoFlowLogMode,
+                        onSelected: (_) {
+                          setState(() {
+                            _todoFlowLogMode = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildTodoFlowStatPill(
+                        label: '残り',
+                        value: '$pendingCount 件',
+                        color: Colors.redAccent,
+                      ),
+                      _buildTodoFlowStatPill(
+                        label: '完了',
+                        value: '$_completedTasksToday 件',
+                        color: Colors.green,
+                      ),
+                      _buildTodoFlowStatPill(
+                        label: 'ログ',
+                        value: '$logCount 件',
+                        color: Colors.indigo,
+                      ),
+                      OutlinedButton.icon(
+                        onPressed:
+                            _todoFlowLogMode ? null : _resetTodoFlowLayout,
+                        icon: const Icon(Icons.auto_fix_high, size: 16),
+                        label: const Text('自動整列'),
+                      ),
+                    ],
+                  ),
+                  _buildDailyOverviewPreview(),
+                ],
+              ),
             ),
           ),
           const Divider(height: 1),
@@ -2696,35 +2791,83 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         child: CustomPaint(
                           painter: _TodoFlowPainter(
                             nodes: nodes,
-                            links: _todoFlowLinks,
+                            links: links,
                           ),
                         ),
                       ),
+                      if (modeEmpty)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(18),
+                            constraints: const BoxConstraints(maxWidth: 360),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.indigo.withValues(alpha: 0.14),
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timeline,
+                                  color: Colors.indigo.shade400,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  '実行ログはまだありません',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'タスクを完了にすると、その日の実行ログを時刻順でここに俯瞰表示します。',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       for (final node in nodes)
                         Positioned(
                           left: node.position.dx,
                           top: node.position.dy,
                           child: GestureDetector(
-                            onPanUpdate: (details) {
-                              final nextPosition = Offset(
-                                (node.position.dx + details.delta.dx).clamp(
-                                  0.0,
-                                  canvasWidth - (_todoFlowNodeWidth + 32),
-                                ),
-                                (node.position.dy + details.delta.dy).clamp(
-                                  0.0,
-                                  canvasHeight - 150,
-                                ),
-                              );
-                              setState(() {
-                                _todoFlowPositions[node.id] = nextPosition;
-                              });
-                            },
-                            onPanEnd: (_) {
-                              _persistTodoFlowState();
-                            },
+                            onPanUpdate: _todoFlowLogMode
+                                ? null
+                                : (details) {
+                                    final nextPosition = Offset(
+                                      (node.position.dx + details.delta.dx)
+                                          .clamp(
+                                        0.0,
+                                        canvasWidth - (_todoFlowNodeWidth + 32),
+                                      ),
+                                      (node.position.dy + details.delta.dy)
+                                          .clamp(
+                                        0.0,
+                                        canvasHeight - 150,
+                                      ),
+                                    );
+                                    setState(() {
+                                      _todoFlowPositions[node.id] =
+                                          nextPosition;
+                                    });
+                                  },
+                            onPanEnd: _todoFlowLogMode
+                                ? null
+                                : (_) {
+                                    _persistTodoFlowState();
+                                  },
                             child: _buildTodoFlowNode(
                               node,
+                              isEditable: !_todoFlowLogMode,
                               onEdit: () {
                                 final task = tasks.firstWhere(
                                   (task) => _taskFlowId(task) == node.id,
@@ -2776,6 +2919,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   Widget _buildTodoFlowNode(
     _TodoFlowNodeData node, {
     required VoidCallback onEdit,
+    bool isEditable = true,
   }) {
     final backgroundColor = Color.alphaBlend(
       Colors.white.withValues(alpha: node.isDimmed ? 0.7 : 0.92),
@@ -2845,20 +2989,21 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 ],
               ),
             ),
-            IconButton(
-              tooltip: '接続とメモを編集',
-              visualDensity: VisualDensity.compact,
-              constraints: const BoxConstraints.tightFor(
-                width: 32,
-                height: 32,
+            if (isEditable)
+              IconButton(
+                tooltip: '接続とメモを編集',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 32,
+                  height: 32,
+                ),
+                onPressed: onEdit,
+                icon: Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: node.color,
+                ),
               ),
-              onPressed: onEdit,
-              icon: Icon(
-                Icons.edit_outlined,
-                size: 18,
-                color: node.color,
-              ),
-            ),
           ],
         ),
       ),
