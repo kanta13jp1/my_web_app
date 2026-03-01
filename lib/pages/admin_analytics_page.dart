@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -79,8 +79,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     setState(() => _isLoading = true);
 
     try {
-      // 全データを削除 (idが0以上のものを削除＝全件削除)
-      await _supabase.from('app_analytics').delete().neq('id', 0);
+      // app_analytics には id 列がないため、日付キー単位で全件削除する。
+      final rows = await _supabase.from('app_analytics').select('date');
+      final dateKeys = rows
+          .whereType<Map>()
+          .map((row) => row['date']?.toString())
+          .whereType<String>()
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList();
+
+      for (final dateKey in dateKeys) {
+        await _supabase.from('app_analytics').delete().eq('date', dateKey);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
