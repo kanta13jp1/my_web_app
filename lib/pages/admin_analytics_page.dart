@@ -396,6 +396,21 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : todayViews == 0
             ? Colors.orange
             : Colors.redAccent;
+    final actionTitle = achieved
+        ? null
+        : todayViews == 0
+            ? '今やる集客アクション'
+            : '今やる導線改善アクション';
+    final actionDetail = achieved
+        ? null
+        : todayViews == 0
+            ? 'X投稿・既存メモ共有・プロフィール導線の更新のうち、1つだけ今すぐ実行して最初の流入を作る。'
+            : '登録ボタン付近の文言を1つ短くし、最初の画面で「登録する理由」が3秒で伝わる形に直す。';
+    final actionIcon = achieved
+        ? null
+        : todayViews == 0
+            ? Icons.campaign
+            : Icons.alt_route;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : todayViews == 0
@@ -525,6 +540,66 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               height: 1.4,
             ),
           ),
+          if (actionTitle != null &&
+              actionDetail != null &&
+              actionIcon != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: diagnosisColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: diagnosisColor.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: diagnosisColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      actionIcon,
+                      color: diagnosisColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          actionTitle,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: diagnosisColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          actionDetail,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
