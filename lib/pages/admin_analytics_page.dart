@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'ai_secretary_page.dart';
+import 'cmo_page.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
@@ -55,6 +57,36 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ifAbsent: () => count,
       );
     });
+  }
+
+  String _resolvePriorityAcquisitionChannel(Map<String, int> sources) {
+    final actionableEntries = sources.entries
+        .where((entry) => entry.key != 'direct' && entry.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    if (actionableEntries.isEmpty) return 'x_share';
+    return actionableEntries.first.key;
+  }
+
+  void _openGrowthAction({
+    required bool isAcquisitionAction,
+    String? priorityChannelLabel,
+  }) {
+    final targetPage =
+        isAcquisitionAction ? const CmoPage() : const AISecretaryPage();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => targetPage),
+    );
+
+    final hint = isAcquisitionAction
+        ? '${priorityChannelLabel ?? '最優先チャネル'}で最初の流入を作る導線を先に実行してください。'
+        : 'AI秘書で訴求文と導線文言を先に整えてください。';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(hint)),
+    );
   }
 
   List<Map<String, dynamic>> _buildMergedDailyStats({
@@ -319,6 +351,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildTodayRegistrationGoalCard(
                       todayViews: todayViews,
                       todayRegistrations: todayRegistrations,
+                      sourceBreakdown: sourceBreakdown,
                     ),
                     const SizedBox(height: 16),
                     _buildKpiSummaryCard(
@@ -378,6 +411,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildTodayRegistrationGoalCard({
     required int todayViews,
     required int todayRegistrations,
+    required Map<String, int> sourceBreakdown,
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
@@ -396,6 +430,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : todayViews == 0
             ? Colors.orange
             : Colors.redAccent;
+    final priorityChannelKey = achieved || todayViews > 0
+        ? null
+        : _resolvePriorityAcquisitionChannel(sourceBreakdown);
+    final priorityChannelLabel = priorityChannelKey == null
+        ? null
+        : _formatSourceName(priorityChannelKey);
     final actionTitle = achieved
         ? null
         : todayViews == 0
@@ -404,13 +444,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final actionDetail = achieved
         ? null
         : todayViews == 0
-            ? 'X投稿・既存メモ共有・プロフィール導線の更新のうち、1つだけ今すぐ実行して最初の流入を作る。'
+            ? '${priorityChannelLabel ?? 'X (Twitter)'}を最優先チャネルにして、投稿・共有・導線更新のうち1つだけ今すぐ実行する。'
             : '登録ボタン付近の文言を1つ短くし、最初の画面で「登録する理由」が3秒で伝わる形に直す。';
     final actionIcon = achieved
         ? null
         : todayViews == 0
             ? Icons.campaign
             : Icons.alt_route;
+    final actionButtonLabel = achieved
+        ? null
+        : todayViews == 0
+            ? '${priorityChannelLabel ?? 'X'}を強化'
+            : 'AI秘書で導線改善';
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : todayViews == 0
@@ -528,6 +573,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 value: diagnosisLabel,
                 color: diagnosisColor,
               ),
+              if (priorityChannelLabel != null)
+                _buildMiniKpiChip(
+                  label: '最優先チャネル',
+                  value: priorityChannelLabel,
+                  color: Colors.blueGrey,
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -542,7 +593,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           if (actionTitle != null &&
               actionDetail != null &&
-              actionIcon != null) ...[
+              actionIcon != null &&
+              actionButtonLabel != null) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -592,6 +644,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             color: Colors.black87,
                             height: 1.4,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: diagnosisColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                          onPressed: () {
+                            _openGrowthAction(
+                              isAcquisitionAction: todayViews == 0,
+                              priorityChannelLabel: priorityChannelLabel,
+                            );
+                          },
+                          icon: const Icon(Icons.arrow_forward, size: 16),
+                          label: Text(actionButtonLabel),
                         ),
                       ],
                     ),
