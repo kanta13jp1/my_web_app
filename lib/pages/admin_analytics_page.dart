@@ -240,16 +240,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalConversions = 0;
     int totalShares = 0;
     final Map<String, int> sourceBreakdown = {};
+    final todayKey = _dateKey(DateTime.now());
+    var todayViews = 0;
+    var todayRegistrations = 0;
 
     int maxDailyViews = 0;
 
     for (var stat in _dailyStats) {
       final views = _toInt(stat['landing_views']);
       final conv = _toInt(stat['conversions']);
+      final statDateKey = _normalizeDateKey(stat['date']);
 
       totalViews += views;
       totalConversions += conv;
       totalShares += _toInt(stat['share_count']);
+
+      if (statDateKey == todayKey) {
+        todayViews = views;
+        todayRegistrations = conv;
+      }
 
       if (views > maxDailyViews) maxDailyViews = views;
 
@@ -307,6 +316,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _buildTodayRegistrationGoalCard(
+                      todayViews: todayViews,
+                      todayRegistrations: todayRegistrations,
+                    ),
+                    const SizedBox(height: 16),
                     _buildKpiSummaryCard(
                       totalCvr,
                       totalViews,
@@ -358,6 +372,198 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildTodayRegistrationGoalCard({
+    required int todayViews,
+    required int todayRegistrations,
+  }) {
+    const dailyTarget = 1;
+    final achieved = todayRegistrations >= dailyTarget;
+    final remaining = achieved ? 0 : dailyTarget - todayRegistrations;
+    final progress = (todayRegistrations / dailyTarget).clamp(0.0, 1.0);
+    final accentColor = achieved ? Colors.green : Colors.redAccent;
+    final todayCvr =
+        todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
+    final diagnosisLabel = achieved
+        ? '登録発生'
+        : todayViews == 0
+            ? '流入不足'
+            : '登録率低下';
+    final diagnosisColor = achieved
+        ? Colors.green
+        : todayViews == 0
+            ? Colors.orange
+            : Colors.redAccent;
+    final statusText = achieved
+        ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
+        : todayViews == 0
+            ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
+            : '流入はありますが登録が出ていません。登録導線か訴求を先に改善してください。';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: achieved
+              ? const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)]
+              : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  achieved ? Icons.check_circle : Icons.track_changes,
+                  color: accentColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '今日の登録目標',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$todayRegistrations / $dailyTarget',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: accentColor,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  achieved ? '達成' : '未達',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 10,
+              value: progress,
+              backgroundColor: Colors.black.withValues(alpha: 0.06),
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildMiniKpiChip(
+                label: '今日の流入',
+                value: '$todayViews',
+                color: Colors.blue,
+              ),
+              _buildMiniKpiChip(
+                label: '今日のCVR',
+                value: '${todayCvr.toStringAsFixed(1)}%',
+                color: diagnosisColor,
+              ),
+              _buildMiniKpiChip(
+                label: '診断',
+                value: diagnosisLabel,
+                color: diagnosisColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            achieved ? statusText : '$statusText あと$remaining人の登録が必要です。',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniKpiChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
