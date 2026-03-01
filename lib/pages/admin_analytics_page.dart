@@ -103,7 +103,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           autoRunOnOpen: true,
         );
       case 'qr_scan':
-        return const NoteListPage();
+        return const NoteListPage(prioritizeShareCandidates: true);
       default:
         return CmoPage(
           initialChannel: channelKey,

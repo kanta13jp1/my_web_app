@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'note_editor_page.dart';
 
 class NoteListPage extends StatefulWidget {
-  const NoteListPage({super.key});
+  final bool prioritizeShareCandidates;
+
+  const NoteListPage({
+    super.key,
+    this.prioritizeShareCandidates = false,
+  });
 
   @override
   State<NoteListPage> createState() => _NoteListPageState();
@@ -29,7 +35,6 @@ class _NoteListPageState extends State<NoteListPage> {
         return;
       }
 
-      // ノート取得: アーカイブされていないものを新しい順に
       final data = await _supabase
           .from('notes')
           .select('id, title, content, created_at, is_pinned')
@@ -38,27 +43,319 @@ class _NoteListPageState extends State<NoteListPage> {
           .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
 
-      if (mounted) {
-        setState(() {
-          _notes = List<Map<String, dynamic>>.from(data);
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _notes = List<Map<String, dynamic>>.from(data);
+        _isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラーが発生しました: $e')),
-        );
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('メモ一覧の取得に失敗しました: $e')),
+      );
+      setState(() => _isLoading = false);
+    }
+  }
+
+  DateTime _createdAtOf(Map<String, dynamic> note) {
+    final raw = note['created_at']?.toString();
+    final parsed = raw == null ? null : DateTime.tryParse(raw);
+    return (parsed ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal();
+  }
+
+  String _noteId(Map<String, dynamic> note) => note['id']?.toString() ?? '';
+
+  String _noteTitle(Map<String, dynamic> note) {
+    final title = (note['title'] as String? ?? '').trim();
+    return title.isEmpty ? '無題のメモ' : title;
+  }
+
+  String _noteContent(Map<String, dynamic> note) =>
+      (note['content'] as String? ?? '').trim();
+
+  Map<String, dynamic>? _keywordMatch(
+    String haystack,
+    List<Map<String, dynamic>> keywordRules,
+  ) {
+    for (final rule in keywordRules) {
+      final keyword = rule['keyword'] as String;
+      if (haystack.contains(keyword)) {
+        return rule;
       }
     }
+    return null;
+  }
+
+  Map<String, dynamic> _buildShareCandidateEntry(Map<String, dynamic> note) {
+    final title = _noteTitle(note);
+    final content = _noteContent(note);
+    final haystack = '$title $content'.toLowerCase();
+
+    const keywordRules = <Map<String, dynamic>>[
+      {'keyword': '共有', 'label': '共有語', 'score': 3},
+      {'keyword': '投稿', 'label': '投稿語', 'score': 3},
+      {'keyword': '導線', 'label': '導線語', 'score': 3},
+      {'keyword': '告知', 'label': '告知語', 'score': 3},
+      {'keyword': '紹介', 'label': '紹介語', 'score': 3},
+      {'keyword': '登録', 'label': '登録語', 'score': 3},
+      {'keyword': 'line', 'label': 'LINE向け', 'score': 3},
+      {'keyword': 'facebook', 'label': 'Facebook向け', 'score': 3},
+      {'keyword': 'qr', 'label': 'QR向け', 'score': 3},
+      {'keyword': 'x', 'label': 'X向け', 'score': 2},
+    ];
+
+    final reasons = <String>[];
+    var score = 0;
+
+    if ((note['is_pinned'] as bool?) == true) {
+      score += 3;
+      reasons.add('ピン留め');
+    }
+
+    if (title.isNotEmpty) {
+      score += 2;
+      reasons.add('タイトルあり');
+    }
+
+    if (content.isNotEmpty) {
+      score += 2;
+      reasons.add('本文あり');
+    }
+
+    if (content.length >= 80) {
+      score += 2;
+      reasons.add('説明量あり');
+    }
+
+    if (content.length >= 160) {
+      score += 1;
+      reasons.add('長文素材');
+    }
+
+    final keywordMatch = _keywordMatch(haystack, keywordRules);
+    if (keywordMatch != null) {
+      score += keywordMatch['score'] as int;
+      reasons.add(keywordMatch['label'] as String);
+    }
+
+    return <String, dynamic>{
+      'note': note,
+      'score': score,
+      'reasons': reasons,
+      'createdAt': _createdAtOf(note),
+    };
+  }
+
+  List<Map<String, dynamic>> _shareCandidateEntries(
+    List<Map<String, dynamic>> notes,
+  ) {
+    final entries = notes
+        .where((note) {
+          final title = _noteTitle(note);
+          final content = _noteContent(note);
+          return title.isNotEmpty || content.isNotEmpty;
+        })
+        .map(_buildShareCandidateEntry)
+        .toList()
+      ..sort((a, b) {
+        final scoreCompare = (b['score'] as int).compareTo(a['score'] as int);
+        if (scoreCompare != 0) return scoreCompare;
+        return (b['createdAt'] as DateTime)
+            .compareTo(a['createdAt'] as DateTime);
+      });
+
+    if (entries.isNotEmpty) {
+      return entries.take(3).toList();
+    }
+
+    return notes
+        .take(3)
+        .map((note) => _buildShareCandidateEntry(note))
+        .toList();
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReasonChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.deepPurple.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: Colors.deepPurple,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteCard(
+    BuildContext context,
+    Map<String, dynamic> note, {
+    bool highlightShareCandidate = false,
+    int? shareScore,
+    List<String> shareReasons = const [],
+  }) {
+    final created = _createdAtOf(note);
+    final dateStr = DateFormat('yyyy/MM/dd HH:mm').format(created);
+    final isPinned = note['is_pinned'] as bool? ?? false;
+    final title = _noteTitle(note);
+    final content = _noteContent(note);
+    final accentColor = highlightShareCandidate
+        ? Colors.deepPurple
+        : (isPinned ? Colors.orange : Colors.blue);
+
+    return Card(
+      elevation: highlightShareCandidate ? 3 : 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: accentColor.withValues(
+            alpha: highlightShareCandidate ? 0.35 : 0.12,
+          ),
+        ),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: accentColor.withValues(alpha: 0.12),
+          child: Icon(
+            highlightShareCandidate
+                ? Icons.campaign
+                : isPinned
+                    ? Icons.push_pin
+                    : Icons.description,
+            color: accentColor,
+            size: 20,
+          ),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (highlightShareCandidate)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      '共有候補',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (highlightShareCandidate) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (shareScore != null) _buildReasonChip('score $shareScore'),
+                  ...shareReasons.take(4).map(_buildReasonChip),
+                ],
+              ),
+            ],
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (content.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                content,
+                maxLines: highlightShareCandidate ? 3 : 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              dateStr,
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        onTap: () => _navigateToEditor(context, _noteId(note)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final shareCandidateEntries = widget.prioritizeShareCandidates
+        ? _shareCandidateEntries(_notes)
+        : const <Map<String, dynamic>>[];
+    final shareCandidateIds = shareCandidateEntries
+        .map((entry) => _noteId(entry['note'] as Map<String, dynamic>))
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final remainingNotes = widget.prioritizeShareCandidates
+        ? _notes
+            .where((note) => !shareCandidateIds.contains(_noteId(note)))
+            .toList()
+        : _notes;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CKO OFFICE (知識)'),
+        title: const Text('CKO OFFICE (メモ一覧)'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
@@ -98,70 +395,41 @@ class _NoteListPageState extends State<NoteListPage> {
                     ],
                   ),
                 )
-              : ListView.builder(
+              : ListView(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _notes.length,
-                  itemBuilder: (context, index) {
-                    final note = _notes[index];
-                    final created = DateTime.parse(note['created_at']);
-                    final dateStr =
-                        DateFormat('yyyy/MM/dd HH:mm').format(created);
-                    final isPinned = note['is_pinned'] as bool? ?? false;
-                    final title = (note['title'] as String?)?.isNotEmpty == true
-                        ? note['title']
-                        : '無題のメモ';
-                    final content = note['content'] as String? ?? '';
-
-                    return Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  children: [
+                    if (widget.prioritizeShareCandidates &&
+                        shareCandidateEntries.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        '共有向け候補',
+                        'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
                       ),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isPinned
-                              ? Colors.orange.withValues(alpha: 0.1)
-                              : Colors.blue.withValues(alpha: 0.1),
-                          child: Icon(
-                            isPinned ? Icons.push_pin : Icons.description,
-                            color: isPinned ? Colors.orange : Colors.blue,
-                            size: 20,
-                          ),
-                        ),
-                        title: Text(
-                          title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (content.isNotEmpty)
-                              Text(
-                                content,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            const SizedBox(height: 4),
-                            Text(
-                              dateStr,
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                        onTap: () => _navigateToEditor(context, note['id']),
-                      ),
-                    );
-                  },
+                      ...shareCandidateEntries.map((entry) {
+                        final note = entry['note'] as Map<String, dynamic>;
+                        final score = entry['score'] as int;
+                        final reasons = List<String>.from(
+                          entry['reasons'] as List,
+                        );
+                        return _buildNoteCard(
+                          context,
+                          note,
+                          highlightShareCandidate: true,
+                          shareScore: score,
+                          shareReasons: reasons,
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                    ],
+                    _buildSectionHeader(
+                      widget.prioritizeShareCandidates ? 'すべてのメモ' : 'メモ一覧',
+                      widget.prioritizeShareCandidates
+                          ? '共有候補の下に、残りのメモを時系列で表示します。'
+                          : 'ピン留め済みメモを優先し、その後は新しい順に表示します。',
+                    ),
+                    ...remainingNotes.map(
+                      (note) => _buildNoteCard(context, note),
+                    ),
+                  ],
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToEditor(context),
@@ -178,7 +446,6 @@ class _NoteListPageState extends State<NoteListPage> {
         builder: (_) => NoteEditorPage(noteId: noteId),
       ),
     );
-    // 戻ってきたらリストを更新
     _fetchNotes();
   }
 }
