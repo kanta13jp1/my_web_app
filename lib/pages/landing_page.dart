@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/ai_service.dart';
+
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
@@ -21,6 +23,7 @@ class _LandingPageState extends State<LandingPage> {
   StreamSubscription<AuthState>? _authSubscription;
 
   bool _isLoading = false;
+  bool _isTrialLoading = false;
   bool _isSignUp = false;
   bool _isLoadingStats = true;
 
@@ -91,6 +94,7 @@ class _LandingPageState extends State<LandingPage> {
         final row = Map<String, dynamic>.from(series[i] as Map);
         final dateStr = (row['date'] ?? '').toString();
         final count = (row['count'] as num?)?.toDouble() ?? 0;
+
         spots.add(FlSpot(i.toDouble(), count));
 
         final date = DateTime.tryParse(dateStr);
@@ -141,7 +145,7 @@ class _LandingPageState extends State<LandingPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      _showMessage('認証エラー: $e');
+      _showMessage(_resolveEmailAuthError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -159,7 +163,7 @@ class _LandingPageState extends State<LandingPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      _showMessage('Googleログインエラー: $e');
+      _showMessage(_resolveGoogleAuthError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -183,22 +187,91 @@ class _LandingPageState extends State<LandingPage> {
       _showMessage('Magic Link を送信しました。メール内リンクから続行してください。');
     } catch (e) {
       if (!mounted) return;
-      _showMessage('Magic Link 送信エラー: $e');
+      _showMessage(_resolveMagicLinkError(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _runTrialActionPreview() {
+  Future<void> _runTrialActionPreview() async {
     final text = _trialPromptController.text.trim();
-    final suggestion = _buildTrialSuggestion(text);
-    setState(() {
-      _trialAction = suggestion.$1;
-      _trialReason = suggestion.$2;
-    });
+    if (text.isEmpty) {
+      final suggestion = _buildTrialFallbackSuggestion(text);
+      setState(() {
+        _trialAction = suggestion.$1;
+        _trialReason = suggestion.$2;
+      });
+      return;
+    }
+
+    setState(() => _isTrialLoading = true);
+    try {
+      final aiService = AIService();
+      final prompt = '''
+以下のユーザー入力から、今すぐ着手すべき1件を日本語で提案してください。
+出力は必ず次の2行のみで返してください。
+ACTION: 20文字以内の具体的な次アクション
+REASON: 60文字以内の理由
+
+ユーザー入力:
+$text
+''';
+      final raw = await aiService.improveText(prompt);
+      final suggestion = _parseTrialAiResponse(raw);
+      if (!mounted) return;
+      setState(() {
+        _trialAction = suggestion.$1;
+        _trialReason = suggestion.$2;
+      });
+    } catch (_) {
+      final suggestion = _buildTrialFallbackSuggestion(text);
+      if (!mounted) return;
+      setState(() {
+        _trialAction = suggestion.$1;
+        _trialReason = '${suggestion.$2}（AI応答失敗のため簡易判定）';
+      });
+    } finally {
+      if (mounted) setState(() => _isTrialLoading = false);
+    }
   }
 
-  (String, String) _buildTrialSuggestion(String input) {
+  (String, String) _parseTrialAiResponse(String raw) {
+    final lines = raw
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+    String? action;
+    String? reason;
+
+    for (final line in lines) {
+      final normalized = line.replaceFirst(RegExp(r'^[-*]\s*'), '');
+      if (normalized.startsWith('ACTION:')) {
+        action = normalized.substring('ACTION:'.length).trim();
+      } else if (normalized.startsWith('REASON:')) {
+        reason = normalized.substring('REASON:'.length).trim();
+      }
+    }
+
+    if (action != null && action.isNotEmpty) {
+      return (
+        action,
+        (reason != null && reason.isNotEmpty) ? reason : 'AIが最短の着手ポイントとして選びました。'
+      );
+    }
+
+    final compact = raw.replaceAll('\n', ' ').trim();
+    if (compact.isNotEmpty) {
+      final safeText =
+          compact.length > 80 ? '${compact.substring(0, 80)}…' : compact;
+      return (safeText, 'AI応答をそのまま次アクション候補として表示しています。');
+    }
+
+    return _buildTrialFallbackSuggestion(_trialPromptController.text);
+  }
+
+  (String, String) _buildTrialFallbackSuggestion(String input) {
     final text = input.trim();
     if (text.isEmpty) {
       return ('まずは今日やる最優先を1件だけ決める。', '入力が空でも、最初の1件を固定すると行動開始が早くなります。');
@@ -233,6 +306,99 @@ class _LandingPageState extends State<LandingPage> {
     }
 
     return ('今から10分で終わる単位に分解して、1件だけ着手する。', '内容が広いときは、10分単位まで小さくするのが最短です。');
+  }
+
+  String _resolveEmailAuthError(Object error) {
+    if (error is AuthWeakPasswordException) {
+      return 'パスワードが弱すぎます。英字・数字を混ぜて、もう少し長くしてください。';
+    }
+    if (error is AuthException) {
+      final lowerMessage = error.message.toLowerCase();
+      final lowerCode = (error.code ?? '').toLowerCase();
+
+      if (lowerCode.contains('invalid_credentials') ||
+          lowerMessage.contains('invalid login credentials')) {
+        return 'メールアドレスかパスワードが一致していません。';
+      }
+      if (lowerCode.contains('email_exists') ||
+          lowerMessage.contains('already registered')) {
+        return 'このメールアドレスは既に登録済みです。ログインに切り替えてください。';
+      }
+      if (lowerCode.contains('weak_password')) {
+        return 'パスワードが弱すぎます。英字・数字を混ぜて、もう少し長くしてください。';
+      }
+      if (lowerCode.contains('email_address_invalid') ||
+          lowerMessage.contains('invalid email')) {
+        return 'メールアドレスの形式が不正です。';
+      }
+      if (lowerCode.contains('over_request_rate_limit') ||
+          lowerCode.contains('over_email_send_rate_limit') ||
+          lowerMessage.contains('rate limit') ||
+          error.statusCode == '429') {
+        return '試行回数が多すぎます。少し待ってから再試行してください。';
+      }
+      return '認証に失敗しました。入力内容を確認して、もう一度試してください。';
+    }
+    return '認証に失敗しました。通信状態を確認して、もう一度試してください。';
+  }
+
+  String _resolveGoogleAuthError(Object error) {
+    if (error is AuthException) {
+      final lowerMessage = error.message.toLowerCase();
+      final lowerCode = (error.code ?? '').toLowerCase();
+
+      if (lowerCode.contains('provider_disabled') ||
+          lowerMessage.contains('provider is not enabled')) {
+        return 'Googleログインが未設定です。Supabase Auth の Google provider を有効化してください。';
+      }
+      if (lowerMessage.contains('redirect') ||
+          lowerCode.contains('bad_oauth_callback') ||
+          lowerCode.contains('validation_failed')) {
+        return 'Googleログインのリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
+      }
+      if (lowerCode.contains('over_request_rate_limit') ||
+          lowerMessage.contains('rate limit') ||
+          error.statusCode == '429') {
+        return 'Googleログインの試行回数が多すぎます。少し待ってから再試行してください。';
+      }
+      return 'Googleログインに失敗しました。設定または通信状態を確認してください。';
+    }
+
+    final message = error.toString().toLowerCase();
+    if (message.contains('popup') || message.contains('blocked')) {
+      return 'Googleログインがブラウザにブロックされました。ポップアップ制限を解除して再試行してください。';
+    }
+
+    return 'Googleログインに失敗しました。設定または通信状態を確認してください。';
+  }
+
+  String _resolveMagicLinkError(Object error) {
+    if (error is AuthException) {
+      final lowerMessage = error.message.toLowerCase();
+      final lowerCode = (error.code ?? '').toLowerCase();
+
+      if (lowerCode.contains('email_address_invalid') ||
+          lowerMessage.contains('invalid email')) {
+        return 'Magic Link を送れません。メールアドレスの形式を確認してください。';
+      }
+      if (lowerCode.contains('over_email_send_rate_limit') ||
+          lowerCode.contains('over_request_rate_limit') ||
+          lowerMessage.contains('rate limit') ||
+          error.statusCode == '429') {
+        return 'Magic Link の送信回数が多すぎます。少し待ってから再試行してください。';
+      }
+      if (lowerMessage.contains('smtp') ||
+          lowerCode.contains('email_not_confirmed')) {
+        return 'メール送信設定に問題があります。時間を置くか、別のログイン方法を使ってください。';
+      }
+      if (lowerMessage.contains('redirect') ||
+          lowerCode.contains('validation_failed')) {
+        return 'Magic Link のリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
+      }
+      return 'Magic Link を送れませんでした。メールアドレスと送信設定を確認してください。';
+    }
+
+    return 'Magic Link を送れませんでした。通信状態を確認して、もう一度試してください。';
   }
 
   Widget _buildPvSection() {
@@ -385,7 +551,7 @@ class _LandingPageState extends State<LandingPage> {
             ),
             const SizedBox(height: 6),
             const Text(
-              '今いちばん詰まっていることを入れると、今やる1件を仮で返します。',
+              '今いちばん詰まっていることを入れると、今やる1件を返します。',
               style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 14),
@@ -403,9 +569,15 @@ class _LandingPageState extends State<LandingPage> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: _runTrialActionPreview,
+                onPressed: _isTrialLoading ? null : _runTrialActionPreview,
                 icon: const Icon(Icons.play_arrow),
-                label: const Text('今やる1件を試す'),
+                label: _isTrialLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('今やる1件を試す'),
               ),
             ),
             if (_trialAction != null) ...[
