@@ -54,7 +54,7 @@ class _CmoPageState extends State<CmoPage> {
       case 'qr_scan':
         return const ['#自分株式会社', '#QR導線', '#導線改善'];
       default:
-        return const ['#自分株式会社', '#広報'];
+        return const ['#自分株式会社', '#広報', '#発信'];
     }
   }
 
@@ -190,8 +190,23 @@ $hashtags
       'title': '$channelLabelの草案',
       'body':
           normalized.isEmpty ? '$channelLabel向けの草案をここから整えてください。' : normalized,
-      'hashtags': _defaultHashtags(channelKey),
+      'hashtags': _defaultHashtags(channelKey).take(3).toList(),
     };
+  }
+
+  List<String> _normalizeHashtags(dynamic rawHashtags, String channelKey) {
+    final fallback = _defaultHashtags(channelKey).take(3).toList();
+    if (rawHashtags is! List) return fallback;
+
+    final normalized = rawHashtags
+        .whereType<Object>()
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toSet()
+        .take(3)
+        .toList();
+
+    return normalized.isEmpty ? fallback : normalized;
   }
 
   Map<String, dynamic> _normalizePressReleaseResult(
@@ -200,18 +215,12 @@ $hashtags
   ) {
     if (rawResult is Map) {
       final resultMap = Map<String, dynamic>.from(rawResult);
-      final hashtags = (resultMap['hashtags'] is List)
-          ? List<String>.from(
-              (resultMap['hashtags'] as List)
-                  .whereType<Object>()
-                  .map((item) => item.toString()),
-            )
-          : _defaultHashtags(channelKey);
+      final hashtags = _normalizeHashtags(resultMap['hashtags'], channelKey);
       return <String, dynamic>{
         'title': (resultMap['title'] ?? '${_channelLabel(channelKey)}の草案')
             .toString(),
         'body': (resultMap['body'] ?? '').toString(),
-        'hashtags': hashtags.isEmpty ? _defaultHashtags(channelKey) : hashtags,
+        'hashtags': hashtags,
       };
     }
 
@@ -260,6 +269,22 @@ $hashtags
       'error': 'Invalid AI payload',
       'result': payloadText,
     };
+  }
+
+  void _showRecoverableAiError(String errorText) {
+    if (!mounted) return;
+
+    final hint = switch (errorText) {
+      'Invalid AI payload' =>
+        'Edge Function の返却形式が崩れています。JSON文字列か JSON オブジェクトで返すよう確認してください。',
+      _ => 'APIキー、ai-assistant 関数、選択モデルを確認してから再生成してください。',
+    };
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('起案エラー: $errorText\n復旧ヒント: $hint'),
+      ),
+    );
   }
 
   String _descriptionText(String channelKey) {
@@ -323,8 +348,9 @@ $hashtags
   }
 
   Widget _buildTagRow() {
-    final tags =
-        List<String>.from(_pressRelease?['hashtags'] as List? ?? const []);
+    final tags = List<String>.from(
+      _pressRelease?['hashtags'] as List? ?? const <String>[],
+    );
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -592,11 +618,13 @@ $hashtags
       if (response.status != 200) {
         throw Exception('AI Error: ${response.status}');
       }
+
       final data = _normalizeInvokePayload(response.data);
       if (data['success'] != true) {
-        throw Exception(
+        _showRecoverableAiError(
           data['error'] as String? ?? 'Unknown error from AI function',
         );
+        return;
       }
 
       if (!mounted) return;

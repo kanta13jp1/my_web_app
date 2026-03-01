@@ -417,7 +417,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      '過去30日間の推移 (閲覧 vs 実登録)',
+                      '過去30日間の推移 (LP View vs 実登録)',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -616,7 +616,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             runSpacing: 10,
             children: [
               _buildMiniKpiChip(
-                label: '今日の流入',
+                label: '今日のLP View数',
                 value: '$todayViews',
                 color: Colors.blue,
               ),
@@ -830,7 +830,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               alignment: WrapAlignment.spaceAround,
               children: [
                 _buildStatItem(
-                  '30日閲覧',
+                  '30日LP View',
                   '$views',
                   Icons.visibility,
                   Colors.blue,
