@@ -41,6 +41,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   List<bool> _continuationChecks = <bool>[];
   List<bool> _abstinenceChecks = <bool>[];
   String? _riskAlert;
+  String? _decodeNotice;
   int _abstinenceViolationCount = 0;
   int _abstinenceNoViolationDays = 0;
   int _lastContinuationCompletionRate = 0;
@@ -999,6 +1000,57 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         .trim();
   }
 
+  String? _extractBracketedField(
+    String source,
+    String fieldName, {
+    required String openChar,
+    required String closeChar,
+  }) {
+    final fieldPattern = RegExp(
+      '"$fieldName"\\s*:\\s*${RegExp.escape(openChar)}',
+      dotAll: true,
+    );
+    final match = fieldPattern.firstMatch(source);
+    if (match == null) return null;
+
+    final startIndex = match.end - 1;
+    var depth = 0;
+    var inString = false;
+    var isEscaped = false;
+
+    for (var i = startIndex; i < source.length; i++) {
+      final char = source[i];
+
+      if (inString) {
+        if (isEscaped) {
+          isEscaped = false;
+        } else if (char == r'\') {
+          isEscaped = true;
+        } else if (char == '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char == '"') {
+        inString = true;
+        continue;
+      }
+      if (char == openChar) {
+        depth++;
+        continue;
+      }
+      if (char == closeChar) {
+        depth--;
+        if (depth == 0) {
+          return source.substring(startIndex, i + 1);
+        }
+      }
+    }
+
+    return source.substring(startIndex);
+  }
+
   List<String> _extractQuotedArrayItems(String source, String fieldName) {
     final fieldPattern = RegExp(
       '"$fieldName"\\s*:\\s*\\[(.*?)\\]',
@@ -1027,6 +1079,129 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     return value.isEmpty ? null : value;
   }
 
+  int? _extractIntFieldValue(String source, String fieldName) {
+    final pattern = RegExp('"$fieldName"\\s*:\\s*(-?\\d+)');
+    final match = pattern.firstMatch(source);
+    if (match == null) return null;
+    return int.tryParse(match.group(1) ?? '');
+  }
+
+  bool? _extractBoolFieldValue(String source, String fieldName) {
+    final pattern = RegExp('"$fieldName"\\s*:\\s*(true|false)');
+    final match = pattern.firstMatch(source);
+    if (match == null) return null;
+    return match.group(1) == 'true';
+  }
+
+  List<Map<String, String>> _extractTolerantMessages(String source) {
+    final messageSource = _extractBracketedField(
+          source,
+          'messages',
+          openChar: '[',
+          closeChar: ']',
+        ) ??
+        source;
+    final objectPattern = RegExp(r'\{[^{}]*\}', dotAll: true);
+    final recovered = <Map<String, String>>[];
+
+    for (final match in objectPattern.allMatches(messageSource)) {
+      final objectText = match.group(0);
+      if (objectText == null) continue;
+      final role = _extractQuotedFieldValue(objectText, 'role');
+      final speakerName = _extractQuotedFieldValue(objectText, 'speaker_name');
+      final content = _extractQuotedFieldValue(objectText, 'content');
+      if (content == null || content.isEmpty) continue;
+      recovered.add(<String, String>{
+        'role': (role == null || role.isEmpty) ? 'Advisor' : role,
+        'speaker_name':
+            (speakerName == null || speakerName.isEmpty) ? 'AI' : speakerName,
+        'content': _truncateText(content, maxChars: 180),
+      });
+    }
+
+    return recovered;
+  }
+
+  Map<String, dynamic>? _extractTolerantNextMeetingMetrics(String source) {
+    final metricsSource = _extractBracketedField(
+      source,
+      'next_meeting_metrics',
+      openChar: '{',
+      closeChar: '}',
+    );
+    if (metricsSource == null || metricsSource.trim().isEmpty) {
+      return null;
+    }
+
+    final decodeCandidates = <String>{
+      metricsSource,
+      _repairJsonCandidate(metricsSource),
+      _escapeBrokenJsonStringContent(metricsSource),
+      _escapeBrokenJsonStringContent(_repairJsonCandidate(metricsSource)),
+    }.where((candidate) => candidate.trim().isNotEmpty);
+
+    for (final candidate in decodeCandidates) {
+      try {
+        final decoded = jsonDecode(candidate);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      } on FormatException {
+        // Fall through to field-by-field salvage.
+      }
+    }
+
+    final recovered = <String, dynamic>{};
+    const intFields = <String>[
+      'continuation_completed_count',
+      'continuation_total_count',
+      'continuation_completion_rate_percent',
+      'abstinence_violation_count',
+      'abstinence_no_violation_days',
+      'deep_work_session_count',
+      'weekly_priority_review_count',
+      'accountability_share_count',
+      'continuation_quick_start_count',
+      'abstinence_rule_completed_count',
+      'abstinence_rule_total_count',
+      'abstinence_rule_completion_rate_percent',
+      'abstinence_recovery_action_count',
+      'deterrence_lock_enabled_count',
+    ];
+
+    for (final fieldName in intFields) {
+      final value = _extractIntFieldValue(metricsSource, fieldName);
+      if (value != null) {
+        recovered[fieldName] = value;
+      }
+    }
+
+    final reminderEnabled =
+        _extractBoolFieldValue(metricsSource, 'reminder_enabled');
+    if (reminderEnabled != null) {
+      recovered['reminder_enabled'] = reminderEnabled;
+    }
+
+    final activeLocks = _extractQuotedArrayItems(
+      metricsSource,
+      'active_deterrence_locks',
+    );
+    if (activeLocks.isNotEmpty) {
+      recovered['active_deterrence_locks'] = activeLocks;
+    }
+
+    final lastReviewAt =
+        _extractQuotedFieldValue(metricsSource, 'last_review_at');
+    if (lastReviewAt != null && lastReviewAt.isNotEmpty) {
+      recovered['last_review_at'] = lastReviewAt;
+    }
+
+    return recovered.isEmpty ? null : recovered;
+  }
+
   String _truncateText(String text, {int maxChars = 140}) {
     final normalized = text.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (normalized.length <= maxChars) return normalized;
@@ -1045,9 +1220,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _extractQuotedArrayItems(normalized, 'continuation_plan');
     final abstinenceRules =
         _extractQuotedArrayItems(normalized, 'abstinence_rules');
+    final recoveredMessages = _extractTolerantMessages(normalized);
     final extractedConclusion =
         _extractQuotedFieldValue(normalized, 'conclusion');
     final extractedMessage = _extractQuotedFieldValue(normalized, 'content');
+    final extractedRiskAlert =
+        _extractQuotedFieldValue(normalized, 'risk_alert');
+    final extractedMetrics = _extractTolerantNextMeetingMetrics(normalized);
 
     final fallbackSeed = extractedConclusion ??
         extractedMessage ??
@@ -1056,17 +1235,27 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       fallbackSeed.isEmpty ? '継続と禁欲の両立を最優先し、48時間の再建プランを実行する。' : fallbackSeed,
       maxChars: 140,
     );
+    final recoveredRiskAlert =
+        extractedRiskAlert ?? '継続と禁欲のバランスが崩れると、実行率と回復速度が同時に落ちる。';
+    final shouldShowDecodeNotice = recoveredMessages.length < 3 ||
+        continuationPlan.isEmpty ||
+        abstinenceRules.isEmpty ||
+        extractedConclusion == null ||
+        extractedMetrics == null;
 
     return <String, dynamic>{
-      'messages': <Map<String, String>>[
-        <String, String>{
-          'role': 'CSO',
-          'speaker_name': 'AI CSO',
-          'content': extractedMessage != null && extractedMessage.isNotEmpty
-              ? _truncateText(extractedMessage, maxChars: 180)
-              : fallbackConclusion,
-        },
-      ],
+      'messages': recoveredMessages.isNotEmpty
+          ? recoveredMessages
+          : <Map<String, String>>[
+              <String, String>{
+                'role': 'CSO',
+                'speaker_name': 'AI CSO',
+                'content':
+                    extractedMessage != null && extractedMessage.isNotEmpty
+                        ? _truncateText(extractedMessage, maxChars: 180)
+                        : fallbackConclusion,
+              },
+            ],
       'continuation_plan': continuationPlan.isNotEmpty
           ? continuationPlan
           : const <String>[
@@ -1081,8 +1270,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               '代替行動を1つ先に決める。',
               '逸脱したら10分以内に再設定する。',
             ],
-      'risk_alert': 'AI応答のJSONが崩れていたため、内容を簡易復元しました。',
+      'risk_alert': recoveredRiskAlert,
       'conclusion': fallbackConclusion,
+      if (extractedMetrics != null) 'next_meeting_metrics': extractedMetrics,
+      if (shouldShowDecodeNotice)
+        '_decode_notice': 'AI応答のJSONを一部自動補正しました。復元結果を確認してください。',
     };
   }
 
@@ -1172,6 +1364,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       _continuationChecks = <bool>[];
       _abstinenceChecks = <bool>[];
       _riskAlert = null;
+      _decodeNotice = null;
     });
 
     try {
@@ -1341,6 +1534,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final abstinenceRules = _extractStringList(decoded['abstinence_rules']);
       final riskAlert = decoded['risk_alert']?.toString();
       final normalizedRiskAlert = riskAlert?.trim();
+      final decodeNotice = decoded['_decode_notice']?.toString().trim();
       final rawNextMetrics = decoded['next_meeting_metrics'];
       final nextMetrics = rawNextMetrics is Map<String, dynamic>
           ? rawNextMetrics
@@ -1386,6 +1580,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             (normalizedRiskAlert == null || normalizedRiskAlert.isEmpty)
                 ? null
                 : normalizedRiskAlert;
+        _decodeNotice = (decodeNotice == null || decodeNotice.isEmpty)
+            ? null
+            : decodeNotice;
         if (nextMetrics != null) {
           _abstinenceViolationCount = _toInt(
             nextMetrics['abstinence_violation_count'],
@@ -1850,6 +2047,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 14),
           if (_riskAlert != null) ...[
             _buildAlertChip(_riskAlert!),
+            const SizedBox(height: 14),
+          ],
+          if (_decodeNotice != null) ...[
+            _buildRecoveryNoticeChip(_decodeNotice!),
             const SizedBox(height: 14),
           ],
           if (_continuationPlan.isNotEmpty) ...[
@@ -2519,6 +2720,38 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               alertText,
               style: const TextStyle(
                 color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecoveryNoticeChip(String noticeText) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blueGrey.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.build_circle_outlined,
+            color: Colors.white70,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              noticeText,
+              style: const TextStyle(
+                color: Colors.white70,
                 height: 1.35,
               ),
             ),
