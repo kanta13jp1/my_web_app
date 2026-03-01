@@ -9,7 +9,14 @@ import '../models/note.dart';
 import '../services/attachment_service.dart';
 
 class AISecretaryPage extends StatefulWidget {
-  const AISecretaryPage({super.key});
+  final String? initialStrategyType;
+  final bool autoRunOnOpen;
+
+  const AISecretaryPage({
+    super.key,
+    this.initialStrategyType,
+    this.autoRunOnOpen = false,
+  });
 
   @override
   State<AISecretaryPage> createState() => _AISecretaryPageState();
@@ -24,6 +31,34 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
   String _currentStrategyType = 'today';
 
   final ImagePicker _picker = ImagePicker();
+
+  bool _isSupportedStrategyType(String? strategyType) {
+    switch (strategyType) {
+      case 'now':
+      case 'today':
+      case 'week':
+      case 'month':
+      case 'year':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final initialType = widget.initialStrategyType;
+    if (_isSupportedStrategyType(initialType)) {
+      _currentStrategyType = initialType!;
+      if (widget.autoRunOnOpen) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _consultSecretary(initialType);
+        });
+      }
+    }
+  }
 
   Future<String?> _translateText(String text) async {
     try {

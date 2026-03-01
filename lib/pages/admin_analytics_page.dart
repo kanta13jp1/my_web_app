@@ -68,12 +68,36 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return actionableEntries.first.key;
   }
 
+  String _buildAcquisitionButtonLabel(
+    String? channelKey,
+    String? channelLabel,
+  ) {
+    switch (channelKey) {
+      case 'x_share':
+        return 'X投稿を作る';
+      case 'line':
+        return 'LINE導線を作る';
+      case 'qr_scan':
+        return 'QR導線を作る';
+      case 'facebook':
+        return 'Facebook投稿を作る';
+      case 'direct':
+        return '導線文を見直す';
+      default:
+        return '${channelLabel ?? '流入'}を強化';
+    }
+  }
+
   void _openGrowthAction({
     required bool isAcquisitionAction,
     String? priorityChannelLabel,
   }) {
-    final targetPage =
-        isAcquisitionAction ? const CmoPage() : const AISecretaryPage();
+    final targetPage = isAcquisitionAction
+        ? const CmoPage()
+        : const AISecretaryPage(
+            initialStrategyType: 'now',
+            autoRunOnOpen: true,
+          );
 
     Navigator.push(
       context,
@@ -82,7 +106,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
     final hint = isAcquisitionAction
         ? '${priorityChannelLabel ?? '最優先チャネル'}で最初の流入を作る導線を先に実行してください。'
-        : 'AI秘書で訴求文と導線文言を先に整えてください。';
+        : 'AI秘書を導線改善モードで開きました。訴求文と導線文言を先に整えてください。';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(hint)),
@@ -454,7 +478,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final actionButtonLabel = achieved
         ? null
         : todayViews == 0
-            ? '${priorityChannelLabel ?? 'X'}を強化'
+            ? _buildAcquisitionButtonLabel(
+                priorityChannelKey,
+                priorityChannelLabel,
+              )
             : 'AI秘書で導線改善';
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
