@@ -19,6 +19,7 @@ class _LandingPageState extends State<LandingPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
+  final GlobalKey _authSectionKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -26,6 +27,7 @@ class _LandingPageState extends State<LandingPage> {
   bool _isTrialLoading = false;
   bool _isSignUp = false;
   bool _isLoadingStats = true;
+  bool _showSaveCtaPrompt = false;
 
   int _todayViews = 0;
   int _monthViews = 0;
@@ -135,7 +137,7 @@ class _LandingPageState extends State<LandingPage> {
         );
         if (!mounted) return;
         if (res.session == null) {
-          _showMessage('確認メールを送信しました。メール内リンクから続行してください。');
+          _showMessage('確認メールを送信しました。受信箱の確認リンクから続行してください。');
         }
       } else {
         await Supabase.instance.client.auth.signInWithPassword(
@@ -159,7 +161,7 @@ class _LandingPageState extends State<LandingPage> {
         redirectTo: _webRedirectUrl,
       );
       if (!launched && mounted) {
-        _showMessage('Googleログインを開始できませんでした。');
+        _showMessage('Googleログインを開始できませんでした。もう一度押してください。');
       }
     } catch (e) {
       if (!mounted) return;
@@ -184,7 +186,7 @@ class _LandingPageState extends State<LandingPage> {
         shouldCreateUser: true,
       );
       if (!mounted) return;
-      _showMessage('Magic Link を送信しました。メール内リンクから続行してください。');
+      _showMessage('Magic Link を送信しました。受信箱のメール内リンクから続行してください。');
     } catch (e) {
       if (!mounted) return;
       _showMessage(_resolveMagicLinkError(e));
@@ -200,6 +202,7 @@ class _LandingPageState extends State<LandingPage> {
       setState(() {
         _trialAction = suggestion.$1;
         _trialReason = suggestion.$2;
+        _showSaveCtaPrompt = false;
       });
       return;
     }
@@ -222,6 +225,7 @@ $text
       setState(() {
         _trialAction = suggestion.$1;
         _trialReason = suggestion.$2;
+        _showSaveCtaPrompt = false;
       });
     } catch (_) {
       final suggestion = _buildTrialFallbackSuggestion(text);
@@ -229,10 +233,29 @@ $text
       setState(() {
         _trialAction = suggestion.$1;
         _trialReason = '${suggestion.$2}（AI応答失敗のため簡易判定）';
+        _showSaveCtaPrompt = false;
       });
     } finally {
       if (mounted) setState(() => _isTrialLoading = false);
     }
+  }
+
+  void _promptRegistrationForTrialSave() {
+    setState(() {
+      _showSaveCtaPrompt = true;
+      _isSignUp = true;
+    });
+    _showMessage('この結果を保存するには登録が必要です。下の認証エリアから続行してください。');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authContext = _authSectionKey.currentContext;
+      if (authContext == null || !mounted) return;
+      Scrollable.ensureVisible(
+        authContext,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+        alignment: 0.08,
+      );
+    });
   }
 
   (String, String) _parseTrialAiResponse(String raw) {
@@ -310,95 +333,119 @@ $text
 
   String _resolveEmailAuthError(Object error) {
     if (error is AuthWeakPasswordException) {
-      return 'パスワードが弱すぎます。英字・数字を混ぜて、もう少し長くしてください。';
+      return 'パスワードが弱すぎます。英字と数字を混ぜて8文字以上にしてください。';
     }
     if (error is AuthException) {
-      final lowerMessage = error.message.toLowerCase();
-      final lowerCode = (error.code ?? '').toLowerCase();
+      final code = (error.code ?? '').toLowerCase();
+      final message = error.message.toLowerCase();
 
-      if (lowerCode.contains('invalid_credentials') ||
-          lowerMessage.contains('invalid login credentials')) {
-        return 'メールアドレスかパスワードが一致していません。';
+      if (code == 'invalid_credentials' ||
+          code == 'invalid_grant' ||
+          message.contains('invalid login credentials')) {
+        return 'メールアドレスかパスワードが一致していません。入力を見直してから再試行してください。';
       }
-      if (lowerCode.contains('email_exists') ||
-          lowerMessage.contains('already registered')) {
-        return 'このメールアドレスは既に登録済みです。ログインに切り替えてください。';
+      if (code == 'email_exists' || code == 'user_already_exists') {
+        return 'このメールアドレスは既に登録済みです。新規登録ではなくログインに切り替えてください。';
       }
-      if (lowerCode.contains('weak_password')) {
-        return 'パスワードが弱すぎます。英字・数字を混ぜて、もう少し長くしてください。';
+      if (code == 'email_not_confirmed') {
+        return 'メール確認が未完了です。受信箱の確認メールを開き、認証リンクを押してからログインしてください。';
       }
-      if (lowerCode.contains('email_address_invalid') ||
-          lowerMessage.contains('invalid email')) {
-        return 'メールアドレスの形式が不正です。';
+      if (code == 'signup_disabled') {
+        return '現在メール新規登録は停止中です。Googleログインか Magic Link を使ってください。';
       }
-      if (lowerCode.contains('over_request_rate_limit') ||
-          lowerCode.contains('over_email_send_rate_limit') ||
-          lowerMessage.contains('rate limit') ||
-          error.statusCode == '429') {
-        return '試行回数が多すぎます。少し待ってから再試行してください。';
+      if (code == 'weak_password') {
+        return 'パスワードが弱すぎます。英字と数字を混ぜて8文字以上にしてください。';
+      }
+      if (code == 'email_address_invalid' ||
+          message.contains('invalid email')) {
+        return 'メールアドレスの形式が不正です。`@` を含む正しい形式で入力してください。';
+      }
+      if (code == 'over_request_rate_limit' ||
+          code == 'over_email_send_rate_limit' ||
+          error.statusCode == '429' ||
+          message.contains('rate limit')) {
+        return '試行回数が多すぎます。1分ほど待ってから再試行してください。';
+      }
+      if (code == 'unexpected_failure' || error.statusCode == '500') {
+        return '認証サーバー側で失敗しました。時間を置いて再試行するか、Googleログインを使ってください。';
       }
       return '認証に失敗しました。入力内容を確認して、もう一度試してください。';
     }
-    return '認証に失敗しました。通信状態を確認して、もう一度試してください。';
+    return '認証に失敗しました。通信状態を確認してから再試行してください。';
   }
 
   String _resolveGoogleAuthError(Object error) {
     if (error is AuthException) {
-      final lowerMessage = error.message.toLowerCase();
-      final lowerCode = (error.code ?? '').toLowerCase();
+      final code = (error.code ?? '').toLowerCase();
+      final message = error.message.toLowerCase();
 
-      if (lowerCode.contains('provider_disabled') ||
-          lowerMessage.contains('provider is not enabled')) {
+      if (code == 'provider_disabled' ||
+          message.contains('provider is not enabled')) {
         return 'Googleログインが未設定です。Supabase Auth の Google provider を有効化してください。';
       }
-      if (lowerMessage.contains('redirect') ||
-          lowerCode.contains('bad_oauth_callback') ||
-          lowerCode.contains('validation_failed')) {
-        return 'Googleログインのリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
+      if (code == 'bad_oauth_callback' ||
+          code == 'bad_oauth_state' ||
+          code == 'flow_state_expired' ||
+          code == 'flow_state_not_found' ||
+          code == 'validation_failed' ||
+          message.contains('redirect')) {
+        return 'Googleログインのリダイレクト設定が不正です。Supabase の Site URL と Redirect URLs を確認してください。';
       }
-      if (lowerCode.contains('over_request_rate_limit') ||
-          lowerMessage.contains('rate limit') ||
-          error.statusCode == '429') {
+      if (code == 'access_denied' || message.contains('cancel')) {
+        return 'Googleログインが途中で中断されました。アカウント選択とアクセス許可を最後まで完了してください。';
+      }
+      if (code == 'over_request_rate_limit' ||
+          error.statusCode == '429' ||
+          message.contains('rate limit')) {
         return 'Googleログインの試行回数が多すぎます。少し待ってから再試行してください。';
+      }
+      if (code == 'unexpected_failure' || error.statusCode == '500') {
+        return 'Googleログイン側で一時的に失敗しました。時間を置くか、Magic Link に切り替えてください。';
       }
       return 'Googleログインに失敗しました。設定または通信状態を確認してください。';
     }
 
     final message = error.toString().toLowerCase();
     if (message.contains('popup') || message.contains('blocked')) {
-      return 'Googleログインがブラウザにブロックされました。ポップアップ制限を解除して再試行してください。';
+      return 'Googleログインがブラウザにブロックされました。ポップアップ制限を解除してから再試行してください。';
     }
-
-    return 'Googleログインに失敗しました。設定または通信状態を確認してください。';
+    return 'Googleログインに失敗しました。通信状態を確認してから再試行してください。';
   }
 
   String _resolveMagicLinkError(Object error) {
     if (error is AuthException) {
-      final lowerMessage = error.message.toLowerCase();
-      final lowerCode = (error.code ?? '').toLowerCase();
+      final code = (error.code ?? '').toLowerCase();
+      final message = error.message.toLowerCase();
 
-      if (lowerCode.contains('email_address_invalid') ||
-          lowerMessage.contains('invalid email')) {
-        return 'Magic Link を送れません。メールアドレスの形式を確認してください。';
+      if (code == 'email_address_invalid' ||
+          message.contains('invalid email')) {
+        return 'Magic Link を送れません。メールアドレスの形式を修正してから再送してください。';
       }
-      if (lowerCode.contains('over_email_send_rate_limit') ||
-          lowerCode.contains('over_request_rate_limit') ||
-          lowerMessage.contains('rate limit') ||
-          error.statusCode == '429') {
-        return 'Magic Link の送信回数が多すぎます。少し待ってから再試行してください。';
+      if (code == 'signup_disabled') {
+        return '現在メール登録が停止中です。Googleログインを使ってください。';
       }
-      if (lowerMessage.contains('smtp') ||
-          lowerCode.contains('email_not_confirmed')) {
-        return 'メール送信設定に問題があります。時間を置くか、別のログイン方法を使ってください。';
+      if (code == 'email_provider_disabled') {
+        return 'Magic Link が未設定です。Supabase Auth の Email provider を有効化してください。';
       }
-      if (lowerMessage.contains('redirect') ||
-          lowerCode.contains('validation_failed')) {
-        return 'Magic Link のリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
+      if (code == 'over_email_send_rate_limit' ||
+          code == 'over_request_rate_limit' ||
+          error.statusCode == '429' ||
+          message.contains('rate limit')) {
+        return 'Magic Link の送信回数が多すぎます。1分ほど待ってから再送してください。';
+      }
+      if (code == 'validation_failed' ||
+          code == 'flow_state_expired' ||
+          code == 'flow_state_not_found' ||
+          message.contains('redirect')) {
+        return 'Magic Link の遷移設定が不正です。Supabase の Site URL と Redirect URLs を確認してください。';
+      }
+      if (message.contains('smtp') || code == 'unexpected_failure') {
+        return 'メール送信側で失敗しました。時間を置くか、Googleログインに切り替えてください。';
       }
       return 'Magic Link を送れませんでした。メールアドレスと送信設定を確認してください。';
     }
 
-    return 'Magic Link を送れませんでした。通信状態を確認して、もう一度試してください。';
+    return 'Magic Link を送れませんでした。通信状態を確認してから再試行してください。';
   }
 
   Widget _buildPvSection() {
@@ -616,10 +663,14 @@ $text
                         style: const TextStyle(color: Colors.black54),
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    const Text(
-                      '続き保存、実行ログ、AI補助は登録後に使えます。',
-                      style: TextStyle(fontSize: 12, color: Colors.black45),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _promptRegistrationForTrialSave,
+                        icon: const Icon(Icons.save_outlined),
+                        label: const Text('この結果を保存する'),
+                      ),
                     ),
                   ],
                 ),
@@ -633,6 +684,7 @@ $text
 
   Widget _buildAuthSection() {
     return Card(
+      key: _authSectionKey,
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -640,6 +692,25 @@ $text
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_showSaveCtaPrompt) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4E5),
+                  borderRadius: BorderRadius.circular(14),
+                  border:
+                      Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: const Text(
+                  'この結果を保存するには登録が必要です。Google、Magic Link、メール登録のいずれかで続行してください。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             const Text(
               '30秒で始める',
               style: TextStyle(
