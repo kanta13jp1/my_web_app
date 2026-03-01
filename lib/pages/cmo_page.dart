@@ -3,7 +3,14 @@ import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 
 class CmoPage extends StatefulWidget {
-  const CmoPage({super.key});
+  final String? initialChannel;
+  final bool autoGenerateOnOpen;
+
+  const CmoPage({
+    super.key,
+    this.initialChannel,
+    this.autoGenerateOnOpen = false,
+  });
 
   @override
   State<CmoPage> createState() => _CmoPageState();
@@ -16,6 +23,32 @@ class _CmoPageState extends State<CmoPage> {
   // Colors
   final Color _purple = const Color(0xFF7C3AED);
   final Color _bg = const Color(0xFFF8FAFC);
+
+  String _channelLabel(String? channelKey) {
+    switch (channelKey) {
+      case 'x_share':
+        return 'X投稿';
+      case 'line':
+        return 'LINE導線';
+      case 'facebook':
+        return 'Facebook投稿';
+      case 'qr_scan':
+        return 'QR導線';
+      default:
+        return 'プレスリリース';
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoGenerateOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _generatePressRelease();
+      });
+    }
+  }
 
   Future<void> _generatePressRelease() async {
     setState(() => _isLoading = true);
@@ -91,6 +124,9 @@ class _CmoPageState extends State<CmoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final channelLabel = _channelLabel(widget.initialChannel);
+    final draftButtonLabel = '$channelLabelの草案を起案する';
+
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
@@ -105,10 +141,10 @@ class _CmoPageState extends State<CmoPage> {
           children: [
             const Icon(Icons.campaign, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              'あなたの実績を世界へ発信しましょう。\nAIが魅力的なプレスリリースを自動生成します。',
+            Text(
+              'あなたの実績を世界へ発信しましょう。\nAIが$channelLabel向けの発信文を自動生成します。',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
             if (_isLoading)
@@ -122,7 +158,7 @@ class _CmoPageState extends State<CmoPage> {
                   padding: const EdgeInsets.all(16),
                 ),
                 icon: const Icon(Icons.auto_awesome),
-                label: const Text('プレスリリースを起案する'),
+                label: Text(draftButtonLabel),
               ),
             if (_pressRelease != null) ...[
               Card(

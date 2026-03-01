@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'ai_secretary_page.dart';
 import 'cmo_page.dart';
+import 'note_list_page.dart';
 
 class AdminAnalyticsPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
@@ -88,12 +89,36 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
+  Widget _buildAcquisitionTargetPage(String? channelKey) {
+    switch (channelKey) {
+      case 'x_share':
+      case 'facebook':
+        return CmoPage(
+          initialChannel: channelKey,
+          autoGenerateOnOpen: true,
+        );
+      case 'line':
+        return const AISecretaryPage(
+          initialStrategyType: 'now',
+          autoRunOnOpen: true,
+        );
+      case 'qr_scan':
+        return const NoteListPage();
+      default:
+        return CmoPage(
+          initialChannel: channelKey,
+          autoGenerateOnOpen: true,
+        );
+    }
+  }
+
   void _openGrowthAction({
     required bool isAcquisitionAction,
+    String? priorityChannelKey,
     String? priorityChannelLabel,
   }) {
     final targetPage = isAcquisitionAction
-        ? const CmoPage()
+        ? _buildAcquisitionTargetPage(priorityChannelKey)
         : const AISecretaryPage(
             initialStrategyType: 'now',
             autoRunOnOpen: true,
@@ -105,7 +130,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
 
     final hint = isAcquisitionAction
-        ? '${priorityChannelLabel ?? '最優先チャネル'}で最初の流入を作る導線を先に実行してください。'
+        ? switch (priorityChannelKey) {
+            'line' => 'AI秘書を開きました。LINE向けの短文導線を先に作ってください。',
+            'qr_scan' => 'ノート一覧を開きました。QR遷移先に使うコンテンツを先に整えてください。',
+            'facebook' => 'Facebook向け草案を起案します。投稿文を先に作ってください。',
+            _ => '${priorityChannelLabel ?? '最優先チャネル'}で最初の流入を作る導線を先に実行してください。',
+          }
         : 'AI秘書を導線改善モードで開きました。訴求文と導線文言を先に整えてください。';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -685,6 +715,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           onPressed: () {
                             _openGrowthAction(
                               isAcquisitionAction: todayViews == 0,
+                              priorityChannelKey: priorityChannelKey,
                               priorityChannelLabel: priorityChannelLabel,
                             );
                           },
