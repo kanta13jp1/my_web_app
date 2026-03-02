@@ -948,8 +948,12 @@ $input
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_showInboxShortcut ? '送信済み' : '開始'),
-                    if (_showInboxShortcut) ...[
+                    Text(
+                      _showInboxShortcut
+                          ? (_isMagicLinkCoolingDown ? '送信済み' : '再送する')
+                          : '開始',
+                    ),
+                    if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
                       const SizedBox(width: 8),
                       const Icon(Icons.check_circle, size: 18),
                     ],
@@ -979,6 +983,14 @@ $input
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '届かない場合は迷惑メールも確認してください。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
                       ),
                     ),
                     const SizedBox(height: 10),
