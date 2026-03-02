@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 
@@ -26,6 +27,17 @@ class _CmoPageState extends State<CmoPage> {
   final Color _purple = const Color(0xFF7C3AED);
   final Color _bg = const Color(0xFFF8FAFC);
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoGenerateOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _generatePressRelease();
+      });
+    }
+  }
+
   String _channelKey() => widget.initialChannel ?? 'x_share';
 
   String _channelLabel(String? channelKey) {
@@ -39,7 +51,22 @@ class _CmoPageState extends State<CmoPage> {
       case 'qr_scan':
         return 'QR導線';
       default:
-        return 'プレスリリース';
+        return '共有文';
+    }
+  }
+
+  String _descriptionText(String channelKey) {
+    switch (channelKey) {
+      case 'x_share':
+        return 'Xで流入を作るための短文投稿を自動生成します。';
+      case 'line':
+        return '1アクションに絞った短い導線文を生成します。';
+      case 'facebook':
+        return '背景説明を含む長文の投稿文を生成します。';
+      case 'qr_scan':
+        return 'QRスキャン後の行動につながる導線文を生成します。';
+      default:
+        return '外部共有に使える短い告知文を生成します。';
     }
   }
 
@@ -62,46 +89,37 @@ class _CmoPageState extends State<CmoPage> {
     switch (channelKey) {
       case 'x_share':
         return const <String, String>{
-          'goal': 'Create a short X post that can be understood in 3 seconds.',
-          'titleRule': 'Use a punchy title under 28 Japanese characters.',
-          'bodyRule':
-              'Write 80-140 Japanese characters. Use one hook, one benefit, and one call to action.',
+          'goal': 'X向けに3秒で伝わる短文を作る',
+          'titleRule': '見出しは28文字以内で強いフックを入れる',
+          'bodyRule': '本文は80-140文字。問題提起、便益、CTAを1つずつ入れる',
           'tone': 'sharp, compact, high-contrast',
         };
       case 'facebook':
         return const <String, String>{
-          'goal':
-              'Create a longer Facebook post that explains context and builds trust.',
-          'titleRule':
-              'Use a descriptive title around 28-48 Japanese characters.',
-          'bodyRule':
-              'Write 220-420 Japanese characters across three short paragraphs: problem, concrete value, and call to action.',
+          'goal': 'Facebook向けに文脈説明つきの長文を作る',
+          'titleRule': '見出しは28-48文字で内容が分かるようにする',
+          'bodyRule': '本文は220-420文字。課題、価値、CTAの3段落で書く',
           'tone': 'warm, persuasive, slightly detailed',
         };
       case 'line':
         return const <String, String>{
-          'goal':
-              'Create a short LINE message that drives one immediate action.',
-          'titleRule': 'Use a direct title under 24 Japanese characters.',
-          'bodyRule':
-              'Write 60-120 Japanese characters focused on one action only.',
+          'goal': 'LINE向けに1アクションだけ促す短文を作る',
+          'titleRule': '見出しは24文字以内で直接的に書く',
+          'bodyRule': '本文は60-120文字。余計な説明を削って1行動に絞る',
           'tone': 'personal, direct, frictionless',
         };
       case 'qr_scan':
         return const <String, String>{
-          'goal':
-              'Create copy for a QR prompt or landing snippet that makes scanning worthwhile.',
-          'titleRule':
-              'Use a utility-first title around 20-36 Japanese characters.',
-          'bodyRule':
-              'Write 90-180 Japanese characters explaining the immediate payoff after scanning.',
+          'goal': 'QRスキャンの価値がすぐ伝わる短文を作る',
+          'titleRule': '見出しは20-36文字で実利を優先して書く',
+          'bodyRule': '本文は90-180文字。スキャン後の利得を具体化する',
           'tone': 'practical, clear, low-friction',
         };
       default:
         return const <String, String>{
-          'goal': 'Create concise public-facing share copy.',
-          'titleRule': 'Use a short, clear title.',
-          'bodyRule': 'Write a concise body with one clear call to action.',
+          'goal': '共有用の短い告知文を作る',
+          'titleRule': '見出しは短く明確にする',
+          'bodyRule': '本文は簡潔に書き、CTAは1つに絞る',
           'tone': 'clear and useful',
         };
     }
@@ -113,29 +131,29 @@ class _CmoPageState extends State<CmoPage> {
     final hashtags = _defaultHashtags(channelKey).join(' ');
 
     return '''
-You are the CMO of Me Inc.
-Write Japanese copy optimized for $channelLabel.
+あなたは自分株式会社のCMOです。
+$channelLabel 向けの日本語コピーを作成してください。
 
-Channel objective:
+目的:
 - ${spec['goal']}
 
-Output rules:
-- Return JSON only.
-- Do not include markdown or code fences.
-- Use keys: title, body, hashtags.
+出力条件:
+- JSONのみを返す
+- Markdownやコードフェンスは禁止
+- keys は title, body, hashtags
 - title: ${spec['titleRule']}
 - body: ${spec['bodyRule']}
 - tone: ${spec['tone']}
-- hashtags: return exactly 3 short hashtags suitable for $channelLabel.
+- hashtags: $channelLabel に適した短いハッシュタグを3件
 
-Output format:
+出力形式:
 {
   "title": "...",
   "body": "...",
   "hashtags": ["...", "...", "..."]
 }
 
-Preferred hashtag direction:
+推奨ハッシュタグ:
 $hashtags
 ''';
   }
@@ -146,30 +164,28 @@ $hashtags
     if (start == -1) return null;
 
     var inString = false;
-    var isEscaped = false;
+    var escaped = false;
     var depth = 0;
 
     for (var i = start; i < trimmed.length; i++) {
       final char = trimmed[i];
+
       if (inString) {
-        if (isEscaped) {
-          isEscaped = false;
+        if (escaped) {
+          escaped = false;
         } else if (char == r'\') {
-          isEscaped = true;
+          escaped = true;
         } else if (char == '"') {
           inString = false;
         }
         continue;
       }
+
       if (char == '"') {
         inString = true;
-        continue;
-      }
-      if (char == '{') {
+      } else if (char == '{') {
         depth++;
-        continue;
-      }
-      if (char == '}') {
+      } else if (char == '}') {
         depth--;
         if (depth == 0) {
           return trimmed.substring(start, i + 1);
@@ -178,70 +194,6 @@ $hashtags
     }
 
     return trimmed.substring(start);
-  }
-
-  Map<String, dynamic> _fallbackPressReleaseFromText(
-    String rawText,
-    String channelKey,
-  ) {
-    final channelLabel = _channelLabel(channelKey);
-    final normalized = rawText.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return <String, dynamic>{
-      'title': '$channelLabelの草案',
-      'body':
-          normalized.isEmpty ? '$channelLabel向けの草案をここから整えてください。' : normalized,
-      'hashtags': _defaultHashtags(channelKey).take(3).toList(),
-    };
-  }
-
-  List<String> _normalizeHashtags(dynamic rawHashtags, String channelKey) {
-    final fallback = _defaultHashtags(channelKey).take(3).toList();
-    if (rawHashtags is! List) return fallback;
-
-    final normalized = rawHashtags
-        .whereType<Object>()
-        .map((item) => item.toString().trim())
-        .where((item) => item.isNotEmpty)
-        .toSet()
-        .take(3)
-        .toList();
-
-    return normalized.isEmpty ? fallback : normalized;
-  }
-
-  Map<String, dynamic> _normalizePressReleaseResult(
-    dynamic rawResult,
-    String channelKey,
-  ) {
-    if (rawResult is Map) {
-      final resultMap = Map<String, dynamic>.from(rawResult);
-      final hashtags = _normalizeHashtags(resultMap['hashtags'], channelKey);
-      return <String, dynamic>{
-        'title': (resultMap['title'] ?? '${_channelLabel(channelKey)}の草案')
-            .toString(),
-        'body': (resultMap['body'] ?? '').toString(),
-        'hashtags': hashtags,
-      };
-    }
-
-    final resultText = rawResult?.toString().trim() ?? '';
-    if (resultText.isEmpty) {
-      return _fallbackPressReleaseFromText('', channelKey);
-    }
-
-    final jsonCandidate = _extractFirstJsonObject(resultText);
-    if (jsonCandidate != null) {
-      try {
-        final decoded = jsonDecode(jsonCandidate);
-        if (decoded is Map) {
-          return _normalizePressReleaseResult(decoded, channelKey);
-        }
-      } on FormatException {
-        // Fall through to plain-text fallback.
-      }
-    }
-
-    return _fallbackPressReleaseFromText(resultText, channelKey);
   }
 
   Map<String, dynamic> _normalizeInvokePayload(dynamic rawPayload) {
@@ -261,357 +213,101 @@ $hashtags
         return Map<String, dynamic>.from(decoded);
       }
     } on FormatException {
-      // Fall back to wrapping the raw text.
+      // Fall back below.
     }
 
     return <String, dynamic>{
       'success': false,
-      'error': 'Invalid AI payload',
-      'result': payloadText,
+      'error': payloadText,
     };
   }
 
-  void _showRecoverableAiError(String errorText) {
+  List<String> _normalizeHashtags(dynamic rawHashtags, String channelKey) {
+    final fallback = _defaultHashtags(channelKey);
+    if (rawHashtags is! List) return fallback;
+
+    final normalized = rawHashtags
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toSet()
+        .take(3)
+        .toList();
+
+    return normalized.isEmpty ? fallback : normalized;
+  }
+
+  Map<String, dynamic> _fallbackPressReleaseFromText(
+    String rawText,
+    String channelKey,
+  ) {
+    final channelLabel = _channelLabel(channelKey);
+    final normalized = rawText.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    return <String, dynamic>{
+      'title': '$channelLabel の下書き',
+      'body': normalized.isEmpty ? '$channelLabel の下書きを生成しました。' : normalized,
+      'hashtags': _defaultHashtags(channelKey),
+    };
+  }
+
+  Map<String, dynamic> _normalizePressReleaseResult(
+    dynamic rawResult,
+    String channelKey,
+  ) {
+    if (rawResult is Map) {
+      final resultMap = Map<String, dynamic>.from(rawResult);
+      return <String, dynamic>{
+        'title': (resultMap['title'] ?? '${_channelLabel(channelKey)}の下書き')
+            .toString(),
+        'body': (resultMap['body'] ?? '').toString(),
+        'hashtags': _normalizeHashtags(resultMap['hashtags'], channelKey),
+      };
+    }
+
+    final resultText = rawResult?.toString().trim() ?? '';
+    if (resultText.isEmpty) {
+      return _fallbackPressReleaseFromText('', channelKey);
+    }
+
+    final jsonCandidate = _extractFirstJsonObject(resultText);
+    if (jsonCandidate != null) {
+      try {
+        final decoded = jsonDecode(jsonCandidate);
+        if (decoded is Map) {
+          return _normalizePressReleaseResult(decoded, channelKey);
+        }
+      } on FormatException {
+        // Fall through to text fallback.
+      }
+    }
+
+    return _fallbackPressReleaseFromText(resultText, channelKey);
+  }
+
+  void _showRecoverableAiError(String details) {
+    final lower = details.toLowerCase();
+    final hint = lower.contains('404') || lower.contains('not found')
+        ? 'AI関数の設定を確認してください。'
+        : lower.contains('api key')
+            ? 'APIキー設定を確認してください。'
+            : '再実行するか、モデル設定を確認してください。';
+
     if (!mounted) return;
-
-    final hint = switch (errorText) {
-      'Invalid AI payload' =>
-        'Edge Function の返却形式が崩れています。JSON文字列か JSON オブジェクトで返すよう確認してください。',
-      _ => 'APIキー、ai-assistant 関数、選択モデルを確認してから再生成してください。',
-    };
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('起案エラー: $errorText\n復旧ヒント: $hint'),
-      ),
+      SnackBar(content: Text('生成に失敗しました。$hint')),
     );
-  }
-
-  String _descriptionText(String channelKey) {
-    switch (channelKey) {
-      case 'x_share':
-        return '3秒で伝わる短文の共有案を起案します。';
-      case 'facebook':
-        return '文脈まで伝わる長文の共有案を起案します。';
-      case 'line':
-        return '1アクションに絞った短い導線文を起案します。';
-      case 'qr_scan':
-        return 'QRで遷移したくなる導線文を起案します。';
-      default:
-        return 'あなたの実績を外向きの文面に整えます。';
-    }
-  }
-
-  int _characterCount(String text) =>
-      text.replaceAll(RegExp(r'\s+'), '').length;
-
-  List<String> _splitFacebookBody(String body) {
-    final paragraphs = body
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-    if (paragraphs.length >= 3) {
-      return <String>[
-        paragraphs.first,
-        paragraphs.sublist(1, paragraphs.length - 1).join('\n'),
-        paragraphs.last,
-      ];
-    }
-
-    final rawSentences = body
-        .split(RegExp(r'[。！？]'))
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
-        .toList();
-    if (rawSentences.length >= 3) {
-      final intro = '${rawSentences.first}。';
-      final middleBody = rawSentences.sublist(1, rawSentences.length - 1);
-      final middle = '${middleBody.join('。')}。';
-      final close = '${rawSentences.last}。';
-      return <String>[intro, middle, close];
-    }
-
-    final normalized = body.trim();
-    if (normalized.isEmpty) {
-      return const <String>['', '', ''];
-    }
-
-    final totalLength = normalized.length;
-    final firstCut = (totalLength / 3).ceil();
-    final secondCut = ((totalLength * 2) / 3).ceil();
-    return <String>[
-      normalized.substring(0, firstCut).trim(),
-      normalized.substring(firstCut, secondCut).trim(),
-      normalized.substring(secondCut).trim(),
-    ];
-  }
-
-  Widget _buildTagRow() {
-    final tags = List<String>.from(
-      _pressRelease?['hashtags'] as List? ?? const <String>[],
-    );
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: tags.map((tag) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: _purple.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            tag,
-            style: TextStyle(
-              color: _purple,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildTemplateLabel(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionCard(String title, String body) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body.isEmpty ? '未生成' : body,
-            style: const TextStyle(fontSize: 14, height: 1.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildXTemplate() {
-    final title = (_pressRelease?['title'] ?? '').toString();
-    final body = (_pressRelease?['body'] ?? '').toString();
-    final previewText =
-        [title, body].where((part) => part.trim().isNotEmpty).join('\n');
-    final count = _characterCount(previewText);
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildTemplateLabel('短文テンプレ'),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _purple.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$count文字',
-                    style: TextStyle(
-                      color: _purple,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSectionCard('見出し', title),
-            const SizedBox(height: 12),
-            _buildSectionCard('本文', body),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                previewText.isEmpty ? '未生成' : previewText,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  height: 1.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _buildTagRow(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFacebookTemplate() {
-    final title = (_pressRelease?['title'] ?? '').toString();
-    final body = (_pressRelease?['body'] ?? '').toString();
-    final sections = _splitFacebookBody(body);
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTemplateLabel('長文テンプレ'),
-            const SizedBox(height: 16),
-            _buildSectionCard('見出し', title),
-            const SizedBox(height: 12),
-            _buildSectionCard('導入', sections[0]),
-            const SizedBox(height: 12),
-            _buildSectionCard('本文', sections[1]),
-            const SizedBox(height: 12),
-            _buildSectionCard('締め / CTA', sections[2]),
-            const SizedBox(height: 14),
-            _buildTagRow(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStandardTemplate() {
-    final title = (_pressRelease?['title'] ?? '').toString();
-    final body = (_pressRelease?['body'] ?? '').toString();
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTemplateLabel('標準テンプレ'),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Divider(height: 28),
-            Text(
-              body,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildTagRow(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultCard(String channelKey) {
-    switch (channelKey) {
-      case 'x_share':
-        return _buildXTemplate();
-      case 'facebook':
-        return _buildFacebookTemplate();
-      default:
-        return _buildStandardTemplate();
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.autoGenerateOnOpen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _generatePressRelease();
-      });
-    }
   }
 
   Future<void> _generatePressRelease() async {
+    final channelKey = _channelKey();
+
     setState(() => _isLoading = true);
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final channelKey = _channelKey();
-      final stats = await supabase
-          .from('user_stats')
-          .select()
-          .eq('user_id', userId)
-          .limit(1)
-          .maybeSingle();
-      final notes = await supabase
-          .from('notes')
-          .select('title, content')
-          .eq('user_id', userId)
-          .eq('is_archived', false)
-          .limit(3);
-
-      final boardData = <String, dynamic>{
-        'userStats': stats,
-        'recentNotes': notes,
-      };
-      final draftPrompt = _buildDraftPrompt(channelKey);
-
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: <String, dynamic>{
           'action': 'improve',
-          'content': '$draftPrompt\n\nContext:\n${jsonEncode(boardData)}',
+          'text': _buildDraftPrompt(channelKey),
         },
       );
 
@@ -621,9 +317,7 @@ $hashtags
 
       final data = _normalizeInvokePayload(response.data);
       if (data['success'] != true) {
-        _showRecoverableAiError(
-          data['error'] as String? ?? 'Unknown error from AI function',
-        );
+        _showRecoverableAiError((data['error'] ?? 'Unknown error').toString());
         return;
       }
 
@@ -632,11 +326,8 @@ $hashtags
         _pressRelease =
             _normalizePressReleaseResult(data['result'], channelKey);
       });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('起案エラー: $e')),
-      );
+    } catch (error) {
+      _showRecoverableAiError(error.toString());
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -644,16 +335,148 @@ $hashtags
     }
   }
 
-  void _sharePressRelease() {
-    if (_pressRelease == null) return;
-    final title = (_pressRelease!['title'] ?? '').toString();
-    final body = (_pressRelease!['body'] ?? '').toString();
-    final tags = (_pressRelease!['hashtags'] as List).join(' ');
+  String _buildShareText() {
+    if (_pressRelease == null) return '';
 
-    SharePlus.instance.share(
+    final title = (_pressRelease!['title'] ?? '').toString().trim();
+    final body = (_pressRelease!['body'] ?? '').toString().trim();
+    final hashtags = _normalizeHashtags(
+      _pressRelease!['hashtags'],
+      _channelKey(),
+    ).join(' ');
+
+    return <String>[title, body, hashtags]
+        .where((part) => part.isNotEmpty)
+        .join('\n\n');
+  }
+
+  Future<void> _sharePressRelease() async {
+    if (_pressRelease == null) return;
+
+    final title = (_pressRelease!['title'] ?? '').toString();
+    await SharePlus.instance.share(
       ShareParams(
-        text: '$title\n\n$body\n\n$tags',
+        text: _buildShareText(),
         subject: title,
+      ),
+    );
+  }
+
+  Future<void> _shareToXDirectly() async {
+    if (_pressRelease == null) return;
+
+    final shareText = _buildShareText();
+    if (shareText.isEmpty) {
+      await _sharePressRelease();
+      return;
+    }
+
+    final uri = Uri.https(
+      'twitter.com',
+      '/intent/tweet',
+      <String, String>{'text': shareText},
+    );
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+      );
+      if (launched) return;
+    } catch (_) {
+      // Fall through to the generic share sheet.
+    }
+
+    await _sharePressRelease();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('X を直接開けなかったため、共有シートを表示しました。'),
+      ),
+    );
+  }
+
+  Widget _buildResultCard(String channelKey) {
+    final release = _pressRelease;
+    if (release == null) return const SizedBox.shrink();
+
+    final title = (release['title'] ?? '').toString();
+    final body = (release['body'] ?? '').toString();
+    final hashtags = _normalizeHashtags(release['hashtags'], channelKey);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${_channelLabel(channelKey)} の生成結果',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSectionLabel('見出し'),
+            const SizedBox(height: 6),
+            SelectableText(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSectionLabel('本文'),
+            const SizedBox(height: 6),
+            SelectableText(
+              body,
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.7,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSectionLabel('ハッシュタグ'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: hashtags.map((tag) => Chip(label: Text(tag))).toList(),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F9FC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: SelectableText(
+                _buildShareText(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: Colors.black54,
       ),
     );
   }
@@ -662,7 +485,8 @@ $hashtags
   Widget build(BuildContext context) {
     final channelKey = _channelKey();
     final channelLabel = _channelLabel(channelKey);
-    final draftButtonLabel = '$channelLabelの草案を起案する';
+    final draftButtonLabel = '$channelLabel の草案を起案する';
+    final primaryShareLabel = channelKey == 'x_share' ? 'Xへ直接投稿' : '外部へ共有';
 
     return Scaffold(
       backgroundColor: _bg,
@@ -714,18 +538,28 @@ $hashtags
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _sharePressRelease,
+                      onPressed: channelKey == 'x_share'
+                          ? _shareToXDirectly
+                          : _sharePressRelease,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.all(16),
                       ),
                       icon: const Icon(Icons.share),
-                      label: const Text('外部へ共有'),
+                      label: Text(primaryShareLabel),
                     ),
                   ),
                 ],
               ),
+              if (channelKey == 'x_share') ...[
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  onPressed: _sharePressRelease,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('共有シートを開く'),
+                ),
+              ],
             ],
           ],
         ),
