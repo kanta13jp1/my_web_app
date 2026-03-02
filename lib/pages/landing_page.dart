@@ -29,6 +29,7 @@ class _LandingPageState extends State<LandingPage> {
   final GlobalKey _authSectionKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
+  Timer? _magicLinkCooldownTimer;
 
   bool _isLoading = false;
   bool _isTrialLoading = false;
@@ -36,6 +37,7 @@ class _LandingPageState extends State<LandingPage> {
   bool _isLoadingStats = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
+  int _magicLinkCooldownSeconds = 0;
 
   int _todayViews = 0;
   int _monthViews = 0;
@@ -64,6 +66,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _magicLinkCooldownTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _trialPromptController.dispose();
@@ -212,6 +215,7 @@ class _LandingPageState extends State<LandingPage> {
           _lastMagicLinkEmail = email;
         });
       }
+      _startMagicLinkCooldown();
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
     } catch (error) {
       if (mounted) {
@@ -223,6 +227,25 @@ class _LandingPageState extends State<LandingPage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _startMagicLinkCooldown() {
+    _magicLinkCooldownTimer?.cancel();
+    if (!mounted) return;
+    setState(() => _magicLinkCooldownSeconds = 30);
+    _magicLinkCooldownTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_magicLinkCooldownSeconds <= 1) {
+        timer.cancel();
+        setState(() => _magicLinkCooldownSeconds = 0);
+        return;
+      }
+      setState(() => _magicLinkCooldownSeconds -= 1);
+    });
   }
 
   Future<void> _runTrialActionPreview() async {
@@ -349,6 +372,8 @@ $input
       _showMessage('受信箱を開けませんでした。ブラウザかメールアプリで受信箱を確認してください。');
     }
   }
+
+  bool get _isMagicLinkCoolingDown => _magicLinkCooldownSeconds > 0;
 
   (String, String) _parseTrialAiResponse(String raw) {
     final lines = raw
@@ -914,10 +939,22 @@ $input
             const SizedBox(height: 10),
             SizedBox(
               height: 52,
-              child: FilledButton.icon(
-                onPressed: _isLoading ? null : _sendMagicLink,
-                icon: const Icon(Icons.mark_email_read_outlined),
-                label: Text(_showInboxShortcut ? '送信済み' : '開始'),
+              child: FilledButton(
+                onPressed: (_isLoading ||
+                        (_showInboxShortcut && _isMagicLinkCoolingDown))
+                    ? null
+                    : _sendMagicLink,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_showInboxShortcut ? '送信済み' : '開始'),
+                    if (_showInboxShortcut) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.check_circle, size: 18),
+                    ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -957,9 +994,15 @@ $input
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _sendMagicLink,
+                            onPressed: (_isLoading || _isMagicLinkCoolingDown)
+                                ? null
+                                : _sendMagicLink,
                             icon: const Icon(Icons.refresh),
-                            label: const Text('再送する'),
+                            label: Text(
+                              _isMagicLinkCoolingDown
+                                  ? '再送 ${_magicLinkCooldownSeconds}s'
+                                  : '再送する',
+                            ),
                           ),
                         ),
                       ],
