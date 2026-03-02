@@ -16,6 +16,10 @@ class AdminAnalyticsPage extends StatefulWidget {
 class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _dailyStats = [];
   int _actualUserCount = 0;
+  int _lpTodayViews = 0;
+  int _lpMonthViews = 0;
+  int _lpTotalViews = 0;
+  bool _hasLpViewStats = false;
   bool _isLoading = true;
   late final SupabaseClient _supabase;
 
@@ -46,6 +50,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return raw.length >= 10 ? raw.substring(0, 10) : raw;
   }
 
+  String _monthKey(DateTime date) =>
+      DateFormat('yyyy-MM').format(_startOfDay(date));
+
   void _mergeSourceCounts(Map<String, int> target, dynamic rawSourceDetails) {
     if (rawSourceDetails is! Map) return;
     rawSourceDetails.forEach((key, value) {
@@ -58,6 +65,35 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ifAbsent: () => count,
       );
     });
+  }
+
+  void _overlayLandingPageViewSeries({
+    required List<Map<String, dynamic>> dailyStats,
+    required dynamic rawLpStats,
+  }) {
+    if (rawLpStats is! Map) return;
+
+    final lpStats = Map<String, dynamic>.from(rawLpStats);
+    final rawSeries = lpStats['series'];
+    if (rawSeries is! List) return;
+
+    final lpViewsByDate = <String, int>{};
+    for (final row in rawSeries.whereType<Map>()) {
+      final dateKey = _normalizeDateKey(row['date']);
+      if (dateKey == null) continue;
+      lpViewsByDate[dateKey] = _toInt(row['count']);
+    }
+
+    if (lpViewsByDate.isEmpty) return;
+
+    for (final day in dailyStats) {
+      final dateKey = _normalizeDateKey(day['date']);
+      if (dateKey == null) continue;
+      final lpViews = lpViewsByDate[dateKey];
+      if (lpViews != null) {
+        day['landing_views'] = lpViews;
+      }
+    }
   }
 
   String _resolvePriorityAcquisitionChannel(Map<String, int> sources) {
@@ -229,24 +265,38 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             .from('user_profiles')
             .select('user_id')
             .count(CountOption.exact),
+        _supabase.rpc('get_lp_view_stats'),
       ]);
 
       final statsResponse = results[0] as List<dynamic>;
       final profileResponse = results[1] as List<dynamic>;
       final userCountResponse = results[2];
+      final lpStatsResponse = results[3];
       final mergedDailyStats = _buildMergedDailyStats(
         analyticsRows: statsResponse,
         profileRows: profileResponse,
         startDate: startDate,
         endDate: today,
       );
+      _overlayLandingPageViewSeries(
+        dailyStats: mergedDailyStats,
+        rawLpStats: lpStatsResponse,
+      );
       final totalUsers =
           userCountResponse is PostgrestResponse ? userCountResponse.count : 0;
+      final lpStats = lpStatsResponse is Map
+          ? Map<String, dynamic>.from(lpStatsResponse)
+          : <String, dynamic>{};
+      final hasLpViewStats = lpStats.isNotEmpty;
 
       if (mounted) {
         setState(() {
           _dailyStats = mergedDailyStats;
           _actualUserCount = totalUsers;
+          _lpTodayViews = _toInt(lpStats['today']);
+          _lpMonthViews = _toInt(lpStats['month']);
+          _lpTotalViews = _toInt(lpStats['total']);
+          _hasLpViewStats = hasLpViewStats;
           _isLoading = false;
         });
       }
@@ -322,11 +372,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   @override
   Widget build(BuildContext context) {
     // データ集計
-    int totalViews = 0;
+    int analyticsViews = 0;
     int totalConversions = 0;
     int totalShares = 0;
+    int monthRegistrations = 0;
     final Map<String, int> sourceBreakdown = {};
     final todayKey = _dateKey(DateTime.now());
+    final currentMonthKey = _monthKey(DateTime.now());
     var todayViews = 0;
     var todayRegistrations = 0;
 
@@ -337,13 +389,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final conv = _toInt(stat['conversions']);
       final statDateKey = _normalizeDateKey(stat['date']);
 
-      totalViews += views;
+      analyticsViews += views;
       totalConversions += conv;
       totalShares += _toInt(stat['share_count']);
 
       if (statDateKey == todayKey) {
         todayViews = views;
         todayRegistrations = conv;
+      }
+      if (statDateKey != null && statDateKey.startsWith(currentMonthKey)) {
+        monthRegistrations += conv;
       }
 
       if (views > maxDailyViews) maxDailyViews = views;
@@ -361,8 +416,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
 
     final chartData = _dailyStats.reversed.toList();
-    final double totalCvr =
-        totalViews == 0 ? 0 : (totalConversions / totalViews * 100);
+    final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
+    final effectiveMonthViews =
+        _hasLpViewStats ? _lpMonthViews : analyticsViews;
+    final effectiveTotalLpViews =
+        _hasLpViewStats ? _lpTotalViews : analyticsViews;
+    final effectiveMonthRegistrations =
+        _hasLpViewStats ? monthRegistrations : totalConversions;
+    final double totalCvr = effectiveMonthViews == 0
+        ? 0
+        : (effectiveMonthRegistrations / effectiveMonthViews * 100);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -403,17 +466,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildTodayRegistrationGoalCard(
-                      todayViews: todayViews,
+                      todayViews: effectiveTodayViews,
                       todayRegistrations: todayRegistrations,
                       sourceBreakdown: sourceBreakdown,
                     ),
                     const SizedBox(height: 16),
                     _buildKpiSummaryCard(
                       totalCvr,
-                      totalViews,
-                      totalConversions,
+                      effectiveMonthViews,
+                      effectiveMonthRegistrations,
                       _actualUserCount,
                       totalShares,
+                      effectiveTotalLpViews,
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -775,10 +839,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildKpiSummaryCard(
     double cvr,
-    int views,
-    int registrations,
+    int monthViews,
+    int monthRegistrations,
     int users,
     int shares,
+    int totalLpViews,
   ) {
     return Card(
       elevation: 4,
@@ -790,7 +855,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: Column(
           children: [
             const Text(
-              '直近30日CVR (実登録ベース)',
+              '今月CVR (実登録ベース)',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 4),
@@ -830,14 +895,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               alignment: WrapAlignment.spaceAround,
               children: [
                 _buildStatItem(
-                  '30日LP View',
-                  '$views',
+                  '今月LP View',
+                  '$monthViews',
                   Icons.visibility,
                   Colors.blue,
                 ),
                 _buildStatItem(
-                  '30日登録',
-                  '$registrations',
+                  '今月登録',
+                  '$monthRegistrations',
                   Icons.person_add,
                   Colors.indigo,
                 ),
@@ -852,6 +917,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   '$shares',
                   Icons.share,
                   Colors.orange,
+                ),
+                _buildStatItem(
+                  '累計LP View',
+                  '$totalLpViews',
+                  Icons.analytics,
+                  Colors.teal,
                 ),
               ],
             ),
