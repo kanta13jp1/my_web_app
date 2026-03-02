@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'admin_analytics_page.dart';
 
 class CmoOfficePage extends StatefulWidget {
@@ -24,24 +26,24 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   Future<void> _fetchStats() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+        return;
+      }
 
-      // ★修正箇所:
-      // 'id' (bigint) ではなく 'user_id' (uuid) で検索します。
-      // ※ Supabase側で user_stats テーブルに user_id カラムを作成し、
-      //    データを登録しておく必要があります。
       final data = await _supabase
           .from('user_stats')
           .select()
-          .eq('user_id', userId) // ここを 'id' から 'user_id' に変更
+          .eq('user_id', userId)
           .maybeSingle();
 
-      if (mounted) {
-        setState(() {
-          _userStats = data;
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _userStats = data;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error fetching stats: $e');
       if (mounted) {
@@ -50,20 +52,48 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
     }
   }
 
-  void _shareApp() {
-    SharePlus.instance.share(ShareParams(text: '「自分株式会社」で人生経営中！ #MeInc'));
+  String _buildShareText() {
+    return '今日のやるべきことをAIと運営導線で1件に絞る。'
+        '\n「自分株式会社」を使って人生を経営中。'
+        '\n今すぐ試す → https://my-web-app-b67f4.web.app/';
+  }
+
+  Future<void> _shareToX() async {
+    final text = _buildShareText();
+    final intentUri = Uri.https(
+      'twitter.com',
+      '/intent/tweet',
+      <String, String>{'text': text},
+    );
+
+    try {
+      final launched = await launchUrl(
+        intentUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) return;
+    } catch (e) {
+      debugPrint('Direct X share failed: $e');
+    }
+
+    await SharePlus.instance.share(ShareParams(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Xを直接開けなかったため、共有シートを開きました。'),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // データがまだない場合のデフォルト値
     final streak = _userStats?['current_streak'] ?? 0;
     final points = _userStats?['total_points'] ?? 0;
     final level = _userStats?['current_level'] ?? 1;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CMO OFFICE (市場広報)'),
+        title: const Text('CMO OFFICE (広報室)'),
         backgroundColor: Colors.pink[700],
         foregroundColor: Colors.white,
       ),
@@ -73,16 +103,16 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
               padding: const EdgeInsets.all(16),
               children: [
                 _buildKpiCard(
-                  '顧客エンゲージメント (継続日数)',
+                  '連続エンゲージメント日数',
                   '$streak日',
                   Icons.local_fire_department,
                   Colors.orange,
                 ),
                 _buildKpiCard(
-                  '顧客LTV (総獲得ポイント)',
+                  '累計LTV (行動価値ポイント)',
                   '$points pt',
                   Icons.monetization_on,
-                  Colors.yellow[800]!,
+                  Colors.amber.shade800,
                 ),
                 _buildKpiCard(
                   'ブランドランク (レベル)',
@@ -91,12 +121,10 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   Colors.blue,
                 ),
                 const SizedBox(height: 24),
-
-                // 詳細分析ページへの導線
                 _buildActionCard(
                   context,
-                  '市場詳細分析 (Admin Analytics)',
-                  'アプリ全体のアクセス数やCVRなどの統計データを確認します。',
+                  '経営分析ダッシュボード',
+                  'LP View・登録数・CVR などの集計を確認します。',
                   Icons.bar_chart,
                   Colors.purple,
                   () => Navigator.push(
@@ -106,23 +134,26 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     ),
                   ),
                 ),
-
                 _buildActionCard(
                   context,
                   '株主総会へ報告 (SNSシェア)',
-                  '現在の経営状況を外部ステークホルダーに共有します。',
+                  'X の投稿画面を直接開いて、近況をそのまま共有します。',
                   Icons.share,
                   Colors.pink,
-                  _shareApp,
+                  () {
+                    _shareToX();
+                  },
                 ),
                 _buildActionCard(
                   context,
-                  '市場調査 (フィードバック)',
-                  'アプリ開発者へ機能要望やバグ報告を送ります。',
+                  '広報フィードバック',
+                  '反応や導線の弱点を確認し、次の改善に使います。',
                   Icons.feedback,
                   Colors.green,
                   () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('フィードバック機能は準備中です')),
+                    const SnackBar(
+                      content: Text('フィードバック収集は準備中です。'),
+                    ),
                   ),
                 ),
               ],
@@ -135,7 +166,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             CircleAvatar(
