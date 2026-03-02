@@ -266,6 +266,10 @@ $input
       _isSignUp = true;
     });
     _showMessage('この結果を保存するには登録が必要です。下の登録セクションから30秒で開始できます。');
+    _scrollToAuthSection();
+  }
+
+  void _scrollToAuthSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
       if (!mounted || authContext == null) return;
@@ -477,16 +481,16 @@ $input
   }
 
   Widget _buildHeroSection() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Icon(
+        const Icon(
           Icons.business_center,
           size: 68,
           color: Colors.blue,
         ),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'AIが、今日やる1件を決める。',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -494,20 +498,41 @@ $input
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: 10),
-        Text(
+        const SizedBox(height: 10),
+        const Text(
           '登録すると、AI提案を保存して明日も続きから再開できます。まずは1回試してください。',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: Colors.black54),
         ),
-        SizedBox(height: 14),
-        Center(
-          child: Text(
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F7FB),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: const Text(
             '登録する理由: 保存 / 再開 / 履歴',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: Colors.blueGrey,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 52,
+          child: FilledButton(
+            onPressed: _scrollToAuthSection,
+            child: const Text(
+              '開始',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -804,7 +829,7 @@ $input
               child: FilledButton.icon(
                 onPressed: _isLoading ? null : _sendMagicLink,
                 icon: const Icon(Icons.mark_email_read_outlined),
-                label: const Text('30秒で開始'),
+                label: const Text('開始'),
               ),
             ),
             const SizedBox(height: 8),
@@ -915,11 +940,11 @@ $input
                 children: [
                   _buildHeroSection(),
                   const SizedBox(height: 24),
-                  _buildPvSection(),
+                  _buildAuthSection(),
                   const SizedBox(height: 20),
                   _buildTrialSection(),
                   const SizedBox(height: 20),
-                  _buildAuthSection(),
+                  _buildPvSection(),
                 ],
               ),
             ),
