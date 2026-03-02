@@ -16,6 +16,11 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
+  static const bool _googleLoginFeatureEnabled = bool.fromEnvironment(
+    'LANDING_GOOGLE_LOGIN_ENABLED',
+    defaultValue: false,
+  );
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
@@ -32,8 +37,8 @@ class _LandingPageState extends State<LandingPage> {
   int _todayViews = 0;
   int _monthViews = 0;
   int _totalViews = 0;
-  List<FlSpot> _pvSpots = [];
-  List<String> _pvLabels = [];
+  List<FlSpot> _pvSpots = const <FlSpot>[];
+  List<String> _pvLabels = const <String>[];
 
   String? _trialAction;
   String? _trialReason;
@@ -71,6 +76,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   void _showMessage(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -81,24 +87,25 @@ class _LandingPageState extends State<LandingPage> {
     try {
       final supabase = Supabase.instance.client;
       await supabase.rpc('increment_lp_view');
-      final res = await supabase.rpc('get_lp_view_stats');
-      final map = Map<String, dynamic>.from(res as Map);
+      final dynamic raw = await supabase.rpc('get_lp_view_stats');
+      final data =
+          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
 
-      final today = (map['today'] as num?)?.toInt() ?? 0;
-      final month = (map['month'] as num?)?.toInt() ?? 0;
-      final total = (map['total'] as num?)?.toInt() ?? 0;
-      final series = (map['series'] as List?) ?? const [];
+      final today = (data['today'] as num?)?.toInt() ?? 0;
+      final month = (data['month'] as num?)?.toInt() ?? 0;
+      final total = (data['total'] as num?)?.toInt() ?? 0;
+      final series =
+          data['series'] is List ? data['series'] as List : const <dynamic>[];
 
       final spots = <FlSpot>[];
       final labels = <String>[];
-
       for (var i = 0; i < series.length; i++) {
-        final row = Map<String, dynamic>.from(series[i] as Map);
-        final dateStr = (row['date'] ?? '').toString();
+        final rowRaw = series[i];
+        if (rowRaw is! Map) continue;
+        final row = Map<String, dynamic>.from(rowRaw);
+        final dateStr = row['date']?.toString() ?? '';
         final count = (row['count'] as num?)?.toDouble() ?? 0;
-
         spots.add(FlSpot(i.toDouble(), count));
-
         final date = DateTime.tryParse(dateStr);
         labels.add(date == null ? '' : DateFormat('M/d').format(date));
       }
@@ -121,7 +128,6 @@ class _LandingPageState extends State<LandingPage> {
   Future<void> _auth() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
     if (email.isEmpty || password.isEmpty) {
       _showMessage('メールアドレスとパスワードを入力してください。');
       return;
@@ -130,14 +136,14 @@ class _LandingPageState extends State<LandingPage> {
     setState(() => _isLoading = true);
     try {
       if (_isSignUp) {
-        final res = await Supabase.instance.client.auth.signUp(
+        final result = await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
           emailRedirectTo: _webRedirectUrl,
         );
         if (!mounted) return;
-        if (res.session == null) {
-          _showMessage('確認メールを送信しました。受信箱の確認リンクから続行してください。');
+        if (result.session == null) {
+          _showMessage('確認メールを送りました。メール内のリンクを開いて登録を完了してください。');
         }
       } else {
         await Supabase.instance.client.auth.signInWithPassword(
@@ -145,29 +151,39 @@ class _LandingPageState extends State<LandingPage> {
           password: password,
         );
       }
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage(_resolveEmailAuthError(e));
+    } catch (error) {
+      _showMessage(_resolveEmailAuthError(error));
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _signInWithGoogle() async {
+    if (!_googleLoginFeatureEnabled) {
+      _showMessage(
+        'Googleログインは未設定のため現在は非表示です。Google provider を有効化し、'
+        '--dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true で再表示してください。',
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final launched = await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: _webRedirectUrl,
       );
-      if (!launched && mounted) {
-        _showMessage('Googleログインを開始できませんでした。もう一度押してください。');
+      if (!launched) {
+        _showMessage('Googleログインを開始できませんでした。少し待ってから再試行してください。');
       }
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage(_resolveGoogleAuthError(e));
+    } catch (error) {
+      _showMessage(_resolveGoogleAuthError(error));
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -185,23 +201,23 @@ class _LandingPageState extends State<LandingPage> {
         emailRedirectTo: _webRedirectUrl,
         shouldCreateUser: true,
       );
-      if (!mounted) return;
-      _showMessage('Magic Link を送信しました。受信箱のメール内リンクから続行してください。');
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage(_resolveMagicLinkError(e));
+      _showMessage('Magic Link を送りました。メール内のリンクを開くとそのまま開始できます。');
+    } catch (error) {
+      _showMessage(_resolveMagicLinkError(error));
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _runTrialActionPreview() async {
-    final text = _trialPromptController.text.trim();
-    if (text.isEmpty) {
-      final suggestion = _buildTrialFallbackSuggestion(text);
+    final input = _trialPromptController.text.trim();
+    if (input.isEmpty) {
+      final fallback = _buildTrialFallbackSuggestion(input);
       setState(() {
-        _trialAction = suggestion.$1;
-        _trialReason = suggestion.$2;
+        _trialAction = fallback.$1;
+        _trialReason = fallback.$2;
         _showSaveCtaPrompt = false;
       });
       return;
@@ -209,34 +225,36 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isTrialLoading = true);
     try {
-      final aiService = AIService();
       final prompt = '''
-以下のユーザー入力から、今すぐ着手すべき1件を日本語で提案してください。
-出力は必ず次の2行のみで返してください。
-ACTION: 20文字以内の具体的な次アクション
+あなたはランディングページ上の体験導線AIです。
+ユーザーの入力から、今すぐ着手すべき1件を日本語で提案してください。
+出力は次の2行のみです。
+ACTION: 20文字以内の具体的な行動
 REASON: 60文字以内の理由
 
 ユーザー入力:
-$text
+$input
 ''';
-      final raw = await aiService.improveText(prompt);
-      final suggestion = _parseTrialAiResponse(raw);
+      final result = await AIService().improveText(prompt);
+      final parsed = _parseTrialAiResponse(result);
       if (!mounted) return;
       setState(() {
-        _trialAction = suggestion.$1;
-        _trialReason = suggestion.$2;
+        _trialAction = parsed.$1;
+        _trialReason = parsed.$2;
         _showSaveCtaPrompt = false;
       });
     } catch (_) {
-      final suggestion = _buildTrialFallbackSuggestion(text);
+      final fallback = _buildTrialFallbackSuggestion(input);
       if (!mounted) return;
       setState(() {
-        _trialAction = suggestion.$1;
-        _trialReason = '${suggestion.$2}（AI応答失敗のため簡易判定）';
+        _trialAction = fallback.$1;
+        _trialReason = '${fallback.$2} AI応答に失敗したため簡易判定を表示しています。';
         _showSaveCtaPrompt = false;
       });
     } finally {
-      if (mounted) setState(() => _isTrialLoading = false);
+      if (mounted) {
+        setState(() => _isTrialLoading = false);
+      }
     }
   }
 
@@ -245,10 +263,10 @@ $text
       _showSaveCtaPrompt = true;
       _isSignUp = true;
     });
-    _showMessage('この結果を保存するには登録が必要です。下の認証エリアから続行してください。');
+    _showMessage('この結果を保存するには登録が必要です。下の認証セクションから開始してください。');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
-      if (authContext == null || !mounted) return;
+      if (!mounted || authContext == null) return;
       Scrollable.ensureVisible(
         authContext,
         duration: const Duration(milliseconds: 320),
@@ -260,7 +278,7 @@ $text
 
   (String, String) _parseTrialAiResponse(String raw) {
     final lines = raw
-        .split('\n')
+        .split(RegExp(r'[\r\n]+'))
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty)
         .toList();
@@ -280,96 +298,105 @@ $text
     if (action != null && action.isNotEmpty) {
       return (
         action,
-        (reason != null && reason.isNotEmpty) ? reason : 'AIが最短の着手ポイントとして選びました。'
+        (reason != null && reason.isNotEmpty) ? reason : 'AIが選んだ最短の着手順です。'
       );
     }
 
     final compact = raw.replaceAll('\n', ' ').trim();
     if (compact.isNotEmpty) {
-      final safeText =
-          compact.length > 80 ? '${compact.substring(0, 80)}…' : compact;
-      return (safeText, 'AI応答をそのまま次アクション候補として表示しています。');
+      final safe =
+          compact.length > 80 ? '${compact.substring(0, 80)}...' : compact;
+      return (safe, 'AI応答をそのまま簡易表示しています。');
     }
 
-    return _buildTrialFallbackSuggestion(_trialPromptController.text);
+    return _buildTrialFallbackSuggestion(_trialPromptController.text.trim());
   }
 
   (String, String) _buildTrialFallbackSuggestion(String input) {
     final text = input.trim();
     if (text.isEmpty) {
-      return ('まずは今日やる最優先を1件だけ決める。', '入力が空でも、最初の1件を固定すると行動開始が早くなります。');
+      return (
+        '今日の最重要1件を書く',
+        '入力が空でも、最優先を1件に絞るだけで着手しやすくなります。',
+      );
     }
 
     if (text.contains('メール') ||
         text.contains('SMS') ||
         text.contains('DM') ||
-        text.contains('連絡') ||
-        text.contains('返信')) {
-      return ('未読の連絡を3件だけ処理する。', '連絡系は先に未読を減らすと、その後の判断負荷が落ちます。');
+        text.contains('連絡')) {
+      return (
+        '未読の連絡を1件だけ処理する',
+        '連絡系は放置すると判断コストが増えるので、最初に1件片付けます。',
+      );
     }
 
     if (text.contains('お金') ||
-        text.contains('支払') ||
-        text.contains('残高') ||
         text.contains('請求') ||
-        text.contains('口座')) {
-      return ('残高か請求を1件だけ確認して記録する。', '金額確認を先に終えると、後ろの意思決定が数字ベースに戻ります。');
+        text.contains('残高') ||
+        text.contains('支払い')) {
+      return (
+        '残高か請求を1件だけ確認する',
+        '数字を先に確認すると、不安が曖昧なまま膨らみにくくなります。',
+      );
     }
 
-    if (text.contains('仕事') ||
-        text.contains('タスク') ||
-        text.contains('締切') ||
+    if (text.contains('タスク') ||
         text.contains('TODO') ||
-        text.contains('作業')) {
-      return ('10分以内に着手できるタスクを1件だけ始める。', '最優先の1件を小さく切ると、先延ばしより着手が勝ちます。');
+        text.contains('整理') ||
+        text.contains('優先')) {
+      return (
+        '10分だけ使って最優先を1件に絞る',
+        '着手前に優先順位を1件まで圧縮すると、その後の判断が速くなります。',
+      );
     }
 
-    if (text.contains('片付') || text.contains('掃除') || text.contains('整理')) {
-      return ('視界に入る場所を1区画だけ片付ける。', '環境を1区画だけ整えると、次の作業への抵抗が下がります。');
-    }
-
-    return ('今から10分で終わる単位に分解して、1件だけ着手する。', '内容が広いときは、10分単位まで小さくするのが最短です。');
+    return (
+      '20分以内で終わる最小作業に分解する',
+      '大きすぎるタスクは始めにくいので、最小単位まで切ってから着手します。',
+    );
   }
 
   String _resolveEmailAuthError(Object error) {
-    if (error is AuthWeakPasswordException) {
-      return 'パスワードが弱すぎます。英字と数字を混ぜて8文字以上にしてください。';
-    }
     if (error is AuthException) {
       final code = (error.code ?? '').toLowerCase();
       final message = error.message.toLowerCase();
+      final status = error.statusCode?.toString() ?? '';
 
       if (code == 'invalid_credentials' ||
           code == 'invalid_grant' ||
           message.contains('invalid login credentials')) {
-        return 'メールアドレスかパスワードが一致していません。入力を見直してから再試行してください。';
+        return 'メールアドレスかパスワードが一致していません。入力を見直すか、Magic Link に切り替えてください。';
       }
       if (code == 'email_exists' || code == 'user_already_exists') {
-        return 'このメールアドレスは既に登録済みです。新規登録ではなくログインに切り替えてください。';
+        return 'このメールアドレスはすでに登録済みです。ログインに切り替えるか、Magic Link を使ってください。';
       }
       if (code == 'email_not_confirmed') {
-        return 'メール確認が未完了です。受信箱の確認メールを開き、認証リンクを押してからログインしてください。';
+        return '確認メールの認証がまだです。メール内リンクを開くか、Magic Link で入り直してください。';
       }
       if (code == 'signup_disabled') {
-        return '現在メール新規登録は停止中です。Googleログインか Magic Link を使ってください。';
+        return 'メール新規登録は現在停止中です。Magic Link を使うか、認証設定を確認してください。';
       }
       if (code == 'weak_password') {
-        return 'パスワードが弱すぎます。英字と数字を混ぜて8文字以上にしてください。';
+        return 'パスワードが弱すぎます。英字と数字を含めて、8文字以上にしてください。';
       }
       if (code == 'email_address_invalid' ||
           message.contains('invalid email')) {
-        return 'メールアドレスの形式が不正です。`@` を含む正しい形式で入力してください。';
+        return 'メールアドレスの形式が正しくありません。`@` を含む形式で入力してください。';
+      }
+      if (code == 'validation_failed') {
+        return '入力内容の検証に失敗しました。メール形式とパスワードの長さを確認して再試行してください。';
       }
       if (code == 'over_request_rate_limit' ||
           code == 'over_email_send_rate_limit' ||
-          error.statusCode == '429' ||
+          status == '429' ||
           message.contains('rate limit')) {
-        return '試行回数が多すぎます。1分ほど待ってから再試行してください。';
+        return '試行回数が多すぎます。1〜2分待ってから再試行するか、Magic Link に切り替えてください。';
       }
-      if (code == 'unexpected_failure' || error.statusCode == '500') {
-        return '認証サーバー側で失敗しました。時間を置いて再試行するか、Googleログインを使ってください。';
+      if (code == 'unexpected_failure' || status == '500') {
+        return '認証サーバー側で一時エラーが出ています。少し待ってから再試行してください。';
       }
-      return '認証に失敗しました。入力内容を確認して、もう一度試してください。';
+      return '認証に失敗しました。入力内容を確認し、それでもだめなら Magic Link を使ってください。';
     }
     return '認証に失敗しました。通信状態を確認してから再試行してください。';
   }
@@ -378,10 +405,11 @@ $text
     if (error is AuthException) {
       final code = (error.code ?? '').toLowerCase();
       final message = error.message.toLowerCase();
+      final status = error.statusCode?.toString() ?? '';
 
       if (code == 'provider_disabled' ||
           message.contains('provider is not enabled')) {
-        return 'Googleログインが未設定です。Supabase Auth の Google provider を有効化してください。';
+        return 'Google provider が Supabase で無効です。Authentication > Sign In / Providers で Google を有効化してください。';
       }
       if (code == 'bad_oauth_callback' ||
           code == 'bad_oauth_state' ||
@@ -389,68 +417,66 @@ $text
           code == 'flow_state_not_found' ||
           code == 'validation_failed' ||
           message.contains('redirect')) {
-        return 'Googleログインのリダイレクト設定が不正です。Supabase の Site URL と Redirect URLs を確認してください。';
+        return 'Google OAuth のリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs と Google 側の callback URL を確認してください。';
       }
       if (code == 'access_denied' || message.contains('cancel')) {
-        return 'Googleログインが途中で中断されました。アカウント選択とアクセス許可を最後まで完了してください。';
+        return 'Google ログインが中断されました。アカウント選択をやり直すか、Magic Link を使ってください。';
       }
       if (code == 'over_request_rate_limit' ||
-          error.statusCode == '429' ||
+          status == '429' ||
           message.contains('rate limit')) {
-        return 'Googleログインの試行回数が多すぎます。少し待ってから再試行してください。';
+        return 'Google ログインの試行回数が多すぎます。少し待ってから再試行してください。';
       }
-      if (code == 'unexpected_failure' || error.statusCode == '500') {
-        return 'Googleログイン側で一時的に失敗しました。時間を置くか、Magic Link に切り替えてください。';
-      }
-      return 'Googleログインに失敗しました。設定または通信状態を確認してください。';
+      return 'Google ログインに失敗しました。設定を確認するか、Magic Link を主導線として使ってください。';
     }
 
-    final message = error.toString().toLowerCase();
-    if (message.contains('popup') || message.contains('blocked')) {
-      return 'Googleログインがブラウザにブロックされました。ポップアップ制限を解除してから再試行してください。';
+    final raw = error.toString().toLowerCase();
+    if (raw.contains('popup') || raw.contains('blocked')) {
+      return 'Google ログインの画面がブラウザにブロックされました。ポップアップを許可するか、Magic Link を使ってください。';
     }
-    return 'Googleログインに失敗しました。通信状態を確認してから再試行してください。';
+    return 'Google ログインに失敗しました。設定確認後に再試行してください。';
   }
 
   String _resolveMagicLinkError(Object error) {
     if (error is AuthException) {
       final code = (error.code ?? '').toLowerCase();
       final message = error.message.toLowerCase();
+      final status = error.statusCode?.toString() ?? '';
 
       if (code == 'email_address_invalid' ||
           message.contains('invalid email')) {
-        return 'Magic Link を送れません。メールアドレスの形式を修正してから再送してください。';
+        return 'メールアドレスの形式が正しくありません。入力を見直してから再送してください。';
       }
       if (code == 'signup_disabled') {
-        return '現在メール登録が停止中です。Googleログインを使ってください。';
+        return '新規ユーザーの自動作成が停止中です。Supabase の Email Auth 設定を確認してください。';
       }
       if (code == 'email_provider_disabled') {
-        return 'Magic Link が未設定です。Supabase Auth の Email provider を有効化してください。';
-      }
-      if (code == 'over_email_send_rate_limit' ||
-          code == 'over_request_rate_limit' ||
-          error.statusCode == '429' ||
-          message.contains('rate limit')) {
-        return 'Magic Link の送信回数が多すぎます。1分ほど待ってから再送してください。';
+        return 'メール認証自体が無効です。Supabase の Email provider を有効化してください。';
       }
       if (code == 'validation_failed' ||
           code == 'flow_state_expired' ||
           code == 'flow_state_not_found' ||
           message.contains('redirect')) {
-        return 'Magic Link の遷移設定が不正です。Supabase の Site URL と Redirect URLs を確認してください。';
+        return 'Magic Link の遷移先設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
       }
-      if (message.contains('smtp') || code == 'unexpected_failure') {
-        return 'メール送信側で失敗しました。時間を置くか、Googleログインに切り替えてください。';
+      if (code == 'over_email_send_rate_limit' ||
+          code == 'over_request_rate_limit' ||
+          status == '429' ||
+          message.contains('rate limit')) {
+        return 'メール送信回数が多すぎます。1〜2分待ってから再送してください。';
       }
-      return 'Magic Link を送れませんでした。メールアドレスと送信設定を確認してください。';
+      if (code == 'unexpected_failure' || message.contains('smtp')) {
+        return 'メール送信設定に失敗しています。Supabase の SMTP / Email 設定を確認してください。';
+      }
+      return 'Magic Link の送信に失敗しました。メールアドレスと認証設定を確認してください。';
     }
-
-    return 'Magic Link を送れませんでした。通信状態を確認してから再試行してください。';
+    return 'Magic Link の送信に失敗しました。通信状態を確認してから再試行してください。';
   }
 
   Widget _buildPvSection() {
     final fmt = NumberFormat('#,###', 'ja_JP');
-    final interval = (_pvLabels.length / 5).ceil().clamp(1, 999).toDouble();
+    final labelInterval =
+        _pvLabels.length <= 5 ? 1 : (_pvLabels.length / 5).ceil();
 
     return Card(
       elevation: 1,
@@ -461,15 +487,12 @@ $text
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'LP View数',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              'LP View 数',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             const Text(
-              'まずは流入を増やす。登録改善の前に、見られているかを確認します。',
+              'まずは流入を増やし、その後に登録導線を詰めます。今日のLP Viewを毎日確認します。',
               style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 14),
@@ -511,11 +534,11 @@ $text
                                 sideTitles: SideTitles(
                                   showTitles: true,
                                   reservedSize: 28,
-                                  interval: interval,
+                                  interval: labelInterval.toDouble(),
                                   getTitlesWidget: (value, meta) {
                                     final index = value.toInt();
                                     final label =
-                                        (index >= 0 && index < _pvLabels.length)
+                                        index >= 0 && index < _pvLabels.length
                                             ? _pvLabels[index]
                                             : '';
                                     return SideTitleWidget(
@@ -543,7 +566,7 @@ $text
             ),
             const SizedBox(height: 8),
             const Text(
-              'グラフは今月の日次 LP View です。',
+              'グラフは今月の日次LP Viewです。',
               style: TextStyle(fontSize: 11, color: Colors.black45),
             ),
           ],
@@ -570,10 +593,7 @@ $text
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -591,14 +611,11 @@ $text
           children: [
             const Text(
               '登録前の1アクション体験',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             const Text(
-              '今いちばん詰まっていることを入れると、今やる1件を返します。',
+              'まず1回だけ使って価値を確認できます。保存したくなった時だけ登録してください。',
               style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 14),
@@ -607,7 +624,7 @@ $text
               minLines: 2,
               maxLines: 3,
               decoration: const InputDecoration(
-                labelText: '例: 仕事と連絡が散らかっていて何から手を付けるか迷う',
+                labelText: '例: 今日いちばん詰まっていることを簡単に書く',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.bolt),
               ),
@@ -641,7 +658,7 @@ $text
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '今やる1件',
+                      '提案された1件',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -698,55 +715,29 @@ $text
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF4E5),
                   borderRadius: BorderRadius.circular(14),
-                  border:
-                      Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Text(
-                  'この結果を保存するには登録が必要です。Google、Magic Link、メール登録のいずれかで続行してください。',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  'この結果を保存するには登録が必要です。まずは Magic Link で始めるのが最短です。',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 14),
             ],
             const Text(
-              '30秒で始める',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              '30秒で開始',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
-              _isSignUp ? '新規登録。最初の設定はあとからでも進められます。' : 'ログイン。前回の続きから再開します。',
+              _isSignUp
+                  ? '新規登録モードです。まずは Magic Link で入り、必要なら後でパスワード設定に切り替えます。'
+                  : '最短導線は Magic Link です。既存ユーザーは下のパスワードログインも使えます。',
               style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: _isLoading ? null : _signInWithGoogle,
-                icon: const Icon(Icons.login),
-                label: const Text('Googleで続ける'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'または',
-                    style: TextStyle(color: Colors.black45),
-                  ),
-                ),
-                Expanded(child: Divider()),
-              ],
-            ),
-            const SizedBox(height: 12),
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -758,19 +749,59 @@ $text
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: 46,
-              child: OutlinedButton.icon(
+              height: 52,
+              child: FilledButton.icon(
                 onPressed: _isLoading ? null : _sendMagicLink,
                 icon: const Icon(Icons.mark_email_read_outlined),
-                label: const Text('Magic Linkを送る'),
+                label: const Text('Magic Link で続ける'),
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'パスワードを作らず、そのままメール内リンクで続行できます。',
+              '最短導線です。パスワード不要で、そのまま新規登録にもログインにも使えます。',
               style: TextStyle(fontSize: 12, color: Colors.black45),
             ),
             const SizedBox(height: 14),
+            if (_googleLoginFeatureEnabled) ...[
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _signInWithGoogle,
+                  icon: const Icon(Icons.login),
+                  label: const Text('Googleで続ける'),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F9FC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: const Text(
+                  'Googleログインは未設定のため現在は非表示です。Supabase で Google provider を有効化し、'
+                  '--dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true で再表示できます。',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'パスワードで続ける',
+                    style: TextStyle(color: Colors.black45),
+                  ),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _passwordController,
               obscureText: true,
@@ -839,7 +870,7 @@ $text
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    '今日のやるべきことを、AIと運用導線で1件に絞る。',
+                    '今日のやるべきことを、AIと運営導線で1件に絞る。',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -848,7 +879,8 @@ $text
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    '優先順位決め、実行、振り返りを1つにまとめた個人用オペレーティングシステムです。',
+                    'まず1回試して価値を確認し、保存したくなった時だけ登録する構成です。'
+                    '新規登録の主導線は Magic Link に寄せています。',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: Colors.black54),
                   ),
