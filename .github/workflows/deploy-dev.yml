@@ -9,6 +9,7 @@ on:
 env:
   ENVIRONMENT: development
   FLUTTER_VERSION: '3.38.x'
+  LANDING_GOOGLE_LOGIN_ENABLED: 'true'
 
 jobs:
   ci:
@@ -65,7 +66,10 @@ jobs:
 
       # Build Flutter Web
       - name: Build Flutter Web (Development)
-        run: flutter build web --release --dart-define=ENVIRONMENT=development
+        run: >
+          flutter build web --release
+          --dart-define=ENVIRONMENT=development
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_DEV }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_DEV }}

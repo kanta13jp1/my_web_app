@@ -60,7 +60,9 @@ jobs:
 
       #  修正: --no-tree-shake-icons を追加
       - name: Build web (production)
-        run: flutter build web --release --no-tree-shake-icons
+        run: >
+          flutter build web --release --no-tree-shake-icons
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
         env:
           FLUTTER_WEB: true
 
@@ -125,7 +127,9 @@ jobs:
 
       #  修正: --no-tree-shake-icons を追加
       - name: Build test
-        run: flutter build web --release --no-tree-shake-icons
+        run: >
+          flutter build web --release --no-tree-shake-icons
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
 
   pr-comment:
     name: PR Comment

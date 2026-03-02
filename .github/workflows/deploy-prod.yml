@@ -13,6 +13,7 @@ permissions:
 env:
   ENVIRONMENT: production
   FLUTTER_VERSION: "3.38.x"
+  LANDING_GOOGLE_LOGIN_ENABLED: "true"
 
 jobs:
   ci:
@@ -91,7 +92,8 @@ jobs:
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
-            --dart-define=APP_VERSION=${{ steps.version.outputs.version }}
+            --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
+            --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
