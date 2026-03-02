@@ -917,7 +917,7 @@ $input
               child: FilledButton.icon(
                 onPressed: _isLoading ? null : _sendMagicLink,
                 icon: const Icon(Icons.mark_email_read_outlined),
-                label: const Text('開始'),
+                label: Text(_showInboxShortcut ? '送信済み' : '開始'),
               ),
             ),
             const SizedBox(height: 8),
@@ -945,13 +945,24 @@ $input
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _openInbox,
-                        icon: const Icon(Icons.open_in_new),
-                        label: const Text('受信箱を開く'),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _openInbox,
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('受信箱を開く'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _sendMagicLink,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('再送する'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
