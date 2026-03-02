@@ -536,6 +536,16 @@ $input
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        const Text(
+          'メール1通で完了',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.black45,
+          ),
+        ),
       ],
     );
   }
@@ -821,6 +831,15 @@ $input
                 labelText: 'メールアドレス',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '保存される内容: AI提案 / 実行履歴 / 明日の続き',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
               ),
             ),
             const SizedBox(height: 10),
