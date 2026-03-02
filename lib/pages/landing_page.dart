@@ -30,7 +30,7 @@ class _LandingPageState extends State<LandingPage> {
 
   bool _isLoading = false;
   bool _isTrialLoading = false;
-  bool _isSignUp = false;
+  bool _isSignUp = true;
   bool _isLoadingStats = true;
   bool _showSaveCtaPrompt = false;
 
@@ -77,9 +77,9 @@ class _LandingPageState extends State<LandingPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _initLpViewStats() async {
@@ -119,7 +119,8 @@ class _LandingPageState extends State<LandingPage> {
         _pvLabels = labels;
         _isLoadingStats = false;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('LP view stats failed: $e');
       if (!mounted) return;
       setState(() => _isLoadingStats = false);
     }
@@ -143,7 +144,7 @@ class _LandingPageState extends State<LandingPage> {
         );
         if (!mounted) return;
         if (result.session == null) {
-          _showMessage('確認メールを送りました。メール内のリンクを開いて登録を完了してください。');
+          _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');
         }
       } else {
         await Supabase.instance.client.auth.signInWithPassword(
@@ -163,8 +164,7 @@ class _LandingPageState extends State<LandingPage> {
   Future<void> _signInWithGoogle() async {
     if (!_googleLoginFeatureEnabled) {
       _showMessage(
-        'Googleログインは未設定のため現在は非表示です。Google provider を有効化し、'
-        '--dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true で再表示してください。',
+        'Googleログインは現在非表示です。`LANDING_GOOGLE_LOGIN_ENABLED=true` で再ビルドすると表示されます。',
       );
       return;
     }
@@ -176,7 +176,7 @@ class _LandingPageState extends State<LandingPage> {
         redirectTo: _webRedirectUrl,
       );
       if (!launched) {
-        _showMessage('Googleログインを開始できませんでした。少し待ってから再試行してください。');
+        _showMessage('Googleログイン画面を開けませんでした。再読み込みしてから再実行してください。');
       }
     } catch (error) {
       _showMessage(_resolveGoogleAuthError(error));
@@ -201,7 +201,7 @@ class _LandingPageState extends State<LandingPage> {
         emailRedirectTo: _webRedirectUrl,
         shouldCreateUser: true,
       );
-      _showMessage('Magic Link を送りました。メール内のリンクを開くとそのまま開始できます。');
+      _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
     } catch (error) {
       _showMessage(_resolveMagicLinkError(error));
     } finally {
@@ -226,15 +226,16 @@ class _LandingPageState extends State<LandingPage> {
     setState(() => _isTrialLoading = true);
     try {
       final prompt = '''
-あなたはランディングページ上の体験導線AIです。
-ユーザーの入力から、今すぐ着手すべき1件を日本語で提案してください。
-出力は次の2行のみです。
+あなたは登録前LPの導線アシスタントです。
+ユーザーの入力を読み、今すぐ着手すべき最初の1件を日本語で返してください。
+出力は次の2行だけにしてください。
 ACTION: 20文字以内の具体的な行動
 REASON: 60文字以内の理由
 
 ユーザー入力:
 $input
 ''';
+
       final result = await AIService().improveText(prompt);
       final parsed = _parseTrialAiResponse(result);
       if (!mounted) return;
@@ -243,12 +244,13 @@ $input
         _trialReason = parsed.$2;
         _showSaveCtaPrompt = false;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Trial preview failed: $e');
       final fallback = _buildTrialFallbackSuggestion(input);
       if (!mounted) return;
       setState(() {
         _trialAction = fallback.$1;
-        _trialReason = '${fallback.$2} AI応答に失敗したため簡易判定を表示しています。';
+        _trialReason = '${fallback.$2} AI応答が不安定だったため簡易提案を表示しています。';
         _showSaveCtaPrompt = false;
       });
     } finally {
@@ -263,7 +265,7 @@ $input
       _showSaveCtaPrompt = true;
       _isSignUp = true;
     });
-    _showMessage('この結果を保存するには登録が必要です。下の認証セクションから開始してください。');
+    _showMessage('この結果を保存するには登録が必要です。下の登録セクションから30秒で開始できます。');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
       if (!mounted || authContext == null) return;
@@ -298,7 +300,7 @@ $input
     if (action != null && action.isNotEmpty) {
       return (
         action,
-        (reason != null && reason.isNotEmpty) ? reason : 'AIが選んだ最短の着手順です。'
+        (reason != null && reason.isNotEmpty) ? reason : 'AIが最短の1件として判断しました。',
       );
     }
 
@@ -306,7 +308,7 @@ $input
     if (compact.isNotEmpty) {
       final safe =
           compact.length > 80 ? '${compact.substring(0, 80)}...' : compact;
-      return (safe, 'AI応答をそのまま簡易表示しています。');
+      return (safe, 'AIの返答をそのまま簡易表示しています。');
     }
 
     return _buildTrialFallbackSuggestion(_trialPromptController.text.trim());
@@ -316,8 +318,8 @@ $input
     final text = input.trim();
     if (text.isEmpty) {
       return (
-        '今日の最重要1件を書く',
-        '入力が空でも、最優先を1件に絞るだけで着手しやすくなります。',
+        '今日の最重要を1件決める',
+        '入力が空でも、最初に最重要を1件に絞るだけで着手はかなり早くなります。',
       );
     }
 
@@ -326,34 +328,34 @@ $input
         text.contains('DM') ||
         text.contains('連絡')) {
       return (
-        '未読の連絡を1件だけ処理する',
-        '連絡系は放置すると判断コストが増えるので、最初に1件片付けます。',
+        '未読の確認を1件だけ終える',
+        '連絡系は放置コストが高いので、最初に1件だけ処理すると全体が進みます。',
       );
     }
 
-    if (text.contains('お金') ||
-        text.contains('請求') ||
-        text.contains('残高') ||
-        text.contains('支払い')) {
+    if (text.contains('考える') ||
+        text.contains('悩む') ||
+        text.contains('迷う') ||
+        text.contains('決めたい')) {
       return (
-        '残高か請求を1件だけ確認する',
-        '数字を先に確認すると、不安が曖昧なまま膨らみにくくなります。',
+        '判断条件を1つだけ書き出す',
+        '条件を先に言語化すると、迷いが減って次の行動が決まりやすくなります。',
       );
     }
 
     if (text.contains('タスク') ||
         text.contains('TODO') ||
-        text.contains('整理') ||
-        text.contains('優先')) {
+        text.contains('仕事') ||
+        text.contains('課題')) {
       return (
-        '10分だけ使って最優先を1件に絞る',
-        '着手前に優先順位を1件まで圧縮すると、その後の判断が速くなります。',
+        '10分だけ使って最重要を1件に絞る',
+        '最重要を1件だけ先に固定すると、その後の先延ばしが大きく減ります。',
       );
     }
 
     return (
-      '20分以内で終わる最小作業に分解する',
-      '大きすぎるタスクは始めにくいので、最小単位まで切ってから着手します。',
+      '20分だけ動ける最小単位に分解する',
+      '大きすぎる作業は始めにくいので、最小単位まで分けてから着手してください。',
     );
   }
 
@@ -366,39 +368,41 @@ $input
       if (code == 'invalid_credentials' ||
           code == 'invalid_grant' ||
           message.contains('invalid login credentials')) {
-        return 'メールアドレスかパスワードが一致していません。入力を見直すか、Magic Link に切り替えてください。';
+        return 'メールアドレスかパスワードが一致していません。入力を見直すか、Magic Link を使ってください。';
       }
       if (code == 'email_exists' || code == 'user_already_exists') {
-        return 'このメールアドレスはすでに登録済みです。ログインに切り替えるか、Magic Link を使ってください。';
+        return 'このメールアドレスは既に登録済みです。ログインに切り替えるか、Magic Link を使ってください。';
       }
       if (code == 'email_not_confirmed') {
-        return '確認メールの認証がまだです。メール内リンクを開くか、Magic Link で入り直してください。';
+        return '確認メールがまだ未完了です。メール内のリンクを開くか、Magic Link を送って入り直してください。';
       }
       if (code == 'signup_disabled') {
-        return 'メール新規登録は現在停止中です。Magic Link を使うか、認証設定を確認してください。';
+        return 'メール新規登録は現在停止中です。Magic Link を使うか、設定を確認してください。';
       }
       if (code == 'weak_password') {
-        return 'パスワードが弱すぎます。英字と数字を含めて、8文字以上にしてください。';
+        return 'パスワードが弱すぎます。8文字以上で、英字と数字を混ぜてください。';
       }
       if (code == 'email_address_invalid' ||
           message.contains('invalid email')) {
         return 'メールアドレスの形式が正しくありません。`@` を含む形式で入力してください。';
       }
       if (code == 'validation_failed') {
-        return '入力内容の検証に失敗しました。メール形式とパスワードの長さを確認して再試行してください。';
+        return '入力内容の検証に失敗しました。メール形式とパスワード長を見直してください。';
       }
       if (code == 'over_request_rate_limit' ||
           code == 'over_email_send_rate_limit' ||
           status == '429' ||
           message.contains('rate limit')) {
-        return '試行回数が多すぎます。1〜2分待ってから再試行するか、Magic Link に切り替えてください。';
+        return '試行回数が多すぎます。少し待ってから再実行するか、Magic Link を使ってください。';
       }
       if (code == 'unexpected_failure' || status == '500') {
-        return '認証サーバー側で一時エラーが出ています。少し待ってから再試行してください。';
+        return '認証サーバー側で一時的なエラーが出ています。少し待ってから再試行してください。';
       }
-      return '認証に失敗しました。入力内容を確認し、それでもだめなら Magic Link を使ってください。';
+
+      return '認証に失敗しました。入力内容を見直すか、Magic Link を使ってください。';
     }
-    return '認証に失敗しました。通信状態を確認してから再試行してください。';
+
+    return '認証に失敗しました。通信状況を確認してから再試行してください。';
   }
 
   String _resolveGoogleAuthError(Object error) {
@@ -409,7 +413,7 @@ $input
 
       if (code == 'provider_disabled' ||
           message.contains('provider is not enabled')) {
-        return 'Google provider が Supabase で無効です。Authentication > Sign In / Providers で Google を有効化してください。';
+        return 'Supabase で Google provider が無効です。Authentication > Sign In / Providers で Google を有効化してください。';
       }
       if (code == 'bad_oauth_callback' ||
           code == 'bad_oauth_state' ||
@@ -417,24 +421,25 @@ $input
           code == 'flow_state_not_found' ||
           code == 'validation_failed' ||
           message.contains('redirect')) {
-        return 'Google OAuth のリダイレクト設定が不正です。Supabase の Site URL / Redirect URLs と Google 側の callback URL を確認してください。';
+        return 'Google OAuth のリダイレクト設定が一致していません。Supabase の Site URL / Redirect URLs と Google 側の callback URL を確認してください。';
       }
       if (code == 'access_denied' || message.contains('cancel')) {
-        return 'Google ログインが中断されました。アカウント選択をやり直すか、Magic Link を使ってください。';
+        return 'Googleログインが中断されました。アカウント選択をやり直すか、Magic Link を使ってください。';
       }
       if (code == 'over_request_rate_limit' ||
           status == '429' ||
           message.contains('rate limit')) {
-        return 'Google ログインの試行回数が多すぎます。少し待ってから再試行してください。';
+        return 'Googleログインの試行回数が多すぎます。少し待ってから再試行してください。';
       }
-      return 'Google ログインに失敗しました。設定を確認するか、Magic Link を主導線として使ってください。';
+
+      return 'Googleログインに失敗しました。設定を確認するか、Magic Link を使ってください。';
     }
 
-    final raw = error.toString().toLowerCase();
-    if (raw.contains('popup') || raw.contains('blocked')) {
-      return 'Google ログインの画面がブラウザにブロックされました。ポップアップを許可するか、Magic Link を使ってください。';
+    final text = error.toString().toLowerCase();
+    if (text.contains('popup')) {
+      return 'ポップアップがブロックされました。ブラウザで許可してから再実行してください。';
     }
-    return 'Google ログインに失敗しました。設定確認後に再試行してください。';
+    return 'Googleログインに失敗しました。少し待ってから再試行してください。';
   }
 
   String _resolveMagicLinkError(Object error) {
@@ -445,38 +450,64 @@ $input
 
       if (code == 'email_address_invalid' ||
           message.contains('invalid email')) {
-        return 'メールアドレスの形式が正しくありません。入力を見直してから再送してください。';
+        return 'メールアドレスの形式が正しくありません。`@` を含む形式で入力してください。';
       }
       if (code == 'signup_disabled') {
-        return '新規ユーザーの自動作成が停止中です。Supabase の Email Auth 設定を確認してください。';
+        return '新規登録が停止中です。既存アカウントでのログインか、設定確認が必要です。';
       }
       if (code == 'email_provider_disabled') {
-        return 'メール認証自体が無効です。Supabase の Email provider を有効化してください。';
+        return 'メール認証が無効です。Supabase の Email provider 設定を確認してください。';
       }
-      if (code == 'validation_failed' ||
-          code == 'flow_state_expired' ||
-          code == 'flow_state_not_found' ||
-          message.contains('redirect')) {
-        return 'Magic Link の遷移先設定が不正です。Supabase の Site URL / Redirect URLs を確認してください。';
+      if (code == 'validation_failed') {
+        return 'Magic Link の送信条件を満たしていません。メールアドレスとリダイレクト設定を確認してください。';
       }
       if (code == 'over_email_send_rate_limit' ||
           code == 'over_request_rate_limit' ||
           status == '429' ||
           message.contains('rate limit')) {
-        return 'メール送信回数が多すぎます。1〜2分待ってから再送してください。';
+        return '送信回数が多すぎます。少し待ってから再送してください。';
       }
-      if (code == 'unexpected_failure' || message.contains('smtp')) {
-        return 'メール送信設定に失敗しています。Supabase の SMTP / Email 設定を確認してください。';
+      if (code == 'flow_state_expired' || code == 'flow_state_not_found') {
+        return '前回の認証状態が切れています。ページを再読み込みしてからもう一度送信してください。';
       }
-      return 'Magic Link の送信に失敗しました。メールアドレスと認証設定を確認してください。';
+
+      return 'Magic Link の送信に失敗しました。メール設定と入力内容を確認してください。';
     }
-    return 'Magic Link の送信に失敗しました。通信状態を確認してから再試行してください。';
+    return 'Magic Link の送信に失敗しました。通信状況を確認してから再試行してください。';
+  }
+
+  Widget _buildHeroSection() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Icon(
+          Icons.business_center,
+          size: 68,
+          color: Colors.blue,
+        ),
+        SizedBox(height: 16),
+        Text(
+          '今日のやるべきことを、AIと運営導線で1件に絞る。',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        SizedBox(height: 10),
+        Text(
+          'まず1回だけ試して価値を確認し、保存したくなった時だけ登録する構成です。新規登録の主導線は Magic Link に寄せています。',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 15, color: Colors.black54),
+        ),
+      ],
+    );
   }
 
   Widget _buildPvSection() {
-    final fmt = NumberFormat('#,###', 'ja_JP');
+    final fmt = NumberFormat('#,###');
     final labelInterval =
-        _pvLabels.length <= 5 ? 1 : (_pvLabels.length / 5).ceil();
+        _pvLabels.length <= 6 ? 1 : (_pvLabels.length / 6).ceil();
 
     return Card(
       elevation: 1,
@@ -566,7 +597,7 @@ $input
             ),
             const SizedBox(height: 8),
             const Text(
-              'グラフは今月の日次LP Viewです。',
+              'グラフは今月の日次 LP View です。',
               style: TextStyle(fontSize: 11, color: Colors.black45),
             ),
           ],
@@ -615,7 +646,7 @@ $input
             ),
             const SizedBox(height: 6),
             const Text(
-              'まず1回だけ使って価値を確認できます。保存したくなった時だけ登録してください。',
+              'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
               style: TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 14),
@@ -715,27 +746,36 @@ $input
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF4E5),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.orange.withValues(alpha: 0.3),
-                  ),
+                  border:
+                      Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
-                  'この結果を保存するには登録が必要です。まずは Magic Link で始めるのが最短です。',
+                  'この提案を保存するには登録が必要です。まずは Magic Link で始めるのが最短です。',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 14),
             ],
             const Text(
-              '30秒で開始',
+              '保存・再開するなら30秒で登録',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               _isSignUp
-                  ? '新規登録モードです。まずは Magic Link で入り、必要なら後でパスワード設定に切り替えます。'
-                  : '最短導線は Magic Link です。既存ユーザーは下のパスワードログインも使えます。',
+                  ? '新規登録は Magic Link が最短です。メール1通でそのまま開始できます。'
+                  : '既存ユーザーも Magic Link が最短です。パスワードログインは下段に残しています。',
               style: const TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            const Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
+                _BenefitChip(icon: Icons.replay, label: '明日も続きから再開'),
+                _BenefitChip(icon: Icons.history, label: '履歴を残す'),
+              ],
             ),
             const SizedBox(height: 16),
             TextField(
@@ -758,7 +798,7 @@ $input
             ),
             const SizedBox(height: 8),
             const Text(
-              '最短導線です。パスワード不要で、そのまま新規登録にもログインにも使えます。',
+              '新規登録にも既存ログインにも使えます。パスワード不要で、そのまま開始できます。',
               style: TextStyle(fontSize: 12, color: Colors.black45),
             ),
             const SizedBox(height: 14),
@@ -781,8 +821,7 @@ $input
                   border: Border.all(color: Colors.black12),
                 ),
                 child: const Text(
-                  'Googleログインは未設定のため現在は非表示です。Supabase で Google provider を有効化し、'
-                  '--dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true で再表示できます。',
+                  'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
@@ -863,27 +902,7 @@ $input
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.business_center,
-                    size: 68,
-                    color: Colors.blue,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '今日のやるべきことを、AIと運営導線で1件に絞る。',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'まず1回試して価値を確認し、保存したくなった時だけ登録する構成です。'
-                    '新規登録の主導線は Magic Link に寄せています。',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15, color: Colors.black54),
-                  ),
+                  _buildHeroSection(),
                   const SizedBox(height: 24),
                   _buildPvSection(),
                   const SizedBox(height: 20),
@@ -895,6 +914,42 @@ $input
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BenefitChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _BenefitChip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FB),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.blueGrey),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
