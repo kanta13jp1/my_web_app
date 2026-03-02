@@ -487,7 +487,7 @@ $input
         ),
         SizedBox(height: 16),
         Text(
-          '今日のやるべきことを、AIと運営導線で1件に絞る。',
+          'AIが、今日やる1件を決める。',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
@@ -496,9 +496,20 @@ $input
         ),
         SizedBox(height: 10),
         Text(
-          'まず1回だけ試して価値を確認し、保存したくなった時だけ登録する構成です。新規登録の主導線は Magic Link に寄せています。',
+          '登録すると、AI提案を保存して明日も続きから再開できます。まずは1回試してください。',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: Colors.black54),
+        ),
+        SizedBox(height: 14),
+        Center(
+          child: Text(
+            '登録する理由: 保存 / 再開 / 履歴',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.blueGrey,
+            ),
+          ),
         ),
       ],
     );
@@ -757,13 +768,13 @@ $input
               const SizedBox(height: 14),
             ],
             const Text(
-              '保存・再開するなら30秒で登録',
+              '保存するなら30秒で開始',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               _isSignUp
-                  ? '新規登録は Magic Link が最短です。メール1通でそのまま開始できます。'
+                  ? '登録すると、提案を保存して明日も続きから再開できます。最短は Magic Link です。'
                   : '既存ユーザーも Magic Link が最短です。パスワードログインは下段に残しています。',
               style: const TextStyle(color: Colors.black54),
             ),
@@ -793,7 +804,7 @@ $input
               child: FilledButton.icon(
                 onPressed: _isLoading ? null : _sendMagicLink,
                 icon: const Icon(Icons.mark_email_read_outlined),
-                label: const Text('Magic Link で続ける'),
+                label: const Text('30秒で開始'),
               ),
             ),
             const SizedBox(height: 8),
