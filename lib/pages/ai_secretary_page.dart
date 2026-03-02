@@ -32,6 +32,82 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
 
   final ImagePicker _picker = ImagePicker();
 
+  Map<String, dynamic> _normalizeFunctionPayload(dynamic rawPayload) {
+    if (rawPayload is Map) {
+      return Map<String, dynamic>.from(rawPayload);
+    }
+
+    final payloadText = rawPayload?.toString().trim() ?? '';
+    if (payloadText.isEmpty) {
+      return const <String, dynamic>{};
+    }
+
+    try {
+      final decoded = jsonDecode(payloadText);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } on FormatException {
+      // Fall back below.
+    }
+
+    return <String, dynamic>{
+      'success': true,
+      'result': payloadText,
+    };
+  }
+
+  String _strategyLabel(String strategyType) {
+    switch (strategyType) {
+      case 'now':
+        return '今この瞬間';
+      case 'today':
+        return '今日';
+      case 'week':
+        return '今週';
+      case 'month':
+        return '今月';
+      case 'year':
+        return '今年';
+      default:
+        return '直近';
+    }
+  }
+
+  String _buildSecretaryPrompt(
+    String strategyType,
+    List<Map<String, dynamic>> recentNotesJson,
+  ) {
+    final notesSummary = recentNotesJson.isEmpty
+        ? '最近のノートはありません。'
+        : recentNotesJson.take(8).map((note) {
+            final title = (note['title'] ?? '無題').toString().trim();
+            final content = (note['content'] ?? '').toString().trim();
+            final normalizedContent = content.replaceAll(RegExp(r'\s+'), ' ');
+            final excerpt = normalizedContent.length > 90
+                ? '${normalizedContent.substring(0, 90)}...'
+                : normalizedContent;
+            return '- $title: $excerpt';
+          }).join('\n');
+
+    return '''
+あなたは「自分株式会社」のMAGI戦略秘書です。
+ユーザーの最近のノートを踏まえて、${_strategyLabel(strategyType)}の行動計画を日本語で提案してください。
+
+出力条件:
+- Markdownで返す
+- 抽象論ではなく、すぐ動ける具体策にする
+- 以下の4項目を必ず含める
+  1. 最優先でやること
+  2. 理由
+  3. 48時間以内にやること
+  4. やらないこと
+
+最近のノート:
+$notesSummary
+''';
+  }
+
   bool _isSupportedStrategyType(String? strategyType) {
     switch (strategyType) {
       case 'now':
@@ -73,7 +149,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
       if (response.status != 200) {
         throw Exception('Server error: ${response.status}');
       }
-      final data = response.data as Map<String, dynamic>;
+      final data = _normalizeFunctionPayload(response.data);
       if (data['success'] != true) throw Exception(data['error']);
       return data['result'] as String?;
     } catch (e) {
@@ -108,20 +184,20 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
       final recentNotesJson = recentNotes
           .map((n) => {'id': n.id, 'title': n.title, 'content': n.content})
           .toList();
+      final prompt = _buildSecretaryPrompt(strategyType, recentNotesJson);
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
         body: {
-          'action': 'secretary_strategy',
-          'strategyType': strategyType,
-          'recentNotes': recentNotesJson,
+          'action': 'improve',
+          'content': prompt,
         },
       );
 
       if (response.status != 200) {
         throw Exception('Server error: ${response.status}');
       }
-      final data = response.data as Map<String, dynamic>;
+      final data = _normalizeFunctionPayload(response.data);
       if (data['success'] != true) throw Exception(data['error']);
 
       setState(() {
