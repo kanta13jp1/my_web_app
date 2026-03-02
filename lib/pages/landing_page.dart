@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_service.dart';
 
@@ -24,6 +25,7 @@ class _LandingPageState extends State<LandingPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
+  final _emailFocusNode = FocusNode();
   final GlobalKey _authSectionKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
@@ -33,6 +35,7 @@ class _LandingPageState extends State<LandingPage> {
   bool _isSignUp = true;
   bool _isLoadingStats = true;
   bool _showSaveCtaPrompt = false;
+  bool _showInboxShortcut = false;
 
   int _todayViews = 0;
   int _monthViews = 0;
@@ -42,6 +45,7 @@ class _LandingPageState extends State<LandingPage> {
 
   String? _trialAction;
   String? _trialReason;
+  String? _lastMagicLinkEmail;
 
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _LandingPageState extends State<LandingPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _trialPromptController.dispose();
+    _emailFocusNode.dispose();
     super.dispose();
   }
 
@@ -201,8 +206,17 @@ class _LandingPageState extends State<LandingPage> {
         emailRedirectTo: _webRedirectUrl,
         shouldCreateUser: true,
       );
+      if (mounted) {
+        setState(() {
+          _showInboxShortcut = true;
+          _lastMagicLinkEmail = email;
+        });
+      }
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
     } catch (error) {
+      if (mounted) {
+        setState(() => _showInboxShortcut = false);
+      }
       _showMessage(_resolveMagicLinkError(error));
     } finally {
       if (mounted) {
@@ -278,8 +292,62 @@ $input
         duration: const Duration(milliseconds: 320),
         curve: Curves.easeOut,
         alignment: 0.08,
-      );
+      ).then((_) {
+        if (!mounted) return;
+        _emailFocusNode.requestFocus();
+      });
     });
+  }
+
+  Uri _resolveInboxUri(String email) {
+    final parts = email.split('@');
+    final domain = parts.length == 2 ? parts.last.toLowerCase() : '';
+
+    switch (domain) {
+      case 'gmail.com':
+      case 'googlemail.com':
+        return Uri.parse('https://mail.google.com/mail/u/0/#inbox');
+      case 'outlook.com':
+      case 'hotmail.com':
+      case 'live.com':
+      case 'msn.com':
+        return Uri.parse('https://outlook.live.com/mail/0/');
+      case 'yahoo.co.jp':
+        return Uri.parse('https://mail.yahoo.co.jp/');
+      case 'yahoo.com':
+        return Uri.parse('https://mail.yahoo.com/');
+      case 'icloud.com':
+      case 'me.com':
+      case 'mac.com':
+        return Uri.parse('https://www.icloud.com/mail');
+      default:
+        return Uri(
+          scheme: 'mailto',
+          path: email,
+        );
+    }
+  }
+
+  Future<void> _openInbox() async {
+    final email = (_lastMagicLinkEmail ?? _emailController.text).trim();
+    if (email.isEmpty) {
+      _showMessage('先にメールアドレスを入力して、Magic Link を送信してください。');
+      return;
+    }
+
+    final inboxUri = _resolveInboxUri(email);
+    try {
+      final launched = await launchUrl(
+        inboxUri,
+        mode: LaunchMode.platformDefault,
+      );
+      if (!launched) {
+        _showMessage('受信箱を開けませんでした。ブラウザかメールアプリで受信箱を確認してください。');
+      }
+    } catch (e) {
+      debugPrint('Open inbox failed: $e');
+      _showMessage('受信箱を開けませんでした。ブラウザかメールアプリで受信箱を確認してください。');
+    }
   }
 
   (String, String) _parseTrialAiResponse(String raw) {
@@ -826,6 +894,7 @@ $input
             const SizedBox(height: 16),
             TextField(
               controller: _emailController,
+              focusNode: _emailFocusNode,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
                 labelText: 'メールアドレス',
@@ -856,6 +925,38 @@ $input
               '新規登録にも既存ログインにも使えます。パスワード不要で、そのまま開始できます。',
               style: TextStyle(fontSize: 12, color: Colors.black45),
             ),
+            if (_showInboxShortcut) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F7FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Magic Link を送信しました。受信箱でメールを開いて、そのままログインしてください。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _openInbox,
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('受信箱を開く'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             if (_googleLoginFeatureEnabled) ...[
               SizedBox(
