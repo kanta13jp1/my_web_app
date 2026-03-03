@@ -255,7 +255,7 @@ class _LandingPageState extends State<LandingPage> {
       setState(() {
         _trialAction = fallback.$1;
         _trialReason = fallback.$2;
-        _showSaveCtaPrompt = false;
+        _showSaveCtaPrompt = true;
       });
       return;
     }
@@ -279,7 +279,7 @@ $input
       setState(() {
         _trialAction = parsed.$1;
         _trialReason = parsed.$2;
-        _showSaveCtaPrompt = false;
+        _showSaveCtaPrompt = true;
       });
     } catch (e) {
       debugPrint('Trial preview failed: $e');
@@ -288,7 +288,7 @@ $input
       setState(() {
         _trialAction = fallback.$1;
         _trialReason = '${fallback.$2} AI応答が不安定だったため簡易提案を表示しています。';
-        _showSaveCtaPrompt = false;
+        _showSaveCtaPrompt = true;
       });
     } finally {
       if (mounted) {
@@ -857,13 +857,22 @@ $input
                         style: const TextStyle(color: Colors.black54),
                       ),
                     ],
+                    const SizedBox(height: 10),
+                    const Text(
+                      '保存すると、この提案を明日も続きから開けます。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
+                      child: FilledButton.icon(
                         onPressed: _promptRegistrationForTrialSave,
                         icon: const Icon(Icons.save_outlined),
-                        label: const Text('この結果を保存する'),
+                        label: const Text('この結果を保存して続ける'),
                       ),
                     ),
                   ],
