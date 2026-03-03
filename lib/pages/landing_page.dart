@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_service.dart';
+import '../services/landing_share_service.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -35,6 +36,7 @@ class _LandingPageState extends State<LandingPage> {
   bool _isTrialLoading = false;
   bool _isSignUp = true;
   bool _isLoadingStats = true;
+  bool _isLoadingShareStats = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
   int _magicLinkCooldownSeconds = 0;
@@ -44,10 +46,12 @@ class _LandingPageState extends State<LandingPage> {
   int _totalViews = 0;
   List<FlSpot> _pvSpots = const <FlSpot>[];
   List<String> _pvLabels = const <String>[];
+  String? _activeShareChannel;
 
   String? _trialAction;
   String? _trialReason;
   String? _lastMagicLinkEmail;
+  LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
 
   @override
   void initState() {
@@ -61,6 +65,7 @@ class _LandingPageState extends State<LandingPage> {
       },
     );
     _initLpViewStats();
+    _loadShareSnapshot();
   }
 
   @override
@@ -90,11 +95,57 @@ class _LandingPageState extends State<LandingPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _loadShareSnapshot() async {
+    try {
+      final snapshot = await LandingShareService.loadSnapshot();
+      if (!mounted) return;
+      setState(() {
+        _shareSnapshot = snapshot;
+        _isLoadingShareStats = false;
+      });
+    } catch (error) {
+      debugPrint('Landing share snapshot failed: $error');
+      if (!mounted) return;
+      setState(() => _isLoadingShareStats = false);
+    }
+  }
+
+  Future<void> _shareLandingPage(String channel) async {
+    if (_activeShareChannel != null) {
+      return;
+    }
+
+    setState(() => _activeShareChannel = channel);
+    try {
+      await LandingShareService.shareLandingPage(channel: channel);
+      final snapshot = await LandingShareService.recordShareAction(
+        channel: channel,
+        client: Supabase.instance.client,
+      );
+      if (!mounted) return;
+      setState(() => _shareSnapshot = snapshot);
+      final label = LandingShareService.channelLabel(channel);
+      _showMessage(
+        channel == LandingShareService.channelCopy
+            ? '計測付きの共有リンクをコピーしました。'
+            : '$label の共有画面を開きました。',
+      );
+    } catch (error) {
+      debugPrint('Landing share failed: $error');
+      _showMessage('共有の起動に失敗しました。');
+    } finally {
+      if (mounted) {
+        setState(() => _activeShareChannel = null);
+      }
+    }
+  }
+
   Future<void> _initLpViewStats() async {
     setState(() => _isLoadingStats = true);
     try {
       final supabase = Supabase.instance.client;
       await supabase.rpc('increment_lp_view');
+      await LandingShareService.recordIncomingShareVisit(client: supabase);
       final dynamic raw = await supabase.rpc('get_lp_view_stats');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
@@ -1125,6 +1176,146 @@ $input
     );
   }
 
+  Widget _buildShareSection() {
+    final lastChannel = _shareSnapshot.lastChannel;
+    final lastChannelLabel = lastChannel == null
+        ? 'まだ未実施'
+        : LandingShareService.channelLabel(lastChannel);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'SNSでシェアして流入を増やす',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '各SNSごとに計測付きリンクを発行します。今日のシェア回数と累計をその場で確認できます。',
+              style: TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 14),
+            if (_isLoadingShareStats)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...[
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _shareMetricCard('今日のシェア', '${_shareSnapshot.todayCount}回'),
+                  _shareMetricCard('累計シェア', '${_shareSnapshot.totalCount}回'),
+                  _shareMetricCard('直近チャネル', lastChannelLabel),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: LandingShareService.supportedChannels.map((channel) {
+                  final label = LandingShareService.channelLabel(channel);
+                  return Chip(
+                    avatar: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        '${_shareSnapshot.countFor(channel)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    label: Text(label),
+                  );
+                }).toList(),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _shareActionButton(
+                  channel: LandingShareService.channelX,
+                  icon: Icons.alternate_email,
+                ),
+                _shareActionButton(
+                  channel: LandingShareService.channelLine,
+                  icon: Icons.chat_bubble_outline,
+                ),
+                _shareActionButton(
+                  channel: LandingShareService.channelFacebook,
+                  icon: Icons.thumb_up_alt_outlined,
+                ),
+                _shareActionButton(
+                  channel: LandingShareService.channelCopy,
+                  icon: Icons.link,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'シェアリンクには流入元の識別子を付与しています。管理画面でもシェア回数とチャネル別内訳を確認できます。',
+              style: TextStyle(fontSize: 12, color: Colors.black45),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shareMetricCard(String label, String value) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _shareActionButton({
+    required String channel,
+    required IconData icon,
+  }) {
+    final label = LandingShareService.channelLabel(channel);
+    final isActive = _activeShareChannel == channel;
+    return FilledButton.icon(
+      onPressed:
+          _activeShareChannel == null ? () => _shareLandingPage(channel) : null,
+      icon: isActive
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(icon),
+      label: Text(label),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1145,6 +1336,8 @@ $input
                   _buildTrialSection(),
                   const SizedBox(height: 20),
                   _buildAuthSection(),
+                  const SizedBox(height: 20),
+                  _buildShareSection(),
                   const SizedBox(height: 20),
                   _buildPvSection(),
                 ],

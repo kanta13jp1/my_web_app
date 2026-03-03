@@ -432,15 +432,20 @@ $appUrl
   }
 
   /// Facebook向けに最適化したシェア
-  static Future<void> shareToFacebook() async {
-    const facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=$appUrl';
+  static Future<void> shareToFacebook({
+    String? customMessage,
+    String? shareUrl,
+  }) async {
+    final targetUrl = shareUrl ?? appUrl;
+    final facebookUrl =
+        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(targetUrl)}';
 
     if (kIsWeb) {
       // ✅ 修正: 共通ユーティリティ経由でURLを開く
       openWebUrl(facebookUrl);
     } else {
       // モバイルの場合は通常のシェア
-      await shareAppMobile();
+      await shareAppMobile(customMessage: customMessage ?? targetUrl);
     }
   }
 

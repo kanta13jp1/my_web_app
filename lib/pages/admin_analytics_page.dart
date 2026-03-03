@@ -370,6 +370,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int analyticsViews = 0;
     int totalShares = 0;
     final Map<String, int> sourceBreakdown = {};
+    final Map<String, int> shareChannelBreakdown = {};
     final todayKey = _dateKey(DateTime.now());
     var todayViews = 0;
     var todayRegistrations = 0;
@@ -393,10 +394,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final sources = stat['source_details'];
       if (sources != null && sources is Map) {
         sources.forEach((key, value) {
-          final count = value as int? ?? 0;
+          final count = _toInt(value);
           if (count > 0) {
-            sourceBreakdown[key.toString()] =
-                (sourceBreakdown[key.toString()] ?? 0) + count;
+            final sourceKey = key.toString();
+            final target = _isShareActionKey(sourceKey)
+                ? shareChannelBreakdown
+                : sourceBreakdown;
+            target[sourceKey] = (target[sourceKey] ?? 0) + count;
           }
         });
       }
@@ -493,6 +497,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildSourceDistribution(sourceBreakdown),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'シェアチャネル (Share Actions)',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSourceDistribution(shareChannelBreakdown),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -1058,11 +1070,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Row(
                   children: sortedEntries.map((e) {
                     final double ratio = e.value / total;
+                    final percent = (ratio * 100).toStringAsFixed(1);
                     return Expanded(
                       flex: e.value,
                       child: Tooltip(
                         message:
-                            '${_formatSourceName(e.key)}: ${e.value} ($ratio%)',
+                            '${_formatSourceName(e.key)}: ${e.value} ($percent%)',
                         child: Container(color: _getSourceColor(e.key)),
                       ),
                     );
@@ -1110,6 +1123,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  bool _isShareActionKey(String key) {
+    switch (key) {
+      case 'share_x':
+      case 'share_line':
+      case 'share_facebook':
+      case 'share_copy':
+        return true;
+      default:
+        return false;
+    }
+  }
+
   String _formatSourceName(String key) {
     switch (key) {
       case 'direct':
@@ -1122,6 +1147,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Facebook';
       case 'line':
         return 'LINE';
+      case 'copy_link':
+        return 'リンクコピー';
+      case 'share_x':
+        return 'X シェア';
+      case 'share_line':
+        return 'LINE シェア';
+      case 'share_facebook':
+        return 'Facebook シェア';
+      case 'share_copy':
+        return 'リンクコピー';
       default:
         return key;
     }
@@ -1139,6 +1174,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFF1877F2);
       case 'line':
         return const Color(0xFF06C755);
+      case 'copy_link':
+        return Colors.deepPurple.shade300;
+      case 'share_x':
+        return Colors.black87;
+      case 'share_line':
+        return const Color(0xFF06C755);
+      case 'share_facebook':
+        return const Color(0xFF1877F2);
+      case 'share_copy':
+        return Colors.deepPurple.shade300;
       default:
         return Colors.indigo.shade300;
     }
