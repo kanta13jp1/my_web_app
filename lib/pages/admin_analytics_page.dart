@@ -17,7 +17,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _dailyStats = [];
   int _actualUserCount = 0;
   int _lpTodayViews = 0;
-  int _lpMonthViews = 0;
   int _lpTotalViews = 0;
   bool _hasLpViewStats = false;
   bool _isLoading = true;
@@ -49,9 +48,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     // Keep plain yyyy-MM-dd values as-is if parsing fails.
     return raw.length >= 10 ? raw.substring(0, 10) : raw;
   }
-
-  String _monthKey(DateTime date) =>
-      DateFormat('yyyy-MM').format(_startOfDay(date));
 
   void _mergeSourceCounts(Map<String, int> target, dynamic rawSourceDetails) {
     if (rawSourceDetails is! Map) return;
@@ -294,7 +290,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _dailyStats = mergedDailyStats;
           _actualUserCount = totalUsers;
           _lpTodayViews = _toInt(lpStats['today']);
-          _lpMonthViews = _toInt(lpStats['month']);
           _lpTotalViews = _toInt(lpStats['total']);
           _hasLpViewStats = hasLpViewStats;
           _isLoading = false;
@@ -373,12 +368,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget build(BuildContext context) {
     // データ集計
     int analyticsViews = 0;
-    int totalConversions = 0;
     int totalShares = 0;
-    int monthRegistrations = 0;
     final Map<String, int> sourceBreakdown = {};
     final todayKey = _dateKey(DateTime.now());
-    final currentMonthKey = _monthKey(DateTime.now());
     var todayViews = 0;
     var todayRegistrations = 0;
 
@@ -390,17 +382,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final statDateKey = _normalizeDateKey(stat['date']);
 
       analyticsViews += views;
-      totalConversions += conv;
       totalShares += _toInt(stat['share_count']);
 
       if (statDateKey == todayKey) {
         todayViews = views;
         todayRegistrations = conv;
       }
-      if (statDateKey != null && statDateKey.startsWith(currentMonthKey)) {
-        monthRegistrations += conv;
-      }
-
       if (views > maxDailyViews) maxDailyViews = views;
 
       final sources = stat['source_details'];
@@ -417,15 +404,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
     final chartData = _dailyStats.reversed.toList();
     final effectiveTodayViews = _hasLpViewStats ? _lpTodayViews : todayViews;
-    final effectiveMonthViews =
-        _hasLpViewStats ? _lpMonthViews : analyticsViews;
     final effectiveTotalLpViews =
         _hasLpViewStats ? _lpTotalViews : analyticsViews;
-    final effectiveMonthRegistrations =
-        _hasLpViewStats ? monthRegistrations : totalConversions;
-    final double totalCvr = effectiveMonthViews == 0
+    final double todaySummaryCvr = effectiveTodayViews == 0
         ? 0
-        : (effectiveMonthRegistrations / effectiveMonthViews * 100);
+        : (todayRegistrations / effectiveTodayViews * 100);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -472,9 +455,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildKpiSummaryCard(
-                      totalCvr,
-                      effectiveMonthViews,
-                      effectiveMonthRegistrations,
+                      todaySummaryCvr,
+                      effectiveTodayViews,
+                      todayRegistrations,
                       _actualUserCount,
                       totalShares,
                       effectiveTotalLpViews,
@@ -558,12 +541,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ? null
         : todayViews == 0
             ? '今やる集客アクション'
-            : '今やる導線改善アクション';
+            : '今やる単独改善アクション';
     final actionDetail = achieved
         ? null
         : todayViews == 0
             ? '${priorityChannelLabel ?? 'X (Twitter)'}を最優先チャネルにして、投稿・共有・導線更新のうち1つだけ今すぐ実行する。'
-            : '登録ボタン付近の文言を1つ短くし、最初の画面で「登録する理由」が3秒で伝わる形に直す。';
+            : '登録ボタン付近の文言を1つ減らし、最初の画面で「登録する理由」が分かる形に書き直します。';
     final actionIcon = achieved
         ? null
         : todayViews == 0
@@ -576,12 +559,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 priorityChannelKey,
                 priorityChannelLabel,
               )
-            : 'AI秘書で導線改善';
+            : 'AI改善で導線改善';
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : todayViews == 0
             ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
-            : '流入はありますが登録が出ていません。登録導線か訴求を先に改善してください。';
+            : '流れ込みはありますが登録が出ていません。登録率が著しく低下しています。';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -690,7 +673,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 color: diagnosisColor,
               ),
               _buildMiniKpiChip(
-                label: '診断',
+                label: '登録率',
                 value: diagnosisLabel,
                 color: diagnosisColor,
               ),
@@ -839,9 +822,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildKpiSummaryCard(
     double cvr,
-    int monthViews,
-    int monthRegistrations,
-    int users,
+    int todayViews,
+    int todayRegistrations,
+    int totalRegistrations,
     int shares,
     int totalLpViews,
   ) {
@@ -855,7 +838,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: Column(
           children: [
             const Text(
-              '今月CVR (実登録ベース)',
+              '今日CVR (実登録ベース)',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 4),
@@ -895,20 +878,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               alignment: WrapAlignment.spaceAround,
               children: [
                 _buildStatItem(
-                  '今月LP View',
-                  '$monthViews',
+                  '今日のLP View',
+                  '$todayViews',
                   Icons.visibility,
                   Colors.blue,
                 ),
                 _buildStatItem(
-                  '今月登録',
-                  '$monthRegistrations',
+                  '今日登録',
+                  '$todayRegistrations',
                   Icons.person_add,
                   Colors.indigo,
                 ),
                 _buildStatItem(
-                  '累計登録者',
-                  '$users',
+                  '累計登録',
+                  '$totalRegistrations',
                   Icons.group,
                   Colors.deepPurple,
                 ),

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FakeSupabaseClient extends Fake implements SupabaseClient {
   final _queryBuilder = FakeSupabaseQueryBuilder();
+  Map<String, dynamic> _rpcResponse = <String, dynamic>{};
 
   FakeSupabaseQueryBuilder get queryBuilder => _queryBuilder;
 
@@ -16,25 +17,37 @@ class FakeSupabaseClient extends Fake implements SupabaseClient {
     _queryBuilder.setTable(table);
     return _queryBuilder;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #rpc) {
+      return FakePostgrestFilterBuilder<dynamic>(_rpcResponse, false);
+    }
+    return super.noSuchMethod(invocation);
+  }
 }
 
 class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
-  List<Map<String, dynamic>> _data = <Map<String, dynamic>>[];
+  final Map<String, List<Map<String, dynamic>>> _tableData =
+      <String, List<Map<String, dynamic>>>{};
   bool _shouldThrow = false;
   String _table = '';
+
+  List<Map<String, dynamic>> get _activeData =>
+      _tableData[_table] ?? <Map<String, dynamic>>[];
 
   void setTable(String table) {
     _table = table;
   }
 
-  void setData(dynamic data) {
+  void setData(dynamic data, {String table = 'app_analytics'}) {
     if (data is List) {
-      _data = data
+      _tableData[table] = data
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
     } else {
-      _data = <Map<String, dynamic>>[];
+      _tableData[table] = <Map<String, dynamic>>[];
     }
     _shouldThrow = false;
   }
@@ -47,21 +60,22 @@ class FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
   PostgrestFilterBuilder<List<Map<String, dynamic>>> select([
     String? columns = '*',
   ]) {
+    final data = _activeData;
     final count =
-        _table == 'user_profiles' ? _resolveUserCount() : _data.length;
+        _table == 'user_profiles' ? _resolveUserCount(data) : data.length;
     return FakePostgrestFilterBuilder<List<Map<String, dynamic>>>(
-      _data,
+      data,
       _shouldThrow,
       count: count,
     );
   }
 
-  int _resolveUserCount() {
-    if (_data.isEmpty) return 0;
-    final first = _data.first;
+  int _resolveUserCount(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) return 0;
+    final first = data.first;
     final userCount = first['user_count'];
     if (userCount is num) return userCount.toInt();
-    return _data.length;
+    return data.length;
   }
 
   SupabaseQueryBuilder order(
@@ -101,7 +115,11 @@ class FakePostgrestFilterBuilder<T> extends Fake
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
-    if (invocation.memberName == #order || invocation.memberName == #limit) {
+    if (invocation.memberName == #order ||
+        invocation.memberName == #limit ||
+        invocation.memberName == #gte ||
+        invocation.memberName == #lte ||
+        invocation.memberName == #eq) {
       return this;
     }
     if (invocation.memberName == #count) {
@@ -144,6 +162,49 @@ class FakeResponsePostgrestBuilder<T> extends Fake
 void main() {
   late FakeSupabaseClient fakeSupabaseClient;
 
+  String formatDate(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final month = normalized.month.toString().padLeft(2, '0');
+    final day = normalized.day.toString().padLeft(2, '0');
+    return '${normalized.year}-$month-$day';
+  }
+
+  List<Map<String, dynamic>> sampleData() {
+    final today = DateTime.now();
+    final yesterday = today.subtract(const Duration(days: 1));
+    return [
+      {
+        'date': formatDate(today),
+        'landing_views': 100,
+        'conversions': 10,
+        'share_count': 5,
+        'source_details': {'direct': 80, 'x_share': 20},
+      },
+      {
+        'date': formatDate(yesterday),
+        'landing_views': 80,
+        'conversions': 12,
+        'share_count': 3,
+        'source_details': {'direct': 70, 'google': 10},
+      },
+    ];
+  }
+
+  List<Map<String, dynamic>> profileData({
+    required int todayRegistrations,
+    required int previousRegistrations,
+  }) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 9);
+    final yesterday = today.subtract(const Duration(days: 1));
+    return [
+      for (var i = 0; i < todayRegistrations; i++)
+        {'created_at': today.toIso8601String()},
+      for (var i = 0; i < previousRegistrations; i++)
+        {'created_at': yesterday.toIso8601String()},
+    ];
+  }
+
   setUp(() {
     fakeSupabaseClient = FakeSupabaseClient();
   });
@@ -154,77 +215,107 @@ void main() {
     );
   }
 
-  final sampleData = [
-    {
-      'date': '2023-10-27',
-      'landing_views': 100,
-      'conversions': 10,
-      'share_count': 5,
-      'source_details': {'direct': 80, 'x_share': 20},
-    },
-    {
-      'date': '2023-10-26',
-      'landing_views': 80,
-      'conversions': 12,
-      'share_count': 3,
-      'source_details': {'direct': 70, 'google': 10},
-    },
-  ];
-
   testWidgets('AdminAnalyticsPage shows data after loading',
       (WidgetTester tester) async {
     // Setup mock data
-    fakeSupabaseClient.queryBuilder.setData(sampleData);
+    fakeSupabaseClient.queryBuilder
+      ..setData(sampleData())
+      ..setData(
+        profileData(todayRegistrations: 10, previousRegistrations: 12),
+        table: 'user_profiles',
+      );
 
     // Build the widget
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
     // Expect data to be displayed
-    expect(find.text('12.2'), findsOneWidget);
-    expect(find.text('180'), findsOneWidget);
+    expect(find.text('今日CVR (実登録ベース)'), findsOneWidget);
+    expect(find.text('10.0'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
+    expect(
+      find.textContaining('登録率', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Shows single improvement action when registrations are zero',
+      (WidgetTester tester) async {
+    fakeSupabaseClient.queryBuilder
+      ..setData([
+        {
+          'date': formatDate(DateTime.now()),
+          'landing_views': 38,
+          'share_count': 0,
+          'source_details': {'direct': 38},
+        },
+      ])
+      ..setData(
+        profileData(todayRegistrations: 0, previousRegistrations: 0),
+        table: 'user_profiles',
+      );
+
+    await tester.pumpWidget(createTestWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.text('今やる単独改善アクション'), findsOneWidget);
+    expect(find.text('AI改善で導線改善'), findsOneWidget);
+    expect(
+      find.textContaining('登録率低下', findRichText: true),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Refresh button reloads the data', (WidgetTester tester) async {
     // Initial data
-    fakeSupabaseClient.queryBuilder.setData(sampleData);
+    fakeSupabaseClient.queryBuilder
+      ..setData(sampleData())
+      ..setData(
+        profileData(todayRegistrations: 10, previousRegistrations: 12),
+        table: 'user_profiles',
+      );
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
     // Verify initial data
-    expect(find.text('180'), findsOneWidget);
+    expect(find.text('10.0'), findsOneWidget);
 
     // New data for refresh
     final newData = [
       {
-        'date': '2023-10-28',
+        'date': formatDate(DateTime.now()),
         'landing_views': 50,
-        'conversions': 5,
         'share_count': 2,
         'source_details': {'direct': 50},
       },
     ];
-    fakeSupabaseClient.queryBuilder.setData(newData);
+    fakeSupabaseClient.queryBuilder
+      ..setData(newData)
+      ..setData(
+        profileData(todayRegistrations: 2, previousRegistrations: 0),
+        table: 'user_profiles',
+      );
 
     // Tap refresh button
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
 
     // Verify new data
-    expect(find.text('50'), findsWidgets);
+    expect(find.text('4.0'), findsOneWidget);
   });
 
   testWidgets('Shows empty state when there is no data',
       (WidgetTester tester) async {
     // Setup empty data
-    fakeSupabaseClient.queryBuilder.setData([]);
+    fakeSupabaseClient.queryBuilder
+      ..setData([])
+      ..setData([], table: 'user_profiles');
 
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
     expect(find.text('0.0'), findsOneWidget);
-    expect(find.byType(ListTile), findsNothing);
+    expect(find.text('今日の登録目標'), findsOneWidget);
   });
 
   testWidgets('Handles Supabase error gracefully', (WidgetTester tester) async {
