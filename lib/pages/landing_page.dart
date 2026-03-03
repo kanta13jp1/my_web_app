@@ -266,6 +266,10 @@ class _LandingPageState extends State<LandingPage> {
           _lastMagicLinkEmail = email;
         });
       }
+      await LandingShareService.recordFunnelEvent(
+        eventKey: LandingShareService.funnelMagicLinkSend,
+        client: Supabase.instance.client,
+      );
       _startMagicLinkCooldown();
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
     } catch (error) {
@@ -300,6 +304,12 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> _runTrialActionPreview() async {
+    unawaited(
+      LandingShareService.recordFunnelEvent(
+        eventKey: LandingShareService.funnelTrialRun,
+        client: Supabase.instance.client,
+      ),
+    );
     final input = _trialPromptController.text.trim();
     if (input.isEmpty) {
       final fallback = _buildTrialFallbackSuggestion(input);
@@ -349,6 +359,12 @@ $input
   }
 
   void _promptRegistrationForTrialSave() {
+    unawaited(
+      LandingShareService.recordFunnelEvent(
+        eventKey: LandingShareService.funnelSaveCta,
+        client: Supabase.instance.client,
+      ),
+    );
     setState(() {
       _showSaveCtaPrompt = true;
       _isSignUp = true;
@@ -417,6 +433,12 @@ $input
         inboxUri,
         mode: LaunchMode.platformDefault,
       );
+      if (launched) {
+        await LandingShareService.recordFunnelEvent(
+          eventKey: LandingShareService.funnelInboxOpen,
+          client: Supabase.instance.client,
+        );
+      }
       if (!launched) {
         _showMessage('受信箱を開けませんでした。ブラウザかメールアプリで受信箱を確認してください。');
       }

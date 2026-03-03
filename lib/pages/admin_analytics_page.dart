@@ -5,6 +5,38 @@ import 'ai_secretary_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
 
+class _FunnelMetrics {
+  final int trialRuns;
+  final int saveClicks;
+  final int magicLinkSends;
+  final int inboxOpens;
+
+  const _FunnelMetrics({
+    required this.trialRuns,
+    required this.saveClicks,
+    required this.magicLinkSends,
+    required this.inboxOpens,
+  });
+}
+
+class _GrowthActionPlan {
+  final String bottleneckLabel;
+  final String title;
+  final String detail;
+  final IconData icon;
+  final String buttonLabel;
+  final bool isAcquisitionAction;
+
+  const _GrowthActionPlan({
+    required this.bottleneckLabel,
+    required this.title,
+    required this.detail,
+    required this.icon,
+    required this.buttonLabel,
+    required this.isAcquisitionAction,
+  });
+}
+
 class AdminAnalyticsPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
   const AdminAnalyticsPage({super.key, this.supabaseClient});
@@ -90,6 +122,144 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         day['landing_views'] = lpViews;
       }
     }
+  }
+
+  _FunnelMetrics _extractFunnelMetrics(Map<String, int> sources) {
+    return _FunnelMetrics(
+      trialRuns: sources['funnel_trial_run'] ?? 0,
+      saveClicks: sources['funnel_save_cta'] ?? 0,
+      magicLinkSends: sources['funnel_magic_link_send'] ?? 0,
+      inboxOpens: sources['funnel_inbox_open'] ?? 0,
+    );
+  }
+
+  String _formatRate(int numerator, int denominator) {
+    if (denominator <= 0) {
+      return '--';
+    }
+    return '${(numerator / denominator * 100).toStringAsFixed(1)}%';
+  }
+
+  int _estimateNeededMagicLinks({
+    required int remainingRegistrations,
+    required int todayRegistrations,
+    required int todayMagicLinkSends,
+  }) {
+    if (remainingRegistrations <= 0) {
+      return 0;
+    }
+    if (todayRegistrations <= 0 || todayMagicLinkSends <= 0) {
+      return remainingRegistrations;
+    }
+
+    final completionRate = todayRegistrations / todayMagicLinkSends;
+    if (completionRate <= 0) {
+      return remainingRegistrations;
+    }
+    return (remainingRegistrations / completionRate).ceil();
+  }
+
+  _GrowthActionPlan _buildGrowthActionPlan({
+    required bool achieved,
+    required int todayViews,
+    required int todayRegistrations,
+    required _FunnelMetrics todayFunnel,
+    required String? priorityChannelKey,
+    required String? priorityChannelLabel,
+  }) {
+    if (achieved) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '達成済み',
+        title: '',
+        detail: '',
+        icon: Icons.check_circle,
+        buttonLabel: '',
+        isAcquisitionAction: false,
+      );
+    }
+
+    if (todayViews == 0) {
+      return _GrowthActionPlan(
+        bottleneckLabel: '流入不足',
+        title: '今やる流入改善アクション',
+        detail:
+            '${priorityChannelLabel ?? 'X (Twitter)'}を最優先チャネルにして、共有・投稿・再配布のいずれか1件だけ先に実行してください。',
+        icon: Icons.campaign,
+        buttonLabel: _buildAcquisitionButtonLabel(
+          priorityChannelKey,
+          priorityChannelLabel,
+        ),
+        isAcquisitionAction: true,
+      );
+    }
+
+    if (todayFunnel.trialRuns == 0) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '体験未実行',
+        title: '今やる単独改善アクション',
+        detail:
+            '流入はありますが無料体験の開始が0件です。ファーストビューのCTAを体験直行に寄せ、最初の1画面で得られる結果を明示してください。',
+        icon: Icons.play_circle_outline,
+        buttonLabel: 'AI改善で体験導線改善',
+        isAcquisitionAction: false,
+      );
+    }
+
+    if (todayFunnel.saveClicks == 0) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '保存未押下',
+        title: '今やる単独改善アクション',
+        detail:
+            '体験は実行されていますが保存CTAが押されていません。結果直下の保存メリットを1行で伝え、ボタン文言を保存ベースに揃えてください。',
+        icon: Icons.save_alt,
+        buttonLabel: 'AI改善で保存訴求改善',
+        isAcquisitionAction: false,
+      );
+    }
+
+    if (todayFunnel.magicLinkSends == 0) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '送信未実施',
+        title: '今やる単独改善アクション',
+        detail:
+            '保存CTAまでは到達していますがMagic Link送信が0件です。メール入力前で「保存すると何が残るか」を再提示し、入力負荷を下げてください。',
+        icon: Icons.mail_outline,
+        buttonLabel: 'AI改善で認証導線改善',
+        isAcquisitionAction: false,
+      );
+    }
+
+    if (todayFunnel.inboxOpens == 0) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '受信箱未確認',
+        title: '今やる単独改善アクション',
+        detail:
+            'Magic Link送信後の受信箱オープンが0件です。送信完了メッセージと「メールを開く」導線をより強く目立たせてください。',
+        icon: Icons.mark_email_read_outlined,
+        buttonLabel: 'AI改善で受信箱誘導改善',
+        isAcquisitionAction: false,
+      );
+    }
+
+    if (todayRegistrations == 0) {
+      return const _GrowthActionPlan(
+        bottleneckLabel: '登録完了待ち',
+        title: '今やる単独改善アクション',
+        detail: '送信までは進んでいますが登録完了が出ていません。メール本文、迷惑メール案内、再送導線を見直して完了率を上げてください。',
+        icon: Icons.checklist_rtl,
+        buttonLabel: 'AI改善で完了率改善',
+        isAcquisitionAction: false,
+      );
+    }
+
+    return const _GrowthActionPlan(
+      bottleneckLabel: '導線再点検',
+      title: '今やる単独改善アクション',
+      detail: '登録完了までの流れを見直し、最も弱い導線を1つだけ改善してください。',
+      icon: Icons.alt_route,
+      buttonLabel: 'AI改善で導線改善',
+      isAcquisitionAction: false,
+    );
   }
 
   String _resolvePriorityAcquisitionChannel(Map<String, int> sources) {
@@ -371,6 +541,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalShares = 0;
     final Map<String, int> sourceBreakdown = {};
     final Map<String, int> shareChannelBreakdown = {};
+    final Map<String, int> funnelBreakdown = {};
+    final Map<String, int> todaySourceDetails = {};
     final todayKey = _dateKey(DateTime.now());
     var todayViews = 0;
     var todayRegistrations = 0;
@@ -397,9 +569,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           final count = _toInt(value);
           if (count > 0) {
             final sourceKey = key.toString();
-            final target = _isShareActionKey(sourceKey)
-                ? shareChannelBreakdown
-                : sourceBreakdown;
+            if (statDateKey == todayKey) {
+              todaySourceDetails[sourceKey] =
+                  (todaySourceDetails[sourceKey] ?? 0) + count;
+            }
+            final target = _isFunnelEventKey(sourceKey)
+                ? funnelBreakdown
+                : _isShareActionKey(sourceKey)
+                    ? shareChannelBreakdown
+                    : sourceBreakdown;
             target[sourceKey] = (target[sourceKey] ?? 0) + count;
           }
         });
@@ -413,6 +591,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final double todaySummaryCvr = effectiveTodayViews == 0
         ? 0
         : (todayRegistrations / effectiveTodayViews * 100);
+    final todayFunnel = _extractFunnelMetrics(todaySourceDetails);
+    final totalFunnel = _extractFunnelMetrics(funnelBreakdown);
+    final total30DayRegistrations = _dailyStats.fold<int>(
+      0,
+      (sum, stat) => sum + _toInt(stat['conversions']),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -456,6 +640,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayViews: effectiveTodayViews,
                       todayRegistrations: todayRegistrations,
                       sourceBreakdown: sourceBreakdown,
+                      todayFunnel: todayFunnel,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFunnelOverviewCard(
+                      title: '今日の登録ファネル',
+                      lpViews: effectiveTodayViews,
+                      registrations: todayRegistrations,
+                      funnel: todayFunnel,
+                      remainingRegistrations:
+                          todayRegistrations >= 1 ? 0 : 1 - todayRegistrations,
                     ),
                     const SizedBox(height: 16),
                     _buildKpiSummaryCard(
@@ -465,6 +659,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       _actualUserCount,
                       totalShares,
                       effectiveTotalLpViews,
+                      todayFunnel,
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -506,6 +701,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 12),
                     _buildSourceDistribution(shareChannelBreakdown),
                     const SizedBox(height: 24),
+                    _buildFunnelOverviewCard(
+                      title: '過去30日の登録ファネル',
+                      lpViews: effectiveTotalLpViews,
+                      registrations: total30DayRegistrations,
+                      funnel: totalFunnel,
+                      remainingRegistrations: 0,
+                    ),
+                    const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
                       style:
@@ -525,6 +728,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayViews,
     required int todayRegistrations,
     required Map<String, int> sourceBreakdown,
+    required _FunnelMetrics todayFunnel,
   }) {
     const dailyTarget = 1;
     final achieved = todayRegistrations >= dailyTarget;
@@ -832,6 +1036,165 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   // --- 以下、既存のウィジェットメソッド ---
 
+  Widget _buildFunnelOverviewCard({
+    required String title,
+    required int lpViews,
+    required int registrations,
+    required _FunnelMetrics funnel,
+    required int remainingRegistrations,
+  }) {
+    final neededMagicLinks = _estimateNeededMagicLinks(
+      remainingRegistrations: remainingRegistrations,
+      todayRegistrations: registrations,
+      todayMagicLinkSends: funnel.magicLinkSends,
+    );
+    final funnelAction = _buildGrowthActionPlan(
+      achieved: remainingRegistrations <= 0,
+      todayViews: lpViews,
+      todayRegistrations: registrations,
+      todayFunnel: funnel,
+      priorityChannelKey: null,
+      priorityChannelLabel: null,
+    );
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                _buildFunnelStepItem(
+                  label: 'LP View',
+                  value: '$lpViews',
+                  icon: Icons.visibility,
+                  color: Colors.blue,
+                ),
+                _buildFunnelStepItem(
+                  label: '体験実行',
+                  value: '${funnel.trialRuns}',
+                  icon: Icons.play_circle_outline,
+                  color: Colors.cyan,
+                ),
+                _buildFunnelStepItem(
+                  label: '保存CTA',
+                  value: '${funnel.saveClicks}',
+                  icon: Icons.save_outlined,
+                  color: Colors.indigo,
+                ),
+                _buildFunnelStepItem(
+                  label: 'Magic Link送信',
+                  value: '${funnel.magicLinkSends}',
+                  icon: Icons.mail_outline,
+                  color: Colors.deepPurple,
+                ),
+                _buildFunnelStepItem(
+                  label: '受信箱を開く',
+                  value: '${funnel.inboxOpens}',
+                  icon: Icons.mark_email_read_outlined,
+                  color: Colors.orange,
+                ),
+                _buildFunnelStepItem(
+                  label: '実登録',
+                  value: '$registrations',
+                  icon: Icons.person_add,
+                  color: Colors.green,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildMiniKpiChip(
+                  label: 'LP→体験率',
+                  value: _formatRate(funnel.trialRuns, lpViews),
+                  color: Colors.cyan,
+                ),
+                _buildMiniKpiChip(
+                  label: '体験→保存率',
+                  value: _formatRate(funnel.saveClicks, funnel.trialRuns),
+                  color: Colors.indigo,
+                ),
+                _buildMiniKpiChip(
+                  label: '保存→送信率',
+                  value: _formatRate(funnel.magicLinkSends, funnel.saveClicks),
+                  color: Colors.deepPurple,
+                ),
+                _buildMiniKpiChip(
+                  label: '送信→登録率',
+                  value: _formatRate(registrations, funnel.magicLinkSends),
+                  color: Colors.green,
+                ),
+                if (remainingRegistrations > 0)
+                  _buildMiniKpiChip(
+                    label: '最大ボトルネック',
+                    value: funnelAction.bottleneckLabel,
+                    color: Colors.blueGrey,
+                  ),
+                if (remainingRegistrations > 0)
+                  _buildMiniKpiChip(
+                    label: '目標達成に必要な送信',
+                    value: '$neededMagicLinks件',
+                    color: Colors.redAccent,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFunnelStepItem({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      width: 110,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildKpiSummaryCard(
     double cvr,
     int todayViews,
@@ -839,6 +1202,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     int totalRegistrations,
     int shares,
     int totalLpViews,
+    _FunnelMetrics todayFunnel,
   ) {
     return Card(
       elevation: 4,
@@ -900,6 +1264,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   '$todayRegistrations',
                   Icons.person_add,
                   Colors.indigo,
+                ),
+                _buildStatItem(
+                  '今日体験',
+                  '${todayFunnel.trialRuns}',
+                  Icons.play_circle_outline,
+                  Colors.cyan,
+                ),
+                _buildStatItem(
+                  '今日Magic Link送信',
+                  '${todayFunnel.magicLinkSends}',
+                  Icons.mail_outline,
+                  Colors.deepPurple,
                 ),
                 _buildStatItem(
                   '累計登録',
@@ -1121,6 +1497,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ),
       ),
     );
+  }
+
+  bool _isFunnelEventKey(String key) {
+    switch (key) {
+      case 'funnel_trial_run':
+      case 'funnel_save_cta':
+      case 'funnel_magic_link_send':
+      case 'funnel_inbox_open':
+        return true;
+      default:
+        return false;
+    }
   }
 
   bool _isShareActionKey(String key) {

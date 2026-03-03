@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
@@ -178,7 +179,14 @@ void main() {
         'landing_views': 100,
         'conversions': 10,
         'share_count': 5,
-        'source_details': {'direct': 80, 'x_share': 20},
+        'source_details': {
+          'direct': 80,
+          'x_share': 20,
+          'funnel_trial_run': 40,
+          'funnel_save_cta': 18,
+          'funnel_magic_link_send': 12,
+          'funnel_inbox_open': 8,
+        },
       },
       {
         'date': formatDate(yesterday),
@@ -217,7 +225,6 @@ void main() {
 
   testWidgets('AdminAnalyticsPage shows data after loading',
       (WidgetTester tester) async {
-    // Setup mock data
     fakeSupabaseClient.queryBuilder
       ..setData(sampleData())
       ..setData(
@@ -225,18 +232,14 @@ void main() {
         table: 'user_profiles',
       );
 
-    // Build the widget
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    // Expect data to be displayed
     expect(find.text('今日CVR (実登録ベース)'), findsOneWidget);
     expect(find.text('10.0'), findsOneWidget);
-    expect(find.text('8'), findsOneWidget);
-    expect(
-      find.textContaining('登録率', findRichText: true),
-      findsOneWidget,
-    );
+    expect(find.text('今日Magic Link送信'), findsOneWidget);
+    expect(find.text('今日の登録ファネル'), findsOneWidget);
+    expect(find.text('過去30日の登録ファネル'), findsOneWidget);
   });
 
   testWidgets('Shows single improvement action when registrations are zero',
@@ -247,7 +250,11 @@ void main() {
           'date': formatDate(DateTime.now()),
           'landing_views': 38,
           'share_count': 0,
-          'source_details': {'direct': 38},
+          'source_details': {
+            'direct': 38,
+            'funnel_trial_run': 12,
+            'funnel_save_cta': 4,
+          },
         },
       ])
       ..setData(
@@ -260,14 +267,14 @@ void main() {
 
     expect(find.text('今やる単独改善アクション'), findsOneWidget);
     expect(find.text('AI改善で導線改善'), findsOneWidget);
+    expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(
-      find.textContaining('登録率低下', findRichText: true),
+      find.textContaining('目標達成に必要な送信', findRichText: true),
       findsOneWidget,
     );
   });
 
   testWidgets('Refresh button reloads the data', (WidgetTester tester) async {
-    // Initial data
     fakeSupabaseClient.queryBuilder
       ..setData(sampleData())
       ..setData(
@@ -277,16 +284,19 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    // Verify initial data
     expect(find.text('10.0'), findsOneWidget);
 
-    // New data for refresh
     final newData = [
       {
         'date': formatDate(DateTime.now()),
         'landing_views': 50,
         'share_count': 2,
-        'source_details': {'direct': 50},
+        'source_details': {
+          'direct': 50,
+          'funnel_trial_run': 10,
+          'funnel_save_cta': 5,
+          'funnel_magic_link_send': 2,
+        },
       },
     ];
     fakeSupabaseClient.queryBuilder
@@ -296,17 +306,14 @@ void main() {
         table: 'user_profiles',
       );
 
-    // Tap refresh button
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
 
-    // Verify new data
     expect(find.text('4.0'), findsOneWidget);
   });
 
   testWidgets('Shows empty state when there is no data',
       (WidgetTester tester) async {
-    // Setup empty data
     fakeSupabaseClient.queryBuilder
       ..setData([])
       ..setData([], table: 'user_profiles');
@@ -319,15 +326,12 @@ void main() {
   });
 
   testWidgets('Handles Supabase error gracefully', (WidgetTester tester) async {
-    // Setup error
     fakeSupabaseClient.queryBuilder.setShouldThrow(true);
 
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    // Should not be loading anymore, but should not show data either
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    // It should just show an empty state as the error is caught and it sets loading to false
     expect(find.text('0.0'), findsOneWidget);
   });
 }

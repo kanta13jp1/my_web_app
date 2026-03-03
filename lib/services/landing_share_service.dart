@@ -34,6 +34,10 @@ class LandingShareService {
   static const String channelLine = 'line';
   static const String channelFacebook = 'facebook';
   static const String channelCopy = 'copy';
+  static const String funnelTrialRun = 'funnel_trial_run';
+  static const String funnelSaveCta = 'funnel_save_cta';
+  static const String funnelMagicLinkSend = 'funnel_magic_link_send';
+  static const String funnelInboxOpen = 'funnel_inbox_open';
 
   static const List<String> supportedChannels = <String>[
     channelX,
@@ -179,6 +183,25 @@ $shareUrl
       now: now,
     );
     return true;
+  }
+
+  static Future<void> recordFunnelEvent({
+    required String eventKey,
+    SupabaseClient? client,
+    DateTime? now,
+  }) async {
+    if (!_isSupportedFunnelEvent(eventKey)) {
+      throw ArgumentError.value(
+        eventKey,
+        'eventKey',
+        'Unsupported funnel event',
+      );
+    }
+    await _incrementSourceDetail(
+      client: client,
+      sourceKey: eventKey,
+      now: now,
+    );
   }
 
   static String? resolveIncomingSource(Map<String, String> queryParameters) {
@@ -341,6 +364,18 @@ $shareUrl
         'channel',
         'Unsupported share channel',
       );
+    }
+  }
+
+  static bool _isSupportedFunnelEvent(String eventKey) {
+    switch (eventKey) {
+      case funnelTrialRun:
+      case funnelSaveCta:
+      case funnelMagicLinkSend:
+      case funnelInboxOpen:
+        return true;
+      default:
+        return false;
     }
   }
 }
