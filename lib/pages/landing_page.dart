@@ -302,7 +302,9 @@ $input
       _showSaveCtaPrompt = true;
       _isSignUp = true;
     });
-    _showMessage('この結果を保存するには登録が必要です。下の登録セクションから30秒で開始できます。');
+    _showMessage(
+      'この結果を保存するには登録が必要です。下の登録セクションから30秒で保存を開始できます。',
+    );
     _scrollToAuthSection();
   }
 
@@ -584,7 +586,7 @@ $input
         ),
         const SizedBox(height: 16),
         const Text(
-          'AIが、今日やる1件を決める。',
+          'AI提案を保存して、明日も続きから再開。',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
@@ -593,7 +595,7 @@ $input
         ),
         const SizedBox(height: 10),
         const Text(
-          '登録すると、AI提案を保存して明日も続きから再開できます。まずは1回試してください。',
+          '最初の1件は登録前に試せます。価値を感じたら、30秒で保存を始めてください。',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: Colors.black54),
         ),
@@ -605,14 +607,29 @@ $input
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.black12),
           ),
-          child: const Text(
-            '登録する理由: 保存 / 再開 / 履歴',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.blueGrey,
-            ),
+          child: const Column(
+            children: [
+              Text(
+                '登録すると残るもの',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.blueGrey,
+                ),
+              ),
+              SizedBox(height: 10),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
+                  _BenefitChip(icon: Icons.replay, label: '続きから再開'),
+                  _BenefitChip(icon: Icons.history, label: '履歴を残す'),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -621,22 +638,12 @@ $input
           child: FilledButton(
             onPressed: _scrollToAuthSection,
             child: const Text(
-              '開始',
+              '30秒で保存を始める',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'メール1通で完了',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.black45,
           ),
         ),
       ],
@@ -889,21 +896,21 @@ $input
                       Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
-                  'この提案を保存するには登録が必要です。まずは Magic Link で始めるのが最短です。',
+                  'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 14),
             ],
             const Text(
-              '保存するなら30秒で開始',
+              '保存して、明日も続きから再開',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               _isSignUp
-                  ? '登録すると、提案を保存して明日も続きから再開できます。最短は Magic Link です。'
-                  : '既存ユーザーも Magic Link が最短です。パスワードログインは下段に残しています。',
+                  ? '登録すると、AI提案・実行履歴・明日の続きが残ります。最短は Magic Link です。'
+                  : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
               style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 12),
@@ -950,8 +957,8 @@ $input
                   children: [
                     Text(
                       _showInboxShortcut
-                          ? (_isMagicLinkCoolingDown ? '送信済み' : '再送する')
-                          : '開始',
+                          ? (_isMagicLinkCoolingDown ? '送信済み' : 'Magic Linkを再送')
+                          : 'Magic Linkで保存を始める',
                     ),
                     if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
                       const SizedBox(width: 8),
@@ -963,7 +970,7 @@ $input
             ),
             const SizedBox(height: 8),
             const Text(
-              '新規登録にも既存ログインにも使えます。パスワード不要で、そのまま開始できます。',
+              '新規登録もログインも、この1通で完了します。',
               style: TextStyle(fontSize: 12, color: Colors.black45),
             ),
             if (_showInboxShortcut) ...[
@@ -1126,9 +1133,9 @@ $input
                 children: [
                   _buildHeroSection(),
                   const SizedBox(height: 24),
-                  _buildAuthSection(),
-                  const SizedBox(height: 20),
                   _buildTrialSection(),
+                  const SizedBox(height: 20),
+                  _buildAuthSection(),
                   const SizedBox(height: 20),
                   _buildPvSection(),
                 ],
