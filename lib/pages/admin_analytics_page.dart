@@ -133,6 +133,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  Map<String, int> _extractSourceCounts(dynamic rawSourceDetails) {
+    final counts = <String, int>{};
+    _mergeSourceCounts(counts, rawSourceDetails);
+    return counts;
+  }
+
   String _formatRate(int numerator, int denominator) {
     if (denominator <= 0) {
       return '--';
@@ -157,6 +163,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return remainingRegistrations;
     }
     return (remainingRegistrations / completionRate).ceil();
+  }
+
+  int _countConsecutiveNoRegistrationDays(List<Map<String, dynamic>> stats) {
+    var streak = 0;
+    for (final stat in stats) {
+      if (_toInt(stat['conversions']) > 0) {
+        break;
+      }
+      streak += 1;
+    }
+    return streak;
+  }
+
+  double _averageViews(List<Map<String, dynamic>> stats, {int days = 7}) {
+    final window = stats.take(days).toList();
+    if (window.isEmpty) {
+      return 0;
+    }
+    final total = window.fold<int>(
+      0,
+      (sum, stat) => sum + _toInt(stat['landing_views']),
+    );
+    return total / window.length;
   }
 
   _GrowthActionPlan _buildGrowthActionPlan({
@@ -597,6 +626,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       0,
       (sum, stat) => sum + _toInt(stat['conversions']),
     );
+    final todayDropBeforeTrial = effectiveTodayViews > todayFunnel.trialRuns
+        ? effectiveTodayViews - todayFunnel.trialRuns
+        : 0;
+    final totalDropBeforeTrial = effectiveTotalLpViews > totalFunnel.trialRuns
+        ? effectiveTotalLpViews - totalFunnel.trialRuns
+        : 0;
+    final zeroRegistrationStreakDays =
+        _countConsecutiveNoRegistrationDays(_dailyStats);
+    final averageViewsLast7Days = _averageViews(_dailyStats);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -660,6 +698,21 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       totalShares,
                       effectiveTotalLpViews,
                       todayFunnel,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildRegistrationOpsCard(
+                      todayDropBeforeTrial: todayDropBeforeTrial,
+                      totalDropBeforeTrial: totalDropBeforeTrial,
+                      zeroRegistrationStreakDays: zeroRegistrationStreakDays,
+                      averageViewsLast7Days: averageViewsLast7Days,
+                      totalTrialRate: _formatRate(
+                        totalFunnel.trialRuns,
+                        effectiveTotalLpViews,
+                      ),
+                      registrationsPerLpView: total30DayRegistrations > 0
+                          ? (effectiveTotalLpViews / total30DayRegistrations)
+                              .toStringAsFixed(1)
+                          : null,
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -1321,6 +1374,101 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  Widget _buildRegistrationOpsCard({
+    required int todayDropBeforeTrial,
+    required int totalDropBeforeTrial,
+    required int zeroRegistrationStreakDays,
+    required double averageViewsLast7Days,
+    required String totalTrialRate,
+    required String? registrationsPerLpView,
+  }) {
+    final alertText = zeroRegistrationStreakDays >= 3
+        ? '登録ゼロが$zeroRegistrationStreakDays日連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
+        : todayDropBeforeTrial > 0
+            ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
+            : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '登録管理の追加指標',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildMiniKpiChip(
+                  label: '今日の体験前離脱',
+                  value: '$todayDropBeforeTrial',
+                  color: Colors.cyan,
+                ),
+                _buildMiniKpiChip(
+                  label: '30日体験前離脱',
+                  value: '$totalDropBeforeTrial',
+                  color: Colors.blueGrey,
+                ),
+                _buildMiniKpiChip(
+                  label: '連続登録ゼロ日',
+                  value: '$zeroRegistrationStreakDays日',
+                  color: Colors.redAccent,
+                ),
+                _buildMiniKpiChip(
+                  label: '直近7日平均LP',
+                  value: averageViewsLast7Days.toStringAsFixed(1),
+                  color: Colors.blue,
+                ),
+                _buildMiniKpiChip(
+                  label: '30日体験率',
+                  value: totalTrialRate,
+                  color: Colors.teal,
+                ),
+                _buildMiniKpiChip(
+                  label: '直近登録効率',
+                  value: registrationsPerLpView == null
+                      ? '登録未発生'
+                      : '$registrationsPerLpView LP/登録',
+                  color: Colors.indigo,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                alertText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Color _getCvrColor(double cvr) {
     if (cvr >= 10) return Colors.green;
     if (cvr >= 5) return Colors.orange;
@@ -1605,6 +1753,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final views = _toInt(stat['landing_views']);
         final conv = _toInt(stat['conversions']);
         final cvr = views == 0 ? 0.0 : (conv / views * 100);
+        final dayFunnel = _extractFunnelMetrics(
+          _extractSourceCounts(stat['source_details']),
+        );
 
         String dateStr = stat['date'].toString();
         try {
@@ -1626,10 +1777,21 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               dateStr,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            subtitle: Row(
+            subtitle: Wrap(
+              spacing: 12,
+              runSpacing: 4,
               children: [
                 _miniStat(Icons.visibility, '$views', Colors.blue),
-                const SizedBox(width: 12),
+                _miniStat(
+                  Icons.play_circle_outline,
+                  '${dayFunnel.trialRuns}',
+                  Colors.cyan,
+                ),
+                _miniStat(
+                  Icons.mail_outline,
+                  '${dayFunnel.magicLinkSends}',
+                  Colors.deepPurple,
+                ),
                 _miniStat(Icons.person_add, '$conv', Colors.indigo),
               ],
             ),

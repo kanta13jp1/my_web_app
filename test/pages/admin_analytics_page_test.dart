@@ -238,6 +238,7 @@ void main() {
     expect(find.text('今日CVR (実登録ベース)'), findsOneWidget);
     expect(find.text('10.0'), findsOneWidget);
     expect(find.text('今日Magic Link送信'), findsOneWidget);
+    expect(find.text('登録管理の追加指標'), findsOneWidget);
     expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(find.text('過去30日の登録ファネル'), findsOneWidget);
   });
@@ -269,6 +270,7 @@ void main() {
     );
     expect(find.text('今やる単独改善アクション'), findsOneWidget);
     expect(find.text('AI改善で体験導線改善'), findsOneWidget);
+    expect(find.text('登録管理の追加指標'), findsOneWidget);
     expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(
       find.textContaining('目標達成に必要な送信', findRichText: true),
