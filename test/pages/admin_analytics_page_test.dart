@@ -242,18 +242,16 @@ void main() {
     expect(find.text('過去30日の登録ファネル'), findsOneWidget);
   });
 
-  testWidgets('Shows single improvement action when registrations are zero',
+  testWidgets('Shows funnel-based action when trial has not started',
       (WidgetTester tester) async {
     fakeSupabaseClient.queryBuilder
       ..setData([
         {
           'date': formatDate(DateTime.now()),
-          'landing_views': 38,
+          'landing_views': 1,
           'share_count': 0,
           'source_details': {
-            'direct': 38,
-            'funnel_trial_run': 12,
-            'funnel_save_cta': 4,
+            'direct': 1,
           },
         },
       ])
@@ -265,8 +263,12 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
+    expect(
+      find.textContaining('登録率 体験未実行', findRichText: true),
+      findsOneWidget,
+    );
     expect(find.text('今やる単独改善アクション'), findsOneWidget);
-    expect(find.text('AI改善で導線改善'), findsOneWidget);
+    expect(find.text('AI改善で体験導線改善'), findsOneWidget);
     expect(find.text('今日の登録ファネル'), findsOneWidget);
     expect(
       find.textContaining('目標達成に必要な送信', findRichText: true),

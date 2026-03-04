@@ -27,6 +27,7 @@ class _LandingPageState extends State<LandingPage> {
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
   final _emailFocusNode = FocusNode();
+  final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
 
   StreamSubscription<AuthState>? _authSubscription;
@@ -375,6 +376,26 @@ $input
     _scrollToAuthSection();
   }
 
+  void _runQuickTrialSample(String prompt) {
+    _trialPromptController
+      ..text = prompt
+      ..selection = TextSelection.collapsed(offset: prompt.length);
+    unawaited(_runTrialActionPreview());
+  }
+
+  void _scrollToTrialSection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final trialContext = _trialSectionKey.currentContext;
+      if (!mounted || trialContext == null) return;
+      Scrollable.ensureVisible(
+        trialContext,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+        alignment: 0.08,
+      );
+    });
+  }
+
   void _scrollToAuthSection() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authContext = _authSectionKey.currentContext;
@@ -668,7 +689,7 @@ $input
         ),
         const SizedBox(height: 10),
         const Text(
-          '最初の1件は登録前に試せます。価値を感じたら、30秒で保存を始めてください。',
+          '最初の1件は登録前に試せます。入力なしでもサンプルで試せるので、まずは価値を確認してください。',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, color: Colors.black54),
         ),
@@ -709,15 +730,20 @@ $input
         SizedBox(
           height: 52,
           child: FilledButton(
-            onPressed: _scrollToAuthSection,
+            onPressed: _scrollToTrialSection,
             child: const Text(
-              '30秒で保存を始める',
+              'まず1件を無料で試す',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: _scrollToAuthSection,
+          child: const Text('保存から始める'),
         ),
       ],
     );
@@ -852,6 +878,7 @@ $input
 
   Widget _buildTrialSection() {
     return Card(
+      key: _trialSectionKey,
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -867,6 +894,40 @@ $input
             const Text(
               'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
               style: TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.flash_on, size: 18),
+                  label: const Text('今日の最優先'),
+                  onPressed: _isTrialLoading
+                      ? null
+                      : () => _runQuickTrialSample(
+                            '今日の最優先タスクを1件に絞りたい',
+                          ),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.trending_up, size: 18),
+                  label: const Text('登録を増やす'),
+                  onPressed: _isTrialLoading
+                      ? null
+                      : () => _runQuickTrialSample(
+                            '登録者数を増やすための次の一手を決めたい',
+                          ),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.done_all, size: 18),
+                  label: const Text('先送り解消'),
+                  onPressed: _isTrialLoading
+                      ? null
+                      : () => _runQuickTrialSample(
+                            '今いちばん先送りしていることを片付けたい',
+                          ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             TextField(

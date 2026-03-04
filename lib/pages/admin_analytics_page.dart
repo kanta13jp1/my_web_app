@@ -734,6 +734,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final achieved = todayRegistrations >= dailyTarget;
     final remaining = achieved ? 0 : dailyTarget - todayRegistrations;
     final progress = (todayRegistrations / dailyTarget).clamp(0.0, 1.0);
+    final priorityChannelKey = achieved || todayViews > 0
+        ? null
+        : _resolvePriorityAcquisitionChannel(sourceBreakdown);
+    final priorityChannelLabel = priorityChannelKey == null
+        ? null
+        : _formatSourceName(priorityChannelKey);
+    final growthAction = _buildGrowthActionPlan(
+      achieved: achieved,
+      todayViews: todayViews,
+      todayRegistrations: todayRegistrations,
+      todayFunnel: todayFunnel,
+      priorityChannelKey: priorityChannelKey,
+      priorityChannelLabel: priorityChannelLabel,
+    );
     final accentColor = achieved ? Colors.green : Colors.redAccent;
     final todayCvr =
         todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
@@ -741,46 +755,37 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ? '登録発生'
         : todayViews == 0
             ? '流入不足'
-            : '登録率低下';
+            : growthAction.bottleneckLabel;
     final diagnosisColor = achieved
         ? Colors.green
         : todayViews == 0
             ? Colors.orange
-            : Colors.redAccent;
-    final priorityChannelKey = achieved || todayViews > 0
-        ? null
-        : _resolvePriorityAcquisitionChannel(sourceBreakdown);
-    final priorityChannelLabel = priorityChannelKey == null
-        ? null
-        : _formatSourceName(priorityChannelKey);
-    final actionTitle = achieved
-        ? null
-        : todayViews == 0
-            ? '今やる集客アクション'
-            : '今やる単独改善アクション';
-    final actionDetail = achieved
-        ? null
-        : todayViews == 0
-            ? '${priorityChannelLabel ?? 'X (Twitter)'}を最優先チャネルにして、投稿・共有・導線更新のうち1つだけ今すぐ実行する。'
-            : '登録ボタン付近の文言を1つ減らし、最初の画面で「登録する理由」が分かる形に書き直します。';
-    final actionIcon = achieved
-        ? null
-        : todayViews == 0
-            ? Icons.campaign
-            : Icons.alt_route;
-    final actionButtonLabel = achieved
-        ? null
-        : todayViews == 0
-            ? _buildAcquisitionButtonLabel(
-                priorityChannelKey,
-                priorityChannelLabel,
-              )
-            : 'AI改善で導線改善';
+            : todayFunnel.trialRuns == 0
+                ? Colors.cyan
+                : todayFunnel.saveClicks == 0
+                    ? Colors.indigo
+                    : todayFunnel.magicLinkSends == 0
+                        ? Colors.deepOrange
+                        : todayFunnel.inboxOpens == 0
+                            ? Colors.amber.shade800
+                            : Colors.redAccent;
+    final actionTitle = achieved ? null : growthAction.title;
+    final actionDetail = achieved ? null : growthAction.detail;
+    final actionIcon = achieved ? null : growthAction.icon;
+    final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
         : todayViews == 0
             ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
-            : '流れ込みはありますが登録が出ていません。登録率が著しく低下しています。';
+            : todayFunnel.trialRuns == 0
+                ? '流れ込みはありますが、無料体験がまだ1回も実行されていません。最初の一手を試したくなる導線を最優先で短くしてください。'
+                : todayFunnel.saveClicks == 0
+                    ? '無料体験の実行はありますが、保存CTAが押されていません。体験直後に「保存すると残る価値」を再提示する必要があります。'
+                    : todayFunnel.magicLinkSends == 0
+                        ? '保存CTAまでは到達していますが、Magic Link送信が0件です。メール入力前の不安を減らす必要があります。'
+                        : todayFunnel.inboxOpens == 0
+                            ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
+                            : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -888,6 +893,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 value: '${todayCvr.toStringAsFixed(1)}%',
                 color: diagnosisColor,
               ),
+              if (todayViews > 0)
+                _buildMiniKpiChip(
+                  label: '今日体験',
+                  value: '${todayFunnel.trialRuns}',
+                  color: Colors.cyan,
+                ),
+              if (todayViews > 0)
+                _buildMiniKpiChip(
+                  label: '今日送信',
+                  value: '${todayFunnel.magicLinkSends}',
+                  color: Colors.deepOrange,
+                ),
               _buildMiniKpiChip(
                 label: '登録率',
                 value: diagnosisLabel,
@@ -977,7 +994,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ),
                           onPressed: () {
                             _openGrowthAction(
-                              isAcquisitionAction: todayViews == 0,
+                              isAcquisitionAction:
+                                  growthAction.isAcquisitionAction,
                               priorityChannelKey: priorityChannelKey,
                               priorityChannelLabel: priorityChannelLabel,
                             );
