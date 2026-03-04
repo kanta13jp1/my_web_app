@@ -3,8 +3,65 @@ import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/financial_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 
-class CfoOfficePage extends StatelessWidget {
+import '../models/agent_task.dart';
+import '../services/agent_org_service.dart';
+import '../widgets/agent_workspace_panel.dart';
+
+class CfoOfficePage extends StatefulWidget {
   const CfoOfficePage({super.key});
+
+  @override
+  State<CfoOfficePage> createState() => _CfoOfficePageState();
+}
+
+class _CfoOfficePageState extends State<CfoOfficePage> {
+  final AgentOrgService _agentOrgService = AgentOrgService();
+  AgentWorkspaceSnapshot? _workspace;
+  bool _isLoadingWorkspace = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkspace();
+  }
+
+  Future<void> _loadWorkspace() async {
+    try {
+      final workspace = await _agentOrgService.loadWorkspaceBySlug('cfo');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _workspace = workspace;
+        _isLoadingWorkspace = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoadingWorkspace = false);
+    }
+  }
+
+  Future<void> _processTask(AgentTask task, String status) async {
+    try {
+      await _agentOrgService.processTask(task: task, status: status);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CFOタスクを $status に更新しました。')),
+      );
+      await _loadWorkspace();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CFOタスクの更新に失敗しました: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,31 +71,42 @@ class CfoOfficePage extends StatelessWidget {
         backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildMenuCard(
-            context,
-            '資産管理闘争', // 名前をコンセプトに合わせました
-            '資産推移、戦況記録、サブスク管理を統合した前線基地。',
-            Icons.monetization_on,
-            const AssetManagementPage(),
-          ),
-          _buildMenuCard(
-            context,
-            '決済チャネル台帳',
-            'クレジットカードや銀行口座の連携状況を確認します。',
-            Icons.account_balance,
-            const PaymentChannelLedgerPage(),
-          ),
-          _buildMenuCard(
-            context,
-            '決算レポート',
-            '日次・週次・月次の収支状況を分析します。',
-            Icons.summarize,
-            const FinancialReportPage(),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadWorkspace,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            AgentWorkspacePanel(
+              officeLabel: 'CFO',
+              accentColor: Colors.green,
+              isLoading: _isLoadingWorkspace,
+              workspace: _workspace,
+              onProcessTask: _processTask,
+            ),
+            const SizedBox(height: 16),
+            _buildMenuCard(
+              context,
+              '資産管理闘争',
+              '資産推移、戦況記録、サブスク管理を統合した前線基地。',
+              Icons.monetization_on,
+              const AssetManagementPage(),
+            ),
+            _buildMenuCard(
+              context,
+              '決済チャネル台帳',
+              'クレジットカードや銀行口座の連携状況を確認します。',
+              Icons.account_balance,
+              const PaymentChannelLedgerPage(),
+            ),
+            _buildMenuCard(
+              context,
+              '決算レポート',
+              '日次・週次・月次の収支状況を分析します。',
+              Icons.summarize,
+              const FinancialReportPage(),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -28,6 +28,20 @@ class AgentOrgSnapshot {
         memoryCountsByAgent = const <String, int>{};
 }
 
+class AgentWorkspaceSnapshot {
+  final AgentProfile agent;
+  final List<AgentTask> tasks;
+  final List<AgentMemoryEntry> recentMemories;
+  final String startupPrompt;
+
+  const AgentWorkspaceSnapshot({
+    required this.agent,
+    required this.tasks,
+    required this.recentMemories,
+    required this.startupPrompt,
+  });
+}
+
 class AgentOrgService {
   final SupabaseClient _supabase;
 
@@ -134,6 +148,67 @@ class AgentOrgService {
       recentMemories: memories,
       openTaskCountsByAgent: taskCounts,
       memoryCountsByAgent: memoryCounts,
+    );
+  }
+
+  Future<AgentWorkspaceSnapshot?> loadWorkspaceBySlug(
+    String slug, {
+    int taskLimit = 8,
+    int memoryLimit = 6,
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) {
+      return null;
+    }
+
+    final agents = await ensureExecutiveAgents();
+    AgentProfile? targetAgent;
+    for (final agent in agents) {
+      if (agent.slug == slug) {
+        targetAgent = agent;
+        break;
+      }
+    }
+    if (targetAgent == null) {
+      return null;
+    }
+
+    final dynamic taskRows = await _supabase
+        .from('agent_tasks')
+        .select()
+        .eq('user_id', userId)
+        .eq('assignee_agent_id', targetAgent.id)
+        .neq('status', 'completed')
+        .order('created_at', ascending: false)
+        .limit(taskLimit);
+    final tasks = (taskRows as List)
+        .whereType<Map>()
+        .map((row) => AgentTask.fromJson(Map<String, dynamic>.from(row)))
+        .toList();
+
+    final dynamic memoryRows = await _supabase
+        .from('agent_memories')
+        .select()
+        .eq('user_id', userId)
+        .eq('agent_id', targetAgent.id)
+        .order('created_at', ascending: false)
+        .limit(memoryLimit);
+    final memories = (memoryRows as List)
+        .whereType<Map>()
+        .map(
+          (row) => AgentMemoryEntry.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList();
+
+    return AgentWorkspaceSnapshot(
+      agent: targetAgent,
+      tasks: tasks,
+      recentMemories: memories,
+      startupPrompt: AgentOrgService.composeStartupPrompt(
+        agent: targetAgent,
+        recentMemories: memories,
+        openTasks: tasks,
+      ),
     );
   }
 
@@ -292,6 +367,76 @@ class AgentOrgService {
         .update({'status': enabled ? 'active' : 'paused'})
         .eq('id', agentId)
         .eq('user_id', userId);
+  }
+
+  Future<void> processTask({
+    required AgentTask task,
+    required String status,
+  }) async {
+    final userId = _requireUserId();
+    await _supabase
+        .from('agent_tasks')
+        .update({
+          'status': status,
+          'completed_at':
+              status == 'completed' ? DateTime.now().toIso8601String() : null,
+        })
+        .eq('id', task.id)
+        .eq('user_id', userId);
+
+    final memoryText = switch (status) {
+      'in_progress' => '着手: ${task.title}',
+      'completed' => '完了: ${task.title}',
+      'cancelled' => '中止: ${task.title}',
+      _ => '状態更新($status): ${task.title}',
+    };
+
+    await appendMemoryEntry(
+      agentId: task.assigneeAgentId,
+      content: memoryText,
+      memoryLayer: 'episode',
+      source: 'task_status',
+    );
+  }
+
+  static String composeStartupPrompt({
+    required AgentProfile agent,
+    required List<AgentMemoryEntry> recentMemories,
+    required List<AgentTask> openTasks,
+  }) {
+    final buffer = StringBuffer()
+      ..writeln('あなたは ${agent.displayName} (${agent.roleTitle}) です。')
+      ..writeln('所属: ${agent.department}')
+      ..writeln('状態: ${agent.isActive ? 'active' : 'paused'}')
+      ..writeln()
+      ..writeln('【Identity】')
+      ..writeln(agent.identityPrompt)
+      ..writeln()
+      ..writeln('【Permissions】')
+      ..writeln(agent.permissionsSummary);
+
+    if (recentMemories.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Recent Memory Stack】');
+      for (final memory in recentMemories.take(5)) {
+        buffer.writeln('- [${memory.memoryLayer}] ${memory.content}');
+      }
+    }
+
+    if (openTasks.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Open Tasks】');
+      for (final task in openTasks.take(5)) {
+        buffer.writeln('- (${task.priority}/${task.status}) ${task.title}');
+      }
+    }
+
+    buffer
+      ..writeln()
+      ..writeln('この前提を維持し、自分の権限内で判断してください。');
+    return buffer.toString().trim();
   }
 
   Future<List<AgentProfile>> _loadAgentsForUser(String userId) async {

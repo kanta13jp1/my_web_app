@@ -3,6 +3,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/agent_task.dart';
+import '../services/agent_org_service.dart';
+import '../widgets/agent_workspace_panel.dart';
 import 'admin_analytics_page.dart';
 
 class CmoOfficePage extends StatefulWidget {
@@ -14,8 +17,10 @@ class CmoOfficePage extends StatefulWidget {
 
 class _CmoOfficePageState extends State<CmoOfficePage> {
   final _supabase = Supabase.instance.client;
+  final AgentOrgService _agentOrgService = AgentOrgService();
   bool _isLoading = true;
   Map<String, dynamic>? _userStats;
+  AgentWorkspaceSnapshot? _workspace;
 
   @override
   void initState() {
@@ -33,22 +38,48 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
         return;
       }
 
-      final data = await _supabase
-          .from('user_stats')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
+      final results = await Future.wait<dynamic>([
+        _supabase
+            .from('user_stats')
+            .select()
+            .eq('user_id', userId)
+            .maybeSingle(),
+        _agentOrgService.loadWorkspaceBySlug('cmo'),
+      ]);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
-        _userStats = data;
+        _userStats = results[0] as Map<String, dynamic>?;
+        _workspace = results[1] as AgentWorkspaceSnapshot?;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error fetching stats: $e');
+      debugPrint('Error fetching CMO workspace: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _processTask(AgentTask task, String status) async {
+    try {
+      await _agentOrgService.processTask(task: task, status: status);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CMOタスクを $status に更新しました。')),
+      );
+      await _fetchStats();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CMOタスクの更新に失敗しました: $error')),
+      );
     }
   }
 
@@ -71,13 +102,17 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
         intentUri,
         mode: LaunchMode.externalApplication,
       );
-      if (launched) return;
+      if (launched) {
+        return;
+      }
     } catch (e) {
       debugPrint('Direct X share failed: $e');
     }
 
     await SharePlus.instance.share(ShareParams(text: text));
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Xを直接開けなかったため、共有シートを開きました。'),
@@ -99,64 +134,73 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildKpiCard(
-                  '連続エンゲージメント日数',
-                  '$streak日',
-                  Icons.local_fire_department,
-                  Colors.orange,
-                ),
-                _buildKpiCard(
-                  '累計LTV (行動価値ポイント)',
-                  '$points pt',
-                  Icons.monetization_on,
-                  Colors.amber.shade800,
-                ),
-                _buildKpiCard(
-                  'ブランドランク (レベル)',
-                  'Lv.$level',
-                  Icons.stars,
-                  Colors.blue,
-                ),
-                const SizedBox(height: 24),
-                _buildActionCard(
-                  context,
-                  '経営分析ダッシュボード',
-                  'LP View・登録数・CVR などの集計を確認します。',
-                  Icons.bar_chart,
-                  Colors.purple,
-                  () => Navigator.push(
+          : RefreshIndicator(
+              onRefresh: _fetchStats,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  AgentWorkspacePanel(
+                    officeLabel: 'CMO',
+                    accentColor: Colors.pink,
+                    isLoading: false,
+                    workspace: _workspace,
+                    onProcessTask: _processTask,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildKpiCard(
+                    '連続エンゲージメント日数',
+                    '$streak日',
+                    Icons.local_fire_department,
+                    Colors.orange,
+                  ),
+                  _buildKpiCard(
+                    '累計LTV (行動価値ポイント)',
+                    '$points pt',
+                    Icons.monetization_on,
+                    Colors.amber.shade800,
+                  ),
+                  _buildKpiCard(
+                    'ブランドランク (レベル)',
+                    'Lv.$level',
+                    Icons.stars,
+                    Colors.blue,
+                  ),
+                  const SizedBox(height: 24),
+                  _buildActionCard(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const AdminAnalyticsPage(),
+                    '経営分析ダッシュボード',
+                    'LP View・登録数・CVR などの集計を確認します。',
+                    Icons.bar_chart,
+                    Colors.purple,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminAnalyticsPage(),
+                      ),
                     ),
                   ),
-                ),
-                _buildActionCard(
-                  context,
-                  '株主総会へ報告 (SNSシェア)',
-                  'X の投稿画面を直接開いて、近況をそのまま共有します。',
-                  Icons.share,
-                  Colors.pink,
-                  () {
-                    _shareToX();
-                  },
-                ),
-                _buildActionCard(
-                  context,
-                  '広報フィードバック',
-                  '反応や導線の弱点を確認し、次の改善に使います。',
-                  Icons.feedback,
-                  Colors.green,
-                  () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('フィードバック収集は準備中です。'),
+                  _buildActionCard(
+                    context,
+                    '株主総会へ報告 (SNSシェア)',
+                    'X の投稿画面を直接開いて、近況をそのまま共有します。',
+                    Icons.share,
+                    Colors.pink,
+                    _shareToX,
+                  ),
+                  _buildActionCard(
+                    context,
+                    '広報フィードバック',
+                    '反応や導線の弱点を確認し、次の改善に使います。',
+                    Icons.feedback,
+                    Colors.green,
+                    () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('フィードバック収集は準備中です。'),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }
