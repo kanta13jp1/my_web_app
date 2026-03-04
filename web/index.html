@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <base href="$FLUTTER_BASE_HREF">
@@ -6,81 +6,292 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <meta name="description" content="あなたがCEO。GPT-5.2, Claude Opus 4.6, Gemini 3.1 Proによる「MAGIシステム」を役員に迎え、資産健康時間を完全管理。世界最強のAIライフマネジメントシステム「自分株式会社」。">
-  <meta name="keywords" content="自分株式会社,Jibun Inc,AI経営,ライフマネジメント,Gemini 3.0,GPT-5,Claude 4.5,DeepSeek,MAGIシステム,断捨離,目標達成,生産性向上,CEO">
+  <meta name="theme-color" content="#3949AB">
+  <meta name="application-name" content="自分株式会社">
+  <meta name="format-detection" content="telephone=no">
+
+  <meta
+    name="description"
+    content="AIが今日の最優先タスクを1件に絞り、行動理由と次の一手まで整理。提案を保存して、明日も続きから再開できるライフマネジメントアプリ『自分株式会社』。"
+  >
+  <meta
+    name="keywords"
+    content="自分株式会社,Jibun Inc,AIライフマネジメント,AI productivity,task prioritization,目標達成,生産性向上,MAGIシステム"
+  >
   <meta name="author" content="自分株式会社 (Jibun Inc.)">
-  <meta name="robots" content="index, follow">
+  <meta
+    name="robots"
+    content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+  >
   <link rel="canonical" href="https://my-web-app-b67f4.web.app/">
 
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="自分株式会社">
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="og:title" content="自分株式会社 | AI MAGIシステムと経営する最強の人生">
-  <meta property="og:description" content="「メモ」の時代は終わった。これからは「経営」だ。最強のAI役員たちと共に、あなたの人生を上場企業へ。完全無料の次世代ERP。">
-  
-  <meta property="og:image" content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp">
+  <meta property="og:title" content="自分株式会社 | AIが今日の最優先タスクを整理">
+  <meta
+    property="og:description"
+    content="今日やるべきことをAIが1件に絞り、理由と次の一手まで整理。保存すれば、明日も続きから再開できます。"
+  >
+  <meta
+    property="og:image"
+    content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp"
+  >
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:alt" content="自分株式会社 - The MAGI System">
+  <meta property="og:image:alt" content="自分株式会社 - AI life management app">
   <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
+  <meta property="og:locale:alternate" content="en_US">
 
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://my-web-app-b67f4.web.app/">
-  <meta property="twitter:title" content="自分株式会社 | AI MAGIシステムと経営する最強の人生">
-  <meta property="twitter:description" content="「メモ」の時代は終わった。これからは「経営」だ。最強のAI役員たちと共に、あなたの人生を上場企業へ。">
-  <meta property="twitter:image" content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp">
-  <meta property="twitter:image:alt" content="自分株式会社 - Management Console">
+  <meta property="twitter:title" content="自分株式会社 | AIが今日の最優先タスクを整理">
+  <meta
+    property="twitter:description"
+    content="AIが今日やるべきことを1件に絞り、保存して明日も続きから再開。"
+  >
+  <meta
+    property="twitter:image"
+    content="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-ogp"
+  >
+  <meta property="twitter:image:alt" content="自分株式会社 - AI life management app">
 
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="自分株式会社">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap"
+    rel="stylesheet"
+  >
 
-  <title>自分株式会社 | AI MAGIシステムと経営する最強の人生</title>
+  <title>自分株式会社 | AIが今日の最優先タスクを整理</title>
   <link rel="manifest" href="manifest.json">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
+    "@type": "SoftwareApplication",
     "name": "自分株式会社",
     "alternateName": "Jibun Inc.",
     "url": "https://my-web-app-b67f4.web.app/",
-    "description": "世界最強のAIモデル群（MAGIシステム）を統合したライフマネジメントERP。",
-    "applicationCategory": "BusinessApplication",
+    "description": "AIが最優先タスクを1件に絞り、行動理由と次の一手まで整理するライフマネジメントアプリ。",
+    "applicationCategory": "ProductivityApplication",
     "operatingSystem": "Web, iOS, Android",
+    "availableLanguage": ["ja", "en"],
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "JPY"
     },
     "featureList": [
-      "MAGIシステム (GPT-5.2, Claude Opus 4.6, Gemini 3.1 Pro)",
-      "緊急役員会議",
-      "リアル断捨離",
-      "プロアクティブ介入",
-      "健康管理"
+      "今日の最優先タスク提案",
+      "48時間以内の次の一手整理",
+      "提案の保存と再開",
+      "無料体験導線",
+      "AIによる行動整理"
     ],
     "inLanguage": "ja",
     "publisher": {
       "@type": "Organization",
       "name": "自分株式会社"
+    },
+    "potentialAction": {
+      "@type": "RegisterAction",
+      "target": "https://my-web-app-b67f4.web.app/"
     }
   }
   </script>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Noto Sans JP", "Noto Sans", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, rgba(79, 70, 229, 0.16), transparent 36%),
+        linear-gradient(180deg, #eef2ff 0%, #ffffff 72%);
+      color: #111827;
+    }
+
+    #seo-shell {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .seo-card {
+      width: min(880px, 100%);
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(99, 102, 241, 0.14);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+    }
+
+    .seo-badge {
+      margin: 0 0 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #4338ca;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .seo-card h1 {
+      margin: 0;
+      font-family: "Noto Serif JP", serif;
+      font-size: clamp(32px, 5vw, 54px);
+      line-height: 1.08;
+    }
+
+    .seo-card p {
+      margin: 14px 0 0;
+      font-size: 16px;
+      line-height: 1.75;
+      color: #374151;
+    }
+
+    .seo-card p[lang="en"] {
+      margin-top: 10px;
+      color: #4b5563;
+    }
+
+    .seo-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .seo-tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .seo-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .seo-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: background-color 120ms ease;
+    }
+
+    .seo-links a.primary {
+      background: #3949ab;
+      color: #ffffff;
+    }
+
+    .seo-links a.secondary {
+      background: #eef2ff;
+      color: #3949ab;
+    }
+
+    .seo-loading {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    noscript {
+      display: block;
+      margin-top: 12px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      #seo-shell {
+        padding: 16px;
+      }
+
+      .seo-card {
+        padding: 22px;
+        border-radius: 20px;
+      }
+
+      .seo-card p {
+        font-size: 15px;
+      }
+
+      .seo-links a {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="seo-shell">
+    <main class="seo-card" aria-labelledby="seo-title">
+      <p class="seo-badge">AI Life Management App</p>
+      <h1 id="seo-title">自分株式会社</h1>
+      <p lang="ja">
+        AIが今日の最優先タスクを1件に絞り、なぜ今やるべきかと次の一手まで整理します。
+        無料体験で価値を確認したあと、提案を保存して明日も続きから再開できます。
+      </p>
+      <p lang="en">
+        Jibun Inc. helps you focus on one next action, explains why it matters,
+        and lets you save your plan so you can resume tomorrow.
+      </p>
+      <div class="seo-tags" aria-label="主要機能">
+        <span class="seo-tag">AI task prioritization</span>
+        <span class="seo-tag">48-hour action planning</span>
+        <span class="seo-tag">Save and resume</span>
+        <span class="seo-tag">MAGI strategy support</span>
+      </div>
+      <nav class="seo-links" aria-label="公開ページ">
+        <a class="primary" href="https://my-web-app-b67f4.web.app/">無料で始める</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/gemini-university">Gemini University</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/danshari">断捨離ツール</a>
+      </nav>
+      <p class="seo-loading">Loading application...</p>
+      <noscript>
+        JavaScript is required to use the full app. Search engines and preview crawlers
+        can still read this summary and the public links above.
+      </noscript>
+    </main>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var seoShell = document.getElementById('seo-shell');
+      if (seoShell) {
+        seoShell.remove();
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
-
-
-
