@@ -26,6 +26,7 @@ import 'gemini_university_v2_page.dart';
 import 'emergency_meeting_page.dart';
 import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
+import 'agent_org_page.dart';
 import 'cfo_office_page.dart';
 import 'cho_office_page.dart';
 import 'cmo_office_page.dart';
@@ -2350,6 +2351,14 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.trending_up,
                                 Colors.pink,
                                 () => _nav(context, const CmoOfficePage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
+                                'AI組織OS',
+                                Icons.account_tree,
+                                Colors.deepPurple,
+                                () => _nav(context, const AgentOrgPage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
                               ),

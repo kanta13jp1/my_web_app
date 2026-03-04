@@ -9,6 +9,7 @@ import 'package:my_web_app/services/notification_service.dart';
 import 'pages/home_page.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/landing_page.dart';
+import 'pages/agent_org_page.dart';
 import 'pages/gemini_university_v2_page.dart';
 import 'pages/danshari_page.dart';
 
@@ -125,6 +126,8 @@ class MyApp extends StatelessWidget {
             );
           case '/home':
             return MaterialPageRoute(builder: (_) => const HomePage());
+          case '/agents':
+            return MaterialPageRoute(builder: (_) => const AgentOrgPage());
           case '/gemini-university':
             return MaterialPageRoute(
               builder: (_) => const GeminiUniversityV2Page(),
