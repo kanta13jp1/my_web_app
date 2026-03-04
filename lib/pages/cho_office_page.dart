@@ -1,42 +1,110 @@
 import 'package:flutter/material.dart';
+
+import '../models/agent_task.dart';
+import '../services/agent_org_service.dart';
+import '../widgets/agent_workspace_panel.dart';
 import 'health_page.dart';
 
-class ChoOfficePage extends StatelessWidget {
+class ChoOfficePage extends StatefulWidget {
   const ChoOfficePage({super.key});
+
+  @override
+  State<ChoOfficePage> createState() => _ChoOfficePageState();
+}
+
+class _ChoOfficePageState extends State<ChoOfficePage> {
+  final AgentOrgService _agentOrgService = AgentOrgService();
+  AgentWorkspaceSnapshot? _workspace;
+  bool _isLoadingWorkspace = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkspace();
+  }
+
+  Future<void> _loadWorkspace() async {
+    try {
+      final workspace = await _agentOrgService.loadWorkspaceBySlug('cho');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _workspace = workspace;
+        _isLoadingWorkspace = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoadingWorkspace = false);
+    }
+  }
+
+  Future<void> _processTask(AgentTask task, String status) async {
+    try {
+      await _agentOrgService.processTask(task: task, status: status);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CHO task updated: $status')));
+      await _loadWorkspace();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update CHO task: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CHO OFFICE (健康)'),
+        title: const Text('CHO OFFICE'),
         backgroundColor: Colors.teal[700],
         foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildMenuCard(
-            context,
-            '健康管理室 (Health Log)',
-            '食事、運動、睡眠などの健康活動を記録します。',
-            Icons.favorite,
-            const HealthPage(),
-          ),
-          _buildMenuCard(
-            context,
-            'メンタルチェック',
-            'ストレスレベルを測定し、AIカウンセラーに相談します。(準備中)',
-            Icons.psychology,
-            null,
-          ),
-          _buildMenuCard(
-            context,
-            '定期健康診断',
-            '健康診断の結果を記録し、経年変化を分析します。(準備中)',
-            Icons.medical_services,
-            null,
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadWorkspace,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            AgentWorkspacePanel(
+              officeLabel: 'CHO',
+              accentColor: Colors.teal,
+              isLoading: _isLoadingWorkspace,
+              workspace: _workspace,
+              onProcessTask: _processTask,
+            ),
+            const SizedBox(height: 16),
+            _buildMenuCard(
+              context,
+              'Health Log',
+              'Track health routines, sleep, and condition records.',
+              Icons.favorite,
+              const HealthPage(),
+            ),
+            _buildMenuCard(
+              context,
+              'Mental Check',
+              'Review stress and focus signals and keep a simple health check.',
+              Icons.psychology,
+              null,
+            ),
+            _buildMenuCard(
+              context,
+              'Medical Notes',
+              'Keep treatment notes and review health-related actions.',
+              Icons.medical_services,
+              null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -63,8 +131,9 @@ class ChoOfficePage extends StatelessWidget {
         onTap: page != null
             ? () =>
                 Navigator.push(context, MaterialPageRoute(builder: (_) => page))
-            : () => ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('準備中です'))),
+            : () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coming soon')),
+                ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_web_app/models/board_meeting.dart';
 import 'package:my_web_app/services/ai_service.dart';
+import 'package:my_web_app/services/agent_org_service.dart';
 import 'package:my_web_app/services/emergency_meeting_pdca_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:http/http.dart' as http;
@@ -29,6 +30,7 @@ class EmergencyMeetingPage extends StatefulWidget {
 
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   final ScrollController _scrollController = ScrollController();
+  final AgentOrgService _agentOrgService = AgentOrgService();
   BoardMeetingLog? _currentLog;
   bool _isLoading = false;
   String _loadingStatus = '';
@@ -273,6 +275,49 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     } else {
       await prefs.remove(_prefsLastReviewAt);
     }
+  }
+
+  Future<String?> _loadBoardStartupContext() async {
+    try {
+      final workspaces = await Future.wait<AgentWorkspaceSnapshot?>([
+        _agentOrgService.loadWorkspaceBySlug('ceo'),
+        _agentOrgService.loadWorkspaceBySlug('cfo'),
+        _agentOrgService.loadWorkspaceBySlug('cho'),
+        _agentOrgService.loadWorkspaceBySlug('chro'),
+      ]);
+
+      final sections = <String>[];
+      for (final workspace in workspaces.whereType<AgentWorkspaceSnapshot>()) {
+        final startupPrompt = workspace.startupPrompt.trim();
+        if (startupPrompt.isEmpty) {
+          continue;
+        }
+        sections.add('### ${workspace.agent.displayName}\n$startupPrompt');
+      }
+
+      if (sections.isEmpty) {
+        return null;
+      }
+
+      return <String>[
+        '【AI組織の継続記憶】',
+        ...sections,
+      ].join('\n\n');
+    } catch (error) {
+      debugPrint('Failed to load board startup context: $error');
+      return null;
+    }
+  }
+
+  String _injectStartupContext({
+    required String prompt,
+    String? startupContext,
+  }) {
+    final normalizedStartupContext = startupContext?.trim();
+    if (normalizedStartupContext == null || normalizedStartupContext.isEmpty) {
+      return prompt;
+    }
+    return '$normalizedStartupContext\n\n[Board Meeting Request]\n$prompt';
   }
 
   int _currentContinuationRatePercent() {
@@ -1410,7 +1455,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           ? 'なし'
           : currentMetrics.activeDeterrenceLocks.join(', ');
 
-      final contextPrompt = _customPromptInstructions
+      final basePrompt = _customPromptInstructions
           .replaceFirst('{userId}', userId)
           .replaceFirst('{noteCount}', noteCount.toString())
           .replaceFirst('{subCount}', subCount.toString())
@@ -1466,6 +1511,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           );
 
       setState(() => _loadingStatus = 'AI役員が継続・禁欲の改善策を議論中...');
+
+      final startupContext = await _loadBoardStartupContext();
+      final contextPrompt = _injectStartupContext(
+        prompt: basePrompt,
+        startupContext: startupContext,
+      );
 
       final aiService = AIService(null, _geminiApiKey);
       String? responseText;

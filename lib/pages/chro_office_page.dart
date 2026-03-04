@@ -1,43 +1,111 @@
 import 'package:flutter/material.dart';
-import 'rewards_page.dart'; // 福利厚生
-import 'stats_page.dart'; // 人事評価
 
-class ChroOfficePage extends StatelessWidget {
+import '../models/agent_task.dart';
+import '../services/agent_org_service.dart';
+import '../widgets/agent_workspace_panel.dart';
+import 'rewards_page.dart';
+import 'stats_page.dart';
+
+class ChroOfficePage extends StatefulWidget {
   const ChroOfficePage({super.key});
+
+  @override
+  State<ChroOfficePage> createState() => _ChroOfficePageState();
+}
+
+class _ChroOfficePageState extends State<ChroOfficePage> {
+  final AgentOrgService _agentOrgService = AgentOrgService();
+  AgentWorkspaceSnapshot? _workspace;
+  bool _isLoadingWorkspace = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkspace();
+  }
+
+  Future<void> _loadWorkspace() async {
+    try {
+      final workspace = await _agentOrgService.loadWorkspaceBySlug('chro');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _workspace = workspace;
+        _isLoadingWorkspace = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoadingWorkspace = false);
+    }
+  }
+
+  Future<void> _processTask(AgentTask task, String status) async {
+    try {
+      await _agentOrgService.processTask(task: task, status: status);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CHRO task updated: $status')));
+      await _loadWorkspace();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update CHRO task: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CHRO OFFICE (人事厚生)'),
+        title: const Text('CHRO OFFICE'),
         backgroundColor: Colors.indigo[700],
         foregroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildMenuCard(
-            context,
-            '福利厚生課 (Rewards)',
-            '獲得したポイントを報酬アイテムと交換します。',
-            Icons.card_giftcard,
-            const RewardsPage(),
-          ),
-          _buildMenuCard(
-            context,
-            '人事評価室 (Stats)',
-            '社員ランク(レベル)や実績の進捗を確認します。',
-            Icons.bar_chart,
-            const StatsPage(),
-          ),
-          _buildMenuCard(
-            context,
-            '社員研修センター (Help)',
-            '業務マニュアル(使い方)を確認します。(準備中)',
-            Icons.menu_book,
-            null,
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadWorkspace,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            AgentWorkspacePanel(
+              officeLabel: 'CHRO',
+              accentColor: Colors.indigo,
+              isLoading: _isLoadingWorkspace,
+              workspace: _workspace,
+              onProcessTask: _processTask,
+            ),
+            const SizedBox(height: 16),
+            _buildMenuCard(
+              context,
+              'Rewards',
+              'Review incentives and keep the reward system visible.',
+              Icons.card_giftcard,
+              const RewardsPage(),
+            ),
+            _buildMenuCard(
+              context,
+              'Stats',
+              'Check user-level and team-level HR metrics.',
+              Icons.bar_chart,
+              const StatsPage(),
+            ),
+            _buildMenuCard(
+              context,
+              'People Help',
+              'Keep onboarding and support notes for team operations.',
+              Icons.menu_book,
+              null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -64,8 +132,9 @@ class ChroOfficePage extends StatelessWidget {
         onTap: page != null
             ? () =>
                 Navigator.push(context, MaterialPageRoute(builder: (_) => page))
-            : () => ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('準備中です'))),
+            : () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Coming soon')),
+                ),
       ),
     );
   }

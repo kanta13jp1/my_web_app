@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/note.dart';
 import '../services/attachment_service.dart';
+import '../services/agent_org_service.dart';
 import '../utils/ai_secretary_content.dart';
 
 class AISecretaryPage extends StatefulWidget {
@@ -32,6 +33,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
   String _currentStrategyType = 'today';
 
   final ImagePicker _picker = ImagePicker();
+  final AgentOrgService _agentOrgService = AgentOrgService();
 
   Map<String, dynamic> _normalizeFunctionPayload(dynamic rawPayload) {
     if (rawPayload is Map) {
@@ -128,6 +130,31 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     }
   }
 
+  Future<String?> _loadStartupPromptFor(String slug) async {
+    try {
+      final workspace = await _agentOrgService.loadWorkspaceBySlug(slug);
+      final startupPrompt = workspace?.startupPrompt.trim();
+      if (startupPrompt == null || startupPrompt.isEmpty) {
+        return null;
+      }
+      return startupPrompt;
+    } catch (error) {
+      debugPrint('Failed to load startup prompt for $slug: $error');
+      return null;
+    }
+  }
+
+  String _injectStartupPrompt({
+    required String taskPrompt,
+    String? startupPrompt,
+  }) {
+    final normalizedStartupPrompt = startupPrompt?.trim();
+    if (normalizedStartupPrompt == null || normalizedStartupPrompt.isEmpty) {
+      return taskPrompt;
+    }
+    return '$normalizedStartupPrompt\n\n[Current Request]\n$taskPrompt';
+  }
+
   Future<void> _consultSecretary(String strategyType) async {
     setState(() {
       _isLoading = true;
@@ -151,9 +178,14 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
       final recentNotesJson = recentNotes
           .map((n) => {'id': n.id, 'title': n.title, 'content': n.content})
           .toList();
-      final prompt = buildAiSecretaryPrompt(
+      final basePrompt = buildAiSecretaryPrompt(
         strategyLabel: _strategyLabel(strategyType),
         recentNotesJson: recentNotesJson,
+      );
+      final startupPrompt = await _loadStartupPromptFor('ceo');
+      final prompt = _injectStartupPrompt(
+        taskPrompt: basePrompt,
+        startupPrompt: startupPrompt,
       );
 
       final response = await supabase.functions.invoke(
