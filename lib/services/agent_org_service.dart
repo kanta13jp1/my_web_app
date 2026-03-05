@@ -2,13 +2,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 import '../models/agent_memory_entry.dart';
+import '../models/agent_message.dart';
 import '../models/agent_profile.dart';
+import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
 
 class AgentOrgSnapshot {
   final List<AgentProfile> agents;
   final List<AgentTask> tasks;
   final List<AgentMemoryEntry> recentMemories;
+  final List<AgentRelationship> relationships;
+  final List<AgentMessage> recentMessages;
   final Map<String, int> openTaskCountsByAgent;
   final Map<String, int> memoryCountsByAgent;
 
@@ -16,6 +20,8 @@ class AgentOrgSnapshot {
     required this.agents,
     required this.tasks,
     required this.recentMemories,
+    required this.relationships,
+    required this.recentMessages,
     required this.openTaskCountsByAgent,
     required this.memoryCountsByAgent,
   });
@@ -24,6 +30,8 @@ class AgentOrgSnapshot {
       : agents = const <AgentProfile>[],
         tasks = const <AgentTask>[],
         recentMemories = const <AgentMemoryEntry>[],
+        relationships = const <AgentRelationship>[],
+        recentMessages = const <AgentMessage>[],
         openTaskCountsByAgent = const <String, int>{},
         memoryCountsByAgent = const <String, int>{};
 }
@@ -47,6 +55,17 @@ class AgentOrgService {
 
   AgentOrgService({SupabaseClient? supabaseClient})
       : _supabase = supabaseClient ?? supabase;
+
+  static const List<String> memoryLayerOrder = <String>[
+    'priming',
+    'rag',
+    'consolidation',
+    'contradiction',
+    'forgetting',
+    'episode',
+    'handoff',
+    'identity_note',
+  ];
 
   static const List<AgentBlueprint> defaultExecutiveBlueprints = [
     AgentBlueprint(
@@ -131,6 +150,40 @@ class AgentOrgService {
         )
         .toList();
 
+    List<AgentRelationship> relationships = const <AgentRelationship>[];
+    try {
+      final dynamic relationshipRows = await _supabase
+          .from('agent_relationships')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(80);
+      relationships = (relationshipRows as List)
+          .whereType<Map>()
+          .map(
+            (row) => AgentRelationship.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList();
+    } catch (_) {
+      relationships = const <AgentRelationship>[];
+    }
+
+    List<AgentMessage> messages = const <AgentMessage>[];
+    try {
+      final dynamic messageRows = await _supabase
+          .from('agent_messages')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(40);
+      messages = (messageRows as List)
+          .whereType<Map>()
+          .map((row) => AgentMessage.fromJson(Map<String, dynamic>.from(row)))
+          .toList();
+    } catch (_) {
+      messages = const <AgentMessage>[];
+    }
+
     final taskCounts = <String, int>{};
     for (final task in tasks) {
       taskCounts[task.assigneeAgentId] =
@@ -146,6 +199,8 @@ class AgentOrgService {
       agents: agents,
       tasks: tasks,
       recentMemories: memories,
+      relationships: relationships,
+      recentMessages: messages,
       openTaskCountsByAgent: taskCounts,
       memoryCountsByAgent: memoryCounts,
     );
@@ -154,7 +209,7 @@ class AgentOrgService {
   Future<AgentWorkspaceSnapshot?> loadWorkspaceBySlug(
     String slug, {
     int taskLimit = 8,
-    int memoryLimit = 6,
+    int memoryLimit = 16,
   }) async {
     final userId = _currentUserId;
     if (userId == null) {
@@ -212,6 +267,13 @@ class AgentOrgService {
     );
   }
 
+  Future<Map<String, AgentProfile>> loadExecutiveAgentMap() async {
+    final agents = await ensureExecutiveAgents();
+    return <String, AgentProfile>{
+      for (final agent in agents) agent.slug: agent,
+    };
+  }
+
   Future<List<AgentProfile>> ensureExecutiveAgents() async {
     final userId = _currentUserId;
     if (userId == null) {
@@ -258,15 +320,22 @@ class AgentOrgService {
       }
     }
 
-    return _loadAgentsForUser(userId);
+    final finalAgents = await _loadAgentsForUser(userId);
+    await _ensureDefaultRelationships(userId, finalAgents);
+    return finalAgents;
   }
 
-  Future<void> delegateTask({
+  Future<AgentTask> delegateTask({
     required String supervisorAgentId,
     required String assigneeAgentId,
     required String title,
     String description = '',
     String priority = 'high',
+    String taskType = 'delegated_action',
+    String source = 'manual_delegate',
+    String messageKind = 'directive',
+    String? conversationId,
+    bool createMessage = true,
   }) async {
     final userId = _requireUserId();
     final normalizedTitle = title.trim();
@@ -275,20 +344,28 @@ class AgentOrgService {
       throw ArgumentError('Task title is required.');
     }
 
-    await _supabase.from('agent_tasks').insert({
-      'user_id': userId,
-      'supervisor_agent_id': supervisorAgentId,
-      'assignee_agent_id': assigneeAgentId,
-      'title': normalizedTitle,
-      'description': normalizedDescription,
-      'status': 'queued',
-      'priority': priority,
-      'task_type': 'delegated_action',
-      'source': 'manual_delegate',
-      'metadata': <String, dynamic>{
-        'delegated_at': DateTime.now().toIso8601String(),
-      },
-    });
+    final dynamic insertedTask = await _supabase
+        .from('agent_tasks')
+        .insert({
+          'user_id': userId,
+          'supervisor_agent_id': supervisorAgentId,
+          'assignee_agent_id': assigneeAgentId,
+          'title': normalizedTitle,
+          'description': normalizedDescription,
+          'status': 'queued',
+          'priority': priority,
+          'task_type': taskType,
+          'source': source,
+          'metadata': <String, dynamic>{
+            'delegated_at': DateTime.now().toIso8601String(),
+          },
+        })
+        .select()
+        .single();
+
+    final task = AgentTask.fromJson(
+      Map<String, dynamic>.from(insertedTask as Map),
+    );
 
     await _supabase
         .from('agents')
@@ -314,6 +391,26 @@ class AgentOrgService {
         'source': 'delegate_task',
       },
     ]);
+
+    if (createMessage) {
+      await sendStructuredMessage(
+        fromAgentId: supervisorAgentId,
+        toAgentId: assigneeAgentId,
+        summary: normalizedTitle,
+        messageKind: messageKind,
+        linkedTaskId: task.id,
+        conversationId: conversationId,
+        payload: <String, dynamic>{
+          'task_id': task.id,
+          'task_type': task.taskType,
+          'description': normalizedDescription,
+          'priority': priority,
+        },
+        source: source,
+      );
+    }
+
+    return task;
   }
 
   Future<void> updateTaskStatus({
@@ -332,16 +429,120 @@ class AgentOrgService {
         .eq('user_id', userId);
   }
 
+  Future<AgentMessage?> sendStructuredMessage({
+    required String fromAgentId,
+    required String toAgentId,
+    required String summary,
+    String messageKind = 'directive',
+    String status = 'sent',
+    String? linkedTaskId,
+    String? conversationId,
+    Map<String, dynamic> payload = const <String, dynamic>{},
+    String source = 'agent_message',
+  }) async {
+    final userId = _requireUserId();
+    final normalizedSummary = summary.trim();
+    if (normalizedSummary.isEmpty) {
+      return null;
+    }
+
+    dynamic inserted;
+    try {
+      inserted = await _supabase
+          .from('agent_messages')
+          .insert({
+            'user_id': userId,
+            'from_agent_id': fromAgentId,
+            'to_agent_id': toAgentId,
+            'linked_task_id': linkedTaskId,
+            'conversation_id': conversationId,
+            'message_kind': messageKind,
+            'summary': normalizedSummary,
+            'payload': payload,
+            'status': status,
+            'metadata': <String, dynamic>{
+              'source': source,
+              'sent_at': DateTime.now().toIso8601String(),
+            },
+          })
+          .select()
+          .maybeSingle();
+
+      await _supabase
+          .from('agents')
+          .update({'last_active_at': DateTime.now().toIso8601String()})
+          .eq('id', fromAgentId)
+          .eq('user_id', userId);
+      await _supabase
+          .from('agents')
+          .update({'last_active_at': DateTime.now().toIso8601String()})
+          .eq('id', toAgentId)
+          .eq('user_id', userId);
+    } catch (_) {
+      return null;
+    }
+
+    if (inserted is! Map) {
+      return null;
+    }
+    return AgentMessage.fromJson(Map<String, dynamic>.from(inserted));
+  }
+
+  Future<void> consolidateMemory({
+    required String agentId,
+    required String summary,
+    String source = 'memory_consolidation',
+  }) async {
+    await appendMemoryEntry(
+      agentId: agentId,
+      content: summary,
+      memoryLayer: 'consolidation',
+      source: source,
+    );
+  }
+
+  Future<void> registerForgettingDecision({
+    required String agentId,
+    required String forgottenItem,
+    required String reason,
+    String source = 'memory_forgetting',
+  }) async {
+    await appendMemoryEntry(
+      agentId: agentId,
+      content: 'Forget: $forgottenItem\nReason: $reason',
+      memoryLayer: 'forgetting',
+      source: source,
+    );
+  }
+
+  Future<void> resolveMemoryContradiction({
+    required String agentId,
+    required String contradiction,
+    required String resolution,
+    String source = 'memory_contradiction',
+  }) async {
+    await appendMemoryEntry(
+      agentId: agentId,
+      content: 'Contradiction: $contradiction\nResolution: $resolution',
+      memoryLayer: 'contradiction',
+      source: source,
+    );
+  }
+
   Future<void> appendMemoryEntry({
     required String agentId,
     required String content,
     String memoryLayer = 'episode',
     String source = 'manual_note',
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     final userId = _requireUserId();
     final normalizedContent = content.trim();
     if (normalizedContent.isEmpty) {
       throw ArgumentError('Memory content is required.');
+    }
+    if (!memoryLayerOrder.contains(memoryLayer)) {
+      throw ArgumentError('Unsupported memory layer: $memoryLayer');
     }
     await _supabase.from('agent_memories').insert({
       'user_id': userId,
@@ -349,6 +550,7 @@ class AgentOrgService {
       'memory_layer': memoryLayer,
       'content': normalizedContent,
       'source': source,
+      'metadata': metadata,
     });
     await _supabase
         .from('agents')
@@ -397,6 +599,20 @@ class AgentOrgService {
       memoryLayer: 'episode',
       source: 'task_status',
     );
+
+    await sendStructuredMessage(
+      fromAgentId: task.assigneeAgentId,
+      toAgentId: task.supervisorAgentId,
+      summary: memoryText,
+      messageKind: 'status',
+      linkedTaskId: task.id,
+      payload: <String, dynamic>{
+        'task_id': task.id,
+        'task_title': task.title,
+        'task_status': status,
+      },
+      source: 'task_status',
+    );
   }
 
   static String composeStartupPrompt({
@@ -404,6 +620,25 @@ class AgentOrgService {
     required List<AgentMemoryEntry> recentMemories,
     required List<AgentTask> openTasks,
   }) {
+    List<AgentMemoryEntry> byLayer(String layer) {
+      return recentMemories
+          .where((memory) => memory.memoryLayer == layer)
+          .toList();
+    }
+
+    final primingStack = <AgentMemoryEntry>[
+      ...byLayer('priming'),
+      ...byLayer('identity_note'),
+    ];
+    final operationalStack = <AgentMemoryEntry>[
+      ...byLayer('rag'),
+      ...byLayer('handoff'),
+      ...byLayer('episode'),
+    ];
+    final consolidationStack = byLayer('consolidation');
+    final contradictionStack = byLayer('contradiction');
+    final forgettingStack = byLayer('forgetting');
+
     final buffer = StringBuffer()
       ..writeln('あなたは ${agent.displayName} (${agent.roleTitle}) です。')
       ..writeln('所属: ${agent.department}')
@@ -415,12 +650,48 @@ class AgentOrgService {
       ..writeln('【Permissions】')
       ..writeln(agent.permissionsSummary);
 
-    if (recentMemories.isNotEmpty) {
+    if (primingStack.isNotEmpty) {
       buffer
         ..writeln()
-        ..writeln('【Recent Memory Stack】');
-      for (final memory in recentMemories.take(5)) {
+        ..writeln('【Priming】');
+      for (final memory in primingStack.take(2)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (operationalStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Operational Memory (RAG / handoff / episode)】');
+      for (final memory in operationalStack.take(6)) {
         buffer.writeln('- [${memory.memoryLayer}] ${memory.content}');
+      }
+    }
+
+    if (consolidationStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Consolidation】');
+      for (final memory in consolidationStack.take(3)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (contradictionStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Contradiction Resolution】');
+      for (final memory in contradictionStack.take(2)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (forgettingStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('【Forgetting Decisions】');
+      for (final memory in forgettingStack.take(2)) {
+        buffer.writeln('- ${memory.content}');
       }
     }
 
@@ -437,6 +708,60 @@ class AgentOrgService {
       ..writeln()
       ..writeln('この前提を維持し、自分の権限内で判断してください。');
     return buffer.toString().trim();
+  }
+
+  Future<void> _ensureDefaultRelationships(
+    String userId,
+    List<AgentProfile> agents,
+  ) async {
+    final bySlug = <String, AgentProfile>{
+      for (final agent in agents) agent.slug: agent,
+    };
+    final ceo = bySlug['ceo'];
+    if (ceo == null) {
+      return;
+    }
+
+    final rows = <Map<String, dynamic>>[];
+    for (final blueprint in defaultExecutiveBlueprints) {
+      if (blueprint.supervisorSlug == null) {
+        continue;
+      }
+      final subordinate = bySlug[blueprint.slug];
+      if (subordinate == null) {
+        continue;
+      }
+      rows.add(<String, dynamic>{
+        'user_id': userId,
+        'from_agent_id': ceo.id,
+        'to_agent_id': subordinate.id,
+        'relationship_type': 'supervises',
+        'communication_protocol': 'directive_then_report',
+        'status': 'active',
+        'metadata': <String, dynamic>{'source': 'registry_sync'},
+      });
+      rows.add(<String, dynamic>{
+        'user_id': userId,
+        'from_agent_id': subordinate.id,
+        'to_agent_id': ceo.id,
+        'relationship_type': 'reports_to',
+        'communication_protocol': 'status_update',
+        'status': 'active',
+        'metadata': <String, dynamic>{'source': 'registry_sync'},
+      });
+    }
+
+    if (rows.isEmpty) {
+      return;
+    }
+    try {
+      await _supabase.from('agent_relationships').upsert(
+            rows,
+            onConflict: 'user_id,from_agent_id,to_agent_id,relationship_type',
+          );
+    } catch (_) {
+      // Keep agent registry usable even before migration is applied.
+    }
   }
 
   Future<List<AgentProfile>> _loadAgentsForUser(String userId) async {

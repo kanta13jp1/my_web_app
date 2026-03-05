@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/agent_memory_entry.dart';
+import '../models/agent_message.dart';
 import '../models/agent_profile.dart';
+import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 
@@ -38,7 +40,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   }
 
   List<AgentProfile> get _delegableAgents => _snapshot.agents
-      .where((agent) => agent.slug == 'cfo' || agent.slug == 'cmo')
+      .where(
+        (agent) =>
+            agent.slug == 'cfo' || agent.slug == 'cmo' || agent.slug == 'chro',
+      )
       .toList();
 
   AgentProfile? get _ceoAgent {
@@ -61,7 +66,12 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         return;
       }
       final delegable = snapshot.agents
-          .where((agent) => agent.slug == 'cfo' || agent.slug == 'cmo')
+          .where(
+            (agent) =>
+                agent.slug == 'cfo' ||
+                agent.slug == 'cmo' ||
+                agent.slug == 'chro',
+          )
           .toList();
       setState(() {
         _snapshot = snapshot;
@@ -273,6 +283,16 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                                 value: '${_snapshot.recentMemories.length}',
                                 color: Colors.blue,
                               ),
+                              _buildSummaryChip(
+                                label: '通信ログ',
+                                value: '${_snapshot.recentMessages.length}',
+                                color: Colors.orange,
+                              ),
+                              _buildSummaryChip(
+                                label: '関係マップ',
+                                value: '${_snapshot.relationships.length}',
+                                color: Colors.teal,
+                              ),
                             ],
                           ),
                         ),
@@ -304,6 +324,36 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         ..._snapshot.tasks.map(_buildTaskCard),
                       const SizedBox(height: 24),
                       const Text(
+                        'agent_relationships',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_snapshot.relationships.isEmpty)
+                        _buildEmptyCard('関係マップはありません。')
+                      else
+                        ..._snapshot.relationships
+                            .take(12)
+                            .map(_buildRelationshipCard),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'agent_messages',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_snapshot.recentMessages.isEmpty)
+                        _buildEmptyCard('通信ログはありません。')
+                      else
+                        ..._snapshot.recentMessages
+                            .take(12)
+                            .map(_buildStructuredMessageCard),
+                      const SizedBox(height: 24),
+                      const Text(
                         'Memory Stack (recent)',
                         style: TextStyle(
                           fontSize: 18,
@@ -333,7 +383,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'CEO -> CFO / CMO 委任',
+              'CEO -> CFO / CMO / CHRO 委任',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
@@ -621,6 +671,78 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     );
   }
 
+  AgentProfile? _findAgentById(String id) {
+    for (final agent in _snapshot.agents) {
+      if (agent.id == id) {
+        return agent;
+      }
+    }
+    return null;
+  }
+
+  Widget _buildRelationshipCard(AgentRelationship relationship) {
+    final from = _findAgentById(relationship.fromAgentId);
+    final to = _findAgentById(relationship.toAgentId);
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: const Icon(Icons.alt_route, color: Colors.teal),
+        title: Text(
+          '${from?.displayName ?? relationship.fromAgentId} -> ${to?.displayName ?? relationship.toAgentId}',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          '${relationship.relationshipType} / ${relationship.communicationProtocol}',
+          style: const TextStyle(height: 1.4),
+        ),
+        trailing: _buildStatusBadge(relationship.status),
+      ),
+    );
+  }
+
+  Widget _buildStructuredMessageCard(AgentMessage message) {
+    final from = _findAgentById(message.fromAgentId);
+    final to = _findAgentById(message.toAgentId);
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${from?.displayName ?? message.fromAgentId} -> ${to?.displayName ?? message.toAgentId}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                _buildStatusBadge(message.status),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${message.messageKind}: ${message.summary}',
+              style: const TextStyle(height: 1.4),
+            ),
+            if (message.linkedTaskId != null &&
+                message.linkedTaskId!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'task: ${message.linkedTaskId}',
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMemoryCard(AgentMemoryEntry memory) {
     AgentProfile? owner;
     for (final agent in _snapshot.agents) {
@@ -656,9 +778,15 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   Widget _buildStatusBadge(String status) {
     final Color color;
     switch (status) {
+      case 'active':
+      case 'sent':
+        color = Colors.teal;
+        break;
       case 'completed':
+      case 'resolved':
         color = Colors.green;
         break;
+      case 'acknowledged':
       case 'in_progress':
         color = Colors.blue;
         break;

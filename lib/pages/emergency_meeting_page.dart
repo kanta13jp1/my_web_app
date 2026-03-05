@@ -44,6 +44,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   List<bool> _abstinenceChecks = <bool>[];
   String? _riskAlert;
   String? _decodeNotice;
+  List<String> _executionHubLogs = <String>[];
+  String? _executionHubError;
   int _abstinenceViolationCount = 0;
   int _abstinenceNoViolationDays = 0;
   int _lastContinuationCompletionRate = 0;
@@ -129,11 +131,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- importUsed: "未確認"\n\n'
       '【役員構成】\n'
       '- CFO: 支出とサブスクの最適化\n'
-      '- CKO: 学習と記録の継続設計\n'
+      '- CMO: 流入、登録率、導線改善\n'
       '- CHRO: 習慣維持とモチベーション管理\n'
-      '- CSO: 全体戦略と実行計画の統合\n\n'
+      '- CEO: 全体戦略と実行計画の統合\n\n'
       '【出力ルール】\n'
-      '1. messages は4〜6件。各役員が数字に触れて短く提言する。\n'
+      '1. messages は3〜5件。CFO / CMO / CHRO の提言を必ず含める。\n'
       '2. continuation_plan は「48時間以内に実行する継続アクション」を3件。\n'
       '3. abstinence_rules は「誘惑を断つ禁欲ルール」を3件。\n'
       '4. risk_alert は最大リスクを1文で示す。\n'
@@ -145,9 +147,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '{\n'
       '  "messages": [\n'
       '    {"role":"CFO","speaker_name":"AI CFO","content":"..."},\n'
-      '    {"role":"CKO","speaker_name":"AI CKO","content":"..."},\n'
+      '    {"role":"CMO","speaker_name":"AI CMO","content":"..."},\n'
       '    {"role":"CHRO","speaker_name":"AI CHRO","content":"..."},\n'
-      '    {"role":"CSO","speaker_name":"AI CSO","content":"..."}\n'
+      '    {"role":"CEO","speaker_name":"AI CEO","content":"..."}\n'
       '  ],\n'
       '  "continuation_plan": ["...", "...", "..."],\n'
       '  "abstinence_rules": ["...", "...", "..."],\n'
@@ -282,6 +284,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final workspaces = await Future.wait<AgentWorkspaceSnapshot?>([
         _agentOrgService.loadWorkspaceBySlug('ceo'),
         _agentOrgService.loadWorkspaceBySlug('cfo'),
+        _agentOrgService.loadWorkspaceBySlug('cmo'),
         _agentOrgService.loadWorkspaceBySlug('cho'),
         _agentOrgService.loadWorkspaceBySlug('chro'),
       ]);
@@ -318,6 +321,151 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       return prompt;
     }
     return '$normalizedStartupContext\n\n[Board Meeting Request]\n$prompt';
+  }
+
+  String? _normalizeRoleSlug(String role) {
+    final normalized = role.trim().toUpperCase();
+    switch (normalized) {
+      case 'CEO':
+        return 'ceo';
+      case 'CFO':
+        return 'cfo';
+      case 'CMO':
+      case 'CKO':
+      case 'CSO':
+        return 'cmo';
+      case 'CHRO':
+        return 'chro';
+      case 'CHO':
+        return 'cho';
+      default:
+        return null;
+    }
+  }
+
+  String _taskTitleForRole(String roleSlug, String seed) {
+    final normalizedSeed = seed.trim().isEmpty ? '48時間実行プランを開始する' : seed.trim();
+    switch (roleSlug) {
+      case 'cfo':
+        return '財務実行: $normalizedSeed';
+      case 'cmo':
+        return '流入実行: $normalizedSeed';
+      case 'chro':
+        return '習慣実行: $normalizedSeed';
+      default:
+        return normalizedSeed;
+    }
+  }
+
+  String _buildExecutionDescription({
+    required String roleLabel,
+    required String meetingConclusion,
+    required String continuationAction,
+    required String abstinenceGuard,
+    String? roleBrief,
+  }) {
+    final lines = <String>[
+      'Role: $roleLabel',
+      'CEO conclusion: $meetingConclusion',
+      '48h action: $continuationAction',
+      'Guardrail: $abstinenceGuard',
+    ];
+    final normalizedRoleBrief = roleBrief?.trim() ?? '';
+    if (normalizedRoleBrief.isNotEmpty) {
+      lines.add('Role brief: $normalizedRoleBrief');
+    }
+    return lines.join('\n');
+  }
+
+  Future<List<String>> _dispatchExecutionHub({
+    required BoardMeetingLog log,
+    required List<String> continuationPlan,
+    required List<String> abstinenceRules,
+  }) async {
+    final agentMap = await _agentOrgService.loadExecutiveAgentMap();
+    final ceo = agentMap['ceo'];
+    if (ceo == null) {
+      return <String>['CEO agent is not available.'];
+    }
+
+    final roleBriefBySlug = <String, String>{};
+    for (final message in log.messages) {
+      final slug = _normalizeRoleSlug(message.role);
+      if (slug == null) {
+        continue;
+      }
+      final text = message.content.trim();
+      if (text.isEmpty) {
+        continue;
+      }
+      roleBriefBySlug[slug] = roleBriefBySlug.containsKey(slug)
+          ? '${roleBriefBySlug[slug]}\n$text'
+          : text;
+    }
+
+    final continuationAction =
+        continuationPlan.isNotEmpty ? continuationPlan.first : log.conclusion;
+    final abstinenceGuard =
+        abstinenceRules.isNotEmpty ? abstinenceRules.first : '誘惑トリガーを1つ遮断する。';
+    final executionLogs = <String>[];
+
+    for (final roleSlug in const <String>['cfo', 'cmo', 'chro']) {
+      final assignee = agentMap[roleSlug];
+      if (assignee == null) {
+        executionLogs.add('$roleSlug: agent not found');
+        continue;
+      }
+
+      final title = _taskTitleForRole(roleSlug, continuationAction);
+      final description = _buildExecutionDescription(
+        roleLabel: assignee.displayName,
+        meetingConclusion: log.conclusion,
+        continuationAction: continuationAction,
+        abstinenceGuard: abstinenceGuard,
+        roleBrief: roleBriefBySlug[roleSlug],
+      );
+
+      final delegatedTask = await _agentOrgService.delegateTask(
+        supervisorAgentId: ceo.id,
+        assigneeAgentId: assignee.id,
+        title: title,
+        description: description,
+        priority: 'high',
+        taskType: 'meeting_execution',
+        source: 'emergency_hub',
+        conversationId: log.id,
+        messageKind: 'directive',
+      );
+
+      await _agentOrgService.consolidateMemory(
+        agentId: assignee.id,
+        summary: 'Emergency hub assigned: ${delegatedTask.title}',
+        source: 'emergency_hub',
+      );
+
+      executionLogs.add('${assignee.displayName}: ${delegatedTask.title}');
+    }
+
+    await _agentOrgService.consolidateMemory(
+      agentId: ceo.id,
+      summary:
+          'Emergency meeting dispatched\nConclusion: ${log.conclusion}\nAssignments:\n${executionLogs.join('\n')}',
+      source: 'emergency_hub',
+    );
+    await _agentOrgService.registerForgettingDecision(
+      agentId: ceo.id,
+      forgottenItem: '曖昧な優先順位',
+      reason: '会議結果をもとに48時間の実行順序を固定するため。',
+      source: 'emergency_hub',
+    );
+    await _agentOrgService.resolveMemoryContradiction(
+      agentId: ceo.id,
+      contradiction: '短期成果を急ぐ行動と禁欲ルールが競合する。',
+      resolution: '継続アクションを先に実行し、禁欲ルールで暴発を抑制する。',
+      source: 'emergency_hub',
+    );
+
+    return executionLogs;
   }
 
   int _currentContinuationRatePercent() {
@@ -1293,8 +1441,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           ? recoveredMessages
           : <Map<String, String>>[
               <String, String>{
-                'role': 'CSO',
-                'speaker_name': 'AI CSO',
+                'role': 'CMO',
+                'speaker_name': 'AI CMO',
                 'content':
                     extractedMessage != null && extractedMessage.isNotEmpty
                         ? _truncateText(extractedMessage, maxChars: 180)
@@ -1410,6 +1558,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       _abstinenceChecks = <bool>[];
       _riskAlert = null;
       _decodeNotice = null;
+      _executionHubLogs = <String>[];
+      _executionHubError = null;
     });
 
     try {
@@ -1621,6 +1771,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         createdAt: DateTime.now(),
       );
 
+      List<String> executionHubLogs = const <String>[];
+      String? executionHubError;
+      try {
+        executionHubLogs = await _dispatchExecutionHub(
+          log: log,
+          continuationPlan: continuationPlan,
+          abstinenceRules: abstinenceRules,
+        );
+      } catch (error) {
+        executionHubError = error.toString();
+        debugPrint('Failed to dispatch execution hub: $error');
+      }
+
       setState(() {
         _currentLog = log;
         _continuationPlan = continuationPlan;
@@ -1634,6 +1797,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _decodeNotice = (decodeNotice == null || decodeNotice.isEmpty)
             ? null
             : decodeNotice;
+        _executionHubLogs = executionHubLogs;
+        _executionHubError = executionHubError;
         if (nextMetrics != null) {
           _abstinenceViolationCount = _toInt(
             nextMetrics['abstinence_violation_count'],
@@ -2104,6 +2269,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             _buildRecoveryNoticeChip(_decodeNotice!),
             const SizedBox(height: 14),
           ],
+          if (_executionHubLogs.isNotEmpty || _executionHubError != null) ...[
+            _buildExecutionHubPanel(),
+            const SizedBox(height: 14),
+          ],
           if (_continuationPlan.isNotEmpty) ...[
             _buildContinuationExecutionPanel(),
             const SizedBox(height: 14),
@@ -2175,6 +2344,53 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExecutionHubPanel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.lightGreenAccent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: Colors.lightGreenAccent.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.hub, color: Colors.lightGreenAccent, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Execution Hub',
+                style: TextStyle(
+                  color: Colors.lightGreenAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_executionHubError != null)
+            Text(
+              'Dispatch warning: $_executionHubError',
+              style: const TextStyle(color: Colors.orangeAccent, height: 1.4),
+            ),
+          if (_executionHubLogs.isNotEmpty)
+            ..._executionHubLogs.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '- $line',
+                  style: const TextStyle(color: Colors.white, height: 1.4),
+                ),
+              ),
+            ),
         ],
       ),
     );

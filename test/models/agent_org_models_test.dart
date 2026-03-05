@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/agent_memory_entry.dart';
+import 'package:my_web_app/models/agent_message.dart';
 import 'package:my_web_app/models/agent_profile.dart';
+import 'package:my_web_app/models/agent_relationship.dart';
 import 'package:my_web_app/models/agent_task.dart';
 import 'package:my_web_app/services/agent_org_service.dart';
 
@@ -69,6 +71,46 @@ void main() {
     expect(memory.toJson()['source'], 'delegate_task');
   });
 
+  test('AgentRelationship parses direction and status', () {
+    final relationship = AgentRelationship.fromJson(<String, dynamic>{
+      'id': 'rel-1',
+      'user_id': 'user-1',
+      'from_agent_id': 'agent-ceo',
+      'to_agent_id': 'agent-cfo',
+      'relationship_type': 'supervises',
+      'communication_protocol': 'directive_then_report',
+      'status': 'active',
+      'created_at': '2026-03-05T01:00:00.000Z',
+      'updated_at': '2026-03-05T01:00:00.000Z',
+    });
+
+    expect(relationship.relationshipType, 'supervises');
+    expect(relationship.isActive, isTrue);
+    expect(relationship.toJson()['to_agent_id'], 'agent-cfo');
+  });
+
+  test('AgentMessage parses payload and status helpers', () {
+    final message = AgentMessage.fromJson(<String, dynamic>{
+      'id': 'msg-1',
+      'user_id': 'user-1',
+      'from_agent_id': 'agent-ceo',
+      'to_agent_id': 'agent-cmo',
+      'linked_task_id': 'task-1',
+      'conversation_id': 'meeting-1',
+      'message_kind': 'directive',
+      'summary': 'LP conversion recovery plan',
+      'payload': <String, dynamic>{'priority': 'high'},
+      'status': 'sent',
+      'created_at': '2026-03-05T01:10:00.000Z',
+      'updated_at': '2026-03-05T01:10:00.000Z',
+    });
+
+    expect(message.messageKind, 'directive');
+    expect(message.isSent, isTrue);
+    expect(message.payload['priority'], 'high');
+    expect(message.toJson()['linked_task_id'], 'task-1');
+  });
+
   test('composeStartupPrompt injects identity, memories and tasks', () {
     final agent = AgentProfile.fromJson(<String, dynamic>{
       'id': 'agent-cmo',
@@ -119,6 +161,7 @@ void main() {
 
     expect(prompt, contains('あなたは CMO'));
     expect(prompt, contains('流入改善 / 登録導線改善'));
+    expect(prompt, contains('Operational Memory'));
     expect(prompt, contains('LPの無料体験導線を優先する'));
     expect(prompt, contains('登録率改善プランを作る'));
   });
