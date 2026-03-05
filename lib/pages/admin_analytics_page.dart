@@ -47,9 +47,13 @@ class AdminAnalyticsPage extends StatefulWidget {
 
 class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _dailyStats = [];
+  List<Map<String, dynamic>> _toolExecutionLogs = [];
+  Map<String, int> _blockedReasonBreakdown = {};
   int _actualUserCount = 0;
   int _lpTodayViews = 0;
   int _lpTotalViews = 0;
+  int _allowedToolExecutionCount = 0;
+  int _blockedToolExecutionCount = 0;
   bool _hasLpViewStats = false;
   bool _isLoading = true;
   late final SupabaseClient _supabase;
@@ -59,6 +63,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (value is num) return value.toInt();
     if (value is String) return int.tryParse(value) ?? 0;
     return 0;
+  }
+
+  bool _toBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+    }
+    return false;
   }
 
   DateTime _startOfDay(DateTime date) =>
@@ -484,6 +497,48 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
 
+      final toolExecutionLogs = <Map<String, dynamic>>[];
+      final blockedReasonCounts = <String, int>{};
+      var allowedExecutionCount = 0;
+      var blockedExecutionCount = 0;
+
+      try {
+        final dynamic rawToolLogs = await _supabase
+            .from('agent_tool_execution_logs')
+            .select('tool_name, allowed, blocked_reason, created_at')
+            .order('created_at', ascending: false)
+            .limit(80);
+
+        if (rawToolLogs is List) {
+          for (final row in rawToolLogs.whereType<Map>()) {
+            final log = Map<String, dynamic>.from(row);
+            final allowed = _toBool(log['allowed']);
+            if (allowed) {
+              allowedExecutionCount += 1;
+            } else {
+              blockedExecutionCount += 1;
+              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
+              final reason =
+                  rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
+              blockedReasonCounts.update(
+                reason,
+                (current) => current + 1,
+                ifAbsent: () => 1,
+              );
+            }
+            toolExecutionLogs.add(log);
+          }
+        }
+      } catch (error) {
+        debugPrint('agent_tool_execution_logs is unavailable: $error');
+      }
+
+      final sortedBlockedReasons = blockedReasonCounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final normalizedBlockedReasons = <String, int>{
+        for (final entry in sortedBlockedReasons) entry.key: entry.value,
+      };
+
       if (mounted) {
         setState(() {
           _dailyStats = mergedDailyStats;
@@ -491,6 +546,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _lpTodayViews = _toInt(lpStats['today']);
           _lpTotalViews = _toInt(lpStats['total']);
           _hasLpViewStats = hasLpViewStats;
+          _toolExecutionLogs = toolExecutionLogs;
+          _blockedReasonBreakdown = normalizedBlockedReasons;
+          _allowedToolExecutionCount = allowedExecutionCount;
+          _blockedToolExecutionCount = blockedExecutionCount;
           _isLoading = false;
         });
       }
@@ -761,6 +820,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       funnel: totalFunnel,
                       remainingRegistrations: 0,
                     ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Agent Tool Guard (Fail-close)',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildToolExecutionGuardCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -1467,6 +1534,234 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildToolExecutionGuardCard() {
+    if (_toolExecutionLogs.isEmpty) {
+      return const Card(
+        elevation: 1,
+        color: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(18),
+          child: Text(
+            'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ),
+      );
+    }
+
+    final totalExecutions =
+        _allowedToolExecutionCount + _blockedToolExecutionCount;
+    final blockedRate = totalExecutions == 0
+        ? 0.0
+        : (_blockedToolExecutionCount / totalExecutions * 100);
+    final recentLogs = _toolExecutionLogs.take(12).toList();
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildMiniKpiChip(
+                  label: 'Allowed',
+                  value: '$_allowedToolExecutionCount',
+                  color: Colors.green,
+                ),
+                _buildMiniKpiChip(
+                  label: 'Blocked',
+                  value: '$_blockedToolExecutionCount',
+                  color: Colors.redAccent,
+                ),
+                _buildMiniKpiChip(
+                  label: 'Blocked Rate',
+                  value: '${blockedRate.toStringAsFixed(1)}%',
+                  color: Colors.deepOrange,
+                ),
+              ],
+            ),
+            if (_blockedReasonBreakdown.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const Text(
+                'Blocked Reasons',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              ..._blockedReasonBreakdown.entries.take(6).map((entry) {
+                final ratio = _blockedToolExecutionCount == 0
+                    ? 0.0
+                    : (entry.value / _blockedToolExecutionCount)
+                        .clamp(0.0, 1.0);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              entry.key,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${entry.value}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          minHeight: 6,
+                          value: ratio,
+                          backgroundColor: Colors.redAccent.withValues(
+                            alpha: 0.08,
+                          ),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+            const SizedBox(height: 12),
+            const Text(
+              'Recent Tool Executions',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            ...recentLogs.map((log) {
+              final allowed = _toBool(log['allowed']);
+              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
+              final reasonText =
+                  rawReason.isEmpty ? 'No block reason' : rawReason;
+              final toolName = _formatToolName(log['tool_name']?.toString());
+              final createdAt = _formatTimestamp(log['created_at']);
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: allowed
+                      ? Colors.green.withValues(alpha: 0.05)
+                      : Colors.redAccent.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: allowed
+                        ? Colors.green.withValues(alpha: 0.2)
+                        : Colors.redAccent.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          allowed ? Icons.check_circle : Icons.block,
+                          size: 16,
+                          color: allowed ? Colors.green : Colors.redAccent,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            toolName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          createdAt,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!allowed) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        reasonText,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatToolName(String? raw) {
+    switch (raw) {
+      case 'delegate_task':
+        return 'delegate_task';
+      case 'process_task':
+        return 'process_task';
+      case 'update_task_status':
+        return 'update_task_status';
+      case 'send_message':
+        return 'send_message';
+      case 'append_memory':
+        return 'append_memory';
+      case 'set_agent_status':
+        return 'set_agent_status';
+      case 'run_heartbeat':
+        return 'run_heartbeat';
+      case 'run_nightly_consolidation':
+        return 'run_nightly_consolidation';
+      case 'run_forgetting':
+        return 'run_forgetting';
+      case 'run_runtime_cycle':
+        return 'run_runtime_cycle';
+      default:
+        return raw == null || raw.trim().isEmpty ? 'unknown_tool' : raw;
+    }
+  }
+
+  String _formatTimestamp(dynamic rawValue) {
+    if (rawValue == null) {
+      return '--';
+    }
+    final parsed = DateTime.tryParse(rawValue.toString())?.toLocal();
+    if (parsed == null) {
+      return '--';
+    }
+    return DateFormat('MM/dd HH:mm:ss').format(parsed);
   }
 
   Color _getCvrColor(double cvr) {
