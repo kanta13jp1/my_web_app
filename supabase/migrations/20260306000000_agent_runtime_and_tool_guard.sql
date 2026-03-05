@@ -9,6 +9,9 @@
 -- 1) Strict memory-layer separation for agent_memories
 -- ---------------------------------------------------------------------------
 
+ALTER TABLE agent_memories
+    DROP CONSTRAINT IF EXISTS agent_memories_memory_layer_check;
+
 UPDATE agent_memories
 SET memory_layer = 'episodes'
 WHERE memory_layer = 'episode';
@@ -24,9 +27,6 @@ WHERE memory_layer IN ('rag', 'consolidation');
 UPDATE agent_memories
 SET memory_layer = 'state'
 WHERE memory_layer IN ('priming', 'identity_note', 'contradiction');
-
-ALTER TABLE agent_memories
-    DROP CONSTRAINT IF EXISTS agent_memories_memory_layer_check;
 
 ALTER TABLE agent_memories
     ADD CONSTRAINT agent_memories_memory_layer_check
