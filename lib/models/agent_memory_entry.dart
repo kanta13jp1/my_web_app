@@ -24,7 +24,7 @@ class AgentMemoryEntry {
       id: json['id']?.toString() ?? '',
       userId: json['user_id']?.toString() ?? '',
       agentId: json['agent_id']?.toString() ?? '',
-      memoryLayer: json['memory_layer']?.toString() ?? 'episode',
+      memoryLayer: json['memory_layer']?.toString() ?? 'episodes',
       content: json['content']?.toString() ?? '',
       source: json['source']?.toString() ?? 'manual_note',
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??

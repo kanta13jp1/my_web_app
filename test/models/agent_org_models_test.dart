@@ -14,10 +14,10 @@ void main() {
       'slug': 'cfo',
       'display_name': 'CFO',
       'role_title': 'Chief Financial Officer',
-      'department': '財務',
+      'department': 'Finance',
       'status': 'active',
-      'identity_prompt': '財務責任者',
-      'permissions_summary': '予算管理',
+      'identity_prompt': 'You are the CFO.',
+      'permissions_summary': 'Budget / fixed cost / financial reporting',
       'supervisor_agent_id': 'agent-ceo',
       'last_active_at': '2026-03-04T09:30:00.000Z',
       'created_at': '2026-03-04T09:00:00.000Z',
@@ -39,8 +39,8 @@ void main() {
       'user_id': 'user-1',
       'supervisor_agent_id': 'agent-ceo',
       'assignee_agent_id': 'agent-cmo',
-      'title': 'LP改善',
-      'description': '体験導線を見直す',
+      'title': 'Improve LP copy',
+      'description': 'Shorten first-view CTA message',
       'status': 'in_progress',
       'priority': 'high',
       'task_type': 'delegated_action',
@@ -60,14 +60,14 @@ void main() {
       'id': 'memory-1',
       'user_id': 'user-1',
       'agent_id': 'agent-cmo',
-      'memory_layer': 'handoff',
-      'content': 'CEOからの新規委任',
+      'memory_layer': 'activity_log',
+      'content': 'Delegated LP task received',
       'source': 'delegate_task',
       'created_at': '2026-03-04T09:15:00.000Z',
     });
 
-    expect(memory.memoryLayer, 'handoff');
-    expect(memory.content, contains('委任'));
+    expect(memory.memoryLayer, 'activity_log');
+    expect(memory.content, contains('LP'));
     expect(memory.toJson()['source'], 'delegate_task');
   });
 
@@ -118,32 +118,32 @@ void main() {
       'slug': 'cmo',
       'display_name': 'CMO',
       'role_title': 'Chief Marketing Officer',
-      'department': '広報',
+      'department': 'Marketing',
       'status': 'active',
-      'identity_prompt': 'あなたは広報責任者です。',
-      'permissions_summary': '流入改善 / 登録導線改善',
+      'identity_prompt': 'You are the CMO for growth and conversion.',
+      'permissions_summary': 'Traffic / LP / share / conversion',
       'created_at': '2026-03-04T09:00:00.000Z',
       'updated_at': '2026-03-04T09:00:00.000Z',
     });
-    final memories = [
+    final memories = <AgentMemoryEntry>[
       AgentMemoryEntry.fromJson(<String, dynamic>{
         'id': 'memory-1',
         'user_id': 'user-1',
         'agent_id': 'agent-cmo',
-        'memory_layer': 'handoff',
-        'content': 'LPの無料体験導線を優先する',
+        'memory_layer': 'activity_log',
+        'content': 'LP hero copy changed for faster first action',
         'source': 'delegate_task',
         'created_at': '2026-03-04T09:10:00.000Z',
       }),
     ];
-    final tasks = [
+    final tasks = <AgentTask>[
       AgentTask.fromJson(<String, dynamic>{
         'id': 'task-1',
         'user_id': 'user-1',
         'supervisor_agent_id': 'agent-ceo',
         'assignee_agent_id': 'agent-cmo',
-        'title': '登録率改善プランを作る',
-        'description': '無料体験導線を最優先で見る',
+        'title': 'Refine first-view CTA',
+        'description': 'Show immediate user outcome on first screen',
         'status': 'queued',
         'priority': 'high',
         'task_type': 'delegated_action',
@@ -159,10 +159,10 @@ void main() {
       openTasks: tasks,
     );
 
-    expect(prompt, contains('あなたは CMO'));
-    expect(prompt, contains('流入改善 / 登録導線改善'));
-    expect(prompt, contains('Operational Memory'));
-    expect(prompt, contains('LPの無料体験導線を優先する'));
-    expect(prompt, contains('登録率改善プランを作る'));
+    expect(prompt, contains('You are CMO'));
+    expect(prompt, contains('Traffic / LP / share / conversion'));
+    expect(prompt, contains('[Activity Log]'));
+    expect(prompt, contains('LP hero copy changed for faster first action'));
+    expect(prompt, contains('Refine first-view CTA'));
   });
 }

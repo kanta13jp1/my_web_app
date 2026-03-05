@@ -210,7 +210,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       await _service.appendMemoryEntry(
         agentId: agent.id,
         content: controller.text.trim(),
-        memoryLayer: 'identity_note',
+        memoryLayer: 'state',
       );
       if (!mounted) {
         return;

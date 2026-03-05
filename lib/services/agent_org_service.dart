@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
@@ -57,15 +59,35 @@ class AgentOrgService {
       : _supabase = supabaseClient ?? supabase;
 
   static const List<String> memoryLayerOrder = <String>[
-    'priming',
-    'rag',
-    'consolidation',
-    'contradiction',
-    'forgetting',
-    'episode',
-    'handoff',
-    'identity_note',
+    'state',
+    'knowledge',
+    'procedures',
+    'skills',
+    'episodes',
+    'activity_log',
   ];
+
+  static const Set<String> _allowedTaskStatuses = <String>{
+    'queued',
+    'in_progress',
+    'completed',
+    'cancelled',
+  };
+
+  static const Set<String> _dangerousFragments = <String>{
+    'drop table',
+    'truncate table',
+    'delete from',
+    'rm -rf',
+    'sudo ',
+    'powershell -',
+    'cmd /c',
+    '<script',
+    'javascript:',
+    'system(',
+  };
+
+  static const int _maxGuardPayloadLength = 8000;
 
   static const List<AgentBlueprint> defaultExecutiveBlueprints = [
     AgentBlueprint(
@@ -325,7 +347,8 @@ class AgentOrgService {
     return finalAgents;
   }
 
-  Future<AgentTask> delegateTask({
+  // ignore: unused_element
+  Future<AgentTask> _delegateTaskLegacy({
     required String supervisorAgentId,
     required String assigneeAgentId,
     required String title,
@@ -377,14 +400,14 @@ class AgentOrgService {
       {
         'user_id': userId,
         'agent_id': supervisorAgentId,
-        'memory_layer': 'episode',
+        'memory_layer': 'episodes',
         'content': '委任: $normalizedTitle',
         'source': 'delegate_task',
       },
       {
         'user_id': userId,
         'agent_id': assigneeAgentId,
-        'memory_layer': 'handoff',
+        'memory_layer': 'activity_log',
         'content': normalizedDescription.isEmpty
             ? 'CEOからの新規委任: $normalizedTitle'
             : 'CEOからの新規委任: $normalizedTitle\n$normalizedDescription',
@@ -413,11 +436,170 @@ class AgentOrgService {
     return task;
   }
 
+  Future<AgentTask> delegateTask({
+    required String supervisorAgentId,
+    required String assigneeAgentId,
+    required String title,
+    String description = '',
+    String priority = 'high',
+    String taskType = 'delegated_action',
+    String source = 'manual_delegate',
+    String messageKind = 'directive',
+    String? conversationId,
+    bool createMessage = true,
+    String? actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final normalizedTitle = title.trim();
+    final normalizedDescription = description.trim();
+    if (normalizedTitle.isEmpty) {
+      throw ArgumentError('Task title is required.');
+    }
+
+    final actorId = actorAgentId ?? supervisorAgentId;
+    if (actorId != supervisorAgentId) {
+      throw StateError(
+        'Fail-close: actor must match supervisor when delegating tasks.',
+      );
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'delegate_task',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'supervisor_agent_id': supervisorAgentId,
+        'assignee_agent_id': assigneeAgentId,
+        'title': normalizedTitle,
+        'description': normalizedDescription,
+        'priority': priority,
+        'task_type': taskType,
+        'source': source,
+      },
+      permissionCheck: () async {
+        final supervisor = await _loadAgentById(supervisorAgentId);
+        final assignee = await _loadAgentById(assigneeAgentId);
+        if (supervisor == null || assignee == null) {
+          return 'Agent not found.';
+        }
+        if (!supervisor.isActive) {
+          return 'Supervisor is not active.';
+        }
+        if (assignee.supervisorAgentId != supervisor.id) {
+          return 'Supervisor cannot delegate to non-subordinate agent.';
+        }
+        return null;
+      },
+    );
+
+    final dynamic insertedTask = await _supabase
+        .from('agent_tasks')
+        .insert({
+          'user_id': userId,
+          'supervisor_agent_id': supervisorAgentId,
+          'assignee_agent_id': assigneeAgentId,
+          'title': normalizedTitle,
+          'description': normalizedDescription,
+          'status': 'queued',
+          'priority': priority,
+          'task_type': taskType,
+          'source': source,
+          'metadata': <String, dynamic>{
+            'delegated_at': DateTime.now().toIso8601String(),
+          },
+        })
+        .select()
+        .single();
+
+    final task = AgentTask.fromJson(
+      Map<String, dynamic>.from(insertedTask as Map),
+    );
+
+    await _supabase
+        .from('agents')
+        .update({'last_active_at': DateTime.now().toIso8601String()})
+        .eq('id', assigneeAgentId)
+        .eq('user_id', userId);
+
+    await _supabase.from('agent_memories').insert([
+      {
+        'user_id': userId,
+        'agent_id': supervisorAgentId,
+        'memory_layer': 'activity_log',
+        'content': 'Delegated task: $normalizedTitle',
+        'source': 'delegate_task',
+      },
+      {
+        'user_id': userId,
+        'agent_id': assigneeAgentId,
+        'memory_layer': 'activity_log',
+        'content': normalizedDescription.isEmpty
+            ? 'Received delegated task: $normalizedTitle'
+            : 'Received delegated task: $normalizedTitle\n$normalizedDescription',
+        'source': 'delegate_task',
+      },
+    ]);
+
+    if (createMessage) {
+      await sendStructuredMessage(
+        actorAgentId: actorId,
+        fromAgentId: supervisorAgentId,
+        toAgentId: assigneeAgentId,
+        summary: normalizedTitle,
+        messageKind: messageKind,
+        linkedTaskId: task.id,
+        conversationId: conversationId,
+        payload: <String, dynamic>{
+          'task_id': task.id,
+          'task_type': task.taskType,
+          'description': normalizedDescription,
+          'priority': priority,
+        },
+        source: source,
+      );
+    }
+
+    return task;
+  }
+
   Future<void> updateTaskStatus({
     required String taskId,
     required String status,
+    String? actorAgentId,
   }) async {
     final userId = _requireUserId();
+    if (!_allowedTaskStatuses.contains(status)) {
+      throw ArgumentError('Unsupported task status: $status');
+    }
+
+    final task = await _loadTaskById(taskId);
+    if (task == null) {
+      throw StateError('Task not found.');
+    }
+    if (!_isValidTaskTransition(from: task.status, to: status)) {
+      throw StateError(
+        'Fail-close: invalid task transition ${task.status} -> $status.',
+      );
+    }
+    final actorId = actorAgentId ?? task.supervisorAgentId;
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'update_task_status',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'task_id': task.id,
+        'task_status': status,
+      },
+      permissionCheck: () async {
+        if (actorId != task.assigneeAgentId &&
+            actorId != task.supervisorAgentId) {
+          return 'Only assignee or supervisor can update task status.';
+        }
+        return null;
+      },
+    );
+
     await _supabase
         .from('agent_tasks')
         .update({
@@ -439,12 +621,45 @@ class AgentOrgService {
     String? conversationId,
     Map<String, dynamic> payload = const <String, dynamic>{},
     String source = 'agent_message',
+    String? actorAgentId,
   }) async {
     final userId = _requireUserId();
     final normalizedSummary = summary.trim();
     if (normalizedSummary.isEmpty) {
       return null;
     }
+    final actorId = actorAgentId ?? fromAgentId;
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'send_message',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'from_agent_id': fromAgentId,
+        'to_agent_id': toAgentId,
+        'message_kind': messageKind,
+        'summary': normalizedSummary,
+        'source': source,
+        'payload': payload,
+      },
+      permissionCheck: () async {
+        if (actorId != fromAgentId) {
+          return 'Actor must match message sender.';
+        }
+        if (fromAgentId == toAgentId) {
+          return null;
+        }
+        final hasForwardRelationship = await _hasActiveRelationship(
+          userId: userId,
+          fromAgentId: fromAgentId,
+          toAgentId: toAgentId,
+        );
+        if (!hasForwardRelationship) {
+          return 'No active relationship between sender and receiver.';
+        }
+        return null;
+      },
+    );
 
     dynamic inserted;
     try {
@@ -492,12 +707,14 @@ class AgentOrgService {
     required String agentId,
     required String summary,
     String source = 'memory_consolidation',
+    String? actorAgentId,
   }) async {
     await appendMemoryEntry(
       agentId: agentId,
       content: summary,
-      memoryLayer: 'consolidation',
+      memoryLayer: 'knowledge',
       source: source,
+      actorAgentId: actorAgentId ?? agentId,
     );
   }
 
@@ -506,12 +723,14 @@ class AgentOrgService {
     required String forgottenItem,
     required String reason,
     String source = 'memory_forgetting',
+    String? actorAgentId,
   }) async {
     await appendMemoryEntry(
       agentId: agentId,
       content: 'Forget: $forgottenItem\nReason: $reason',
-      memoryLayer: 'forgetting',
+      memoryLayer: 'activity_log',
       source: source,
+      actorAgentId: actorAgentId ?? agentId,
     );
   }
 
@@ -520,21 +739,24 @@ class AgentOrgService {
     required String contradiction,
     required String resolution,
     String source = 'memory_contradiction',
+    String? actorAgentId,
   }) async {
     await appendMemoryEntry(
       agentId: agentId,
       content: 'Contradiction: $contradiction\nResolution: $resolution',
-      memoryLayer: 'contradiction',
+      memoryLayer: 'state',
       source: source,
+      actorAgentId: actorAgentId ?? agentId,
     );
   }
 
   Future<void> appendMemoryEntry({
     required String agentId,
     required String content,
-    String memoryLayer = 'episode',
+    String memoryLayer = 'episodes',
     String source = 'manual_note',
     Map<String, dynamic> metadata = const <String, dynamic>{},
+    String? actorAgentId,
   }) async {
     final userId = _requireUserId();
     final normalizedContent = content.trim();
@@ -544,6 +766,33 @@ class AgentOrgService {
     if (!memoryLayerOrder.contains(memoryLayer)) {
       throw ArgumentError('Unsupported memory layer: $memoryLayer');
     }
+    final actorId = actorAgentId ?? agentId;
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'append_memory',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'target_agent_id': agentId,
+        'memory_layer': memoryLayer,
+        'source': source,
+        'metadata': metadata,
+        'content': normalizedContent,
+      },
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        final target = await _loadAgentById(agentId);
+        if (actor == null || target == null) {
+          return 'Agent not found.';
+        }
+        if (actor.id == target.id) {
+          return null;
+        }
+        if (target.supervisorAgentId == actor.id || actor.slug == 'ceo') {
+          return null;
+        }
+        return 'Actor cannot write memory for another agent.';
+      },
+    );
     await _supabase.from('agent_memories').insert({
       'user_id': userId,
       'agent_id': agentId,
@@ -562,8 +811,40 @@ class AgentOrgService {
   Future<void> setAgentStatus({
     required String agentId,
     required bool enabled,
+    String? actorAgentId,
   }) async {
     final userId = _requireUserId();
+    final actorId = actorAgentId ?? await _findAgentIdBySlug('ceo');
+    if (actorId == null) {
+      throw StateError(
+        'Fail-close: actor agent is required for status change.',
+      );
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'set_agent_status',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'target_agent_id': agentId,
+        'enabled': enabled,
+      },
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        final target = await _loadAgentById(agentId);
+        if (actor == null || target == null) {
+          return 'Agent not found.';
+        }
+        if (actor.id == target.id) {
+          return null;
+        }
+        if (target.supervisorAgentId == actor.id || actor.slug == 'ceo') {
+          return null;
+        }
+        return 'Actor cannot change target agent status.';
+      },
+    );
+
     await _supabase
         .from('agents')
         .update({'status': enabled ? 'active' : 'paused'})
@@ -574,8 +855,37 @@ class AgentOrgService {
   Future<void> processTask({
     required AgentTask task,
     required String status,
+    String? actorAgentId,
   }) async {
     final userId = _requireUserId();
+    if (!_allowedTaskStatuses.contains(status)) {
+      throw ArgumentError('Unsupported task status: $status');
+    }
+    if (!_isValidTaskTransition(from: task.status, to: status)) {
+      throw StateError(
+        'Fail-close: invalid task transition ${task.status} -> $status.',
+      );
+    }
+
+    final actorId = actorAgentId ?? task.assigneeAgentId;
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'process_task',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'task_id': task.id,
+        'task_type': task.taskType,
+        'current_status': task.status,
+        'next_status': status,
+      },
+      permissionCheck: () async {
+        if (actorId != task.assigneeAgentId) {
+          return 'Only assignee can process delegated tasks.';
+        }
+        return null;
+      },
+    );
+
     await _supabase
         .from('agent_tasks')
         .update({
@@ -596,11 +906,13 @@ class AgentOrgService {
     await appendMemoryEntry(
       agentId: task.assigneeAgentId,
       content: memoryText,
-      memoryLayer: 'episode',
+      memoryLayer: 'episodes',
       source: 'task_status',
+      actorAgentId: actorId,
     );
 
     await sendStructuredMessage(
+      actorAgentId: actorId,
       fromAgentId: task.assigneeAgentId,
       toAgentId: task.supervisorAgentId,
       summary: memoryText,
@@ -615,7 +927,179 @@ class AgentOrgService {
     );
   }
 
-  static String composeStartupPrompt({
+  Future<int> runHeartbeat({
+    String? actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final actorId = actorAgentId ?? await _findAgentIdBySlug('ceo');
+    if (actorId == null) {
+      throw StateError('Fail-close: actor agent is required for heartbeat.');
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'run_heartbeat',
+      actorAgentId: actorId,
+      payload: const <String, dynamic>{},
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        if (actor == null || actor.slug != 'ceo') {
+          return 'Only CEO can execute heartbeat manually.';
+        }
+        return null;
+      },
+    );
+
+    final dynamic response = await _supabase
+        .rpc('run_agent_heartbeat', params: {'p_user_id': userId});
+    if (response is int) {
+      return response;
+    }
+    return int.tryParse(response?.toString() ?? '0') ?? 0;
+  }
+
+  Future<int> runNightlyConsolidation({
+    String? actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final actorId = actorAgentId ?? await _findAgentIdBySlug('ceo');
+    if (actorId == null) {
+      throw StateError(
+        'Fail-close: actor agent is required for nightly consolidation.',
+      );
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'run_nightly_consolidation',
+      actorAgentId: actorId,
+      payload: const <String, dynamic>{},
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        if (actor == null || actor.slug != 'ceo') {
+          return 'Only CEO can execute nightly consolidation manually.';
+        }
+        return null;
+      },
+    );
+
+    final dynamic response = await _supabase
+        .rpc('run_agent_nightly_consolidation', params: {'p_user_id': userId});
+    if (response is int) {
+      return response;
+    }
+    return int.tryParse(response?.toString() ?? '0') ?? 0;
+  }
+
+  Future<int> runForgettingCycle({
+    int retentionDays = 30,
+    String? actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final actorId = actorAgentId ?? await _findAgentIdBySlug('ceo');
+    if (actorId == null) {
+      throw StateError('Fail-close: actor agent is required for forgetting.');
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'run_forgetting',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{'retention_days': retentionDays},
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        if (actor == null || actor.slug != 'ceo') {
+          return 'Only CEO can execute forgetting manually.';
+        }
+        return null;
+      },
+    );
+
+    final dynamic response = await _supabase.rpc(
+      'run_agent_memory_forgetting',
+      params: {
+        'p_user_id': userId,
+        'p_retention_days': retentionDays,
+      },
+    );
+    if (response is int) {
+      return response;
+    }
+    return int.tryParse(response?.toString() ?? '0') ?? 0;
+  }
+
+  Future<Map<String, dynamic>> runRuntimeCycle({
+    bool runNightly = false,
+    bool runForgetting = false,
+    String? actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final actorId = actorAgentId ?? await _findAgentIdBySlug('ceo');
+    if (actorId == null) {
+      throw StateError(
+        'Fail-close: actor agent is required for runtime cycle.',
+      );
+    }
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'run_runtime_cycle',
+      actorAgentId: actorId,
+      payload: <String, dynamic>{
+        'run_nightly': runNightly,
+        'run_forgetting': runForgetting,
+      },
+      permissionCheck: () async {
+        final actor = await _loadAgentById(actorId);
+        if (actor == null || actor.slug != 'ceo') {
+          return 'Only CEO can execute runtime cycle manually.';
+        }
+        return null;
+      },
+    );
+
+    final dynamic response = await _supabase.rpc(
+      'run_agent_runtime_cycle',
+      params: <String, dynamic>{
+        'p_user_id': userId,
+        'p_run_nightly': runNightly,
+        'p_run_forgetting': runForgetting,
+      },
+    );
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+    return <String, dynamic>{
+      'heartbeat_agents': 0,
+      'nightly_agents': 0,
+      'forgetting_agents': 0,
+      'run_nightly': runNightly,
+      'run_forgetting': runForgetting,
+    };
+  }
+
+  static bool _isValidTaskTransition({
+    required String from,
+    required String to,
+  }) {
+    if (from == to) {
+      return true;
+    }
+    switch (from) {
+      case 'queued':
+        return to == 'in_progress' || to == 'completed' || to == 'cancelled';
+      case 'in_progress':
+        return to == 'completed' || to == 'cancelled';
+      case 'completed':
+      case 'cancelled':
+        return false;
+      default:
+        return false;
+    }
+  }
+
+  // ignore: unused_element
+  static String _composeStartupPromptLegacy({
     required AgentProfile agent,
     required List<AgentMemoryEntry> recentMemories,
     required List<AgentTask> openTasks,
@@ -627,17 +1111,16 @@ class AgentOrgService {
     }
 
     final primingStack = <AgentMemoryEntry>[
-      ...byLayer('priming'),
-      ...byLayer('identity_note'),
+      ...byLayer('state'),
     ];
     final operationalStack = <AgentMemoryEntry>[
-      ...byLayer('rag'),
-      ...byLayer('handoff'),
-      ...byLayer('episode'),
+      ...byLayer('knowledge'),
+      ...byLayer('activity_log'),
+      ...byLayer('episodes'),
     ];
-    final consolidationStack = byLayer('consolidation');
-    final contradictionStack = byLayer('contradiction');
-    final forgettingStack = byLayer('forgetting');
+    final consolidationStack = byLayer('procedures');
+    final contradictionStack = byLayer('skills');
+    final forgettingStack = byLayer('activity_log');
 
     final buffer = StringBuffer()
       ..writeln('あなたは ${agent.displayName} (${agent.roleTitle}) です。')
@@ -662,7 +1145,7 @@ class AgentOrgService {
     if (operationalStack.isNotEmpty) {
       buffer
         ..writeln()
-        ..writeln('【Operational Memory (RAG / handoff / episode)】');
+        ..writeln('【Operational Memory (knowledge / activity_log / episodes)】');
       for (final memory in operationalStack.take(6)) {
         buffer.writeln('- [${memory.memoryLayer}] ${memory.content}');
       }
@@ -707,6 +1190,106 @@ class AgentOrgService {
     buffer
       ..writeln()
       ..writeln('この前提を維持し、自分の権限内で判断してください。');
+    return buffer.toString().trim();
+  }
+
+  static String composeStartupPrompt({
+    required AgentProfile agent,
+    required List<AgentMemoryEntry> recentMemories,
+    required List<AgentTask> openTasks,
+  }) {
+    List<AgentMemoryEntry> byLayer(String layer) {
+      return recentMemories
+          .where((memory) => memory.memoryLayer == layer)
+          .toList();
+    }
+
+    final stateStack = byLayer('state');
+    final knowledgeStack = byLayer('knowledge');
+    final procedureStack = byLayer('procedures');
+    final skillsStack = byLayer('skills');
+    final episodeStack = byLayer('episodes');
+    final activityLogStack = byLayer('activity_log');
+
+    final buffer = StringBuffer()
+      ..writeln('You are ${agent.displayName} (${agent.roleTitle}).')
+      ..writeln('Department: ${agent.department}')
+      ..writeln('Status: ${agent.isActive ? 'active' : 'paused'}')
+      ..writeln()
+      ..writeln('[Identity]')
+      ..writeln(agent.identityPrompt)
+      ..writeln()
+      ..writeln('[Permissions]')
+      ..writeln(agent.permissionsSummary);
+
+    if (stateStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[State]');
+      for (final memory in stateStack.take(3)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (knowledgeStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Knowledge]');
+      for (final memory in knowledgeStack.take(4)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (procedureStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Procedures]');
+      for (final memory in procedureStack.take(3)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (skillsStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Skills]');
+      for (final memory in skillsStack.take(3)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (episodeStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Episodes]');
+      for (final memory in episodeStack.take(5)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (activityLogStack.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Activity Log]');
+      for (final memory in activityLogStack.take(4)) {
+        buffer.writeln('- ${memory.content}');
+      }
+    }
+
+    if (openTasks.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('[Open Tasks]');
+      for (final task in openTasks.take(5)) {
+        buffer.writeln('- (${task.priority}/${task.status}) ${task.title}');
+      }
+    }
+
+    buffer
+      ..writeln()
+      ..writeln(
+        'Use this context to execute your role with strict permission boundaries.',
+      );
     return buffer.toString().trim();
   }
 
@@ -782,6 +1365,164 @@ class AgentOrgService {
       (a, b) => (orderMap[a.slug] ?? 999).compareTo(orderMap[b.slug] ?? 999),
     );
     return unsorted;
+  }
+
+  Future<AgentProfile?> _loadAgentById(String agentId) async {
+    final userId = _requireUserId();
+    if (agentId.trim().isEmpty) {
+      return null;
+    }
+    final dynamic row = await _supabase
+        .from('agents')
+        .select()
+        .eq('user_id', userId)
+        .eq('id', agentId)
+        .maybeSingle();
+    if (row is! Map) {
+      return null;
+    }
+    return AgentProfile.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<AgentTask?> _loadTaskById(String taskId) async {
+    final userId = _requireUserId();
+    if (taskId.trim().isEmpty) {
+      return null;
+    }
+    final dynamic row = await _supabase
+        .from('agent_tasks')
+        .select()
+        .eq('user_id', userId)
+        .eq('id', taskId)
+        .maybeSingle();
+    if (row is! Map) {
+      return null;
+    }
+    return AgentTask.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  Future<String?> _findAgentIdBySlug(String slug) async {
+    final userId = _requireUserId();
+    final dynamic row = await _supabase
+        .from('agents')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('slug', slug)
+        .maybeSingle();
+    if (row is! Map) {
+      return null;
+    }
+    return row['id']?.toString();
+  }
+
+  Future<bool> _hasActiveRelationship({
+    required String userId,
+    required String fromAgentId,
+    required String toAgentId,
+  }) async {
+    if (fromAgentId == toAgentId) {
+      return true;
+    }
+    final dynamic row = await _supabase
+        .from('agent_relationships')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('from_agent_id', fromAgentId)
+        .eq('to_agent_id', toAgentId)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+    return row is Map;
+  }
+
+  Future<void> _guardToolExecution({
+    required String userId,
+    required String toolName,
+    required String actorAgentId,
+    required Map<String, dynamic> payload,
+    required Future<String?> Function() permissionCheck,
+  }) async {
+    if (actorAgentId.trim().isEmpty) {
+      await _logToolExecution(
+        userId: userId,
+        actorAgentId: null,
+        toolName: toolName,
+        payload: payload,
+        allowed: false,
+        blockedReason: 'Missing actor agent id.',
+      );
+      throw StateError('Fail-close: missing actor agent id for $toolName.');
+    }
+
+    final dangerousReason = _detectDangerousPayload(payload);
+    if (dangerousReason != null) {
+      await _logToolExecution(
+        userId: userId,
+        actorAgentId: actorAgentId,
+        toolName: toolName,
+        payload: payload,
+        allowed: false,
+        blockedReason: dangerousReason,
+      );
+      throw StateError('Fail-close: $dangerousReason');
+    }
+
+    final permissionDeniedReason = await permissionCheck();
+    if (permissionDeniedReason != null) {
+      await _logToolExecution(
+        userId: userId,
+        actorAgentId: actorAgentId,
+        toolName: toolName,
+        payload: payload,
+        allowed: false,
+        blockedReason: permissionDeniedReason,
+      );
+      throw StateError('Fail-close: $permissionDeniedReason');
+    }
+
+    await _logToolExecution(
+      userId: userId,
+      actorAgentId: actorAgentId,
+      toolName: toolName,
+      payload: payload,
+      allowed: true,
+      blockedReason: null,
+    );
+  }
+
+  String? _detectDangerousPayload(Map<String, dynamic> payload) {
+    final serialized = jsonEncode(payload).toLowerCase();
+    if (serialized.length > _maxGuardPayloadLength) {
+      return 'Payload is too large.';
+    }
+    for (final fragment in _dangerousFragments) {
+      if (serialized.contains(fragment)) {
+        return 'Dangerous payload fragment detected: $fragment';
+      }
+    }
+    return null;
+  }
+
+  Future<void> _logToolExecution({
+    required String userId,
+    required String? actorAgentId,
+    required String toolName,
+    required Map<String, dynamic> payload,
+    required bool allowed,
+    required String? blockedReason,
+  }) async {
+    try {
+      await _supabase.from('agent_tool_execution_logs').insert({
+        'user_id': userId,
+        'actor_agent_id': actorAgentId,
+        'tool_name': toolName,
+        'allowed': allowed,
+        'blocked_reason': blockedReason,
+        'payload': payload,
+      });
+    } catch (_) {
+      // Keep fail-close behavior even before migration is applied.
+    }
   }
 
   String? get _currentUserId => _supabase.auth.currentUser?.id;
