@@ -50,14 +50,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   int _abstinenceNoViolationDays = 0;
   int _lastContinuationCompletionRate = 0;
   int _continuationQuickStartCount = 0;
+  int _continuationTimeBlockReservedCount = 0;
+  int _continuationProgressLogCount = 0;
   int _deepWorkSessionCount = 0;
   int _weeklyPriorityReviewCount = 0;
   int _accountabilityShareCount = 0;
   int _abstinenceRecoveryActionCount = 0;
+  int _abstinenceRecoveredWithin10mCount = 0;
+  int _abstinenceRecoveryWindowMissedCount = 0;
+  int _deterrenceStrictModeBlockCount = 0;
   bool _dailyReminderEnabled = false;
   bool _lockImpulsePurchase = false;
   bool _lockNewProjects = false;
   bool _lockSubscriptionAdditions = false;
+  DateTime? _abstinenceRecoveryDueAt;
   DateTime? _lastReviewAt;
   List<Map<String, dynamic>> _selectableModels = [
     {
@@ -86,6 +92,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       'emergency_continuation_completion_rate';
   static const String _prefsContinuationQuickStartCount =
       'emergency_continuation_quick_start_count';
+  static const String _prefsContinuationTimeBlockReservedCount =
+      'emergency_continuation_time_block_reserved_count';
+  static const String _prefsContinuationProgressLogCount =
+      'emergency_continuation_progress_log_count';
   static const String _prefsDeepWorkSessionCount =
       'emergency_deep_work_session_count';
   static const String _prefsWeeklyPriorityReviewCount =
@@ -94,6 +104,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       'emergency_accountability_share_count';
   static const String _prefsAbstinenceRecoveryActionCount =
       'emergency_abstinence_recovery_action_count';
+  static const String _prefsAbstinenceRecoveredWithin10mCount =
+      'emergency_abstinence_recovered_within_10m_count';
+  static const String _prefsAbstinenceRecoveryWindowMissedCount =
+      'emergency_abstinence_recovery_window_missed_count';
+  static const String _prefsDeterrenceStrictModeBlockCount =
+      'emergency_deterrence_strict_mode_block_count';
+  static const String _prefsAbstinenceRecoveryDueAt =
+      'emergency_abstinence_recovery_due_at';
   static const String _prefsDailyReminderEnabled =
       'emergency_daily_reminder_enabled';
   static const String _prefsLockImpulsePurchase = 'emergency_lock_impulse';
@@ -121,10 +139,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '- abstinenceRuleCompletionRate: {abstinenceRuleCompletionRate}\n'
       '- deepWorkSessionCount: {deepWorkSessionCount}\n'
       '- continuationQuickStartCount: {continuationQuickStartCount}\n'
+      '- continuationTimeBlockReservedCount: {continuationTimeBlockReservedCount}\n'
+      '- continuationProgressLogCount: {continuationProgressLogCount}\n'
       '- weeklyPriorityReviewCount: {weeklyPriorityReviewCount}\n'
       '- accountabilityShareCount: {accountabilityShareCount}\n'
       '- abstinenceRecoveryActionCount: {abstinenceRecoveryActionCount}\n'
+      '- abstinenceRecoveredWithin10mCount: {abstinenceRecoveredWithin10mCount}\n'
+      '- abstinenceRecoveryWindowMissedCount: {abstinenceRecoveryWindowMissedCount}\n'
       '- deterrenceLockEnabledCount: {deterrenceLockEnabledCount}\n'
+      '- deterrenceStrictModeBlockCount: {deterrenceStrictModeBlockCount}\n'
+      '- deterrenceLockCoveragePercent: {deterrenceLockCoveragePercent}\n'
       '- activeDeterrenceLocks: {activeDeterrenceLocks}\n'
       '- healthData: "データ未連携"\n'
       '- marketData: "データ未連携"\n'
@@ -142,7 +166,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '5. conclusion は CEO が今週やる最優先アクションを1〜2文で示す。\n'
       '6. next_meeting_metrics に以下を必ず含める: continuation_quick_start_count, '
       'abstinence_rule_completion_rate_percent, abstinence_recovery_action_count, '
-      'deterrence_lock_enabled_count。\n'
+      'deterrence_lock_enabled_count, continuation_time_block_reserved_count, '
+      'abstinence_recovered_within_10m_count, abstinence_recovery_window_missed_count。\n'
       '7. 返答はJSONのみ。Markdownや説明文は不要。\n\n'
       '{\n'
       '  "messages": [\n'
@@ -157,9 +182,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       '  "conclusion": "...",\n'
       '  "next_meeting_metrics": {\n'
       '    "continuation_quick_start_count": 0,\n'
+      '    "continuation_time_block_reserved_count": 0,\n'
       '    "abstinence_rule_completion_rate_percent": 0,\n'
       '    "abstinence_recovery_action_count": 0,\n'
-      '    "deterrence_lock_enabled_count": 0\n'
+      '    "abstinence_recovered_within_10m_count": 0,\n'
+      '    "abstinence_recovery_window_missed_count": 0,\n'
+      '    "deterrence_strict_mode_block_count": 0,\n'
+      '    "deterrence_lock_enabled_count": 0,\n'
+      '    "deterrence_lock_coverage_percent": 0\n'
       '  }\n'
       '}';
 
@@ -202,6 +232,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Future<void> _loadPdcaState() async {
     final prefs = await SharedPreferences.getInstance();
     final savedReviewAt = prefs.getString(_prefsLastReviewAt);
+    final savedRecoveryDueAt = prefs.getString(_prefsAbstinenceRecoveryDueAt);
     if (!mounted) return;
 
     setState(() {
@@ -213,6 +244,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           prefs.getInt(_prefsContinuationCompletionRate) ?? 0;
       _continuationQuickStartCount =
           prefs.getInt(_prefsContinuationQuickStartCount) ?? 0;
+      _continuationTimeBlockReservedCount =
+          prefs.getInt(_prefsContinuationTimeBlockReservedCount) ?? 0;
+      _continuationProgressLogCount =
+          prefs.getInt(_prefsContinuationProgressLogCount) ?? 0;
       _deepWorkSessionCount = prefs.getInt(_prefsDeepWorkSessionCount) ?? 0;
       _weeklyPriorityReviewCount =
           prefs.getInt(_prefsWeeklyPriorityReviewCount) ?? 0;
@@ -220,12 +255,21 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           prefs.getInt(_prefsAccountabilityShareCount) ?? 0;
       _abstinenceRecoveryActionCount =
           prefs.getInt(_prefsAbstinenceRecoveryActionCount) ?? 0;
+      _abstinenceRecoveredWithin10mCount =
+          prefs.getInt(_prefsAbstinenceRecoveredWithin10mCount) ?? 0;
+      _abstinenceRecoveryWindowMissedCount =
+          prefs.getInt(_prefsAbstinenceRecoveryWindowMissedCount) ?? 0;
+      _deterrenceStrictModeBlockCount =
+          prefs.getInt(_prefsDeterrenceStrictModeBlockCount) ?? 0;
       _dailyReminderEnabled =
           prefs.getBool(_prefsDailyReminderEnabled) ?? false;
       _lockImpulsePurchase = prefs.getBool(_prefsLockImpulsePurchase) ?? false;
       _lockNewProjects = prefs.getBool(_prefsLockNewProjects) ?? false;
       _lockSubscriptionAdditions =
           prefs.getBool(_prefsLockSubscriptionAdditions) ?? false;
+      _abstinenceRecoveryDueAt = savedRecoveryDueAt == null
+          ? null
+          : DateTime.tryParse(savedRecoveryDueAt);
       _lastReviewAt =
           savedReviewAt == null ? null : DateTime.tryParse(savedReviewAt);
     });
@@ -249,6 +293,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       _prefsContinuationQuickStartCount,
       _continuationQuickStartCount,
     );
+    await prefs.setInt(
+      _prefsContinuationTimeBlockReservedCount,
+      _continuationTimeBlockReservedCount,
+    );
+    await prefs.setInt(
+      _prefsContinuationProgressLogCount,
+      _continuationProgressLogCount,
+    );
     await prefs.setInt(_prefsDeepWorkSessionCount, _deepWorkSessionCount);
     await prefs.setInt(
       _prefsWeeklyPriorityReviewCount,
@@ -262,6 +314,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       _prefsAbstinenceRecoveryActionCount,
       _abstinenceRecoveryActionCount,
     );
+    await prefs.setInt(
+      _prefsAbstinenceRecoveredWithin10mCount,
+      _abstinenceRecoveredWithin10mCount,
+    );
+    await prefs.setInt(
+      _prefsAbstinenceRecoveryWindowMissedCount,
+      _abstinenceRecoveryWindowMissedCount,
+    );
+    await prefs.setInt(
+      _prefsDeterrenceStrictModeBlockCount,
+      _deterrenceStrictModeBlockCount,
+    );
     await prefs.setBool(_prefsDailyReminderEnabled, _dailyReminderEnabled);
     await prefs.setBool(_prefsLockImpulsePurchase, _lockImpulsePurchase);
     await prefs.setBool(_prefsLockNewProjects, _lockNewProjects);
@@ -269,6 +333,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       _prefsLockSubscriptionAdditions,
       _lockSubscriptionAdditions,
     );
+    if (_abstinenceRecoveryDueAt != null) {
+      await prefs.setString(
+        _prefsAbstinenceRecoveryDueAt,
+        _abstinenceRecoveryDueAt!.toIso8601String(),
+      );
+    } else {
+      await prefs.remove(_prefsAbstinenceRecoveryDueAt);
+    }
     if (_lastReviewAt != null) {
       await prefs.setString(
         _prefsLastReviewAt,
@@ -499,6 +571,42 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     return locks;
   }
 
+  int _currentDeterrenceLockCoveragePercent() {
+    final activeLockCount = _activeDeterrenceLocks().length;
+    final percent = ((activeLockCount / 3) * 100).round();
+    if (percent < 0) return 0;
+    if (percent > 100) return 100;
+    return percent;
+  }
+
+  bool _hasPendingRecoveryWindow() {
+    final dueAt = _abstinenceRecoveryDueAt;
+    if (dueAt == null) return false;
+    return !DateTime.now().isAfter(dueAt);
+  }
+
+  Duration? _remainingRecoveryWindow() {
+    final dueAt = _abstinenceRecoveryDueAt;
+    if (dueAt == null) return null;
+    final remaining = dueAt.difference(DateTime.now());
+    if (remaining.isNegative) {
+      return const Duration(seconds: 0);
+    }
+    return remaining;
+  }
+
+  Future<void> _flushExpiredRecoveryWindowIfNeeded() async {
+    final dueAt = _abstinenceRecoveryDueAt;
+    if (dueAt == null || !DateTime.now().isAfter(dueAt)) {
+      return;
+    }
+    setState(() {
+      _abstinenceRecoveryWindowMissedCount += 1;
+      _abstinenceRecoveryDueAt = null;
+    });
+    await _persistPdcaState();
+  }
+
   int _toInt(dynamic value, {int fallback = 0}) {
     if (value is int) return value;
     if (value is double) return value.round();
@@ -534,17 +642,24 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       continuationTotalCount: continuationTotal,
       continuationCompletionRatePercent: _currentContinuationRatePercent(),
       continuationQuickStartCount: _continuationQuickStartCount,
+      continuationTimeBlockReservedCount: _continuationTimeBlockReservedCount,
+      continuationProgressLogCount: _continuationProgressLogCount,
       abstinenceViolationCount: _abstinenceViolationCount,
       abstinenceNoViolationDays: _abstinenceNoViolationDays,
       abstinenceRuleCompletedCount: abstinenceCompleted,
       abstinenceRuleTotalCount: abstinenceTotal,
       abstinenceRuleCompletionRatePercent: _currentAbstinenceRuleRatePercent(),
+      abstinenceRecoveredWithin10mCount: _abstinenceRecoveredWithin10mCount,
+      abstinenceRecoveryWindowMissedCount: _abstinenceRecoveryWindowMissedCount,
       deepWorkSessionCount: _deepWorkSessionCount,
       weeklyPriorityReviewCount: _weeklyPriorityReviewCount,
       accountabilityShareCount: _accountabilityShareCount,
       abstinenceRecoveryActionCount: _abstinenceRecoveryActionCount,
       reminderEnabled: _dailyReminderEnabled,
       deterrenceLockEnabledCount: activeLocks.length,
+      deterrenceStrictModeBlockCount: _deterrenceStrictModeBlockCount,
+      deterrenceLockCoveragePercent: _currentDeterrenceLockCoveragePercent(),
+      abstinenceRecoveryDueAt: _abstinenceRecoveryDueAt,
       activeDeterrenceLocks: activeLocks,
       lastReviewAt: _lastReviewAt,
     );
@@ -588,6 +703,44 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     await _persistPdcaState();
   }
 
+  Future<void> _quickStartAndCompleteNextContinuationAction() async {
+    final nextIndex = _nextPendingContinuationIndex();
+    if (nextIndex < 0) return;
+    setState(() {
+      _continuationQuickStartCount += 1;
+      _continuationChecks[nextIndex] = true;
+      _lastContinuationCompletionRate = _currentContinuationRatePercent();
+    });
+    await _persistPdcaState();
+  }
+
+  Future<void> _reserveContinuationTimeBlock() async {
+    setState(() {
+      _continuationTimeBlockReservedCount += 1;
+    });
+    await _persistPdcaState();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('明朝の15分ブロックを予約しました。'),
+      ),
+    );
+  }
+
+  Future<void> _recordContinuationProgressLog() async {
+    setState(() {
+      _continuationProgressLogCount += 1;
+      _lastReviewAt = DateTime.now();
+    });
+    await _persistPdcaState();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('48時間の進捗ログを記録しました。'),
+      ),
+    );
+  }
+
   void _toggleAbstinenceCheck(int index, bool? value) {
     if (index < 0 || index >= _abstinenceChecks.length || value == null) return;
     setState(() => _abstinenceChecks[index] = value);
@@ -629,9 +782,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _recordAbstinenceViolation() async {
+    await _flushExpiredRecoveryWindowIfNeeded();
     setState(() {
       _abstinenceViolationCount += 1;
       _abstinenceNoViolationDays = 0;
+      _abstinenceRecoveryDueAt =
+          DateTime.now().add(const Duration(minutes: 10));
     });
     if (!_dailyReminderEnabled) {
       await _toggleDailyReminder(true);
@@ -640,6 +796,24 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _recordAbstinenceCleanDay() async {
+    await _flushExpiredRecoveryWindowIfNeeded();
+    if (_hasPendingRecoveryWindow()) {
+      setState(() {
+        _deterrenceStrictModeBlockCount += 1;
+      });
+      await _persistPdcaState();
+      if (!mounted) return;
+      final remainingSeconds =
+          _remainingRecoveryWindow()?.inSeconds.clamp(0, 600) ?? 0;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '先に10分以内リカバリーを実行してください。残り ${remainingSeconds}s',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _abstinenceNoViolationDays += 1);
     await _persistPdcaState();
   }
@@ -660,7 +834,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _recordAbstinenceRecoveryAction() async {
-    setState(() => _abstinenceRecoveryActionCount += 1);
+    await _flushExpiredRecoveryWindowIfNeeded();
+    final dueAt = _abstinenceRecoveryDueAt;
+    final recoveredWithinWindow =
+        dueAt != null && !DateTime.now().isAfter(dueAt);
+    setState(() {
+      _abstinenceRecoveryActionCount += 1;
+      if (recoveredWithinWindow) {
+        _abstinenceRecoveredWithin10mCount += 1;
+      }
+      _abstinenceRecoveryDueAt = null;
+    });
     await _persistPdcaState();
   }
 
@@ -1358,11 +1542,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       'weekly_priority_review_count',
       'accountability_share_count',
       'continuation_quick_start_count',
+      'continuation_time_block_reserved_count',
+      'continuation_progress_log_count',
       'abstinence_rule_completed_count',
       'abstinence_rule_total_count',
       'abstinence_rule_completion_rate_percent',
       'abstinence_recovery_action_count',
+      'abstinence_recovered_within_10m_count',
+      'abstinence_recovery_window_missed_count',
       'deterrence_lock_enabled_count',
+      'deterrence_strict_mode_block_count',
+      'deterrence_lock_coverage_percent',
     ];
 
     for (final fieldName in intFields) {
@@ -1390,6 +1580,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _extractQuotedFieldValue(metricsSource, 'last_review_at');
     if (lastReviewAt != null && lastReviewAt.isNotEmpty) {
       recovered['last_review_at'] = lastReviewAt;
+    }
+
+    final abstinenceRecoveryDueAt =
+        _extractQuotedFieldValue(metricsSource, 'abstinence_recovery_due_at');
+    if (abstinenceRecoveryDueAt != null && abstinenceRecoveryDueAt.isNotEmpty) {
+      recovered['abstinence_recovery_due_at'] = abstinenceRecoveryDueAt;
     }
 
     return recovered.isEmpty ? null : recovered;
@@ -1638,6 +1834,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             currentMetrics.continuationQuickStartCount.toString(),
           )
           .replaceFirst(
+            '{continuationTimeBlockReservedCount}',
+            currentMetrics.continuationTimeBlockReservedCount.toString(),
+          )
+          .replaceFirst(
+            '{continuationProgressLogCount}',
+            currentMetrics.continuationProgressLogCount.toString(),
+          )
+          .replaceFirst(
             '{weeklyPriorityReviewCount}',
             currentMetrics.weeklyPriorityReviewCount.toString(),
           )
@@ -1650,8 +1854,24 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             currentMetrics.abstinenceRecoveryActionCount.toString(),
           )
           .replaceFirst(
+            '{abstinenceRecoveredWithin10mCount}',
+            currentMetrics.abstinenceRecoveredWithin10mCount.toString(),
+          )
+          .replaceFirst(
+            '{abstinenceRecoveryWindowMissedCount}',
+            currentMetrics.abstinenceRecoveryWindowMissedCount.toString(),
+          )
+          .replaceFirst(
             '{deterrenceLockEnabledCount}',
             currentMetrics.deterrenceLockEnabledCount.toString(),
+          )
+          .replaceFirst(
+            '{deterrenceStrictModeBlockCount}',
+            currentMetrics.deterrenceStrictModeBlockCount.toString(),
+          )
+          .replaceFirst(
+            '{deterrenceLockCoveragePercent}',
+            currentMetrics.deterrenceLockCoveragePercent.toString(),
           )
           .replaceFirst('{activeDeterrenceLocks}', activeLocksText)
           .replaceFirst('{focusTheme}', _focusLabel(_selectedFocus))
@@ -1816,6 +2036,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             nextMetrics['continuation_quick_start_count'],
             fallback: _continuationQuickStartCount,
           );
+          _continuationTimeBlockReservedCount = _toInt(
+            nextMetrics['continuation_time_block_reserved_count'],
+            fallback: _continuationTimeBlockReservedCount,
+          );
+          _continuationProgressLogCount = _toInt(
+            nextMetrics['continuation_progress_log_count'],
+            fallback: _continuationProgressLogCount,
+          );
           _dailyReminderEnabled = _toBool(
             nextMetrics['reminder_enabled'],
             fallback: _dailyReminderEnabled,
@@ -1849,9 +2077,25 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             nextMetrics['abstinence_recovery_action_count'],
             fallback: _abstinenceRecoveryActionCount,
           );
+          _abstinenceRecoveredWithin10mCount = _toInt(
+            nextMetrics['abstinence_recovered_within_10m_count'],
+            fallback: _abstinenceRecoveredWithin10mCount,
+          );
+          _abstinenceRecoveryWindowMissedCount = _toInt(
+            nextMetrics['abstinence_recovery_window_missed_count'],
+            fallback: _abstinenceRecoveryWindowMissedCount,
+          );
+          _deterrenceStrictModeBlockCount = _toInt(
+            nextMetrics['deterrence_strict_mode_block_count'],
+            fallback: _deterrenceStrictModeBlockCount,
+          );
 
           final parsedReviewAt = _toDateTime(nextMetrics['last_review_at']);
           _lastReviewAt = parsedReviewAt ?? _lastReviewAt;
+          if (nextMetrics.containsKey('abstinence_recovery_due_at')) {
+            _abstinenceRecoveryDueAt =
+                _toDateTime(nextMetrics['abstinence_recovery_due_at']);
+          }
         }
       });
       await _persistPdcaState();
@@ -2559,6 +2803,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               Colors.lightBlueAccent,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            '15分ブロック予約: $_continuationTimeBlockReservedCount回 / 48h進捗ログ: $_continuationProgressLogCount回',
+            style: const TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 8),
           Text(
             '30分深掘り実施: $_deepWorkSessionCount回 / 週次優先レビュー: $_weeklyPriorityReviewCount回 / '
@@ -2619,6 +2868,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('continuation_execute_now_button'),
+                      onPressed: _quickStartAndCompleteNextContinuationAction,
+                      icon: const Icon(Icons.bolt),
+                      label: const Text('今すぐ1件を実行して完了'),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -2643,6 +2902,36 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   onPressed: _recordPriorityReview,
                   icon: const Icon(Icons.event_available),
                   label: const Text('優先レビュー完了'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('continuation_reserve_time_block_button'),
+                  onPressed: _reserveContinuationTimeBlock,
+                  icon: const Icon(Icons.schedule),
+                  label: const Text('明朝15分ブロック予約'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('continuation_log_48h_progress_button'),
+                  onPressed: _recordContinuationProgressLog,
+                  icon: const Icon(Icons.history_toggle_off),
+                  label: const Text('48h進捗ログ記録'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white54),
@@ -2684,6 +2973,22 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             .clamp(0, 10)
             .toDouble();
     final deterrenceProgress = deterrenceScore / 10;
+    final hasPendingRecoveryWindow = _hasPendingRecoveryWindow();
+    final recoveryWindowRemaining = _remainingRecoveryWindow();
+    final remainingRecoverySeconds =
+        recoveryWindowRemaining?.inSeconds.clamp(0, 600) ?? 0;
+    final recoveryActionTotal = _abstinenceRecoveryActionCount;
+    final recoveryWithinRatePercent = recoveryActionTotal == 0
+        ? 0
+        : ((_abstinenceRecoveredWithin10mCount / recoveryActionTotal) * 100)
+            .round();
+
+    if (_abstinenceRecoveryDueAt != null && !hasPendingRecoveryWindow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _flushExpiredRecoveryWindowIfNeeded();
+      });
+    }
 
     return Container(
       width: double.infinity,
@@ -2744,6 +3049,29 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             backgroundColor: Colors.white24,
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
           ),
+          if (hasPendingRecoveryWindow) ...[
+            const SizedBox(height: 8),
+            Container(
+              key: const Key('abstinence_pending_recovery_window_banner'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.redAccent.withValues(alpha: 0.8),
+                ),
+              ),
+              child: Text(
+                '厳格モード: 逸脱後10分以内の再設定が未実施です。残り ${remainingRecoverySeconds}s 以内に「即時リカバリー」を実行してください。',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
           if (activeLockCount < 2) ...[
             const SizedBox(height: 6),
             const Text(
@@ -2807,10 +3135,22 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 6),
+          Text(
+            '10分内リカバリー成功: $_abstinenceRecoveredWithin10mCount回 / 10分超過: $_abstinenceRecoveryWindowMissedCount回 '
+            '(成功率 $recoveryWithinRatePercent%)',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '厳格モード抑止発生: $_deterrenceStrictModeBlockCount回',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
+                  key: const Key('abstinence_record_violation_button'),
                   onPressed: _recordAbstinenceViolation,
                   icon: const Icon(Icons.report_problem_outlined),
                   label: const Text('違反を記録'),
@@ -2823,6 +3163,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
+                  key: const Key('abstinence_record_clean_day_button'),
                   onPressed: _recordAbstinenceCleanDay,
                   icon: const Icon(Icons.verified),
                   label: const Text('本日違反なし'),
@@ -2838,6 +3179,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
+              key: const Key('abstinence_record_accountability_button'),
               onPressed: _recordAccountabilityShare,
               icon: const Icon(Icons.group),
               label: const Text('週次共有を記録'),
@@ -2851,6 +3193,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
+              key: const Key('abstinence_immediate_recovery_button'),
               onPressed: _recordAbstinenceRecoveryAction,
               icon: const Icon(Icons.restart_alt),
               label: const Text('違反後の即時リカバリーを記録'),
@@ -2907,6 +3250,13 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ],
           ),
           const SizedBox(height: 8),
+          Text(
+            '追加PDCA指標: 15分予約 ${metrics.continuationTimeBlockReservedCount} / 48h進捗ログ ${metrics.continuationProgressLogCount} / '
+            '10分内回復 ${metrics.abstinenceRecoveredWithin10mCount} / 10分超過 ${metrics.abstinenceRecoveryWindowMissedCount} / '
+            '厳格抑止 ${metrics.deterrenceStrictModeBlockCount} / ロック網羅率 ${metrics.deterrenceLockCoveragePercent}%',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
           Text(
             '継続完了率: ${metrics.continuationCompletionRatePercent}% '
             '(${metrics.continuationCompletedCount}/${metrics.continuationTotalCount})',
