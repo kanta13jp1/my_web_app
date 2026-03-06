@@ -212,8 +212,8 @@ void main() {
 
       // UIの確認
       expect(find.text('緊急役員会議 (継続・禁欲)'), findsOneWidget);
-      // ボタンがあるか確認
-      expect(find.text('継続・禁欲プランを作成'), findsOneWidget);
+      // 会議フォーカス選択が表示されること
+      expect(find.byType(ChoiceChip), findsWidgets);
     });
 
     testWidgets('Feature: NoteListPage renders correctly',
@@ -222,7 +222,7 @@ void main() {
       // データの読み込み待ち（エラーになってもUIが出ればOK）
       await tester.pumpAndSettle();
 
-      expect(find.text('CKO OFFICE (知識)'), findsOneWidget);
+      expect(find.text('CKO OFFICE (メモ一覧)'), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
   });

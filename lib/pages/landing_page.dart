@@ -54,17 +54,30 @@ class _LandingPageState extends State<LandingPage> {
   String? _lastMagicLinkEmail;
   LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
 
+  SupabaseClient? get _supabaseClientOrNull {
+    try {
+      return Supabase.instance.client;
+    } on AssertionError {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  GoTrueClient? get _authClientOrNull => _supabaseClientOrNull?.auth;
+
   @override
   void initState() {
     super.initState();
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
-      (data) {
+    final authClient = _authClientOrNull;
+    if (authClient != null) {
+      _authSubscription = authClient.onAuthStateChange.listen((data) {
         if (!mounted) return;
         if (data.event == AuthChangeEvent.signedIn && data.session != null) {
           _goToAuthenticatedEntry();
         }
-      },
-    );
+      });
+    }
     _initLpViewStats();
     _loadShareSnapshot();
   }
@@ -121,7 +134,7 @@ class _LandingPageState extends State<LandingPage> {
       await LandingShareService.shareLandingPage(channel: channel);
       final snapshot = await LandingShareService.recordShareAction(
         channel: channel,
-        client: Supabase.instance.client,
+        client: _supabaseClientOrNull,
       );
       if (!mounted) return;
       setState(() => _shareSnapshot = snapshot);
@@ -143,8 +156,13 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> _initLpViewStats() async {
     setState(() => _isLoadingStats = true);
+    final supabase = _supabaseClientOrNull;
+    if (supabase == null) {
+      if (!mounted) return;
+      setState(() => _isLoadingStats = false);
+      return;
+    }
     try {
-      final supabase = Supabase.instance.client;
       await supabase.rpc('increment_lp_view');
       await LandingShareService.recordIncomingShareVisit(client: supabase);
       final dynamic raw = await supabase.rpc('get_lp_view_stats');
@@ -196,8 +214,13 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
+      final supabase = _supabaseClientOrNull;
+      if (supabase == null) {
+        _showMessage('認証機能を初期化できませんでした。');
+        return;
+      }
       if (_isSignUp) {
-        final result = await Supabase.instance.client.auth.signUp(
+        final result = await supabase.auth.signUp(
           email: email,
           password: password,
           emailRedirectTo: _webRedirectUrl,
@@ -207,7 +230,7 @@ class _LandingPageState extends State<LandingPage> {
           _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');
         }
       } else {
-        await Supabase.instance.client.auth.signInWithPassword(
+        await supabase.auth.signInWithPassword(
           email: email,
           password: password,
         );
@@ -231,7 +254,12 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
-      final launched = await Supabase.instance.client.auth.signInWithOAuth(
+      final authClient = _authClientOrNull;
+      if (authClient == null) {
+        _showMessage('認証機能を初期化できませんでした。');
+        return;
+      }
+      final launched = await authClient.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: _webRedirectUrl,
       );
@@ -256,7 +284,12 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client.auth.signInWithOtp(
+      final supabase = _supabaseClientOrNull;
+      if (supabase == null) {
+        _showMessage('認証機能を初期化できませんでした。');
+        return;
+      }
+      await supabase.auth.signInWithOtp(
         email: email,
         emailRedirectTo: _webRedirectUrl,
         shouldCreateUser: true,
@@ -269,7 +302,7 @@ class _LandingPageState extends State<LandingPage> {
       }
       await LandingShareService.recordFunnelEvent(
         eventKey: LandingShareService.funnelMagicLinkSend,
-        client: Supabase.instance.client,
+        client: supabase,
       );
       _startMagicLinkCooldown();
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
@@ -308,7 +341,7 @@ class _LandingPageState extends State<LandingPage> {
     unawaited(
       LandingShareService.recordFunnelEvent(
         eventKey: LandingShareService.funnelTrialRun,
-        client: Supabase.instance.client,
+        client: _supabaseClientOrNull,
       ),
     );
     final input = _trialPromptController.text.trim();
@@ -363,7 +396,7 @@ $input
     unawaited(
       LandingShareService.recordFunnelEvent(
         eventKey: LandingShareService.funnelSaveCta,
-        client: Supabase.instance.client,
+        client: _supabaseClientOrNull,
       ),
     );
     setState(() {
@@ -457,7 +490,7 @@ $input
       if (launched) {
         await LandingShareService.recordFunnelEvent(
           eventKey: LandingShareService.funnelInboxOpen,
-          client: Supabase.instance.client,
+          client: _supabaseClientOrNull,
         );
       }
       if (!launched) {

@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FakeSupabaseClient extends Fake implements SupabaseClient {
   final _queryBuilder = FakeSupabaseQueryBuilder();
-  Map<String, dynamic> _rpcResponse = <String, dynamic>{};
+  final Map<String, dynamic> _rpcResponse = <String, dynamic>{};
 
   FakeSupabaseQueryBuilder get queryBuilder => _queryBuilder;
 

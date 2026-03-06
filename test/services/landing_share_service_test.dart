@@ -56,17 +56,20 @@ void main() {
     );
     expect(
       LandingShareService.resolveIncomingSource(
-          <String, String>{'src': 'facebook'}),
+        <String, String>{'src': 'facebook'},
+      ),
       'facebook',
     );
     expect(
       LandingShareService.resolveIncomingSource(
-          <String, String>{'src': 'copy'}),
+        <String, String>{'src': 'copy'},
+      ),
       'copy_link',
     );
     expect(
       LandingShareService.resolveIncomingSource(
-          <String, String>{'src': 'unknown'}),
+        <String, String>{'src': 'unknown'},
+      ),
       isNull,
     );
   });
