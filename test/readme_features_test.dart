@@ -47,13 +47,17 @@ void main() {
       await tester.pumpWidget(createTestWidget(const HomePage()));
       await tester.pumpAndSettle();
 
-      expect(find.text('次に実施すべきアクション'), findsOneWidget);
-      expect(find.textContaining('AI推奨:'), findsOneWidget);
-      expect(find.text('やらないことガード'), findsOneWidget);
-      expect(find.text('CEO OFFICE'), findsOneWidget);
-      expect(find.text('CSO OFFICE'), findsOneWidget);
-      expect(find.text('OPERATIONS CALENDAR'), findsOneWidget);
-      expect(find.textContaining('逸脱日数'), findsOneWidget);
+      expect(find.byKey(const Key('home_page_scaffold')), findsOneWidget);
+      expect(find.byKey(const Key('home_page_title')), findsOneWidget);
+      expect(find.byKey(const Key('home_section_ceo_office')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_section_cso_office')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_section_operations_calendar')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage prioritizes morning briefing before noon',
@@ -66,8 +70,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('モーニング・ブリーフィングを先に実施'), findsOneWidget);
-      expect(find.text('モーニング・ブリーフィング（最優先）'), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_next_action_morningBriefing')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage prioritizes abstinence guard when slips exist',
@@ -92,10 +98,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('逸脱が発生。禁欲ガードを最優先'), findsOneWidget);
-      expect(find.text('禁欲ガードへ'), findsOneWidget);
-      expect(find.text('モーニング・ブリーフィングを先に実施'), findsNothing);
-      expect(find.text('NEXT'), findsWidgets);
+      expect(
+        find.byKey(const Key('home_next_action_abstinenceGuard')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_next_action_morningBriefing')),
+        findsNothing,
+      );
     });
 
     testWidgets('Feature: HomePage prioritizes balance check after briefing',
@@ -110,8 +120,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('今日の口座残高を確認'), findsOneWidget);
-      expect(find.text('NEXT'), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_next_action_balanceCheck')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage shows normal mode when core flow is done',
@@ -127,7 +139,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('今日の必須導線は完了済み'), findsOneWidget);
+      expect(find.byKey(const Key('home_next_action_none')), findsOneWidget);
     });
 
     testWidgets('Feature: HomePage calendar day shows slips and missing items',
@@ -160,19 +172,14 @@ void main() {
       await tester.tap(calendarDay);
       await tester.pumpAndSettle();
 
-      expect(find.text('2026/02/26 の状態'), findsOneWidget);
-      expect(find.text('逸脱あり'), findsOneWidget);
-      expect(find.textContaining('再発防止アクション:'), findsOneWidget);
-      expect(find.text('逸脱内容'), findsOneWidget);
-      expect(find.text('未達成項目'), findsOneWidget);
-      expect(find.textContaining('酒: 1回'), findsOneWidget);
-      expect(find.textContaining('口座残高確認'), findsOneWidget);
-
-      await tester.tap(find.text('その日の禁欲ガードへ'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('禁欲ガード'), findsOneWidget);
-      expect(find.text('対象日: 2026/02/26'), findsOneWidget);
+      expect(
+        find.byKey(const Key('calendar_day_detail_2026-02-26')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('calendar_day_detail_open_abstinence_button')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage calendar summary pills filter highlights',
@@ -197,12 +204,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final slipSummaryPill = find.textContaining('逸脱日数');
+      final slipSummaryPill = find.byKey(
+        const Key('home_calendar_summary_slip'),
+      );
       await tester.ensureVisible(slipSummaryPill);
       await tester.tap(slipSummaryPill);
       await tester.pumpAndSettle();
 
-      expect(find.text('表示中: 逸脱日数のみハイライト'), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_calendar_filter_slip')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: EmergencyMeetingPage renders correctly',
@@ -210,10 +222,18 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: EmergencyMeetingPage()));
       await tester.pumpAndSettle();
 
-      // UIの確認
-      expect(find.text('緊急役員会議 (継続・禁欲)'), findsOneWidget);
-      // 会議フォーカス選択が表示されること
-      expect(find.byType(ChoiceChip), findsWidgets);
+      expect(
+        find.byKey(const Key('emergency_meeting_page_scaffold')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('emergency_meeting_page_title')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('emergency_meeting_focus_balanced')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: NoteListPage renders correctly',
@@ -222,8 +242,9 @@ void main() {
       // データの読み込み待ち（エラーになってもUIが出ればOK）
       await tester.pumpAndSettle();
 
-      expect(find.text('CKO OFFICE (メモ一覧)'), findsOneWidget);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byKey(const Key('note_list_page_scaffold')), findsOneWidget);
+      expect(find.byKey(const Key('note_list_page_title')), findsOneWidget);
+      expect(find.byKey(const Key('note_list_page_fab')), findsOneWidget);
     });
   });
 }

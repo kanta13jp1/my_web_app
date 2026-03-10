@@ -2168,8 +2168,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('emergency_meeting_page_scaffold'),
       appBar: AppBar(
-        title: const Text('緊急役員会議 (継続・禁欲)'),
+        title: const Text(
+          '緊急役員会議 (継続・禁欲)',
+          key: Key('emergency_meeting_page_title'),
+        ),
         backgroundColor: Colors.red[900],
         foregroundColor: Colors.white,
         actions: [
@@ -2238,6 +2242,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           final isSelected = _selectedFocus == focus;
                           final chipColor = _focusColor(focus);
                           return ChoiceChip(
+                            key: Key('emergency_meeting_focus_${focus.name}'),
                             label: Text(_focusShortLabel(focus)),
                             selected: isSelected,
                             selectedColor: chipColor.withValues(alpha: 0.18),

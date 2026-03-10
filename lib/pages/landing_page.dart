@@ -8,10 +8,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_service.dart';
+import '../services/landing_page_adapter.dart';
 import '../services/landing_share_service.dart';
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({super.key});
+  final LandingPageAdapter adapter;
+
+  const LandingPage({
+    super.key,
+    LandingPageAdapter? adapter,
+  }) : adapter = adapter ?? const SupabaseLandingPageAdapter();
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -54,30 +60,15 @@ class _LandingPageState extends State<LandingPage> {
   String? _lastMagicLinkEmail;
   LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
 
-  SupabaseClient? get _supabaseClientOrNull {
-    try {
-      return Supabase.instance.client;
-    } on AssertionError {
-      return null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  GoTrueClient? get _authClientOrNull => _supabaseClientOrNull?.auth;
-
   @override
   void initState() {
     super.initState();
-    final authClient = _authClientOrNull;
-    if (authClient != null) {
-      _authSubscription = authClient.onAuthStateChange.listen((data) {
-        if (!mounted) return;
-        if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-          _goToAuthenticatedEntry();
-        }
-      });
-    }
+    _authSubscription = widget.adapter.authStateChanges().listen((data) {
+      if (!mounted) return;
+      if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+        _goToAuthenticatedEntry();
+      }
+    });
     _initLpViewStats();
     _loadShareSnapshot();
   }
@@ -111,7 +102,7 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> _loadShareSnapshot() async {
     try {
-      final snapshot = await LandingShareService.loadSnapshot();
+      final snapshot = await widget.adapter.loadShareSnapshot();
       if (!mounted) return;
       setState(() {
         _shareSnapshot = snapshot;
@@ -131,11 +122,7 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _activeShareChannel = channel);
     try {
-      await LandingShareService.shareLandingPage(channel: channel);
-      final snapshot = await LandingShareService.recordShareAction(
-        channel: channel,
-        client: _supabaseClientOrNull,
-      );
+      final snapshot = await widget.adapter.shareLandingPage(channel: channel);
       if (!mounted) return;
       setState(() => _shareSnapshot = snapshot);
       final label = LandingShareService.channelLabel(channel);
@@ -156,43 +143,21 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> _initLpViewStats() async {
     setState(() => _isLoadingStats = true);
-    final supabase = _supabaseClientOrNull;
-    if (supabase == null) {
-      if (!mounted) return;
-      setState(() => _isLoadingStats = false);
-      return;
-    }
     try {
-      await supabase.rpc('increment_lp_view');
-      await LandingShareService.recordIncomingShareVisit(client: supabase);
-      final dynamic raw = await supabase.rpc('get_lp_view_stats');
-      final data =
-          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-
-      final today = (data['today'] as num?)?.toInt() ?? 0;
-      final month = (data['month'] as num?)?.toInt() ?? 0;
-      final total = (data['total'] as num?)?.toInt() ?? 0;
-      final series =
-          data['series'] is List ? data['series'] as List : const <dynamic>[];
-
+      final stats = await widget.adapter.loadLpViewStats();
       final spots = <FlSpot>[];
       final labels = <String>[];
-      for (var i = 0; i < series.length; i++) {
-        final rowRaw = series[i];
-        if (rowRaw is! Map) continue;
-        final row = Map<String, dynamic>.from(rowRaw);
-        final dateStr = row['date']?.toString() ?? '';
-        final count = (row['count'] as num?)?.toDouble() ?? 0;
-        spots.add(FlSpot(i.toDouble(), count));
-        final date = DateTime.tryParse(dateStr);
-        labels.add(date == null ? '' : DateFormat('M/d').format(date));
+      for (var i = 0; i < stats.series.length; i++) {
+        final row = stats.series[i];
+        spots.add(FlSpot(i.toDouble(), row.count));
+        labels.add(row.date == null ? '' : DateFormat('M/d').format(row.date!));
       }
 
       if (!mounted) return;
       setState(() {
-        _todayViews = today;
-        _monthViews = month;
-        _totalViews = total;
+        _todayViews = stats.todayViews;
+        _monthViews = stats.monthViews;
+        _totalViews = stats.totalViews;
         _pvSpots = spots;
         _pvLabels = labels;
         _isLoadingStats = false;
@@ -214,13 +179,8 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
-      final supabase = _supabaseClientOrNull;
-      if (supabase == null) {
-        _showMessage('認証機能を初期化できませんでした。');
-        return;
-      }
       if (_isSignUp) {
-        final result = await supabase.auth.signUp(
+        final result = await widget.adapter.signUp(
           email: email,
           password: password,
           emailRedirectTo: _webRedirectUrl,
@@ -230,11 +190,13 @@ class _LandingPageState extends State<LandingPage> {
           _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');
         }
       } else {
-        await supabase.auth.signInWithPassword(
+        await widget.adapter.signInWithPassword(
           email: email,
           password: password,
         );
       }
+    } on LandingPageAuthUnavailableException {
+      _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
       _showMessage(_resolveEmailAuthError(error));
     } finally {
@@ -254,18 +216,14 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
-      final authClient = _authClientOrNull;
-      if (authClient == null) {
-        _showMessage('認証機能を初期化できませんでした。');
-        return;
-      }
-      final launched = await authClient.signInWithOAuth(
-        OAuthProvider.google,
+      final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
       );
       if (!launched) {
         _showMessage('Googleログイン画面を開けませんでした。再読み込みしてから再実行してください。');
       }
+    } on LandingPageAuthUnavailableException {
+      _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
       _showMessage(_resolveGoogleAuthError(error));
     } finally {
@@ -284,12 +242,7 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
-      final supabase = _supabaseClientOrNull;
-      if (supabase == null) {
-        _showMessage('認証機能を初期化できませんでした。');
-        return;
-      }
-      await supabase.auth.signInWithOtp(
+      await widget.adapter.sendMagicLink(
         email: email,
         emailRedirectTo: _webRedirectUrl,
         shouldCreateUser: true,
@@ -300,12 +253,10 @@ class _LandingPageState extends State<LandingPage> {
           _lastMagicLinkEmail = email;
         });
       }
-      await LandingShareService.recordFunnelEvent(
-        eventKey: LandingShareService.funnelMagicLinkSend,
-        client: supabase,
-      );
       _startMagicLinkCooldown();
       _showMessage('Magic Link を送信しました。メール内のリンクからそのまま開始できます。');
+    } on LandingPageAuthUnavailableException {
+      _showMessage('認証機能を初期化できませんでした。');
     } catch (error) {
       if (mounted) {
         setState(() => _showInboxShortcut = false);
@@ -338,12 +289,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> _runTrialActionPreview() async {
-    unawaited(
-      LandingShareService.recordFunnelEvent(
-        eventKey: LandingShareService.funnelTrialRun,
-        client: _supabaseClientOrNull,
-      ),
-    );
+    unawaited(widget.adapter.recordTrialRun());
     final input = _trialPromptController.text.trim();
     if (input.isEmpty) {
       final fallback = _buildTrialFallbackSuggestion(input);
@@ -393,12 +339,7 @@ $input
   }
 
   void _promptRegistrationForTrialSave() {
-    unawaited(
-      LandingShareService.recordFunnelEvent(
-        eventKey: LandingShareService.funnelSaveCta,
-        client: _supabaseClientOrNull,
-      ),
-    );
+    unawaited(widget.adapter.recordSaveCta());
     setState(() {
       _showSaveCtaPrompt = true;
       _isSignUp = true;
@@ -488,10 +429,7 @@ $input
         mode: LaunchMode.platformDefault,
       );
       if (launched) {
-        await LandingShareService.recordFunnelEvent(
-          eventKey: LandingShareService.funnelInboxOpen,
-          client: _supabaseClientOrNull,
-        );
+        await widget.adapter.recordInboxOpen();
       }
       if (!launched) {
         _showMessage('受信箱を開けませんでした。ブラウザかメールアプリで受信箱を確認してください。');
@@ -704,6 +642,7 @@ $input
 
   Widget _buildHeroSection() {
     return Column(
+      key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         const Icon(
@@ -763,6 +702,7 @@ $input
         SizedBox(
           height: 52,
           child: FilledButton(
+            key: const Key('landing_trial_scroll_button'),
             onPressed: _scrollToTrialSection,
             child: const Text(
               'まず1件を無料で試す',
@@ -788,6 +728,7 @@ $input
         _pvLabels.length <= 6 ? 1 : (_pvLabels.length / 6).ceil();
 
     return Card(
+      key: const Key('landing_pv_section'),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -910,13 +851,15 @@ $input
   }
 
   Widget _buildTrialSection() {
-    return Card(
-      key: _trialSectionKey,
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
+    return KeyedSubtree(
+      key: const Key('landing_trial_section'),
+      child: Card(
+        key: _trialSectionKey,
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
@@ -1047,19 +990,22 @@ $input
               ),
             ],
           ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAuthSection() {
-    return Card(
-      key: _authSectionKey,
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
+    return KeyedSubtree(
+      key: const Key('landing_auth_section'),
+      child: Card(
+        key: _authSectionKey,
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_showSaveCtaPrompt) ...[
@@ -1287,6 +1233,7 @@ $input
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -1299,6 +1246,7 @@ $input
         : LandingShareService.channelLabel(lastChannel);
 
     return Card(
+      key: const Key('landing_share_section'),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -1419,6 +1367,7 @@ $input
     final label = LandingShareService.channelLabel(channel);
     final isActive = _activeShareChannel == channel;
     return FilledButton.icon(
+      key: Key('landing_share_button_$channel'),
       onPressed:
           _activeShareChannel == null ? () => _shareLandingPage(channel) : null,
       icon: isActive
@@ -1435,8 +1384,12 @@ $input
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('landing_page_scaffold'),
       appBar: AppBar(
-        title: const Text('自分株式会社へようこそ'),
+        title: const Text(
+          '自分株式会社へようこそ',
+          key: Key('landing_page_title'),
+        ),
       ),
       body: SafeArea(
         child: Center(

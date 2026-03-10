@@ -354,8 +354,12 @@ class _NoteListPageState extends State<NoteListPage> {
         : _notes;
 
     return Scaffold(
+      key: const Key('note_list_page_scaffold'),
       appBar: AppBar(
-        title: const Text('CKO OFFICE (メモ一覧)'),
+        title: const Text(
+          'CKO OFFICE (メモ一覧)',
+          key: Key('note_list_page_title'),
+        ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
@@ -432,6 +436,7 @@ class _NoteListPageState extends State<NoteListPage> {
                   ],
                 ),
       floatingActionButton: FloatingActionButton(
+        key: const Key('note_list_page_fab'),
         onPressed: () => _navigateToEditor(context),
         backgroundColor: Colors.blue,
         child: const Icon(Icons.add),

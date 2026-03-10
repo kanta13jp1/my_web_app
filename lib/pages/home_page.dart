@@ -913,6 +913,7 @@ abstinence_slip_details: $slipDetailsText
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
+      key: Key('home_next_action_${command.type.name}'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1371,6 +1372,7 @@ abstinence_slip_details: $slipDetailsText
             const SizedBox(height: 6),
             Text(
               filterLabel,
+              key: Key('home_calendar_filter_${_calendarHighlightFilter.name}'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -1604,6 +1606,7 @@ abstinence_slip_details: $slipDetailsText
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          key: Key('home_calendar_summary_${filter.name}'),
           borderRadius: BorderRadius.circular(999),
           onTap: () {
             setState(() {
@@ -1700,6 +1703,7 @@ abstinence_slip_details: $slipDetailsText
       ),
       builder: (context) {
         final title = DateFormat('yyyy/MM/dd').format(day.date);
+        final detailDateKey = DateFormat('yyyy-MM-dd').format(day.date);
         final status = _resolveCalendarDayStatus(day);
         final completedItems = <String>[
           if (day.morningDone) 'モーニング・ブリーフィング',
@@ -1715,6 +1719,7 @@ abstinence_slip_details: $slipDetailsText
             needsMorning || needsBalance || needsCriticalTask;
 
         return SafeArea(
+          key: Key('calendar_day_detail_$detailDateKey'),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
             child: SingleChildScrollView(
@@ -1794,6 +1799,7 @@ abstinence_slip_details: $slipDetailsText
                   ),
                   const SizedBox(height: 8),
                   FilledButton.icon(
+                    key: const Key('calendar_day_detail_open_abstinence_button'),
                     onPressed: () async {
                       Navigator.pop(context);
                       await _openAbstinenceGuardForDate(
@@ -2005,11 +2011,13 @@ abstinence_slip_details: $slipDetailsText
     final contentHorizontalPadding = isCompact ? 12.0 : (isWide ? 24.0 : 16.0);
 
     return Scaffold(
+      key: const Key('home_page_scaffold'),
       backgroundColor:
           isDark ? const Color(0xFF0B1220) : const Color(0xFFF3F7FF),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
+          key: Key('home_page_title'),
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('自分株式会社 経営コックピット'),
@@ -2138,6 +2146,7 @@ abstinence_slip_details: $slipDetailsText
                               'CEO OFFICE',
                               Icons.business_center,
                               Colors.redAccent,
+                              key: const Key('home_section_ceo_office'),
                             ),
                             _buildCeoCard(context),
                             const SizedBox(height: 12),
@@ -2162,6 +2171,7 @@ abstinence_slip_details: $slipDetailsText
                               'OPERATIONS CALENDAR',
                               Icons.calendar_month,
                               Colors.blueGrey,
+                              key: const Key('home_section_operations_calendar'),
                             ),
                             _buildCalendarPanel(context, opsSnapshot),
                             const SizedBox(height: 24),
@@ -2242,6 +2252,7 @@ abstinence_slip_details: $slipDetailsText
                               'CSO OFFICE',
                               Icons.flag,
                               Colors.orange,
+                              key: const Key('home_section_cso_office'),
                             ),
                             _buildGridMenu(context, isCompact, [
                               _MenuData(
@@ -2417,8 +2428,14 @@ abstinence_slip_details: $slipDetailsText
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, Color color) {
+  Widget _buildSectionHeader(
+    String title,
+    IconData icon,
+    Color color, {
+    Key? key,
+  }) {
     return Padding(
+      key: key,
       padding: const EdgeInsets.only(bottom: 12.0, left: 2, right: 2),
       child: Row(
         children: [
