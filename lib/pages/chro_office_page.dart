@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
+import 'people_help_page.dart';
 import 'rewards_page.dart';
 import 'stats_page.dart';
 
@@ -65,6 +66,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('chro_office_page_scaffold'),
       appBar: AppBar(
         title: const Text('CHRO OFFICE'),
         backgroundColor: Colors.indigo[700],
@@ -102,7 +104,8 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
               'People Help',
               'Keep onboarding and support notes for team operations.',
               Icons.menu_book,
-              null,
+              const PeopleHelpPage(),
+              tileKey: const Key('chro_menu_people_help'),
             ),
           ],
         ),
@@ -115,12 +118,14 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
     String title,
     String subtitle,
     IconData icon,
-    Widget? page,
-  ) {
+    Widget? page, {
+    Key? tileKey,
+  }) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
+        key: tileKey,
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
           backgroundColor: Colors.indigo[100],
@@ -129,11 +134,11 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: page != null
-            ? () =>
-                Navigator.push(context, MaterialPageRoute(builder: (_) => page))
-            : () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Coming soon')),
+        onTap: page == null
+            ? null
+            : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => page),
                 ),
       ),
     );

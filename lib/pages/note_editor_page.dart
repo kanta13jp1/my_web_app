@@ -322,6 +322,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           child: Column(
             children: [
               TextField(
+                key: const Key('note_editor_title_field'),
                 controller: _titleController,
                 decoration: const InputDecoration(
                   hintText: 'タイトル',
@@ -335,6 +336,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               const Divider(),
               Expanded(
                 child: TextField(
+                  key: const Key('note_editor_content_field'),
                   controller: _contentController,
                   decoration: const InputDecoration(
                     hintText: '内容を入力...',
@@ -374,6 +376,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final isEditing = _currentNoteId != null;
 
     return Scaffold(
+      key: const Key('note_editor_page_scaffold'),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
