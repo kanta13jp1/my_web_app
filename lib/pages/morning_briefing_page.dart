@@ -2578,133 +2578,156 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _todoController,
-                        decoration: const InputDecoration(
-                          hintText: 'タスクを追加...',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 520;
+                    if (isCompact) {
+                      return _buildCompactTaskComposer(context);
+                    }
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _todoController,
+                            decoration: const InputDecoration(
+                              hintText: 'タスクを追加...',
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                            onSubmitted: (_) => addTodo(),
+                          ),
                         ),
-                        onSubmitted: (_) => addTodo(),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => selectDate(context),
-                      icon: Icon(
-                        Icons.calendar_today,
-                        color:
-                            _selectedDate != null ? Colors.orange : Colors.grey,
-                      ),
-                      tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
-                    ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<String>(
-                      icon: Icon(
-                        Icons.repeat,
-                        color: _selectedRecurrence != 'none'
-                            ? Colors.orange
-                            : Colors.grey,
-                      ),
-                      tooltip: '繰り返し設定',
-                      onSelected: (value) {
-                        setState(() {
-                          _selectedRecurrence = value;
-                        });
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'none',
-                          child: Text('繰り返しなし'),
+                        IconButton(
+                          onPressed: () => selectDate(context),
+                          icon: Icon(
+                            Icons.calendar_today,
+                            color: _selectedDate != null
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                          tooltip: _selectedDate != null ? '期限を設定中' : '期限を設定',
                         ),
-                        const PopupMenuItem(value: 'daily', child: Text('毎日')),
-                        const PopupMenuItem(value: 'weekly', child: Text('毎週')),
-                        const PopupMenuItem(
-                          value: 'monthly',
-                          child: Text('毎月'),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          icon: Icon(
+                            Icons.repeat,
+                            color: _selectedRecurrence != 'none'
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                          tooltip: '繰り返し設定',
+                          onSelected: (value) {
+                            setState(() {
+                              _selectedRecurrence = value;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'none',
+                              child: Text('繰り返しなし'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'daily',
+                              child: Text('毎日'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'weekly',
+                              child: Text('毎週'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'monthly',
+                              child: Text('毎月'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          icon: Icon(
+                            _categoryIcons[_selectedCategory],
+                            color: Colors.grey,
+                          ),
+                          tooltip: 'カテゴリ選択',
+                          onSelected: (value) {
+                            setState(() {
+                              _selectedCategory = value;
+                            });
+                          },
+                          itemBuilder: (context) =>
+                              _categoryLabels.entries.map((e) {
+                            return PopupMenuItem(
+                              value: e.key,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _categoryIcons[e.key],
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(e.value),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<int>(
+                          icon: Icon(
+                            Icons.access_time,
+                            color: _selectedDuration != null
+                                ? Colors.orange
+                                : Colors.grey,
+                          ),
+                          tooltip: '見積もり時間',
+                          onSelected: (value) {
+                            setState(() {
+                              _selectedDuration = value;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 15, child: Text('15分')),
+                            const PopupMenuItem(value: 30, child: Text('30分')),
+                            const PopupMenuItem(value: 45, child: Text('45分')),
+                            const PopupMenuItem(value: 60, child: Text('1時間')),
+                            const PopupMenuItem(
+                              value: 90,
+                              child: Text('1.5時間'),
+                            ),
+                            const PopupMenuItem(value: 120, child: Text('2時間')),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          icon: Icon(
+                            Icons.signal_cellular_alt,
+                            color: _difficultyColors[_selectedDifficulty],
+                          ),
+                          tooltip: '難易度',
+                          onSelected: (value) {
+                            setState(() {
+                              _selectedDifficulty = value;
+                            });
+                          },
+                          itemBuilder: (context) =>
+                              _difficultyLabels.entries.map((e) {
+                            return PopupMenuItem(
+                              value: e.key,
+                              child: Text(
+                                e.value,
+                                style:
+                                    TextStyle(color: _difficultyColors[e.key]),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          onPressed: addTodo,
+                          icon: const Icon(Icons.add),
                         ),
                       ],
-                    ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<String>(
-                      icon: Icon(
-                        _categoryIcons[_selectedCategory],
-                        color: Colors.grey,
-                      ),
-                      tooltip: 'カテゴリ選択',
-                      onSelected: (value) {
-                        setState(() {
-                          _selectedCategory = value;
-                        });
-                      },
-                      itemBuilder: (context) =>
-                          _categoryLabels.entries.map((e) {
-                        return PopupMenuItem(
-                          value: e.key,
-                          child: Row(
-                            children: [
-                              Icon(_categoryIcons[e.key], color: Colors.grey),
-                              const SizedBox(width: 8),
-                              Text(e.value),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<int>(
-                      icon: Icon(
-                        Icons.access_time,
-                        color: _selectedDuration != null
-                            ? Colors.orange
-                            : Colors.grey,
-                      ),
-                      tooltip: '見積もり時間',
-                      onSelected: (value) {
-                        setState(() {
-                          _selectedDuration = value;
-                        });
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(value: 15, child: Text('15分')),
-                        const PopupMenuItem(value: 30, child: Text('30分')),
-                        const PopupMenuItem(value: 45, child: Text('45分')),
-                        const PopupMenuItem(value: 60, child: Text('1時間')),
-                        const PopupMenuItem(value: 90, child: Text('1.5時間')),
-                        const PopupMenuItem(value: 120, child: Text('2時間')),
-                      ],
-                    ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<String>(
-                      icon: Icon(
-                        Icons.signal_cellular_alt,
-                        color: _difficultyColors[_selectedDifficulty],
-                      ),
-                      tooltip: '難易度',
-                      onSelected: (value) {
-                        setState(() {
-                          _selectedDifficulty = value;
-                        });
-                      },
-                      itemBuilder: (context) =>
-                          _difficultyLabels.entries.map((e) {
-                        return PopupMenuItem(
-                          value: e.key,
-                          child: Text(
-                            e.value,
-                            style: TextStyle(color: _difficultyColors[e.key]),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: addTodo,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
 
@@ -2918,6 +2941,209 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         ],
       ),
     );
+  }
+
+  Widget _buildCompactTaskComposer(BuildContext context) {
+    final hasSelectionSummary = _selectedDate != null ||
+        _selectedRecurrence != 'none' ||
+        _selectedDuration != null ||
+        _selectedDifficulty != 'normal';
+
+    return Column(
+      key: const Key('morning_briefing_task_composer_compact'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('morning_briefing_task_input'),
+                controller: _todoController,
+                minLines: 1,
+                maxLines: 2,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  hintText: 'タスクを追加...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+                onSubmitted: (_) => addTodo(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 56,
+              width: 56,
+              child: IconButton.filled(
+                key: const Key('morning_briefing_add_task_button'),
+                onPressed: addTodo,
+                icon: const Icon(Icons.add),
+                tooltip: '追加',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          key: const Key('morning_briefing_task_controls'),
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            IconButton(
+              onPressed: () => selectDate(context),
+              icon: Icon(
+                Icons.calendar_today,
+                color: _selectedDate != null ? Colors.orange : Colors.grey,
+              ),
+              tooltip: _selectedDate != null ? '日付を変更' : '日付を設定',
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.repeat,
+                color:
+                    _selectedRecurrence != 'none' ? Colors.orange : Colors.grey,
+              ),
+              tooltip: '繰り返し設定',
+              onSelected: (value) {
+                setState(() {
+                  _selectedRecurrence = value;
+                });
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'none', child: Text('繰り返しなし')),
+                PopupMenuItem(value: 'daily', child: Text('毎日')),
+                PopupMenuItem(value: 'weekly', child: Text('毎週')),
+                PopupMenuItem(value: 'monthly', child: Text('毎月')),
+              ],
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(
+                _categoryIcons[_selectedCategory],
+                color: Colors.grey,
+              ),
+              tooltip: 'カテゴリー選択',
+              onSelected: (value) {
+                setState(() {
+                  _selectedCategory = value;
+                });
+              },
+              itemBuilder: (context) => _categoryLabels.entries.map((e) {
+                return PopupMenuItem(
+                  value: e.key,
+                  child: Row(
+                    children: [
+                      Icon(_categoryIcons[e.key], color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text(e.value),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            PopupMenuButton<int>(
+              icon: Icon(
+                Icons.access_time,
+                color: _selectedDuration != null ? Colors.orange : Colors.grey,
+              ),
+              tooltip: '見積時間',
+              onSelected: (value) {
+                setState(() {
+                  _selectedDuration = value;
+                });
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 15, child: Text('15分')),
+                PopupMenuItem(value: 30, child: Text('30分')),
+                PopupMenuItem(value: 45, child: Text('45分')),
+                PopupMenuItem(value: 60, child: Text('1時間')),
+                PopupMenuItem(value: 90, child: Text('1.5時間')),
+                PopupMenuItem(value: 120, child: Text('2時間')),
+              ],
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.signal_cellular_alt,
+                color: _difficultyColors[_selectedDifficulty],
+              ),
+              tooltip: '難易度',
+              onSelected: (value) {
+                setState(() {
+                  _selectedDifficulty = value;
+                });
+              },
+              itemBuilder: (context) => _difficultyLabels.entries.map((e) {
+                return PopupMenuItem(
+                  value: e.key,
+                  child: Text(
+                    e.value,
+                    style: TextStyle(color: _difficultyColors[e.key]),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        if (hasSelectionSummary) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (_selectedDate != null)
+                Chip(
+                  avatar: const Icon(Icons.event, size: 16),
+                  label: Text(
+                    '${_selectedDate!.year}/${_selectedDate!.month}/${_selectedDate!.day}',
+                  ),
+                ),
+              if (_selectedRecurrence != 'none')
+                Chip(
+                  avatar: const Icon(Icons.repeat, size: 16),
+                  label: Text(_recurrenceChipLabel(_selectedRecurrence)),
+                ),
+              if (_selectedDuration != null)
+                Chip(
+                  avatar: const Icon(Icons.access_time, size: 16),
+                  label: Text('${_selectedDuration!}分'),
+                ),
+              if (_selectedDifficulty != 'normal')
+                Chip(
+                  avatar: const Icon(Icons.signal_cellular_alt, size: 16),
+                  label: Text(_difficultyChipLabel(_selectedDifficulty)),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _recurrenceChipLabel(String value) {
+    switch (value) {
+      case 'daily':
+        return '毎日';
+      case 'weekly':
+        return '毎週';
+      case 'monthly':
+        return '毎月';
+      default:
+        return '繰り返しなし';
+    }
+  }
+
+  String _difficultyChipLabel(String value) {
+    switch (value) {
+      case 'easy':
+        return '簡単';
+      case 'hard':
+        return '難しい';
+      default:
+        return '普通';
+    }
   }
 
   Widget _buildCalendarView() {
