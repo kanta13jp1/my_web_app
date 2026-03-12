@@ -59,12 +59,17 @@ class _HomePageState extends State<HomePage> {
   _CalendarHighlightFilter _calendarHighlightFilter =
       _CalendarHighlightFilter.all;
   _KpiTrendRange _kpiTrendRange = _KpiTrendRange.oneMonth;
+  _CalendarTaskPreviewFilter _calendarTaskPreviewFilter =
+      _CalendarTaskPreviewFilter.all;
+  DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
 
   @override
   void initState() {
     super.initState();
-    _selectedCalendarDate = _startOfDay(_now());
+    final today = _startOfDay(_now());
+    _calendarMonthAnchor = DateTime(today.year, today.month, 1);
+    _selectedCalendarDate = today;
     _reloadHomeSignals();
   }
 
@@ -465,6 +470,11 @@ class _HomePageState extends State<HomePage> {
   DateTime _startOfDay(DateTime date) =>
       DateTime(date.year, date.month, date.day);
 
+  DateTime _calendarAnchorMonth() {
+    final anchor = _calendarMonthAnchor ?? _startOfDay(_now());
+    return DateTime(anchor.year, anchor.month, 1);
+  }
+
   String _statusDateKey(DateTime date) =>
       DateFormat('yyyy-MM-dd').format(_startOfDay(date));
 
@@ -577,8 +587,9 @@ class _HomePageState extends State<HomePage> {
     required SharedPreferences prefs,
   }) async {
     final now = _now();
-    final firstDayOfMonth = DateTime(now.year, now.month, 1);
-    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+    final monthAnchor = _calendarAnchorMonth();
+    final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
+    final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
     final startOffset = firstDayOfMonth.weekday % 7;
     final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
     final endOffset = 6 - (lastDayOfMonth.weekday % 7);
@@ -605,7 +616,8 @@ class _HomePageState extends State<HomePage> {
       final abstinence = await AbstinenceGuardStore.loadSnapshot(
         now: day,
       );
-      final isCurrentMonth = day.month == now.month;
+      final isCurrentMonth =
+          day.year == monthAnchor.year && day.month == monthAnchor.month;
       final isToday =
           day.year == now.year && day.month == now.month && day.day == now.day;
       final dayStatus = homeDailyMap[dateKey] ?? const _HomeDailyStatusRecord();
@@ -1421,13 +1433,19 @@ abstinence_slip_details: $slipDetailsText
     _HomeOpsSnapshot snapshot,
   ) {
     final now = _now();
+    final monthAnchor = _calendarAnchorMonth();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedDay = _resolveSelectedCalendarDay(snapshot);
+    final visibleMonthLabel = DateFormat('yyyy年M月').format(monthAnchor);
+    final isViewingCurrentMonth =
+        monthAnchor.year == now.year && monthAnchor.month == now.month;
     final currentMonthLabel = DateFormat('yyyy年M月').format(now);
     const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
-    final recentDays = snapshot.calendarDays
-        .where((day) => !day.date.isAfter(now) && day.isCurrentMonth)
-        .toList();
+    final displayedMonthDays =
+        snapshot.calendarDays.where((day) => day.isCurrentMonth).toList();
+    final recentDays = isViewingCurrentMonth
+        ? displayedMonthDays.where((day) => !day.date.isAfter(now)).toList()
+        : displayedMonthDays;
     final morningDoneCount = recentDays.where((day) => day.morningDone).length;
     final balanceDoneCount = recentDays.where((day) => day.balanceDone).length;
     final cleanDaysCount = recentDays
@@ -1477,6 +1495,20 @@ abstinence_slip_details: $slipDetailsText
                 ),
               ),
               const SizedBox(width: 8),
+              IconButton(
+                key: const Key('home_calendar_month_prev'),
+                tooltip: '前月',
+                visualDensity: VisualDensity.compact,
+                onPressed: _showPreviousCalendarMonth,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                key: const Key('home_calendar_month_next'),
+                tooltip: '翌月',
+                visualDensity: VisualDensity.compact,
+                onPressed: _showNextCalendarMonth,
+                icon: const Icon(Icons.chevron_right),
+              ),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
@@ -1503,6 +1535,16 @@ abstinence_slip_details: $slipDetailsText
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            visibleMonthLabel,
+            key: const Key('home_calendar_month_label'),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.blueGrey.shade600,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -1692,7 +1734,7 @@ abstinence_slip_details: $slipDetailsText
             },
           ),
           const SizedBox(height: 10),
-          _buildSelectedDayTaskPreview(context, selectedDay),
+          _buildSelectedDayTaskPreviewPanel(context, selectedDay),
           const SizedBox(height: 14),
           const Wrap(
             spacing: 10,
@@ -1708,6 +1750,36 @@ abstinence_slip_details: $slipDetailsText
         ],
       ),
     );
+  }
+
+  void _showPreviousCalendarMonth() {
+    final current = _calendarAnchorMonth();
+    _setCalendarMonth(DateTime(current.year, current.month - 1, 1));
+  }
+
+  void _showNextCalendarMonth() {
+    final current = _calendarAnchorMonth();
+    _setCalendarMonth(DateTime(current.year, current.month + 1, 1));
+  }
+
+  void _setCalendarMonth(DateTime month) {
+    final normalizedMonth = DateTime(month.year, month.month, 1);
+    final currentSelected = _selectedCalendarDate;
+    final now = _startOfDay(_now());
+    final nextSelected = currentSelected != null &&
+            currentSelected.year == normalizedMonth.year &&
+            currentSelected.month == normalizedMonth.month
+        ? _startOfDay(currentSelected)
+        : (now.year == normalizedMonth.year &&
+                now.month == normalizedMonth.month
+            ? now
+            : normalizedMonth);
+
+    setState(() {
+      _calendarMonthAnchor = normalizedMonth;
+      _selectedCalendarDate = nextSelected;
+      _reloadHomeSignals();
+    });
   }
 
   _HomeCalendarDay? _resolveSelectedCalendarDay(_HomeOpsSnapshot snapshot) {
@@ -1734,6 +1806,7 @@ abstinence_slip_details: $slipDetailsText
     return snapshot.calendarDays.first;
   }
 
+  // ignore: unused_element
   Widget _buildSelectedDayTaskPreview(
     BuildContext context,
     _HomeCalendarDay? day,
@@ -1744,6 +1817,9 @@ abstinence_slip_details: $slipDetailsText
 
     final completedCount = day.completedTaskCount;
     final remainingCount = day.totalTaskCount - completedCount;
+    final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
+    final hiddenTaskCount =
+        filteredTasks.length > 6 ? filteredTasks.length - 6 : 0;
     final title = DateFormat('yyyy/MM/dd').format(day.date);
 
     return Container(
@@ -1795,7 +1871,26 @@ abstinence_slip_details: $slipDetailsText
             ],
           ),
           const SizedBox(height: 10),
-          if (day.tasks.isEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildCalendarTaskPreviewFilterChip(
+                label: 'すべて',
+                filter: _CalendarTaskPreviewFilter.all,
+              ),
+              _buildCalendarTaskPreviewFilterChip(
+                label: '未完了のみ',
+                filter: _CalendarTaskPreviewFilter.incompleteOnly,
+              ),
+              _buildCalendarTaskPreviewFilterChip(
+                label: '重要のみ',
+                filter: _CalendarTaskPreviewFilter.importantOnly,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (filteredTasks.isEmpty)
             Container(
               key: const Key('home_calendar_task_preview_empty'),
               width: double.infinity,
@@ -1810,7 +1905,7 @@ abstinence_slip_details: $slipDetailsText
               ),
             )
           else
-            ...day.tasks.take(6).toList().asMap().entries.map((entry) {
+            ...filteredTasks.take(6).toList().asMap().entries.map((entry) {
               final index = entry.key;
               final task = entry.value;
               final sourceColor = _calendarTaskSourceColor(task);
@@ -1880,7 +1975,7 @@ abstinence_slip_details: $slipDetailsText
                 ),
               );
             }),
-          if (day.tasks.length > 6)
+          if (hiddenTaskCount > 0)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
@@ -1894,6 +1989,220 @@ abstinence_slip_details: $slipDetailsText
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSelectedDayTaskPreviewPanel(
+    BuildContext context,
+    _HomeCalendarDay? day,
+  ) {
+    if (day == null) {
+      return const SizedBox.shrink();
+    }
+
+    final completedCount = day.completedTaskCount;
+    final remainingCount = day.totalTaskCount - completedCount;
+    final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
+    final hiddenTaskCount =
+        filteredTasks.length > 6 ? filteredTasks.length - 6 : 0;
+    final title = DateFormat('yyyy/MM/dd').format(day.date);
+
+    return Container(
+      key: const Key('home_calendar_task_preview'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.indigo.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$title のタスク',
+                      key: const Key('home_calendar_task_preview_title'),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blueGrey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('home_calendar_task_preview_open_detail'),
+                onPressed: () => _showCalendarDayDetails(context, day),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('詳細'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildCalendarTaskPreviewFilterChip(
+                label: 'すべて',
+                filter: _CalendarTaskPreviewFilter.all,
+              ),
+              _buildCalendarTaskPreviewFilterChip(
+                label: '未完了のみ',
+                filter: _CalendarTaskPreviewFilter.incompleteOnly,
+              ),
+              _buildCalendarTaskPreviewFilterChip(
+                label: '重要のみ',
+                filter: _CalendarTaskPreviewFilter.importantOnly,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (filteredTasks.isEmpty)
+            Container(
+              key: const Key('home_calendar_task_preview_empty'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'この日に該当するタスクはありません。',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            )
+          else
+            ...filteredTasks.take(6).toList().asMap().entries.map((entry) {
+              final index = entry.key;
+              final task = entry.value;
+              final sourceColor = _calendarTaskSourceColor(task);
+              return Container(
+                key: Key('home_calendar_task_preview_item_$index'),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: sourceColor.withValues(alpha: 0.14),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      task.isCompleted
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      size: 18,
+                      color: task.isCompleted ? Colors.green : Colors.blueGrey,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              decoration: task.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: task.isCompleted
+                                  ? Colors.blueGrey.shade500
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _buildCalendarTaskBadge(
+                                label: _calendarTaskSourceLabel(task),
+                                color: sourceColor,
+                              ),
+                              if (task.secondaryLabel != null)
+                                _buildCalendarTaskBadge(
+                                  label: task.secondaryLabel!,
+                                  color: Colors.blueGrey,
+                                ),
+                              if (task.isImportant)
+                                _buildCalendarTaskBadge(
+                                  label: '重要',
+                                  color: Colors.redAccent,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          if (hiddenTaskCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '他 $hiddenTaskCount 件のタスクがあります。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blueGrey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<_HomeCalendarTask> _filterCalendarPreviewTasks(
+    List<_HomeCalendarTask> tasks,
+  ) {
+    return switch (_calendarTaskPreviewFilter) {
+      _CalendarTaskPreviewFilter.all => tasks,
+      _CalendarTaskPreviewFilter.incompleteOnly =>
+        tasks.where((task) => !task.isCompleted).toList(),
+      _CalendarTaskPreviewFilter.importantOnly =>
+        tasks.where((task) => task.isImportant).toList(),
+    };
+  }
+
+  Widget _buildCalendarTaskPreviewFilterChip({
+    required String label,
+    required _CalendarTaskPreviewFilter filter,
+  }) {
+    final isSelected = _calendarTaskPreviewFilter == filter;
+    return ChoiceChip(
+      key: Key('home_calendar_preview_filter_${filter.name}'),
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) {
+        setState(() {
+          _calendarTaskPreviewFilter = filter;
+        });
+      },
     );
   }
 
@@ -3903,6 +4212,12 @@ enum _CalendarHighlightFilter {
   slip,
   clean,
   unset,
+}
+
+enum _CalendarTaskPreviewFilter {
+  all,
+  incompleteOnly,
+  importantOnly,
 }
 
 enum _KpiTrendRange {

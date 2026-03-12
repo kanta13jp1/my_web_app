@@ -63,6 +63,30 @@ void main() {
         findsOneWidget,
       );
       expect(
+        find.byKey(const Key('home_calendar_month_prev')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_month_next')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_month_label')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_preview_filter_all')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_preview_filter_incompleteOnly')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_preview_filter_importantOnly')),
+        findsOneWidget,
+      );
+      expect(
         find.byKey(const Key('home_calendar_task_preview_empty')),
         findsOneWidget,
       );
@@ -224,6 +248,43 @@ void main() {
         find.byKey(const Key('home_calendar_filter_slip')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('Feature: HomePage calendar can move between months',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Text monthLabel = tester.widget(
+        find.byKey(const Key('home_calendar_month_label')),
+      );
+      expect(monthLabel.data, '2026年2月');
+
+      await tester.ensureVisible(
+        find.byKey(const Key('home_calendar_month_prev')),
+      );
+      await tester.tap(find.byKey(const Key('home_calendar_month_prev')));
+      await tester.pumpAndSettle();
+
+      monthLabel = tester.widget(
+        find.byKey(const Key('home_calendar_month_label')),
+      );
+      expect(monthLabel.data, '2026年1月');
+
+      await tester.ensureVisible(
+        find.byKey(const Key('home_calendar_month_next')),
+      );
+      await tester.tap(find.byKey(const Key('home_calendar_month_next')));
+      await tester.pumpAndSettle();
+
+      monthLabel = tester.widget(
+        find.byKey(const Key('home_calendar_month_label')),
+      );
+      expect(monthLabel.data, '2026年2月');
     });
 
     testWidgets('Feature: EmergencyMeetingPage renders correctly',
