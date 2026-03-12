@@ -59,10 +59,12 @@ class _HomePageState extends State<HomePage> {
   _CalendarHighlightFilter _calendarHighlightFilter =
       _CalendarHighlightFilter.all;
   _KpiTrendRange _kpiTrendRange = _KpiTrendRange.oneMonth;
+  DateTime? _selectedCalendarDate;
 
   @override
   void initState() {
     super.initState();
+    _selectedCalendarDate = _startOfDay(_now());
     _reloadHomeSignals();
   }
 
@@ -190,6 +192,135 @@ class _HomePageState extends State<HomePage> {
       debugPrint('Error fetching pending stock task count: $e');
       return 0;
     }
+  }
+
+  Future<Map<String, List<_HomeCalendarTask>>> _fetchHomeCalendarTaskMap({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return <String, List<_HomeCalendarTask>>{};
+
+    final startKey = _statusDateKey(startDate);
+    final endKey = _statusDateKey(endDate);
+    final tasksByDate = <String, List<_HomeCalendarTask>>{};
+
+    void appendTask(String dateKey, _HomeCalendarTask task) {
+      tasksByDate.putIfAbsent(dateKey, () => <_HomeCalendarTask>[]).add(task);
+    }
+
+    try {
+      final dynamic todoRowsRaw = await Supabase.instance.client
+          .from('daily_todos')
+          .select(
+            'id,task_date,task,is_completed,is_important,category,order_index',
+          )
+          .eq('user_id', userId)
+          .gte('task_date', startKey)
+          .lte('task_date', endKey)
+          .order('task_date', ascending: true)
+          .order('order_index', ascending: true);
+      final todoRows = todoRowsRaw is List ? todoRowsRaw : const <dynamic>[];
+
+      for (final row in todoRows.whereType<Map<String, dynamic>>()) {
+        final dateKey = row['task_date']?.toString();
+        final title = (row['task'] as String? ?? '').trim();
+        if (dateKey == null || dateKey.isEmpty || title.isEmpty) {
+          continue;
+        }
+
+        appendTask(
+          dateKey,
+          _HomeCalendarTask(
+            id: 'daily_${row['id']}',
+            title: title,
+            isCompleted: row['is_completed'] == true,
+            isImportant: row['is_important'] == true,
+            source: _HomeCalendarTaskSource.dailyTodo,
+            secondaryLabel:
+                _dailyTodoCategoryLabel(row['category']?.toString()),
+            sortOrder: (row['order_index'] as num?)?.toInt() ?? 0,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching daily todo map: $e');
+    }
+
+    try {
+      final dynamic mindlessRowsRaw = await Supabase.instance.client
+          .from('mindless_tasks')
+          .select('id,task_date,hour_slot,content,is_completed')
+          .eq('user_id', userId)
+          .gte('task_date', startKey)
+          .lte('task_date', endKey)
+          .order('task_date', ascending: true)
+          .order('hour_slot', ascending: true);
+      final mindlessRows =
+          mindlessRowsRaw is List ? mindlessRowsRaw : const <dynamic>[];
+
+      for (final row in mindlessRows.whereType<Map<String, dynamic>>()) {
+        final dateKey = row['task_date']?.toString();
+        final title = (row['content'] as String? ?? '').trim();
+        if (dateKey == null || dateKey.isEmpty || title.isEmpty) {
+          continue;
+        }
+
+        final hourSlot = (row['hour_slot'] as num?)?.toInt();
+        appendTask(
+          dateKey,
+          _HomeCalendarTask(
+            id: 'mindless_${row['id']}',
+            title: title,
+            isCompleted: row['is_completed'] == true,
+            isImportant: false,
+            source: _HomeCalendarTaskSource.mindless,
+            secondaryLabel: _hourSlotLabel(hourSlot),
+            sortOrder: 1000 + (hourSlot ?? 0),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching mindless task map: $e');
+    }
+
+    for (final tasks in tasksByDate.values) {
+      tasks.sort((a, b) {
+        final completedCompare =
+            (a.isCompleted ? 1 : 0).compareTo(b.isCompleted ? 1 : 0);
+        if (completedCompare != 0) {
+          return completedCompare;
+        }
+
+        final sortCompare = a.sortOrder.compareTo(b.sortOrder);
+        if (sortCompare != 0) {
+          return sortCompare;
+        }
+
+        return a.title.compareTo(b.title);
+      });
+    }
+
+    return tasksByDate;
+  }
+
+  String _dailyTodoCategoryLabel(String? category) {
+    return switch (category) {
+      'work' => '仕事',
+      'health' => '健康',
+      'household' => '生活',
+      'study' => '学習',
+      'personal' => '個人',
+      _ => '今日タスク',
+    };
+  }
+
+  String _hourSlotLabel(int? hourSlot) {
+    if (hourSlot == null) {
+      return '実行枠';
+    }
+    final safeHour = hourSlot.clamp(0, 23);
+    return '${safeHour.toString().padLeft(2, '0')}:00';
   }
 
   Future<_HomeKpiOverview> _loadHomeKpiOverview() async {
@@ -461,23 +592,30 @@ class _HomePageState extends State<HomePage> {
       startDate: startDay,
       endDate: endDay,
     );
+    final tasksByDate = await _fetchHomeCalendarTaskMap(
+      startDate: startDay,
+      endDate: endDay,
+    );
 
     final days = <_HomeCalendarDay>[];
     for (DateTime day = startDay;
         !day.isAfter(endDay);
         day = day.add(const Duration(days: 1))) {
+      final dateKey = _statusDateKey(day);
       final abstinence = await AbstinenceGuardStore.loadSnapshot(
         now: day,
       );
       final isCurrentMonth = day.month == now.month;
       final isToday =
           day.year == now.year && day.month == now.month && day.day == now.day;
-      final dayStatus =
-          homeDailyMap[_statusDateKey(day)] ?? const _HomeDailyStatusRecord();
+      final dayStatus = homeDailyMap[dateKey] ?? const _HomeDailyStatusRecord();
       final morningDone = dayStatus.morningBriefingDone;
       final balanceDone = dayStatus.balanceCheckDone;
       final pendingCriticalTaskCountForDay =
-          pendingCriticalTaskMap[_statusDateKey(day)] ?? 0;
+          pendingCriticalTaskMap[dateKey] ?? 0;
+      final tasks = List<_HomeCalendarTask>.from(
+        tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
+      );
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -513,6 +651,7 @@ class _HomePageState extends State<HomePage> {
           slipDetails: abstinence.slipDetails,
           missingItems: missingItems,
           relapsePreventionAction: relapsePreventionAction,
+          tasks: tasks,
         ),
       );
     }
@@ -1283,6 +1422,7 @@ abstinence_slip_details: $slipDetailsText
   ) {
     final now = _now();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedDay = _resolveSelectedCalendarDay(snapshot);
     final currentMonthLabel = DateFormat('yyyy年M月').format(now);
     const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
     final recentDays = snapshot.calendarDays
@@ -1457,7 +1597,12 @@ abstinence_slip_details: $slipDetailsText
                     'calendar_day_${DateFormat('yyyy-MM-dd').format(day.date)}',
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () => _showCalendarDayDetails(context, day),
+                  onTap: () async {
+                    setState(() {
+                      _selectedCalendarDate = _startOfDay(day.date);
+                    });
+                    await _showCalendarDayDetails(context, day);
+                  },
                   child: Container(
                     decoration: BoxDecoration(
                       color: backgroundColor,
@@ -1547,6 +1692,8 @@ abstinence_slip_details: $slipDetailsText
             },
           ),
           const SizedBox(height: 10),
+          _buildSelectedDayTaskPreview(context, selectedDay),
+          const SizedBox(height: 14),
           const Wrap(
             spacing: 10,
             runSpacing: 8,
@@ -1561,6 +1708,238 @@ abstinence_slip_details: $slipDetailsText
         ],
       ),
     );
+  }
+
+  _HomeCalendarDay? _resolveSelectedCalendarDay(_HomeOpsSnapshot snapshot) {
+    if (snapshot.calendarDays.isEmpty) {
+      return null;
+    }
+
+    final selectedDate = _selectedCalendarDate ?? _startOfDay(_now());
+    for (final day in snapshot.calendarDays) {
+      if (DateUtils.isSameDay(day.date, selectedDate)) {
+        return day;
+      }
+    }
+    for (final day in snapshot.calendarDays) {
+      if (day.isToday) {
+        return day;
+      }
+    }
+    for (final day in snapshot.calendarDays) {
+      if (day.isCurrentMonth) {
+        return day;
+      }
+    }
+    return snapshot.calendarDays.first;
+  }
+
+  Widget _buildSelectedDayTaskPreview(
+    BuildContext context,
+    _HomeCalendarDay? day,
+  ) {
+    if (day == null) {
+      return const SizedBox.shrink();
+    }
+
+    final completedCount = day.completedTaskCount;
+    final remainingCount = day.totalTaskCount - completedCount;
+    final title = DateFormat('yyyy/MM/dd').format(day.date);
+
+    return Container(
+      key: const Key('home_calendar_task_preview'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.indigo.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$title のタスク',
+                      key: const Key('home_calendar_task_preview_title'),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blueGrey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('home_calendar_task_preview_open_detail'),
+                onPressed: () => _showCalendarDayDetails(context, day),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('詳細'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (day.tasks.isEmpty)
+            Container(
+              key: const Key('home_calendar_task_preview_empty'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'この日に登録されているタスクはありません。',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            )
+          else
+            ...day.tasks.take(6).toList().asMap().entries.map((entry) {
+              final index = entry.key;
+              final task = entry.value;
+              final sourceColor = _calendarTaskSourceColor(task);
+              return Container(
+                key: Key('home_calendar_task_preview_item_$index'),
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: sourceColor.withValues(alpha: 0.14),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      task.isCompleted
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      size: 18,
+                      color: task.isCompleted ? Colors.green : Colors.blueGrey,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              decoration: task.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: task.isCompleted
+                                  ? Colors.blueGrey.shade500
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _buildCalendarTaskBadge(
+                                label: _calendarTaskSourceLabel(task),
+                                color: sourceColor,
+                              ),
+                              if (task.secondaryLabel != null)
+                                _buildCalendarTaskBadge(
+                                  label: task.secondaryLabel!,
+                                  color: Colors.blueGrey,
+                                ),
+                              if (task.isImportant)
+                                _buildCalendarTaskBadge(
+                                  label: '重要',
+                                  color: Colors.redAccent,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          if (day.tasks.length > 6)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '他 ${day.tasks.length - 6} 件のタスクがあります。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blueGrey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarTaskBadge({
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  String _calendarTaskSourceLabel(_HomeCalendarTask task) {
+    return switch (task.source) {
+      _HomeCalendarTaskSource.dailyTodo => '今日タスク',
+      _HomeCalendarTaskSource.mindless => '時間割',
+    };
+  }
+
+  Color _calendarTaskSourceColor(_HomeCalendarTask task) {
+    return switch (task.source) {
+      _HomeCalendarTaskSource.dailyTodo => Colors.indigo,
+      _HomeCalendarTaskSource.mindless => Colors.teal,
+    };
+  }
+
+  String _formatCalendarTaskForDetail(_HomeCalendarTask task) {
+    final sourceLabel = _calendarTaskSourceLabel(task);
+    final stateLabel = task.isCompleted ? '完了' : '未完了';
+    final secondary =
+        task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
+    final important = task.isImportant ? ' [重要]' : '';
+    return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
   }
 
   Widget _buildCalendarDot(Color color) {
@@ -1711,6 +2090,9 @@ abstinence_slip_details: $slipDetailsText
           if (day.pendingCriticalTaskCount == 0) '必須タスク完了',
           if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip) '禁欲ガード安定',
         ];
+        final taskItems = day.tasks
+            .map((task) => _formatCalendarTaskForDetail(task))
+            .toList();
         final needsMorning = !day.isFuture && !day.morningDone;
         final needsBalance = !day.isFuture && !day.balanceDone;
         final needsCriticalTask =
@@ -1799,7 +2181,8 @@ abstinence_slip_details: $slipDetailsText
                   ),
                   const SizedBox(height: 8),
                   FilledButton.icon(
-                    key: const Key('calendar_day_detail_open_abstinence_button'),
+                    key:
+                        const Key('calendar_day_detail_open_abstinence_button'),
                     onPressed: () async {
                       Navigator.pop(context);
                       await _openAbstinenceGuardForDate(
@@ -1874,6 +2257,15 @@ abstinence_slip_details: $slipDetailsText
                           : '前後月の補助セルです。',
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  _buildCalendarDetailSection(
+                    title: '登録タスク',
+                    accent: Colors.indigo,
+                    emptyLabel: day.isFuture
+                        ? 'まだこの日のタスクは登録されていません。'
+                        : 'この日のタスクはありません。',
+                    items: taskItems,
+                  ),
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: '逸脱内容',
@@ -2171,7 +2563,8 @@ abstinence_slip_details: $slipDetailsText
                               'OPERATIONS CALENDAR',
                               Icons.calendar_month,
                               Colors.blueGrey,
-                              key: const Key('home_section_operations_calendar'),
+                              key:
+                                  const Key('home_section_operations_calendar'),
                             ),
                             _buildCalendarPanel(context, opsSnapshot),
                             const SizedBox(height: 24),
@@ -3632,6 +4025,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
+  final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
     required this.date,
@@ -3648,6 +4042,36 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
+    this.tasks = const <_HomeCalendarTask>[],
+  });
+
+  int get totalTaskCount => tasks.length;
+
+  int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
+}
+
+enum _HomeCalendarTaskSource {
+  dailyTodo,
+  mindless,
+}
+
+class _HomeCalendarTask {
+  final String id;
+  final String title;
+  final bool isCompleted;
+  final bool isImportant;
+  final _HomeCalendarTaskSource source;
+  final String? secondaryLabel;
+  final int sortOrder;
+
+  const _HomeCalendarTask({
+    required this.id,
+    required this.title,
+    required this.isCompleted,
+    required this.isImportant,
+    required this.source,
+    required this.sortOrder,
+    this.secondaryLabel,
   });
 }
 

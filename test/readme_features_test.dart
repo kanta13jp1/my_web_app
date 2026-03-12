@@ -58,6 +58,14 @@ void main() {
         find.byKey(const Key('home_section_operations_calendar')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const Key('home_calendar_task_preview')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_calendar_task_preview_empty')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage prioritizes morning briefing before noon',
@@ -76,7 +84,8 @@ void main() {
       );
     });
 
-    testWidgets('Feature: HomePage prioritizes abstinence guard when slips exist',
+    testWidgets(
+        'Feature: HomePage prioritizes abstinence guard when slips exist',
         (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       await AbstinenceGuardStore.setEnabled(
