@@ -997,6 +997,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   Future<void> showTaskDetails(Map<String, dynamic> todo) async {
     final todoId = todo['id'] as String;
     final task = todo['task'] as String;
+    final details = (todo['details'] as String?)?.trim();
     final dueDateStr = todo['due_date'] as String?;
     final createdAtStr = todo['created_at'] as String?;
     final isCompleted = todo['is_completed'] as bool;
@@ -1039,6 +1040,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     '内容: $task',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
+                  if (details != null && details.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      '詳細:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(details),
+                  ],
                   const SizedBox(height: 8),
                   Text('状態: ${isCompleted ? "完了" : "未完了"}'),
                   Text('重要: ${isImportant ? "はい" : "いいえ"}'),
@@ -3146,7 +3156,305 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Widget _buildCalendarView() {
+  DateTime? _parseLocalDateTime(String? rawValue) {
+    if (rawValue == null || rawValue.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateTime.parse(rawValue).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _formatCalendarDate(
+    DateTime? date, {
+    bool includeWeekday = false,
+    bool includeTime = false,
+  }) {
+    if (date == null) {
+      return '未設定';
+    }
+
+    const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    final buffer = StringBuffer(
+      '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}',
+    );
+
+    if (includeWeekday) {
+      buffer.write(' (${weekdays[date.weekday - 1]})');
+    }
+
+    final hasTime = date.hour != 0 || date.minute != 0;
+    if (includeTime && hasTime) {
+      buffer.write(
+        ' ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
+      );
+    }
+
+    return buffer.toString();
+  }
+
+  Widget _buildCalendarMetaChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarTaskCard(Map<String, dynamic> todo) {
+    final task = (todo['task'] as String? ?? '').trim();
+    final details = (todo['details'] as String?)?.trim();
+    final isCompleted = todo['is_completed'] as bool? ?? false;
+    final isImportant = todo['is_important'] as bool? ?? false;
+    final category = todo['category'] as String? ?? 'work';
+    final difficulty = todo['difficulty'] as String? ?? 'normal';
+    final recurrence = todo['recurrence'] as String? ?? 'none';
+    final estimatedMinutes = (todo['estimated_minutes'] as num?)?.toInt();
+    final actualMinutes = (todo['actual_minutes'] as num?)?.toInt();
+    final dueDate = _parseLocalDateTime(todo['due_date'] as String?);
+    final todoId = todo['id'] as String?;
+    final matchingSubtasks = todoId == null
+        ? const <Map<String, dynamic>>[]
+        : _subtasks.where((item) => item['todo_id'] == todoId).toList();
+    final completedSubtasks =
+        matchingSubtasks.where((item) => item['is_completed'] == true).length;
+
+    final now = DateTime.now();
+    final isOverdue = !isCompleted &&
+        dueDate != null &&
+        DateTime(
+          dueDate.year,
+          dueDate.month,
+          dueDate.day,
+          23,
+          59,
+          59,
+        ).isBefore(now);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isOverdue
+              ? Colors.red.shade200
+              : (isCompleted ? Colors.grey.shade200 : Colors.grey.shade300),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => showTaskDetails(todo),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isCompleted
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: isCompleted ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                task,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: isCompleted
+                                      ? Colors.grey
+                                      : (isOverdue
+                                          ? Colors.red.shade700
+                                          : Colors.black87),
+                                ),
+                              ),
+                            ),
+                            if (isImportant)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.shade100,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '重要',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade900,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            if (isCompleted)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '完了',
+                                  style: TextStyle(
+                                    color: Colors.green.shade700,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (details != null && details.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            details,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey.shade500,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildCalendarMetaChip(
+                    icon: dueDate == null ? Icons.event_busy : Icons.event,
+                    label: dueDate == null
+                        ? '期限未設定'
+                        : _formatCalendarDate(dueDate, includeTime: true),
+                    color: isOverdue ? Colors.red : Colors.blueGrey,
+                  ),
+                  _buildCalendarMetaChip(
+                    icon: _categoryIcons[category] ?? Icons.category,
+                    label: _categoryLabels[category] ?? category,
+                    color: _categoryColors[category] ?? Colors.grey,
+                  ),
+                  if (recurrence != 'none')
+                    _buildCalendarMetaChip(
+                      icon: Icons.repeat,
+                      label: _recurrenceChipLabel(recurrence),
+                      color: Colors.purple,
+                    ),
+                  _buildCalendarMetaChip(
+                    icon: Icons.signal_cellular_alt,
+                    label: _difficultyLabels[difficulty] ?? difficulty,
+                    color: _difficultyColors[difficulty] ?? Colors.blue,
+                  ),
+                  if (estimatedMinutes != null)
+                    _buildCalendarMetaChip(
+                      icon: Icons.timer_outlined,
+                      label: '見積 $estimatedMinutes分',
+                      color: Colors.indigo,
+                    ),
+                  if (actualMinutes != null)
+                    _buildCalendarMetaChip(
+                      icon: Icons.play_circle_outline,
+                      label: '実績 $actualMinutes分',
+                      color: Colors.green,
+                    ),
+                ],
+              ),
+              if (matchingSubtasks.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.checklist,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'サブタスク $completedSubtasks/${matchingSubtasks.length} 完了',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'タップで詳細',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildCalendarViewLegacy() {
     return Column(
       children: [
         TableCalendar<Map<String, dynamic>>(
@@ -3293,6 +3601,127 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ),
                   );
                 },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarView() {
+    return Column(
+      children: [
+        TableCalendar<Map<String, dynamic>>(
+          locale: 'ja_JP',
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          calendarFormat: CalendarFormat.month,
+          eventLoader: _getEventsForDay,
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            todayDecoration: BoxDecoration(
+              color: Colors.orange.shade200,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              shape: BoxShape.circle,
+            ),
+            markerDecoration: const BoxDecoration(
+              color: Colors.indigo,
+              shape: BoxShape.circle,
+            ),
+          ),
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+          ),
+          onDaySelected: (selectedDay, focusedDay) {
+            if (!isSameDay(_selectedDay, selectedDay)) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+
+              _selectedEvents.value = _getEventsForDay(selectedDay);
+            }
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+        ),
+        const Divider(),
+        Expanded(
+          child: ValueListenableBuilder<List<Map<String, dynamic>>>(
+            valueListenable: _selectedEvents,
+            builder: (context, value, _) {
+              final selectedDay = _selectedDay ?? _focusedDay;
+              final completedCount =
+                  value.where((todo) => todo['is_completed'] == true).length;
+
+              return Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatCalendarDate(
+                            selectedDay,
+                            includeWeekday: true,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '登録 ${value.length}件 / 完了 $completedCount件',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (value.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'カードをタップすると詳細とサブタスクを確認できます。',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (value.isEmpty)
+                    const Expanded(
+                      child: Center(
+                        child: Text('この日に登録されているタスクはありません。'),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: value.length,
+                        itemBuilder: (context, index) =>
+                            _buildCalendarTaskCard(value[index]),
+                      ),
+                    ),
+                ],
               );
             },
           ),
