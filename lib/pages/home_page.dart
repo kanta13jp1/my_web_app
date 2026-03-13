@@ -28,6 +28,7 @@ import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
 import 'agent_org_page.dart';
 import 'cfo_office_page.dart';
+import 'asset_management_page.dart';
 import 'cho_office_page.dart';
 import 'cmo_office_page.dart';
 import 'chro_office_page.dart';
@@ -114,6 +115,9 @@ class _HomePageState extends State<HomePage> {
   String _balanceCheckDoneKeyFor(DateTime date) =>
       'home_balance_check_done_${DateFormat('yyyy-MM-dd').format(date)}';
 
+  String _monthlyFlowReviewDoneKeyFor(DateTime date) =>
+      'home_monthly_flow_review_done_${DateFormat('yyyy-MM').format(date)}';
+
   String _aiNudgeCacheKey(_HomeActionType type, _HomeOpsSnapshot snapshot) {
     final slipSeed = snapshot.abstinenceSlipDetails.take(3).join('|');
     final seed =
@@ -196,6 +200,77 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Error fetching pending stock task count: $e');
       return 0;
+    }
+  }
+
+  Future<_HomeMonthlyCashflowSummary> _loadMonthlyCashflowSummary({
+    required SharedPreferences prefs,
+    required DateTime month,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final monthStart = DateTime(month.year, month.month, 1);
+    final nextMonth = DateTime(month.year, month.month + 1, 1);
+    final reviewDone =
+        prefs.getBool(_monthlyFlowReviewDoneKeyFor(monthStart)) ?? false;
+
+    if (userId == null) {
+      return _HomeMonthlyCashflowSummary(
+        month: monthStart,
+        reviewDone: reviewDone,
+      );
+    }
+
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('wealth_struggles')
+          .select('action_type,amount,occurred_at')
+          .eq('user_id', userId)
+          .gte('occurred_at', monthStart.toUtc().toIso8601String())
+          .lt('occurred_at', nextMonth.toUtc().toIso8601String())
+          .order('occurred_at', ascending: false);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+
+      var incomeTotal = 0;
+      var expenseTotal = 0;
+      var incomeCount = 0;
+      var expenseCount = 0;
+      DateTime? lastRecordedAt;
+
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final actionType = row['action_type']?.toString() ?? '';
+        final amount = (row['amount'] as num?)?.toInt() ?? 0;
+        final occurredAt = DateTime.tryParse(
+          row['occurred_at']?.toString() ?? '',
+        )?.toLocal();
+        if (occurredAt != null &&
+            (lastRecordedAt == null || occurredAt.isAfter(lastRecordedAt))) {
+          lastRecordedAt = occurredAt;
+        }
+
+        if (actionType == 'conquer') {
+          incomeTotal += amount;
+          incomeCount += 1;
+        } else if (actionType == 'expense') {
+          expenseTotal += amount;
+          expenseCount += 1;
+        }
+      }
+
+      return _HomeMonthlyCashflowSummary(
+        month: monthStart,
+        incomeTotal: incomeTotal,
+        expenseTotal: expenseTotal,
+        incomeCount: incomeCount,
+        expenseCount: expenseCount,
+        reviewDone: reviewDone,
+        lastRecordedAt: lastRecordedAt,
+      );
+    } catch (e) {
+      debugPrint('Error loading monthly cashflow summary: $e');
+      return _HomeMonthlyCashflowSummary(
+        month: monthStart,
+        reviewDone: reviewDone,
+      );
     }
   }
 
@@ -556,6 +631,10 @@ class _HomePageState extends State<HomePage> {
   Future<_HomeOpsSnapshot> _loadOpsSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
     final today = _startOfDay(_now());
+    final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
+      prefs: prefs,
+      month: today,
+    );
     final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
     final pendingStockTaskCount = await _fetchPendingStockTaskCount();
     final homeDailyMap = await _loadHomeDailyStatusMap(
@@ -580,6 +659,7 @@ class _HomePageState extends State<HomePage> {
       abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
       abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
       calendarDays: calendarDays,
+      monthlyCashflowSummary: monthlyCashflowSummary,
     );
   }
 
@@ -888,6 +968,16 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
+    if (snapshot.monthlyCashflowSummary.needsReview) {
+      return _HomeActionCommand(
+        type: _HomeActionType.monthlyFlowReview,
+        title: '今月の収支を先に把握する',
+        detail: snapshot.monthlyCashflowSummary.summaryLine,
+        icon: Icons.receipt_long,
+        color: Colors.green.shade700,
+      );
+    }
+
     if (!snapshot.morningBriefingDone && hour < 12) {
       return const _HomeActionCommand(
         type: _HomeActionType.morningBriefing,
@@ -941,6 +1031,25 @@ abstinence_slip_details: $slipDetailsText
 
   Future<void> _openMorningBriefing(BuildContext context) async {
     await _openMorningBriefingForDate(context, _now());
+  }
+
+  Future<void> _openMonthlyCashflowReview(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final month = DateTime(_now().year, _now().month, 1);
+    await prefs.setBool(_monthlyFlowReviewDoneKeyFor(month), true);
+    if (!context.mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AssetManagementPage(
+          initialFocus: AssetManagementInitialFocus.flow,
+          emphasizeMonthlyFlow: true,
+        ),
+      ),
+    );
+    if (mounted) {
+      await _refreshKpis();
+    }
   }
 
   Future<void> _openMorningBriefingForDate(
@@ -1033,6 +1142,11 @@ abstinence_slip_details: $slipDetailsText
       buttonLabel = 'ブリーフィングへ';
       onPressed = () {
         _openMorningBriefing(context);
+      };
+    } else if (command.type == _HomeActionType.monthlyFlowReview) {
+      buttonLabel = '今月の収支へ';
+      onPressed = () {
+        _openMonthlyCashflowReview(context);
       };
     } else if (command.type == _HomeActionType.balanceCheck) {
       buttonLabel = '財務管理へ';
@@ -1191,6 +1305,234 @@ abstinence_slip_details: $slipDetailsText
                   label: Text(buttonLabel),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyCashflowPriorityCard(
+    BuildContext context,
+    _HomeOpsSnapshot snapshot, {
+    required bool isHighlighted,
+  }) {
+    final summary = snapshot.monthlyCashflowSummary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = summary.netTotal >= 0
+        ? Colors.green.shade700
+        : Colors.redAccent.shade200;
+    final cardColor =
+        isDark ? const Color(0xFF111827) : Colors.white.withValues(alpha: 0.92);
+    final borderColor = isHighlighted
+        ? accentColor.withValues(alpha: 0.7)
+        : accentColor.withValues(alpha: 0.22);
+    final monthLabel = summary.monthLabel;
+    final recordLabel =
+        summary.recordCount == 0 ? '未記録' : '${summary.recordCount}件記録';
+
+    return Container(
+      key: const Key('home_monthly_cashflow_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor, width: isHighlighted ? 1.6 : 1),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: isHighlighted ? 0.18 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.receipt_long, color: accentColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$monthLabelの収支を最優先',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      summary.summaryLine,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: (isDark ? Colors.white : Colors.black87)
+                            .withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isHighlighted)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'NOW',
+                    style: TextStyle(
+                      color: accentColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildMonthlyCashflowMetric(
+                label: '収入',
+                value: _formatYen(summary.incomeTotal.toDouble()),
+                color: Colors.green.shade700,
+              ),
+              _buildMonthlyCashflowMetric(
+                label: '支出',
+                value: _formatYen(summary.expenseTotal.toDouble()),
+                color: Colors.redAccent,
+              ),
+              _buildMonthlyCashflowMetric(
+                label: '差額',
+                value: _formatSignedYen(summary.netTotal.toDouble()),
+                color: accentColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMonthlyCashflowChip(
+                icon:
+                    summary.reviewDone ? Icons.visibility : Icons.priority_high,
+                label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
+                color: summary.reviewDone ? Colors.blueGrey : accentColor,
+              ),
+              _buildMonthlyCashflowChip(
+                icon: Icons.edit_note,
+                label: recordLabel,
+                color: summary.recordCount > 0 ? Colors.blue : Colors.orange,
+              ),
+              if (summary.lastRecordedAt != null)
+                _buildMonthlyCashflowChip(
+                  icon: Icons.schedule,
+                  label:
+                      '最終記録 ${DateFormat('M/d HH:mm').format(summary.lastRecordedAt!)}',
+                  color: Colors.indigo,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            key: const Key('home_monthly_cashflow_cta'),
+            onPressed: () => _openMonthlyCashflowReview(context),
+            icon: const Icon(Icons.arrow_forward),
+            label: Text(
+              summary.recordCount == 0 ? '今月の収支を記録する' : '今月の収支を確認する',
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: accentColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyCashflowMetric({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 104),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyCashflowChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
@@ -2795,6 +3137,8 @@ abstinence_slip_details: $slipDetailsText
             builder: (context, snapshot) {
               final opsSnapshot = snapshot.data ?? const _HomeOpsSnapshot();
               final nextAction = _resolveNextAction(opsSnapshot);
+              final highlightMonthlyFlow =
+                  nextAction.type == _HomeActionType.monthlyFlowReview;
               final highlightMorning =
                   nextAction.type == _HomeActionType.morningBriefing;
               final highlightBalance =
@@ -2831,6 +3175,12 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _buildMonthlyCashflowPriorityCard(
+                              context,
+                              opsSnapshot,
+                              isHighlighted: highlightMonthlyFlow,
+                            ),
+                            const SizedBox(height: 14),
                             _buildNextActionBubble(
                               context,
                               nextAction,
@@ -3036,8 +3386,13 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.account_balance_wallet,
                                 Colors.green,
                                 () => _openCfoOffice(context),
-                                isHighlighted: highlightBalance,
-                                badgeLabel: highlightBalance ? 'NEXT' : null,
+                                isHighlighted:
+                                    highlightMonthlyFlow || highlightBalance,
+                                badgeLabel: highlightMonthlyFlow
+                                    ? 'NOW'
+                                    : highlightBalance
+                                        ? 'NEXT'
+                                        : null,
                               ),
                               _MenuData(
                                 '健康管理 (CHO)',
@@ -4200,6 +4555,7 @@ class _MenuData {
 
 enum _HomeActionType {
   abstinenceGuard,
+  monthlyFlowReview,
   morningBriefing,
   balanceCheck,
   criticalTasks,
@@ -4301,9 +4657,53 @@ class _HomeKpiOverview {
       yearBaseTotal == null ? null : latestTotal - yearBaseTotal!;
 }
 
+class _HomeMonthlyCashflowSummary {
+  final DateTime? month;
+  final int incomeTotal;
+  final int expenseTotal;
+  final int incomeCount;
+  final int expenseCount;
+  final bool reviewDone;
+  final DateTime? lastRecordedAt;
+
+  const _HomeMonthlyCashflowSummary({
+    this.month,
+    this.incomeTotal = 0,
+    this.expenseTotal = 0,
+    this.incomeCount = 0,
+    this.expenseCount = 0,
+    this.reviewDone = false,
+    this.lastRecordedAt,
+  });
+
+  int get netTotal => incomeTotal - expenseTotal;
+
+  int get recordCount => incomeCount + expenseCount;
+
+  bool get needsReview => !reviewDone;
+
+  String get monthLabel =>
+      month == null ? '今月' : DateFormat('M月').format(month!);
+
+  String get summaryLine {
+    if (recordCount == 0) {
+      return '$monthLabelの収支がまだ記録されていません。先に全体像を把握してください。';
+    }
+    if (incomeCount == 0) {
+      return '$monthLabelは支出のみ記録されています。収入側も含めて差額を確認してください。';
+    }
+    if (expenseCount == 0) {
+      return '$monthLabelは収入のみ記録されています。支出側も含めて差額を確認してください。';
+    }
+    final netLabel = netTotal >= 0 ? '黒字' : '赤字';
+    return '$monthLabelの収入${NumberFormat('#,##0').format(incomeTotal)}円、支出${NumberFormat('#,##0').format(expenseTotal)}円、差額${NumberFormat('#,##0').format(netTotal.abs())}円の$netLabelです。';
+  }
+}
+
 class _HomeOpsSnapshot {
   final bool morningBriefingDone;
   final bool balanceCheckDone;
+  final _HomeMonthlyCashflowSummary monthlyCashflowSummary;
   final int pendingCriticalTaskCount;
   final int pendingStockTaskCount;
   final int abstinenceFocusCount;
@@ -4315,6 +4715,7 @@ class _HomeOpsSnapshot {
   const _HomeOpsSnapshot({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
+    this.monthlyCashflowSummary = const _HomeMonthlyCashflowSummary(),
     this.pendingCriticalTaskCount = 0,
     this.pendingStockTaskCount = 0,
     this.abstinenceFocusCount = 0,

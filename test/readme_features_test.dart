@@ -49,6 +49,10 @@ void main() {
 
       expect(find.byKey(const Key('home_page_scaffold')), findsOneWidget);
       expect(find.byKey(const Key('home_page_title')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_monthly_cashflow_card')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('home_section_ceo_office')), findsOneWidget);
       expect(
         find.byKey(const Key('home_section_cso_office')),
@@ -94,7 +98,9 @@ void main() {
 
     testWidgets('Feature: HomePage prioritizes morning briefing before noon',
         (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({
+        'home_monthly_flow_review_done_2026-02': true,
+      });
       await tester.pumpWidget(
         createTestWidget(
           HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
@@ -104,6 +110,23 @@ void main() {
 
       expect(
         find.byKey(const Key('home_next_action_morningBriefing')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'Feature: HomePage prioritizes monthly cashflow review before briefing',
+        (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('home_next_action_monthlyFlowReview')),
         findsOneWidget,
       );
     });
@@ -144,6 +167,7 @@ void main() {
     testWidgets('Feature: HomePage prioritizes balance check after briefing',
         (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({
+        'home_monthly_flow_review_done_2026-02': true,
         'home_morning_briefing_done_2026-02-26': true,
       });
       await tester.pumpWidget(
@@ -162,6 +186,7 @@ void main() {
     testWidgets('Feature: HomePage shows normal mode when core flow is done',
         (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({
+        'home_monthly_flow_review_done_2026-02': true,
         'home_morning_briefing_done_2026-02-26': true,
         'home_balance_check_done_2026-02-26': true,
       });

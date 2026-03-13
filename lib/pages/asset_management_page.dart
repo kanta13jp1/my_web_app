@@ -9,8 +9,20 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 
+enum AssetManagementInitialFocus {
+  overview,
+  flow,
+}
+
 class AssetManagementPage extends StatefulWidget {
-  const AssetManagementPage({super.key});
+  final AssetManagementInitialFocus initialFocus;
+  final bool emphasizeMonthlyFlow;
+
+  const AssetManagementPage({
+    super.key,
+    this.initialFocus = AssetManagementInitialFocus.overview,
+    this.emphasizeMonthlyFlow = false,
+  });
 
   @override
   State<AssetManagementPage> createState() => _AssetManagementPageState();
@@ -119,6 +131,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() => _now = DateTime.now());
     });
     _fetchTodayClosing();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.initialFocus == AssetManagementInitialFocus.flow) {
+        _scrollTo(_keyFlow);
+      }
+    });
   }
 
   @override
@@ -2013,6 +2031,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildMonthlyFlowFirstCard(),
+            const SizedBox(height: 16),
+            _buildMonthlyFlowPrimaryActionBar(),
+            const SizedBox(height: 24),
             _buildDeadlineChecklistCard(), // 締切チェックリスト
             const SizedBox(height: 16),
             _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
@@ -2040,6 +2062,168 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // -------------------------
   // 各カードUIコンポーネント
   // -------------------------
+
+  Widget _buildMonthlyFlowFirstCard() {
+    final currentMonth = DateTime(_now.year, _now.month, 1);
+    final monthLabel = _flowMonthLabel(currentMonth);
+    final flows = _flowsForMonth(currentMonth);
+    var totalIncome = 0;
+    var totalExpense = 0;
+
+    for (final item in flows) {
+      final amount = (item['amount'] as num?)?.toInt() ?? 0;
+      final actionType = item['action_type'] as String? ?? '';
+      if (actionType == 'conquer') {
+        totalIncome += amount;
+      } else if (actionType == 'expense') {
+        totalExpense += amount;
+      }
+    }
+
+    final net = totalIncome - totalExpense;
+    final statusText = flows.isEmpty
+        ? 'まだ今月の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+        : '今月の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+
+    return Card(
+      key: const Key('asset_monthly_flow_priority_card'),
+      elevation: widget.emphasizeMonthlyFlow ? 6 : 3,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: widget.emphasizeMonthlyFlow
+              ? Colors.green.shade400
+              : Colors.green.shade100,
+          width: widget.emphasizeMonthlyFlow ? 2 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$monthLabelの収支を最優先で把握',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: '収入',
+                  value: '¥${NumberFormat('#,###').format(totalIncome)}',
+                  color: Colors.green.shade700,
+                ),
+                _buildFlowPriorityMetric(
+                  label: '支出',
+                  value: '¥${NumberFormat('#,###').format(totalExpense)}',
+                  color: Colors.red.shade700,
+                ),
+                _buildFlowPriorityMetric(
+                  label: '差額',
+                  value:
+                      '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
+                  color: net >= 0 ? Colors.green.shade800 : Colors.red.shade800,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyFlowPrimaryActionBar() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: FilledButton.icon(
+        key: const Key('asset_monthly_flow_priority_button'),
+        onPressed: () => _scrollTo(_keyFlow),
+        icon: const Icon(Icons.arrow_downward),
+        label: const Text('今月の収支入力へ進む'),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF1B5E20),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlowPriorityMetric({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 108),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildDeadlineChecklistCard() {
     final remainText = _remainingToDeadlineText();
