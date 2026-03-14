@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/gamification_service.dart';
+import '../services/completion_goal_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -580,6 +581,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     int? actualMinutes;
     String? reflection;
     final points = _difficultyPoints[difficulty] ?? 10;
+    final goalBefore = CompletionGoalService.buildSnapshot(todos: _todos);
+    final completedAtIso =
+        !currentValue ? DateTime.now().toIso8601String() : null;
 
     // タスクを完了にする場合、最重要タスクのチェックを行う
     if (!currentValue) {
@@ -671,6 +675,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     try {
       final updates = <String, dynamic>{
         'is_completed': !currentValue,
+        'completed_at': completedAtIso,
       };
 
       if (!currentValue) {
@@ -681,10 +686,22 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         updates['reflection'] = null;
       }
 
-      await Supabase.instance.client
-          .from('daily_todos')
-          .update(updates)
-          .eq('id', id);
+      try {
+        await Supabase.instance.client
+            .from('daily_todos')
+            .update(updates)
+            .eq('id', id);
+      } catch (e) {
+        if (!updates.containsKey('completed_at')) {
+          rethrow;
+        }
+        final fallbackUpdates = Map<String, dynamic>.from(updates)
+          ..remove('completed_at');
+        await Supabase.instance.client
+            .from('daily_todos')
+            .update(fallbackUpdates)
+            .eq('id', id);
+      }
 
       if (!currentValue && mounted) {
         // 難易度に応じて紙吹雪の時間を調整
@@ -733,6 +750,31 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             duration: const Duration(seconds: 1),
           ),
         );
+        final simulatedTodos = _todos
+            .map(
+              (todo) => todo['id'] == id
+                  ? {
+                      ...todo,
+                      'is_completed': true,
+                      'completed_at': completedAtIso,
+                    }
+                  : todo,
+            )
+            .toList();
+        final goalAfter = CompletionGoalService.buildSnapshot(
+          todos: simulatedTodos,
+        );
+        if (!goalBefore.isAchieved && goalAfter.isAchieved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '前日超え達成: 昨日 ${goalAfter.yesterdayCompletedCount}件 → 今日 ${goalAfter.todayCompletedCount}件',
+              ),
+              backgroundColor: Colors.indigo,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       } else if (currentValue && mounted) {
         // タスク完了取り消し時にポイント減算
         context.read<GamificationService>().awardPoints(
@@ -1328,8 +1370,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final todayStr = _dateOnly(DateTime.now());
 
     final historyTodos = _todos.where((t) {
+      if (t['is_completed'] != true) {
+        return false;
+      }
+      final completedAt = _parseLocalDateTime(t['completed_at'] as String?);
+      if (completedAt != null) {
+        return _dateOnly(completedAt) == todayStr;
+      }
       final td = t['task_date'] as String?;
-      return t['is_completed'] == true && td == todayStr;
+      return td == todayStr;
     }).toList();
 
     if (historyTodos.isEmpty) {
@@ -2163,6 +2212,103 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  Widget _buildBeatYesterdayGoalCard(
+    BuildContext context,
+    DailyCompletionGoalSnapshot snapshot,
+  ) {
+    final achieved = snapshot.isAchieved;
+    final theme = Theme.of(context);
+    final accentColor = achieved ? Colors.green : Colors.deepOrange;
+    final headline = achieved ? '前日超えを達成しました' : '今日は昨日より1件多く完了する';
+    final detail = achieved
+        ? '昨日 ${snapshot.yesterdayCompletedCount}件 → 今日 ${snapshot.todayCompletedCount}件'
+        : '昨日 ${snapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.todayCompletedCount}件 / 目標 ${snapshot.targetCount}件';
+    final helper = achieved
+        ? 'このまま上振れを狙えます。次の1件を短時間で片付ける。'
+        : 'あと ${snapshot.remainingCount}件で前日超えです。短い未完了タスクから先に片付けます。';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                achieved ? Icons.trending_up : Icons.flag,
+                color: accentColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '前日超えチャレンジ',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  achieved ? '達成' : '進行中',
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            headline,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            detail,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: snapshot.progress,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: Colors.white,
+            color: accentColor,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            helper,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   BarChartGroupData makeBarGroup(int x, double y, Color color) {
     return BarChartGroupData(
       x: x,
@@ -2180,6 +2326,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   @override
   Widget build(BuildContext context) {
+    final completionGoalSnapshot = CompletionGoalService.buildSnapshot(
+      todos: _todos,
+    );
     // フィルタリング
 
     final filteredTodos = _filterCategory == 'all'
@@ -2565,6 +2714,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           ],
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildBeatYesterdayGoalCard(
+                      context,
+                      completionGoalSnapshot,
                     ),
                   ],
                 ),
