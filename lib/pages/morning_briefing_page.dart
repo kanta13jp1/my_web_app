@@ -171,16 +171,26 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
     return _todos.where((todo) {
-      if (todo['due_date'] == null) {
-        return false;
+      DateTime? taskDate;
+      DateTime? dueDate;
+
+      final taskDateRaw = todo['task_date']?.toString();
+      if (taskDateRaw != null && taskDateRaw.isNotEmpty) {
+        taskDate = DateTime.tryParse(taskDateRaw);
       }
-      try {
-        final dueDate = DateTime.parse(todo['due_date']).toLocal();
-        return isSameDay(dueDate, day);
-      } catch (e) {
-        debugPrint('Invalid due_date format: ${todo['due_date']}');
-        return false;
+
+      final dueDateRaw = todo['due_date']?.toString();
+      if (dueDateRaw != null && dueDateRaw.isNotEmpty) {
+        try {
+          dueDate = DateTime.parse(dueDateRaw).toLocal();
+        } catch (e) {
+          debugPrint('Invalid due_date format: $dueDateRaw');
+        }
       }
+
+      final matchesTaskDate = taskDate != null && isSameDay(taskDate, day);
+      final matchesDueDate = dueDate != null && isSameDay(dueDate, day);
+      return matchesTaskDate || matchesDueDate;
     }).toList();
   }
 
