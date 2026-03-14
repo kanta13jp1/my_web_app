@@ -3453,6 +3453,147 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  bool _useCalendarBottomSheet(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    return size.width < 520 || size.height < 760;
+  }
+
+  Future<void> _showCalendarDayTasksSheet(
+    DateTime day,
+    List<Map<String, dynamic>> tasks,
+  ) async {
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: tasks.isEmpty ? 0.42 : 0.78,
+          minChildSize: 0.32,
+          maxChildSize: 0.94,
+          builder: (context, scrollController) {
+            return Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _formatCalendarDate(day, includeWeekday: true),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    tasks.isEmpty
+                        ? 'この日に登録されているタスクはありません。'
+                        : '${tasks.length}件のタスクが登録されています。',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (tasks.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Text('別の日付を選ぶか、タスクを追加してください。'),
+                    )
+                  else
+                    ...tasks.map(_buildCalendarTaskCard),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactCalendarSummaryCard(
+    BuildContext context,
+    DateTime selectedDay,
+    List<Map<String, dynamic>> tasks,
+  ) {
+    final completedCount =
+        tasks.where((todo) => todo['is_completed'] == true).length;
+    final firstTask =
+        tasks.isNotEmpty ? (tasks.first['task'] as String? ?? '').trim() : null;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.indigo.shade50,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _formatCalendarDate(selectedDay, includeWeekday: true),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tasks.isEmpty
+                ? 'この日は未登録です。'
+                : '登録 ${tasks.length}件 / 完了 $completedCount件',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (firstTask != null && firstTask.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              '先頭タスク: $firstTask',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.grey.shade800,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => _showCalendarDayTasksSheet(selectedDay, tasks),
+              icon: const Icon(Icons.list_alt),
+              label: Text(tasks.isEmpty ? 'この日の状況を見る' : 'この日の詳細を開く'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ignore: unused_element
   Widget _buildCalendarViewLegacy() {
     return Column(
@@ -3609,7 +3750,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildCalendarView() {
+  // ignore: unused_element
+  Widget _buildCalendarViewCurrentLegacy() {
     return Column(
       children: [
         TableCalendar<Map<String, dynamic>>(
@@ -3642,12 +3784,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
           onDaySelected: (selectedDay, focusedDay) {
             if (!isSameDay(_selectedDay, selectedDay)) {
+              final events = _getEventsForDay(selectedDay);
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
 
-              _selectedEvents.value = _getEventsForDay(selectedDay);
+              _selectedEvents.value = events;
+
+              if (_useCalendarBottomSheet(context)) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _showCalendarDayTasksSheet(selectedDay, events);
+                });
+              }
             }
           },
           onPageChanged: (focusedDay) {
@@ -3725,6 +3875,146 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               );
             },
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarView() {
+    return Column(
+      children: [
+        TableCalendar<Map<String, dynamic>>(
+          locale: 'ja_JP',
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          calendarFormat: CalendarFormat.month,
+          eventLoader: _getEventsForDay,
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            todayDecoration: BoxDecoration(
+              color: Colors.orange.shade200,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              shape: BoxShape.circle,
+            ),
+            markerDecoration: const BoxDecoration(
+              color: Colors.indigo,
+              shape: BoxShape.circle,
+            ),
+          ),
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+          ),
+          onDaySelected: (selectedDay, focusedDay) {
+            if (!isSameDay(_selectedDay, selectedDay)) {
+              final events = _getEventsForDay(selectedDay);
+
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+
+              _selectedEvents.value = events;
+
+              if (_useCalendarBottomSheet(context)) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _showCalendarDayTasksSheet(selectedDay, events);
+                });
+              }
+            }
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+        ),
+        const Divider(),
+        ValueListenableBuilder<List<Map<String, dynamic>>>(
+          valueListenable: _selectedEvents,
+          builder: (context, value, _) {
+            final selectedDay = _selectedDay ?? _focusedDay;
+            final isCompact = _useCalendarBottomSheet(context);
+
+            if (isCompact) {
+              return _buildCompactCalendarSummaryCard(
+                context,
+                selectedDay,
+                value,
+              );
+            }
+
+            final completedCount =
+                value.where((todo) => todo['is_completed'] == true).length;
+
+            return Expanded(
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatCalendarDate(
+                            selectedDay,
+                            includeWeekday: true,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '登録 ${value.length}件 / 完了 $completedCount件',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (value.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'カードをタップすると詳細とサブタスクを確認できます。',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (value.isEmpty)
+                    const Expanded(
+                      child: Center(
+                        child: Text('この日に登録されているタスクはありません。'),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: value.length,
+                        itemBuilder: (context, index) =>
+                            _buildCalendarTaskCard(value[index]),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
