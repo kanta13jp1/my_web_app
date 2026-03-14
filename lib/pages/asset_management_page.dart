@@ -1577,6 +1577,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  String _composeFlowDescription(String source, String memo) {
+    final normalizedSource = source.trim();
+    final normalizedMemo = memo.trim();
+    if (normalizedMemo.isEmpty) {
+      return normalizedSource;
+    }
+    return '$normalizedSource $normalizedMemo';
+  }
+
+  ({String source, String memo}) _parseFlowDescription(String description) {
+    final normalized = description.trim();
+    final match = RegExp(r'^(\[[^\]]+\])\s*(.*)$').firstMatch(normalized);
+    if (match != null) {
+      return (
+        source: match.group(1)?.trim() ?? '',
+        memo: match.group(2)?.trim() ?? '',
+      );
+    }
+
+    return (
+      source: _sourceOptions.contains('[その他]') ? '[その他]' : _sourceOptions.last,
+      memo: normalized,
+    );
+  }
+
+  String _flowLabelToActionType(String label) =>
+      label == '収入' ? 'conquer' : 'expense';
+
+  String _actionTypeToFlowLabel(String actionType) =>
+      actionType == 'expense' ? '支出' : '収入';
+
   Future<void> _recordFlow() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -1599,7 +1630,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'user_id': userId,
         'action_type': actionType,
         'amount': amount,
-        'description': '$_selectedSource $memo',
+        'description': _composeFlowDescription(_selectedSource, memo),
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
 
@@ -1623,6 +1654,188 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
     } catch (e) {
       debugPrint('Error recording flow: $e');
+    }
+  }
+
+  Future<void> _editFlow(Map<String, dynamic> flow) async {
+    final flowId = flow['id']?.toString();
+    if (flowId == null || flowId.isEmpty) return;
+
+    final parsed = _parseFlowDescription(flow['description']?.toString() ?? '');
+    final availableSources = [..._sourceOptions];
+    if (parsed.source.isNotEmpty && !availableSources.contains(parsed.source)) {
+      availableSources.add(parsed.source);
+    }
+
+    final memoController = TextEditingController(text: parsed.memo);
+    final amountController = TextEditingController(
+      text: ((flow['amount'] as num?)?.toInt() ?? 0).toString(),
+    );
+    var selectedSource = availableSources.contains(parsed.source)
+        ? parsed.source
+        : availableSources.first;
+    var selectedType =
+        _actionTypeToFlowLabel(flow['action_type']?.toString() ?? 'expense');
+    var selectedDate =
+        DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
+            DateTime.now();
+
+    try {
+      final shouldSave = await showDialog<bool>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('収支記録を編集'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedType,
+                    decoration: const InputDecoration(
+                      labelText: '種別',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: '支出', child: Text('支出')),
+                      DropdownMenuItem(value: '収入', child: Text('収入')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setDialogState(() => selectedType = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020, 1, 1),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked == null) return;
+                      setDialogState(() => selectedDate = picked);
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: '日付',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(DateFormat('yyyy/MM/dd').format(selectedDate)),
+                          const Icon(Icons.calendar_today, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSource,
+                    decoration: const InputDecoration(
+                      labelText: '入出金元',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: availableSources
+                        .map(
+                          (source) => DropdownMenuItem(
+                            value: source,
+                            child: Text(
+                              source.replaceAll('[', '').replaceAll(']', ''),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setDialogState(() => selectedSource = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: memoController,
+                    decoration: const InputDecoration(
+                      labelText: '内容',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '金額 (円)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('保存'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (shouldSave != true) return;
+
+      final memo = memoController.text.trim();
+      final amount = int.tryParse(amountController.text.replaceAll(',', ''));
+      if (amount == null || amount <= 0 || memo.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('内容と金額を正しく入力してください')),
+        );
+        return;
+      }
+
+      await _supabase.from('wealth_struggles').update({
+        'action_type': _flowLabelToActionType(selectedType),
+        'amount': amount,
+        'description': _composeFlowDescription(selectedSource, memo),
+        'occurred_at': selectedDate.toUtc().toIso8601String(),
+      }).eq('id', flowId);
+
+      if (mounted) {
+        setState(() {
+          _selectedFlowHistoryMonth = _monthStart(selectedDate);
+        });
+      }
+
+      await _fetchRecentFlows();
+      await _fetchTodayClosing();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('収支記録を更新しました'),
+          backgroundColor: Colors.black87,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error editing flow: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('収支記録の更新に失敗しました: $e')),
+      );
+    } finally {
+      memoController.dispose();
+      amountController.dispose();
     }
   }
 
@@ -3074,7 +3287,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   // ④ 今月の支出と収入
-  Widget _buildFlowCard() {
+  // ignore: unused_element
+  Widget _buildFlowCardLegacy() {
     final visibleFlows = _flowsForMonth(_selectedFlowHistoryMonth);
     final visibleMonthLabel = _flowMonthLabel(_selectedFlowHistoryMonth);
     final canMoveForward = !_isSameMonth(
@@ -3387,6 +3601,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
+                        onTap: () => _editFlow(item),
                         leading: Icon(
                           isIncome ? Icons.add_circle : Icons.remove_circle,
                           color: isIncome ? Colors.green : Colors.red,
@@ -3394,7 +3609,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         title: Text(desc, style: const TextStyle(fontSize: 13)),
                         subtitle: Text(
-                          DateFormat('MM/dd').format(date),
+                          '${DateFormat('MM/dd').format(date)} ・ タップで編集',
                           style: const TextStyle(fontSize: 11),
                         ),
                         trailing: Text(
@@ -3414,6 +3629,373 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   // ③ 固定費
+  Widget _buildFlowCard() {
+    final visibleFlows = _flowsForMonth(_selectedFlowHistoryMonth);
+    final visibleMonthLabel = _flowMonthLabel(_selectedFlowHistoryMonth);
+    final canMoveForward = !_isSameMonth(
+      _selectedFlowHistoryMonth,
+      DateTime.now(),
+    );
+    int totalIncome = 0;
+    int totalExpense = 0;
+
+    for (final item in visibleFlows) {
+      final amount = (item['amount'] as num?)?.toInt() ?? 0;
+      final actionType = item['action_type'] as String? ?? '';
+      if (actionType == 'conquer') totalIncome += amount;
+      if (actionType == 'expense') totalExpense += amount;
+    }
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.receipt_long, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  '④収支の記録',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            Text(
+              'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedFlowType,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    items: ['支出', '収入']
+                        .map(
+                          (value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedFlowType = value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedFlowDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) {
+                        setState(() => _selectedFlowDate = date);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[400]!),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(DateFormat('MM/dd').format(_selectedFlowDate)),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey[50],
+                borderRadius: BorderRadius.circular(10),
+                border:
+                    Border.all(color: Colors.blueGrey.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: '前月',
+                    onPressed: () => _shiftFlowHistoryMonth(-1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickFlowHistoryMonth,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Column(
+                          children: [
+                            const Text(
+                              '履歴表示月',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              visibleMonthLabel,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '次月',
+                    onPressed:
+                        canMoveForward ? () => _shiftFlowHistoryMonth(1) : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedSource,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    items: _sourceOptions
+                        .map(
+                          (source) => DropdownMenuItem(
+                            value: source,
+                            child: Text(
+                              source.replaceAll('[', '').replaceAll(']', ''),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedSource = value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _flowMemoController,
+                    decoration: const InputDecoration(
+                      labelText: '内容',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _flowAmountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '金額 (円)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _recordFlow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[800],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('追加'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      Text(
+                        '$visibleMonthLabel 収入',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        '￥${NumberFormat('#,###').format(totalIncome)}',
+                        style: TextStyle(
+                          color: Colors.green[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        '$visibleMonthLabel 支出',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        '￥${NumberFormat('#,###').format(totalExpense)}',
+                        style: TextStyle(
+                          color: Colors.red[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text('収支差額', style: TextStyle(fontSize: 10)),
+                      Text(
+                        '￥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
+                        style: TextStyle(
+                          color: (totalIncome - totalExpense) >= 0
+                              ? Colors.green[800]
+                              : Colors.red[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (visibleFlows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(child: Text('$visibleMonthLabel の記録はありません')),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: visibleFlows.length,
+                itemBuilder: (context, index) {
+                  final item = visibleFlows[index];
+                  final isIncome =
+                      (item['action_type'] as String?) == 'conquer';
+                  final amount = (item['amount'] as num?)?.toInt() ?? 0;
+                  final desc = item['description']?.toString() ?? '';
+                  final date = DateTime.tryParse(
+                        item['occurred_at']?.toString() ?? '',
+                      )?.toLocal() ??
+                      _selectedFlowHistoryMonth;
+
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    onTap: () => _editFlow(item),
+                    leading: Icon(
+                      isIncome ? Icons.add_circle : Icons.remove_circle,
+                      color: isIncome ? Colors.green : Colors.red,
+                      size: 20,
+                    ),
+                    title: Text(desc, style: const TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      '${DateFormat('MM/dd').format(date)} ・ タップで編集',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    trailing: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${isIncome ? '+' : '-'}￥${NumberFormat('#,###').format(amount)}',
+                          style: TextStyle(
+                            color: isIncome ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '編集',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blueGrey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            const SizedBox(height: 4),
+            Text(
+              '履歴の行をタップすると、日付・入出金元・内容・金額を後から修正できます。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSubscriptionCard() {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
