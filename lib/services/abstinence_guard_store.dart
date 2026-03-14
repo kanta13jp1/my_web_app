@@ -6,12 +6,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AbstinenceGuardItem {
   final String id;
   final String label;
+  final String interruptionSignal;
+  final String eliminationAction;
   final String replacementAction;
+  final bool isDigital;
+  final bool isImpulse;
 
   const AbstinenceGuardItem({
     required this.id,
     required this.label,
+    required this.interruptionSignal,
+    required this.eliminationAction,
     required this.replacementAction,
+    this.isDigital = false,
+    this.isImpulse = false,
   });
 }
 
@@ -41,9 +49,8 @@ class AbstinenceGuardSnapshot {
         (sum, state) => sum + state.slipCount,
       );
 
-  int get cleanEnabledCount => states
-      .where((state) => state.isEnabled && state.slipCount == 0)
-      .length;
+  int get cleanEnabledCount =>
+      states.where((state) => state.isEnabled && state.slipCount == 0).length;
 
   List<AbstinenceGuardState> get enabledStates =>
       states.where((state) => state.isEnabled).toList();
@@ -57,6 +64,28 @@ class AbstinenceGuardSnapshot {
   List<String> get enabledLabels =>
       enabledStates.map((state) => state.item.label).toList();
 
+  List<AbstinenceGuardState> get priorityStates {
+    final indexedStates = states.asMap().entries.toList();
+    indexedStates.sort((a, b) {
+      final slipCompare = b.value.slipCount.compareTo(a.value.slipCount);
+      if (slipCompare != 0) return slipCompare;
+
+      final enabledCompare =
+          (b.value.isEnabled ? 1 : 0).compareTo(a.value.isEnabled ? 1 : 0);
+      if (enabledCompare != 0) return enabledCompare;
+
+      return a.key.compareTo(b.key);
+    });
+
+    return indexedStates
+        .map((entry) => entry.value)
+        .where((state) => state.isEnabled || state.slipCount > 0)
+        .toList();
+  }
+
+  AbstinenceGuardState? get primaryInterference =>
+      priorityStates.isEmpty ? null : priorityStates.first;
+
   List<String> get slipDetails => slippedStates
       .map((state) => '${state.item.label}: ${state.slipCount}回')
       .toList();
@@ -65,52 +94,108 @@ class AbstinenceGuardSnapshot {
 class AbstinenceGuardStore {
   static const List<AbstinenceGuardItem> items = [
     AbstinenceGuardItem(
+      id: 'sns',
+      label: 'SNS',
+      interruptionSignal: '考え始める前に通知やタイムラインを開いてしまう',
+      eliminationAction: '通知を切り、ログアウトし、端末を机から離す',
+      replacementAction: '紙に次の一手を1行だけ書く',
+      isDigital: true,
+      isImpulse: true,
+    ),
+    AbstinenceGuardItem(
+      id: 'mobile_games',
+      label: 'スマホゲーム',
+      interruptionSignal: '5分だけのつもりで起動して流れを失う',
+      eliminationAction: 'アプリをホーム画面から外し、課金導線を切る',
+      replacementAction: '5分だけ単純作業を先に終わらせる',
+      isDigital: true,
+      isImpulse: true,
+    ),
+    AbstinenceGuardItem(
       id: 'alcohol',
+      interruptionSignal: '夜に思考が鈍ったタイミングで飲みたくなる',
+      eliminationAction: '家に置かず、水と無糖飲料だけを見える場所に置く',
       label: '酒',
       replacementAction: '水を飲む、店に寄らず帰る。',
     ),
     AbstinenceGuardItem(
       id: 'smoking',
+      interruptionSignal: '一区切りごとに手持ち無沙汰で吸いたくなる',
+      eliminationAction: '灰皿とライターを手元から消し、外に出ない',
       label: '煙草',
       replacementAction: '深呼吸して3分歩く。',
     ),
     AbstinenceGuardItem(
       id: 'gambling',
+      interruptionSignal: '負けや焦りを取り返したくなった瞬間に開く',
+      eliminationAction: '入金手段を外し、関連ブックマークを削除する',
       label: 'ギャンブル',
       replacementAction: '口座残高を確認して離脱する。',
     ),
     AbstinenceGuardItem(
       id: 'lust',
+      interruptionSignal: '刺激を探し始めると作業の文脈が切れる',
+      eliminationAction: '刺激源のタブを閉じ、視界から端末を外す',
       label: '性欲',
       replacementAction: '視線を切って作業に戻る。',
     ),
     AbstinenceGuardItem(
       id: 'smartphone',
+      interruptionSignal: '目的なく手に取った時点で集中が切れている',
+      eliminationAction: '別室に置くか、手の届かない場所で充電する',
       label: 'スマホ',
       replacementAction: '物理的に手放して別室に置く。',
     ),
     AbstinenceGuardItem(
       id: 'video',
+      interruptionSignal: 'おすすめを見始めると連続視聴に流れる',
+      eliminationAction: '動画サイトを閉じ、検索ではなく作業アプリだけ残す',
       label: '動画',
       replacementAction: '5分だけ紙に次の行動を書く。',
     ),
     AbstinenceGuardItem(
+      id: 'manga',
+      label: '漫画',
+      interruptionSignal: '1話だけのつもりが読み続けてしまう',
+      eliminationAction: 'アプリを閉じて、本棚やサイトをブロックする',
+      replacementAction: '読みたい衝動はメモして、夜の自由時間へ送る',
+      isDigital: true,
+      isImpulse: true,
+    ),
+    AbstinenceGuardItem(
       id: 'eating_out',
+      interruptionSignal: '面倒回避で外食に逃げると判断が雑になる',
+      eliminationAction: '先に家で食べる物を決め、出費導線を断つ',
       label: '外食',
       replacementAction: '買い置きか固定メニューで済ませる。',
     ),
     AbstinenceGuardItem(
       id: 'masturbation',
+      interruptionSignal: '刺激探索が始まった時点で深い思考が止まる',
+      eliminationAction: '刺激源を閉じて立ち上がり、冷水で顔を洗う',
       label: 'マスターベーション',
       replacementAction: '立ち上がって冷水で手を洗う。',
     ),
     AbstinenceGuardItem(
+      id: 'dating_apps',
+      label: '出会い・異性探索',
+      interruptionSignal: '承認や刺激を求めて検索や連絡に流れる',
+      eliminationAction: '出会い系アプリと関連通知を切り、夜まで開かない',
+      replacementAction: '衝動はメモ化して、今日の最重要タスクへ戻る',
+      isDigital: true,
+      isImpulse: true,
+    ),
+    AbstinenceGuardItem(
       id: 'touch_hair',
+      interruptionSignal: '思考停止時の癖として手が頭に行く',
+      eliminationAction: '両手を机の上に置き、姿勢を戻す',
       label: '髪をさわる',
       replacementAction: '両手を机の上に置く。',
     ),
     AbstinenceGuardItem(
       id: 'touch_beard',
+      interruptionSignal: '考えが詰まると無意識に触り続ける',
+      eliminationAction: '手を離し、メモに論点を3語だけ書く',
       label: '髭をさわる',
       replacementAction: '口元から手を離して深呼吸する。',
     ),
@@ -482,9 +567,9 @@ class AbstinenceGuardStore {
         )
         .toList();
     await Supabase.instance.client.from('abstinence_daily_status').upsert(
-      rows,
-      onConflict: 'user_id,status_date,item_id',
-    );
+          rows,
+          onConflict: 'user_id,status_date,item_id',
+        );
   }
 }
 

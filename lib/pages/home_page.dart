@@ -647,6 +647,7 @@ class _HomePageState extends State<HomePage> {
     final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
       now: today,
     );
+    final primaryInterference = abstinenceSnapshot.primaryInterference;
     final calendarDays = await _loadCalendarDays(prefs: prefs);
 
     return _HomeOpsSnapshot(
@@ -658,6 +659,9 @@ class _HomePageState extends State<HomePage> {
       abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
       abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
       abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
+      abstinencePrimaryLabel: primaryInterference?.item.label,
+      abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
+      abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
       calendarDays: calendarDays,
       monthlyCashflowSummary: monthlyCashflowSummary,
     );
@@ -1686,6 +1690,9 @@ abstinence_slip_details: $slipDetailsText
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeLabels = snapshot.abstinenceTopLabels;
+    final primaryLabel = snapshot.abstinencePrimaryLabel;
+    final primarySignal = snapshot.abstinencePrimarySignal;
+    final primaryAction = snapshot.abstinencePrimaryAction;
 
     return Container(
       width: double.infinity,
@@ -1765,6 +1772,44 @@ abstinence_slip_details: $slipDetailsText
               color: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
+          if (primaryLabel != null &&
+              primarySignal != null &&
+              primaryAction != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              key: const Key('home_abstinence_primary_card'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '今日の主犯: $primaryLabel',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '切断サイン: $primarySignal',
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '排除手順: $primaryAction',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -4710,6 +4755,9 @@ class _HomeOpsSnapshot {
   final int abstinenceSlipCount;
   final List<String> abstinenceSlipDetails;
   final List<String> abstinenceTopLabels;
+  final String? abstinencePrimaryLabel;
+  final String? abstinencePrimarySignal;
+  final String? abstinencePrimaryAction;
   final List<_HomeCalendarDay> calendarDays;
 
   const _HomeOpsSnapshot({
@@ -4722,6 +4770,9 @@ class _HomeOpsSnapshot {
     this.abstinenceSlipCount = 0,
     this.abstinenceSlipDetails = const [],
     this.abstinenceTopLabels = const [],
+    this.abstinencePrimaryLabel,
+    this.abstinencePrimarySignal,
+    this.abstinencePrimaryAction,
     this.calendarDays = const [],
   });
 }

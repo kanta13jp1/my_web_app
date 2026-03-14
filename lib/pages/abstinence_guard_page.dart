@@ -18,13 +18,29 @@ class AbstinenceGuardPage extends StatefulWidget {
 }
 
 class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
+  static const List<String> _digitalPresetIds = <String>[
+    'sns',
+    'mobile_games',
+    'smartphone',
+    'video',
+    'manga',
+  ];
+  static const List<String> _impulsePresetIds = <String>[
+    'alcohol',
+    'smoking',
+    'masturbation',
+    'lust',
+    'dating_apps',
+  ];
+
   AbstinenceGuardSnapshot? _snapshot;
   bool _isLoading = true;
   late DateTime _selectedDate;
 
   DateTime _currentDate() => widget.nowProvider?.call() ?? DateTime.now();
 
-  DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _startOfDay(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -62,7 +78,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   }
 
   Future<void> _loadSnapshot() async {
-    final snapshot = await AbstinenceGuardStore.loadSnapshot(now: _selectedDate);
+    final snapshot =
+        await AbstinenceGuardStore.loadSnapshot(now: _selectedDate);
     if (!mounted) return;
     setState(() {
       _snapshot = snapshot;
@@ -80,13 +97,44 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   }
 
   Future<void> _incrementSlip(String itemId) async {
-    await AbstinenceGuardStore.incrementSlip(itemId: itemId, now: _selectedDate);
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: itemId,
+      now: _selectedDate,
+    );
     await _loadSnapshot();
+    final item =
+        AbstinenceGuardStore.items.where((entry) => entry.id == itemId);
+    if (!mounted || item.isEmpty) return;
+    final selectedItem = item.first;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${selectedItem.label}: ${selectedItem.eliminationAction}',
+        ),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _clearSlip(String itemId) async {
     await AbstinenceGuardStore.clearSlip(itemId: itemId, now: _selectedDate);
     await _loadSnapshot();
+  }
+
+  Future<void> _setEnabledBatch(List<String> itemIds) async {
+    for (final itemId in itemIds) {
+      await AbstinenceGuardStore.setEnabled(
+        itemId: itemId,
+        isEnabled: true,
+        now: _selectedDate,
+      );
+    }
+    await _loadSnapshot();
+  }
+
+  List<AbstinenceGuardState> _priorityStates(AbstinenceGuardSnapshot snapshot) {
+    return snapshot.priorityStates;
   }
 
   Future<void> _moveDay(int offset) async {
@@ -205,9 +253,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                             const SizedBox(width: 4),
                             IconButton.outlined(
                               tooltip: '翌日',
-                              onPressed: canMoveToNextDay
-                                  ? () => _moveDay(1)
-                                  : null,
+                              onPressed:
+                                  canMoveToNextDay ? () => _moveDay(1) : null,
                               icon: const Icon(Icons.chevron_right),
                             ),
                           ],
@@ -221,7 +268,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: dailyStatus.color.withValues(alpha: 0.14),
+                                color:
+                                    dailyStatus.color.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Row(
@@ -283,6 +331,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  _buildPriorityPanel(snapshot),
+                  _buildPresetPanel(),
                   ...snapshot.states.map(_buildGuardCard),
                 ],
               ),
@@ -311,10 +361,139 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     );
   }
 
-  Widget _buildGuardCard(AbstinenceGuardState state) {
-    final color = state.isEnabled ? Colors.redAccent : Colors.blueGrey;
+  Widget _buildPresetPanel() {
+    return Container(
+      key: const Key('abstinence_guard_quick_preset_panel'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'よくある邪魔をまとめてガードする',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '思考を切りやすい対象を先にONにして、主犯を炙り出します。',
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                key: const Key('abstinence_guard_quick_preset_digital'),
+                onPressed: () => _setEnabledBatch(_digitalPresetIds),
+                icon: const Icon(Icons.phone_android),
+                label: const Text('SNS・ゲーム・動画'),
+              ),
+              FilledButton.tonalIcon(
+                key: const Key('abstinence_guard_quick_preset_impulse'),
+                onPressed: () => _setEnabledBatch(_impulsePresetIds),
+                icon: const Icon(Icons.block),
+                label: const Text('快楽衝動をまとめて遮断'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriorityPanel(AbstinenceGuardSnapshot snapshot) {
+    final priorityStates = _priorityStates(snapshot);
+    final primary = priorityStates.isEmpty ? null : priorityStates.first;
 
     return Container(
+      key: const Key('abstinence_guard_priority_panel'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '思考をぶった切る主犯候補',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (primary == null)
+            const Text(
+              'まだ主犯候補が見えていません。まずは SNS / スマホゲーム / 動画 / 漫画 / オナニー / 煙草 / 酒 / 出会い系 などから先にガードを入れます。',
+            )
+          else ...[
+            Text(
+              '主犯: ${primary.item.label}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text('切断サイン: ${primary.item.interruptionSignal}'),
+            const SizedBox(height: 4),
+            Text('排除手順: ${primary.item.eliminationAction}'),
+            const SizedBox(height: 4),
+            Text('復帰行動: ${primary.item.replacementAction}'),
+          ],
+          if (priorityStates.length > 1) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: priorityStates.take(3).map((state) {
+                final color =
+                    state.slipCount > 0 ? Colors.orange : Colors.redAccent;
+                final suffix =
+                    state.slipCount > 0 ? '逸脱 ${state.slipCount}回' : 'ガード中';
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${state.item.label} $suffix',
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGuardCard(AbstinenceGuardState state) {
+    final color = state.isEnabled ? Colors.redAccent : Colors.blueGrey;
+    final tags = <String>[
+      if (state.item.isDigital) 'デジタル',
+      if (state.item.isImpulse) '衝動',
+    ];
+
+    return Container(
+      key: Key('abstinence_guard_card_${state.item.id}'),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -345,6 +524,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   ),
                 ),
                 Switch.adaptive(
+                  key: Key('abstinence_guard_switch_${state.item.id}'),
                   value: state.isEnabled,
                   onChanged: (value) => _setEnabled(state.item.id, value),
                 ),
@@ -356,6 +536,34 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                 color: Colors.black.withValues(alpha: 0.68),
               ),
             ),
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: tags
+                    .map(
+                      (tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -369,12 +577,27 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
+            const SizedBox(height: 8),
+            _buildActionBox(
+              title: '切断サイン',
+              value: state.item.interruptionSignal,
+              color: color,
+              icon: Icons.sensors_off_outlined,
+            ),
+            const SizedBox(height: 8),
+            _buildActionBox(
+              title: '排除手順',
+              value: state.item.eliminationAction,
+              color: Colors.redAccent,
+              icon: Icons.block,
+            ),
             if (state.isEnabled) ...[
               const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: FilledButton.icon(
+                      key: Key('abstinence_guard_slip_${state.item.id}'),
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                         foregroundColor: Colors.white,
@@ -396,6 +619,48 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionBox({
+    required String title,
+    required String value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
