@@ -2800,7 +2800,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   ),
 
                     // --- Tab 2: Calendar View (カレンダー) ---
-                    _buildCalendarView(),
+                    _buildAdaptiveCalendarView(),
 
                     // --- Tab 3: History (履歴) ---
                     _isLoading
@@ -3235,7 +3235,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
-  Widget _buildCalendarTaskCard(Map<String, dynamic> todo) {
+  Widget _buildCalendarTaskCard(
+    Map<String, dynamic> todo, {
+    bool compact = false,
+  }) {
     final task = (todo['task'] as String? ?? '').trim();
     final details = (todo['details'] as String?)?.trim();
     final isCompleted = todo['is_completed'] as bool? ?? false;
@@ -3266,7 +3269,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         ).isBefore(now);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 4 : 6,
+      ),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -3280,7 +3286,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         borderRadius: BorderRadius.circular(16),
         onTap: () => showTaskDetails(todo),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(compact ? 12 : 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -3305,7 +3311,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               child: Text(
                                 task,
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: compact ? 14 : 15,
                                   fontWeight: FontWeight.w700,
                                   decoration: isCompleted
                                       ? TextDecoration.lineThrough
@@ -3364,7 +3370,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           const SizedBox(height: 6),
                           Text(
                             details,
-                            maxLines: 3,
+                            maxLines: compact ? 2 : 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Colors.grey.shade700,
@@ -3382,7 +3388,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: compact ? 8 : 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -3425,7 +3431,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ],
               ),
               if (matchingSubtasks.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                SizedBox(height: compact ? 8 : 10),
                 Row(
                   children: [
                     const Icon(
@@ -3444,7 +3450,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ],
                 ),
               ],
-              const SizedBox(height: 8),
+              SizedBox(height: compact ? 6 : 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -3466,6 +3472,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   bool _useCalendarBottomSheet(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     return size.width < 520 || size.height < 760;
+  }
+
+  bool _useWideCalendarSplit(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    return size.width >= 1120 && size.height >= 760;
   }
 
   Future<void> _showCalendarDayTasksSheet(
@@ -3599,6 +3610,96 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               label: Text(tasks.isEmpty ? 'この日の状況を見る' : 'この日の詳細を開く'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarDetailPane(
+    DateTime selectedDay,
+    List<Map<String, dynamic>> tasks, {
+    required bool dense,
+  }) {
+    final completedCount =
+        tasks.where((todo) => todo['is_completed'] == true).length;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(dense ? 12 : 14),
+            decoration: BoxDecoration(
+              color: Colors.indigo.shade50,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatCalendarDate(
+                    selectedDay,
+                    includeWeekday: true,
+                  ),
+                  style: TextStyle(
+                    fontSize: dense ? 15 : 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '登録 ${tasks.length}件 / 完了 $completedCount件',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: dense ? 12 : 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (tasks.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'カードをタップすると詳細とサブタスクを確認できます。',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (tasks.isEmpty)
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'この日に登録されているタスクはありません。',
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.only(
+                  top: dense ? 8 : 10,
+                  bottom: dense ? 10 : 12,
+                ),
+                itemCount: tasks.length,
+                itemBuilder: (context, index) =>
+                    _buildCalendarTaskCard(tasks[index], compact: dense),
+              ),
+            ),
         ],
       ),
     );
@@ -3890,6 +3991,211 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     );
   }
 
+  Widget _buildAdaptiveCalendarView() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = _useCalendarBottomSheet(context);
+        final isWideSplit = !isCompact && _useWideCalendarSplit(context);
+        final denseCalendar = !isCompact && constraints.maxHeight < 720;
+        final rowHeight = isCompact ? 42.0 : (denseCalendar ? 34.0 : 38.0);
+        final daysOfWeekHeight = denseCalendar ? 18.0 : 22.0;
+
+        final calendar = Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(
+            denseCalendar ? 8 : 10,
+            denseCalendar ? 4 : 8,
+            denseCalendar ? 8 : 10,
+            denseCalendar ? 8 : 10,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: TableCalendar<Map<String, dynamic>>(
+            locale: 'ja_JP',
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            calendarFormat: CalendarFormat.month,
+            rowHeight: rowHeight,
+            daysOfWeekHeight: daysOfWeekHeight,
+            sixWeekMonthsEnforced: false,
+            eventLoader: _getEventsForDay,
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            calendarStyle: CalendarStyle(
+              outsideDaysVisible: false,
+              canMarkersOverflow: false,
+              markersMaxCount: 1,
+              cellMargin: EdgeInsets.symmetric(
+                horizontal: denseCalendar ? 1.5 : 2.5,
+                vertical: denseCalendar ? 1.5 : 2.5,
+              ),
+              todayDecoration: BoxDecoration(
+                color: Colors.orange.shade200,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                shape: BoxShape.circle,
+              ),
+              markerDecoration: const BoxDecoration(
+                color: Colors.indigo,
+                shape: BoxShape.circle,
+              ),
+              defaultTextStyle: TextStyle(
+                fontSize: denseCalendar ? 13 : 14,
+              ),
+              weekendTextStyle: TextStyle(
+                fontSize: denseCalendar ? 13 : 14,
+              ),
+            ),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(
+                fontSize: denseCalendar ? 11 : 12,
+                fontWeight: FontWeight.w600,
+              ),
+              weekendStyle: TextStyle(
+                fontSize: denseCalendar ? 11 : 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            headerStyle: HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+              headerPadding: EdgeInsets.symmetric(
+                vertical: denseCalendar ? 2 : 6,
+              ),
+              titleTextStyle: TextStyle(
+                fontSize: denseCalendar ? 16 : 18,
+                fontWeight: FontWeight.w700,
+              ),
+              leftChevronMargin: EdgeInsets.zero,
+              rightChevronMargin: EdgeInsets.zero,
+              leftChevronPadding: const EdgeInsets.all(4),
+              rightChevronPadding: const EdgeInsets.all(4),
+            ),
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, day, events) {
+                if (events.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final countLabel =
+                    events.length > 9 ? '9+' : events.length.toString();
+
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      bottom: denseCalendar ? 1 : 2,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.shade400,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      countLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            onDaySelected: (selectedDay, focusedDay) {
+              if (!isSameDay(_selectedDay, selectedDay)) {
+                final events = _getEventsForDay(selectedDay);
+
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                });
+
+                _selectedEvents.value = events;
+
+                if (_useCalendarBottomSheet(context)) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    _showCalendarDayTasksSheet(selectedDay, events);
+                  });
+                }
+              }
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+          ),
+        );
+
+        return ValueListenableBuilder<List<Map<String, dynamic>>>(
+          valueListenable: _selectedEvents,
+          builder: (context, value, _) {
+            final selectedDay = _selectedDay ?? _focusedDay;
+
+            if (isCompact) {
+              return Column(
+                children: [
+                  calendar,
+                  const SizedBox(height: 8),
+                  _buildCompactCalendarSummaryCard(
+                    context,
+                    selectedDay,
+                    value,
+                  ),
+                ],
+              );
+            }
+
+            final detailPane = _buildCalendarDetailPane(
+              selectedDay,
+              value,
+              dense: denseCalendar,
+            );
+
+            if (isWideSplit) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Flexible(
+                    flex: 8,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: calendar,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    flex: 11,
+                    child: detailPane,
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                calendar,
+                const SizedBox(height: 8),
+                Expanded(child: detailPane),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ignore: unused_element
   Widget _buildCalendarView() {
     return Column(
       children: [
