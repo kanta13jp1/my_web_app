@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 // Services
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
+import '../services/completion_goal_service.dart';
 import '../services/theme_service.dart';
 
 // Pages
@@ -122,7 +123,9 @@ class _HomePageState extends State<HomePage> {
     final slipSeed = snapshot.abstinenceSlipDetails.take(3).join('|');
     final seed =
         '${snapshot.pendingCriticalTaskCount}|${snapshot.pendingStockTaskCount}|'
-        '${snapshot.abstinenceSlipCount}|$slipSeed';
+        '${snapshot.abstinenceSlipCount}|$slipSeed|'
+        '${snapshot.completionGoalSnapshot.todayCompletedCount}|'
+        '${snapshot.completionGoalSnapshot.yesterdayCompletedCount}';
     final encoded = base64Url.encode(utf8.encode(seed)).replaceAll('=', '');
     final token = encoded.length > 40 ? encoded.substring(0, 40) : encoded;
     return 'home_ai_nudge_${_todayKey}_${type.name}_$token';
@@ -272,6 +275,61 @@ class _HomePageState extends State<HomePage> {
         reviewDone: reviewDone,
       );
     }
+  }
+
+  Future<DailyCompletionGoalSnapshot> _loadDailyCompletionGoalSnapshot({
+    required DateTime now,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return CompletionGoalService.buildSnapshot(
+        todos: const <Map<String, dynamic>>[],
+        now: now,
+      );
+    }
+
+    final today = _startOfDay(now);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final tomorrow = today.add(const Duration(days: 1));
+    final yesterdayKey = _statusDateKey(yesterday);
+    final todayKey = _statusDateKey(today);
+    final yesterdayIso = yesterday.toIso8601String();
+    final tomorrowIso = tomorrow.toIso8601String();
+    final rowsById = <String, Map<String, dynamic>>{};
+
+    void mergeRows(dynamic rowsRaw) {
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final id = row['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        rowsById[id] = row;
+      }
+    }
+
+    try {
+      final byTaskDate = await Supabase.instance.client
+          .from('daily_todos')
+          .select('id,is_completed,completed_at,task_date')
+          .eq('user_id', userId)
+          .gte('task_date', yesterdayKey)
+          .lte('task_date', todayKey);
+      mergeRows(byTaskDate);
+
+      final byCompletedAt = await Supabase.instance.client
+          .from('daily_todos')
+          .select('id,is_completed,completed_at,task_date')
+          .eq('user_id', userId)
+          .gte('completed_at', yesterdayIso)
+          .lt('completed_at', tomorrowIso);
+      mergeRows(byCompletedAt);
+    } catch (e) {
+      debugPrint('Error loading completion goal snapshot: $e');
+    }
+
+    return CompletionGoalService.buildSnapshot(
+      todos: rowsById.values.toList(),
+      now: now,
+    );
   }
 
   Future<Map<String, List<_HomeCalendarTask>>> _fetchHomeCalendarTaskMap({
@@ -647,6 +705,9 @@ class _HomePageState extends State<HomePage> {
     final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
       now: today,
     );
+    final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
+      now: today,
+    );
     final primaryInterference = abstinenceSnapshot.primaryInterference;
     final calendarDays = await _loadCalendarDays(prefs: prefs);
 
@@ -662,6 +723,7 @@ class _HomePageState extends State<HomePage> {
       abstinencePrimaryLabel: primaryInterference?.item.label,
       abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
       abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
+      completionGoalSnapshot: completionGoalSnapshot,
       calendarDays: calendarDays,
       monthlyCashflowSummary: monthlyCashflowSummary,
     );
@@ -1012,6 +1074,17 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
+    if (!snapshot.completionGoalSnapshot.isAchieved) {
+      return _HomeActionCommand(
+        type: _HomeActionType.beatYesterdayGoal,
+        title: '今日は昨日より1件多く完了する',
+        detail:
+            '昨日 ${snapshot.completionGoalSnapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.completionGoalSnapshot.todayCompletedCount}件 / 目標 ${snapshot.completionGoalSnapshot.targetCount}件',
+        icon: Icons.trending_up,
+        color: Colors.indigo,
+      );
+    }
+
     if (hour >= 6 &&
         snapshot.pendingStockTaskCount > 0 &&
         _now().weekday == DateTime.saturday) {
@@ -1166,6 +1239,11 @@ abstinence_slip_details: $slipDetailsText
       buttonLabel = '週末ストックへ';
       onPressed = () {
         _nav(context, const StockTasksPage());
+      };
+    } else if (command.type == _HomeActionType.beatYesterdayGoal) {
+      buttonLabel = 'タスク一覧へ';
+      onPressed = () {
+        _openMorningBriefing(context);
       };
     } else if (command.type == _HomeActionType.abstinenceGuard) {
       buttonLabel = '禁欲ガードへ';
@@ -1678,6 +1756,144 @@ abstinence_slip_details: $slipDetailsText
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletionGoalPanel(
+    BuildContext context,
+    _HomeOpsSnapshot snapshot, {
+    bool isHighlighted = false,
+  }) {
+    final goal = snapshot.completionGoalSnapshot;
+    final achieved = goal.isAchieved;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = achieved ? Colors.green : Colors.indigo;
+    final headline = achieved ? '前日超えを達成中' : '今日は昨日より1件多く終える';
+    final detail =
+        '昨日 ${goal.yesterdayCompletedCount}件 / 今日 ${goal.todayCompletedCount}件 / 目標 ${goal.targetCount}件';
+    final helper = achieved
+        ? 'このまま維持して、次の1件は短く終わるタスクから取ります。'
+        : 'あと ${goal.remainingCount}件で前日超えです。5分で終わるものから先に片付けます。';
+    final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
+
+    return Container(
+      key: const Key('home_completion_goal_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              accent.withValues(alpha: isHighlighted ? 0.18 : 0.08),
+              baseColor,
+            ),
+            Color.alphaBlend(
+              Colors.white.withValues(alpha: isDark ? 0.02 : 0.5),
+              baseColor,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.26)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  achieved ? Icons.trending_up : Icons.flag,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '前日超えチャレンジ',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      headline,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  achieved ? '達成中' : '未達',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            detail,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: goal.progress,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: Colors.white,
+            color: accent,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            helper,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            key: const Key('home_completion_goal_open_morning_briefing'),
+            onPressed: () => _openMorningBriefing(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.arrow_forward, size: 16),
+            label: const Text('タスク一覧へ'),
           ),
         ],
       ),
@@ -3190,6 +3406,8 @@ abstinence_slip_details: $slipDetailsText
                   nextAction.type == _HomeActionType.balanceCheck;
               final highlightCritical =
                   nextAction.type == _HomeActionType.criticalTasks;
+              final highlightBeatYesterday =
+                  nextAction.type == _HomeActionType.beatYesterdayGoal;
               final highlightStock =
                   nextAction.type == _HomeActionType.stockReview;
               final highlightAbstinence =
@@ -3235,6 +3453,12 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             const SizedBox(height: 14),
                             _buildForcedTaskPanel(context, opsSnapshot),
+                            const SizedBox(height: 14),
+                            _buildCompletionGoalPanel(
+                              context,
+                              opsSnapshot,
+                              isHighlighted: highlightBeatYesterday,
+                            ),
                             const SizedBox(height: 14),
                             _buildAbstinenceGuardPanel(context, opsSnapshot),
                             const SizedBox(height: 20),
@@ -4604,6 +4828,7 @@ enum _HomeActionType {
   morningBriefing,
   balanceCheck,
   criticalTasks,
+  beatYesterdayGoal,
   stockReview,
   none,
 }
@@ -4749,6 +4974,7 @@ class _HomeOpsSnapshot {
   final bool morningBriefingDone;
   final bool balanceCheckDone;
   final _HomeMonthlyCashflowSummary monthlyCashflowSummary;
+  final DailyCompletionGoalSnapshot completionGoalSnapshot;
   final int pendingCriticalTaskCount;
   final int pendingStockTaskCount;
   final int abstinenceFocusCount;
@@ -4764,6 +4990,10 @@ class _HomeOpsSnapshot {
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
     this.monthlyCashflowSummary = const _HomeMonthlyCashflowSummary(),
+    this.completionGoalSnapshot = const DailyCompletionGoalSnapshot(
+      todayCompletedCount: 0,
+      yesterdayCompletedCount: 0,
+    ),
     this.pendingCriticalTaskCount = 0,
     this.pendingStockTaskCount = 0,
     this.abstinenceFocusCount = 0,

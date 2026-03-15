@@ -53,6 +53,10 @@ void main() {
         find.byKey(const Key('home_monthly_cashflow_card')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const Key('home_completion_goal_card')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('home_section_ceo_office')), findsOneWidget);
       expect(
         find.byKey(const Key('home_section_cso_office')),
@@ -183,7 +187,8 @@ void main() {
       );
     });
 
-    testWidgets('Feature: HomePage shows normal mode when core flow is done',
+    testWidgets(
+        'Feature: HomePage prioritizes completion goal after core flow is done',
         (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({
         'home_monthly_flow_review_done_2026-02': true,
@@ -197,7 +202,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('home_next_action_none')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_next_action_beatYesterdayGoal')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage calendar day shows slips and missing items',
