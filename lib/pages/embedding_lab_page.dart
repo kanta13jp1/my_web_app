@@ -11,6 +11,8 @@ class EmbeddingLabPage extends StatefulWidget {
 }
 
 class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
+  static const String _modelName = 'models/gemini-embedding-001';
+
   final TextEditingController _inputController = TextEditingController();
   String _result = '';
   bool _isLoading = false;
@@ -24,6 +26,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
 
   Future<void> _loadApiKey() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
     setState(() {
       _apiKey = prefs.getString('gemini_api_key');
     });
@@ -38,35 +42,43 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
     });
 
     try {
-      // models/embedding-gecko-001 は古い embedText メソッドのみサポートしているため、
-      // SDKではなく直接 REST API を叩きます。
+      // gemini-embedding-001 は embedContent を使ってテキスト埋め込みを返します。
       final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/embedding-gecko-001:embedText?key=$_apiKey',
+        'https://generativelanguage.googleapis.com/v1beta/$_modelName:embedContent',
       );
 
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': _apiKey!,
+        },
         body: jsonEncode({
-          'text': _inputController.text,
+          'content': {
+            'parts': [
+              {'text': _inputController.text},
+            ],
+          },
         }),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data =
             jsonDecode(response.body) as Map<String, dynamic>;
-        // レスポンス形式: { "embedding": { "value": [0.1, 0.2, ...] } }
+        // レスポンス形式: { "embedding": { "values": [0.1, 0.2, ...] } }
         final embeddingData = data['embedding'];
-        List<dynamic> vector = [];
+        List<double> vector = [];
 
         if (embeddingData is Map<String, dynamic> &&
-            embeddingData['value'] is List) {
-          vector = List<dynamic>.from(embeddingData['value'] as List);
+            embeddingData['values'] is List) {
+          vector = (embeddingData['values'] as List)
+              .map((value) => (value as num).toDouble())
+              .toList();
         }
 
         if (mounted) {
           setState(() {
-            _result = 'モデル: embedding-gecko-001 (via embedText)\n'
+            _result = 'モデル: gemini-embedding-001 (via embedContent)\n'
                 '次元数: ${vector.length}\n\n'
                 '--- 先頭データ(10件) ---\n[${vector.take(10).join(', ')}...]\n\n'
                 '※Embedding成功！';
@@ -89,10 +101,16 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
   }
 
   @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Embedding Lab (Gecko)'),
+        title: const Text('Embedding Lab'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
@@ -101,7 +119,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Card(
+            Card(
               color: Colors.teal,
               child: Padding(
                 padding: EdgeInsets.all(12.0),
@@ -110,7 +128,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     Icon(Icons.science, color: Colors.white, size: 32),
                     SizedBox(height: 8),
                     Text(
-                      'モデル: models/embedding-gecko-001',
+                      'モデル: $_modelName',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -118,7 +136,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Legacy method: embedText',
+                      'Standard method: embedContent',
                       style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],
@@ -129,7 +147,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
             TextField(
               controller: _inputController,
               decoration: const InputDecoration(
-                labelText: 'テキストを入力 (max 1024 tokens)',
+                labelText: 'テキストを入力 (max 2048 tokens)',
                 border: OutlineInputBorder(),
                 hintText: '例: 人工知能について教えて',
               ),
