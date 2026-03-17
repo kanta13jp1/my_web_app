@@ -65,11 +65,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _showDailyChange = false;
 
   // --- 収支（フロー）記録用変数 ---
-  DateTime _selectedFlowDate = DateTime.now();
-  DateTime _selectedFlowHistoryMonth =
-      DateTime(DateTime.now().year, DateTime.now().month, 1);
-  String _selectedSource = '[三井住友銀行大塚支店]';
-  String _selectedFlowType = '支出'; // 収入 or 支出
   final List<String> _sourceOptions = [
     '[三井住友銀行大塚支店]',
     '[PayPayカード]',
@@ -80,6 +75,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     '[現金]',
     '[その他]',
   ];
+  DateTime _selectedFlowDate = DateTime.now();
+  DateTime _selectedFlowHistoryMonth =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  String _selectedSource = '[三井住友銀行大塚支店]';
+  String _selectedTransferDestination = '[PayPayカード]';
+  String _selectedFlowType = '支出'; // 支出 / 収入 / 振替
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
@@ -116,6 +117,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   static const double _compactWidthBreakpoint = 420;
+  static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
   bool get _isCompact =>
       MediaQuery.sizeOf(context).width < _compactWidthBreakpoint;
 
@@ -189,6 +191,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _flowMonthLabel(DateTime month) =>
       DateFormat('yyyy/MM').format(_monthStart(month));
+
+  String get _defaultFlowSource =>
+      _sourceOptions.contains('[その他]') ? '[その他]' : _sourceOptions.last;
+
+  String _sourceLabel(String source) =>
+      source.replaceAll('[', '').replaceAll(']', '').trim();
+
+  List<String> _transferDestinationOptions(
+    String source, {
+    String? include,
+  }) {
+    final options = [
+      for (final item in _sourceOptions)
+        if (item != source) item,
+    ];
+    if (include != null &&
+        include.isNotEmpty &&
+        include != source &&
+        !options.contains(include)) {
+      options.add(include);
+    }
+    if (options.isEmpty) {
+      options.add(source);
+    }
+    return options;
+  }
+
+  String _resolvedTransferDestination(
+    String source, {
+    String? preferred,
+  }) {
+    if (preferred != null && preferred.isNotEmpty && preferred != source) {
+      return preferred;
+    }
+    final options = _transferDestinationOptions(source, include: preferred);
+    return options.first;
+  }
+
+  bool _isIncomeActionType(String actionType) => actionType == 'conquer';
+
+  bool _isExpenseActionType(String actionType) => actionType == 'expense';
+
+  bool _isTransferActionType(String actionType) => actionType == 'transfer';
+
+  String _flowAmountPrefix(String actionType) {
+    if (_isIncomeActionType(actionType)) return '+';
+    if (_isTransferActionType(actionType)) return '↔';
+    return '-';
+  }
+
+  IconData _flowActionIcon(String actionType) {
+    if (_isIncomeActionType(actionType)) return Icons.add_circle;
+    if (_isTransferActionType(actionType)) return Icons.swap_horiz;
+    return Icons.remove_circle;
+  }
+
+  Color _flowActionColor(String actionType) {
+    if (_isIncomeActionType(actionType)) return Colors.green;
+    if (_isTransferActionType(actionType)) return Colors.blue;
+    return Colors.red;
+  }
+
+  void _updateSelectedFlowType(String label) {
+    setState(() {
+      _selectedFlowType = label;
+      if (label == '振替') {
+        _selectedTransferDestination = _resolvedTransferDestination(
+          _selectedSource,
+          preferred: _selectedTransferDestination,
+        );
+      }
+    });
+  }
+
+  void _updateSelectedSource(String source) {
+    setState(() {
+      _selectedSource = source;
+      if (_selectedFlowType == '振替') {
+        _selectedTransferDestination = _resolvedTransferDestination(
+          source,
+          preferred: _selectedTransferDestination,
+        );
+      }
+    });
+  }
 
   List<Map<String, dynamic>> _flowsForMonth(DateTime month) {
     final target = _monthStart(month);
@@ -876,10 +963,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final currentMonthFlows = _flowsForMonth(now);
     int totalIncome = 0;
     int totalExpense = 0;
+    int totalTransfer = 0;
     for (final f in currentMonthFlows) {
       final amt = (f['amount'] as num?)?.toInt() ?? 0;
       if (f['action_type'] == 'conquer') totalIncome += amt;
       if (f['action_type'] == 'expense') totalExpense += amt;
+      if (f['action_type'] == 'transfer') totalTransfer += amt;
     }
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
@@ -941,6 +1030,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     buf.writeln('### ④ 収支（$monthLabel）');
     buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
+    buf.writeln('- 振替合計: ¥${NumberFormat('#,###').format(totalTransfer)}');
     buf.writeln(
       '- 差額: ¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
     );
@@ -1577,36 +1667,122 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  String _composeFlowDescription(String source, String memo) {
+  String _composeFlowDescription({
+    required String flowType,
+    required String source,
+    required String memo,
+    String? destination,
+  }) {
     final normalizedSource = source.trim();
     final normalizedMemo = memo.trim();
+    if (flowType == '振替') {
+      final normalizedDestination = (destination ?? '').trim();
+      final route = '$normalizedSource -> $normalizedDestination';
+      if (normalizedMemo.isEmpty) {
+        return route;
+      }
+      return '$route $normalizedMemo';
+    }
     if (normalizedMemo.isEmpty) {
       return normalizedSource;
     }
     return '$normalizedSource $normalizedMemo';
   }
 
-  ({String source, String memo}) _parseFlowDescription(String description) {
+  ({
+    String source,
+    String destination,
+    String memo,
+    bool isTransfer,
+  }) _parseFlowDescription(
+    String description, {
+    String? actionType,
+  }) {
     final normalized = description.trim();
+    if (_isTransferActionType(actionType ?? '')) {
+      final transferMatch =
+          RegExp(r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$')
+              .firstMatch(normalized);
+      if (transferMatch != null) {
+        return (
+          source: transferMatch.group(1)?.trim() ?? '',
+          destination: transferMatch.group(2)?.trim() ?? '',
+          memo: transferMatch.group(3)?.trim() ?? '',
+          isTransfer: true,
+        );
+      }
+    }
+
     final match = RegExp(r'^(\[[^\]]+\])\s*(.*)$').firstMatch(normalized);
     if (match != null) {
       return (
         source: match.group(1)?.trim() ?? '',
+        destination: '',
         memo: match.group(2)?.trim() ?? '',
+        isTransfer: _isTransferActionType(actionType ?? ''),
       );
     }
 
     return (
-      source: _sourceOptions.contains('[その他]') ? '[その他]' : _sourceOptions.last,
+      source: '',
+      destination: '',
       memo: normalized,
+      isTransfer: _isTransferActionType(actionType ?? ''),
     );
   }
 
-  String _flowLabelToActionType(String label) =>
-      label == '収入' ? 'conquer' : 'expense';
+  String _flowDisplayTitle(Map<String, dynamic> flow) {
+    final actionType = flow['action_type']?.toString() ?? '';
+    final parsed = _parseFlowDescription(
+      flow['description']?.toString() ?? '',
+      actionType: actionType,
+    );
+    if (parsed.isTransfer) {
+      final fromLabel = _sourceLabel(parsed.source);
+      final toLabel = _sourceLabel(parsed.destination);
+      final routeParts =
+          [fromLabel, toLabel].where((part) => part.trim().isNotEmpty).toList();
+      final routeLabel = routeParts.join(' → ');
+      if (routeLabel.isEmpty) {
+        return parsed.memo;
+      }
+      if (parsed.memo.isEmpty) {
+        return routeLabel;
+      }
+      return '$routeLabel ・ ${parsed.memo}';
+    }
 
-  String _actionTypeToFlowLabel(String actionType) =>
-      actionType == 'expense' ? '支出' : '収入';
+    final sourceLabel = _sourceLabel(parsed.source);
+    if (sourceLabel.isEmpty) {
+      return parsed.memo;
+    }
+    if (parsed.memo.isEmpty) {
+      return sourceLabel;
+    }
+    return '$sourceLabel ・ ${parsed.memo}';
+  }
+
+  String _flowLabelToActionType(String label) {
+    switch (label) {
+      case '収入':
+        return 'conquer';
+      case '振替':
+        return 'transfer';
+      default:
+        return 'expense';
+    }
+  }
+
+  String _actionTypeToFlowLabel(String actionType) {
+    switch (actionType) {
+      case 'conquer':
+        return '収入';
+      case 'transfer':
+        return '振替';
+      default:
+        return '支出';
+    }
+  }
 
   Future<void> _recordFlow() async {
     final userId = _supabase.auth.currentUser?.id;
@@ -1615,22 +1791,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final memo = _flowMemoController.text.trim();
     final amountStr = _flowAmountController.text.replaceAll(',', '');
     final amount = int.tryParse(amountStr);
+    final isTransfer = _selectedFlowType == '振替';
 
-    if (amount == null || amount <= 0 || memo.isEmpty) {
+    if (amount == null || amount <= 0 || (!isTransfer && memo.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('内容と金額(1円以上)を正しく入力してください')),
+        SnackBar(
+          content: Text(
+            isTransfer ? '振替先と金額(1円以上)を正しく入力してください' : '内容と金額(1円以上)を正しく入力してください',
+          ),
+        ),
       );
       return;
     }
 
-    final actionType = _selectedFlowType == '収入' ? 'conquer' : 'expense';
+    if (isTransfer && _selectedSource == _selectedTransferDestination) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')),
+      );
+      return;
+    }
+
+    final actionType = _flowLabelToActionType(_selectedFlowType);
 
     try {
       await _supabase.from('wealth_struggles').insert({
         'user_id': userId,
         'action_type': actionType,
         'amount': amount,
-        'description': _composeFlowDescription(_selectedSource, memo),
+        'description': _composeFlowDescription(
+          flowType: _selectedFlowType,
+          source: _selectedSource,
+          destination: isTransfer ? _selectedTransferDestination : null,
+          memo: memo,
+        ),
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
 
@@ -1645,8 +1838,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('収支を記録しました'),
+          SnackBar(
+            content: Text(
+              isTransfer ? '振替を記録しました' : '収支を記録しました',
+            ),
             backgroundColor: Colors.black87,
           ),
         );
@@ -1661,21 +1856,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final flowId = flow['id']?.toString();
     if (flowId == null || flowId.isEmpty) return;
 
-    final parsed = _parseFlowDescription(flow['description']?.toString() ?? '');
+    final currentActionType = flow['action_type']?.toString() ?? 'expense';
+    final parsed = _parseFlowDescription(
+      flow['description']?.toString() ?? '',
+      actionType: currentActionType,
+    );
     final availableSources = [..._sourceOptions];
     if (parsed.source.isNotEmpty && !availableSources.contains(parsed.source)) {
       availableSources.add(parsed.source);
+    }
+    if (parsed.destination.isNotEmpty &&
+        !availableSources.contains(parsed.destination)) {
+      availableSources.add(parsed.destination);
     }
 
     final memoController = TextEditingController(text: parsed.memo);
     final amountController = TextEditingController(
       text: ((flow['amount'] as num?)?.toInt() ?? 0).toString(),
     );
-    var selectedSource = availableSources.contains(parsed.source)
-        ? parsed.source
-        : availableSources.first;
-    var selectedType =
-        _actionTypeToFlowLabel(flow['action_type']?.toString() ?? 'expense');
+    var selectedSource =
+        parsed.source.isNotEmpty ? parsed.source : _defaultFlowSource;
+    if (!availableSources.contains(selectedSource)) {
+      availableSources.add(selectedSource);
+    }
+    var selectedType = _actionTypeToFlowLabel(currentActionType);
+    var selectedDestination = _resolvedTransferDestination(
+      selectedSource,
+      preferred: parsed.destination,
+    );
     var selectedDate =
         DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
             DateTime.now();
@@ -1697,13 +1905,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
-                    items: const [
-                      DropdownMenuItem(value: '支出', child: Text('支出')),
-                      DropdownMenuItem(value: '収入', child: Text('収入')),
-                    ],
+                    items: _flowTypeOptions
+                        .map(
+                          (value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(value),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (value) {
                       if (value == null) return;
-                      setDialogState(() => selectedType = value);
+                      setDialogState(() {
+                        selectedType = value;
+                        if (value == '振替') {
+                          selectedDestination = _resolvedTransferDestination(
+                            selectedSource,
+                            preferred: selectedDestination,
+                          );
+                        }
+                      });
                     },
                   ),
                   const SizedBox(height: 12),
@@ -1736,9 +1956,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: selectedSource,
-                    decoration: const InputDecoration(
-                      labelText: '入出金元',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: selectedType == '振替' ? '振替元' : '入出金元',
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                     items: availableSources
@@ -1753,15 +1973,49 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         .toList(),
                     onChanged: (value) {
                       if (value == null) return;
-                      setDialogState(() => selectedSource = value);
+                      setDialogState(() {
+                        selectedSource = value;
+                        if (selectedType == '振替') {
+                          selectedDestination = _resolvedTransferDestination(
+                            value,
+                            preferred: selectedDestination,
+                          );
+                        }
+                      });
                     },
                   ),
+                  if (selectedType == '振替') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedDestination,
+                      decoration: const InputDecoration(
+                        labelText: '振替先',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: _transferDestinationOptions(
+                        selectedSource,
+                        include: selectedDestination,
+                      )
+                          .map(
+                            (source) => DropdownMenuItem(
+                              value: source,
+                              child: Text(_sourceLabel(source)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => selectedDestination = value);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: memoController,
-                    decoration: const InputDecoration(
-                      labelText: '内容',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: selectedType == '振替' ? 'メモ（任意）' : '内容',
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
@@ -1796,10 +2050,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final memo = memoController.text.trim();
       final amount = int.tryParse(amountController.text.replaceAll(',', ''));
-      if (amount == null || amount <= 0 || memo.isEmpty) {
+      final isTransfer = selectedType == '振替';
+      if (amount == null || amount <= 0 || (!isTransfer && memo.isEmpty)) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('内容と金額を正しく入力してください')),
+          SnackBar(
+            content: Text(
+              isTransfer ? '振替先と金額を正しく入力してください' : '内容と金額を正しく入力してください',
+            ),
+          ),
+        );
+        return;
+      }
+      if (isTransfer && selectedSource == selectedDestination) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')),
         );
         return;
       }
@@ -1807,7 +2073,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _supabase.from('wealth_struggles').update({
         'action_type': _flowLabelToActionType(selectedType),
         'amount': amount,
-        'description': _composeFlowDescription(selectedSource, memo),
+        'description': _composeFlowDescription(
+          flowType: selectedType,
+          source: selectedSource,
+          destination: isTransfer ? selectedDestination : null,
+          memo: memo,
+        ),
         'occurred_at': selectedDate.toUtc().toIso8601String(),
       }).eq('id', flowId);
 
@@ -1822,8 +2093,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('収支記録を更新しました'),
+        SnackBar(
+          content: Text(
+            isTransfer ? '振替記録を更新しました' : '収支記録を更新しました',
+          ),
           backgroundColor: Colors.black87,
         ),
       );
@@ -1843,26 +2116,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 5. 必須タスクの記録と把握
   // ==========================================
   Future<bool> _confirmDeleteFlow(Map<String, dynamic> flow) async {
-    final parsed = _parseFlowDescription(flow['description']?.toString() ?? '');
-    final memo = parsed.memo.isNotEmpty
-        ? parsed.memo
-        : (flow['description']?.toString().trim().isNotEmpty ?? false)
-            ? flow['description'].toString().trim()
-            : 'この収支記録';
+    final actionType = flow['action_type']?.toString() ?? 'expense';
+    final parsed = _parseFlowDescription(
+      flow['description']?.toString() ?? '',
+      actionType: actionType,
+    );
+    final title = _flowDisplayTitle(flow).trim().isNotEmpty
+        ? _flowDisplayTitle(flow)
+        : (parsed.memo.isNotEmpty ? parsed.memo : 'この収支記録');
     final amount = (flow['amount'] as num?)?.toInt() ?? 0;
     final date = DateTime.tryParse(
           flow['occurred_at']?.toString() ?? '',
         )?.toLocal() ??
         DateTime.now();
-    final typeLabel =
-        _actionTypeToFlowLabel(flow['action_type']?.toString() ?? 'expense');
+    final typeLabel = _actionTypeToFlowLabel(actionType);
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('削除の確認'),
         content: Text(
-          '${DateFormat('yyyy/MM/dd').format(date)} の$typeLabel「$memo」（¥${NumberFormat('#,###').format(amount)}）を削除しますか？',
+          '${DateFormat('yyyy/MM/dd').format(date)} の$typeLabel「$title」（¥${NumberFormat('#,###').format(amount)}）を削除しますか？',
         ),
         actions: [
           TextButton(
@@ -3728,14 +4002,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _selectedFlowHistoryMonth,
       DateTime.now(),
     );
+    final isTransferSelected = _selectedFlowType == '振替';
+    final transferOptions = _transferDestinationOptions(
+      _selectedSource,
+      include: _selectedTransferDestination,
+    );
     int totalIncome = 0;
     int totalExpense = 0;
+    int totalTransfer = 0;
 
     for (final item in visibleFlows) {
       final amount = (item['amount'] as num?)?.toInt() ?? 0;
       final actionType = item['action_type'] as String? ?? '';
-      if (actionType == 'conquer') totalIncome += amount;
-      if (actionType == 'expense') totalExpense += amount;
+      if (_isIncomeActionType(actionType)) totalIncome += amount;
+      if (_isExpenseActionType(actionType)) totalExpense += amount;
+      if (_isTransferActionType(actionType)) totalTransfer += amount;
     }
 
     return Card(
@@ -3756,7 +4037,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ],
             ),
             Text(
-              'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
+              'お金の流れをすべてリスト化する。収入・支出に加えて口座間の振替も記録できます。表示中: $visibleMonthLabel（過去月に切替可）',
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
             const SizedBox(height: 16),
@@ -3772,7 +4053,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     ),
-                    items: ['支出', '収入']
+                    items: _flowTypeOptions
                         .map(
                           (value) => DropdownMenuItem(
                             value: value,
@@ -3785,7 +4066,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        setState(() => _selectedFlowType = value);
+                        _updateSelectedFlowType(value);
                       }
                     },
                   ),
@@ -3891,18 +4172,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _selectedSource,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: isTransferSelected ? '振替元' : '入出金元',
+                      border: const OutlineInputBorder(),
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                     ),
                     items: _sourceOptions
                         .map(
                           (source) => DropdownMenuItem(
                             value: source,
                             child: Text(
-                              source.replaceAll('[', '').replaceAll(']', ''),
+                              _sourceLabel(source),
                               style: const TextStyle(fontSize: 13),
                             ),
                           ),
@@ -3910,7 +4194,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        setState(() => _selectedSource = value);
+                        _updateSelectedSource(value);
                       }
                     },
                   ),
@@ -3918,17 +4202,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   flex: 3,
-                  child: TextField(
-                    controller: _flowMemoController,
-                    decoration: const InputDecoration(
-                      labelText: '内容',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
+                  child: isTransferSelected
+                      ? DropdownButtonFormField<String>(
+                          initialValue: _selectedTransferDestination,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: '振替先',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                          ),
+                          items: transferOptions
+                              .map(
+                                (source) => DropdownMenuItem(
+                                  value: source,
+                                  child: Text(
+                                    _sourceLabel(source),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(
+                                () => _selectedTransferDestination = value,
+                              );
+                            }
+                          },
+                        )
+                      : TextField(
+                          controller: _flowMemoController,
+                          decoration: const InputDecoration(
+                            labelText: '内容',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
                 ),
               ],
             ),
+            if (isTransferSelected) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _flowMemoController,
+                decoration: const InputDecoration(
+                  labelText: 'メモ（任意）',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
@@ -3951,7 +4278,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text('追加'),
+                  child: Text(isTransferSelected ? '振替を追加' : '追加'),
                 ),
               ],
             ),
@@ -4015,6 +4342,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ],
               ),
             ),
+            if (totalTransfer > 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                '$visibleMonthLabel の振替合計: ￥${NumberFormat('#,###').format(totalTransfer)}（収支差額には含めません）',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.blueGrey[700],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             if (visibleFlows.isEmpty)
               Padding(
@@ -4028,36 +4365,49 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 itemCount: visibleFlows.length,
                 itemBuilder: (context, index) {
                   final item = visibleFlows[index];
-                  final isIncome =
-                      (item['action_type'] as String?) == 'conquer';
+                  final actionType = item['action_type']?.toString() ?? '';
+                  final parsed = _parseFlowDescription(
+                    item['description']?.toString() ?? '',
+                    actionType: actionType,
+                  );
                   final amount = (item['amount'] as num?)?.toInt() ?? 0;
-                  final desc = item['description']?.toString() ?? '';
                   final date = DateTime.tryParse(
                         item['occurred_at']?.toString() ?? '',
                       )?.toLocal() ??
                       _selectedFlowHistoryMonth;
+                  final subtitleParts = <String>[
+                    DateFormat('MM/dd').format(date),
+                    _actionTypeToFlowLabel(actionType),
+                  ];
+                  if (!parsed.isTransfer && parsed.source.isNotEmpty) {
+                    subtitleParts.add(_sourceLabel(parsed.source));
+                  }
+                  subtitleParts.add('タップで編集');
 
                   return ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     onTap: () => _editFlow(item),
                     leading: Icon(
-                      isIncome ? Icons.add_circle : Icons.remove_circle,
-                      color: isIncome ? Colors.green : Colors.red,
+                      _flowActionIcon(actionType),
+                      color: _flowActionColor(actionType),
                       size: 20,
                     ),
-                    title: Text(desc, style: const TextStyle(fontSize: 13)),
+                    title: Text(
+                      _flowDisplayTitle(item),
+                      style: const TextStyle(fontSize: 13),
+                    ),
                     subtitle: Text(
-                      '${DateFormat('MM/dd').format(date)} ・ タップで編集',
+                      subtitleParts.join(' ・ '),
                       style: const TextStyle(fontSize: 11),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${isIncome ? '+' : '-'}￥${NumberFormat('#,###').format(amount)}',
+                          '${_flowAmountPrefix(actionType)}￥${NumberFormat('#,###').format(amount)}',
                           style: TextStyle(
-                            color: isIncome ? Colors.green : Colors.red,
+                            color: _flowActionColor(actionType),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -4083,7 +4433,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             const SizedBox(height: 4),
             Text(
-              '履歴の行をタップするか、右の編集・削除ボタンから日付・入出金元・内容・金額の修正や誤登録の削除ができます。',
+              '履歴の行をタップするか、右の編集・削除ボタンから日付・口座・内容・金額の修正や誤登録の削除ができます。振替は差額に含めず、移動履歴としてだけ残ります。',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey[600],
