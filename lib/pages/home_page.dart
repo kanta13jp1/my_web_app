@@ -3319,14 +3319,14 @@ abstinence_slip_details: $slipDetailsText
       backgroundColor:
           isDark ? const Color(0xFF0B1220) : const Color(0xFFF3F7FF),
       appBar: AppBar(
-        toolbarHeight: 74,
+        toolbarHeight: 82,
         title: const Column(
           key: Key('home_page_title'),
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('自分株式会社 経営コックピット'),
-            // 時計部分を独立したウィジェットとして配置（パフォーマンス改善）
-            _ClockWidget(),
+            Text('経営コックピット'),
+            SizedBox(height: 2),
+            _ClockWidget(key: Key('home_page_clock')),
           ],
         ),
         flexibleSpace: DecoratedBox(
@@ -4763,7 +4763,7 @@ abstinence_slip_details: $slipDetailsText
 
 // 時計表示（独立Widget）
 class _ClockWidget extends StatefulWidget {
-  const _ClockWidget();
+  const _ClockWidget({super.key});
 
   @override
   State<_ClockWidget> createState() => _ClockWidgetState();
@@ -4795,7 +4795,11 @@ class _ClockWidgetState extends State<_ClockWidget> {
   Widget build(BuildContext context) {
     return Text(
       DateFormat('yyyy/MM/dd HH:mm:ss').format(_dateTime),
-      style: const TextStyle(fontSize: 12, color: Colors.white70),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Colors.white70,
+      ),
     );
   }
 }

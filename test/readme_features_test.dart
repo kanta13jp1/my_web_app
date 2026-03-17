@@ -49,6 +49,7 @@ void main() {
 
       expect(find.byKey(const Key('home_page_scaffold')), findsOneWidget);
       expect(find.byKey(const Key('home_page_title')), findsOneWidget);
+      expect(find.byKey(const Key('home_page_clock')), findsOneWidget);
       expect(
         find.byKey(const Key('home_monthly_cashflow_card')),
         findsOneWidget,
