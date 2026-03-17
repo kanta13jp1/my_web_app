@@ -58,6 +58,14 @@ void main() {
         find.byKey(const Key('home_completion_goal_card')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const Key('home_section_office_kpi_summary')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_office_kpi_card_cfo')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('home_section_ceo_office')), findsOneWidget);
       expect(
         find.byKey(const Key('home_section_cso_office')),

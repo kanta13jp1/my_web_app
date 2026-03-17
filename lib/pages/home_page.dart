@@ -28,6 +28,7 @@ import 'emergency_meeting_page.dart';
 import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
 import 'agent_org_page.dart';
+import 'admin_analytics_page.dart';
 import 'cfo_office_page.dart';
 import 'asset_management_page.dart';
 import 'cho_office_page.dart';
@@ -56,6 +57,7 @@ class _HomePageState extends State<HomePage> {
   late Future<String> _totalAssetsFuture;
   late Future<_HomeOpsSnapshot> _opsSnapshotFuture;
   late Future<_HomeKpiOverview> _kpiOverviewFuture;
+  late Future<_HomeMarketingKpiSummary> _marketingKpiFuture;
   late Future<String?> _aiNudgeFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   _CalendarHighlightFilter _calendarHighlightFilter =
@@ -81,6 +83,7 @@ class _HomePageState extends State<HomePage> {
     _totalAssetsFuture = _fetchTotalAssets();
     _opsSnapshotFuture = _loadOpsSnapshot();
     _kpiOverviewFuture = _loadHomeKpiOverview();
+    _marketingKpiFuture = _loadHomeMarketingKpiSummary();
     _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
@@ -105,6 +108,7 @@ class _HomePageState extends State<HomePage> {
     await _totalAssetsFuture;
     await _opsSnapshotFuture;
     await _kpiOverviewFuture;
+    await _marketingKpiFuture;
     await _aiNudgeFuture;
   }
 
@@ -577,6 +581,79 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<_HomeMarketingKpiSummary> _loadHomeMarketingKpiSummary() async {
+    final today = _startOfDay(_now());
+    final todayKey = _statusDateKey(today);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    try {
+      final results = await Future.wait<dynamic>([
+        Supabase.instance.client
+            .from('app_analytics')
+            .select('date,landing_views,share_count,source_details')
+            .eq('date', todayKey)
+            .maybeSingle(),
+        Supabase.instance.client
+            .from('user_profiles')
+            .select('created_at')
+            .gte('created_at', today.toIso8601String())
+            .lt('created_at', tomorrow.toIso8601String()),
+        Supabase.instance.client.rpc('get_lp_view_stats'),
+      ]);
+
+      final analyticsRow = results[0] is Map
+          ? Map<String, dynamic>.from(results[0] as Map)
+          : <String, dynamic>{};
+      final profileRows =
+          results[1] is List ? results[1] as List<dynamic> : const [];
+      final lpStats = results[2] is Map
+          ? Map<String, dynamic>.from(results[2] as Map)
+          : <String, dynamic>{};
+
+      var todayViews = _toIntValue(analyticsRow['landing_views']);
+      if (lpStats.isNotEmpty) {
+        todayViews = _toIntValue(lpStats['today']);
+        final rawSeries = lpStats['series'];
+        if (todayViews == 0 && rawSeries is List) {
+          for (final row in rawSeries.whereType<Map>()) {
+            final dateKey = _normalizeDateKey(row['date']);
+            if (dateKey == todayKey) {
+              todayViews = _toIntValue(row['count']);
+              break;
+            }
+          }
+        }
+      }
+
+      String? topShareChannelKey;
+      var topShareChannelCount = 0;
+      final rawSourceDetails = analyticsRow['source_details'];
+      if (rawSourceDetails is Map) {
+        for (final entry in rawSourceDetails.entries) {
+          final sourceKey = entry.key.toString();
+          if (!sourceKey.startsWith('share_') && sourceKey != 'x_share') {
+            continue;
+          }
+          final count = _toIntValue(entry.value);
+          if (count > topShareChannelCount) {
+            topShareChannelCount = count;
+            topShareChannelKey = sourceKey;
+          }
+        }
+      }
+
+      return _HomeMarketingKpiSummary(
+        todayViews: todayViews,
+        todayRegistrations: profileRows.length,
+        todayShares: _toIntValue(analyticsRow['share_count']),
+        topShareChannelKey: topShareChannelKey,
+      );
+    } catch (e) {
+      debugPrint('Error loading home marketing summary: $e');
+      return const _HomeMarketingKpiSummary();
+    }
+  }
+
   _AssetBucket _resolveAssetBucket(String title) {
     if (title.contains('株') ||
         title.contains('証券') ||
@@ -602,6 +679,45 @@ class _HomePageState extends State<HomePage> {
 
   DateTime _startOfDay(DateTime date) =>
       DateTime(date.year, date.month, date.day);
+
+  int _toIntValue(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  String? _normalizeDateKey(dynamic value) {
+    if (value == null) return null;
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) {
+      return _statusDateKey(parsed.toLocal());
+    }
+
+    return raw.length >= 10 ? raw.substring(0, 10) : raw;
+  }
+
+  String _shareChannelLabel(String? sourceKey) {
+    switch (sourceKey) {
+      case 'share_x':
+      case 'x_share':
+        return 'X';
+      case 'share_line':
+      case 'line':
+        return 'LINE';
+      case 'share_facebook':
+      case 'facebook':
+        return 'Facebook';
+      case 'share_copy':
+      case 'copy':
+        return 'リンクコピー';
+      default:
+        return '未検出';
+    }
+  }
 
   DateTime _calendarAnchorMonth() {
     final anchor = _calendarMonthAnchor ?? _startOfDay(_now());
@@ -3476,6 +3592,19 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
+                              'OFFICE KPI SNAPSHOT',
+                              Icons.space_dashboard,
+                              Colors.deepPurple,
+                              key: const Key('home_section_office_kpi_summary'),
+                            ),
+                            _buildOfficeKpiSummary(
+                              context,
+                              isDark,
+                              isCompact,
+                              opsSnapshot,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
                               'KPI SUMMARY',
                               Icons.show_chart,
                               Colors.purple,
@@ -4044,6 +4173,380 @@ abstinence_slip_details: $slipDetailsText
           ),
         );
       },
+    );
+  }
+
+  Widget _buildOfficeKpiSummary(
+    BuildContext context,
+    bool isDark,
+    bool isCompact,
+    _HomeOpsSnapshot snapshot,
+  ) {
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait<dynamic>([_kpiOverviewFuture, _marketingKpiFuture]),
+      builder: (context, officeSnapshot) {
+        final overview =
+            officeSnapshot.data != null && officeSnapshot.data!.isNotEmpty
+                ? officeSnapshot.data![0] as _HomeKpiOverview? ??
+                    const _HomeKpiOverview()
+                : const _HomeKpiOverview();
+        final marketing =
+            officeSnapshot.data != null && officeSnapshot.data!.length > 1
+                ? officeSnapshot.data![1] as _HomeMarketingKpiSummary? ??
+                    const _HomeMarketingKpiSummary()
+                : const _HomeMarketingKpiSummary();
+        final nextAction = _resolveNextAction(snapshot);
+        final goal = snapshot.completionGoalSnapshot;
+        final coreFlowDone = [
+          snapshot.monthlyCashflowSummary.reviewDone,
+          snapshot.morningBriefingDone,
+          snapshot.balanceCheckDone,
+        ].where((value) => value).length;
+        final hasAssetData = overview.hasData || overview.latestTotal > 0;
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final columns = isCompact || width < 720
+                ? 1
+                : width < 1180
+                    ? 2
+                    : 3;
+            const spacing = 12.0;
+            final cardWidth = columns == 1
+                ? width
+                : (width - (spacing * (columns - 1))) / columns;
+
+            final cards = <Widget>[
+              SizedBox(
+                width: cardWidth,
+                child: _buildOfficeKpiCard(
+                  key: const Key('home_office_kpi_card_ceo'),
+                  isDark: isDark,
+                  officeLabel: 'CEO',
+                  title: '全体進行',
+                  headline: '$coreFlowDone/3',
+                  subtitle: '今日の必須導線',
+                  icon: Icons.business_center,
+                  accentColor: Colors.redAccent,
+                  metrics: <_OfficeKpiMetricItem>[
+                    _OfficeKpiMetricItem('次アクション', nextAction.title),
+                    _OfficeKpiMetricItem(
+                      '必須タスク残',
+                      '${snapshot.pendingCriticalTaskCount}件',
+                    ),
+                    _OfficeKpiMetricItem(
+                      '前日超え目標',
+                      goal.isAchieved ? '達成済み' : 'あと ${goal.remainingCount}件',
+                    ),
+                  ],
+                  actionLabel: '役員会議へ',
+                  onTap: () => _nav(context, const EmergencyMeetingPage()),
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _buildOfficeKpiCard(
+                  key: const Key('home_office_kpi_card_cfo'),
+                  isDark: isDark,
+                  officeLabel: 'CFO',
+                  title: '財務',
+                  headline:
+                      hasAssetData ? _formatYen(overview.latestTotal) : '--',
+                  subtitle: '総資産',
+                  icon: Icons.account_balance_wallet,
+                  accentColor: Colors.green,
+                  metrics: <_OfficeKpiMetricItem>[
+                    _OfficeKpiMetricItem(
+                      '今月差額',
+                      _formatSignedYen(
+                        snapshot.monthlyCashflowSummary.netTotal.toDouble(),
+                      ),
+                    ),
+                    _OfficeKpiMetricItem(
+                      '記録件数',
+                      '${snapshot.monthlyCashflowSummary.recordCount}件',
+                    ),
+                    _OfficeKpiMetricItem(
+                      'レビュー',
+                      snapshot.monthlyCashflowSummary.reviewDone
+                          ? '確認済み'
+                          : '未実施',
+                    ),
+                  ],
+                  actionLabel: '収支を見る',
+                  onTap: () => _nav(context, const AssetManagementPage()),
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _buildOfficeKpiCard(
+                  key: const Key('home_office_kpi_card_cmo'),
+                  isDark: isDark,
+                  officeLabel: 'CMO',
+                  title: '流入',
+                  headline: '${marketing.todayViews}',
+                  subtitle: '今日のLP View',
+                  icon: Icons.campaign,
+                  accentColor: Colors.pink,
+                  metrics: <_OfficeKpiMetricItem>[
+                    _OfficeKpiMetricItem(
+                      '今日の登録',
+                      '${marketing.todayRegistrations}件',
+                    ),
+                    _OfficeKpiMetricItem('今日のCVR', marketing.todayCvrLabel),
+                    _OfficeKpiMetricItem(
+                      '主要チャネル',
+                      _shareChannelLabel(marketing.topShareChannelKey),
+                    ),
+                  ],
+                  actionLabel: '分析を見る',
+                  onTap: () => _nav(context, const AdminAnalyticsPage()),
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _buildOfficeKpiCard(
+                  key: const Key('home_office_kpi_card_cho'),
+                  isDark: isDark,
+                  officeLabel: 'CHO',
+                  title: '集中防衛',
+                  headline: '${snapshot.abstinenceFocusCount}件',
+                  subtitle: '遮断中の邪魔',
+                  icon: Icons.shield_moon,
+                  accentColor: Colors.teal,
+                  metrics: <_OfficeKpiMetricItem>[
+                    _OfficeKpiMetricItem(
+                      '逸脱回数',
+                      '${snapshot.abstinenceSlipCount}回',
+                    ),
+                    _OfficeKpiMetricItem(
+                      '主犯候補',
+                      snapshot.abstinencePrimaryLabel ?? '未検出',
+                    ),
+                    _OfficeKpiMetricItem(
+                      '切断サイン',
+                      snapshot.abstinencePrimarySignal ?? '監視中',
+                    ),
+                  ],
+                  actionLabel: '抑止設定へ',
+                  onTap: () => _openAbstinenceGuard(context),
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _buildOfficeKpiCard(
+                  key: const Key('home_office_kpi_card_chro'),
+                  isDark: isDark,
+                  officeLabel: 'CHRO',
+                  title: '実行管理',
+                  headline: '${goal.todayCompletedCount}/${goal.targetCount}',
+                  subtitle: '今日の完了数 / 目標',
+                  icon: Icons.groups_2,
+                  accentColor: Colors.indigo,
+                  metrics: <_OfficeKpiMetricItem>[
+                    _OfficeKpiMetricItem(
+                      '昨日の完了',
+                      '${goal.yesterdayCompletedCount}件',
+                    ),
+                    _OfficeKpiMetricItem(
+                      '残り',
+                      goal.isAchieved ? '達成済み' : '${goal.remainingCount}件',
+                    ),
+                    _OfficeKpiMetricItem(
+                      '重要タスク残',
+                      '${snapshot.pendingCriticalTaskCount}件',
+                    ),
+                  ],
+                  actionLabel: 'タスクを見る',
+                  onTap: () => _openMorningBriefing(context),
+                ),
+              ),
+            ];
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: cards,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildOfficeKpiCard({
+    required Key key,
+    required bool isDark,
+    required String officeLabel,
+    required String title,
+    required String headline,
+    required String subtitle,
+    required IconData icon,
+    required Color accentColor,
+    required List<_OfficeKpiMetricItem> metrics,
+    required String actionLabel,
+    required VoidCallback onTap,
+  }) {
+    final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final labelColor =
+        isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.65);
+    final titleColor = isDark ? Colors.white : Colors.black87;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: key,
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 232),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                baseColor,
+                Color.alphaBlend(
+                  accentColor.withValues(alpha: isDark ? 0.16 : 0.09),
+                  baseColor,
+                ),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accentColor.withValues(alpha: 0.28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        officeLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: accentColor,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(icon, color: accentColor, size: 20),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: labelColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  headline,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 28,
+                    height: 1.05,
+                    fontWeight: FontWeight.w900,
+                    color: titleColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...metrics
+                    .take(3)
+                    .map((metric) => _buildOfficeKpiMetricRow(metric, isDark)),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: onTap,
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: Text(actionLabel),
+                    style: TextButton.styleFrom(
+                      foregroundColor: accentColor,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfficeKpiMetricRow(
+    _OfficeKpiMetricItem metric,
+    bool isDark,
+  ) {
+    final labelColor =
+        isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.6);
+    final valueColor = isDark ? Colors.white : Colors.black87;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              metric.label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: labelColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              metric.value,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: valueColor,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -4931,6 +5434,25 @@ class _HomeKpiOverview {
       yearBaseTotal == null ? null : latestTotal - yearBaseTotal!;
 }
 
+class _HomeMarketingKpiSummary {
+  final int todayViews;
+  final int todayRegistrations;
+  final int todayShares;
+  final String? topShareChannelKey;
+
+  const _HomeMarketingKpiSummary({
+    this.todayViews = 0,
+    this.todayRegistrations = 0,
+    this.todayShares = 0,
+    this.topShareChannelKey,
+  });
+
+  double get todayCvr =>
+      todayViews == 0 ? 0 : (todayRegistrations / todayViews) * 100;
+
+  String get todayCvrLabel => '${todayCvr.toStringAsFixed(1)}%';
+}
+
 class _HomeMonthlyCashflowSummary {
   final DateTime? month;
   final int incomeTotal;
@@ -4972,6 +5494,13 @@ class _HomeMonthlyCashflowSummary {
     final netLabel = netTotal >= 0 ? '黒字' : '赤字';
     return '$monthLabelの収入${NumberFormat('#,##0').format(incomeTotal)}円、支出${NumberFormat('#,##0').format(expenseTotal)}円、差額${NumberFormat('#,##0').format(netTotal.abs())}円の$netLabelです。';
   }
+}
+
+class _OfficeKpiMetricItem {
+  final String label;
+  final String value;
+
+  const _OfficeKpiMetricItem(this.label, this.value);
 }
 
 class _HomeOpsSnapshot {
