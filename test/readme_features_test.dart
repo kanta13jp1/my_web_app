@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/emergency_meeting_page.dart';
+import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -36,6 +37,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
       child: MaterialApp(
+        builder: (context, child) => GlobalHeaderClockShell(
+          child: child ?? const SizedBox.shrink(),
+        ),
         home: child,
       ),
     );
@@ -47,9 +51,10 @@ void main() {
       await tester.pumpWidget(createTestWidget(const HomePage()));
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('global_header_clock_bar')), findsOneWidget);
+      expect(find.byKey(const Key('global_header_clock_text')), findsOneWidget);
       expect(find.byKey(const Key('home_page_scaffold')), findsOneWidget);
       expect(find.byKey(const Key('home_page_title')), findsOneWidget);
-      expect(find.byKey(const Key('home_page_clock')), findsOneWidget);
       expect(
         find.byKey(const Key('home_monthly_cashflow_card')),
         findsOneWidget,

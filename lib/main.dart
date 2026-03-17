@@ -14,6 +14,7 @@ import 'pages/gemini_university_v2_page.dart';
 import 'pages/danshari_page.dart';
 
 import 'services/theme_service.dart';
+import 'widgets/global_header_clock_bar.dart';
 
 SupabaseClient? _testSupabaseClient;
 
@@ -106,6 +107,11 @@ class MyApp extends StatelessWidget {
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
       themeMode: themeService.getFlutterThemeMode(),
+      builder: (context, child) {
+        return GlobalHeaderClockShell(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
