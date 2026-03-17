@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'note_editor_page.dart';
 
+enum _NoteCardAction {
+  duplicate,
+}
+
 class NoteListPage extends StatefulWidget {
   final bool prioritizeShareCandidates;
 
@@ -72,6 +76,68 @@ class _NoteListPageState extends State<NoteListPage> {
 
   String _noteContent(Map<String, dynamic> note) =>
       (note['content'] as String? ?? '').trim();
+
+  String _buildDuplicateTitle(String title) {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      return '無題のメモ (コピー)';
+    }
+
+    final match = RegExp(r'^(.*) \(コピー(?: (\d+))?\)$').firstMatch(trimmed);
+    if (match == null) {
+      return '$trimmed (コピー)';
+    }
+
+    final baseTitle = (match.group(1) ?? trimmed).trim();
+    final currentCopyNumber = int.tryParse(match.group(2) ?? '1') ?? 1;
+    return '$baseTitle (コピー ${currentCopyNumber + 1})';
+  }
+
+  Future<void> _duplicateNote(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final duplicateTitle = _buildDuplicateTitle(_noteTitle(note));
+    final duplicateContent = _noteContent(note);
+
+    try {
+      final inserted = await _supabase
+          .from('notes')
+          .insert({
+            'user_id': userId,
+            'title': duplicateTitle,
+            'content': duplicateContent,
+            'is_archived': false,
+            'is_pinned': false,
+          })
+          .select('id')
+          .maybeSingle();
+
+      await _fetchNotes();
+      if (!mounted) return;
+
+      final duplicatedId = inserted is Map ? inserted['id']?.toString() : null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('「$duplicateTitle」を複製しました'),
+          action: duplicatedId == null
+              ? null
+              : SnackBarAction(
+                  label: '開く',
+                  onPressed: () => _navigateToEditor(context, duplicatedId),
+                ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('メモの複製に失敗しました: $e')),
+      );
+    }
+  }
 
   Map<String, dynamic>? _keywordMatch(
     String haystack,
@@ -329,6 +395,27 @@ class _NoteListPageState extends State<NoteListPage> {
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<_NoteCardAction>(
+          tooltip: 'メモ操作',
+          onSelected: (action) {
+            switch (action) {
+              case _NoteCardAction.duplicate:
+                _duplicateNote(context, note);
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem<_NoteCardAction>(
+              value: _NoteCardAction.duplicate,
+              child: Row(
+                children: [
+                  Icon(Icons.copy_outlined, size: 18),
+                  SizedBox(width: 8),
+                  Text('複製'),
+                ],
               ),
             ),
           ],
