@@ -71,7 +71,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
       final data = await _supabase
           .from('notes')
-          .select('id, title, content, created_at, is_pinned')
+          .select('id, title, content, created_at, is_pinned, reminder_date')
           .eq('user_id', userId)
           .eq('is_archived', false)
           .order('is_pinned', ascending: false)
@@ -113,6 +113,53 @@ class _NoteListPageState extends State<NoteListPage> {
 
   String _noteContent(Map<String, dynamic> note) =>
       (note['content'] as String? ?? '').trim();
+
+  DateTime? _reminderDateOf(Map<String, dynamic> note) {
+    final raw = note['reminder_date']?.toString();
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.toLocal();
+  }
+
+  String _formatReminderDate(DateTime reminderDate) =>
+      DateFormat('MM/dd HH:mm').format(reminderDate);
+
+  bool _isReminderOverdue(DateTime reminderDate) =>
+      reminderDate.isBefore(DateTime.now());
+
+  bool _isReminderDueToday(DateTime reminderDate) =>
+      DateUtils.isSameDay(reminderDate, DateTime.now());
+
+  String _reminderLabel(DateTime reminderDate) {
+    if (_isReminderOverdue(reminderDate)) {
+      return '期限超過 ${_formatReminderDate(reminderDate)}';
+    }
+    if (_isReminderDueToday(reminderDate)) {
+      return '今日 ${DateFormat('HH:mm').format(reminderDate)}';
+    }
+    return _formatReminderDate(reminderDate);
+  }
+
+  Color _reminderColor(DateTime reminderDate) {
+    if (_isReminderOverdue(reminderDate)) {
+      return Colors.red.shade700;
+    }
+    if (_isReminderDueToday(reminderDate)) {
+      return Colors.orange.shade700;
+    }
+    return Colors.teal.shade700;
+  }
+
+  List<Map<String, dynamic>> _reminderEntries(List<Map<String, dynamic>> notes) {
+    final reminders = notes
+        .where((note) => _reminderDateOf(note) != null)
+        .toList()
+      ..sort((a, b) {
+        final aReminder = _reminderDateOf(a) ?? DateTime(9999);
+        final bReminder = _reminderDateOf(b) ?? DateTime(9999);
+        return aReminder.compareTo(bReminder);
+      });
+    return reminders;
+  }
 
   Future<List<_LocalDraftEntry>> _loadDraftEntries(
     List<Map<String, dynamic>> notes,
@@ -505,6 +552,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget _buildNoteCard(
     BuildContext context,
     Map<String, dynamic> note, {
+    bool highlightReminder = false,
     bool highlightShareCandidate = false,
     int? shareScore,
     List<String> shareReasons = const [],
@@ -514,9 +562,12 @@ class _NoteListPageState extends State<NoteListPage> {
     final isPinned = note['is_pinned'] as bool? ?? false;
     final title = _noteTitle(note);
     final content = _noteContent(note);
+    final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
         ? Colors.deepPurple
-        : (isPinned ? Colors.orange : Colors.blue);
+        : (highlightReminder
+              ? Colors.teal
+              : (isPinned ? Colors.orange : Colors.blue));
 
     return Card(
       elevation: highlightShareCandidate ? 3 : 2,
@@ -535,7 +586,9 @@ class _NoteListPageState extends State<NoteListPage> {
           child: Icon(
             highlightShareCandidate
                 ? Icons.campaign
-                : isPinned
+                : highlightReminder
+                    ? Icons.alarm
+                    : isPinned
                     ? Icons.push_pin
                     : Icons.description,
             color: accentColor,
@@ -592,6 +645,36 @@ class _NoteListPageState extends State<NoteListPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (reminderDate != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _reminderColor(reminderDate).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.alarm,
+                      size: 14,
+                      color: _reminderColor(reminderDate),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _reminderLabel(reminderDate),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _reminderColor(reminderDate),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (content.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -642,18 +725,26 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final reminderEntries = _reminderEntries(_notes);
+    final reminderIds = reminderEntries
+        .map(_noteId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final reminderExcludedNotes = _notes
+        .where((note) => !reminderIds.contains(_noteId(note)))
+        .toList();
     final shareCandidateEntries = widget.prioritizeShareCandidates
-        ? _shareCandidateEntries(_notes)
+        ? _shareCandidateEntries(reminderExcludedNotes)
         : const <Map<String, dynamic>>[];
     final shareCandidateIds = shareCandidateEntries
         .map((entry) => _noteId(entry['note'] as Map<String, dynamic>))
         .where((id) => id.isNotEmpty)
         .toSet();
     final remainingNotes = widget.prioritizeShareCandidates
-        ? _notes
+        ? reminderExcludedNotes
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
-        : _notes;
+        : reminderExcludedNotes;
     final hasAnyEntries = _draftEntries.isNotEmpty || _notes.isNotEmpty;
 
     return Scaffold(
@@ -715,6 +806,20 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                       const SizedBox(height: 8),
                     ],
+                    if (reminderEntries.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        'リマインダー',
+                        'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
+                      ),
+                      ...reminderEntries.map(
+                        (note) => _buildNoteCard(
+                          context,
+                          note,
+                          highlightReminder: true,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     if (widget.prioritizeShareCandidates &&
                         shareCandidateEntries.isNotEmpty) ...[
                       _buildSectionHeader(
@@ -737,7 +842,8 @@ class _NoteListPageState extends State<NoteListPage> {
                       }),
                       const SizedBox(height: 8),
                     ],
-                    _buildSectionHeader(
+                    if (remainingNotes.isNotEmpty)
+                      _buildSectionHeader(
                       widget.prioritizeShareCandidates ? 'すべてのメモ' : 'メモ一覧',
                       widget.prioritizeShareCandidates
                           ? '共有候補の下に、残りのメモを時系列で表示します。'

@@ -7,8 +7,16 @@ Future<void> showReminderDialog({
   required DateTime? currentReminder,
   required Function(DateTime?) onReminderSet,
 }) async {
-  DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  DateTime? selectedDate = currentReminder == null
+      ? null
+      : DateTime(
+          currentReminder.year,
+          currentReminder.month,
+          currentReminder.day,
+        );
+  TimeOfDay? selectedTime = currentReminder == null
+      ? null
+      : TimeOfDay.fromDateTime(currentReminder);
 
   await showDialog(
     context: context,
@@ -30,11 +38,17 @@ Future<void> showReminderDialog({
                       : '日付を選択',
                 ),
                 onTap: () async {
+                  final now = DateTime.now();
                   final date = await showDatePicker(
                     context: context,
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                    initialDate: selectedDate != null &&
+                            !selectedDate!.isBefore(
+                              DateTime(now.year, now.month, now.day),
+                            )
+                        ? selectedDate!
+                        : now,
+                    firstDate: DateTime(now.year, now.month, now.day),
+                    lastDate: now.add(const Duration(days: 365)),
                   );
                   if (date != null) {
                     setDialogState(() {

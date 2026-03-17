@@ -7,6 +7,7 @@ import '../models/note_snapshot.dart';
 import '../services/auto_save_service.dart';
 import '../services/undo_redo_service.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
+import '../widgets/note_editor/editor_dialogs.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -31,6 +32,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late UndoRedoService _undoRedoService;
 
   String? _currentNoteId;
+  DateTime? _reminderDate;
   bool _isLoading = false;
   bool _isApplyingSnapshot = false;
   static const String _draftKeyPrefix = 'note_editor_draft_';
@@ -65,13 +67,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final prefs = await SharedPreferences.getInstance();
     final title = _titleController.text;
     final content = _contentController.text;
-    if (title.trim().isEmpty && content.trim().isEmpty) {
+    if (title.trim().isEmpty &&
+        content.trim().isEmpty &&
+        _reminderDate == null) {
       await prefs.remove(_currentDraftKey());
       return;
     }
     final payload = <String, dynamic>{
       'title': title,
       'content': content,
+      'reminder_date': _reminderDate?.toIso8601String(),
       'saved_at': DateTime.now().toIso8601String(),
     };
     await prefs.setString(_currentDraftKey(), jsonEncode(payload));
@@ -84,22 +89,29 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     String title;
     String content;
+    DateTime? reminderDate;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
       title = (decoded['title'] ?? '').toString();
       content = (decoded['content'] ?? '').toString();
+      reminderDate = decoded['reminder_date'] == null
+          ? null
+          : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
     } catch (_) {
       return;
     }
-    if (title.isEmpty && content.isEmpty) return;
+    if (title.isEmpty && content.isEmpty && reminderDate == null) return;
 
     final hasChanges =
-        _titleController.text != title || _contentController.text != content;
+        _titleController.text != title ||
+        _contentController.text != content ||
+        _reminderDate?.toIso8601String() != reminderDate?.toIso8601String();
     if (!hasChanges) return;
 
     _titleController.text = title;
     _contentController.text = content;
+    _reminderDate = reminderDate;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,6 +164,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _persistDraftToLocal();
   }
 
+  void _handleReminderChanged(DateTime? reminderDate) {
+    setState(() {
+      _reminderDate = reminderDate?.toLocal();
+    });
+    _autoSaveService.markAsModified();
+    _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    _persistDraftToLocal();
+  }
+
   Future<void> _loadNote(String id) async {
     setState(() => _isLoading = true);
     try {
@@ -165,6 +186,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         setState(() {
           _titleController.text = data['title'] as String? ?? '';
           _contentController.text = data['content'] as String? ?? '';
+          _reminderDate = data['reminder_date'] == null
+              ? null
+              : DateTime.tryParse(
+                    data['reminder_date'].toString(),
+                  )?.toLocal();
         });
       }
     } catch (e) {
@@ -182,7 +208,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    if (title.isEmpty && content.isEmpty) {
+    if (title.isEmpty && content.isEmpty && _reminderDate == null) {
       return;
     }
 
@@ -193,6 +219,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await Supabase.instance.client.from('notes').update({
         'title': title,
         'content': content,
+        'reminder_date': _reminderDate?.toUtc().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', _currentNoteId!);
     } else {
@@ -202,6 +229,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             'user_id': user.id,
             'title': title,
             'content': content,
+            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
             'is_archived': false,
             'is_pinned': false,
           })
@@ -220,7 +248,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _saveManually() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    if (title.isEmpty && content.isEmpty) {
+    if (title.isEmpty && content.isEmpty && _reminderDate == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('タイトルまたは内容を入力してください')),
@@ -280,6 +308,61 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return '$hh:$mm';
   }
 
+  String _formatReminderDate(DateTime dateTime) =>
+      '${dateTime.year}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')} ${_formatTime(dateTime)}';
+
+  Color _reminderColor(BuildContext context) {
+    final reminderDate = _reminderDate;
+    if (reminderDate == null) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (reminderDate.isBefore(DateTime.now())) {
+      return Colors.red.shade700;
+    }
+    if (DateUtils.isSameDay(reminderDate, DateTime.now())) {
+      return Colors.orange.shade700;
+    }
+    return Colors.teal.shade700;
+  }
+
+  Widget _buildReminderBanner(BuildContext context) {
+    if (_reminderDate == null) {
+      return const SizedBox.shrink();
+    }
+
+    final color = _reminderColor(context);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.alarm, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Reminder: ${_formatReminderDate(_reminderDate!)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => _handleReminderChanged(null),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSaveStateIndicator() {
     return AnimatedBuilder(
       animation: _autoSaveService,
@@ -321,6 +404,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              _buildReminderBanner(context),
               TextField(
                 key: const Key('note_editor_title_field'),
                 controller: _titleController,
@@ -401,6 +485,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               onPressed: _undoRedoService.canRedo ? _redo : null,
               tooltip: 'やり直し (Ctrl+Y / Ctrl+Shift+Z)',
             ),
+          ),
+          IconButton(
+            icon: Icon(
+              _reminderDate == null
+                  ? Icons.alarm_add_outlined
+                  : Icons.alarm_on_outlined,
+            ),
+            onPressed: () => showReminderDialog(
+              context: context,
+              currentReminder: _reminderDate,
+              onReminderSet: _handleReminderChanged,
+            ),
+            tooltip: 'Reminder',
           ),
           IconButton(
             icon: const Icon(Icons.save),
