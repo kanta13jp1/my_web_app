@@ -806,6 +806,58 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
   }
 
+  bool _isMissingDailyTodoDetailsColumn(Object error) {
+    return error is PostgrestException &&
+        error.code == 'PGRST204' &&
+        error.message.contains("'details' column") &&
+        error.message.contains("'daily_todos'");
+  }
+
+  Future<bool> _updateDailyTodoWithDetailsFallback(
+    String id,
+    Map<String, dynamic> values,
+  ) async {
+    try {
+      await Supabase.instance.client.from('daily_todos').update(values).eq(
+            'id',
+            id,
+          );
+      return false;
+    } on PostgrestException catch (e) {
+      if (!values.containsKey('details') ||
+          !_isMissingDailyTodoDetailsColumn(e)) {
+        rethrow;
+      }
+
+      final fallbackValues = Map<String, dynamic>.from(values)
+        ..remove('details');
+      await Supabase.instance.client
+          .from('daily_todos')
+          .update(fallbackValues)
+          .eq('id', id);
+      return true;
+    }
+  }
+
+  Future<bool> _insertDailyTodoWithDetailsFallback(
+    Map<String, dynamic> values,
+  ) async {
+    try {
+      await Supabase.instance.client.from('daily_todos').insert(values);
+      return false;
+    } on PostgrestException catch (e) {
+      if (!values.containsKey('details') ||
+          !_isMissingDailyTodoDetailsColumn(e)) {
+        rethrow;
+      }
+
+      final fallbackValues = Map<String, dynamic>.from(values)
+        ..remove('details');
+      await Supabase.instance.client.from('daily_todos').insert(fallbackValues);
+      return true;
+    }
+  }
+
   Future<void> addSubtask(String todoId, String title) async {
     await Supabase.instance.client.from('daily_subtasks').insert({
       'todo_id': todoId,
@@ -1014,9 +1066,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   final newTask = editController.text.trim();
                   if (newTask.isNotEmpty) {
                     try {
-                      await Supabase.instance.client
-                          .from('daily_todos')
-                          .update({
+                      final detailsDropped =
+                          await _updateDailyTodoWithDetailsFallback(id, {
                         'task': newTask,
                         'details': editDetailsController.text
                             .trim(), // <-- Save details
@@ -1025,8 +1076,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         'category': editCategory,
                         'estimated_minutes': editDuration,
                         'difficulty': editDifficulty,
-                      }).eq('id', id);
+                      });
                       if (context.mounted) Navigator.pop(context);
+                      if (detailsDropped && mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'daily_todos.details 列が未反映のため、詳細メモはまだ保存されていません。Supabase マイグレーションを適用してください。',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
                     } catch (e) {
                       debugPrint('Error updating todo: $e');
                       if (context.mounted) {
@@ -4877,7 +4938,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         }
       }
 
-      await Supabase.instance.client.from('daily_todos').insert({
+      final detailsDropped = await _insertDailyTodoWithDetailsFallback({
         'task': taskToMove['task'],
         'is_completed': false,
         'is_important': taskToMove['is_important'] ?? false,
@@ -4894,9 +4955,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('タスクを「今日」に移動しました。'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text(
+              detailsDropped
+                  ? 'タスクを今日へ移動しました。詳細メモは DB 反映後に利用できます。'
+                  : 'タスクを「今日」に移動しました。',
+            ),
+            backgroundColor: detailsDropped ? Colors.orange : Colors.green,
           ),
         );
       }
