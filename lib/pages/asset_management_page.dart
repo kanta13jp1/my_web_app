@@ -1842,6 +1842,78 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   // 5. 必須タスクの記録と把握
   // ==========================================
+  Future<bool> _confirmDeleteFlow(Map<String, dynamic> flow) async {
+    final parsed = _parseFlowDescription(flow['description']?.toString() ?? '');
+    final memo = parsed.memo.isNotEmpty
+        ? parsed.memo
+        : (flow['description']?.toString().trim().isNotEmpty ?? false)
+            ? flow['description'].toString().trim()
+            : 'この収支記録';
+    final amount = (flow['amount'] as num?)?.toInt() ?? 0;
+    final date = DateTime.tryParse(
+          flow['occurred_at']?.toString() ?? '',
+        )?.toLocal() ??
+        DateTime.now();
+    final typeLabel =
+        _actionTypeToFlowLabel(flow['action_type']?.toString() ?? 'expense');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('削除の確認'),
+        content: Text(
+          '${DateFormat('yyyy/MM/dd').format(date)} の$typeLabel「$memo」（¥${NumberFormat('#,###').format(amount)}）を削除しますか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('削除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _deleteFlow(Map<String, dynamic> flow) async {
+    final userId = _supabase.auth.currentUser?.id;
+    final flowId = flow['id']?.toString();
+    if (userId == null || flowId == null || flowId.isEmpty) return;
+
+    final shouldDelete = await _confirmDeleteFlow(flow);
+    if (!shouldDelete) return;
+
+    try {
+      await _supabase
+          .from('wealth_struggles')
+          .delete()
+          .eq('id', flowId)
+          .eq('user_id', userId);
+
+      await _fetchRecentFlows();
+      await _fetchTodayClosing();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('収支記録を削除しました'),
+          backgroundColor: Colors.black87,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error deleting flow: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('収支記録の削除に失敗しました: $e')),
+      );
+    }
+  }
+
   Future<void> _fetchMustTasks() async {
     setState(() => _isLoadingTasks = true);
     try {
@@ -3630,6 +3702,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               color: Colors.blueGrey[700],
                               onPressed: () => _editFlow(item),
                             ),
+                            IconButton(
+                              tooltip: '削除',
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              color: Colors.red[400],
+                              onPressed: () => _deleteFlow(item),
+                            ),
                           ],
                         ),
                       );
@@ -3990,6 +4069,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           color: Colors.blueGrey[700],
                           onPressed: () => _editFlow(item),
                         ),
+                        IconButton(
+                          tooltip: '削除',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.delete_outline, size: 20),
+                          color: Colors.red[400],
+                          onPressed: () => _deleteFlow(item),
+                        ),
                       ],
                     ),
                   );
@@ -3997,7 +4083,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             const SizedBox(height: 4),
             Text(
-              '履歴の行をタップするか、右の編集ボタンから日付・入出金元・内容・金額を後から修正できます。',
+              '履歴の行をタップするか、右の編集・削除ボタンから日付・入出金元・内容・金額の修正や誤登録の削除ができます。',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey[600],
