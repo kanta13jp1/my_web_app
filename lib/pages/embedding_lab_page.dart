@@ -119,7 +119,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
+            const Card(
               color: Colors.teal,
               child: Padding(
                 padding: EdgeInsets.all(12.0),

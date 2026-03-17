@@ -1,11 +1,32 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   duplicate,
+}
+
+class _LocalDraftEntry {
+  final String storageKey;
+  final String? noteId;
+  final String title;
+  final String content;
+  final DateTime savedAt;
+
+  const _LocalDraftEntry({
+    required this.storageKey,
+    required this.noteId,
+    required this.title,
+    required this.content,
+    required this.savedAt,
+  });
+
+  bool get isNewNoteDraft => noteId == null || noteId!.isEmpty;
 }
 
 class NoteListPage extends StatefulWidget {
@@ -22,8 +43,10 @@ class NoteListPage extends StatefulWidget {
 
 class _NoteListPageState extends State<NoteListPage> {
   final _supabase = Supabase.instance.client;
+  static const String _draftKeyPrefix = 'note_editor_draft_';
   bool _isLoading = true;
   List<Map<String, dynamic>> _notes = [];
+  List<_LocalDraftEntry> _draftEntries = [];
 
   @override
   void initState() {
@@ -35,7 +58,14 @@ class _NoteListPageState extends State<NoteListPage> {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
-        if (mounted) setState(() => _isLoading = false);
+        final drafts = await _loadDraftEntries(const <Map<String, dynamic>>[]);
+        if (mounted) {
+          setState(() {
+            _notes = [];
+            _draftEntries = drafts;
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -46,18 +76,25 @@ class _NoteListPageState extends State<NoteListPage> {
           .eq('is_archived', false)
           .order('is_pinned', ascending: false)
           .order('created_at', ascending: false);
+      final notes = List<Map<String, dynamic>>.from(data);
+      final drafts = await _loadDraftEntries(notes);
 
       if (!mounted) return;
       setState(() {
-        _notes = List<Map<String, dynamic>>.from(data);
+        _notes = notes;
+        _draftEntries = drafts;
         _isLoading = false;
       });
     } catch (e) {
+      final drafts = await _loadDraftEntries(_notes);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('メモ一覧の取得に失敗しました: $e')),
       );
-      setState(() => _isLoading = false);
+      setState(() {
+        _draftEntries = drafts;
+        _isLoading = false;
+      });
     }
   }
 
@@ -76,6 +113,94 @@ class _NoteListPageState extends State<NoteListPage> {
 
   String _noteContent(Map<String, dynamic> note) =>
       (note['content'] as String? ?? '').trim();
+
+  Future<List<_LocalDraftEntry>> _loadDraftEntries(
+    List<Map<String, dynamic>> notes,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final noteById = <String, Map<String, dynamic>>{
+      for (final note in notes)
+        if (_noteId(note).isNotEmpty) _noteId(note): note,
+    };
+    final drafts = <_LocalDraftEntry>[];
+
+    for (final key in prefs.getKeys()) {
+      if (!key.startsWith(_draftKeyPrefix)) continue;
+
+      final raw = prefs.getString(key);
+      if (raw == null || raw.trim().isEmpty) continue;
+
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is! Map) continue;
+
+        final suffix = key.substring(_draftKeyPrefix.length);
+        final noteId = suffix == 'new' ? null : suffix;
+        final title = (decoded['title'] ?? '').toString();
+        final content = (decoded['content'] ?? '').toString();
+        if (title.trim().isEmpty && content.trim().isEmpty) continue;
+
+        final fallbackNote = noteId == null ? null : noteById[noteId];
+        final savedAt = DateTime.tryParse(
+              (decoded['saved_at'] ?? '').toString(),
+            )?.toLocal() ??
+            _createdAtOf(fallbackNote ?? const <String, dynamic>{});
+
+        drafts.add(
+          _LocalDraftEntry(
+            storageKey: key,
+            noteId: noteId,
+            title: title,
+            content: content,
+            savedAt: savedAt,
+          ),
+        );
+      } catch (_) {
+        continue;
+      }
+    }
+
+    drafts.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return drafts;
+  }
+
+  String _draftTitle(_LocalDraftEntry draft) {
+    final title = draft.title.trim();
+    if (title.isNotEmpty) {
+      return title;
+    }
+    if (draft.isNewNoteDraft) {
+      return '新規メモの下書き';
+    }
+
+    for (final note in _notes) {
+      if (_noteId(note) == draft.noteId) {
+        return '${_noteTitle(note)} の下書き';
+      }
+    }
+    return '編集中のメモ';
+  }
+
+  String _draftPreview(_LocalDraftEntry draft) {
+    final content = draft.content.trim();
+    if (content.isNotEmpty) {
+      return content;
+    }
+    if (draft.isNewNoteDraft) {
+      return '途中まで書いた新規メモをここから再開できます。';
+    }
+    return '保存前の変更があります。';
+  }
+
+  Future<void> _deleteDraft(_LocalDraftEntry draft) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(draft.storageKey);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('下書きを削除しました')),
+    );
+    await _fetchNotes();
+  }
 
   String _buildDuplicateTitle(String title) {
     final trimmed = title.trim();
@@ -104,7 +229,7 @@ class _NoteListPageState extends State<NoteListPage> {
     final duplicateContent = _noteContent(note);
 
     try {
-      final inserted = await _supabase
+      final Map<String, dynamic>? inserted = await _supabase
           .from('notes')
           .insert({
             'user_id': userId,
@@ -117,9 +242,9 @@ class _NoteListPageState extends State<NoteListPage> {
           .maybeSingle();
 
       await _fetchNotes();
-      if (!mounted) return;
+      if (!mounted || !context.mounted) return;
 
-      final duplicatedId = inserted is Map ? inserted['id']?.toString() : null;
+      final duplicatedId = inserted?['id']?.toString();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('「$duplicateTitle」を複製しました'),
@@ -132,7 +257,7 @@ class _NoteListPageState extends State<NoteListPage> {
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('メモの複製に失敗しました: $e')),
       );
@@ -282,6 +407,96 @@ class _NoteListPageState extends State<NoteListPage> {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: Colors.deepPurple,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDraftCard(BuildContext context, _LocalDraftEntry draft) {
+    const accentColor = Colors.black87;
+    final savedAtLabel = DateFormat('yyyy/MM/dd HH:mm').format(draft.savedAt);
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: accentColor.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: accentColor.withValues(alpha: 0.08),
+                  child: const Icon(Icons.drafts_outlined, color: accentColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _draftTitle(draft),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        draft.isNewNoteDraft ? '新規メモの下書き' : '既存メモの下書き',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: '下書きを削除',
+                  onPressed: () => _deleteDraft(draft),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _draftPreview(draft),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '最終保存: $savedAtLabel',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => _navigateToEditor(context, draft.noteId),
+                  icon: const Icon(Icons.edit_note),
+                  label: const Text('続きから編集'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -439,6 +654,7 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : _notes;
+    final hasAnyEntries = _draftEntries.isNotEmpty || _notes.isNotEmpty;
 
     return Scaffold(
       key: const Key('note_list_page_scaffold'),
@@ -458,7 +674,7 @@ class _NoteListPageState extends State<NoteListPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _notes.isEmpty
+          : !hasAnyEntries
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -489,6 +705,16 @@ class _NoteListPageState extends State<NoteListPage> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    if (_draftEntries.isNotEmpty) ...[
+                      _buildSectionHeader(
+                        '下書き',
+                        'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
+                      ),
+                      ..._draftEntries.map(
+                        (draft) => _buildDraftCard(context, draft),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     if (widget.prioritizeShareCandidates &&
                         shareCandidateEntries.isNotEmpty) ...[
                       _buildSectionHeader(

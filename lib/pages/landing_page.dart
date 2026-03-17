@@ -860,136 +860,137 @@ $input
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '登録前の1アクション体験',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-              style: TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ActionChip(
-                  avatar: const Icon(Icons.flash_on, size: 18),
-                  label: const Text('今日の最優先'),
-                  onPressed: _isTrialLoading
-                      ? null
-                      : () => _runQuickTrialSample(
-                            '今日の最優先タスクを1件に絞りたい',
-                          ),
-                ),
-                ActionChip(
-                  avatar: const Icon(Icons.trending_up, size: 18),
-                  label: const Text('登録を増やす'),
-                  onPressed: _isTrialLoading
-                      ? null
-                      : () => _runQuickTrialSample(
-                            '登録者数を増やすための次の一手を決めたい',
-                          ),
-                ),
-                ActionChip(
-                  avatar: const Icon(Icons.done_all, size: 18),
-                  label: const Text('先送り解消'),
-                  onPressed: _isTrialLoading
-                      ? null
-                      : () => _runQuickTrialSample(
-                            '今いちばん先送りしていることを片付けたい',
-                          ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _trialPromptController,
-              minLines: 2,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '例: 今日いちばん詰まっていることを簡単に書く',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.bolt),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '登録前の1アクション体験',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _isTrialLoading ? null : _runTrialActionPreview,
-                icon: const Icon(Icons.play_arrow),
-                label: _isTrialLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('今やる1件を試す'),
+              const SizedBox(height: 6),
+              const Text(
+                'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
+                style: TextStyle(color: Colors.black54),
               ),
-            ),
-            if (_trialAction != null) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.flash_on, size: 18),
+                    label: const Text('今日の最優先'),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : () => _runQuickTrialSample(
+                              '今日の最優先タスクを1件に絞りたい',
+                            ),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.trending_up, size: 18),
+                    label: const Text('登録を増やす'),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : () => _runQuickTrialSample(
+                              '登録者数を増やすための次の一手を決めたい',
+                            ),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.done_all, size: 18),
+                    label: const Text('先送り解消'),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : () => _runQuickTrialSample(
+                              '今いちばん先送りしていることを片付けたい',
+                            ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F7FF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+              TextField(
+                controller: _trialPromptController,
+                minLines: 2,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: '例: 今日いちばん詰まっていることを簡単に書く',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.bolt),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '提案された1件',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.blue,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _isTrialLoading ? null : _runTrialActionPreview,
+                  icon: const Icon(Icons.play_arrow),
+                  label: _isTrialLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('今やる1件を試す'),
+                ),
+              ),
+              if (_trialAction != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F7FF),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '提案された1件',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.blue,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _trialAction!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (_trialReason != null) ...[
                       const SizedBox(height: 6),
                       Text(
-                        _trialReason!,
-                        style: const TextStyle(color: Colors.black54),
+                        _trialAction!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (_trialReason != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _trialReason!,
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      const Text(
+                        '保存すると、この提案を明日も続きから開けます。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _promptRegistrationForTrialSave,
+                          icon: const Icon(Icons.save_outlined),
+                          label: const Text('この結果を保存して続ける'),
+                        ),
                       ),
                     ],
-                    const SizedBox(height: 10),
-                    const Text(
-                      '保存すると、この提案を明日も続きから開けます。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _promptRegistrationForTrialSave,
-                        icon: const Icon(Icons.save_outlined),
-                        label: const Text('この結果を保存して続ける'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
           ),
         ),
       ),
@@ -1006,233 +1007,236 @@ $input
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_showSaveCtaPrompt) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF4E5),
-                  borderRadius: BorderRadius.circular(14),
-                  border:
-                      Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_showSaveCtaPrompt) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF4E5),
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                        Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                child: const Text(
-                  'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                const SizedBox(height: 14),
+              ],
+              const Text(
+                '保存して、明日も続きから再開',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _isSignUp
+                    ? '登録すると、AI提案・実行履歴・明日の続きが残ります。最短は Magic Link です。'
+                    : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
+                style: const TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+              const Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
+                  _BenefitChip(icon: Icons.replay, label: '明日も続きから再開'),
+                  _BenefitChip(icon: Icons.history, label: '履歴を残す'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                focusNode: _emailFocusNode,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'メールアドレス',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '保存される内容: AI提案 / 実行履歴 / 明日の続き',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 52,
+                child: FilledButton(
+                  onPressed: (_isLoading ||
+                          (_showInboxShortcut && _isMagicLinkCoolingDown))
+                      ? null
+                      : _sendMagicLink,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _showInboxShortcut
+                            ? (_isMagicLinkCoolingDown
+                                ? '送信済み'
+                                : 'Magic Linkを再送')
+                            : 'Magic Linkで保存を始める',
+                      ),
+                      if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.check_circle, size: 18),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '新規登録もログインも、この1通で完了します。',
+                style: TextStyle(fontSize: 12, color: Colors.black45),
+              ),
+              if (_showInboxShortcut) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F7FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                        Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Magic Link を送信しました。受信箱でメールを開いて、そのままログインしてください。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        '届かない場合は迷惑メールも確認してください。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _openInbox,
+                              icon: const Icon(Icons.open_in_new),
+                              label: const Text('受信箱を開く'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: (_isLoading || _isMagicLinkCoolingDown)
+                                  ? null
+                                  : _sendMagicLink,
+                              icon: const Icon(Icons.refresh),
+                              label: Text(
+                                _isMagicLinkCoolingDown
+                                    ? '再送 ${_magicLinkCooldownSeconds}s'
+                                    : '再送する',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              if (_googleLoginFeatureEnabled) ...[
+                SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                    icon: const Icon(Icons.login),
+                    label: const Text('Googleで続ける'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F9FC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: const Text(
+                    'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              const Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'パスワードで続ける',
+                      style: TextStyle(color: Colors.black45),
+                    ),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'パスワード',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
               const SizedBox(height: 14),
-            ],
-            const Text(
-              '保存して、明日も続きから再開',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _isSignUp
-                  ? '登録すると、AI提案・実行履歴・明日の続きが残ります。最短は Magic Link です。'
-                  : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
-              style: const TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 12),
-            const Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
-                _BenefitChip(icon: Icons.replay, label: '明日も続きから再開'),
-                _BenefitChip(icon: Icons.history, label: '履歴を残す'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              focusNode: _emailFocusNode,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'メールアドレス',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '保存される内容: AI提案 / 実行履歴 / 明日の続き',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 52,
-              child: FilledButton(
-                onPressed: (_isLoading ||
-                        (_showInboxShortcut && _isMagicLinkCoolingDown))
-                    ? null
-                    : _sendMagicLink,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _showInboxShortcut
-                          ? (_isMagicLinkCoolingDown ? '送信済み' : 'Magic Linkを再送')
-                          : 'Magic Linkで保存を始める',
-                    ),
-                    if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
-                      const SizedBox(width: 8),
-                      const Icon(Icons.check_circle, size: 18),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '新規登録もログインも、この1通で完了します。',
-              style: TextStyle(fontSize: 12, color: Colors.black45),
-            ),
-            if (_showInboxShortcut) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F7FF),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Magic Link を送信しました。受信箱でメールを開いて、そのままログインしてください。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      '届かない場合は迷惑メールも確認してください。',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _openInbox,
-                            icon: const Icon(Icons.open_in_new),
-                            label: const Text('受信箱を開く'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: (_isLoading || _isMagicLinkCoolingDown)
-                                ? null
-                                : _sendMagicLink,
-                            icon: const Icon(Icons.refresh),
-                            label: Text(
-                              _isMagicLinkCoolingDown
-                                  ? '再送 ${_magicLinkCooldownSeconds}s'
-                                  : '再送する',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            if (_googleLoginFeatureEnabled) ...[
               SizedBox(
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: _isLoading ? null : _signInWithGoogle,
-                  icon: const Icon(Icons.login),
-                  label: const Text('Googleで続ける'),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: const Text(
-                  'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            const Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'パスワードで続ける',
-                    style: TextStyle(color: Colors.black45),
-                  ),
-                ),
-                Expanded(child: Divider()),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'パスワード',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock_outline),
-              ),
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 52,
-              child: FilledButton(
-                onPressed: _isLoading ? null : _auth,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        _isSignUp ? 'メールで新規登録' : 'メールでログイン',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                height: 52,
+                child: FilledButton(
+                  onPressed: _isLoading ? null : _auth,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          _isSignUp ? 'メールで新規登録' : 'メールでログイン',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                      setState(() => _isSignUp = !_isSignUp);
-                    },
-              child: Text(
-                _isSignUp ? 'すでにアカウントがある場合はログイン' : 'アカウントがない場合は新規登録',
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        setState(() => _isSignUp = !_isSignUp);
+                      },
+                child: Text(
+                  _isSignUp ? 'すでにアカウントがある場合はログイン' : 'アカウントがない場合は新規登録',
+                ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),

@@ -540,7 +540,8 @@ class AIService {
     final addedProviders = <_MagiProvider>{};
 
     void addPlan(_MagiProvider provider, String model) {
-      if (addedProviders.contains(provider) || !_isProviderConfigured(provider)) {
+      if (addedProviders.contains(provider) ||
+          !_isProviderConfigured(provider)) {
         return;
       }
       plans.add(_MagiSynthesisPlan(provider: provider, model: model));
@@ -549,7 +550,10 @@ class AIService {
 
     if (synthesisModel != null && synthesisModel.trim().isNotEmpty) {
       final synthesisModelValue = synthesisModel.trim();
-      addPlan(_inferProviderFromModel(synthesisModelValue), synthesisModelValue);
+      addPlan(
+        _inferProviderFromModel(synthesisModelValue),
+        synthesisModelValue,
+      );
     }
 
     addPlan(
@@ -758,28 +762,28 @@ $originalPrompt
   }
 
   List<_MagiNodeProfile> get _magiProfiles => const <_MagiNodeProfile>[
-    _MagiNodeProfile(
-      nodeName: 'MELCHIOR',
-      viewpoint: '論理・整合性',
-      instruction: '要件を分解し、矛盾を排除し、結論を短く明確にする。',
-      provider: _MagiProvider.openai,
-      defaultModel: _defaultOpenAIModel,
-    ),
-    _MagiNodeProfile(
-      nodeName: 'BALTHASAR',
-      viewpoint: '実務・実行可能性',
-      instruction: 'すぐ実行できる手順、制約、リスクを重視する。',
-      provider: _MagiProvider.anthropic,
-      defaultModel: _defaultAnthropicModel,
-    ),
-    _MagiNodeProfile(
-      nodeName: 'CASPER',
-      viewpoint: '継続性・心理',
-      instruction: '受け手が動ける表現、負荷の低い実践性、継続性を最適化する。',
-      provider: _MagiProvider.gemini,
-      defaultModel: '',
-    ),
-  ];
+        _MagiNodeProfile(
+          nodeName: 'MELCHIOR',
+          viewpoint: '論理・整合性',
+          instruction: '要件を分解し、矛盾を排除し、結論を短く明確にする。',
+          provider: _MagiProvider.openai,
+          defaultModel: _defaultOpenAIModel,
+        ),
+        _MagiNodeProfile(
+          nodeName: 'BALTHASAR',
+          viewpoint: '実務・実行可能性',
+          instruction: 'すぐ実行できる手順、制約、リスクを重視する。',
+          provider: _MagiProvider.anthropic,
+          defaultModel: _defaultAnthropicModel,
+        ),
+        _MagiNodeProfile(
+          nodeName: 'CASPER',
+          viewpoint: '継続性・心理',
+          instruction: '受け手が動ける表現、負荷の低い実践性、継続性を最適化する。',
+          provider: _MagiProvider.gemini,
+          defaultModel: '',
+        ),
+      ];
 
   Future<String?> generateMindMap({
     required String model,
