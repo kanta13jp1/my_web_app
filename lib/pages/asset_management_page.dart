@@ -3612,12 +3612,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           '${DateFormat('MM/dd').format(date)} ・ タップで編集',
                           style: const TextStyle(fontSize: 11),
                         ),
-                        trailing: Text(
-                          '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
-                          style: TextStyle(
-                            color: isIncome ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
+                              style: TextStyle(
+                                color: isIncome ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              tooltip: '編集',
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.edit_outlined, size: 20),
+                              color: Colors.blueGrey[700],
+                              onPressed: () => _editFlow(item),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -3959,9 +3972,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       '${DateFormat('MM/dd').format(date)} ・ タップで編集',
                       style: const TextStyle(fontSize: 11),
                     ),
-                    trailing: Column(
+                    trailing: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           '${isIncome ? '+' : '-'}￥${NumberFormat('#,###').format(amount)}',
@@ -3970,12 +3982,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
-                          '編集',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.blueGrey[600],
-                          ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          tooltip: '編集',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: Colors.blueGrey[700],
+                          onPressed: () => _editFlow(item),
                         ),
                       ],
                     ),
@@ -3984,7 +3997,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             const SizedBox(height: 4),
             Text(
-              '履歴の行をタップすると、日付・入出金元・内容・金額を後から修正できます。',
+              '履歴の行をタップするか、右の編集ボタンから日付・入出金元・内容・金額を後から修正できます。',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey[600],
