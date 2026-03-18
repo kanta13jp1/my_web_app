@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../services/ai_service.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_share_service.dart';
 
@@ -314,7 +313,7 @@ REASON: 60文字以内の理由
 $input
 ''';
 
-      final result = await AIService().improveText(prompt);
+      final result = await widget.adapter.improveTrialPrompt(prompt: prompt);
       final parsed = _parseTrialAiResponse(result);
       if (!mounted) return;
       setState(() {

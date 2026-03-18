@@ -48,6 +48,10 @@ abstract interface class LandingPageAdapter {
 
   Future<LandingPageViewStats> loadLpViewStats();
 
+  Future<String> improveTrialPrompt({
+    required String prompt,
+  });
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -156,6 +160,36 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
       debugPrint('LP view stats failed: $error');
       return const LandingPageViewStats.empty();
     }
+  }
+
+  @override
+  Future<String> improveTrialPrompt({
+    required String prompt,
+  }) async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      throw const LandingPageAuthUnavailableException();
+    }
+
+    final response = await client.functions.invoke(
+      'ai-assistant',
+      body: <String, dynamic>{
+        'action': 'improve',
+        'content': prompt,
+      },
+    );
+    final data =
+        response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+    final result = data['result'];
+    if (data['success'] == true && result is String) {
+      return result;
+    }
+
+    throw Exception(
+      data['error']?.toString() ?? 'Landing trial preview failed.',
+    );
   }
 
   @override
