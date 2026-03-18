@@ -52,6 +52,18 @@ class AgentWorkspaceSnapshot {
   });
 }
 
+class AgentBoardChannel {
+  final String id;
+  final String label;
+  final String description;
+
+  const AgentBoardChannel({
+    required this.id,
+    required this.label,
+    required this.description,
+  });
+}
+
 class AgentOrgService {
   final SupabaseClient _supabase;
 
@@ -65,6 +77,34 @@ class AgentOrgService {
     'skills',
     'episodes',
     'activity_log',
+  ];
+
+  static const List<AgentBoardChannel> boardChannels = <AgentBoardChannel>[
+    AgentBoardChannel(
+      id: 'executive',
+      label: 'executive',
+      description: 'Cross-functional leadership updates and alignment.',
+    ),
+    AgentBoardChannel(
+      id: 'finance',
+      label: 'finance',
+      description: 'Budget, revenue, and cashflow coordination.',
+    ),
+    AgentBoardChannel(
+      id: 'growth',
+      label: 'growth',
+      description: 'Campaigns, launches, and customer traction.',
+    ),
+    AgentBoardChannel(
+      id: 'people',
+      label: 'people',
+      description: 'Hiring, staffing, and team support topics.',
+    ),
+    AgentBoardChannel(
+      id: 'health',
+      label: 'health',
+      description: 'Wellbeing, risk flags, and sustainable pacing.',
+    ),
   ];
 
   static const Set<String> _allowedTaskStatuses = <String>{
@@ -88,6 +128,18 @@ class AgentOrgService {
   };
 
   static const int _maxGuardPayloadLength = 8000;
+
+  static bool isSupportedBoardChannel(String? channelId) {
+    if (channelId == null) {
+      return false;
+    }
+    for (final channel in boardChannels) {
+      if (channel.id == channelId) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   static const List<AgentBlueprint> defaultExecutiveBlueprints = [
     AgentBlueprint(
@@ -620,6 +672,7 @@ class AgentOrgService {
     String? linkedTaskId,
     String? conversationId,
     Map<String, dynamic> payload = const <String, dynamic>{},
+    Map<String, dynamic> metadata = const <String, dynamic>{},
     String source = 'agent_message',
     String? actorAgentId,
   }) async {
@@ -641,6 +694,7 @@ class AgentOrgService {
         'summary': normalizedSummary,
         'source': source,
         'payload': payload,
+        'metadata': metadata,
       },
       permissionCheck: () async {
         if (actorId != fromAgentId) {
@@ -678,6 +732,7 @@ class AgentOrgService {
             'metadata': <String, dynamic>{
               'source': source,
               'sent_at': DateTime.now().toIso8601String(),
+              ...metadata,
             },
           })
           .select()
@@ -701,6 +756,35 @@ class AgentOrgService {
       return null;
     }
     return AgentMessage.fromJson(Map<String, dynamic>.from(inserted));
+  }
+
+  Future<AgentMessage?> postBoardMessage({
+    required String fromAgentId,
+    required String channel,
+    required String summary,
+    String status = 'sent',
+    Map<String, dynamic> payload = const <String, dynamic>{},
+    String? actorAgentId,
+  }) async {
+    final normalizedChannel = channel.trim().toLowerCase();
+    if (!isSupportedBoardChannel(normalizedChannel)) {
+      throw ArgumentError('Unsupported board channel: $channel');
+    }
+
+    return sendStructuredMessage(
+      fromAgentId: fromAgentId,
+      toAgentId: fromAgentId,
+      summary: summary,
+      messageKind: 'board',
+      status: status,
+      conversationId: 'board:$normalizedChannel',
+      payload: payload,
+      metadata: <String, dynamic>{
+        'channel': normalizedChannel,
+      },
+      source: 'board_channel',
+      actorAgentId: actorAgentId,
+    );
   }
 
   Future<void> consolidateMemory({

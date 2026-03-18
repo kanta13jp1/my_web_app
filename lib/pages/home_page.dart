@@ -3822,7 +3822,7 @@ abstinence_slip_details: $slipDetailsText
                                 'AI組織OS',
                                 Icons.account_tree,
                                 Colors.deepPurple,
-                                () => _nav(context, const AgentOrgPage()),
+                                () => _nav(context, AgentOrgPage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
                               ),

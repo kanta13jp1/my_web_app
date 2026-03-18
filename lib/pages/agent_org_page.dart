@@ -8,22 +8,31 @@ import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 
 class AgentOrgPage extends StatefulWidget {
-  const AgentOrgPage({super.key});
+  final AgentOrgService service;
+
+  AgentOrgPage({
+    super.key,
+    AgentOrgService? service,
+  }) : service = service ?? AgentOrgService();
 
   @override
   State<AgentOrgPage> createState() => _AgentOrgPageState();
 }
 
 class _AgentOrgPageState extends State<AgentOrgPage> {
-  final AgentOrgService _service = AgentOrgService();
   final TextEditingController _taskTitleController = TextEditingController();
   final TextEditingController _taskDescriptionController =
+      TextEditingController();
+  final TextEditingController _boardMessageController =
       TextEditingController();
 
   AgentOrgSnapshot _snapshot = const AgentOrgSnapshot.empty();
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _isPostingBoardMessage = false;
   String? _selectedAssigneeId;
+  String? _selectedBoardAuthorId;
+  String _selectedBoardChannel = AgentOrgService.boardChannels.first.id;
   String? _errorText;
 
   @override
@@ -36,6 +45,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   void dispose() {
     _taskTitleController.dispose();
     _taskDescriptionController.dispose();
+    _boardMessageController.dispose();
     super.dispose();
   }
 
@@ -46,6 +56,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       )
       .toList();
 
+  List<AgentProfile> get _boardAuthors =>
+      _snapshot.agents.where((agent) => agent.isActive).toList();
+
   AgentProfile? get _ceoAgent {
     for (final agent in _snapshot.agents) {
       if (agent.slug == 'ceo') {
@@ -55,13 +68,68 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     return null;
   }
 
+  String? _defaultBoardAuthorIdForSnapshot(AgentOrgSnapshot snapshot) {
+    for (final agent in snapshot.agents) {
+      if (agent.slug == 'ceo' && agent.isActive) {
+        return agent.id;
+      }
+    }
+    for (final agent in snapshot.agents) {
+      if (agent.isActive) {
+        return agent.id;
+      }
+    }
+    return null;
+  }
+
+  AgentBoardChannel get _selectedBoardChannelConfig {
+    for (final channel in AgentOrgService.boardChannels) {
+      if (channel.id == _selectedBoardChannel) {
+        return channel;
+      }
+    }
+    return AgentOrgService.boardChannels.first;
+  }
+
+  String? _boardChannelFor(AgentMessage message) {
+    final raw = message.metadata['channel']?.toString().trim().toLowerCase();
+    if (!AgentOrgService.isSupportedBoardChannel(raw)) {
+      return null;
+    }
+    return raw;
+  }
+
+  List<AgentMessage> get _boardMessages => _snapshot.recentMessages
+      .where((message) => message.messageKind == 'board')
+      .toList();
+
+  List<AgentMessage> get _directMessages => _snapshot.recentMessages
+      .where((message) => message.messageKind != 'board')
+      .toList();
+
+  Map<String, int> get _boardMessageCounts {
+    final counts = <String, int>{};
+    for (final message in _boardMessages) {
+      final channel = _boardChannelFor(message);
+      if (channel == null) {
+        continue;
+      }
+      counts[channel] = (counts[channel] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  List<AgentMessage> get _selectedBoardMessages => _boardMessages
+      .where((message) => _boardChannelFor(message) == _selectedBoardChannel)
+      .toList();
+
   Future<void> _loadSnapshot() async {
     setState(() {
       _isLoading = true;
       _errorText = null;
     });
     try {
-      final snapshot = await _service.loadSnapshot();
+      final snapshot = await widget.service.loadSnapshot();
       if (!mounted) {
         return;
       }
@@ -79,6 +147,13 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             delegable.any((agent) => agent.id == _selectedAssigneeId)
                 ? _selectedAssigneeId
                 : (delegable.isNotEmpty ? delegable.first.id : null);
+        _selectedBoardAuthorId =
+            snapshot.agents.any(
+                  (agent) =>
+                      agent.isActive && agent.id == _selectedBoardAuthorId,
+                )
+                ? _selectedBoardAuthorId
+                : _defaultBoardAuthorIdForSnapshot(snapshot);
         _isLoading = false;
       });
     } catch (error) {
@@ -109,7 +184,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
 
     setState(() => _isSubmitting = true);
     try {
-      await _service.delegateTask(
+      await widget.service.delegateTask(
         supervisorAgentId: ceoAgent.id,
         assigneeAgentId: assigneeId,
         title: title,
@@ -140,7 +215,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
 
   Future<void> _setTaskStatus(AgentTask task, String status) async {
     try {
-      await _service.updateTaskStatus(taskId: task.id, status: status);
+      await widget.service.updateTaskStatus(taskId: task.id, status: status);
       if (!mounted) {
         return;
       }
@@ -157,7 +232,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
 
   Future<void> _toggleAgentStatus(AgentProfile agent) async {
     try {
-      await _service.setAgentStatus(
+      await widget.service.setAgentStatus(
         agentId: agent.id,
         enabled: !agent.isActive,
       );
@@ -207,7 +282,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       if (submitted != true) {
         return;
       }
-      await _service.appendMemoryEntry(
+      await widget.service.appendMemoryEntry(
         agentId: agent.id,
         content: controller.text.trim(),
         memoryLayer: 'state',
@@ -228,6 +303,55 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       );
     } finally {
       controller.dispose();
+    }
+  }
+
+  Future<void> _postBoardMessage() async {
+    final authorId = _selectedBoardAuthorId;
+    final message = _boardMessageController.text.trim();
+    if (authorId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose an active agent before posting.')),
+      );
+      return;
+    }
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a board update before posting.')),
+      );
+      return;
+    }
+
+    setState(() => _isPostingBoardMessage = true);
+    try {
+      await widget.service.postBoardMessage(
+        fromAgentId: authorId,
+        channel: _selectedBoardChannel,
+        summary: message,
+      );
+      if (!mounted) {
+        return;
+      }
+      _boardMessageController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Posted to #${_selectedBoardChannelConfig.label}.',
+          ),
+        ),
+      );
+      await _loadSnapshot();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Board post failed: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPostingBoardMessage = false);
+      }
     }
   }
 
@@ -300,6 +424,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       const SizedBox(height: 16),
                       _buildDelegationComposer(),
                       const SizedBox(height: 24),
+                      _buildBoardSection(),
+                      const SizedBox(height: 24),
                       const Text(
                         'Agent Registry',
                         style: TextStyle(
@@ -346,10 +472,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      if (_snapshot.recentMessages.isEmpty)
+                      if (_directMessages.isEmpty)
                         _buildEmptyCard('通信ログはありません。')
                       else
-                        ..._snapshot.recentMessages
+                        ..._directMessages
                             .take(12)
                             .map(_buildStructuredMessageCard),
                       const SizedBox(height: 24),
@@ -448,6 +574,119 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 label: const Text('delegateTask を実行'),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBoardSection() {
+    final boardAuthors = _boardAuthors;
+    final boardCounts = _boardMessageCounts;
+
+    return Card(
+      key: const Key('agent_org_board_section'),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Board Channels',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'AnimaWorks-style shared channels for cross-team coordination.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: AgentOrgService.boardChannels.map((channel) {
+                final count = boardCounts[channel.id] ?? 0;
+                return ChoiceChip(
+                  key: Key('agent_org_board_channel_${channel.id}'),
+                  label: Text('#${channel.label} ($count)'),
+                  selected: _selectedBoardChannel == channel.id,
+                  onSelected: (selected) {
+                    if (!selected) {
+                      return;
+                    }
+                    setState(() => _selectedBoardChannel = channel.id);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _selectedBoardChannelConfig.description,
+              style: const TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              key: const Key('agent_org_board_author_field'),
+              initialValue: _selectedBoardAuthorId,
+              decoration: const InputDecoration(
+                labelText: 'Speaker',
+                border: OutlineInputBorder(),
+              ),
+              items: boardAuthors
+                  .map(
+                    (agent) => DropdownMenuItem<String>(
+                      value: agent.id,
+                      child: Text('${agent.displayName} (${agent.department})'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: _isPostingBoardMessage
+                  ? null
+                  : (value) => setState(() => _selectedBoardAuthorId = value),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('agent_org_board_message_field'),
+              controller: _boardMessageController,
+              enabled: !_isPostingBoardMessage,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: 'Post to #${_selectedBoardChannelConfig.label}',
+                hintText:
+                    'Share blockers, updates, or asks for the whole channel.',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('agent_org_board_post_button'),
+                onPressed: _isPostingBoardMessage ? null : _postBoardMessage,
+                icon: _isPostingBoardMessage
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.campaign_outlined),
+                label: Text('Post to #${_selectedBoardChannelConfig.label}'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Channel Timeline',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            if (_selectedBoardMessages.isEmpty)
+              _buildEmptyCard(
+                'No posts yet in #${_selectedBoardChannelConfig.label}.',
+              )
+            else
+              ..._selectedBoardMessages.take(10).map(_buildBoardMessageCard),
           ],
         ),
       ),
@@ -701,7 +940,71 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     );
   }
 
+  Widget _buildBoardMessageCard(AgentMessage message) {
+    final from = _findAgentById(message.fromAgentId);
+    final channelId = _boardChannelFor(message) ?? _selectedBoardChannel;
+    final channel = AgentOrgService.boardChannels.firstWhere(
+      (item) => item.id == channelId,
+      orElse: () => _selectedBoardChannelConfig,
+    );
+    final createdAt = message.createdAt;
+    final timestamp =
+        '${createdAt.month}/${createdAt.day} ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    from?.displayName ?? message.fromAgentId,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  timestamp,
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMiniTag(
+                  icon: Icons.tag,
+                  label: '#${channel.label}',
+                  color: Colors.deepPurple,
+                ),
+                _buildMiniTag(
+                  icon: Icons.forum_outlined,
+                  label: message.status,
+                  color: Colors.orange,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message.summary,
+              style: const TextStyle(height: 1.45),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStructuredMessageCard(AgentMessage message) {
+    if (message.messageKind == 'board') {
+      return _buildBoardMessageCard(message);
+    }
     final from = _findAgentById(message.fromAgentId);
     final to = _findAgentById(message.toAgentId);
     return Card(

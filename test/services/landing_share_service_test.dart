@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/agent_memory_entry.dart';
+import 'package:my_web_app/models/agent_message.dart';
+import 'package:my_web_app/models/agent_profile.dart';
+import 'package:my_web_app/models/agent_relationship.dart';
+import 'package:my_web_app/models/agent_task.dart';
+import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
+import 'package:my_web_app/services/agent_org_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,6 +116,142 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordTrialRun() async {}
 }
 
+class _FakeAgentOrgService extends Fake implements AgentOrgService {
+  _FakeAgentOrgService(this.snapshot);
+
+  AgentOrgSnapshot snapshot;
+  final List<Map<String, String>> boardPosts = <Map<String, String>>[];
+
+  @override
+  Future<AgentOrgSnapshot> loadSnapshot() async => snapshot;
+
+  @override
+  Future<AgentMessage?> postBoardMessage({
+    required String fromAgentId,
+    required String channel,
+    required String summary,
+    String status = 'sent',
+    Map<String, dynamic> payload = const <String, dynamic>{},
+    String? actorAgentId,
+  }) async {
+    boardPosts.add(<String, String>{
+      'fromAgentId': fromAgentId,
+      'channel': channel,
+      'summary': summary,
+    });
+
+    final now = DateTime(2026, 3, 18, 9, 45);
+    final message = AgentMessage(
+      id: 'board-${boardPosts.length}',
+      userId: 'user-1',
+      fromAgentId: fromAgentId,
+      toAgentId: fromAgentId,
+      conversationId: 'board:$channel',
+      messageKind: 'board',
+      summary: summary,
+      payload: payload,
+      status: status,
+      createdAt: now,
+      updatedAt: now,
+      metadata: <String, dynamic>{
+        'channel': channel,
+        'source': 'board_channel',
+      },
+    );
+
+    snapshot = AgentOrgSnapshot(
+      agents: snapshot.agents,
+      tasks: snapshot.tasks,
+      recentMemories: snapshot.recentMemories,
+      relationships: snapshot.relationships,
+      recentMessages: <AgentMessage>[message, ...snapshot.recentMessages],
+      openTaskCountsByAgent: snapshot.openTaskCountsByAgent,
+      memoryCountsByAgent: snapshot.memoryCountsByAgent,
+    );
+    return message;
+  }
+}
+
+AgentProfile _agent({
+  required String id,
+  required String slug,
+  required String displayName,
+  required String department,
+  String status = 'active',
+}) {
+  final now = DateTime(2026, 3, 18, 9);
+  return AgentProfile(
+    id: id,
+    userId: 'user-1',
+    slug: slug,
+    displayName: displayName,
+    roleTitle: displayName,
+    department: department,
+    status: status,
+    identityPrompt: '$displayName owns $department decisions.',
+    permissionsSummary: '$displayName can coordinate work.',
+    createdAt: now,
+    updatedAt: now,
+    lastActiveAt: now,
+  );
+}
+
+AgentMessage _boardMessage({
+  required String id,
+  required String fromAgentId,
+  required String channel,
+  required String summary,
+}) {
+  final now = DateTime(2026, 3, 18, 9, 30);
+  return AgentMessage(
+    id: id,
+    userId: 'user-1',
+    fromAgentId: fromAgentId,
+    toAgentId: fromAgentId,
+    conversationId: 'board:$channel',
+    messageKind: 'board',
+    summary: summary,
+    payload: const <String, dynamic>{},
+    status: 'sent',
+    createdAt: now,
+    updatedAt: now,
+    metadata: <String, dynamic>{
+      'channel': channel,
+    },
+  );
+}
+
+AgentOrgSnapshot _snapshotWithMessages(List<AgentMessage> messages) {
+  return AgentOrgSnapshot(
+    agents: <AgentProfile>[
+      _agent(
+        id: 'ceo-1',
+        slug: 'ceo',
+        displayName: 'CEO',
+        department: 'Executive',
+      ),
+      _agent(
+        id: 'cfo-1',
+        slug: 'cfo',
+        displayName: 'CFO',
+        department: 'Finance',
+      ),
+      _agent(
+        id: 'cmo-1',
+        slug: 'cmo',
+        displayName: 'CMO',
+        department: 'Growth',
+      ),
+    ],
+    tasks: const <AgentTask>[],
+    recentMemories: const <AgentMemoryEntry>[],
+    relationships: const <AgentRelationship>[],
+    recentMessages: messages,
+    openTaskCountsByAgent: const <String, int>{},
+    memoryCountsByAgent: const <String, int>{},
+  );
+}
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -209,5 +352,97 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
+  });
+
+  testWidgets('AgentOrgPage filters board timeline by channel',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final service = _FakeAgentOrgService(
+      _snapshotWithMessages(<AgentMessage>[
+        _boardMessage(
+          id: 'message-1',
+          fromAgentId: 'ceo-1',
+          channel: 'executive',
+          summary: 'CEO weekly alignment note',
+        ),
+        _boardMessage(
+          id: 'message-2',
+          fromAgentId: 'cfo-1',
+          channel: 'finance',
+          summary: 'CFO budget checkpoint',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentOrgPage(service: service),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('agent_org_board_section')), findsOneWidget);
+    expect(find.text('CEO weekly alignment note'), findsOneWidget);
+    expect(find.text('CFO budget checkpoint'), findsNothing);
+
+    final scrollable = find.byType(Scrollable).first;
+    final financeChip =
+        find.byKey(const Key('agent_org_board_channel_finance'));
+    await tester.scrollUntilVisible(financeChip, 200, scrollable: scrollable);
+    await tester.tap(financeChip);
+    await tester.pump();
+
+    expect(find.text('CEO weekly alignment note'), findsNothing);
+    expect(find.text('CFO budget checkpoint'), findsOneWidget);
+  });
+
+  testWidgets('AgentOrgPage posts board updates through the injected service',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final service = _FakeAgentOrgService(
+      _snapshotWithMessages(<AgentMessage>[
+        _boardMessage(
+          id: 'message-1',
+          fromAgentId: 'ceo-1',
+          channel: 'executive',
+          summary: 'CEO weekly alignment note',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentOrgPage(service: service),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(
+      find.byKey(const Key('agent_org_board_message_field')),
+      'Need a launch readiness summary by noon.',
+    );
+    final scrollable = find.byType(Scrollable).first;
+    final postButton = find.byKey(const Key('agent_org_board_post_button'));
+    await tester.scrollUntilVisible(postButton, 200, scrollable: scrollable);
+    await tester.tap(postButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(service.boardPosts, hasLength(1));
+    expect(service.boardPosts.single['channel'], 'executive');
+    expect(
+      service.boardPosts.single['summary'],
+      'Need a launch readiness summary by noon.',
+    );
+    expect(
+      find.text('Need a launch readiness summary by noon.'),
+      findsOneWidget,
+    );
   });
 }

@@ -133,7 +133,7 @@ class MyApp extends StatelessWidget {
           case '/home':
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
-            return MaterialPageRoute(builder: (_) => const AgentOrgPage());
+            return MaterialPageRoute(builder: (_) => AgentOrgPage());
           case '/gemini-university':
             return MaterialPageRoute(
               builder: (_) => const GeminiUniversityV2Page(),
