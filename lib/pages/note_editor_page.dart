@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/note_snapshot.dart';
+import '../services/ai_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/undo_redo_service.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
@@ -14,6 +15,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialTitle;
   final String? initialContent;
   final SupabaseClient? supabaseClient;
+  final AIService? aiService;
 
   const NoteEditorPage({
     super.key,
@@ -21,6 +23,7 @@ class NoteEditorPage extends StatefulWidget {
     this.initialTitle,
     this.initialContent,
     this.supabaseClient,
+    this.aiService,
   });
 
   @override
@@ -30,25 +33,39 @@ class NoteEditorPage extends StatefulWidget {
 class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
+  late TextEditingController _slashCommandController;
   late AutoSaveService _autoSaveService;
   late UndoRedoService _undoRedoService;
   late final SupabaseClient _supabase;
+  late final AIService _aiService;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
   bool _isLoading = false;
+  bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const List<String> _slashCommandSuggestions = <String>[
+    '/help',
+    '/improve',
+    '/summarize',
+    '/title',
+    '/translate en',
+    '/favorite',
+    '/stamp',
+  ];
 
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
+    _aiService = widget.aiService ?? AIService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
         TextEditingController(text: widget.initialContent ?? '');
+    _slashCommandController = TextEditingController();
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
 
@@ -194,6 +211,190 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _autoSaveService.markAsModified();
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
     _persistDraftToLocal();
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _setTitleText(String value) {
+    _titleController.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+  }
+
+  void _setContentText(String value) {
+    _contentController.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+  }
+
+  void _prefillSlashCommand(String command) {
+    _slashCommandController.value = TextEditingValue(
+      text: command,
+      selection: TextSelection.collapsed(offset: command.length),
+    );
+  }
+
+  String _formatCommandTimestamp(DateTime value) {
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$year-$month-$day $hour:$minute';
+  }
+
+  void _appendTimestampBlock() {
+    final timestamp = '## ${_formatCommandTimestamp(DateTime.now().toLocal())}';
+    final current = _contentController.text.trimRight();
+    final nextContent = current.isEmpty ? timestamp : '$current\n\n$timestamp';
+    _setContentText(nextContent);
+  }
+
+  Future<void> _showSlashCommandHelp() async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Slash Commands'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('/help 使えるコマンド一覧を表示'),
+            SizedBox(height: 8),
+            Text('/improve 本文を読みやすく改善'),
+            SizedBox(height: 8),
+            Text('/summarize 本文を要約'),
+            SizedBox(height: 8),
+            Text('/title 本文からタイトル候補を生成'),
+            SizedBox(height: 8),
+            Text('/translate en 本文を指定言語へ翻訳'),
+            SizedBox(height: 8),
+            Text('/favorite ノートのお気に入りを切り替え'),
+            SizedBox(height: 8),
+            Text('/stamp 現在時刻の見出しを本文に追加'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _runSlashCommand() async {
+    if (_isRunningSlashCommand) return;
+
+    final rawInput = _slashCommandController.text.trim();
+    if (rawInput.isEmpty) {
+      _showMessage('スラッシュコマンドを入力してください');
+      return;
+    }
+    if (!rawInput.startsWith('/')) {
+      _showMessage('コマンドは / から始めてください');
+      return;
+    }
+
+    final body = rawInput.substring(1).trim();
+    if (body.isEmpty) {
+      _showMessage('コマンド名を入力してください');
+      return;
+    }
+
+    final parts = body.split(RegExp(r'\s+'));
+    final command = parts.first.toLowerCase();
+    final arguments = parts.skip(1).toList(growable: false);
+
+    switch (command) {
+      case 'help':
+        await _showSlashCommandHelp();
+        _slashCommandController.clear();
+        return;
+      case 'favorite':
+      case 'fav':
+      case 'star':
+        _toggleFavorite();
+        _slashCommandController.clear();
+        return;
+      case 'stamp':
+      case 'date':
+        _appendTimestampBlock();
+        _slashCommandController.clear();
+        _showMessage('タイムスタンプを追加しました');
+        return;
+      case 'clear':
+        _setContentText('');
+        _slashCommandController.clear();
+        _showMessage('本文をクリアしました');
+        return;
+    }
+
+    final content = _contentController.text.trim();
+    if (content.isEmpty) {
+      _showMessage('本文が空のため、このコマンドは実行できません');
+      return;
+    }
+
+    setState(() {
+      _isRunningSlashCommand = true;
+    });
+
+    try {
+      switch (command) {
+        case 'improve':
+          final improved = await _aiService.improveText(content);
+          _setContentText(improved);
+          _showMessage('本文を改善しました');
+          break;
+        case 'summarize':
+        case 'summary':
+          final summary = await _aiService.summarizeText(content);
+          _setContentText(summary);
+          _showMessage('本文を要約しました');
+          break;
+        case 'title':
+          final suggestions = await _aiService.suggestTitles(content);
+          if (suggestions.isEmpty) {
+            _showMessage('タイトル候補を生成できませんでした');
+            break;
+          }
+          _setTitleText(suggestions.first);
+          _showMessage('タイトル候補を反映しました');
+          break;
+        case 'translate':
+          final targetLanguage = arguments.isEmpty ? 'en' : arguments.join(' ');
+          final translated = await _aiService.translateText(
+            content,
+            targetLanguage: targetLanguage,
+          );
+          _setContentText(translated);
+          _showMessage('本文を $targetLanguage に翻訳しました');
+          break;
+        default:
+          _showMessage('未対応のコマンドです: /$command');
+          return;
+      }
+      _slashCommandController.clear();
+    } catch (e) {
+      _showMessage('コマンド実行に失敗しました: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRunningSlashCommand = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadNote(String id) async {
@@ -441,6 +642,97 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Widget _buildSlashCommandChip(String command) {
+    return ActionChip(
+      label: Text(command),
+      onPressed: _isRunningSlashCommand ? null : () => _prefillSlashCommand(command),
+    );
+  }
+
+  Widget _buildSlashCommandBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+
+    return Container(
+      key: const Key('note_editor_slash_command_bar'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.terminal_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Claude Code-style slash commands',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('note_editor_slash_command_field'),
+            controller: _slashCommandController,
+            enabled: !_isRunningSlashCommand,
+            onSubmitted: (_) => _runSlashCommand(),
+            decoration: InputDecoration(
+              hintText: '例: /summarize  または  /favorite',
+              prefixIcon: const Icon(Icons.code_rounded),
+              suffixIcon: _isRunningSlashCommand
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton(
+                      key: const Key('note_editor_slash_command_run_button'),
+                      onPressed: _runSlashCommand,
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      tooltip: 'コマンドを実行',
+                    ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Enter で実行。よく使うコマンドをワンクリックで入力できます。',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _slashCommandSuggestions
+                .map(_buildSlashCommandChip)
+                .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEditorBody() {
     return Stack(
       children: [
@@ -449,6 +741,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           child: Column(
             children: [
               _buildReminderBanner(context),
+              _buildSlashCommandBar(context),
               TextField(
                 key: const Key('note_editor_title_field'),
                 controller: _titleController,
@@ -494,6 +787,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _detachTextListeners();
     _autoSaveService.dispose();
     _undoRedoService.dispose();
+    _slashCommandController.dispose();
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();

@@ -6,7 +6,12 @@ import 'rewards_page.dart';
 import 'stats_page.dart';
 
 class PeopleHelpPage extends StatelessWidget {
-  const PeopleHelpPage({super.key});
+  final Widget? onboardingNotePage;
+
+  const PeopleHelpPage({
+    super.key,
+    this.onboardingNotePage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +51,12 @@ class PeopleHelpPage extends StatelessWidget {
             subtitle: '初日対応のメモをすぐ作成する。',
             icon: Icons.edit_note,
             color: Colors.indigo,
-            page: const NoteEditorPage(
-              initialTitle: 'オンボーディングメモ',
-              initialContent:
-                  '目的:\n- \n\n初日チェック:\n- アカウント発行\n- 必須ルール共有\n\n1週間以内:\n- 役割確認\n- 次回1on1予約\n',
-            ),
+            page: onboardingNotePage ??
+                const NoteEditorPage(
+                  initialTitle: 'オンボーディングメモ',
+                  initialContent:
+                      '目的:\n- \n\n初日チェック:\n- アカウント発行\n- 必須ルール共有\n\n1週間以内:\n- 役割確認\n- 次回1on1予約\n',
+                ),
           ),
           _buildActionCard(
             context,
