@@ -13,12 +13,14 @@ class NoteEditorPage extends StatefulWidget {
   final String? noteId;
   final String? initialTitle;
   final String? initialContent;
+  final SupabaseClient? supabaseClient;
 
   const NoteEditorPage({
     super.key,
     this.noteId,
     this.initialTitle,
     this.initialContent,
+    this.supabaseClient,
   });
 
   @override
@@ -30,9 +32,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _contentController;
   late AutoSaveService _autoSaveService;
   late UndoRedoService _undoRedoService;
+  late final SupabaseClient _supabase;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
+  bool _isFavorite = false;
   bool _isLoading = false;
   bool _isApplyingSnapshot = false;
   static const String _draftKeyPrefix = 'note_editor_draft_';
@@ -40,6 +44,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   @override
   void initState() {
     super.initState();
+    _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
@@ -63,13 +68,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return '$_draftKeyPrefix${_currentNoteId ?? 'new'}';
   }
 
+  bool get _hasPersistableState =>
+      _titleController.text.trim().isNotEmpty ||
+      _contentController.text.trim().isNotEmpty ||
+      _reminderDate != null ||
+      _isFavorite;
+
+  bool _boolFromValue(dynamic value) => value == true;
+
   Future<void> _persistDraftToLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final title = _titleController.text;
     final content = _contentController.text;
-    if (title.trim().isEmpty &&
-        content.trim().isEmpty &&
-        _reminderDate == null) {
+    if (!_hasPersistableState) {
       await prefs.remove(_currentDraftKey());
       return;
     }
@@ -77,6 +88,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       'title': title,
       'content': content,
       'reminder_date': _reminderDate?.toIso8601String(),
+      'is_favorite': _isFavorite,
       'saved_at': DateTime.now().toIso8601String(),
     };
     await prefs.setString(_currentDraftKey(), jsonEncode(payload));
@@ -90,6 +102,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String title;
     String content;
     DateTime? reminderDate;
+    bool isFavorite;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return;
@@ -98,20 +111,28 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       reminderDate = decoded['reminder_date'] == null
           ? null
           : DateTime.tryParse(decoded['reminder_date'].toString())?.toLocal();
+      isFavorite = _boolFromValue(decoded['is_favorite']);
     } catch (_) {
       return;
     }
-    if (title.isEmpty && content.isEmpty && reminderDate == null) return;
+    if (title.isEmpty &&
+        content.isEmpty &&
+        reminderDate == null &&
+        !isFavorite) {
+      return;
+    }
 
     final hasChanges =
         _titleController.text != title ||
         _contentController.text != content ||
-        _reminderDate?.toIso8601String() != reminderDate?.toIso8601String();
+        _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
+        _isFavorite != isFavorite;
     if (!hasChanges) return;
 
     _titleController.text = title;
     _contentController.text = content;
     _reminderDate = reminderDate;
+    _isFavorite = isFavorite;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,7 +170,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _undoRedoService.addSnapshot(_buildCurrentSnapshot());
 
     final hasAnyInput = _titleController.text.trim().isNotEmpty ||
-        _contentController.text.trim().isNotEmpty;
+        _contentController.text.trim().isNotEmpty ||
+        _reminderDate != null ||
+        _isFavorite;
     if (_currentNoteId != null || !hasAnyInput) {
       _autoSaveService.markAsSaved();
     } else {
@@ -176,9 +199,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _loadNote(String id) async {
     setState(() => _isLoading = true);
     try {
-      final data = await Supabase.instance.client
+      final data = await _supabase
           .from('notes')
-          .select()
+          .select('title, content, reminder_date, is_favorite')
           .eq('id', id)
           .single();
 
@@ -191,6 +214,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               : DateTime.tryParse(
                     data['reminder_date'].toString(),
                   )?.toLocal();
+          _isFavorite = _boolFromValue(data['is_favorite']);
         });
       }
     } catch (e) {
@@ -208,28 +232,30 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    if (title.isEmpty && content.isEmpty && _reminderDate == null) {
+    if (!_hasPersistableState && _currentNoteId == null) {
       return;
     }
 
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('ログインが必要です');
 
     if (_currentNoteId != null) {
-      await Supabase.instance.client.from('notes').update({
+      await _supabase.from('notes').update({
         'title': title,
         'content': content,
         'reminder_date': _reminderDate?.toUtc().toIso8601String(),
+        'is_favorite': _isFavorite,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', _currentNoteId!);
     } else {
-      final dynamic inserted = await Supabase.instance.client
+      final dynamic inserted = await _supabase
           .from('notes')
           .insert({
             'user_id': user.id,
             'title': title,
             'content': content,
             'reminder_date': _reminderDate?.toUtc().toIso8601String(),
+            'is_favorite': _isFavorite,
             'is_archived': false,
             'is_pinned': false,
           })
@@ -246,9 +272,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _saveManually() async {
-    final title = _titleController.text.trim();
-    final content = _contentController.text.trim();
-    if (title.isEmpty && content.isEmpty && _reminderDate == null) {
+    if (!_hasPersistableState && _currentNoteId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('タイトルまたは内容を入力してください')),
@@ -286,6 +310,26 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _isApplyingSnapshot = false;
 
     _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+  }
+
+  void _toggleFavorite() {
+    final nextValue = !_isFavorite;
+    setState(() {
+      _isFavorite = nextValue;
+    });
+    _autoSaveService.markAsModified();
+    _persistDraftToLocal();
+    if (_currentNoteId != null || _hasPersistableState) {
+      _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました',
+        ),
+      ),
+    );
   }
 
   void _undo() {
@@ -485,6 +529,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               onPressed: _undoRedoService.canRedo ? _redo : null,
               tooltip: 'やり直し (Ctrl+Y / Ctrl+Shift+Z)',
             ),
+          ),
+          IconButton(
+            key: const Key('note_editor_page_favorite_button'),
+            icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
+            color: _isFavorite ? Colors.amber.shade700 : null,
+            onPressed: _toggleFavorite,
+            tooltip: _isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
           ),
           IconButton(
             icon: Icon(
