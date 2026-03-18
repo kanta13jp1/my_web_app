@@ -73,14 +73,16 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     required String email,
     required String password,
   }) {
-    throw UnimplementedError();
+    return Future<AuthResponse>.error(
+      UnsupportedError('signInWithPassword is not used in this test'),
+    );
   }
 
   @override
   Future<bool> signInWithGoogle({
     String? redirectTo,
   }) {
-    throw UnimplementedError();
+    return Future<bool>.value(true);
   }
 
   @override
@@ -89,7 +91,9 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     required String password,
     String? emailRedirectTo,
   }) {
-    throw UnimplementedError();
+    return Future<AuthResponse>.error(
+      UnsupportedError('signUp is not used in this test'),
+    );
   }
 
   @override
@@ -98,7 +102,7 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     String? emailRedirectTo,
     bool shouldCreateUser = true,
   }) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
@@ -121,7 +125,8 @@ void main() {
         home: LandingPage(adapter: adapter),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byKey(const Key('landing_page_scaffold')), findsOneWidget);
     expect(find.byKey(const Key('landing_hero_section')), findsOneWidget);
@@ -135,7 +140,8 @@ void main() {
     final shareButton = find.byKey(const Key('landing_share_button_x'));
     await tester.ensureVisible(shareButton);
     await tester.tap(shareButton);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
   });

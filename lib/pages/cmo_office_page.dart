@@ -7,17 +7,26 @@ import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
 import 'admin_analytics_page.dart';
+import 'feedback_page.dart';
 
 class CmoOfficePage extends StatefulWidget {
-  const CmoOfficePage({super.key});
+  final SupabaseClient? supabaseClient;
+  final AgentOrgService? agentOrgService;
+
+  const CmoOfficePage({
+    super.key,
+    this.supabaseClient,
+    this.agentOrgService,
+  });
 
   @override
   State<CmoOfficePage> createState() => _CmoOfficePageState();
 }
 
 class _CmoOfficePageState extends State<CmoOfficePage> {
-  final _supabase = Supabase.instance.client;
-  final AgentOrgService _agentOrgService = AgentOrgService();
+  late final SupabaseClient _supabase;
+  late final AgentOrgService _agentOrgService;
+
   bool _isLoading = true;
   Map<String, dynamic>? _userStats;
   AgentWorkspaceSnapshot? _workspace;
@@ -25,6 +34,8 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   @override
   void initState() {
     super.initState();
+    _supabase = widget.supabaseClient ?? Supabase.instance.client;
+    _agentOrgService = widget.agentOrgService ?? AgentOrgService();
     _fetchStats();
   }
 
@@ -39,24 +50,18 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       }
 
       final results = await Future.wait<dynamic>([
-        _supabase
-            .from('user_stats')
-            .select()
-            .eq('user_id', userId)
-            .maybeSingle(),
+        _supabase.from('user_stats').select().eq('user_id', userId).maybeSingle(),
         _agentOrgService.loadWorkspaceBySlug('cmo'),
       ]);
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _userStats = results[0] as Map<String, dynamic>?;
         _workspace = results[1] as AgentWorkspaceSnapshot?;
         _isLoading = false;
       });
-    } catch (e) {
-      debugPrint('Error fetching CMO workspace: $e');
+    } catch (error) {
+      debugPrint('Error fetching CMO workspace: $error');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -66,17 +71,13 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   Future<void> _processTask(AgentTask task, String status) async {
     try {
       await _agentOrgService.processTask(task: task, status: status);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CMOタスクを $status に更新しました。')),
       );
       await _fetchStats();
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('CMOタスクの更新に失敗しました: $error')),
       );
@@ -84,9 +85,9 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
   }
 
   String _buildShareText() {
-    return '今日のやるべきことをAIと運営導線で1件に絞る。'
-        '\n「自分株式会社」を使って人生を経営中。'
-        '\n今すぐ試す → https://my-web-app-b67f4.web.app/';
+    return '今日の記録を続けるほど、AIと習慣形成で1日が整う。\n'
+        '自分株式会社を使って、行動を前に進めよう。\n'
+        'https://my-web-app-b67f4.web.app/';
   }
 
   Future<void> _shareToX() async {
@@ -105,19 +106,28 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       if (launched) {
         return;
       }
-    } catch (e) {
-      debugPrint('Direct X share failed: $e');
+    } catch (error) {
+      debugPrint('Direct X share failed: $error');
     }
 
     await SharePlus.instance.share(ShareParams(text: text));
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Xを直接開けなかったため、共有シートを開きました。'),
+        content: Text('X を直接開けなかったため、共有シートを表示しました。'),
       ),
     );
+  }
+
+  Future<void> _openFeedbackPage() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FeedbackPage(),
+      ),
+    );
+    if (!mounted) return;
+    await _fetchStats();
   }
 
   @override
@@ -128,7 +138,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CMO OFFICE (広報室)'),
+        title: const Text('CMO OFFICE (マーケティング)'),
         backgroundColor: Colors.pink[700],
         foregroundColor: Colors.white,
       ),
@@ -148,13 +158,13 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   ),
                   const SizedBox(height: 16),
                   _buildKpiCard(
-                    '連続エンゲージメント日数',
+                    '継続エンゲージメント日数',
                     '$streak日',
                     Icons.local_fire_department,
                     Colors.orange,
                   ),
                   _buildKpiCard(
-                    '累計LTV (行動価値ポイント)',
+                    '累計 LTV 指標 (獲得ポイント)',
                     '$points pt',
                     Icons.monetization_on,
                     Colors.amber.shade800,
@@ -168,8 +178,8 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   const SizedBox(height: 24),
                   _buildActionCard(
                     context,
-                    '経営分析ダッシュボード',
-                    'LP View・登録数・CVR などの集計を確認します。',
+                    '導線分析ダッシュボード',
+                    'LP View・訪問数・CVR などの指標を確認できます。',
                     Icons.bar_chart,
                     Colors.purple,
                     () => Navigator.push(
@@ -181,23 +191,20 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   ),
                   _buildActionCard(
                     context,
-                    '株主総会へ報告 (SNSシェア)',
-                    'X の投稿画面を直接開いて、近況をそのまま共有します。',
+                    '発信テンプレを共有する (SNSシェア)',
+                    'X の投稿画面を開いて、訴求文をそのまま共有できます。',
                     Icons.share,
                     Colors.pink,
                     _shareToX,
                   ),
                   _buildActionCard(
                     context,
-                    '広報フィードバック',
-                    '反応や導線の弱点を確認し、次の改善に使います。',
+                    'マーケフィードバック',
+                    '要望や改善案を集めて、次の改善サイクルへつなげます。',
                     Icons.feedback,
                     Colors.green,
-                    () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('フィードバック収集は準備中です。'),
-                      ),
-                    ),
+                    _openFeedbackPage,
+                    tileKey: const Key('cmo_office_feedback_action'),
                   ),
                 ],
               ),
@@ -246,12 +253,14 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
     String subtitle,
     IconData icon,
     Color color,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    Key? tileKey,
+  }) {
     return Card(
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
+        key: tileKey,
         leading: Icon(icon, color: color, size: 32),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
