@@ -1,3 +1,5 @@
+// ignore_for_file: require_trailing_commas
+
 import 'dart:async';
 import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:flutter/material.dart';
@@ -12,6 +14,11 @@ import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 enum AssetManagementInitialFocus {
   overview,
   flow,
+}
+
+enum AssetDebtPlannerMode {
+  ask,
+  code,
 }
 
 class AssetManagementPage extends StatefulWidget {
@@ -102,6 +109,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;
+  DebtExecutionPlan? _debtExecutionPlan;
+  AssetDebtPlannerMode _debtPlannerMode = AssetDebtPlannerMode.ask;
+  Set<String> _selectedDebtExecutionTaskIds = <String>{};
+  bool _isApplyingDebtExecutionTasks = false;
 
   final List<Color> _colors = [
     Colors.blue,
@@ -731,10 +742,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() => _isGeneratingDebtPlan = true);
     try {
       final result = _debtRepaymentPlanner.generatePlan(input: input);
+      final executionPlan = _debtRepaymentPlanner.buildExecutionPlan(
+        input: input,
+        result: result,
+      );
 
       if (!mounted) return;
       setState(() {
         _debtPlanMarkdown = result.markdown;
+        _debtExecutionPlan = executionPlan;
+        _selectedDebtExecutionTaskIds =
+            executionPlan.tasks.map((task) => task.id).toSet();
+        _debtPlannerMode = AssetDebtPlannerMode.ask;
         _debtPlanGeneratedAt = DateTime.now();
       });
       final warningCount = result.warnings.length;
@@ -755,6 +774,137 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       if (mounted) {
         setState(() => _isGeneratingDebtPlan = false);
+      }
+    }
+  }
+
+  List<DebtExecutionTask> get _selectedDebtExecutionTasks {
+    final plan = _debtExecutionPlan;
+    if (plan == null) return const <DebtExecutionTask>[];
+    return plan.tasks
+        .where((task) => _selectedDebtExecutionTaskIds.contains(task.id))
+        .toList(growable: false);
+  }
+
+  void _toggleDebtExecutionTask(String taskId, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedDebtExecutionTaskIds.add(taskId);
+      } else {
+        _selectedDebtExecutionTaskIds.remove(taskId);
+      }
+    });
+  }
+
+  void _selectAllDebtExecutionTasks() {
+    final plan = _debtExecutionPlan;
+    if (plan == null) return;
+    setState(() {
+      _selectedDebtExecutionTaskIds = plan.tasks.map((task) => task.id).toSet();
+    });
+  }
+
+  void _clearDebtExecutionTaskSelection() {
+    setState(() {
+      _selectedDebtExecutionTaskIds = <String>{};
+    });
+  }
+
+  String _mustTaskSignatureFromMap(Map<String, dynamic> task) {
+    final title = (task['title'] ?? '').toString().trim().toLowerCase();
+    final deadline =
+        DateTime.tryParse(task['deadline']?.toString() ?? '')?.toLocal();
+    final deadlineKey =
+        deadline == null ? '' : DateFormat('yyyy-MM-dd').format(deadline);
+    return '$title|$deadlineKey';
+  }
+
+  String _mustTaskSignatureFromExecutionTask(DebtExecutionTask task) {
+    final deadlineKey = DateFormat('yyyy-MM-dd').format(task.dueDate);
+    return '${task.title.trim().toLowerCase()}|$deadlineKey';
+  }
+
+  bool _isExecutionTaskAlreadyAdded(DebtExecutionTask task) {
+    final signature = _mustTaskSignatureFromExecutionTask(task);
+    return _mustTasks.any(
+      (item) => _mustTaskSignatureFromMap(item) == signature,
+    );
+  }
+
+  Future<void> _applyDebtExecutionTasksToMustTasks() async {
+    final selectedTasks = _selectedDebtExecutionTasks;
+    if (selectedTasks.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('追加する Code タスクを選択してください')),
+      );
+      return;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ログイン後に Code タスクを追加できます')),
+      );
+      return;
+    }
+
+    final existingSignatures =
+        _mustTasks.map(_mustTaskSignatureFromMap).toSet();
+    final rows = <Map<String, dynamic>>[];
+    final insertedIds = <String>[];
+    var skippedCount = 0;
+
+    for (final task in selectedTasks) {
+      final signature = _mustTaskSignatureFromExecutionTask(task);
+      if (existingSignatures.contains(signature)) {
+        skippedCount++;
+        continue;
+      }
+      existingSignatures.add(signature);
+      rows.add({
+        'user_id': userId,
+        'title': task.title,
+        'deadline': task.dueDate.toUtc().toIso8601String(),
+        'is_completed': false,
+      });
+      insertedIds.add(task.id);
+    }
+
+    if (rows.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('選択した Code タスクはすでに必須タスクへ追加済みです')),
+      );
+      return;
+    }
+
+    setState(() => _isApplyingDebtExecutionTasks = true);
+    try {
+      await _supabase.from('must_tasks').insert(rows);
+      await _fetchMustTasks();
+      await _fetchTodayClosing();
+
+      if (!mounted) return;
+      setState(() {
+        _selectedDebtExecutionTaskIds.removeAll(insertedIds);
+      });
+      _scrollTo(_keyMust);
+      final suffix = skippedCount > 0 ? '（重複 $skippedCount 件を除外）' : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Code タスクを ${rows.length} 件追加しました$suffix'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Code タスクの追加に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isApplyingDebtExecutionTasks = false);
       }
     }
   }
@@ -3070,7 +3220,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text(
                   '3ヶ月俯瞰（先月・今月・来月）',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -3299,6 +3452,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(fontSize: 11, color: Colors.grey[700]),
               ),
             ],
+            if (_debtPlanMarkdown != null && _debtExecutionPlan != null) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildDebtPlannerModeChip(
+                    mode: AssetDebtPlannerMode.ask,
+                    label: 'Ask',
+                    icon: Icons.chat_bubble_outline,
+                  ),
+                  _buildDebtPlannerModeChip(
+                    mode: AssetDebtPlannerMode.code,
+                    label: 'Code',
+                    icon: Icons.code,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _debtPlannerMode == AssetDebtPlannerMode.ask
+                    ? 'Ask は返済プランを読むモードです。'
+                    : 'Code は返済プランを must tasks に反映するモードです。',
+                style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+              ),
+            ],
             const SizedBox(height: 12),
             if (_isGeneratingDebtPlan)
               const Center(child: CircularProgressIndicator())
@@ -3308,20 +3487,305 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               )
             else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: MarkdownBody(
-                  data: _debtPlanMarkdown!,
-                  selectable: true,
-                ),
-              ),
+              _debtPlannerMode == AssetDebtPlannerMode.ask
+                  ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: MarkdownBody(
+                        data: _debtPlanMarkdown!,
+                        selectable: true,
+                      ),
+                    )
+                  : _buildDebtCodeModePanel(),
           ],
         ),
+      ),
+    );
+  }
+
+  IconData _debtExecutionTaskIcon(DebtExecutionTaskKind kind) {
+    switch (kind) {
+      case DebtExecutionTaskKind.focus:
+        return Icons.my_location;
+      case DebtExecutionTaskKind.budget:
+        return Icons.account_balance_wallet_outlined;
+      case DebtExecutionTaskKind.fixedCost:
+        return Icons.content_cut;
+      case DebtExecutionTaskKind.payment:
+        return Icons.payments_outlined;
+      case DebtExecutionTaskKind.milestone:
+        return Icons.flag_outlined;
+      case DebtExecutionTaskKind.review:
+        return Icons.refresh_rounded;
+    }
+  }
+
+  Color _debtExecutionTaskColor(DebtExecutionTaskKind kind) {
+    switch (kind) {
+      case DebtExecutionTaskKind.focus:
+        return Colors.deepPurple;
+      case DebtExecutionTaskKind.budget:
+        return Colors.red.shade700;
+      case DebtExecutionTaskKind.fixedCost:
+        return Colors.orange.shade700;
+      case DebtExecutionTaskKind.payment:
+        return Colors.green.shade700;
+      case DebtExecutionTaskKind.milestone:
+        return Colors.blue.shade700;
+      case DebtExecutionTaskKind.review:
+        return Colors.teal.shade700;
+    }
+  }
+
+  Widget _buildDebtPlannerModeChip({
+    required AssetDebtPlannerMode mode,
+    required String label,
+    required IconData icon,
+  }) {
+    final selected = _debtPlannerMode == mode;
+    return ChoiceChip(
+      key: Key('asset_debt_planner_mode_${mode.name}'),
+      selected: selected,
+      onSelected: (_) {
+        setState(() {
+          _debtPlannerMode = mode;
+        });
+      },
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: selected ? Colors.white : Colors.grey.shade700,
+      ),
+      selectedColor: Colors.deepPurple,
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : Colors.black87,
+        fontWeight: FontWeight.w700,
+      ),
+      label: Text(label),
+    );
+  }
+
+  Widget _buildDebtCodeModePanel() {
+    final plan = _debtExecutionPlan;
+    if (plan == null) {
+      return Text(
+        'Code モード用の実行タスクはまだありません。',
+        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+      );
+    }
+
+    final selectedCount = _selectedDebtExecutionTasks.length;
+
+    return Container(
+      key: const Key('asset_debt_code_mode_panel'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F3FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.code, color: Colors.deepPurple),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Codex-style Code モード',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            plan.summary,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.45,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...plan.tasks.map((task) {
+            final selected = _selectedDebtExecutionTaskIds.contains(task.id);
+            final alreadyAdded = _isExecutionTaskAlreadyAdded(task);
+            final color = _debtExecutionTaskColor(task.kind);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.18)),
+              ),
+              child: CheckboxListTile(
+                key: Key('asset_debt_code_task_${task.id}'),
+                value: selected,
+                onChanged: alreadyAdded
+                    ? null
+                    : (value) =>
+                        _toggleDebtExecutionTask(task.id, value ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+                secondary: Icon(
+                  _debtExecutionTaskIcon(task.kind),
+                  color: color,
+                ),
+                title: Text(
+                  task.title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(task.detail),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '期限: ${DateFormat('yyyy/MM/dd').format(task.dueDate)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                        if (alreadyAdded)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              '既存タスクあり',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+          _isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _selectAllDebtExecutionTasks,
+                      icon: const Icon(Icons.done_all),
+                      label: const Text('全選択'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _clearDebtExecutionTaskSelection,
+                      icon: const Icon(Icons.remove_done),
+                      label: const Text('選択解除'),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      key: const Key('asset_debt_code_apply_button'),
+                      onPressed: _isApplyingDebtExecutionTasks
+                          ? null
+                          : _applyDebtExecutionTasksToMustTasks,
+                      icon: _isApplyingDebtExecutionTasks
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.playlist_add_check_circle_outlined),
+                      label: Text('必須タスクへ追加 ($selectedCount)'),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _selectAllDebtExecutionTasks,
+                        icon: const Icon(Icons.done_all),
+                        label: const Text('全選択'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _clearDebtExecutionTaskSelection,
+                        icon: const Icon(
+                          Icons.remove_done,
+                        ),
+                        label: const Text(
+                          '選択解除',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton.icon(
+                        key: const Key('asset_debt_code_apply_button'),
+                        onPressed: _isApplyingDebtExecutionTasks
+                            ? null
+                            : _applyDebtExecutionTasksToMustTasks,
+                        icon: _isApplyingDebtExecutionTasks
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.playlist_add_check_circle_outlined),
+                        label: Text(
+                          '必須タスクへ追加 ($selectedCount)',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ],
       ),
     );
   }
@@ -3337,8 +3801,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.account_balance, color: Colors.green),
-                SizedBox(width: 8),
+                Icon(
+                  Icons.account_balance,
+                  color: Colors.green,
+                ),
+                SizedBox(
+                  width: 8,
+                ),
                 Text(
                   '①資産・②負債の全容把握',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

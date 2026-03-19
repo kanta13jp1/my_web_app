@@ -121,6 +121,115 @@ class DebtRepaymentPlannerService {
     );
   }
 
+  DebtExecutionPlan buildExecutionPlan({
+    required DebtRepaymentPlanInput input,
+    required DebtRepaymentPlanResult result,
+  }) {
+    final tasks = <DebtExecutionTask>[];
+    final seenIds = <String>{};
+
+    void addTask({
+      required String id,
+      required DebtExecutionTaskKind kind,
+      required String title,
+      required String detail,
+      required DateTime dueDate,
+    }) {
+      if (!seenIds.add(id)) return;
+      tasks.add(
+        DebtExecutionTask(
+          id: id,
+          kind: kind,
+          title: title,
+          detail: detail,
+          dueDate: dueDate,
+        ),
+      );
+    }
+
+    final topPriority =
+        result.priorities.isEmpty ? null : result.priorities.first;
+    final firstAction =
+        result.monthlyActions.isEmpty ? null : result.monthlyActions.first;
+    final firstRoadmap = result.roadmap.isEmpty ? null : result.roadmap.first;
+    final monthStart = DateTime(input.baseMonth.year, input.baseMonth.month, 1);
+    final budgetGap = max(
+      0,
+      result.requestedMonthlyBudget - result.affordableMonthlyBudget,
+    );
+
+    if (topPriority != null) {
+      addTask(
+        id: 'focus-${topPriority.name}',
+        kind: DebtExecutionTaskKind.focus,
+        title: '最優先返済「${topPriority.name}」へ集中する',
+        detail:
+            '${_strategyLabel(input.strategy)}では ${topPriority.name} が第1優先です。${topPriority.reason}',
+        dueDate: _dueDateInMonth(monthStart, day: 7),
+      );
+    }
+
+    if (budgetGap > 0) {
+      addTask(
+        id: 'budget-gap',
+        kind: DebtExecutionTaskKind.budget,
+        title: '返済原資 ${_yen(budgetGap)} を補填する',
+        detail: '実収支ベースでは毎月 ${_yen(budgetGap)} 足りません。固定費圧縮か追加収入で穴を埋める必要があります。',
+        dueDate: _dueDateInMonth(monthStart, day: 10),
+      );
+    } else if (input.fixedCost > 0) {
+      addTask(
+        id: 'fixed-cost-review',
+        kind: DebtExecutionTaskKind.fixedCost,
+        title: '固定費を棚卸しして追加返済枠を作る',
+        detail: '現在の固定費は ${_yen(input.fixedCost)} です。不要な契約や分割払いを見直して余力を増やします。',
+        dueDate: _dueDateInMonth(monthStart, day: 12),
+      );
+    }
+
+    if (firstAction != null) {
+      final focusName = firstAction.focusDebt ?? topPriority?.name ?? '最優先債務';
+      addTask(
+        id: 'payment-$focusName-${firstAction.monthIndex}',
+        kind: DebtExecutionTaskKind.payment,
+        title: '今月の返済 ${_yen(firstAction.paymentTotal)} を実行する',
+        detail:
+            '$focusName を軸に、最低返済 ${_yen(firstAction.minimumTotal)} と上乗せ ${_yen(firstAction.extraTotal)} を確保します。',
+        dueDate: _dueDateInMonth(monthStart, day: 25),
+      );
+    }
+
+    if (firstRoadmap != null) {
+      final milestoneWindow = firstRoadmap.endMonth == null
+          ? '${firstRoadmap.startMonth}ヶ月目から着手'
+          : '${firstRoadmap.startMonth}〜${firstRoadmap.endMonth}ヶ月目の完了目標';
+      addTask(
+        id: 'milestone-${firstRoadmap.name}',
+        kind: DebtExecutionTaskKind.milestone,
+        title: '${firstRoadmap.name} の完済マイルストーンを追跡する',
+        detail: '$milestoneWindow を念頭に、返済順序を崩さず進捗を確認します。',
+        dueDate: _dueDateInMonth(monthStart, day: 28),
+      );
+    }
+
+    addTask(
+      id: 'review-and-rerun',
+      kind: DebtExecutionTaskKind.review,
+      title: '月末に実績を記録してプランを再実行する',
+      detail: '返済額・固定費・収支を更新し、Ask の提案を次の Code 実行へつなげます。',
+      dueDate: _dueDateInMonth(monthStart, day: 31),
+    );
+
+    final summary = topPriority == null
+        ? 'Codex-style Code モード用に、今月の実行タスクを整理しました。'
+        : 'Codex-style Code モード用に、${topPriority.name} を起点とした実行タスクへ落とし込みました。';
+
+    return DebtExecutionPlan(
+      summary: summary,
+      tasks: tasks,
+    );
+  }
+
   List<DebtPriorityItem> _buildPriorities({
     required List<_DebtState> debts,
     required DebtRepaymentStrategy strategy,
@@ -648,6 +757,12 @@ class DebtRepaymentPlannerService {
 
   String _percent(double value) {
     return '${(value * 100).toStringAsFixed(1)}%';
+  }
+
+  DateTime _dueDateInMonth(DateTime monthStart, {required int day}) {
+    final lastDay = DateTime(monthStart.year, monthStart.month + 1, 0).day;
+    final resolvedDay = day.clamp(1, lastDay);
+    return DateTime(monthStart.year, monthStart.month, resolvedDay);
   }
 }
 

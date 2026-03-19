@@ -104,6 +104,41 @@ class DebtRoadmapStep {
   });
 }
 
+enum DebtExecutionTaskKind {
+  focus,
+  budget,
+  fixedCost,
+  payment,
+  milestone,
+  review,
+}
+
+class DebtExecutionTask {
+  final String id;
+  final DebtExecutionTaskKind kind;
+  final String title;
+  final String detail;
+  final DateTime dueDate;
+
+  const DebtExecutionTask({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.detail,
+    required this.dueDate,
+  });
+}
+
+class DebtExecutionPlan {
+  final String summary;
+  final List<DebtExecutionTask> tasks;
+
+  const DebtExecutionPlan({
+    required this.summary,
+    required this.tasks,
+  });
+}
+
 class DebtRepaymentPlanResult {
   final String markdown;
   final List<String> warnings;
