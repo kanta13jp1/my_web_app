@@ -14,19 +14,27 @@ class _FakeNoteEditorAIService extends AIService {
   _FakeNoteEditorAIService() : super(_FakeEditorSupabaseClient());
 
   String? lastSummarizeStyleName;
+  String? lastSummarizeModel;
+  String? lastSuggestTitlesModel;
 
   @override
   Future<String> summarizeText(
     String content, {
+    String? model,
     String? styleName,
     String? styleInstruction,
   }) async {
+    lastSummarizeModel = model;
     lastSummarizeStyleName = styleName;
     return 'summary[$styleName]: $content';
   }
 
   @override
-  Future<List<String>> suggestTitles(String content) async {
+  Future<List<String>> suggestTitles(
+    String content, {
+    String? model,
+  }) async {
+    lastSuggestTitlesModel = model;
     return <String>['AI generated note title'];
   }
 }
@@ -77,6 +85,9 @@ void main() {
   testWidgets('NoteEditorPage slash commands update favorite, style, and title', (
     WidgetTester tester,
   ) async {
+    SharedPreferences.setMockInitialValues({
+      'preferred_ai_model': 'gpt-4o-mini',
+    });
     final aiService = _FakeNoteEditorAIService();
 
     await tester.pumpWidget(
@@ -105,6 +116,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('/style concise'), findsOneWidget);
+    expect(
+      find.byKey(const Key('note_editor_selected_ai_model_chip')),
+      findsOneWidget,
+    );
+    expect(find.text('Default model: gpt-4o-mini'), findsOneWidget);
     expect(find.byIcon(Icons.star_border), findsOneWidget);
 
     await tester.enterText(commandField, '/favorite');
@@ -139,6 +155,7 @@ void main() {
       contentField.controller?.text,
       'summary[concise]: Revenue growth notes',
     );
+    expect(aiService.lastSummarizeModel, 'gpt-4o-mini');
     expect(aiService.lastSummarizeStyleName, 'concise');
 
     await tester.enterText(commandField, '/title');
@@ -151,5 +168,6 @@ void main() {
       find.byKey(const Key('note_editor_title_field')),
     );
     expect(titleField.controller?.text, 'AI generated note title');
+    expect(aiService.lastSuggestTitlesModel, 'gpt-4o-mini');
   });
 }

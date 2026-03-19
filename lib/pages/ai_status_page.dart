@@ -1,12 +1,18 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/ai_model_preference_service.dart';
 
 class AiStatusPage extends StatefulWidget {
-  // テスト用にSupabaseClientを注入できるようにする
+  // 繝・せ繝育畑縺ｫSupabaseClient繧呈ｳｨ蜈･縺ｧ縺阪ｋ繧医≧縺ｫ縺吶ｋ
   final SupabaseClient? supabaseClient;
+  final AiModelPreferenceService modelPreferenceService;
 
-  const AiStatusPage({super.key, this.supabaseClient});
+  const AiStatusPage({
+    super.key,
+    this.supabaseClient,
+    this.modelPreferenceService = const AiModelPreferenceService(),
+  });
 
   @override
   State<AiStatusPage> createState() => _AiStatusPageState();
@@ -16,28 +22,56 @@ class _AiStatusPageState extends State<AiStatusPage> {
   List<Map<String, dynamic>> _models = [];
   bool _isLoading = true;
   String? _error;
+  String? _preferredModel;
 
-  // テスト結果の状態管理
+  // 繝・せ繝育ｵ先棡縺ｮ迥ｶ諷狗ｮ｡逅・
   final Map<String, String> _testResults = {}; // 'testing', 'success', 'error'
-  final Map<String, String> _testErrors = {}; // エラー詳細メッセージ
-  final Map<String, Map<String, dynamic>> _visionScores = {}; // Visionベンチマーク詳細
+  final Map<String, String> _testErrors = {}; // 繧ｨ繝ｩ繝ｼ隧ｳ邏ｰ繝｡繝・そ繝ｼ繧ｸ
+  final Map<String, Map<String, dynamic>> _visionScores = {}; // Vision繝吶Φ繝√・繝ｼ繧ｯ隧ｳ邏ｰ
 
-  // テスト時は注入されたクライアントを使い、通常時はシングルトンを使う
+  // 繝・せ繝域凾縺ｯ豕ｨ蜈･縺輔ｌ縺溘け繝ｩ繧､繧｢繝ｳ繝医ｒ菴ｿ縺・・壼ｸｸ譎ゅ・繧ｷ繝ｳ繧ｰ繝ｫ繝医Φ繧剃ｽｿ縺・
   SupabaseClient get _supabase =>
       widget.supabaseClient ?? Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
+    _loadPreferredModel();
     _fetchAvailableModels();
   }
 
-  // モデル一覧の取得 (APIレスポンスをUI用に整形)
+  Future<void> _loadPreferredModel() async {
+    final preferredModel =
+        await widget.modelPreferenceService.loadPreferredModel();
+    if (!mounted) {
+      _preferredModel = preferredModel;
+      return;
+    }
+    setState(() {
+      _preferredModel = preferredModel;
+    });
+  }
+
+  Future<void> _setPreferredModel(String modelName) async {
+    await widget.modelPreferenceService.savePreferredModel(modelName);
+    if (!mounted) {
+      _preferredModel = modelName;
+      return;
+    }
+    setState(() {
+      _preferredModel = modelName;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Default AI model set to $modelName')),
+    );
+  }
+
+  // 繝｢繝・Ν荳隕ｧ縺ｮ蜿門ｾ・(API繝ｬ繧ｹ繝昴Φ繧ｹ繧旦I逕ｨ縺ｫ謨ｴ蠖｢)
   Future<void> _fetchAvailableModels() async {
     try {
       setState(() => _isLoading = true);
 
-      // _supabase クライアントを使用
+      // _supabase 繧ｯ繝ｩ繧､繧｢繝ｳ繝医ｒ菴ｿ逕ｨ
       final response = await _supabase.functions.invoke(
         'ai-assistant',
         body: {'action': 'get_models'},
@@ -54,22 +88,22 @@ class _AiStatusPageState extends State<AiStatusPage> {
       setState(() {
         final List<dynamic> rawList = data['models'] as List<dynamic>? ?? [];
 
-        // 【重要】ここでデータを正規化します
+        // 縲宣㍾隕√代％縺薙〒繝・・繧ｿ繧呈ｭ｣隕丞喧縺励∪縺・
         _models = rawList.map((m) {
           final modelMap = m as Map<String, dynamic>;
-          // APIの 'name' をUIの 'model' にマッピング
+          // API縺ｮ 'name' 繧旦I縺ｮ 'model' 縺ｫ繝槭ャ繝斐Φ繧ｰ
           final String name = modelMap['model'] as String? ??
               modelMap['name'] as String? ??
               'Unknown';
 
-          // プロバイダー表記ゆれを吸収し、MAGIで扱うエンジン名へ正規化
+          // 繝励Ο繝舌う繝繝ｼ陦ｨ險倥ｆ繧後ｒ蜷ｸ蜿弱＠縲｀AGI縺ｧ謇ｱ縺・お繝ｳ繧ｸ繝ｳ蜷阪∈豁｣隕丞喧
           final rawProvider = modelMap['provider'] as String? ?? '';
           final provider = _normalizeEngine(rawProvider, name);
 
           return {
             'model': name,
             'provider': provider,
-            // scoreがAPIにない場合は 0 で初期化してエラーを防ぐ
+            // score縺窟PI縺ｫ縺ｪ縺・ｴ蜷医・ 0 縺ｧ蛻晄悄蛹悶＠縺ｦ繧ｨ繝ｩ繝ｼ繧帝亟縺・
             'score': modelMap['score'] as int? ?? 0,
             'description': modelMap['description'] as String?,
           };
@@ -87,7 +121,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     }
   }
 
-  // リストをスコア順に並び替える共通メソッド (Null安全対応)
+  // 繝ｪ繧ｹ繝医ｒ繧ｹ繧ｳ繧｢鬆・↓荳ｦ縺ｳ譖ｿ縺医ｋ蜈ｱ騾壹Γ繧ｽ繝・ラ (Null螳牙・蟇ｾ蠢・
   void _sortModels() {
     _models.sort((a, b) {
       final scoreA = a['score'] as int? ?? 0;
@@ -96,17 +130,17 @@ class _AiStatusPageState extends State<AiStatusPage> {
     });
   }
 
-  // 全モデルの順次テスト実行
+  // 蜈ｨ繝｢繝・Ν縺ｮ鬆・ｬ｡繝・せ繝亥ｮ溯｡・
   Future<void> _runAllTests() async {
     for (var model in _models) {
       final String modelName = model['model'] as String;
-      // 各モデルのテストを待機せずに並列気味に回す（UI更新を優先）
+      // 蜷・Δ繝・Ν縺ｮ繝・せ繝医ｒ蠕・ｩ溘○縺壹↓荳ｦ蛻玲ｰ怜袖縺ｫ蝗槭☆・・I譖ｴ譁ｰ繧貞━蜈茨ｼ・
       _testSingleModel(modelName);
       await Future.delayed(const Duration(milliseconds: 500));
     }
   }
 
-  // 単体モデルのテスト実行 (多段階ベンチマーク対応版)
+  // 蜊倅ｽ薙Δ繝・Ν縺ｮ繝・せ繝亥ｮ溯｡・(螟壽ｮｵ髫弱・繝ｳ繝√・繝ｼ繧ｯ蟇ｾ蠢懃沿)
   Future<void> _testSingleModel(String modelName) async {
     setState(() {
       _testResults[modelName] = 'testing';
@@ -131,12 +165,12 @@ class _AiStatusPageState extends State<AiStatusPage> {
           if (benchmark != null) {
             _visionScores[modelName] = benchmark;
 
-            // ★ 多段階ベンチマーク対応: スコアを動的に更新
+            // 笘・螟壽ｮｵ髫弱・繝ｳ繝√・繝ｼ繧ｯ蟇ｾ蠢・ 繧ｹ繧ｳ繧｢繧貞虚逧・↓譖ｴ譁ｰ
             final index = _models.indexWhere(
               (m) => m['model'] == modelName,
             );
             if (index != -1) {
-              // (認識率 * 10) - (速度ms / 100)
+              // (隱崎ｭ倡紫 * 10) - (騾溷ｺｦms / 100)
               final int visionScore = benchmark['score'] as int? ?? 0;
               final int latencyMs =
                   (benchmark['latency'] as num?)?.toInt() ?? 0;
@@ -144,7 +178,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
               _models[index]['score'] = newScore;
 
-              // ★ 順位が変わる可能性があるため再ソート
+              // 笘・鬆・ｽ阪′螟峨ｏ繧句庄閭ｽ諤ｧ縺後≠繧九◆繧∝・繧ｽ繝ｼ繝・
               _sortModels();
             }
           }
@@ -152,7 +186,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           _testResults[modelName] = 'error';
           _testErrors[modelName] = data['error']?.toString() ?? 'Unknown Error';
 
-          // エラー時はスコアを0にして最下位へ
+          // 繧ｨ繝ｩ繝ｼ譎ゅ・繧ｹ繧ｳ繧｢繧・縺ｫ縺励※譛荳倶ｽ阪∈
           final index = _models.indexWhere(
             (m) => m['model'] == modelName,
           );
@@ -176,19 +210,19 @@ class _AiStatusPageState extends State<AiStatusPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('MAGI稼働モニター'),
+        title: const Text('MAGI遞ｼ蜒阪Δ繝九ち繝ｼ'),
         backgroundColor: navy,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
             onPressed: _runAllTests,
-            tooltip: '全ノードをテスト',
+            tooltip: 'Run all tests',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchAvailableModels,
-            tooltip: '一覧を更新',
+            tooltip: '荳隕ｧ繧呈峩譁ｰ',
           ),
         ],
       ),
@@ -199,19 +233,23 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Text(
-                      'エラー: $_error',
+                      '繧ｨ繝ｩ繝ｼ: $_error',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _models.length,
+                  itemCount: _models.length + (_preferredModel != null ? 1 : 0),
                   itemBuilder: (context, index) {
-                    final modelMap = _models[index];
+                    if (_preferredModel != null && index == 0) {
+                      return _buildDefaultModelBanner(navy);
+                    }
+                    final modelIndex = _preferredModel != null ? index - 1 : index;
+                    final modelMap = _models[modelIndex];
                     final provider =
                         modelMap['provider'] as String? ?? 'Unknown';
-                    // scoreがnullでも0として扱う
+                    // score縺系ull縺ｧ繧・縺ｨ縺励※謇ｱ縺・
                     final score = modelMap['score'] as int? ?? 0;
                     final modelName = modelMap['model'] as String? ?? 'Unknown';
                     final status = _testResults[modelName];
@@ -233,7 +271,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ヘッダー行
+                              // 繝倥ャ繝繝ｼ陦・
                               Row(
                                 children: [
                                   Stack(
@@ -282,7 +320,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                       ],
                                     ),
                                   ),
-                                  // スコア表示
+                                  // 繧ｹ繧ｳ繧｢陦ｨ遉ｺ
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
@@ -302,15 +340,48 @@ class _AiStatusPageState extends State<AiStatusPage> {
                                         'Score',
                                         style: TextStyle(fontSize: 10),
                                       ),
+                                      const SizedBox(height: 8),
+                                      if (_preferredModel == modelName)
+                                        Container(
+                                          key: Key(
+                                            'ai_status_default_model_badge_$modelName',
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: navy.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Default',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        OutlinedButton(
+                                          key: Key(
+                                            'ai_status_default_model_button_$modelName',
+                                          ),
+                                          onPressed: () =>
+                                              _setPreferredModel(modelName),
+                                          child: const Text('Set Default'),
+                                        ),
                                     ],
                                   ),
                                 ],
                               ),
 
-                              // ベンチマーク結果の表示
+                              // 繝吶Φ繝√・繝ｼ繧ｯ邨先棡縺ｮ陦ｨ遉ｺ
                               _buildBenchmarkResult(modelName),
 
-                              // エラー表示
+                              // 繧ｨ繝ｩ繝ｼ陦ｨ遉ｺ
                               if (_testErrors.containsKey(modelName))
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
@@ -333,7 +404,49 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
-  /// ベンチマーク結果のWidget（多段階対応）
+  /// 繝吶Φ繝√・繝ｼ繧ｯ邨先棡縺ｮWidget・亥､壽ｮｵ髫主ｯｾ蠢懶ｼ・
+  Widget _buildDefaultModelBanner(Color navy) {
+    return Container(
+      key: const Key('ai_status_default_model_banner'),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: navy.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: navy.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.rocket_launch_outlined, color: navy),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'OpenClaw-style default model',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: navy.withValues(alpha: 0.92),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _preferredModel ?? '',
+                  style: TextStyle(
+                    color: navy.withValues(alpha: 0.72),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBenchmarkResult(String modelName) {
     final benchmark = _visionScores[modelName];
     if (benchmark == null) return const SizedBox.shrink();
@@ -350,7 +463,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         const Divider(height: 1),
         const SizedBox(height: 12),
 
-        // 総合スコアのプログレスバー
+        // 邱丞粋繧ｹ繧ｳ繧｢縺ｮ繝励Ο繧ｰ繝ｬ繧ｹ繝舌・
         Row(
           children: [
             Expanded(
@@ -382,14 +495,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
         ),
         const SizedBox(height: 8),
 
-        // バッジ表示
+        // 繝舌ャ繧ｸ陦ｨ遉ｺ
         Wrap(
           spacing: 8,
           runSpacing: 4,
           children: [
-            _buildScoreBadge('総合', '$totalScore点', Colors.purple),
+            _buildScoreBadge('邱丞粋', '$totalScore轤ｹ', Colors.purple),
             _buildScoreBadge(
-              '速度',
+              '騾溷ｺｦ',
               '${(latency / 1000).toStringAsFixed(2)}s',
               Colors.teal,
             ),
@@ -397,7 +510,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         ),
         const SizedBox(height: 8),
 
-        // サマリーテキスト
+        // 繧ｵ繝槭Μ繝ｼ繝・く繧ｹ繝・
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(8),
@@ -411,14 +524,14 @@ class _AiStatusPageState extends State<AiStatusPage> {
           ),
         ),
 
-        // レベル別詳細（展開可能）
+        // 繝ｬ繝吶Ν蛻･隧ｳ邏ｰ・亥ｱ暮幕蜿ｯ閭ｽ・・
         if (levels != null && levels.isNotEmpty)
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               tilePadding: EdgeInsets.zero,
               title: const Text(
-                'レベル別詳細',
+                '繝ｬ繝吶Ν蛻･隧ｳ邏ｰ',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
               children: levels.map<Widget>((level) {
@@ -431,7 +544,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
-  /// レベル別詳細のWidget
+  /// 繝ｬ繝吶Ν蛻･隧ｳ邏ｰ縺ｮWidget
   Widget _buildLevelDetail(Map<String, dynamic> levelData) {
     final String levelName = levelData['level'] as String? ?? '';
     final String? description = levelData['description'] as String?;
@@ -498,7 +611,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            '回答: $response',
+            '蝗樒ｭ・ $response',
             style: TextStyle(
               fontSize: 11,
               color: Colors.grey.shade700,
@@ -512,27 +625,27 @@ class _AiStatusPageState extends State<AiStatusPage> {
     );
   }
 
-  /// レベル名のラベル変換
+  /// 繝ｬ繝吶Ν蜷阪・繝ｩ繝吶Ν螟画鋤
   String _getLevelLabel(String levelName, String? description) {
-    // descriptionがあればそれを使用（サーバーから送られてくる）
+    // description縺後≠繧後・縺昴ｌ繧剃ｽｿ逕ｨ・医し繝ｼ繝舌・縺九ｉ騾√ｉ繧後※縺上ｋ・・
     if (description != null && description.isNotEmpty) {
       final levelNum = levelName.replaceAll('level', 'L');
       return '$levelNum: $description';
     }
-    // フォールバック
+    // 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
     switch (levelName) {
       case 'level1':
-        return 'L1: 色認識';
+        return 'L1: Lightweight reasoning';
       case 'level2':
-        return 'L2: 単純OCR';
+        return 'L2: Balanced execution';
       case 'level3':
-        return 'L3: 複雑カウント';
+        return 'L3: Mid-range analysis';
       case 'level4':
-        return 'L4: 空間認識';
+        return 'L4: Accuracy focused';
       case 'level5':
-        return 'L5: 論理推論';
+        return 'L5: Strategic synthesis';
       case 'level6':
-        return 'L6: 微細識別';
+        return 'L6: Specialized domain';
       default:
         return levelName;
     }

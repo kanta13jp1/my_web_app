@@ -1,9 +1,10 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/note_snapshot.dart';
+import '../services/ai_model_preference_service.dart';
 import '../services/ai_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/undo_redo_service.dart';
@@ -16,6 +17,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialContent;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
+  final AiModelPreferenceService modelPreferenceService;
 
   const NoteEditorPage({
     super.key,
@@ -24,6 +26,7 @@ class NoteEditorPage extends StatefulWidget {
     this.initialContent,
     this.supabaseClient,
     this.aiService,
+    this.modelPreferenceService = const AiModelPreferenceService(),
   });
 
   @override
@@ -130,6 +133,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
+  String? _selectedAiModel;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -160,6 +164,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _bootstrapEditor() async {
+    await _loadPreferredAiModel();
     await _loadAiStylePreference();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
@@ -240,7 +245,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ローカル下書きを復元しました。')),
+        const SnackBar(content: Text('Local draft restored.')),
       );
     }
   }
@@ -343,6 +348,18 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     });
   }
 
+  Future<void> _loadPreferredAiModel() async {
+    final preferredModel =
+        await widget.modelPreferenceService.loadPreferredModel();
+    if (!mounted) {
+      _selectedAiModel = preferredModel;
+      return;
+    }
+    setState(() {
+      _selectedAiModel = preferredModel;
+    });
+  }
+
   Future<void> _persistAiStylePreference(NoteEditorAiStyle style) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_aiStylePreferenceKey, style.commandValue);
@@ -392,25 +409,25 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('/help 使えるコマンド一覧を表示'),
+            Text('/help Show available commands'),
             SizedBox(height: 8),
-            Text('/improve 本文を読みやすく改善'),
+            Text('/improve Improve the current note'),
             SizedBox(height: 8),
-            Text('/summarize 本文を要約'),
+            Text('/summarize Summarize the current note'),
             SizedBox(height: 8),
-            Text('/title 本文からタイトル候補を生成'),
+            Text('/title Suggest a title from the current note'),
             SizedBox(height: 8),
-            Text('/translate en 本文を指定言語へ翻訳'),
+            Text('/translate en Translate the current note'),
             SizedBox(height: 8),
-            Text('/favorite ノートのお気に入りを切り替え'),
+            Text('/favorite Toggle favorite for this note'),
             SizedBox(height: 8),
-            Text('/stamp 現在時刻の見出しを本文に追加'),
+            Text('/stamp Insert the current timestamp'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('閉じる'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -422,17 +439,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     final rawInput = _slashCommandController.text.trim();
     if (rawInput.isEmpty) {
-      _showMessage('スラッシュコマンドを入力してください');
+      _showMessage('繧ｹ繝ｩ繝・す繝･繧ｳ繝槭Φ繝峨ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞');
       return;
     }
     if (!rawInput.startsWith('/')) {
-      _showMessage('コマンドは / から始めてください');
+      _showMessage('繧ｳ繝槭Φ繝峨・ / 縺九ｉ蟋九ａ縺ｦ縺上□縺輔＞');
       return;
     }
 
     final body = rawInput.substring(1).trim();
     if (body.isEmpty) {
-      _showMessage('コマンド名を入力してください');
+      _showMessage('繧ｳ繝槭Φ繝牙錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞');
       return;
     }
 
@@ -473,18 +490,18 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'date':
         _appendTimestampBlock();
         _slashCommandController.clear();
-        _showMessage('タイムスタンプを追加しました');
+        _showMessage('繧ｿ繧､繝繧ｹ繧ｿ繝ｳ繝励ｒ霑ｽ蜉縺励∪縺励◆');
         return;
       case 'clear':
         _setContentText('');
         _slashCommandController.clear();
-        _showMessage('本文をクリアしました');
+        _showMessage('譛ｬ譁・ｒ繧ｯ繝ｪ繧｢縺励∪縺励◆');
         return;
     }
 
     final content = _contentController.text.trim();
     if (content.isEmpty) {
-      _showMessage('本文が空のため、このコマンドは実行できません');
+      _showMessage('譛ｬ譁・′遨ｺ縺ｮ縺溘ａ縲√％縺ｮ繧ｳ繝槭Φ繝峨・螳溯｡後〒縺阪∪縺帙ｓ');
       return;
     }
 
@@ -497,49 +514,55 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         case 'improve':
           final improved = await _aiService.improveText(
             content,
+            model: _selectedAiModel,
             styleName: _selectedAiStyle.commandValue,
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(improved);
-          _showMessage('本文を改善しました');
+          _showMessage('譛ｬ譁・ｒ謾ｹ蝟・＠縺ｾ縺励◆');
           break;
         case 'summarize':
         case 'summary':
           final summary = await _aiService.summarizeText(
             content,
+            model: _selectedAiModel,
             styleName: _selectedAiStyle.commandValue,
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(summary);
-          _showMessage('本文を要約しました');
+          _showMessage('譛ｬ譁・ｒ隕∫ｴ・＠縺ｾ縺励◆');
           break;
         case 'title':
-          final suggestions = await _aiService.suggestTitles(content);
+          final suggestions = await _aiService.suggestTitles(
+            content,
+            model: _selectedAiModel,
+          );
           if (suggestions.isEmpty) {
-            _showMessage('タイトル候補を生成できませんでした');
+            _showMessage('繧ｿ繧､繝医Ν蛟呵｣懊ｒ逕滓・縺ｧ縺阪∪縺帙ｓ縺ｧ縺励◆');
             break;
           }
           _setTitleText(suggestions.first);
-          _showMessage('タイトル候補を反映しました');
+          _showMessage('繧ｿ繧､繝医Ν蛟呵｣懊ｒ蜿肴丐縺励∪縺励◆');
           break;
         case 'translate':
           final targetLanguage = arguments.isEmpty ? 'en' : arguments.join(' ');
           final translated = await _aiService.translateText(
             content,
             targetLanguage: targetLanguage,
+            model: _selectedAiModel,
             styleName: _selectedAiStyle.commandValue,
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(translated);
-          _showMessage('本文を $targetLanguage に翻訳しました');
+          _showMessage('譛ｬ譁・ｒ $targetLanguage 縺ｫ鄙ｻ險ｳ縺励∪縺励◆');
           break;
         default:
-          _showMessage('未対応のコマンドです: /$command');
+          _showMessage('譛ｪ蟇ｾ蠢懊・繧ｳ繝槭Φ繝峨〒縺・ /$command');
           return;
       }
       _slashCommandController.clear();
     } catch (e) {
-      _showMessage('コマンド実行に失敗しました: $e');
+      _showMessage('繧ｳ繝槭Φ繝牙ｮ溯｡後↓螟ｱ謨励＠縺ｾ縺励◆: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -573,7 +596,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('読み込みエラー: $e')),
+          SnackBar(content: Text('隱ｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ: $e')),
         );
       }
     } finally {
@@ -590,7 +613,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     final user = _supabase.auth.currentUser;
-    if (user == null) throw Exception('ログインが必要です');
+    if (user == null) throw Exception('Login is required.');
 
     if (_currentNoteId != null) {
       await _supabase.from('notes').update({
@@ -628,7 +651,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (!_hasPersistableState && _currentNoteId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('タイトルまたは内容を入力してください')),
+          const SnackBar(content: Text('繧ｿ繧､繝医Ν縺ｾ縺溘・蜀・ｮｹ繧貞・蜉帙＠縺ｦ縺上□縺輔＞')),
         );
       }
       return;
@@ -638,13 +661,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存しました')),
+          const SnackBar(content: Text('菫晏ｭ倥＠縺ｾ縺励◆')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存エラー: $e')),
+          SnackBar(content: Text('菫晏ｭ倥お繝ｩ繝ｼ: $e')),
         );
       }
     }
@@ -679,7 +702,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました',
+          nextValue ? '縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉縺励∪縺励◆' : '縺頑ｰ励↓蜈･繧翫ｒ隗｣髯､縺励∪縺励◆',
         ),
       ),
     );
@@ -769,24 +792,24 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         switch (state) {
           case SaveState.saved:
             final suffix =
-                lastSaved != null ? '  最終保存: ${_formatTime(lastSaved)}' : '';
+                lastSaved != null ? '  Last saved ${_formatTime(lastSaved)}' : '';
             return Text(
-              '保存済み$suffix',
+              'Saved$suffix',
               style: const TextStyle(fontSize: 12, color: Colors.green),
             );
           case SaveState.saving:
             return const Text(
-              '保存中...',
+              'Saving...',
               style: TextStyle(fontSize: 12, color: Colors.blue),
             );
           case SaveState.modified:
             return const Text(
-              '未保存',
+              'Unsaved changes',
               style: TextStyle(fontSize: 12, color: Colors.orange),
             );
           case SaveState.error:
             return const Text(
-              '保存エラー',
+              'Save error',
               style: TextStyle(fontSize: 12, color: Colors.red),
             );
         }
@@ -814,6 +837,32 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 _setAiStyle(style);
               }
             },
+    );
+  }
+
+  Widget _buildPreferredModelChip() {
+    final model = _selectedAiModel;
+    if (model == null || model.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('note_editor_selected_ai_model_chip'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.memory_rounded, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            'Default model: $model',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 
@@ -859,7 +908,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             enabled: !_isRunningSlashCommand,
             onSubmitted: (_) => _runSlashCommand(),
             decoration: InputDecoration(
-              hintText: '例: /summarize  または  /favorite',
+              hintText: 'Try /summarize or /favorite',
               prefixIcon: const Icon(Icons.code_rounded),
               suffixIcon: _isRunningSlashCommand
                   ? const Padding(
@@ -874,7 +923,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       key: const Key('note_editor_slash_command_run_button'),
                       onPressed: _runSlashCommand,
                       icon: const Icon(Icons.play_arrow_rounded),
-                      tooltip: 'コマンドを実行',
+                      tooltip: 'Run command',
                     ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -883,12 +932,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter で実行。よく使うコマンドをワンクリックで入力できます。',
+            'Press Enter or use the play button to run a command.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
+          if (_selectedAiModel != null && _selectedAiModel!.isNotEmpty) ...[
+            _buildPreferredModelChip(),
+            const SizedBox(height: 8),
+          ],
           Text(
             'Claude-style writing mode',
             style: theme.textTheme.titleSmall?.copyWith(
@@ -937,7 +990,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 key: const Key('note_editor_title_field'),
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  hintText: 'タイトル',
+                  hintText: '繧ｿ繧､繝医Ν',
                   border: InputBorder.none,
                 ),
                 style: const TextStyle(
@@ -951,7 +1004,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   key: const Key('note_editor_content_field'),
                   controller: _contentController,
                   decoration: const InputDecoration(
-                    hintText: '内容を入力...',
+                    hintText: 'Write your note here...',
                     border: InputBorder.none,
                   ),
                   maxLines: null,
@@ -967,6 +1020,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           child: AiAssistantMenu(
             contentController: _contentController,
             onApply: (text) => _contentController.text = text,
+            model: _selectedAiModel,
             styleName: _selectedAiStyle.instruction == null
                 ? null
                 : _selectedAiStyle.commandValue,
@@ -998,7 +1052,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isEditing ? 'メモ編集' : '新規メモ'),
+            Text(isEditing ? 'Edit Note' : 'New Note'),
             _buildSaveStateIndicator(),
           ],
         ),
@@ -1008,7 +1062,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             builder: (context, _) => IconButton(
               icon: const Icon(Icons.undo),
               onPressed: _undoRedoService.canUndo ? _undo : null,
-              tooltip: '元に戻す (Ctrl+Z)',
+              tooltip: '蜈・↓謌ｻ縺・(Ctrl+Z)',
             ),
           ),
           AnimatedBuilder(
@@ -1016,7 +1070,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             builder: (context, _) => IconButton(
               icon: const Icon(Icons.redo),
               onPressed: _undoRedoService.canRedo ? _redo : null,
-              tooltip: 'やり直し (Ctrl+Y / Ctrl+Shift+Z)',
+              tooltip: '繧・ｊ逶ｴ縺・(Ctrl+Y / Ctrl+Shift+Z)',
             ),
           ),
           IconButton(
@@ -1024,7 +1078,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
             color: _isFavorite ? Colors.amber.shade700 : null,
             onPressed: _toggleFavorite,
-            tooltip: _isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
+            tooltip: _isFavorite ? '縺頑ｰ励↓蜈･繧願ｧ｣髯､' : '縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉',
           ),
           IconButton(
             icon: Icon(
@@ -1042,7 +1096,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveManually,
-            tooltip: '保存',
+            tooltip: 'Save',
           ),
         ],
       ),

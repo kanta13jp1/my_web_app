@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../services/theme_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../services/theme_service.dart';
 
 class AiAssistantMenu extends StatefulWidget {
   final TextEditingController contentController;
   final Function(String) onApply;
   final SupabaseClient? supabaseClient;
+  final String? model;
   final String? styleName;
   final String? styleInstruction;
 
@@ -15,6 +17,7 @@ class AiAssistantMenu extends StatefulWidget {
     required this.contentController,
     required this.onApply,
     this.supabaseClient,
+    this.model,
     this.styleName,
     this.styleInstruction,
   });
@@ -57,11 +60,11 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
       ),
       offset: const Offset(0, -60),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onSelected: (value) => _handleAiAction(value),
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: 'improve', child: Text('文章を洗練')),
-        const PopupMenuItem(value: 'summarize', child: Text('要約')),
-        const PopupMenuItem(value: 'analyze_note_text', child: Text('CSO分析')),
+      onSelected: _handleAiAction,
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'improve', child: Text('Improve Writing')),
+        PopupMenuItem(value: 'summarize', child: Text('Summarize')),
+        PopupMenuItem(value: 'expand', child: Text('Expand Ideas')),
       ],
     );
   }
@@ -71,10 +74,12 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
     try {
       final supabase = widget.supabaseClient ?? Supabase.instance.client;
       final response = await supabase.functions.invoke(
-        'ai-assistant', // Assuming the Edge Function name is 'ai-assistant'
+        'ai-assistant',
         body: {
           'action': action,
           'content': widget.contentController.text,
+          if (widget.model != null && widget.model!.trim().isNotEmpty)
+            'model': widget.model!.trim(),
           if (widget.styleInstruction != null &&
               widget.styleInstruction!.trim().isNotEmpty)
             'styleName': widget.styleName ?? 'custom',
@@ -84,26 +89,26 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
         },
       );
 
+      if (!mounted) {
+        return;
+      }
+
       if (response.status == 200) {
         final result =
             (response.data as Map<String, dynamic>)['result'] as String;
-        widget.onApply(result); // Apply the AI-generated content
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('AIが$actionを実行しました。')),
-          );
-        }
+        widget.onApply(result);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI action completed.')),
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('AI機能の呼び出しに失敗しました: ${response.data}')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI action failed: ${response.data}')),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI機能でエラーが発生しました: $e')),
+          SnackBar(content: Text('AI action errored: $e')),
         );
       }
     } finally {

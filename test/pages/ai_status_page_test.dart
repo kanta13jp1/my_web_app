@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @GenerateMocks([
@@ -13,10 +14,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_status_page_test.mocks.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late MockSupabaseClient mockSupabaseClient;
   late MockFunctionsClient mockFunctionsClient;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     mockSupabaseClient = MockSupabaseClient();
     mockFunctionsClient = MockFunctionsClient();
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
@@ -183,5 +187,48 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('API Error: 500'), findsOneWidget);
+  });
+  testWidgets('can set and show the default AI model', (
+    WidgetTester tester,
+  ) async {
+    final modelsResponse = {
+      'success': true,
+      'models': [
+        {'model': 'claude-3-haiku-20240307', 'provider': 'anthropic'},
+        {'model': 'gpt-4o-mini', 'provider': 'openai'},
+      ],
+    };
+    final mockResponse = MockFunctionResponse();
+    when(mockResponse.data).thenReturn(modelsResponse);
+    when(mockResponse.status).thenReturn(200);
+
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockResponse);
+
+    await tester.pumpWidget(createTestWidget());
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(
+        const Key('ai_status_default_model_button_claude-3-haiku-20240307'),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('ai_status_default_model_banner')), findsOneWidget);
+    expect(find.text('OpenClaw-style default model'), findsOneWidget);
+    expect(find.text('claude-3-haiku-20240307'), findsWidgets);
+    expect(
+      find.byKey(
+        const Key('ai_status_default_model_badge_claude-3-haiku-20240307'),
+      ),
+      findsOneWidget,
+    );
   });
 }
