@@ -30,6 +30,90 @@ class NoteEditorPage extends StatefulWidget {
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
+enum NoteEditorAiStyle {
+  normal,
+  concise,
+  formal,
+  explanatory,
+}
+
+extension NoteEditorAiStyleX on NoteEditorAiStyle {
+  String get commandValue {
+    switch (this) {
+      case NoteEditorAiStyle.normal:
+        return 'normal';
+      case NoteEditorAiStyle.concise:
+        return 'concise';
+      case NoteEditorAiStyle.formal:
+        return 'formal';
+      case NoteEditorAiStyle.explanatory:
+        return 'explanatory';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case NoteEditorAiStyle.normal:
+        return 'Normal';
+      case NoteEditorAiStyle.concise:
+        return 'Concise';
+      case NoteEditorAiStyle.formal:
+        return 'Formal';
+      case NoteEditorAiStyle.explanatory:
+        return 'Explain';
+    }
+  }
+
+  String get helperText {
+    switch (this) {
+      case NoteEditorAiStyle.normal:
+        return 'Balanced default tone for general editing.';
+      case NoteEditorAiStyle.concise:
+        return 'Short, direct, and easy to scan.';
+      case NoteEditorAiStyle.formal:
+        return 'Polished, calm, and professional wording.';
+      case NoteEditorAiStyle.explanatory:
+        return 'More context, guidance, and clear reasoning.';
+    }
+  }
+
+  String? get instruction {
+    switch (this) {
+      case NoteEditorAiStyle.normal:
+        return null;
+      case NoteEditorAiStyle.concise:
+        return 'Use a concise writing style. Keep the output brief, direct, and easy to scan. Prefer shorter sentences and compact structure.';
+      case NoteEditorAiStyle.formal:
+        return 'Use a polished and professional writing style. Keep the tone calm, businesslike, and well structured.';
+      case NoteEditorAiStyle.explanatory:
+        return 'Use an explanatory writing style. Add enough context to make the reasoning easy to follow, while staying clear and practical.';
+    }
+  }
+}
+
+NoteEditorAiStyle? _tryParseNoteEditorAiStyle(String? raw) {
+  final normalized = raw?.trim().toLowerCase();
+  switch (normalized) {
+    case 'normal':
+    case 'default':
+    case 'standard':
+      return NoteEditorAiStyle.normal;
+    case 'concise':
+    case 'brief':
+    case 'short':
+      return NoteEditorAiStyle.concise;
+    case 'formal':
+    case 'professional':
+      return NoteEditorAiStyle.formal;
+    case 'explanatory':
+    case 'explain':
+    case 'teacher':
+      return NoteEditorAiStyle.explanatory;
+    default:
+      return null;
+  }
+}
+
 class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
@@ -45,11 +129,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isLoading = false;
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
+  NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   static const String _draftKeyPrefix = 'note_editor_draft_';
+  static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const List<String> _slashCommandSuggestions = <String>[
     '/help',
     '/improve',
     '/summarize',
+    '/style concise',
     '/title',
     '/translate en',
     '/favorite',
@@ -73,6 +160,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _bootstrapEditor() async {
+    await _loadAiStylePreference();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
     }
@@ -139,8 +227,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return;
     }
 
-    final hasChanges =
-        _titleController.text != title ||
+    final hasChanges = _titleController.text != title ||
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
         _isFavorite != isFavorite;
@@ -241,6 +328,43 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Future<void> _loadAiStylePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nextStyle = _tryParseNoteEditorAiStyle(
+          prefs.getString(_aiStylePreferenceKey),
+        ) ??
+        NoteEditorAiStyle.normal;
+    if (!mounted) {
+      _selectedAiStyle = nextStyle;
+      return;
+    }
+    setState(() {
+      _selectedAiStyle = nextStyle;
+    });
+  }
+
+  Future<void> _persistAiStylePreference(NoteEditorAiStyle style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_aiStylePreferenceKey, style.commandValue);
+  }
+
+  Future<void> _setAiStyle(
+    NoteEditorAiStyle style, {
+    bool announce = true,
+  }) async {
+    if (mounted) {
+      setState(() {
+        _selectedAiStyle = style;
+      });
+    } else {
+      _selectedAiStyle = style;
+    }
+    await _persistAiStylePreference(style);
+    if (announce) {
+      _showMessage('AI style: ${style.label}');
+    }
+  }
+
   String _formatCommandTimestamp(DateTime value) {
     final year = value.year.toString().padLeft(4, '0');
     final month = value.month.toString().padLeft(2, '0');
@@ -327,6 +451,24 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _toggleFavorite();
         _slashCommandController.clear();
         return;
+      case 'style':
+      case 'tone':
+        if (arguments.isEmpty) {
+          _showMessage(
+            'Available AI styles: normal, concise, formal, explanatory',
+          );
+          return;
+        }
+        final nextStyle = _tryParseNoteEditorAiStyle(arguments.join(' '));
+        if (nextStyle == null) {
+          _showMessage(
+            'Unknown AI style. Use: normal, concise, formal, explanatory',
+          );
+          return;
+        }
+        await _setAiStyle(nextStyle);
+        _slashCommandController.clear();
+        return;
       case 'stamp':
       case 'date':
         _appendTimestampBlock();
@@ -353,13 +495,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     try {
       switch (command) {
         case 'improve':
-          final improved = await _aiService.improveText(content);
+          final improved = await _aiService.improveText(
+            content,
+            styleName: _selectedAiStyle.commandValue,
+            styleInstruction: _selectedAiStyle.instruction,
+          );
           _setContentText(improved);
           _showMessage('本文を改善しました');
           break;
         case 'summarize':
         case 'summary':
-          final summary = await _aiService.summarizeText(content);
+          final summary = await _aiService.summarizeText(
+            content,
+            styleName: _selectedAiStyle.commandValue,
+            styleInstruction: _selectedAiStyle.instruction,
+          );
           _setContentText(summary);
           _showMessage('本文を要約しました');
           break;
@@ -377,6 +527,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           final translated = await _aiService.translateText(
             content,
             targetLanguage: targetLanguage,
+            styleName: _selectedAiStyle.commandValue,
+            styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(translated);
           _showMessage('本文を $targetLanguage に翻訳しました');
@@ -413,8 +565,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           _reminderDate = data['reminder_date'] == null
               ? null
               : DateTime.tryParse(
-                    data['reminder_date'].toString(),
-                  )?.toLocal();
+                  data['reminder_date'].toString(),
+                )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
         });
       }
@@ -645,7 +797,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget _buildSlashCommandChip(String command) {
     return ActionChip(
       label: Text(command),
-      onPressed: _isRunningSlashCommand ? null : () => _prefillSlashCommand(command),
+      onPressed:
+          _isRunningSlashCommand ? null : () => _prefillSlashCommand(command),
+    );
+  }
+
+  Widget _buildAiStyleChip(NoteEditorAiStyle style) {
+    return ChoiceChip(
+      key: Key('note_editor_ai_style_${style.commandValue}'),
+      label: Text(style.label),
+      selected: _selectedAiStyle == style,
+      onSelected: _isRunningSlashCommand
+          ? null
+          : (selected) {
+              if (selected) {
+                _setAiStyle(style);
+              }
+            },
     );
   }
 
@@ -721,6 +889,29 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             ),
           ),
           const SizedBox(height: 8),
+          Text(
+            'Claude-style writing mode',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: NoteEditorAiStyle.values
+                .map(_buildAiStyleChip)
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedAiStyle.helperText,
+            key: const Key('note_editor_ai_style_helper'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -776,6 +967,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           child: AiAssistantMenu(
             contentController: _contentController,
             onApply: (text) => _contentController.text = text,
+            styleName: _selectedAiStyle.instruction == null
+                ? null
+                : _selectedAiStyle.commandValue,
+            styleInstruction: _selectedAiStyle.instruction,
           ),
         ),
       ],

@@ -7,12 +7,16 @@ class AiAssistantMenu extends StatefulWidget {
   final TextEditingController contentController;
   final Function(String) onApply;
   final SupabaseClient? supabaseClient;
+  final String? styleName;
+  final String? styleInstruction;
 
   const AiAssistantMenu({
     super.key,
     required this.contentController,
     required this.onApply,
     this.supabaseClient,
+    this.styleName,
+    this.styleInstruction,
   });
 
   @override
@@ -71,6 +75,12 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
         body: {
           'action': action,
           'content': widget.contentController.text,
+          if (widget.styleInstruction != null &&
+              widget.styleInstruction!.trim().isNotEmpty)
+            'styleName': widget.styleName ?? 'custom',
+          if (widget.styleInstruction != null &&
+              widget.styleInstruction!.trim().isNotEmpty)
+            'styleInstruction': widget.styleInstruction,
         },
       );
 

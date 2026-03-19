@@ -833,7 +833,28 @@ Generate a mind map for the following topic: **"{topic}"**
   // =========================================================================
 
   /// 文章改善
-  Future<String> improveText(String content) async {
+  Map<String, dynamic> _stylePayload({
+    String? styleName,
+    String? styleInstruction,
+  }) {
+    final normalizedInstruction = styleInstruction?.trim();
+    if (normalizedInstruction == null || normalizedInstruction.isEmpty) {
+      return const <String, dynamic>{};
+    }
+    final normalizedName = styleName?.trim();
+    return <String, dynamic>{
+      'styleName': (normalizedName == null || normalizedName.isEmpty)
+          ? 'custom'
+          : normalizedName,
+      'styleInstruction': normalizedInstruction,
+    };
+  }
+
+  Future<String> improveText(
+    String content, {
+    String? styleName,
+    String? styleInstruction,
+  }) async {
     return await _retryWithBackoff(
       () async {
         final data = await _invokeFunction(
@@ -841,6 +862,10 @@ Generate a mind map for the following topic: **"{topic}"**
           {
             'action': 'improve',
             'content': content,
+            ..._stylePayload(
+              styleName: styleName,
+              styleInstruction: styleInstruction,
+            ),
           },
         );
         return data['result'] as String;
@@ -850,7 +875,11 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 
   /// 要約生成
-  Future<String> summarizeText(String content) async {
+  Future<String> summarizeText(
+    String content, {
+    String? styleName,
+    String? styleInstruction,
+  }) async {
     return await _retryWithBackoff(
       () async {
         final data = await _invokeFunction(
@@ -858,6 +887,10 @@ Generate a mind map for the following topic: **"{topic}"**
           {
             'action': 'summarize',
             'content': content,
+            ..._stylePayload(
+              styleName: styleName,
+              styleInstruction: styleInstruction,
+            ),
           },
         );
         return data['result'] as String;
@@ -887,6 +920,8 @@ Generate a mind map for the following topic: **"{topic}"**
   Future<String> translateText(
     String content, {
     String targetLanguage = 'en',
+    String? styleName,
+    String? styleInstruction,
   }) async {
     return await _retryWithBackoff(
       () async {
@@ -896,6 +931,10 @@ Generate a mind map for the following topic: **"{topic}"**
             'action': 'translate',
             'content': content,
             'targetLanguage': targetLanguage,
+            ..._stylePayload(
+              styleName: styleName,
+              styleInstruction: styleInstruction,
+            ),
           },
         );
         return data['result'] as String;

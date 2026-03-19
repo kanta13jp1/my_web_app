@@ -13,6 +13,18 @@ class _FakeEditorSupabaseClient extends Fake implements SupabaseClient {}
 class _FakeNoteEditorAIService extends AIService {
   _FakeNoteEditorAIService() : super(_FakeEditorSupabaseClient());
 
+  String? lastSummarizeStyleName;
+
+  @override
+  Future<String> summarizeText(
+    String content, {
+    String? styleName,
+    String? styleInstruction,
+  }) async {
+    lastSummarizeStyleName = styleName;
+    return 'summary[$styleName]: $content';
+  }
+
   @override
   Future<List<String>> suggestTitles(String content) async {
     return <String>['AI generated note title'];
@@ -62,9 +74,11 @@ void main() {
     expect(find.byKey(const Key('note_editor_title_field')), findsOneWidget);
   });
 
-  testWidgets('NoteEditorPage slash commands update favorite state and title', (
+  testWidgets('NoteEditorPage slash commands update favorite, style, and title', (
     WidgetTester tester,
   ) async {
+    final aiService = _FakeNoteEditorAIService();
+
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => ThemeService(),
@@ -72,7 +86,7 @@ void main() {
           home: NoteEditorPage(
             initialContent: 'Revenue growth notes',
             supabaseClient: _FakeEditorSupabaseClient(),
-            aiService: _FakeNoteEditorAIService(),
+            aiService: aiService,
           ),
         ),
       ),
@@ -90,6 +104,7 @@ void main() {
       find.byKey(const Key('note_editor_slash_command_bar')),
       findsOneWidget,
     );
+    expect(find.text('/style concise'), findsOneWidget);
     expect(find.byIcon(Icons.star_border), findsOneWidget);
 
     await tester.enterText(commandField, '/favorite');
@@ -98,6 +113,33 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(Icons.star), findsOneWidget);
+
+    await tester.enterText(commandField, '/style concise');
+    await tester.ensureVisible(runButton);
+    await tester.tap(runButton);
+    await tester.pump();
+    await tester.pump();
+
+    final conciseChip = tester.widget<ChoiceChip>(
+      find.byKey(const Key('note_editor_ai_style_concise')),
+    );
+    expect(conciseChip.selected, isTrue);
+    expect(find.text('Short, direct, and easy to scan.'), findsOneWidget);
+
+    await tester.enterText(commandField, '/summarize');
+    await tester.ensureVisible(runButton);
+    await tester.tap(runButton);
+    await tester.pump();
+    await tester.pump();
+
+    final contentField = tester.widget<TextField>(
+      find.byKey(const Key('note_editor_content_field')),
+    );
+    expect(
+      contentField.controller?.text,
+      'summary[concise]: Revenue growth notes',
+    );
+    expect(aiService.lastSummarizeStyleName, 'concise');
 
     await tester.enterText(commandField, '/title');
     await tester.ensureVisible(runButton);

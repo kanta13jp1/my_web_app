@@ -26,6 +26,8 @@ interface AIRequest {
     action: string;
     model?: string;
     content?: string;
+    styleName?: string;
+    styleInstruction?: string;
     imageBase64?: string;
     mimeType?: string;
     targetLanguage?: string;
@@ -193,7 +195,11 @@ serve(async (req) => {
         
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title'].includes(action)) {
-             const prompt = `Action: ${action}\nContent: ${requestData.content}`;
+             const normalizedStyleInstruction = requestData.styleInstruction?.trim();
+             const stylePrompt = normalizedStyleInstruction
+                ? `\nStyle preset: ${requestData.styleName || 'custom'}\nStyle instruction: ${normalizedStyleInstruction}\nFollow this style while completing the action.`
+                : '';
+             const prompt = `Action: ${action}${stylePrompt}\nContent: ${requestData.content}`;
              const result = await tryAIChain(prompt);
              return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
