@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
+import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 
 enum AssetManagementInitialFocus {
@@ -24,11 +25,13 @@ enum AssetDebtPlannerMode {
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
+  final AssetWatchlistService watchlistService;
 
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
+    this.watchlistService = const AssetWatchlistService(),
   });
 
   @override
@@ -62,6 +65,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, Map<String, double>> _assetData = {};
   Map<String, Map<String, double>> _effectiveAssetDataByDate = {};
   Map<String, String?> _lastUpdatedDates = {};
+  Map<String, AssetWatchlistEntry> _watchlistByType = {};
+  final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
 
   // --- グラフデータ ---
   List<LineChartBarData> _lineChartBars = [];
@@ -136,6 +141,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void initState() {
     super.initState();
     _loadDataFromSupabase();
+    _loadWatchlistEntries();
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
@@ -1265,6 +1271,151 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
+  GlobalKey _assetRowKeyForType(String type) {
+    return _assetRowKeys.putIfAbsent(
+      type,
+      () => GlobalKey(debugLabel: 'asset_row_$type'),
+    );
+  }
+
+  void _setWatchlistEntries(List<AssetWatchlistEntry> entries) {
+    _watchlistByType = <String, AssetWatchlistEntry>{
+      for (final entry in entries) entry.assetType: entry,
+    };
+  }
+
+  List<AssetWatchlistEntry> get _visibleWatchlistEntries {
+    final entries = _watchlistByType.values
+        .where((entry) => _assetTypes.contains(entry.assetType))
+        .toList();
+    entries.sort((a, b) {
+      final groupCompare = a.group.toLowerCase().compareTo(b.group.toLowerCase());
+      if (groupCompare != 0) {
+        if (a.group.isEmpty) return 1;
+        if (b.group.isEmpty) return -1;
+        return groupCompare;
+      }
+      return a.assetType.toLowerCase().compareTo(b.assetType.toLowerCase());
+    });
+    return entries;
+  }
+
+  Future<void> _loadWatchlistEntries() async {
+    final entries = await widget.watchlistService.loadEntries();
+    if (!mounted) return;
+    setState(() {
+      _setWatchlistEntries(entries);
+    });
+  }
+
+  void _jumpToAssetType(String type) {
+    final key = _assetRowKeys[type];
+    if (key == null || key.currentContext == null) {
+      _scrollTo(_keyStock);
+      return;
+    }
+    _scrollTo(key);
+  }
+
+  Future<void> _showWatchlistDialog(String type) async {
+    final existing = _watchlistByType[type];
+    final groupController = TextEditingController(text: existing?.group ?? '');
+    final memoController = TextEditingController(text: existing?.memo ?? '');
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(existing == null ? 'Add To Watchlist' : 'Edit Watchlist'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: groupController,
+                  decoration: const InputDecoration(
+                    labelText: 'Group',
+                    hintText: 'invest / debt / this week',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: memoController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Memo',
+                    hintText: 'Why this item matters now',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            if (existing != null)
+              TextButton(
+                onPressed: () async {
+                  final entries = await widget.watchlistService.removeEntry(type);
+                  if (!mounted) return;
+                  setState(() {
+                    _setWatchlistEntries(entries);
+                  });
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Removed $type from watchlist')),
+                  );
+                },
+                child: const Text('Remove'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final entries = await widget.watchlistService.saveEntry(
+                  AssetWatchlistEntry(
+                    assetType: type,
+                    group: groupController.text,
+                    memo: memoController.text,
+                    addedAt: existing?.addedAt ?? DateTime.now(),
+                  ),
+                );
+                if (!mounted) return;
+                setState(() {
+                  _setWatchlistEntries(entries);
+                });
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Updated watchlist for $type')),
+                );
+              },
+              child: Text(existing == null ? 'Save' : 'Update'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      groupController.dispose();
+      memoController.dispose();
+    }
+  }
+
   void _initControllers() {
     final newControllers = <String, TextEditingController>{};
     for (var type in _assetTypes) {
@@ -1510,13 +1661,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             onPressed: () async {
               final userId = _supabase.auth.currentUser?.id;
               if (userId != null) {
+                final watchlistEntries =
+                    await widget.watchlistService.removeEntry(type);
                 await _supabase
                     .from('cfo_assets')
                     .delete()
                     .eq('user_id', userId)
                     .eq('title', type);
                 setState(() {
+                  _setWatchlistEntries(watchlistEntries);
                   _assetTypes.remove(type);
+                  _assetRowKeys.remove(type);
                   _controllers.remove(type)?.dispose();
                   _assetData.forEach((date, assets) {
                     assets.remove(type);
@@ -3819,6 +3974,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
             const SizedBox(height: 16),
+            _buildAssetWatchlistSection(),
+            const SizedBox(height: 16),
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
             Row(
@@ -3856,6 +4013,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final todayStr = _todayDateKey();
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
     final isCompact = _isCompact;
+    final watchlistEntry = _watchlistByType[type];
 
     // 最新残高を取得
     final lastDate = _lastUpdatedDates[type];
@@ -3871,8 +4029,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
+        key: _assetRowKeyForType(type),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (watchlistEntry != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildWatchlistMetaChip(
+                    icon: Icons.star,
+                    label: watchlistEntry.group.isEmpty
+                        ? 'Watching'
+                        : 'Watch: ${watchlistEntry.group}',
+                    iconColor: Colors.amber[800],
+                  ),
+                  if (watchlistEntry.memo.isNotEmpty)
+                    _buildWatchlistMetaChip(
+                      icon: Icons.sticky_note_2_outlined,
+                      label: watchlistEntry.memo,
+                    ),
+                ],
+              ),
+            ),
           isCompact
               ? Column(
                   children: [
@@ -3900,6 +4081,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        IconButton(
+                          tooltip: watchlistEntry == null
+                              ? 'Add to watchlist'
+                              : 'Edit watchlist',
+                          onPressed: () => _showWatchlistDialog(type),
+                          icon: Icon(
+                            watchlistEntry == null
+                                ? Icons.star_border
+                                : Icons.star,
+                            color: watchlistEntry == null
+                                ? Colors.grey[500]
+                                : Colors.amber[800],
+                          ),
+                        ),
                         if (canQuickUpdate) ...[
                           OutlinedButton.icon(
                             onPressed: () => _quickUpdateAssetData(type),
@@ -3956,6 +4151,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: watchlistEntry == null
+                          ? 'Add to watchlist'
+                          : 'Edit watchlist',
+                      onPressed: () => _showWatchlistDialog(type),
+                      icon: Icon(
+                        watchlistEntry == null
+                            ? Icons.star_border
+                            : Icons.star,
+                        color: watchlistEntry == null
+                            ? Colors.grey[500]
+                            : Colors.amber[800],
+                      ),
+                    ),
                     if (canQuickUpdate) ...[
                       OutlinedButton.icon(
                         onPressed: () => _quickUpdateAssetData(type),
@@ -4029,6 +4238,183 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 style: TextStyle(fontSize: 11, color: Colors.grey[400]),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWatchlistMetaChip({
+    required IconData icon,
+    required String label,
+    Color? iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor ?? Colors.grey[700]),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetWatchlistSection() {
+    final entries = _visibleWatchlistEntries;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber[800]),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Watchlist',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text(
+                '${entries.length} item(s)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Keep important assets or liabilities pinned with a short memo.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+          if (entries.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber[100]!),
+              ),
+              child: const Text(
+                'Use the star button on any asset row to add it here.',
+                style: TextStyle(fontSize: 12, height: 1.5),
+              ),
+            )
+          else
+            ...entries.map((entry) {
+              final lastDate = _lastUpdatedDates[entry.assetType];
+              double? lastAmount;
+              if (lastDate != null) {
+                lastAmount = _assetData[lastDate]?[entry.assetType];
+              }
+              final isLiability = (lastAmount ?? 0) < 0;
+              final amountColor =
+                  isLiability ? Colors.red[600] : Colors.green[700];
+
+              return Container(
+                key: Key('asset_watchlist_item_${entry.assetType}'),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.amber[100]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _getIconForAsset(entry.assetType),
+                          color: amountColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.assetType,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Jump to row',
+                          onPressed: () => _jumpToAssetType(entry.assetType),
+                          icon: const Icon(Icons.vertical_align_bottom),
+                        ),
+                        IconButton(
+                          tooltip: 'Edit watchlist',
+                          onPressed: () => _showWatchlistDialog(entry.assetType),
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
+                      ],
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (entry.group.isNotEmpty)
+                          _buildWatchlistMetaChip(
+                            icon: Icons.folder_open_outlined,
+                            label: entry.group,
+                            iconColor: Colors.amber[800],
+                          ),
+                        if (lastAmount != null)
+                          _buildWatchlistMetaChip(
+                            icon: isLiability
+                                ? Icons.trending_down
+                                : Icons.trending_up,
+                            label:
+                                'Latest ${NumberFormat('#,###').format(lastAmount)}',
+                            iconColor: amountColor,
+                          ),
+                        if (lastDate != null)
+                          _buildWatchlistMetaChip(
+                            icon: Icons.schedule,
+                            label: 'Updated $lastDate',
+                          ),
+                      ],
+                    ),
+                    if (entry.memo.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        entry.memo,
+                        style: const TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );

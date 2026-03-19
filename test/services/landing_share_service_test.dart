@@ -8,6 +8,7 @@ import 'package:my_web_app/models/agent_task.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/agent_org_service.dart';
+import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -253,6 +254,8 @@ AgentOrgSnapshot _snapshotWithMessages(List<AgentMessage> messages) {
 }
 
 void main() {
+  const watchlistService = AssetWatchlistService();
+
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
@@ -321,6 +324,103 @@ void main() {
         <String, String>{'src': 'unknown'},
       ),
       isNull,
+    );
+  });
+
+  testWidgets('AssetWatchlistService loads grouped items before ungrouped ones',
+      (WidgetTester tester) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'cash',
+        group: '',
+        memo: 'keep a buffer',
+        addedAt: DateTime(2026, 3, 19, 8),
+      ),
+      prefs: prefs,
+    );
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'nisa',
+        group: 'invest',
+        memo: 'check weekly contribution',
+        addedAt: DateTime(2026, 3, 19, 9),
+      ),
+      prefs: prefs,
+    );
+
+    final entries = await watchlistService.loadEntries(prefs: prefs);
+
+    expect(
+      entries.map((entry) => entry.assetType).toList(),
+      <String>['nisa', 'cash'],
+    );
+    expect(entries.first.group, 'invest');
+    expect(entries.last.memo, 'keep a buffer');
+  });
+
+  testWidgets('AssetWatchlistService updates the same asset instead of duplicating',
+      (WidgetTester tester) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'card',
+        group: 'fixed',
+        memo: 'review due date',
+        addedAt: DateTime(2026, 3, 18, 12),
+      ),
+      prefs: prefs,
+    );
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'card',
+        group: 'fixed',
+        memo: 'review this month statement',
+        addedAt: DateTime(2026, 3, 18, 12),
+      ),
+      prefs: prefs,
+    );
+
+    final entries = await watchlistService.loadEntries(prefs: prefs);
+
+    expect(entries, hasLength(1));
+    expect(entries.single.assetType, 'card');
+    expect(entries.single.memo, 'review this month statement');
+  });
+
+  testWidgets('AssetWatchlistService removes a watched asset cleanly',
+      (WidgetTester tester) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'cash',
+        group: 'living',
+        memo: 'maintain runway',
+        addedAt: DateTime(2026, 3, 19),
+      ),
+      prefs: prefs,
+    );
+    await watchlistService.saveEntry(
+      AssetWatchlistEntry(
+        assetType: 'loan',
+        group: 'debt',
+        memo: 'candidate for extra payment',
+        addedAt: DateTime(2026, 3, 19, 9),
+      ),
+      prefs: prefs,
+    );
+
+    final entries = await watchlistService.removeEntry(
+      'cash',
+      prefs: prefs,
+    );
+
+    expect(
+      entries.map((entry) => entry.assetType).toList(),
+      <String>['loan'],
     );
   });
 
