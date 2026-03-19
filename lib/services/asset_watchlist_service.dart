@@ -74,7 +74,7 @@ class AssetWatchlistService {
         continue;
       }
       final entry = AssetWatchlistEntry.fromJson(
-        Map<String, dynamic>.from(item as Map),
+        Map<String, dynamic>.from(item),
       );
       if (entry.assetType.isEmpty) {
         continue;
