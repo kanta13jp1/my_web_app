@@ -787,6 +787,87 @@ class AgentOrgService {
     );
   }
 
+  Future<AgentMessage?> toggleBoardReaction({
+    required String messageId,
+    required String emoji,
+    required String actorAgentId,
+  }) async {
+    final userId = _requireUserId();
+    final normalizedEmoji = emoji.trim();
+    if (messageId.trim().isEmpty) {
+      throw ArgumentError('Message id is required.');
+    }
+    if (normalizedEmoji.isEmpty) {
+      throw ArgumentError('Emoji is required.');
+    }
+
+    AgentProfile? actor;
+    AgentMessage? currentMessage;
+
+    await _guardToolExecution(
+      userId: userId,
+      toolName: 'toggle_board_reaction',
+      actorAgentId: actorAgentId,
+      payload: <String, dynamic>{
+        'message_id': messageId,
+        'emoji': normalizedEmoji,
+      },
+      permissionCheck: () async {
+        actor = await _loadAgentById(actorAgentId);
+        currentMessage = await _loadMessageById(messageId);
+        if (actor == null) {
+          return 'Actor not found.';
+        }
+        if (!actor!.isActive) {
+          return 'Actor is not active.';
+        }
+        if (currentMessage == null) {
+          return 'Message not found.';
+        }
+        if (currentMessage!.messageKind != 'board') {
+          return 'Only board messages support reactions.';
+        }
+        return null;
+      },
+    );
+
+    final message = currentMessage;
+    if (message == null || message.messageKind != 'board') {
+      return null;
+    }
+
+    final nextMetadata = _toggleReactionMetadata(
+      metadata: message.metadata,
+      emoji: normalizedEmoji,
+      actorAgentId: actorAgentId,
+    );
+
+    try {
+      final dynamic updated = await _supabase
+          .from('agent_messages')
+          .update({
+            'metadata': nextMetadata,
+          })
+          .eq('id', message.id)
+          .eq('user_id', userId)
+          .select()
+          .single();
+
+      await _supabase
+          .from('agents')
+          .update({'last_active_at': DateTime.now().toIso8601String()})
+          .eq('id', actorAgentId)
+          .eq('user_id', userId);
+
+      if (updated is! Map) {
+        return null;
+      }
+      return AgentMessage.fromJson(Map<String, dynamic>.from(updated));
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> consolidateMemory({
     required String agentId,
     required String summary,
@@ -1485,6 +1566,23 @@ class AgentOrgService {
     return AgentTask.fromJson(Map<String, dynamic>.from(row));
   }
 
+  Future<AgentMessage?> _loadMessageById(String messageId) async {
+    final userId = _requireUserId();
+    if (messageId.trim().isEmpty) {
+      return null;
+    }
+    final dynamic row = await _supabase
+        .from('agent_messages')
+        .select()
+        .eq('user_id', userId)
+        .eq('id', messageId)
+        .maybeSingle();
+    if (row is! Map) {
+      return null;
+    }
+    return AgentMessage.fromJson(Map<String, dynamic>.from(row));
+  }
+
   Future<String?> _findAgentIdBySlug(String slug) async {
     final userId = _requireUserId();
     final dynamic row = await _supabase
@@ -1517,6 +1615,54 @@ class AgentOrgService {
         .limit(1)
         .maybeSingle();
     return row is Map;
+  }
+
+  Map<String, dynamic> _toggleReactionMetadata({
+    required Map<String, dynamic> metadata,
+    required String emoji,
+    required String actorAgentId,
+  }) {
+    final nextMetadata = Map<String, dynamic>.from(metadata);
+    final reactionActorIds = <String, List<String>>{};
+    final rawReactionActorIds = metadata['reaction_actor_ids'];
+    if (rawReactionActorIds is Map) {
+      for (final entry in rawReactionActorIds.entries) {
+        reactionActorIds[entry.key.toString()] = _coerceStringList(entry.value);
+      }
+    }
+
+    final nextActors = List<String>.from(reactionActorIds[emoji] ?? const []);
+    if (nextActors.contains(actorAgentId)) {
+      nextActors.remove(actorAgentId);
+    } else {
+      nextActors.add(actorAgentId);
+      nextActors.sort();
+    }
+
+    if (nextActors.isEmpty) {
+      reactionActorIds.remove(emoji);
+    } else {
+      reactionActorIds[emoji] = nextActors;
+    }
+
+    if (reactionActorIds.isEmpty) {
+      nextMetadata.remove('reaction_actor_ids');
+      nextMetadata.remove('reaction_updated_at');
+    } else {
+      nextMetadata['reaction_actor_ids'] = reactionActorIds;
+      nextMetadata['reaction_updated_at'] = DateTime.now().toIso8601String();
+    }
+    return nextMetadata;
+  }
+
+  List<String> _coerceStringList(dynamic value) {
+    if (value is! List) {
+      return <String>[];
+    }
+    return value
+        .map((item) => item?.toString().trim() ?? '')
+        .where((item) => item.isNotEmpty)
+        .toList();
   }
 
   Future<void> _guardToolExecution({

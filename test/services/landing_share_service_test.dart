@@ -127,6 +127,7 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
   AgentOrgSnapshot snapshot;
   final List<Map<String, String>> boardPosts = <Map<String, String>>[];
   final List<Map<String, String>> delegatedTasks = <Map<String, String>>[];
+  final List<Map<String, String>> boardReactions = <Map<String, String>>[];
 
   @override
   Future<AgentOrgSnapshot> loadSnapshot() async => snapshot;
@@ -235,6 +236,60 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
     );
     return message;
   }
+
+  @override
+  Future<AgentMessage?> toggleBoardReaction({
+    required String messageId,
+    required String emoji,
+    required String actorAgentId,
+  }) async {
+    boardReactions.add(<String, String>{
+      'messageId': messageId,
+      'emoji': emoji,
+      'actorAgentId': actorAgentId,
+    });
+
+    AgentMessage? updatedMessage;
+    final nextMessages = snapshot.recentMessages.map((message) {
+      if (message.id != messageId) {
+        return message;
+      }
+      final nextMetadata = _toggleReactionMetadata(
+        message.metadata,
+        emoji: emoji,
+        actorAgentId: actorAgentId,
+      );
+      updatedMessage = AgentMessage(
+        id: message.id,
+        userId: message.userId,
+        fromAgentId: message.fromAgentId,
+        toAgentId: message.toAgentId,
+        linkedTaskId: message.linkedTaskId,
+        conversationId: message.conversationId,
+        messageKind: message.messageKind,
+        summary: message.summary,
+        payload: message.payload,
+        status: message.status,
+        acknowledgedAt: message.acknowledgedAt,
+        resolvedAt: message.resolvedAt,
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+        metadata: nextMetadata,
+      );
+      return updatedMessage!;
+    }).toList();
+
+    snapshot = AgentOrgSnapshot(
+      agents: snapshot.agents,
+      tasks: snapshot.tasks,
+      recentMemories: snapshot.recentMemories,
+      relationships: snapshot.relationships,
+      recentMessages: nextMessages,
+      openTaskCountsByAgent: snapshot.openTaskCountsByAgent,
+      memoryCountsByAgent: snapshot.memoryCountsByAgent,
+    );
+    return updatedMessage;
+  }
 }
 
 AgentProfile _agent({
@@ -266,6 +321,7 @@ AgentMessage _boardMessage({
   required String fromAgentId,
   required String channel,
   required String summary,
+  Map<String, dynamic> metadata = const <String, dynamic>{},
 }) {
   final now = DateTime(2026, 3, 18, 9, 30);
   return AgentMessage(
@@ -282,8 +338,52 @@ AgentMessage _boardMessage({
     updatedAt: now,
     metadata: <String, dynamic>{
       'channel': channel,
+      ...metadata,
     },
   );
+}
+
+Map<String, dynamic> _toggleReactionMetadata(
+  Map<String, dynamic> metadata, {
+  required String emoji,
+  required String actorAgentId,
+}) {
+  final nextMetadata = <String, dynamic>{...metadata};
+  final reactionActorIds = <String, List<String>>{};
+  final rawReactionActorIds = metadata['reaction_actor_ids'];
+  if (rawReactionActorIds is Map) {
+    for (final entry in rawReactionActorIds.entries) {
+      final value = entry.value;
+      if (value is! List) {
+        continue;
+      }
+      reactionActorIds[entry.key.toString()] = value
+          .map((item) => item?.toString().trim() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+  }
+
+  final nextActors = List<String>.from(reactionActorIds[emoji] ?? const []);
+  if (nextActors.contains(actorAgentId)) {
+    nextActors.remove(actorAgentId);
+  } else {
+    nextActors.add(actorAgentId);
+    nextActors.sort();
+  }
+
+  if (nextActors.isEmpty) {
+    reactionActorIds.remove(emoji);
+  } else {
+    reactionActorIds[emoji] = nextActors;
+  }
+
+  if (reactionActorIds.isEmpty) {
+    nextMetadata.remove('reaction_actor_ids');
+  } else {
+    nextMetadata['reaction_actor_ids'] = reactionActorIds;
+  }
+  return nextMetadata;
 }
 
 AgentOrgSnapshot _snapshotWithMessages(List<AgentMessage> messages) {
@@ -664,5 +764,48 @@ void main() {
       'Outline scope, pricing assumptions, open questions, and a proposed response plan for the customer.',
     );
     expect(find.text('Prepare estimate response'), findsOneWidget);
+  });
+
+  testWidgets(
+      'AgentOrgPage supports Slack-style quick reactions on board posts',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final service = _FakeAgentOrgService(
+      _snapshotWithMessages(<AgentMessage>[
+        _boardMessage(
+          id: 'message-1',
+          fromAgentId: 'cfo-1',
+          channel: 'executive',
+          summary: 'Please confirm budget sign-off today.',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentOrgPage(service: service),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final scrollable = find.byType(Scrollable).first;
+    final reactionChip =
+        find.byKey(const Key('agent_org_board_reaction_message-1_thumbs_up'));
+    await tester.scrollUntilVisible(reactionChip, 200, scrollable: scrollable);
+    await tester.tap(reactionChip);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(service.boardReactions, hasLength(1));
+    expect(service.boardReactions.single['messageId'], 'message-1');
+    expect(service.boardReactions.single['emoji'], '👍');
+    expect(service.boardReactions.single['actorAgentId'], 'ceo-1');
+
+    final chipWidget = tester.widget<FilterChip>(reactionChip);
+    expect(chipWidget.selected, isTrue);
+    expect(find.text('👍 1'), findsOneWidget);
   });
 }

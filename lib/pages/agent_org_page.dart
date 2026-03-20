@@ -21,6 +21,16 @@ class AgentTaskTemplate {
   });
 }
 
+class AgentBoardReactionOption {
+  final String id;
+  final String emoji;
+
+  const AgentBoardReactionOption({
+    required this.id,
+    required this.emoji,
+  });
+}
+
 class AgentOrgPage extends StatefulWidget {
   final AgentOrgService service;
 
@@ -72,6 +82,13 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     ),
   ];
 
+  static const List<AgentBoardReactionOption> _quickReactionOptions =
+      <AgentBoardReactionOption>[
+    AgentBoardReactionOption(id: 'thumbs_up', emoji: '👍'),
+    AgentBoardReactionOption(id: 'eyes', emoji: '👀'),
+    AgentBoardReactionOption(id: 'check', emoji: '✅'),
+  ];
+
   final TextEditingController _taskTitleController = TextEditingController();
   final TextEditingController _taskDescriptionController =
       TextEditingController();
@@ -86,6 +103,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   String? _selectedBoardAuthorId;
   String _selectedBoardChannel = AgentOrgService.boardChannels.first.id;
   String? _errorText;
+  final Set<String> _reactionRequestsInFlight = <String>{};
 
   @override
   void initState() {
@@ -425,6 +443,104 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     _taskTitleController.clear();
     _taskDescriptionController.clear();
     setState(() => _selectedTaskTemplateId = null);
+  }
+
+  Map<String, List<String>> _reactionActorsFor(AgentMessage message) {
+    final reactionActors = <String, List<String>>{};
+    final raw = message.metadata['reaction_actor_ids'];
+    if (raw is! Map) {
+      return reactionActors;
+    }
+    for (final entry in raw.entries) {
+      final key = entry.key.toString();
+      final value = entry.value;
+      if (value is! List) {
+        continue;
+      }
+      final actors = value
+          .map((item) => item?.toString().trim() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
+      reactionActors[key] = actors;
+    }
+    return reactionActors;
+  }
+
+  int _reactionCountFor(AgentMessage message, String emoji) {
+    final actors = _reactionActorsFor(message)[emoji];
+    return actors?.length ?? 0;
+  }
+
+  bool _isReactionSelected(AgentMessage message, String emoji) {
+    final actorId = _selectedBoardAuthorId;
+    if (actorId == null) {
+      return false;
+    }
+    final actors = _reactionActorsFor(message)[emoji];
+    return actors?.contains(actorId) ?? false;
+  }
+
+  void _replaceMessageInSnapshot(AgentMessage updatedMessage) {
+    final nextMessages = _snapshot.recentMessages
+        .map((message) =>
+            message.id == updatedMessage.id ? updatedMessage : message)
+        .toList();
+    setState(() {
+      _snapshot = AgentOrgSnapshot(
+        agents: _snapshot.agents,
+        tasks: _snapshot.tasks,
+        recentMemories: _snapshot.recentMemories,
+        relationships: _snapshot.relationships,
+        recentMessages: nextMessages,
+        openTaskCountsByAgent: _snapshot.openTaskCountsByAgent,
+        memoryCountsByAgent: _snapshot.memoryCountsByAgent,
+      );
+    });
+  }
+
+  Future<void> _toggleBoardReaction(
+    AgentMessage message,
+    AgentBoardReactionOption option,
+  ) async {
+    final actorId = _selectedBoardAuthorId;
+    if (actorId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Choose an active agent before reacting.'),
+        ),
+      );
+      return;
+    }
+    final requestKey = '${message.id}:${option.id}';
+    if (_reactionRequestsInFlight.contains(requestKey)) {
+      return;
+    }
+
+    setState(() => _reactionRequestsInFlight.add(requestKey));
+    try {
+      final updatedMessage = await widget.service.toggleBoardReaction(
+        messageId: message.id,
+        emoji: option.emoji,
+        actorAgentId: actorId,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (updatedMessage != null) {
+        _replaceMessageInSnapshot(updatedMessage);
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reaction failed: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _reactionRequestsInFlight.remove(requestKey));
+      }
+    }
   }
 
   @override
@@ -776,6 +892,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   ? null
                   : (value) => setState(() => _selectedBoardAuthorId = value),
             ),
+            const SizedBox(height: 8),
+            const Text(
+              'Slack-style quick reactions will use the selected Speaker.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
             const SizedBox(height: 12),
             TextField(
               key: const Key('agent_org_board_message_field'),
@@ -1125,6 +1246,29 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             Text(
               message.summary,
               style: const TextStyle(height: 1.45),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _quickReactionOptions.map((option) {
+                final isSelected = _isReactionSelected(message, option.emoji);
+                final count = _reactionCountFor(message, option.emoji);
+                final requestKey = '${message.id}:${option.id}';
+                final isBusy = _reactionRequestsInFlight.contains(requestKey);
+                final label =
+                    count > 0 ? '${option.emoji} $count' : option.emoji;
+                return FilterChip(
+                  key: Key(
+                    'agent_org_board_reaction_${message.id}_${option.id}',
+                  ),
+                  label: Text(label),
+                  selected: isSelected,
+                  onSelected: isBusy
+                      ? null
+                      : (_) => _toggleBoardReaction(message, option),
+                );
+              }).toList(),
             ),
           ],
         ),
