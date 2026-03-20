@@ -7,6 +7,20 @@ import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 
+class AgentTaskTemplate {
+  final String id;
+  final String label;
+  final String title;
+  final String description;
+
+  const AgentTaskTemplate({
+    required this.id,
+    required this.label,
+    required this.title,
+    required this.description,
+  });
+}
+
 class AgentOrgPage extends StatefulWidget {
   final AgentOrgService service;
 
@@ -20,17 +34,55 @@ class AgentOrgPage extends StatefulWidget {
 }
 
 class _AgentOrgPageState extends State<AgentOrgPage> {
+  static const List<AgentTaskTemplate> _taskTemplates = <AgentTaskTemplate>[
+    AgentTaskTemplate(
+      id: 'call-report',
+      label: 'Call Report',
+      title: 'Capture incoming call follow-up',
+      description:
+          'Summarize the caller request, owner, response deadline, and next action so the team can close the loop quickly.',
+    ),
+    AgentTaskTemplate(
+      id: 'estimate-request',
+      label: 'Estimate Request',
+      title: 'Prepare estimate response',
+      description:
+          'Outline scope, pricing assumptions, open questions, and a proposed response plan for the customer.',
+    ),
+    AgentTaskTemplate(
+      id: 'meeting-followup',
+      label: 'Meeting Follow-up',
+      title: 'Execute post-meeting follow-up',
+      description:
+          'List decisions, owners, deadlines, and the communication needed after the meeting.',
+    ),
+    AgentTaskTemplate(
+      id: 'material-request',
+      label: 'Material Request',
+      title: 'Collect requested materials',
+      description:
+          'Gather the requested documents, confirm gaps, and return a ready-to-share package with context.',
+    ),
+    AgentTaskTemplate(
+      id: 'purchase-request',
+      label: 'Purchase Request',
+      title: 'Review purchase request',
+      description:
+          'Validate the need, budget impact, approval path, and recommended next step for the purchase.',
+    ),
+  ];
+
   final TextEditingController _taskTitleController = TextEditingController();
   final TextEditingController _taskDescriptionController =
       TextEditingController();
-  final TextEditingController _boardMessageController =
-      TextEditingController();
+  final TextEditingController _boardMessageController = TextEditingController();
 
   AgentOrgSnapshot _snapshot = const AgentOrgSnapshot.empty();
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isPostingBoardMessage = false;
   String? _selectedAssigneeId;
+  String? _selectedTaskTemplateId;
   String? _selectedBoardAuthorId;
   String _selectedBoardChannel = AgentOrgService.boardChannels.first.id;
   String? _errorText;
@@ -63,6 +115,15 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     for (final agent in _snapshot.agents) {
       if (agent.slug == 'ceo') {
         return agent;
+      }
+    }
+    return null;
+  }
+
+  AgentTaskTemplate? get _selectedTaskTemplate {
+    for (final template in _taskTemplates) {
+      if (template.id == _selectedTaskTemplateId) {
+        return template;
       }
     }
     return null;
@@ -147,13 +208,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             delegable.any((agent) => agent.id == _selectedAssigneeId)
                 ? _selectedAssigneeId
                 : (delegable.isNotEmpty ? delegable.first.id : null);
-        _selectedBoardAuthorId =
-            snapshot.agents.any(
-                  (agent) =>
-                      agent.isActive && agent.id == _selectedBoardAuthorId,
-                )
-                ? _selectedBoardAuthorId
-                : _defaultBoardAuthorIdForSnapshot(snapshot);
+        _selectedBoardAuthorId = snapshot.agents.any(
+          (agent) => agent.isActive && agent.id == _selectedBoardAuthorId,
+        )
+            ? _selectedBoardAuthorId
+            : _defaultBoardAuthorIdForSnapshot(snapshot);
         _isLoading = false;
       });
     } catch (error) {
@@ -195,6 +254,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       }
       _taskTitleController.clear();
       _taskDescriptionController.clear();
+      setState(() => _selectedTaskTemplateId = null);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('CEOから役員へタスクを委任しました。')),
       );
@@ -355,6 +415,18 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     }
   }
 
+  void _applyTaskTemplate(AgentTaskTemplate template) {
+    _taskTitleController.text = template.title;
+    _taskDescriptionController.text = template.description;
+    setState(() => _selectedTaskTemplateId = template.id);
+  }
+
+  void _clearTaskTemplate() {
+    _taskTitleController.clear();
+    _taskDescriptionController.clear();
+    setState(() => _selectedTaskTemplateId = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeAgents =
@@ -501,6 +573,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   }
 
   Widget _buildDelegationComposer() {
+    final selectedTemplate = _selectedTaskTemplate;
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -517,6 +591,60 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               'ここから永続エージェントへタスクを委任します。委任内容は agent_tasks と記憶ログに保存されます。',
               style: TextStyle(fontSize: 12, color: Colors.black54),
             ),
+            const SizedBox(height: 12),
+            const Text(
+              'Chatwork-style task templates',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Pick a reusable request pattern, then adjust the details before delegating.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _taskTemplates.map((template) {
+                return ChoiceChip(
+                  key: Key('agent_org_task_template_${template.id}'),
+                  label: Text(template.label),
+                  selected: _selectedTaskTemplateId == template.id,
+                  onSelected: _isSubmitting
+                      ? null
+                      : (selected) {
+                          if (selected) {
+                            _applyTaskTemplate(template);
+                            return;
+                          }
+                          _clearTaskTemplate();
+                        },
+                );
+              }).toList(),
+            ),
+            if (selectedTemplate != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Selected template: ${selectedTemplate.label}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    key: const Key('agent_org_task_template_clear_button'),
+                    onPressed: _isSubmitting ? null : _clearTaskTemplate,
+                    icon: const Icon(Icons.clear_rounded),
+                    label: const Text('Clear'),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               key: ValueKey(_selectedAssigneeId),
@@ -539,6 +667,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             ),
             const SizedBox(height: 12),
             TextField(
+              key: const Key('agent_org_task_title_field'),
               controller: _taskTitleController,
               enabled: !_isSubmitting,
               decoration: const InputDecoration(
@@ -549,6 +678,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             ),
             const SizedBox(height: 12),
             TextField(
+              key: const Key('agent_org_task_description_field'),
               controller: _taskDescriptionController,
               enabled: !_isSubmitting,
               minLines: 2,
@@ -563,6 +693,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
+                key: const Key('agent_org_delegation_submit_button'),
                 onPressed: _isSubmitting ? null : _submitDelegation,
                 icon: _isSubmitting
                     ? const SizedBox(

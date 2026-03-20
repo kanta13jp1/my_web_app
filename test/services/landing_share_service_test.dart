@@ -82,21 +82,24 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,
-  }) => Future<AuthResponse>.error(
+  }) =>
+      Future<AuthResponse>.error(
         UnsupportedError('signInWithPassword is not used in this test'),
       );
 
   @override
   Future<bool> signInWithGoogle({
     String? redirectTo,
-  }) => Future<bool>.value(true);
+  }) =>
+      Future<bool>.value(true);
 
   @override
   Future<AuthResponse> signUp({
     required String email,
     required String password,
     String? emailRedirectTo,
-  }) => Future<AuthResponse>.error(
+  }) =>
+      Future<AuthResponse>.error(
         UnsupportedError('signUp is not used in this test'),
       );
 
@@ -105,7 +108,8 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
     required String email,
     String? emailRedirectTo,
     bool shouldCreateUser = true,
-  }) => Future<void>.value();
+  }) =>
+      Future<void>.value();
 
   @override
   Future<void> recordInboxOpen() async {}
@@ -122,9 +126,69 @@ class _FakeAgentOrgService extends Fake implements AgentOrgService {
 
   AgentOrgSnapshot snapshot;
   final List<Map<String, String>> boardPosts = <Map<String, String>>[];
+  final List<Map<String, String>> delegatedTasks = <Map<String, String>>[];
 
   @override
   Future<AgentOrgSnapshot> loadSnapshot() async => snapshot;
+
+  @override
+  Future<AgentTask> delegateTask({
+    required String supervisorAgentId,
+    required String assigneeAgentId,
+    required String title,
+    String description = '',
+    String priority = 'high',
+    String taskType = 'delegated_action',
+    String source = 'manual_delegate',
+    String messageKind = 'directive',
+    String? conversationId,
+    bool createMessage = true,
+    String? actorAgentId,
+  }) async {
+    delegatedTasks.add(<String, String>{
+      'supervisorAgentId': supervisorAgentId,
+      'assigneeAgentId': assigneeAgentId,
+      'title': title,
+      'description': description,
+      'priority': priority,
+      'taskType': taskType,
+      'source': source,
+    });
+
+    final now = DateTime(2026, 3, 18, 10, 00);
+    final task = AgentTask(
+      id: 'task-${delegatedTasks.length}',
+      userId: 'user-1',
+      supervisorAgentId: supervisorAgentId,
+      assigneeAgentId: assigneeAgentId,
+      title: title,
+      description: description,
+      status: 'queued',
+      priority: priority,
+      taskType: taskType,
+      source: source,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    final nextTaskCounts = <String, int>{
+      ...snapshot.openTaskCountsByAgent,
+      assigneeAgentId:
+          (snapshot.openTaskCountsByAgent[assigneeAgentId] ?? 0) + 1,
+    };
+
+    snapshot = AgentOrgSnapshot(
+      agents: snapshot.agents,
+      tasks: <AgentTask>[task, ...snapshot.tasks],
+      recentMemories: snapshot.recentMemories,
+      relationships: snapshot.relationships,
+      recentMessages: snapshot.recentMessages,
+      openTaskCountsByAgent: nextTaskCounts,
+      memoryCountsByAgent: snapshot.memoryCountsByAgent,
+    );
+
+    return task;
+  }
 
   @override
   Future<AgentMessage?> postBoardMessage({
@@ -360,7 +424,8 @@ void main() {
     expect(entries.last.memo, 'keep a buffer');
   });
 
-  testWidgets('AssetWatchlistService updates the same asset instead of duplicating',
+  testWidgets(
+      'AssetWatchlistService updates the same asset instead of duplicating',
       (WidgetTester tester) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -544,5 +609,60 @@ void main() {
       find.text('Need a launch readiness summary by noon.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'AgentOrgPage applies Chatwork-style task templates before delegating',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final service = _FakeAgentOrgService(
+      _snapshotWithMessages(const <AgentMessage>[]),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentOrgPage(service: service),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final scrollable = find.byType(Scrollable).first;
+    final templateChip =
+        find.byKey(const Key('agent_org_task_template_estimate-request'));
+    await tester.scrollUntilVisible(templateChip, 200, scrollable: scrollable);
+    await tester.tap(templateChip);
+    await tester.pump();
+
+    final titleField = tester.widget<TextField>(
+      find.byKey(const Key('agent_org_task_title_field')),
+    );
+    final descriptionField = tester.widget<TextField>(
+      find.byKey(const Key('agent_org_task_description_field')),
+    );
+
+    expect(titleField.controller?.text, 'Prepare estimate response');
+    expect(
+      descriptionField.controller?.text,
+      'Outline scope, pricing assumptions, open questions, and a proposed response plan for the customer.',
+    );
+
+    final submitButton =
+        find.byKey(const Key('agent_org_delegation_submit_button'));
+    await tester.scrollUntilVisible(submitButton, 200, scrollable: scrollable);
+    await tester.tap(submitButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(service.delegatedTasks, hasLength(1));
+    expect(service.delegatedTasks.single['assigneeAgentId'], 'cfo-1');
+    expect(service.delegatedTasks.single['title'], 'Prepare estimate response');
+    expect(
+      service.delegatedTasks.single['description'],
+      'Outline scope, pricing assumptions, open questions, and a proposed response plan for the customer.',
+    );
+    expect(find.text('Prepare estimate response'), findsOneWidget);
   });
 }
