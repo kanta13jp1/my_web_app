@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +7,7 @@ import '../models/note_snapshot.dart';
 import '../services/ai_model_preference_service.dart';
 import '../services/ai_service.dart';
 import '../services/auto_save_service.dart';
+import '../services/note_prompt_library_service.dart';
 import '../services/undo_redo_service.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
@@ -18,6 +19,7 @@ class NoteEditorPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
   final AiModelPreferenceService modelPreferenceService;
+  final NotePromptLibraryService promptLibraryService;
 
   const NoteEditorPage({
     super.key,
@@ -27,6 +29,7 @@ class NoteEditorPage extends StatefulWidget {
     this.supabaseClient,
     this.aiService,
     this.modelPreferenceService = const AiModelPreferenceService(),
+    this.promptLibraryService = const NotePromptLibraryService(),
   });
 
   @override
@@ -134,17 +137,43 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isApplyingSnapshot = false;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
+  List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const List<String> _slashCommandSuggestions = <String>[
     '/help',
     '/improve',
     '/summarize',
+    '/prompt executive-brief',
     '/style concise',
     '/title',
     '/translate en',
     '/favorite',
     '/stamp',
+  ];
+  static final List<NotePromptTemplate> _builtInPromptTemplates =
+      <NotePromptTemplate>[
+    NotePromptTemplate(
+      id: 'executive-brief',
+      title: 'Executive Brief',
+      prompt:
+          'Rewrite the current note as a concise executive brief.\n\nInclude:\n- Executive summary\n- Decisions made\n- Risks or blockers\n- Next steps with owners\n\nContext\nTitle: {{note_title}}\nContent:\n{{note_content}}',
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+    ),
+    NotePromptTemplate(
+      id: 'follow-up-message',
+      title: 'Follow-up Message',
+      prompt:
+          'Turn the current note into a clear follow-up message that can be shared with teammates.\n\nUse this information:\nTitle: {{note_title}}\nContent:\n{{note_content}}\n\nKeep the tone aligned with {{writing_style}}.',
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+    ),
+    NotePromptTemplate(
+      id: 'counterpoint-review',
+      title: 'Counterpoint Review',
+      prompt:
+          'Review the current note like a skeptical partner.\n\nContext\nTitle: {{note_title}}\nContent:\n{{note_content}}\n\nList blind spots, assumptions, and questions that should be answered before acting.',
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+    ),
   ];
 
   @override
@@ -166,6 +195,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _bootstrapEditor() async {
     await _loadPreferredAiModel();
     await _loadAiStylePreference();
+    await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
     }
@@ -360,6 +390,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     });
   }
 
+  Future<void> _loadPromptTemplates() async {
+    final templates = await widget.promptLibraryService.loadTemplates();
+    if (!mounted) {
+      _savedPromptTemplates = templates;
+      return;
+    }
+    setState(() {
+      _savedPromptTemplates = templates;
+    });
+  }
+
   Future<void> _persistAiStylePreference(NoteEditorAiStyle style) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_aiStylePreferenceKey, style.commandValue);
@@ -380,6 +421,285 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (announce) {
       _showMessage('AI style: ${style.label}');
     }
+  }
+
+  List<NotePromptTemplate> get _availablePromptTemplates =>
+      <NotePromptTemplate>[
+        ..._builtInPromptTemplates,
+        ..._savedPromptTemplates,
+      ];
+
+  String _normalizePromptTemplateKey(String raw) {
+    final normalized = raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-{2,}'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    return normalized;
+  }
+
+  String _buildPromptTemplateId(String title) {
+    final base = _normalizePromptTemplateKey(title);
+    if (base.isEmpty) {
+      return DateTime.now().millisecondsSinceEpoch.toString();
+    }
+
+    final existingIds =
+        _savedPromptTemplates.map((template) => template.id).toSet();
+    if (!existingIds.contains(base)) {
+      return base;
+    }
+
+    var suffix = 2;
+    while (existingIds.contains('$base-$suffix')) {
+      suffix++;
+    }
+    return '$base-$suffix';
+  }
+
+  NotePromptTemplate? _findPromptTemplate(String rawQuery) {
+    final normalized = _normalizePromptTemplateKey(rawQuery);
+    if (normalized.isEmpty) {
+      return null;
+    }
+
+    for (final template in _availablePromptTemplates) {
+      if (template.id == normalized) {
+        return template;
+      }
+    }
+
+    for (final template in _availablePromptTemplates) {
+      if (_normalizePromptTemplateKey(template.title) == normalized) {
+        return template;
+      }
+    }
+
+    for (final template in _availablePromptTemplates) {
+      final titleKey = _normalizePromptTemplateKey(template.title);
+      if (titleKey.contains(normalized) || normalized.contains(titleKey)) {
+        return template;
+      }
+    }
+
+    return null;
+  }
+
+  String _resolvePromptTemplateVariables(String prompt) {
+    final today = DateTime.now().toLocal();
+    final noteTitle = _titleController.text.trim();
+    final noteContent = _contentController.text.trim();
+    final replacements = <String, String>{
+      '{{note_title}}': noteTitle.isEmpty ? '(untitled note)' : noteTitle,
+      '{{note_content}}': noteContent.isEmpty ? '(empty note)' : noteContent,
+      '{{writing_style}}': _selectedAiStyle.commandValue,
+      '{{today}}':
+          '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
+      '{{default_model}}': _selectedAiModel ?? 'auto',
+    };
+
+    var resolved = prompt;
+    for (final entry in replacements.entries) {
+      resolved = resolved.replaceAll(entry.key, entry.value);
+    }
+    return resolved.trim();
+  }
+
+  String _buildPromptTemplateRequest(NotePromptTemplate template) {
+    final noteTitle = _titleController.text.trim();
+    final noteContent = _contentController.text.trim();
+    final resolvedTemplate = _resolvePromptTemplateVariables(template.prompt);
+
+    return <String>[
+      'You are running a saved prompt from a Claude-style workbench.',
+      'Template title: ${template.title}',
+      'Selected writing style: ${_selectedAiStyle.commandValue}',
+      'Current note title: ${noteTitle.isEmpty ? '(untitled note)' : noteTitle}',
+      'Current note content:',
+      noteContent.isEmpty ? '(empty note)' : noteContent,
+      'Saved prompt:',
+      resolvedTemplate,
+      'Return only the final result requested by the saved prompt.',
+    ].join('\n\n');
+  }
+
+  Future<void> _runPromptTemplate(NotePromptTemplate template) async {
+    if (_isRunningSlashCommand) {
+      return;
+    }
+
+    final hasNoteContext = _titleController.text.trim().isNotEmpty ||
+        _contentController.text.trim().isNotEmpty;
+    if (!hasNoteContext) {
+      _showMessage(
+        'Add a note title or content before running a saved prompt.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isRunningSlashCommand = true;
+    });
+
+    try {
+      final result = await _aiService.runCustomPrompt(
+        _buildPromptTemplateRequest(template),
+        model: _selectedAiModel,
+        styleName: _selectedAiStyle.commandValue,
+        styleInstruction: _selectedAiStyle.instruction,
+      );
+      _setContentText(result);
+      _showMessage('Prompt applied: ${template.title}');
+    } catch (e) {
+      _showMessage('Prompt failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRunningSlashCommand = false;
+        });
+      } else {
+        _isRunningSlashCommand = false;
+      }
+    }
+  }
+
+  Future<void> _savePromptTemplate(NotePromptTemplate template) async {
+    final nextTemplates = await widget.promptLibraryService.saveTemplate(
+      template,
+    );
+    if (!mounted) {
+      _savedPromptTemplates = nextTemplates;
+      return;
+    }
+    setState(() {
+      _savedPromptTemplates = nextTemplates;
+    });
+    _showMessage('Saved prompt: ${template.title}');
+  }
+
+  Future<void> _deletePromptTemplate(NotePromptTemplate template) async {
+    final nextTemplates = await widget.promptLibraryService.deleteTemplate(
+      template.id,
+    );
+    if (!mounted) {
+      _savedPromptTemplates = nextTemplates;
+      return;
+    }
+    setState(() {
+      _savedPromptTemplates = nextTemplates;
+    });
+    _showMessage('Removed prompt: ${template.title}');
+  }
+
+  Future<void> _showPromptTemplateDialog() async {
+    if (!mounted) {
+      return;
+    }
+
+    final titleController = TextEditingController();
+    final promptController = TextEditingController(
+      text:
+          'Rewrite this note for a new audience.\n\nTitle: {{note_title}}\nContent:\n{{note_content}}',
+    );
+
+    final createdTemplate = await showDialog<NotePromptTemplate>(
+      context: context,
+      builder: (context) {
+        String? errorText;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Save Prompt Template'),
+              content: SizedBox(
+                width: 480,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        key: const Key(
+                          'note_editor_prompt_template_title_field',
+                        ),
+                        controller: titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Template Name',
+                          hintText: 'Board Brief',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key(
+                          'note_editor_prompt_template_prompt_field',
+                        ),
+                        controller: promptController,
+                        minLines: 4,
+                        maxLines: 8,
+                        decoration: const InputDecoration(
+                          labelText: 'Prompt',
+                          hintText:
+                              'Use {{note_title}}, {{note_content}}, {{writing_style}}, {{today}}, or {{default_model}}.',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Variables: {{note_title}}, {{note_content}}, {{writing_style}}, {{today}}, {{default_model}}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      if (errorText != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          errorText!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  key: const Key('note_editor_prompt_template_save_button'),
+                  onPressed: () {
+                    final title = titleController.text.trim();
+                    final prompt = promptController.text.trim();
+                    if (title.isEmpty || prompt.isEmpty) {
+                      setDialogState(() {
+                        errorText = 'Name and prompt are both required.';
+                      });
+                      return;
+                    }
+                    Navigator.of(context).pop(
+                      NotePromptTemplate(
+                        id: _buildPromptTemplateId(title),
+                        title: title,
+                        prompt: prompt,
+                        updatedAt: DateTime.now(),
+                      ),
+                    );
+                  },
+                  child: const Text('Save Prompt'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (createdTemplate == null) {
+      return;
+    }
+
+    await _savePromptTemplate(createdTemplate);
   }
 
   String _formatCommandTimestamp(DateTime value) {
@@ -414,6 +734,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             Text('/improve Improve the current note'),
             SizedBox(height: 8),
             Text('/summarize Summarize the current note'),
+            SizedBox(height: 8),
+            Text('/prompt <name> Run a saved prompt template'),
             SizedBox(height: 8),
             Text('/title Suggest a title from the current note'),
             SizedBox(height: 8),
@@ -491,6 +813,23 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _appendTimestampBlock();
         _slashCommandController.clear();
         _showMessage('繧ｿ繧､繝繧ｹ繧ｿ繝ｳ繝励ｒ霑ｽ蜉縺励∪縺励◆');
+        return;
+      case 'prompt':
+      case 'template':
+        if (arguments.isEmpty) {
+          final available = _availablePromptTemplates
+              .map((template) => template.id)
+              .join(', ');
+          _showMessage('Available prompts: $available');
+          return;
+        }
+        final template = _findPromptTemplate(arguments.join(' '));
+        if (template == null) {
+          _showMessage('Prompt not found. Try /prompt executive-brief');
+          return;
+        }
+        _slashCommandController.clear();
+        await _runPromptTemplate(template);
         return;
       case 'clear':
         _setContentText('');
@@ -791,8 +1130,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         final lastSaved = _autoSaveService.lastSavedTime;
         switch (state) {
           case SaveState.saved:
-            final suffix =
-                lastSaved != null ? '  Last saved ${_formatTime(lastSaved)}' : '';
+            final suffix = lastSaved != null
+                ? '  Last saved ${_formatTime(lastSaved)}'
+                : '';
             return Text(
               'Saved$suffix',
               style: const TextStyle(fontSize: 12, color: Colors.green),
@@ -866,6 +1206,128 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
+  Widget _buildPromptTemplateChip(
+    NotePromptTemplate template, {
+    bool deletable = false,
+  }) {
+    final key = Key('note_editor_prompt_template_chip_${template.id}');
+    if (deletable) {
+      return InputChip(
+        key: key,
+        label: Text(template.title),
+        onPressed:
+            _isRunningSlashCommand ? null : () => _runPromptTemplate(template),
+        onDeleted: _isRunningSlashCommand
+            ? null
+            : () => _deletePromptTemplate(template),
+      );
+    }
+    return ActionChip(
+      key: key,
+      label: Text(template.title),
+      onPressed:
+          _isRunningSlashCommand ? null : () => _runPromptTemplate(template),
+    );
+  }
+
+  Widget _buildPromptWorkbenchSection(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      key: const Key('note_editor_prompt_library_section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          leading: Icon(
+            Icons.auto_fix_high_rounded,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
+          title: Text(
+            'Claude Workbench-style prompts',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Text(
+            'Save prompts you want to test repeatedly, then rerun them against the current note.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('note_editor_prompt_library_add_button'),
+                onPressed:
+                    _isRunningSlashCommand ? null : _showPromptTemplateDialog,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('New Prompt'),
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 180),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Built-in prompts',
+                      style: theme.textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _builtInPromptTemplates
+                          .map(_buildPromptTemplateChip)
+                          .toList(growable: false),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Saved prompts',
+                      style: theme.textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    if (_savedPromptTemplates.isEmpty)
+                      Text(
+                        'No saved prompts yet. Create one with variables like {{note_content}}.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _savedPromptTemplates
+                            .map(
+                              (template) => _buildPromptTemplateChip(
+                                template,
+                                deletable: true,
+                              ),
+                            )
+                            .toList(growable: false),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSlashCommandBar(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
@@ -880,99 +1342,107 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 240),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.terminal_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
+              Row(
+                children: [
+                  Icon(
+                    Icons.terminal_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Claude Code-style slash commands',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Claude Code-style slash commands',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('note_editor_slash_command_field'),
+                controller: _slashCommandController,
+                enabled: !_isRunningSlashCommand,
+                onSubmitted: (_) => _runSlashCommand(),
+                decoration: InputDecoration(
+                  hintText: 'Try /summarize or /favorite',
+                  prefixIcon: const Icon(Icons.code_rounded),
+                  suffixIcon: _isRunningSlashCommand
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          key:
+                              const Key('note_editor_slash_command_run_button'),
+                          onPressed: _runSlashCommand,
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          tooltip: 'Run command',
+                        ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Press Enter or use the play button to run a command.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_selectedAiModel != null && _selectedAiModel!.isNotEmpty) ...[
+                _buildPreferredModelChip(),
+                const SizedBox(height: 8),
+              ],
+              Text(
+                'Claude-style writing mode',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: NoteEditorAiStyle.values
+                    .map(_buildAiStyleChip)
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _selectedAiStyle.helperText,
+                key: const Key('note_editor_ai_style_helper'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildPromptWorkbenchSection(context),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _slashCommandSuggestions
+                    .map(_buildSlashCommandChip)
+                    .toList(growable: false),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          TextField(
-            key: const Key('note_editor_slash_command_field'),
-            controller: _slashCommandController,
-            enabled: !_isRunningSlashCommand,
-            onSubmitted: (_) => _runSlashCommand(),
-            decoration: InputDecoration(
-              hintText: 'Try /summarize or /favorite',
-              prefixIcon: const Icon(Icons.code_rounded),
-              suffixIcon: _isRunningSlashCommand
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : IconButton(
-                      key: const Key('note_editor_slash_command_run_button'),
-                      onPressed: _runSlashCommand,
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      tooltip: 'Run command',
-                    ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Press Enter or use the play button to run a command.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (_selectedAiModel != null && _selectedAiModel!.isNotEmpty) ...[
-            _buildPreferredModelChip(),
-            const SizedBox(height: 8),
-          ],
-          Text(
-            'Claude-style writing mode',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: NoteEditorAiStyle.values
-                .map(_buildAiStyleChip)
-                .toList(growable: false),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _selectedAiStyle.helperText,
-            key: const Key('note_editor_ai_style_helper'),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _slashCommandSuggestions
-                .map(_buildSlashCommandChip)
-                .toList(growable: false),
-          ),
-        ],
+        ),
       ),
     );
   }

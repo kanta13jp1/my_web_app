@@ -194,12 +194,14 @@ serve(async (req) => {
         }
         
         // --- 4. Generic Actions ---
-        if (['improve', 'summarize', 'expand', 'translate', 'suggest_title'].includes(action)) {
+        if (['improve', 'summarize', 'expand', 'translate', 'suggest_title', 'custom_prompt'].includes(action)) {
              const normalizedStyleInstruction = requestData.styleInstruction?.trim();
              const stylePrompt = normalizedStyleInstruction
                 ? `\nStyle preset: ${requestData.styleName || 'custom'}\nStyle instruction: ${normalizedStyleInstruction}\nFollow this style while completing the action.`
                 : '';
-             const prompt = `Action: ${action}${stylePrompt}\nContent: ${requestData.content}`;
+             const prompt = action === 'custom_prompt'
+                ? `Action: custom_prompt${stylePrompt}\nSaved prompt:\n${requestData.content}`
+                : `Action: ${action}${stylePrompt}\nContent: ${requestData.content}`;
              const result = await tryAIChain(prompt);
              return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }

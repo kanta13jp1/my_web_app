@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
@@ -83,15 +83,16 @@ class AIService {
           }
 
           final waitTimeMs = e.retryAfter != null
-              ? (int.tryParse(e.retryAfter!) ?? 0) * 1000 : delayMs + Random().nextInt(500);
+              ? (int.tryParse(e.retryAfter!) ?? 0) * 1000
+              : delayMs + Random().nextInt(500);
           AppLogger.info(
             'Rate limit hit for $operationName. Retrying in ${waitTimeMs}ms (attempt ${retryCount + 1}/$_maxRetries)',
           );
 
           await Future.delayed(Duration(milliseconds: waitTimeMs));
           retryCount++;
-          delayMs =
-              (delayMs * 2).clamp(_initialRetryDelayMs, 30000); continue;
+          delayMs = (delayMs * 2).clamp(_initialRetryDelayMs, 30000);
+          continue;
         }
 
         AppLogger.error(
@@ -701,8 +702,12 @@ $originalPrompt
   }) {
     final buffer = StringBuffer()
       ..writeln('You are the MAGI synthesis node.')
-      ..writeln('Review the opinions from the other nodes, compare tradeoffs, and merge them into one final answer.')
-      ..writeln('Return exactly one JSON object with the merged recommendation and key reasoning.')
+      ..writeln(
+        'Review the opinions from the other nodes, compare tradeoffs, and merge them into one final answer.',
+      )
+      ..writeln(
+        'Return exactly one JSON object with the merged recommendation and key reasoning.',
+      )
       ..writeln('Keep the answer concise and do not use Markdown code fences.')
       ..writeln()
       ..writeln('[ORIGINAL_PROMPT]')
@@ -748,21 +753,24 @@ $originalPrompt
         _MagiNodeProfile(
           nodeName: 'MELCHIOR',
           viewpoint: '隲也炊繝ｻ謨ｴ蜷域ｧ',
-          instruction: 'Provide logical, evidence-based analysis with clear tradeoffs and practical recommendations.',
+          instruction:
+              'Provide logical, evidence-based analysis with clear tradeoffs and practical recommendations.',
           provider: _MagiProvider.openai,
           defaultModel: _defaultOpenAIModel,
         ),
         _MagiNodeProfile(
           nodeName: 'BALTHASAR',
           viewpoint: '螳溷漁繝ｻ螳溯｡悟庄閭ｽ諤ｧ',
-          instruction: 'Focus on emotional nuance, empathy, and how the response will feel for the user.',
+          instruction:
+              'Focus on emotional nuance, empathy, and how the response will feel for the user.',
           provider: _MagiProvider.anthropic,
           defaultModel: _defaultAnthropicModel,
         ),
         _MagiNodeProfile(
           nodeName: 'CASPER',
           viewpoint: '邯咏ｶ壽ｧ繝ｻ蠢・炊',
-          instruction: 'Look for blind spots, edge cases, and strategic risks before making a recommendation.',
+          instruction:
+              'Look for blind spots, edge cases, and strategic risks before making a recommendation.',
           provider: _MagiProvider.gemini,
           defaultModel: '',
         ),
@@ -949,6 +957,32 @@ Generate a mind map for the following topic: **"{topic}"**
         return _parseTitles(data['result'] as String);
       },
       operationName: 'suggestTitles',
+    );
+  }
+
+  Future<String> runCustomPrompt(
+    String prompt, {
+    String? model,
+    String? styleName,
+    String? styleInstruction,
+  }) async {
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          {
+            'action': 'custom_prompt',
+            'content': prompt,
+            if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
+            ..._stylePayload(
+              styleName: styleName,
+              styleInstruction: styleInstruction,
+            ),
+          },
+        );
+        return data['result'] as String;
+      },
+      operationName: 'runCustomPrompt',
     );
   }
 

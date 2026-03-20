@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
@@ -16,6 +18,8 @@ class _FakeNoteEditorAIService extends AIService {
   String? lastSummarizeStyleName;
   String? lastSummarizeModel;
   String? lastSuggestTitlesModel;
+  String? lastCustomPrompt;
+  String? lastCustomPromptModel;
 
   @override
   Future<String> summarizeText(
@@ -36,6 +40,18 @@ class _FakeNoteEditorAIService extends AIService {
   }) async {
     lastSuggestTitlesModel = model;
     return <String>['AI generated note title'];
+  }
+
+  @override
+  Future<String> runCustomPrompt(
+    String prompt, {
+    String? model,
+    String? styleName,
+    String? styleInstruction,
+  }) async {
+    lastCustomPrompt = prompt;
+    lastCustomPromptModel = model;
+    return 'custom[$model]: ${prompt.split('\n').first}';
   }
 }
 
@@ -82,7 +98,8 @@ void main() {
     expect(find.byKey(const Key('note_editor_title_field')), findsOneWidget);
   });
 
-  testWidgets('NoteEditorPage slash commands update favorite, style, and title', (
+  testWidgets('NoteEditorPage slash commands update favorite, style, and title',
+      (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({
@@ -107,9 +124,15 @@ void main() {
     final commandField = find.byKey(
       const Key('note_editor_slash_command_field'),
     );
-    final runButton = find.byKey(
-      const Key('note_editor_slash_command_run_button'),
-    );
+
+    Future<void> submitSlashCommand(String command) async {
+      await tester.ensureVisible(commandField);
+      await tester.showKeyboard(commandField);
+      await tester.enterText(commandField, command);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.pump();
+    }
 
     expect(
       find.byKey(const Key('note_editor_slash_command_bar')),
@@ -123,18 +146,11 @@ void main() {
     expect(find.text('Default model: gpt-4o-mini'), findsOneWidget);
     expect(find.byIcon(Icons.star_border), findsOneWidget);
 
-    await tester.enterText(commandField, '/favorite');
-    await tester.ensureVisible(runButton);
-    await tester.tap(runButton);
-    await tester.pump();
+    await submitSlashCommand('/favorite');
 
     expect(find.byIcon(Icons.star), findsOneWidget);
 
-    await tester.enterText(commandField, '/style concise');
-    await tester.ensureVisible(runButton);
-    await tester.tap(runButton);
-    await tester.pump();
-    await tester.pump();
+    await submitSlashCommand('/style concise');
 
     final conciseChip = tester.widget<ChoiceChip>(
       find.byKey(const Key('note_editor_ai_style_concise')),
@@ -142,11 +158,7 @@ void main() {
     expect(conciseChip.selected, isTrue);
     expect(find.text('Short, direct, and easy to scan.'), findsOneWidget);
 
-    await tester.enterText(commandField, '/summarize');
-    await tester.ensureVisible(runButton);
-    await tester.tap(runButton);
-    await tester.pump();
-    await tester.pump();
+    await submitSlashCommand('/summarize');
 
     final contentField = tester.widget<TextField>(
       find.byKey(const Key('note_editor_content_field')),
@@ -158,16 +170,96 @@ void main() {
     expect(aiService.lastSummarizeModel, 'gpt-4o-mini');
     expect(aiService.lastSummarizeStyleName, 'concise');
 
-    await tester.enterText(commandField, '/title');
-    await tester.ensureVisible(runButton);
-    await tester.tap(runButton);
-    await tester.pump();
-    await tester.pump();
+    await submitSlashCommand('/title');
 
     final titleField = tester.widget<TextField>(
       find.byKey(const Key('note_editor_title_field')),
     );
     expect(titleField.controller?.text, 'AI generated note title');
     expect(aiService.lastSuggestTitlesModel, 'gpt-4o-mini');
+  });
+
+  testWidgets('NoteEditorPage prompt library saves and runs a custom prompt', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'preferred_ai_model': 'gpt-4o-mini',
+      'note_prompt_library_v1': jsonEncode([
+        {
+          'id': 'board-brief',
+          'title': 'Board Brief',
+          'prompt':
+              'Turn this note into a board-ready brief.\nTitle: {{note_title}}\nContent: {{note_content}}\nStyle: {{writing_style}}',
+          'updatedAt': '2026-03-20T09:00:00.000',
+        },
+      ]),
+    });
+    final aiService = _FakeNoteEditorAIService();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => ThemeService(),
+        child: MaterialApp(
+          home: NoteEditorPage(
+            initialTitle: 'Q1 Planning',
+            initialContent: 'Revenue growth notes',
+            supabaseClient: _FakeEditorSupabaseClient(),
+            aiService: aiService,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('note_editor_prompt_library_section')),
+      findsOneWidget,
+    );
+    final commandField = find.byKey(
+      const Key('note_editor_slash_command_field'),
+    );
+    final libraryTile = find.descendant(
+      of: find.byKey(const Key('note_editor_prompt_library_section')),
+      matching: find.byType(ListTile),
+    );
+
+    Future<void> submitSlashCommand(String command) async {
+      await tester.ensureVisible(commandField);
+      await tester.showKeyboard(commandField);
+      await tester.enterText(commandField, command);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.pump();
+    }
+
+    await tester.ensureVisible(libraryTile);
+    await tester.tap(libraryTile);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('note_editor_prompt_template_chip_board-brief')),
+      findsOneWidget,
+    );
+
+    await submitSlashCommand('/prompt board-brief');
+
+    final contentField = tester.widget<TextField>(
+      find.byKey(const Key('note_editor_content_field')),
+    );
+    expect(
+      contentField.controller?.text,
+      'custom[gpt-4o-mini]: You are running a saved prompt from a Claude-style workbench.',
+    );
+    expect(aiService.lastCustomPromptModel, 'gpt-4o-mini');
+    expect(aiService.lastCustomPrompt, contains('Template title: Board Brief'));
+    expect(
+      aiService.lastCustomPrompt,
+      contains('Current note title: Q1 Planning'),
+    );
+    expect(aiService.lastCustomPrompt, contains('Revenue growth notes'));
+    expect(
+      aiService.lastCustomPrompt,
+      contains('Style: normal'),
+    );
   });
 }
