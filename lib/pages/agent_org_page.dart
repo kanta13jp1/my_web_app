@@ -482,8 +482,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
 
   void _replaceMessageInSnapshot(AgentMessage updatedMessage) {
     final nextMessages = _snapshot.recentMessages
-        .map((message) =>
-            message.id == updatedMessage.id ? updatedMessage : message)
+        .map(
+          (message) =>
+              message.id == updatedMessage.id ? updatedMessage : message,
+        )
         .toList();
     setState(() {
       _snapshot = AgentOrgSnapshot(

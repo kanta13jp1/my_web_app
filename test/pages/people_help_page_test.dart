@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/people_help_page.dart';
 import 'package:my_web_app/services/ai_service.dart';
+import 'package:my_web_app/services/people_leave_request_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,6 +65,9 @@ void main() {
 
   testWidgets('PeopleHelpPage renders quick actions and opens onboarding memo',
       (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => ThemeService(),
@@ -81,6 +85,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('people_help_quick_stats')),
+      200,
+      scrollable: scrollable,
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('people_help_leave_requests_section')),
+      200,
+      scrollable: scrollable,
+    );
+
     expect(find.byKey(const Key('people_help_page_scaffold')), findsOneWidget);
     expect(find.byKey(const Key('people_help_hero_card')), findsOneWidget);
     expect(find.byKey(const Key('people_help_quick_notes')), findsOneWidget);
@@ -90,6 +106,10 @@ void main() {
     );
     expect(find.byKey(const Key('people_help_quick_rewards')), findsOneWidget);
     expect(find.byKey(const Key('people_help_quick_stats')), findsOneWidget);
+    expect(
+      find.byKey(const Key('people_help_leave_requests_section')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('people_help_quick_onboarding')));
     await tester.pumpAndSettle();
@@ -261,5 +281,74 @@ void main() {
       aiService.lastCustomPrompt,
       contains('Style: normal'),
     );
+  });
+
+  testWidgets('PeopleHelpPage creates and approves a leave request', (
+    WidgetTester tester,
+  ) async {
+    const leaveRequestService = PeopleLeaveRequestService();
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => ThemeService(),
+        child: const MaterialApp(
+          home: PeopleHelpPage(
+            leaveRequestService: leaveRequestService,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('people_help_leave_requests_section')),
+      200,
+      scrollable: scrollable,
+    );
+
+    expect(
+      find.byKey(const Key('people_help_leave_requests_empty')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('people_help_leave_request_add_button')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('people_help_leave_request_employee_field')),
+      'Aiko Tanaka',
+    );
+    await tester.enterText(
+      find.byKey(const Key('people_help_leave_request_start_field')),
+      '2026-03-25',
+    );
+    await tester.enterText(
+      find.byKey(const Key('people_help_leave_request_end_field')),
+      '2026-03-26',
+    );
+    await tester.enterText(
+      find.byKey(const Key('people_help_leave_request_reason_field')),
+      'Family trip',
+    );
+
+    await tester.tap(
+      find.byKey(const Key('people_help_leave_request_submit_button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aiko Tanaka'), findsOneWidget);
+    expect(find.text('Paid leave'), findsOneWidget);
+    expect(find.text('2026-03-25 to 2026-03-26'), findsOneWidget);
+    expect(find.text('pending'), findsOneWidget);
+
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('approved'), findsOneWidget);
   });
 }
