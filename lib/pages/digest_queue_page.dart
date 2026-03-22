@@ -64,7 +64,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedDomain,
+                      initialValue: selectedDomain,
                       decoration: const InputDecoration(
                         labelText: '領域',
                       ),

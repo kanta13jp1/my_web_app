@@ -175,7 +175,7 @@ void main() {
   });
 
   group('EmergencyMeetingBiReportService', () {
-    final metrics = EmergencyMeetingPdcaMetrics(
+    const metrics = EmergencyMeetingPdcaMetrics(
       continuationCompletedCount: 1,
       continuationTotalCount: 4,
       continuationCompletionRatePercent: 25,
@@ -197,10 +197,10 @@ void main() {
       deterrenceLockEnabledCount: 0,
       deterrenceStrictModeBlockCount: 1,
       deterrenceLockCoveragePercent: 0,
-      activeDeterrenceLocks: const <String>[],
+      activeDeterrenceLocks: <String>[],
     );
 
-    final context = EmergencyMeetingReportContext(
+    const context = EmergencyMeetingReportContext(
       userId: 'user-42',
       noteCount: 12,
       subscriptionCount: 4,

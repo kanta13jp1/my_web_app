@@ -542,8 +542,11 @@ class _HomePageState extends State<HomePage> {
         if (category == null) continue;
 
         final dateKey = DateFormat('yyyy-MM-dd').format(occurredAt);
-        wasteByDate.update(dateKey, (value) => value + amount,
-            ifAbsent: () => amount);
+        wasteByDate.update(
+          dateKey,
+          (value) => value + amount,
+          ifAbsent: () => amount,
+        );
         wasteBreakdown.update(
           category,
           (value) => value + amount,
@@ -3853,7 +3856,7 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.cyan,
                                 () => _nav(context, const DigestQueuePage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '蜈医↓蠢・亥ｰ守ｷ壹ｒ螳御ｺ・＠縺ｦ縺上□縺輔＞縲・,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                             ]),
                             const SizedBox(height: 24),

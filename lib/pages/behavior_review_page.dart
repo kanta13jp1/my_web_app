@@ -257,12 +257,12 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
   }
 
   Widget _buildIntroCard() {
-    return Card(
+    return const Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
               'あとで後悔しないための振り返り',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
