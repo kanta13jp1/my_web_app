@@ -9,6 +9,7 @@ import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   duplicate,
+  delete,
 }
 
 class _LocalDraftEntry {
@@ -300,6 +301,67 @@ class _NoteListPageState extends State<NoteListPage> {
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('お気に入りの更新に失敗しました: $e')),
+      );
+    }
+  }
+
+  Future<bool> _confirmDeleteNote(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final title = _noteTitle(note);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('メモを削除'),
+        content: Text('「$title」を削除しますか？\n一覧から非表示になり、下書きも削除されます。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
+  Future<void> _deleteNote(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final noteId = _noteId(note);
+    if (noteId.isEmpty) return;
+
+    final confirmed = await _confirmDeleteNote(context, note);
+    if (!confirmed || !mounted || !context.mounted) return;
+
+    final deletedTitle = _noteTitle(note);
+    final now = DateTime.now().toIso8601String();
+
+    try {
+      await _supabase.from('notes').update({
+        'is_archived': true,
+        'archived_at': now,
+        'updated_at': now,
+      }).eq('id', noteId);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('$_draftKeyPrefix$noteId');
+
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('「$deletedTitle」を削除しました')),
+      );
+      await _fetchNotes();
+    } catch (e) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('メモの削除に失敗しました: $e')),
       );
     }
   }
@@ -784,6 +846,8 @@ class _NoteListPageState extends State<NoteListPage> {
                 switch (action) {
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
+                  case _NoteCardAction.delete:
+                    _deleteNote(context, note);
                 }
               },
               itemBuilder: (context) => const [
@@ -794,6 +858,16 @@ class _NoteListPageState extends State<NoteListPage> {
                       Icon(Icons.copy_outlined, size: 18),
                       SizedBox(width: 8),
                       Text('複製'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<_NoteCardAction>(
+                  value: _NoteCardAction.delete,
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 18),
+                      SizedBox(width: 8),
+                      Text('削除'),
                     ],
                   ),
                 ),

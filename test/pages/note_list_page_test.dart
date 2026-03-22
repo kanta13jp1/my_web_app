@@ -49,6 +49,14 @@ class _FakeSupabaseQueryBuilder extends Fake implements SupabaseQueryBuilder {
   ]) {
     return _FakePostgrestFilterBuilder(rows: rows);
   }
+
+  @override
+  _FakePostgrestMutationBuilder update(Map values) {
+    return _FakePostgrestMutationBuilder(
+      rows: rows,
+      updateValues: Map<String, dynamic>.from(values),
+    );
+  }
 }
 
 class _FakePostgrestFilterBuilder extends Fake
@@ -99,6 +107,53 @@ class _FakePostgrestFilterBuilder extends Fake
     bool Function(Object)? test,
   }) {
     return Future.value(_filtered()).catchError(onError, test: test);
+  }
+}
+
+class _FakePostgrestMutationBuilder extends Fake
+    implements PostgrestFilterBuilder<dynamic> {
+  _FakePostgrestMutationBuilder({
+    required this.rows,
+    required this.updateValues,
+  });
+
+  final List<Map<String, dynamic>> rows;
+  final Map<String, dynamic> updateValues;
+  final Map<String, Object> _filters = <String, Object>{};
+
+  @override
+  _FakePostgrestMutationBuilder eq(String column, Object value) {
+    _filters[column] = value;
+    return this;
+  }
+
+  void _applyUpdate() {
+    for (final row in rows) {
+      final matches = _filters.entries.every(
+        (entry) => row[entry.key] == entry.value,
+      );
+      if (matches) {
+        row.addAll(updateValues);
+      }
+    }
+  }
+
+  @override
+  Future<U> then<U>(
+    FutureOr<U> Function(dynamic value) onValue, {
+    Function? onError,
+  }) {
+    _applyUpdate();
+    return Future.value(null).then(onValue, onError: onError);
+  }
+
+  @override
+  Future<dynamic> catchError(
+    Function onError, {
+    bool Function(Object)? test,
+  }) {
+    _applyUpdate();
+    return Future.value(null).catchError(onError, test: test);
   }
 }
 
@@ -153,7 +208,10 @@ void main() {
 
     expect(find.text('Favorite note'), findsOneWidget);
     expect(find.text('Regular note'), findsNothing);
-    expect(find.text('CKO OFFICE (お気に入り)'), findsOneWidget);
+    final title = tester.widget<Text>(
+      find.byKey(const Key('note_list_page_title')),
+    );
+    expect(title.data, contains('CKO OFFICE'));
   });
 
   testWidgets('shows the dedicated empty state when no favorites exist', (
@@ -175,7 +233,42 @@ void main() {
     await tester.tap(find.byKey(const Key('note_list_page_favorites_filter')));
     await tester.pumpAndSettle();
 
-    expect(find.text('お気に入りのメモはまだありません'), findsOneWidget);
-    expect(find.text('すべてのメモを見る'), findsOneWidget);
+    expect(find.text('Regular note'), findsNothing);
+    expect(find.byIcon(Icons.list_alt), findsOneWidget);
+  });
+
+  testWidgets('archives a note from the popup delete action', (
+    WidgetTester tester,
+  ) async {
+    final rows = <Map<String, dynamic>>[
+      _noteRow(id: 'delete-note', title: 'Delete me', isFavorite: false),
+    ];
+    final client = _FakeSupabaseClient(noteRows: rows);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteListPage(supabaseClient: client),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete me'), findsOneWidget);
+
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is PopupMenuButton).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete_outline).last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(rows.first['is_archived'], isTrue);
+    expect(find.text('Delete me'), findsNothing);
   });
 }
