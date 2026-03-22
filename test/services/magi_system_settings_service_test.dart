@@ -8,7 +8,7 @@ void main() {
   });
 
   test('loads defaults and builds ai-assistant payload', () async {
-    final service = MagiSystemSettingsService();
+    const service = MagiSystemSettingsService();
 
     final settings = await service.loadSettings();
     final payload = await service.buildAiAssistantPayload(
@@ -29,7 +29,7 @@ void main() {
   });
 
   test('persists enabled state and node model overrides', () async {
-    final service = MagiSystemSettingsService();
+    const service = MagiSystemSettingsService();
 
     await service.saveEnabled(false);
     await service.saveNodeModel(MagiNodeRole.melchior, 'gpt-5.4');

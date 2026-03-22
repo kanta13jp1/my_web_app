@@ -587,12 +587,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtLockdownLoadedForDebt = remainingDebt;
       });
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _isLoadingDebtLockdown = false;
+        });
       }
-      setState(() {
-        _isLoadingDebtLockdown = false;
-      });
     }
   }
 

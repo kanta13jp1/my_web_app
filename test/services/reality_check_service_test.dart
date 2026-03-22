@@ -8,7 +8,7 @@ void main() {
   });
 
   test('addEntry stores entry and updates today count and streak', () async {
-    final service = RealityCheckService();
+    const service = RealityCheckService();
 
     var result = await service.addEntry(
       category: '仕事と金',

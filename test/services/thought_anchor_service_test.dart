@@ -8,7 +8,7 @@ void main() {
   });
 
   test('completeSession stores records and updates daily stats', () async {
-    final service = ThoughtAnchorService();
+    const service = ThoughtAnchorService();
 
     var result = await service.completeSession(
       anchorText: '会議で伝える論点を3つ整理する',
