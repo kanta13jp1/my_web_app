@@ -131,63 +131,79 @@ serve(async (req) => {
 
         // --- 3. Board Meeting ---
         if (action === 'hold_board_meeting') {
-            // 元のプロンプト（コンテキスト）を取得
             const contextFromClient = requestData.content;
-
-            // AIに対する指示とJSON出力形式を定義
             const systemPrompt = `
-あなたは「自分株式会社」の経営シミュレーターです。
-受け取った【現状データ】と【発言ルール】に厳密に従って、各役員のロールプレイを実行し、会議を進行してください。
+あなたは「自分株式会社」の緊急役員会議 BI レポート生成システムです。
+雑談ではなく、受け取った現状データだけを根拠に、4名の役員が短く具体的な分析を返してください。
 
-【出力形式】
-以下のJSON形式のみで回答してください。コードブロックや他のテキストは含めないでください。
+必須ルール:
+- 数字が渡されている項目は、できるだけ具体的に引用する
+- 不明な数字は推測しない
+- 各発言は「現状の数字 -> 問題解釈 -> 次の一手」の順で 2〜4 文にする
+- 抽象論や精神論だけで終わらせない
+- CFO はサブスク・ポイント・固定費・投資対効果を見る
+- CKO はノート・継続実行・深い作業・知識の実行率を見る
+- CHRO はストリーク・禁欲・回復行動・習慣崩れの兆候を見る
+- CEO は全体を統合し、48時間以内の具体的な実行判断を下す
 
+以下の JSON だけを返してください。コードブロックや前置きは禁止です。
 {
   "messages": [
     {
-      "speakerName": "CFO",
+      "speaker_name": "AI CFO",
       "role": "CFO",
-      "content": "CFOとしての分析報告です..."
+      "content": "CFO としての分析..."
     },
     {
-      "speakerName": "CKO",
+      "speaker_name": "AI CKO",
       "role": "CKO",
-      "content": "CKOとしての分析報告です..."
+      "content": "CKO としての分析..."
     },
     {
-      "speakerName": "CHRO",
+      "speaker_name": "AI CHRO",
       "role": "CHRO",
-      "content": "CHROとしての分析報告です..."
+      "content": "CHRO としての分析..."
     },
     {
-      "speakerName": "CSO",
-      "role": "CSO",
-      "content": "CSOとしての分析報告です..."
+      "speaker_name": "AI CEO",
+      "role": "CEO",
+      "content": "CEO としての統合判断..."
     }
   ],
-  "conclusion": "CSOとして、CEOが今週末に実行すべき具体的な行動計画です..."
+  "conclusion": "CEO が今すぐ実行すべき具体策..."
 }
 `;
-            
-            // 指示とクライアントからのコンテキストを結合
-            const finalPrompt = `${systemPrompt}\n\n${contextFromClient}`;
-            
-            const resultStr = await tryAIChain(finalPrompt);
 
-            // 結果からJSONを抽出
-            // AIが ```json ... ``` のようにコードブロックを付けてくる場合に対応
+            const finalPrompt = `${systemPrompt}\n\n[CURRENT BOARD CONTEXT]\n${contextFromClient}`;
+            const resultStr = await tryAIChain(finalPrompt);
             const match = resultStr.match(/\{[\s\S]*\}/);
             if (!match) {
                 throw new Error("AI response did not contain valid JSON.");
             }
             const cleanJson = match[0];
-
             const result = JSON.parse(cleanJson);
-
-            // フロントエンドのモデル `BoardMeetingLog` と構造を合わせる
+            const rawMessages = Array.isArray(result.messages) ? result.messages : [];
+            const normalizedMessages = rawMessages
+                .map((item: Record<string, unknown>) => {
+                    const role = typeof item.role === 'string' ? item.role : 'CEO';
+                    const speakerName =
+                        typeof item.speaker_name === 'string'
+                            ? item.speaker_name
+                            : typeof item.speakerName === 'string'
+                                ? item.speakerName
+                                : `AI ${role}`;
+                    const content = typeof item.content === 'string' ? item.content.trim() : '';
+                    if (!content) return null;
+                    return {
+                        speaker_name: speakerName,
+                        role,
+                        content,
+                    };
+                })
+                .filter(Boolean);
             const formattedResult = {
-                messages: result.messages,
-                conclusion: result.conclusion,
+                messages: normalizedMessages,
+                conclusion: typeof result.conclusion === 'string' ? result.conclusion.trim() : '',
             };
 
             return new Response(JSON.stringify({ success: true, result: formattedResult }), { headers: corsHeaders });
@@ -222,7 +238,7 @@ serve(async (req) => {
 function inferProvider(modelName: string): string {
     if (modelName.startsWith('gpt')) return 'openai';
     if (modelName.startsWith('claude')) return 'anthropic';
-    if (modelName.startsWith('gemini')) return 'gemini';
+    if (modelName.startsWith('gemini') || modelName.startsWith('gemma')) return 'gemini';
     return 'openai';
 }
 

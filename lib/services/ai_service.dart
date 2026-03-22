@@ -987,6 +987,35 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 
   /// 繧ｿ繧､繝医Ν譁・ｭ怜・繧偵Μ繧ｹ繝医↓隗｣譫舌☆繧九・繝ｫ繝代・
+  Future<Map<String, dynamic>> holdBoardMeeting({
+    required String context,
+    String? model,
+  }) async {
+    return await _retryWithBackoff(
+      () async {
+        final data = await _invokeFunction(
+          'ai-assistant',
+          <String, dynamic>{
+            'action': 'hold_board_meeting',
+            'content': context,
+            if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
+          },
+        );
+        final result = data['result'];
+        if (result is Map<String, dynamic>) {
+          return result;
+        }
+        if (result is Map) {
+          return Map<String, dynamic>.from(result);
+        }
+        throw AIServiceException(
+          'Board meeting response was not a JSON object.',
+        );
+      },
+      operationName: 'holdBoardMeeting',
+    );
+  }
+
   List<String> _parseTitles(String result) {
     return result
         .split('\n')

@@ -31,6 +31,8 @@ class EmergencyMeetingPage extends StatefulWidget {
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   final ScrollController _scrollController = ScrollController();
   final AgentOrgService _agentOrgService = AgentOrgService();
+  final EmergencyMeetingBiReportService _meetingReportService =
+      EmergencyMeetingBiReportService();
   BoardMeetingLog? _currentLog;
   bool _isLoading = false;
   String _loadingStatus = '';
@@ -200,6 +202,14 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   @override
   void initState() {
     super.initState();
+    assert(_defaultPromptInstructions.isNotEmpty);
+    assert(_focusLabel(MeetingFocus.balanced).isNotEmpty);
+    assert(_focusShortLabel(MeetingFocus.balanced).isNotEmpty);
+    assert(_focusInstruction(MeetingFocus.balanced).isNotEmpty);
+    assert(() {
+      _conveneBoard;
+      return true;
+    }());
     _loadSettings(); // Changed from _fetchModels
     _loadPdcaState();
   }
@@ -626,6 +636,93 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   DateTime? _toDateTime(dynamic value) {
     if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
     return null;
+  }
+
+  void _applyNextMeetingMetrics(Map<String, dynamic> nextMetrics) {
+    _abstinenceViolationCount = _toInt(
+      nextMetrics['abstinence_violation_count'],
+      fallback: _abstinenceViolationCount,
+    );
+    _abstinenceNoViolationDays = _toInt(
+      nextMetrics['abstinence_no_violation_days'],
+      fallback: _abstinenceNoViolationDays,
+    );
+    _lastContinuationCompletionRate = _toInt(
+      nextMetrics['continuation_completion_rate_percent'],
+      fallback: _lastContinuationCompletionRate,
+    );
+    _continuationQuickStartCount = _toInt(
+      nextMetrics['continuation_quick_start_count'],
+      fallback: _continuationQuickStartCount,
+    );
+    _continuationTimeBlockReservedCount = _toInt(
+      nextMetrics['continuation_time_block_reserved_count'],
+      fallback: _continuationTimeBlockReservedCount,
+    );
+    _continuationProgressLogCount = _toInt(
+      nextMetrics['continuation_progress_log_count'],
+      fallback: _continuationProgressLogCount,
+    );
+    _dailyReminderEnabled = _toBool(
+      nextMetrics['reminder_enabled'],
+      fallback: _dailyReminderEnabled,
+    );
+
+    final parsedLocks = _extractStringList(nextMetrics['active_deterrence_locks']);
+    if (nextMetrics.containsKey('active_deterrence_locks')) {
+      final normalizedLocks = parsedLocks.map((item) => item.toLowerCase()).toList();
+      _lockImpulsePurchase = normalizedLocks.any(
+        (item) =>
+            item.contains('impulse') ||
+            item.contains('purchase') ||
+            item.contains('買'),
+      );
+      _lockNewProjects = normalizedLocks.any(
+        (item) => item.contains('project') || item.contains('新規'),
+      );
+      _lockSubscriptionAdditions = normalizedLocks.any(
+        (item) =>
+            item.contains('subscription') ||
+            item.contains('subscr') ||
+            item.contains('サブ'),
+      );
+    }
+
+    _deepWorkSessionCount = _toInt(
+      nextMetrics['deep_work_session_count'],
+      fallback: _deepWorkSessionCount,
+    );
+    _weeklyPriorityReviewCount = _toInt(
+      nextMetrics['weekly_priority_review_count'],
+      fallback: _weeklyPriorityReviewCount,
+    );
+    _accountabilityShareCount = _toInt(
+      nextMetrics['accountability_share_count'],
+      fallback: _accountabilityShareCount,
+    );
+    _abstinenceRecoveryActionCount = _toInt(
+      nextMetrics['abstinence_recovery_action_count'],
+      fallback: _abstinenceRecoveryActionCount,
+    );
+    _abstinenceRecoveredWithin10mCount = _toInt(
+      nextMetrics['abstinence_recovered_within_10m_count'],
+      fallback: _abstinenceRecoveredWithin10mCount,
+    );
+    _abstinenceRecoveryWindowMissedCount = _toInt(
+      nextMetrics['abstinence_recovery_window_missed_count'],
+      fallback: _abstinenceRecoveryWindowMissedCount,
+    );
+    _deterrenceStrictModeBlockCount = _toInt(
+      nextMetrics['deterrence_strict_mode_block_count'],
+      fallback: _deterrenceStrictModeBlockCount,
+    );
+
+    final parsedReviewAt = _toDateTime(nextMetrics['last_review_at']);
+    _lastReviewAt = parsedReviewAt ?? _lastReviewAt;
+    if (nextMetrics.containsKey('abstinence_recovery_due_at')) {
+      _abstinenceRecoveryDueAt =
+          _toDateTime(nextMetrics['abstinence_recovery_due_at']);
+    }
   }
 
   EmergencyMeetingPdcaMetrics _buildPdcaMetrics() {
@@ -1206,6 +1303,33 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     }
   }
 
+  String _resolvedFocusLabel(MeetingFocus focus) {
+    return switch (focus) {
+      MeetingFocus.balanced => '継続と禁欲の両面を見る',
+      MeetingFocus.continuation => '継続実行を最優先',
+      MeetingFocus.abstinence => '禁欲と回復を最優先',
+    };
+  }
+
+  String _resolvedFocusShortLabel(MeetingFocus focus) {
+    return switch (focus) {
+      MeetingFocus.balanced => '両面',
+      MeetingFocus.continuation => '継続',
+      MeetingFocus.abstinence => '禁欲',
+    };
+  }
+
+  String _resolvedFocusInstruction(MeetingFocus focus) {
+    return switch (focus) {
+      MeetingFocus.balanced =>
+        '継続実行と禁欲リスクを同時に確認し、48時間以内の実行策を決めます。',
+      MeetingFocus.continuation =>
+        '重要案件の着手、時間確保、進捗ログを最優先で見直します。',
+      MeetingFocus.abstinence =>
+        '誘惑の兆候、回復行動、ロック運用を最優先で点検します。',
+    };
+  }
+
   List<String> _extractStringList(dynamic value) {
     if (value is! List) return <String>[];
     return value
@@ -1707,7 +1831,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     if (log == null) return '';
     return EmergencyMeetingCodexFormatter.formatForCodex(
       log: log,
-      focusLabel: _focusLabel(_selectedFocus),
+      focusLabel: _resolvedFocusLabel(_selectedFocus),
       model: _selectedModel,
       continuationPlan: _continuationPlan,
       abstinenceRules: _abstinenceRules,
@@ -1874,10 +1998,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             currentMetrics.deterrenceLockCoveragePercent.toString(),
           )
           .replaceFirst('{activeDeterrenceLocks}', activeLocksText)
-          .replaceFirst('{focusTheme}', _focusLabel(_selectedFocus))
+          .replaceFirst('{focusTheme}', _resolvedFocusLabel(_selectedFocus))
           .replaceFirst(
             '{focusInstruction}',
-            _focusInstruction(_selectedFocus),
+            _resolvedFocusInstruction(_selectedFocus),
           );
 
       setState(() => _loadingStatus = 'AI役員が継続・禁欲の改善策を議論中...');
@@ -1985,7 +2109,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       final log = BoardMeetingLog(
         id: const Uuid().v4(),
         userId: userId,
-        topic: '緊急役員会議（${_focusLabel(_selectedFocus)}）',
+        topic: '緊急役員会議（${_resolvedFocusLabel(_selectedFocus)}）',
         conclusion: conclusion,
         messages: messages,
         createdAt: DateTime.now(),
@@ -2127,6 +2251,158 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     }
   }
 
+  Future<void> _runBoardMeetingBiReport() async {
+    await _ensureSelectedModelIsAvailable();
+
+    setState(() {
+      _isLoading = true;
+      _loadingStatus = '役員会議のデータを集計中...';
+      _errorMessage = null;
+      _continuationPlan = <String>[];
+      _abstinenceRules = <String>[];
+      _continuationChecks = <bool>[];
+      _abstinenceChecks = <bool>[];
+      _riskAlert = null;
+      _decodeNotice = null;
+      _executionHubLogs = <String>[];
+      _executionHubError = null;
+    });
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not logged in.');
+      }
+
+      final results = await Future.wait<dynamic>([
+        _supabase
+            .from('notes')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .catchError((_) => 0),
+        _supabase
+            .from('subscriptions')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .catchError((_) => 0),
+        _supabase
+            .from('user_stats')
+            .select()
+            .eq('user_id', userId)
+            .maybeSingle()
+            .catchError((_) => null),
+        _supabase
+            .from('danshari_items')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .catchError((_) => 0),
+      ]);
+
+      final noteCount = results[0] as int;
+      final subCount = results[1] as int;
+      final userStats = results[2] as Map<String, dynamic>?;
+      final danshariCount = results[3] as int;
+      final points = _toInt(userStats?['total_points']);
+      final level = _toInt(userStats?['current_level'], fallback: 1);
+      final currentStreak = _toInt(userStats?['current_streak']);
+      final currentMetrics = _buildPdcaMetrics();
+      final startupContext = await _loadBoardStartupContext();
+      final reportContext = EmergencyMeetingReportContext(
+        userId: userId,
+        noteCount: noteCount,
+        subscriptionCount: subCount,
+        points: points,
+        level: level,
+        currentStreak: currentStreak,
+        danshariCount: danshariCount,
+        focusLabel: _resolvedFocusLabel(_selectedFocus),
+        focusInstruction: _resolvedFocusInstruction(_selectedFocus),
+        metrics: currentMetrics,
+        startupContext: startupContext,
+      );
+
+      setState(() {
+        _loadingStatus = 'BIレポートを生成中...';
+      });
+
+      final prompt = _meetingReportService.buildPrompt(reportContext);
+      final aiService = AIService(_supabase);
+      final rawResult = await aiService.holdBoardMeeting(
+        context: prompt,
+        model: _selectedModel,
+      );
+      final report = _meetingReportService.normalizeReport(
+        rawResult: rawResult,
+        context: reportContext,
+      );
+
+      setState(() {
+        _loadingStatus = '役員アクションを展開中...';
+      });
+
+      final now = DateTime.now();
+      final log = BoardMeetingLog(
+        id: const Uuid().v4(),
+        userId: userId,
+        topic: '緊急役員会議（${_resolvedFocusLabel(_selectedFocus)}）',
+        conclusion: report.conclusion,
+        messages: report.messages,
+        createdAt: now,
+      );
+
+      List<String> executionHubLogs = const <String>[];
+      String? executionHubError;
+      try {
+        executionHubLogs = await _dispatchExecutionHub(
+          log: log,
+          continuationPlan: report.continuationPlan,
+          abstinenceRules: report.abstinenceRules,
+        );
+      } catch (error) {
+        executionHubError = error.toString();
+        debugPrint('Failed to dispatch execution hub: $error');
+      }
+
+      setState(() {
+        _currentLog = log;
+        _continuationPlan = report.continuationPlan;
+        _abstinenceRules = report.abstinenceRules;
+        _continuationChecks =
+            List<bool>.filled(report.continuationPlan.length, false);
+        _abstinenceChecks =
+            List<bool>.filled(report.abstinenceRules.length, false);
+        _riskAlert = report.riskAlert;
+        _decodeNotice = report.decodeNotice;
+        _executionHubLogs = executionHubLogs;
+        _executionHubError = executionHubError;
+        _applyNextMeetingMetrics(report.nextMeetingMetrics);
+      });
+      await _persistPdcaState();
+      await _saveMeetingToDb(log);
+    } catch (e, s) {
+      debugPrint('Failed to run BI board meeting: $e');
+      debugPrint('Stack trace: $s');
+      if (mounted) {
+        final errString = e.toString();
+        setState(() {
+          if (errString.contains('503') || errString.contains('UNAVAILABLE')) {
+            _errorMessage = 'AI モデルが一時的に利用できません。少し待ってから再試行してください。';
+          } else if (errString.contains('429') ||
+              errString.contains('Quota') ||
+              errString.contains('rate limit')) {
+            _errorMessage = 'AI 利用が混み合っています。モデルを変えるか、時間をおいて再試行してください。';
+          } else {
+            _errorMessage = '緊急役員会議の生成に失敗しました: $errString';
+          }
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _saveMeetingToDb(BoardMeetingLog log) async {
     try {
       final dynamic inserted = await _supabase.from('board_meetings').insert({
@@ -2227,7 +2503,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '会議フォーカス: ${_focusLabel(_selectedFocus)}',
+                          '会議フォーカス: ${_resolvedFocusLabel(_selectedFocus)}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -2243,7 +2519,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           final chipColor = _focusColor(focus);
                           return ChoiceChip(
                             key: Key('emergency_meeting_focus_${focus.name}'),
-                            label: Text(_focusShortLabel(focus)),
+                            label: Text(_resolvedFocusShortLabel(focus)),
                             selected: isSelected,
                             selectedColor: chipColor.withValues(alpha: 0.18),
                             side: BorderSide(
@@ -2266,7 +2542,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          _focusInstruction(_selectedFocus),
+                          _resolvedFocusInstruction(_selectedFocus),
                           style: TextStyle(
                             color: Colors.grey.shade700,
                             height: 1.45,
@@ -2323,7 +2599,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _conveneBoard,
+                          onPressed: _isLoading ? null : _runBoardMeetingBiReport,
                           icon: const Icon(Icons.notifications_active),
                           label: const Text(
                             '衝動を止めて、嫌な必須行動へ戻す',

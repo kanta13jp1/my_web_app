@@ -173,4 +173,91 @@ void main() {
       );
     });
   });
+
+  group('EmergencyMeetingBiReportService', () {
+    final metrics = EmergencyMeetingPdcaMetrics(
+      continuationCompletedCount: 1,
+      continuationTotalCount: 4,
+      continuationCompletionRatePercent: 25,
+      continuationQuickStartCount: 0,
+      continuationTimeBlockReservedCount: 0,
+      continuationProgressLogCount: 1,
+      abstinenceViolationCount: 2,
+      abstinenceNoViolationDays: 1,
+      abstinenceRuleCompletedCount: 1,
+      abstinenceRuleTotalCount: 3,
+      abstinenceRuleCompletionRatePercent: 33,
+      abstinenceRecoveredWithin10mCount: 0,
+      abstinenceRecoveryWindowMissedCount: 2,
+      deepWorkSessionCount: 2,
+      weeklyPriorityReviewCount: 0,
+      accountabilityShareCount: 0,
+      abstinenceRecoveryActionCount: 1,
+      reminderEnabled: false,
+      deterrenceLockEnabledCount: 0,
+      deterrenceStrictModeBlockCount: 1,
+      deterrenceLockCoveragePercent: 0,
+      activeDeterrenceLocks: const <String>[],
+    );
+
+    final context = EmergencyMeetingReportContext(
+      userId: 'user-42',
+      noteCount: 12,
+      subscriptionCount: 4,
+      points: 320,
+      level: 3,
+      currentStreak: 5,
+      danshariCount: 7,
+      focusLabel: '継続実行を最優先',
+      focusInstruction: '重要案件の着手、時間確保、進捗ログを最優先で見直します。',
+      metrics: metrics,
+      startupContext: '### CFO\n固定費を見直す',
+    );
+
+    test('buildPrompt includes BI context and startup prompt', () {
+      final service = EmergencyMeetingBiReportService();
+
+      final prompt = service.buildPrompt(context);
+
+      expect(prompt, contains('緊急役員会議 BI レポート生成システム'));
+      expect(prompt, contains('notes: 12'));
+      expect(prompt, contains('subscriptions: 4'));
+      expect(prompt, contains('label: 継続実行を最優先'));
+      expect(prompt, contains('### CFO'));
+      expect(prompt, contains('"continuation_completion_rate_percent": 25'));
+    });
+
+    test('normalizeReport fills missing roles and fallback plans safely', () {
+      final service = EmergencyMeetingBiReportService();
+      final now = DateTime.parse('2026-03-22T10:00:00.000Z');
+
+      final report = service.normalizeReport(
+        rawResult: <String, dynamic>{
+          'messages': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'speakerName': 'AI CFO',
+              'role': 'CFO',
+              'content': 'サブスクは4件です。固定費を見直します。',
+            },
+          ],
+        },
+        context: context,
+        generatedAt: now,
+      );
+
+      expect(report.messages, hasLength(4));
+      expect(
+        report.messages.map((message) => message.role),
+        containsAll(<String>['CFO', 'CKO', 'CHRO', 'CEO']),
+      );
+      expect(report.messages.first.timestamp, now);
+      expect(report.conclusion, contains('継続実行を最優先'));
+      expect(report.continuationPlan, hasLength(3));
+      expect(report.abstinenceRules, hasLength(3));
+      expect(report.riskAlert, isNotEmpty);
+      expect(report.decodeNotice, isNotNull);
+      expect(report.nextMeetingMetrics['continuation_completion_rate_percent'], 25);
+      expect(report.nextMeetingMetrics['abstinence_violation_count'], 2);
+    });
+  });
 }
