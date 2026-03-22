@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +20,7 @@ class AIServiceException implements Exception {
   String toString() => message;
 }
 
-/// AI讖溯・繧呈署萓帙☆繧九し繝ｼ繝薙せ
+/// AI 機能を提供するサービス
 class AIService {
   final SupabaseClient _supabase;
   final String? _googleAIApiKey;
@@ -59,7 +59,7 @@ class AIService {
           httpClient,
         );
 
-  /// 謖・焚繝舌ャ繧ｯ繧ｪ繝輔〒繝ｪ繝医Λ繧､繧貞ｮ溯｡後☆繧九・繝ｫ繝代・繝｡繧ｽ繝・ラ
+  /// レート制限エラー時に指数バックオフで再試行するヘルパー
   Future<T> _retryWithBackoff<T>(
     Future<T> Function() operation, {
     String operationName = 'AI operation',
@@ -71,7 +71,7 @@ class AIService {
       try {
         return await operation();
       } catch (e, stackTrace) {
-        // AIServiceException縺ｮ蝣ｴ蜷医√Ξ繝ｼ繝亥宛髯舌お繝ｩ繝ｼ縺九メ繧ｧ繝・け
+        // レート制限エラーだけ再試行する
         if (e is AIServiceException && e.isRateLimitError) {
           if (retryCount >= _maxRetries) {
             AppLogger.error(
@@ -118,13 +118,13 @@ class AIService {
         body: body,
       );
 
-      // 繧ｨ繝ｩ繝ｼ繝ｬ繧ｹ繝昴Φ繧ｹ縺ｮ繝√ぉ繝・け
+      // 正常系のレスポンスをマップとして扱う
       final data = response.data as Map<String, dynamic>;
 
       AppLogger.debug('Supabase Function Response ($functionName): $data');
 
       if (data['success'] != true) {
-        final errorMessage = (data['error'] as String?) ?? 'AI蜃ｦ逅・↓螟ｱ謨励＠縺ｾ縺励◆';
+        final errorMessage = (data['error'] as String?) ?? 'AI処理に失敗しました';
         final errorType = data['errorType'] as String?;
         final retryAfter = data['retryAfter']?.toString();
 
@@ -142,14 +142,14 @@ class AIService {
       return data;
     } on FunctionException catch (e) {
       final details = e.details;
-      // 縲蝉ｿｮ豁｣轤ｹ縲粗.message 縺ｧ縺ｯ縺ｪ縺・$e (e.toString()) 繧剃ｽｿ逕ｨ
+      // message だけでなく details もログへ残す
       AppLogger.error(
         'FunctionException ($functionName): $e, details: $details',
       );
 
       if (details is Map<String, dynamic>) {
         final errorMessage =
-            details['error']?.toString() ?? 'Supabase Function縺九ｉ縺ｮ蠢懃ｭ斐お繝ｩ繝ｼ';
+            details['error']?.toString() ?? 'Supabase Function からの詳細エラー';
         final errorType = details['errorType'] as String?;
         final retryAfter = details['retryAfter']?.toString();
 
@@ -160,8 +160,8 @@ class AIService {
         );
       }
 
-      // 隧ｳ邏ｰ諠・ｱ縺後↑縺・ｴ蜷医ｂ繧ｫ繧ｹ繧ｿ繝萓句､悶↓螟画鋤
-      throw AIServiceException('Supabase Function繧ｨ繝ｩ繝ｼ: ${e.toString()}');
+      // details が読めない場合もカスタム例外へ包む
+      throw AIServiceException('Supabase Function エラー: ${e.toString()}');
     } on PostgrestException catch (e) {
       AppLogger.error('PostgrestException ($functionName): ${e.message}');
       throw AIServiceException('Postgrest error: ${e.message}');
@@ -171,8 +171,8 @@ class AIService {
         error: e,
         stackTrace: stackTrace,
       );
-      // 縺昴・莉悶・繝阪ャ繝医Ρ繝ｼ繧ｯ繧ｨ繝ｩ繝ｼ縺ｪ縺ｩ
-      throw AIServiceException('莠域悄縺帙〓繧ｨ繝ｩ繝ｼ: ${e.toString()}');
+      // 予期しないエラーも AIServiceException に包む
+      throw AIServiceException('予期しないエラー: ${e.toString()}');
     }
   }
 
@@ -466,7 +466,7 @@ class AIService {
 
     final validOpinions = results.whereType<_MagiOpinion>().toList();
     if (validOpinions.isEmpty) {
-      // 蜈ｨ繝弱・繝牙､ｱ謨玲凾縺ｯ縲∝茜逕ｨ蜿ｯ閭ｽ縺ｪ繝励Ο繝舌う繝縺ｧ蜊倡匱螳溯｡後↓繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+      // 全ノード失敗時は、利用可能なプロバイダーでベストエフォート生成へフォールバック
       return _generateBestEffortSingle(
         fallbackGeminiModel: model,
         prompt: prompt,
@@ -687,10 +687,10 @@ class AIService {
     required _MagiNodeProfile profile,
   }) {
     return '''
-縺ゅ↑縺溘・MAGI繧ｷ繧ｹ繝・Β縺ｮ縲・{profile.nodeName}縲阪〒縺吶・諡・ｽ楢ｦｳ轤ｹ: ${profile.viewpoint}
-蛻・梵譁ｹ驥・ ${profile.instruction}
+You are MAGI system node "${profile.nodeName}".
+Viewpoint: ${profile.viewpoint}
+Additional instruction: ${profile.instruction}
 
-莉･荳九・繝ｦ繝ｼ繧ｶ繝ｼ萓晞ｼ縺ｫ蟇ｾ縺励※縲√≠縺ｪ縺溘・隕ｳ轤ｹ縺縺代〒蝗樒ｭ疲｡医ｒ菴懈・縺励※縺上□縺輔＞縲・蜈・ｾ晞ｼ縺ｮ蛻ｶ邏・ｼ亥ｽ｢蠑上・險隱槭・譁・㍼繝ｻJSON蠢・医↑縺ｩ・峨・蜴ｳ螳医＠縺ｦ縺上□縺輔＞縲・菴呵ｨ医↑蜑咲ｽｮ縺阪・荳崎ｦ√〒縺吶・
 [USER_PROMPT]
 $originalPrompt
 ''';
@@ -752,7 +752,7 @@ $originalPrompt
   List<_MagiNodeProfile> get _magiProfiles => const <_MagiNodeProfile>[
         _MagiNodeProfile(
           nodeName: 'MELCHIOR',
-          viewpoint: '隲也炊繝ｻ謨ｴ蜷域ｧ',
+          viewpoint: '論理・分析重視',
           instruction:
               'Provide logical, evidence-based analysis with clear tradeoffs and practical recommendations.',
           provider: _MagiProvider.openai,
@@ -760,7 +760,7 @@ $originalPrompt
         ),
         _MagiNodeProfile(
           nodeName: 'BALTHASAR',
-          viewpoint: '螳溷漁繝ｻ螳溯｡悟庄閭ｽ諤ｧ',
+          viewpoint: '共感・人間理解重視',
           instruction:
               'Focus on emotional nuance, empathy, and how the response will feel for the user.',
           provider: _MagiProvider.anthropic,
@@ -768,7 +768,7 @@ $originalPrompt
         ),
         _MagiNodeProfile(
           nodeName: 'CASPER',
-          viewpoint: '邯咏ｶ壽ｧ繝ｻ蠢・炊',
+          viewpoint: '批判・リスク検討',
           instruction:
               'Look for blind spots, edge cases, and strategic risks before making a recommendation.',
           provider: _MagiProvider.gemini,
@@ -785,27 +785,27 @@ You are an expert mind map generator. Your task is to take a central topic and g
 
 The JSON object should have a single root key representing the central topic. The value should be an object where each key is a child idea. This can be nested recursively for sub-ideas.
 
-**Example Input:** "譎る俣邂｡逅・｡・ (Time Management Techniques)
+**Example Input:** "Time Management Techniques"
 
 **Example Output:**
 ```json
 {
-  "譎る俣邂｡逅・｡・: {
-    "逶ｮ讓呵ｨｭ螳・: {
-      "SMART縺ｮ豕募援": {},
-      "遏ｭ譛溘・髟ｷ譛溽岼讓・: {}
+  "Time Management Techniques": {
+    "Goal Setting": {
+      "SMART Goals": {},
+      "Long-term Vision": {}
     },
-    "繧ｿ繧ｹ繧ｯ縺ｮ蜆ｪ蜈磯・ｽ堺ｻ倥￠": {
-      "繧｢繧､繧ｼ繝ｳ繝上Ρ繝ｼ繝ｻ繝槭ヨ繝ｪ繧ｯ繧ｹ": {},
-      "ABCDE繝｡繧ｽ繝・ラ": {}
+    "Task Prioritization": {
+      "Eisenhower Matrix": {},
+      "ABCDE Method": {}
     },
-    "繝・け繝九ャ繧ｯ": {
-      "繝昴Δ繝峨・繝ｭ繝ｻ繝・け繝九ャ繧ｯ": {},
-      "2蛻・Ν繝ｼ繝ｫ": {}
+    "Scheduling": {
+      "Pomodoro Technique": {},
+      "2-Minute Rule": {}
     },
-    "繝・・繝ｫ": {
-      "繧ｫ繝ｬ繝ｳ繝繝ｼ繧｢繝励Μ": {},
-      "繧ｿ繧ｹ繧ｯ邂｡逅・ヤ繝ｼ繝ｫ": {}
+    "Tools": {
+      "Calendar App": {},
+      "Task Management Tool": {}
     }
   }
 }
@@ -824,7 +824,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 
   // =========================================================================
-  // AI繧｢繧ｷ繧ｹ繧ｿ繝ｳ繝域ｩ溯・
+  // AI assistant / text transformation
   // =========================================================================
 
   Map<String, dynamic> _stylePayload({
@@ -897,7 +897,7 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
-  /// 譁・ｫ螻暮幕
+  /// Expand note content.
   Future<String> expandText(String content) async {
     return await _retryWithBackoff(
       () async {
@@ -914,7 +914,7 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
-  /// 鄙ｻ險ｳ
+  /// Translate text.
   Future<String> translateText(
     String content, {
     String targetLanguage = 'en',
@@ -990,7 +990,7 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
-  /// 繧ｿ繧､繝医Ν譁・ｭ怜・繧偵Μ繧ｹ繝医↓隗｣譫舌☆繧九・繝ｫ繝代・
+  /// 緊急役員会議の構造化レスポンスを返す
   Future<Map<String, dynamic>> holdBoardMeeting({
     required String context,
     String? model,
@@ -1047,13 +1047,13 @@ Generate a mind map for the following topic: **"{topic}"**
         .where((line) => line.trim().isNotEmpty)
         .map(
           (line) => line.replaceAll(RegExp(r'^\d+\.\s*'), '').trim(),
-        ) // 繝翫Φ繝舌Μ繝ｳ繧ｰ繧帝勁蜴ｻ
+        ) // numbering like "1." is stripped
         .where((line) => line.isNotEmpty)
         .toList();
   }
 
   // =========================================================================
-  // AI繝｡繧ｿ繝・・繧ｿ/讀懃ｴ｢讖溯・
+  // AI metadata / tag suggestion
   // =========================================================================
 
   Future<TagSuggestion> suggestTags({
@@ -1084,7 +1084,7 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
-  /// AI讀懃ｴ｢
+  /// AI 検索
   Future<AISearchResult> searchNotes({
     required String query,
     int limit = 20,
@@ -1153,7 +1153,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 
   // =========================================================================
-  // AI遘俶嶌讖溯・
+  // AI task recommendations
   // =========================================================================
 
   Future<TaskRecommendations> getTaskRecommendations({
@@ -1162,7 +1162,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        // 繝弱・繝亥叙蠕怜・逅・・ Future 繧貞ｮ夂ｾｩ
+        // ノート一覧取得の Future を先に準備
         final Future<List<Map<String, dynamic>>> notesFuture;
 
         if (recentNotes == null || recentNotes.isEmpty) {
@@ -1177,12 +1177,12 @@ Generate a mind map for the following topic: **"{topic}"**
                 (response) => List<Map<String, dynamic>>.from(
                   response,
                 ),
-              ); // 譏守､ｺ逧・↓ Future<List> 繧定ｿ斐☆
+              ); // Future<List> に整形
         } else {
           notesFuture = Future.value(recentNotes);
         }
 
-        // 邨ｱ險域ュ蝣ｱ蜿門ｾ怜・逅・・ Future 繧貞ｮ夂ｾｩ
+        // ユーザーステータス取得の Future を先に準備
         final Future<Map<String, dynamic>> statsFuture = _supabase
             .from('user_stats')
             .select(
@@ -1192,7 +1192,7 @@ Generate a mind map for the following topic: **"{topic}"**
             .single()
             .then(
               (response) => response,
-            ); // 譏守､ｺ逧・↓ Future<Map> 繧定ｿ斐☆
+            ); // Future<Map> として扱う
 
         final results = await Future.wait<dynamic>([
           notesFuture,
@@ -1234,12 +1234,12 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 
   // =========================================================================
-  // AI邂｡逅・ｩ溯・
+  // AI daily challenges
   // =========================================================================
 
   Future<void> generateDailyChallenges({DateTime? targetDate}) async {
     final date = targetDate ?? DateTime.now();
-    // 譌･譛ｬ譎る俣縺ｮ譌･莉俶枚蟄怜・ (YYYY-MM-DD)
+    // 日本標準時の日付文字列 (YYYY-MM-DD)
     final dateStr =
         "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 
@@ -1260,7 +1260,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }
 }
 
-// ... (繧ｯ繝ｩ繧ｹ螳夂ｾｩ縺ｯ縺昴・縺ｾ縺ｾ)
+// Supporting types
 enum _MagiProvider {
   openai,
   anthropic,
@@ -1305,7 +1305,7 @@ class _MagiOpinion {
   });
 }
 
-/// 繧ｿ繧ｰ謠先｡医・邨先棡
+/// タグ提案の結果
 class TagSuggestion {
   final List<String> tags;
   final String category;
@@ -1318,7 +1318,7 @@ class TagSuggestion {
   });
 }
 
-/// AI讀懃ｴ｢縺ｮ邨先棡
+/// AI 検索の結果
 class AISearchResult {
   final List<Map<String, dynamic>> results;
   final int totalResults;
@@ -1345,13 +1345,13 @@ class AIUsageStats {
   });
 }
 
-/// AI遘俶嶌縺ｮ繧ｿ繧ｹ繧ｯ謗ｨ螂ｨ
+/// AI タスク推薦の結果
 class TaskRecommendations {
-  final List<String> daily; // 莉頑律繧・ｋ縺ｹ縺阪％縺ｨ
-  final List<String> weekly; // 莉企ｱ繧・ｋ縺ｹ縺阪％縺ｨ
-  final List<String> monthly; // 莉頑怦繧・ｋ縺ｹ縺阪％縺ｨ
-  final List<String> yearly; // 莉雁ｹｴ繧・ｋ縺ｹ縺阪％縺ｨ
-  final String insights; // AI縺九ｉ縺ｮ繧､繝ｳ繧ｵ繧､繝・
+  final List<String> daily; // 毎日やるべきこと
+  final List<String> weekly; // 毎週やるべきこと
+  final List<String> monthly; // 毎月やるべきこと
+  final List<String> yearly; // 毎年やるべきこと
+  final String insights; // AI からのインサイト
   TaskRecommendations({
     required this.daily,
     required this.weekly,

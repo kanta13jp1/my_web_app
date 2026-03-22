@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -761,17 +761,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     final rawInput = _slashCommandController.text.trim();
     if (rawInput.isEmpty) {
-      _showMessage('繧ｹ繝ｩ繝・す繝･繧ｳ繝槭Φ繝峨ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞');
+      _showMessage('スラッシュコマンドを入力してください');
       return;
     }
     if (!rawInput.startsWith('/')) {
-      _showMessage('繧ｳ繝槭Φ繝峨・ / 縺九ｉ蟋九ａ縺ｦ縺上□縺輔＞');
+      _showMessage('コマンドは / から始めてください');
       return;
     }
 
     final body = rawInput.substring(1).trim();
     if (body.isEmpty) {
-      _showMessage('繧ｳ繝槭Φ繝牙錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞');
+      _showMessage('コマンド名を入力してください');
       return;
     }
 
@@ -812,7 +812,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'date':
         _appendTimestampBlock();
         _slashCommandController.clear();
-        _showMessage('繧ｿ繧､繝繧ｹ繧ｿ繝ｳ繝励ｒ霑ｽ蜉縺励∪縺励◆');
+        _showMessage('タイムスタンプを追加しました');
         return;
       case 'prompt':
       case 'template':
@@ -834,13 +834,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       case 'clear':
         _setContentText('');
         _slashCommandController.clear();
-        _showMessage('譛ｬ譁・ｒ繧ｯ繝ｪ繧｢縺励∪縺励◆');
+        _showMessage('本文をクリアしました');
         return;
     }
 
     final content = _contentController.text.trim();
     if (content.isEmpty) {
-      _showMessage('譛ｬ譁・′遨ｺ縺ｮ縺溘ａ縲√％縺ｮ繧ｳ繝槭Φ繝峨・螳溯｡後〒縺阪∪縺帙ｓ');
+      _showMessage('本文が空です。改善・要約・翻訳の前にメモを書いてください');
       return;
     }
 
@@ -858,7 +858,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(improved);
-          _showMessage('譛ｬ譁・ｒ謾ｹ蝟・＠縺ｾ縺励◆');
+          _showMessage('本文を改善しました');
           break;
         case 'summarize':
         case 'summary':
@@ -869,7 +869,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(summary);
-          _showMessage('譛ｬ譁・ｒ隕∫ｴ・＠縺ｾ縺励◆');
+          _showMessage('本文を要約しました');
           break;
         case 'title':
           final suggestions = await _aiService.suggestTitles(
@@ -877,11 +877,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             model: _selectedAiModel,
           );
           if (suggestions.isEmpty) {
-            _showMessage('繧ｿ繧､繝医Ν蛟呵｣懊ｒ逕滓・縺ｧ縺阪∪縺帙ｓ縺ｧ縺励◆');
+            _showMessage('タイトル候補を生成できませんでした');
             break;
           }
           _setTitleText(suggestions.first);
-          _showMessage('繧ｿ繧､繝医Ν蛟呵｣懊ｒ蜿肴丐縺励∪縺励◆');
+          _showMessage('タイトル候補を適用しました');
           break;
         case 'translate':
           final targetLanguage = arguments.isEmpty ? 'en' : arguments.join(' ');
@@ -893,15 +893,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             styleInstruction: _selectedAiStyle.instruction,
           );
           _setContentText(translated);
-          _showMessage('譛ｬ譁・ｒ $targetLanguage 縺ｫ鄙ｻ險ｳ縺励∪縺励◆');
+          _showMessage('本文を $targetLanguage に翻訳しました');
           break;
         default:
-          _showMessage('譛ｪ蟇ｾ蠢懊・繧ｳ繝槭Φ繝峨〒縺・ /$command');
+          _showMessage('未対応のコマンドです: /$command');
           return;
       }
       _slashCommandController.clear();
     } catch (e) {
-      _showMessage('繧ｳ繝槭Φ繝牙ｮ溯｡後↓螟ｱ謨励＠縺ｾ縺励◆: $e');
+      _showMessage('コマンドの実行に失敗しました: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -935,7 +935,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('隱ｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ: $e')),
+          SnackBar(content: Text('メモの読み込みに失敗しました: $e')),
         );
       }
     } finally {
@@ -990,7 +990,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (!_hasPersistableState && _currentNoteId == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('繧ｿ繧､繝医Ν縺ｾ縺溘・蜀・ｮｹ繧貞・蜉帙＠縺ｦ縺上□縺輔＞')),
+          const SnackBar(content: Text('保存する内容がありません')),
         );
       }
       return;
@@ -1000,13 +1000,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('菫晏ｭ倥＠縺ｾ縺励◆')),
+          const SnackBar(content: Text('手動保存しました')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('菫晏ｭ倥お繝ｩ繝ｼ: $e')),
+          SnackBar(content: Text('保存に失敗しました: $e')),
         );
       }
     }
@@ -1041,7 +1041,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          nextValue ? '縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉縺励∪縺励◆' : '縺頑ｰ励↓蜈･繧翫ｒ隗｣髯､縺励∪縺励◆',
+          nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました',
         ),
       ),
     );
@@ -1460,7 +1460,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 key: const Key('note_editor_title_field'),
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  hintText: '繧ｿ繧､繝医Ν',
+                  hintText: 'タイトル',
                   border: InputBorder.none,
                 ),
                 style: const TextStyle(
@@ -1532,7 +1532,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             builder: (context, _) => IconButton(
               icon: const Icon(Icons.undo),
               onPressed: _undoRedoService.canUndo ? _undo : null,
-              tooltip: '蜈・↓謌ｻ縺・(Ctrl+Z)',
+              tooltip: '元に戻す (Ctrl+Z)',
             ),
           ),
           AnimatedBuilder(
@@ -1540,7 +1540,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             builder: (context, _) => IconButton(
               icon: const Icon(Icons.redo),
               onPressed: _undoRedoService.canRedo ? _redo : null,
-              tooltip: '繧・ｊ逶ｴ縺・(Ctrl+Y / Ctrl+Shift+Z)',
+              tooltip: 'やり直し (Ctrl+Y / Ctrl+Shift+Z)',
             ),
           ),
           IconButton(
@@ -1548,7 +1548,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
             color: _isFavorite ? Colors.amber.shade700 : null,
             onPressed: _toggleFavorite,
-            tooltip: _isFavorite ? '縺頑ｰ励↓蜈･繧願ｧ｣髯､' : '縺頑ｰ励↓蜈･繧翫↓霑ｽ蜉',
+            tooltip: _isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
           ),
           IconButton(
             icon: Icon(
