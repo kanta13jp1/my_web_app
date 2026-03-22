@@ -30,11 +30,13 @@ class EmergencyMeetingPage extends StatefulWidget {
 
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   static const List<String> _boardMeetingSupportedModels = <String>[
-    'gemini-2.0-flash',
+    'claude-sonnet-4-6',
+    'gpt-5.4',
     'gpt-4o-mini',
     'claude-3-haiku-20240307',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-pro-latest',
+    'gemini-2.5-flash',
+    'gemma-3n-e2b-it',
+    'deepseek-chat',
   ];
 
   static List<Map<String, dynamic>> _defaultBoardMeetingModels() {

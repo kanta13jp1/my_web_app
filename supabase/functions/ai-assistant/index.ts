@@ -16,9 +16,61 @@ const KEYS = {
 };
 
 const FALLBACK_MODELS = [
-    { provider: 'gemini', model: 'gemini-2.0-flash' },
     { provider: 'openai', model: 'gpt-4o-mini' },
-    { provider: 'anthropic', model: 'claude-3-haiku-20240307' }
+    { provider: 'anthropic', model: 'claude-3-haiku-20240307' },
+    { provider: 'gemini', model: 'gemini-2.5-flash' },
+    { provider: 'deepseek', model: 'deepseek-chat' },
+];
+
+const MODEL_CATALOG = [
+    {
+        name: 'claude-sonnet-4-6',
+        provider: 'Anthropic',
+        description: '品質重視の推奨モデル',
+        score: 980,
+    },
+    {
+        name: 'gpt-5.4',
+        provider: 'OpenAI',
+        description: '品質重視の推奨モデル',
+        score: 970,
+    },
+    {
+        name: 'gpt-4o-mini',
+        provider: 'OpenAI',
+        description: '速度重視の推奨モデル',
+        score: 910,
+    },
+    {
+        name: 'claude-3-haiku-20240307',
+        provider: 'Anthropic',
+        description: '速度重視の推奨モデル',
+        score: 890,
+    },
+    {
+        name: 'gemini-2.5-flash',
+        provider: 'Google',
+        description: 'Gemini 系の推奨モデル',
+        score: 860,
+    },
+    {
+        name: 'gemma-3n-e2b-it',
+        provider: 'Google',
+        description: 'Gemini 系の軽量モデル',
+        score: 820,
+    },
+    {
+        name: 'deepseek-reasoner',
+        provider: 'DeepSeek',
+        description: '推論特化の DeepSeek モデル',
+        score: 780,
+    },
+    {
+        name: 'deepseek-chat',
+        provider: 'DeepSeek',
+        description: '高速な DeepSeek チャットモデル',
+        score: 760,
+    },
 ];
 
 // 型定義の追加（any排除のため）
@@ -63,6 +115,9 @@ serve(async (req) => {
         const tryAIChain = async (originalPrompt: string, image?: { base64: string, mime: string }) => {
             if (targetModel) {
                  const fighter = { provider: inferProvider(targetModel), model: targetModel };
+                 if (!isProviderAvailable(fighter.provider)) {
+                    throw new Error(`${fighter.provider} API key is not configured`);
+                 }
                  return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
             }
             let lastError;
@@ -80,21 +135,11 @@ serve(async (req) => {
 
         // --- 1. GET MODELS ---
         if (action === 'get_models') {
+            const models = MODEL_CATALOG.filter((item) => isProviderAvailable(item.provider));
             return new Response(
                 JSON.stringify({
                     success: true,
-                    models: [
-                        // Recommended
-                        { name: 'gpt-4o', provider: 'OpenAI', description: 'High Intelligence (Recommended)' },
-                        { name: 'claude-3-opus-20240229', provider: 'Anthropic', description: 'Complex Tasks (High Perf.)' },
-                        { name: 'gemini-1.5-pro-latest', provider: 'Google', description: 'Large Context (High Perf.)' },
-                        // Mid-tier
-                        { name: 'gpt-4o-mini', provider: 'OpenAI', description: 'Good Balance' },
-                        { name: 'claude-3-sonnet-20240229', provider: 'Anthropic', description: 'Good Balance' },
-                        { name: 'gemini-1.5-flash-latest', provider: 'Google', description: 'Fast & Versatile' },
-                        // Economy
-                        { name: 'claude-3-haiku-20240307', provider: 'Anthropic', description: 'Fast & Compact' },
-                    ]
+                    models,
                 }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
@@ -208,6 +253,53 @@ serve(async (req) => {
 
             return new Response(JSON.stringify({ success: true, result: formattedResult }), { headers: corsHeaders });
         }
+
+        if (action === 'test_model') {
+            const benchmarkPrompt = [
+                'You are running a connectivity benchmark.',
+                'Reply with the exact text "ping-ok" and nothing else.',
+            ].join('\n');
+            const startedAt = Date.now();
+            const result = await tryAIChain(benchmarkPrompt);
+            const latency = Date.now() - startedAt;
+            const normalized = result.trim();
+            const passed = normalized === 'ping-ok';
+            const score = passed ? Math.max(60, 100 - Math.floor(latency / 100)) : 0;
+            const benchmark = {
+                score,
+                latency,
+                detail: passed
+                    ? `Smoke test passed in ${latency}ms`
+                    : `Unexpected response: ${normalized.slice(0, 120)}`,
+                levels: [
+                    {
+                        level: 'level1',
+                        description: 'Connectivity smoke test',
+                        passed,
+                        score,
+                        maxPoints: 100,
+                        response: normalized,
+                        latency,
+                    },
+                ],
+            };
+
+            if (!passed) {
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        error: `Model returned an unexpected benchmark response: ${normalized.slice(0, 120)}`,
+                        benchmark,
+                    }),
+                    { headers: corsHeaders, status: 400 },
+                );
+            }
+
+            return new Response(
+                JSON.stringify({ success: true, benchmark }),
+                { headers: corsHeaders },
+            );
+        }
         
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title', 'custom_prompt'].includes(action)) {
@@ -236,9 +328,11 @@ serve(async (req) => {
 });
 
 function inferProvider(modelName: string): string {
-    if (modelName.startsWith('gpt')) return 'openai';
-    if (modelName.startsWith('claude')) return 'anthropic';
-    if (modelName.startsWith('gemini') || modelName.startsWith('gemma')) return 'gemini';
+    const normalized = modelName.toLowerCase().trim();
+    if (normalized.startsWith('deepseek')) return 'deepseek';
+    if (normalized.startsWith('claude')) return 'anthropic';
+    if (normalized.startsWith('gemini') || normalized.startsWith('gemma')) return 'gemini';
+    if (normalized.startsWith('gpt') || normalized.startsWith('o')) return 'openai';
     return 'openai';
 }
 
@@ -246,15 +340,46 @@ function inferProvider(modelName: string): string {
 type KeyMap = typeof KEYS;
 
 async function callAI(fighter: Fighter, keys: KeyMap, data: AIRequest): Promise<string> {
+    if (!isProviderAvailable(fighter.provider)) {
+        throw new Error(`${fighter.provider} API key is not configured`);
+    }
     if (fighter.provider === 'gemini') return await callGemini(fighter.model, keys.gemini!, data);
     if (fighter.provider === 'anthropic') return await callAnthropic(fighter.model, keys.anthropic!, data);
-    return await callOpenAICompatible(fighter.model, keys.openai!, data);
+    if (fighter.provider === 'deepseek') return await callDeepSeek(fighter.model, keys.deepseek!, data);
+    return await callOpenAICompatible(fighter.model, keys.openai!, data, {
+        providerLabel: 'OpenAI',
+        baseUrl: 'https://api.openai.com/v1/chat/completions',
+    });
 }
 
 // ---------------- Helper functions ----------------
 // Removed unused 'provider' arg, typed arrays instead of any[]
 
-async function callOpenAICompatible(model: string, apiKey: string, data: AIRequest): Promise<string> {
+function isProviderAvailable(providerName: string): boolean {
+    switch (providerName.toLowerCase()) {
+        case 'google':
+        case 'gemini':
+            return Boolean(KEYS.gemini);
+        case 'openai':
+            return Boolean(KEYS.openai);
+        case 'anthropic':
+            return Boolean(KEYS.anthropic);
+        case 'deepseek':
+            return Boolean(KEYS.deepseek);
+        case 'xai':
+        case 'grok':
+            return false;
+        default:
+            return false;
+    }
+}
+
+async function callOpenAICompatible(
+    model: string,
+    apiKey: string,
+    data: AIRequest,
+    options: { providerLabel: string; baseUrl: string },
+): Promise<string> {
     const messages: Array<{ role: string; content: string | Array<Record<string, unknown>> }> = [{ role: "user", content: data.content || "" }];
     if (data.imageBase64) {
         messages[0].content = [
@@ -262,14 +387,21 @@ async function callOpenAICompatible(model: string, apiKey: string, data: AIReque
             { type: "image_url", image_url: { url: `data:${data.mimeType};base64,${data.imageBase64}` } }
         ];
     }
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    const resp = await fetch(options.baseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({ model, messages, max_tokens: 1024 })
     });
     const json = await resp.json();
-    if (!resp.ok) throw new Error(`OpenAI: ${json.error?.message || "Unknown error"}`);
+    if (!resp.ok) throw new Error(`${options.providerLabel}: ${json.error?.message || "Unknown error"}`);
     return json.choices[0].message.content;
+}
+
+async function callDeepSeek(model: string, apiKey: string, data: AIRequest): Promise<string> {
+    return await callOpenAICompatible(model, apiKey, data, {
+        providerLabel: 'DeepSeek',
+        baseUrl: 'https://api.deepseek.com/chat/completions',
+    });
 }
 
 async function callAnthropic(model: string, apiKey: string, data: AIRequest): Promise<string> {

@@ -26,23 +26,28 @@ class AIService {
   final String? _googleAIApiKey;
   final String? _openAIApiKey;
   final String? _anthropicApiKey;
+  final String? _deepSeekApiKey;
   final http.Client _httpClient;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
   static const bool _magiDefaultEnabled = true;
   static const int _magiOpinionMaxLength = 900;
   static const String _defaultOpenAIModel = 'gpt-4o-mini';
-  static const String _defaultAnthropicModel = 'claude-3-5-sonnet-latest';
+  static const String _defaultAnthropicModel = 'claude-sonnet-4-6';
+  static const String _defaultGeminiModel = 'gemini-2.5-flash';
+  static const String _defaultDeepSeekModel = 'deepseek-chat';
 
   AIService([
     SupabaseClient? supabaseClient,
     this._googleAIApiKey,
     String? openAIApiKey,
     String? anthropicApiKey,
+    String? deepSeekApiKey,
     http.Client? httpClient,
   ])  : _supabase = supabaseClient ?? supabase,
         _openAIApiKey = openAIApiKey,
         _anthropicApiKey = anthropicApiKey,
+        _deepSeekApiKey = deepSeekApiKey,
         _httpClient = httpClient ?? http.Client();
 
   AIService.withMagiKeys({
@@ -50,12 +55,14 @@ class AIService {
     String? geminiApiKey,
     String? openAIApiKey,
     String? anthropicApiKey,
+    String? deepSeekApiKey,
     http.Client? httpClient,
   }) : this(
           supabaseClient,
           geminiApiKey,
           openAIApiKey,
           anthropicApiKey,
+          deepSeekApiKey,
           httpClient,
         );
 
@@ -229,19 +236,26 @@ class AIService {
       _MagiProvider.openai => _openAIApiKey,
       _MagiProvider.anthropic => _anthropicApiKey,
       _MagiProvider.gemini => _googleAIApiKey,
+      _MagiProvider.deepseek => _deepSeekApiKey,
     };
     return key != null && key.trim().isNotEmpty;
   }
 
   _MagiProvider _inferProviderFromModel(String model) {
     final lower = model.toLowerCase();
-    if (lower.contains('gpt') || lower.contains('o1') || lower.contains('o3')) {
-      return _MagiProvider.openai;
+    if (lower.startsWith('deepseek')) {
+      return _MagiProvider.deepseek;
     }
-    if (lower.contains('claude') || lower.contains('anthropic')) {
+    if (lower.startsWith('claude') || lower.contains('anthropic')) {
       return _MagiProvider.anthropic;
     }
-    return _MagiProvider.gemini;
+    if (lower.startsWith('gemini') || lower.startsWith('gemma')) {
+      return _MagiProvider.gemini;
+    }
+    if (lower.startsWith('gpt') || lower.startsWith('o')) {
+      return _MagiProvider.openai;
+    }
+    return _MagiProvider.openai;
   }
 
   Future<String?> _generateSingleContentByProvider({
@@ -259,6 +273,10 @@ class AIService {
           prompt: prompt,
         ),
       _MagiProvider.gemini => _generateSingleGeminiContent(
+          model: model,
+          prompt: prompt,
+        ),
+      _MagiProvider.deepseek => _generateSingleDeepSeekContent(
           model: model,
           prompt: prompt,
         ),
@@ -394,6 +412,68 @@ class AIService {
     }
   }
 
+  Future<String?> _generateSingleDeepSeekContent({
+    required String model,
+    required String prompt,
+  }) async {
+    final apiKey = _deepSeekApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      throw AIServiceException('DeepSeek API key is not configured.');
+    }
+    try {
+      final response = await _httpClient.post(
+        Uri.parse('https://api.deepseek.com/chat/completions'),
+        headers: <String, String>{
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'model': model,
+          'messages': <Map<String, String>>[
+            <String, String>{'role': 'user', 'content': prompt},
+          ],
+        }),
+      );
+      if (response.statusCode >= 400) {
+        throw _mapHttpApiError('DeepSeek', response);
+      }
+
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      final choices = decoded['choices'];
+      if (choices is! List || choices.isEmpty) {
+        return null;
+      }
+      final firstChoice = choices.first;
+      if (firstChoice is! Map<String, dynamic>) {
+        return null;
+      }
+      final message = firstChoice['message'];
+      if (message is! Map<String, dynamic>) {
+        return null;
+      }
+      final content = message['content'];
+      if (content is String) {
+        return content;
+      }
+      if (content is List) {
+        final text = content
+            .whereType<Map<String, dynamic>>()
+            .map((part) => part['text']?.toString() ?? '')
+            .where((part) => part.trim().isNotEmpty)
+            .join('\n')
+            .trim();
+        return text.isEmpty ? null : text;
+      }
+      return null;
+    } catch (e) {
+      if (e is AIServiceException) rethrow;
+      throw _mapAiModelError(e);
+    }
+  }
+
   AIServiceException _mapHttpApiError(String provider, http.Response response) {
     final retryAfter = response.headers['retry-after'];
     final detail = _extractApiErrorMessage(response.body);
@@ -446,12 +526,15 @@ class AIService {
     String? casperModel,
     String? synthesisModel,
   }) async {
+    final safeGeminiModel = _inferProviderFromModel(model) == _MagiProvider.gemini
+        ? model
+        : _defaultGeminiModel;
     final profiles = _magiProfiles;
     final results = await Future.wait<_MagiOpinion?>(
       profiles.map((profile) {
         final nodeModel = _resolveMagiNodeModel(
           profile: profile,
-          fallbackGeminiModel: model,
+          fallbackGeminiModel: safeGeminiModel,
           melchiorModel: melchiorModel,
           balthasarModel: balthasarModel,
           casperModel: casperModel,
@@ -468,7 +551,7 @@ class AIService {
     if (validOpinions.isEmpty) {
       // 全ノード失敗時は、利用可能なプロバイダーでベストエフォート生成へフォールバック
       return _generateBestEffortSingle(
-        fallbackGeminiModel: model,
+        fallbackGeminiModel: safeGeminiModel,
         prompt: prompt,
         melchiorModel: melchiorModel,
         balthasarModel: balthasarModel,
@@ -486,7 +569,7 @@ class AIService {
       opinions: validOpinions,
     );
     return _synthesizeMagiOpinions(
-      fallbackGeminiModel: model,
+      fallbackGeminiModel: safeGeminiModel,
       prompt: synthesisPrompt,
       opinions: validOpinions,
       melchiorModel: melchiorModel,
@@ -516,6 +599,10 @@ class AIService {
         (casperModel != null && casperModel.trim().isNotEmpty)
             ? casperModel.trim()
             : fallbackGeminiModel,
+      _MagiProvider.deepseek =>
+        profile.defaultModel.isNotEmpty
+            ? profile.defaultModel
+            : _defaultDeepSeekModel,
     };
   }
 
@@ -1265,6 +1352,7 @@ enum _MagiProvider {
   openai,
   anthropic,
   gemini,
+  deepseek,
 }
 
 class _MagiSynthesisPlan {

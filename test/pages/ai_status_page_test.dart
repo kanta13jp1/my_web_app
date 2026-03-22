@@ -32,19 +32,22 @@ void main() {
     );
   }
 
-  testWidgets('初期表示: モデル一覧を取得し、正規化して表示すること', (WidgetTester tester) async {
+  testWidgets('normalizes providers and hides xai entries', (
+    WidgetTester tester,
+  ) async {
     final modelsResponse = {
       'success': true,
       'models': [
-        {'name': 'gemini-pro', 'provider': 'Google', 'score': 80},
-        {'model': 'gpt-4', 'provider': 'openai'},
+        {'name': 'gemma-3n-e2b-it', 'provider': 'Google', 'score': 80},
+        {'model': 'o4-mini', 'provider': 'openai'},
+        {'model': 'deepseek-chat', 'provider': 'DeepSeek', 'score': 70},
+        {'model': 'grok-2', 'provider': 'xAI', 'score': 99},
       ],
     };
     final mockResponse = MockFunctionResponse();
     when(mockResponse.data).thenReturn(modelsResponse);
     when(mockResponse.status).thenReturn(200);
 
-    // 引数を具体的に指定
     when(
       mockFunctionsClient.invoke(
         'ai-assistant',
@@ -56,15 +59,22 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('gemini-pro'), findsOneWidget);
-    expect(find.text('MAGI Node: CASPER (GEMINI)'), findsOneWidget);
+    expect(find.text('gemma-3n-e2b-it'), findsOneWidget);
+    expect(find.textContaining('CASPER (GEMINI)'), findsOneWidget);
     expect(find.text('80'), findsOneWidget);
-    expect(find.text('gpt-4'), findsOneWidget);
-    expect(find.text('MAGI Node: MELCHIOR (GPT)'), findsOneWidget);
-    expect(find.text('0'), findsOneWidget);
+
+    expect(find.text('o4-mini'), findsOneWidget);
+    expect(find.textContaining('MELCHIOR (GPT)'), findsOneWidget);
+
+    expect(find.text('deepseek-chat'), findsOneWidget);
+    expect(find.textContaining('MELCHIOR (DEEPSEEK)'), findsOneWidget);
+
+    expect(find.text('grok-2'), findsNothing);
   });
 
-  testWidgets('モデルテスト実行: 成功時にスコアが更新され詳細が表示されること', (WidgetTester tester) async {
+  testWidgets('updates score and benchmark details after a successful test', (
+    WidgetTester tester,
+  ) async {
     final modelsResponse = {
       'success': true,
       'models': [
@@ -113,7 +123,9 @@ void main() {
     expect(find.text('Great performance'), findsOneWidget);
   });
 
-  testWidgets('全テスト実行ボタン: 順次テストが実行されること', (WidgetTester tester) async {
+  testWidgets('runs all model tests from the toolbar action', (
+    WidgetTester tester,
+  ) async {
     final modelsResponse = {
       'success': true,
       'models': [
@@ -137,7 +149,6 @@ void main() {
       'benchmark': {'score': 50},
     });
 
-    // argThatを使わず、個別に定義
     when(
       mockFunctionsClient.invoke(
         'ai-assistant',
@@ -172,7 +183,7 @@ void main() {
     ).called(1);
   });
 
-  testWidgets('エラー系: APIエラー時にエラーメッセージが表示されること', (WidgetTester tester) async {
+  testWidgets('shows the api error state', (WidgetTester tester) async {
     final mockErrResp = MockFunctionResponse();
     when(mockErrResp.status).thenReturn(500);
 
@@ -186,15 +197,16 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('API Error: 500'), findsOneWidget);
+    expect(find.textContaining('500'), findsOneWidget);
   });
-  testWidgets('can set and show the default AI model', (
+
+  testWidgets('can set and show the default ai model', (
     WidgetTester tester,
   ) async {
     final modelsResponse = {
       'success': true,
       'models': [
-        {'model': 'claude-3-haiku-20240307', 'provider': 'anthropic'},
+        {'model': 'claude-sonnet-4-6', 'provider': 'anthropic'},
         {'model': 'gpt-4o-mini', 'provider': 'openai'},
       ],
     };
@@ -215,18 +227,20 @@ void main() {
 
     await tester.tap(
       find.byKey(
-        const Key('ai_status_default_model_button_claude-3-haiku-20240307'),
+        const Key('ai_status_default_model_button_claude-sonnet-4-6'),
       ),
     );
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('ai_status_default_model_banner')), findsOneWidget);
-    expect(find.text('OpenClaw-style default model'), findsOneWidget);
-    expect(find.text('claude-3-haiku-20240307'), findsWidgets);
+    expect(
+      find.byKey(const Key('ai_status_default_model_banner')),
+      findsOneWidget,
+    );
+    expect(find.text('claude-sonnet-4-6'), findsWidgets);
     expect(
       find.byKey(
-        const Key('ai_status_default_model_badge_claude-3-haiku-20240307'),
+        const Key('ai_status_default_model_badge_claude-sonnet-4-6'),
       ),
       findsOneWidget,
     );

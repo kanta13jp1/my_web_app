@@ -89,25 +89,31 @@ class _AiStatusPageState extends State<AiStatusPage> {
         final List<dynamic> rawList = data['models'] as List<dynamic>? ?? [];
 
         // ここでデータを整形します
-        _models = rawList.map((m) {
-          final modelMap = m as Map<String, dynamic>;
-          // API の 'name' または 'model' を正規化
-          final String name = modelMap['model'] as String? ??
-              modelMap['name'] as String? ??
-              '不明';
+        _models = rawList
+            .map<Map<String, dynamic>?>((m) {
+              final modelMap = m as Map<String, dynamic>;
+              // API の 'name' または 'model' を正規化
+              final String name = modelMap['model'] as String? ??
+                  modelMap['name'] as String? ??
+                  '不明';
 
-          // プロバイダー表記をそろえて、MAGI 表示用のエンジン名へ正規化
-          final rawProvider = modelMap['provider'] as String? ?? '';
-          final provider = _normalizeEngine(rawProvider, name);
+              // プロバイダー表記をそろえて、MAGI 表示用のエンジン名へ正規化
+              final rawProvider = modelMap['provider'] as String? ?? '';
+              final provider = _normalizeEngine(rawProvider, name);
+              if (provider == 'xai') {
+                return null;
+              }
 
-          return {
-            'model': name,
-            'provider': provider,
-            // score がない場合は 0 として扱う
-            'score': modelMap['score'] as int? ?? 0,
-            'description': modelMap['description'] as String?,
-          };
-        }).toList();
+              return {
+                'model': name,
+                'provider': provider,
+                // score がない場合は 0 として扱う
+                'score': modelMap['score'] as int? ?? 0,
+                'description': modelMap['description'] as String?,
+              };
+            })
+            .whereType<Map<String, dynamic>>()
+            .toList();
 
         _sortModels();
         _isLoading = false;
@@ -695,15 +701,28 @@ class _AiStatusPageState extends State<AiStatusPage> {
   }
 
   String _normalizeEngine(String provider, String modelName) {
-    final source = '${provider.toLowerCase()} ${modelName.toLowerCase()}';
-    if (source.contains('openai') || source.contains('gpt')) {
+    final normalizedProvider = provider.toLowerCase().trim();
+    final normalizedModel = modelName.toLowerCase().trim();
+    final source = '$normalizedProvider $normalizedModel';
+
+    if (source.contains('deepseek')) {
+      return 'deepseek';
+    }
+    if (source.contains('openai') ||
+        normalizedModel.startsWith('gpt') ||
+        normalizedModel.startsWith('o')) {
       return 'gpt';
     }
     if (source.contains('anthropic') || source.contains('claude')) {
       return 'claude';
     }
-    if (source.contains('google') || source.contains('gemini')) {
+    if (source.contains('google') ||
+        source.contains('gemini') ||
+        source.contains('gemma')) {
       return 'gemini';
+    }
+    if (source.contains('xai') || source.contains('grok')) {
+      return 'xai';
     }
     return provider.trim().isEmpty ? 'unknown' : provider.toLowerCase();
   }
@@ -712,6 +731,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
     final engine = _normalizeEngine(provider, modelName);
     switch (engine) {
       case 'gpt':
+        return 'MELCHIOR';
+      case 'deepseek':
         return 'MELCHIOR';
       case 'claude':
         return 'BALTHASAR';

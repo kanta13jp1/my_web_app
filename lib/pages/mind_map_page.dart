@@ -25,11 +25,11 @@ class _MindMapPageState extends State<MindMapPage> {
   int _graphVersion = 0;
 
   String? _geminiApiKey;
-  String _selectedModel = 'gemini-2.0-flash';
+  String _selectedModel = 'gemini-2.5-flash';
   static const List<String> _mindMapFallbackModels = <String>[
     'gemini-2.5-flash',
+    'gemma-3n-e2b-it',
     'gemini-2.0-flash',
-    'gemini-1.5-pro',
   ];
 
   @override
@@ -61,7 +61,7 @@ class _MindMapPageState extends State<MindMapPage> {
     final resolvedModel =
         savedCandidates.whereType<String>().map((v) => v.trim()).firstWhere(
               (v) => v.isNotEmpty,
-              orElse: () => 'gemini-2.0-flash',
+              orElse: () => 'gemini-2.5-flash',
             );
 
     if (mounted) {
