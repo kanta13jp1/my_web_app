@@ -35,11 +35,54 @@ class AbstinenceGuardState {
   });
 }
 
+class AbstinenceQuitStep {
+  final String id;
+  final String label;
+
+  const AbstinenceQuitStep({
+    required this.id,
+    required this.label,
+  });
+}
+
+class AbstinenceQuitStepState {
+  final AbstinenceQuitStep step;
+  final bool isCompleted;
+
+  const AbstinenceQuitStepState({
+    required this.step,
+    required this.isCompleted,
+  });
+}
+
+class AbstinenceQuitProtocolStatus {
+  final AbstinenceGuardItem item;
+  final bool isEnabled;
+  final int slipCount;
+  final List<AbstinenceQuitStepState> steps;
+
+  const AbstinenceQuitProtocolStatus({
+    required this.item,
+    required this.isEnabled,
+    required this.slipCount,
+    required this.steps,
+  });
+
+  int get completedCount => steps.where((step) => step.isCompleted).length;
+
+  int get totalCount => steps.length;
+
+  bool get isLockedForToday =>
+      isEnabled && totalCount > 0 && completedCount == totalCount;
+}
+
 class AbstinenceGuardSnapshot {
   final List<AbstinenceGuardState> states;
+  final List<AbstinenceQuitProtocolStatus> quitProtocolStatuses;
 
   const AbstinenceGuardSnapshot({
     required this.states,
+    this.quitProtocolStatuses = const <AbstinenceQuitProtocolStatus>[],
   });
 
   int get enabledCount => states.where((state) => state.isEnabled).length;
@@ -92,6 +135,43 @@ class AbstinenceGuardSnapshot {
 }
 
 class AbstinenceGuardStore {
+  static const List<String> quitProtocolItemIds = <String>[
+    'alcohol',
+    'smoking',
+  ];
+
+  static const Map<String, List<AbstinenceQuitStep>> quitProtocolSteps =
+      <String, List<AbstinenceQuitStep>>{
+    'alcohol': <AbstinenceQuitStep>[
+      AbstinenceQuitStep(
+        id: 'remove_stock',
+        label: 'Remove every drink from the house today.',
+      ),
+      AbstinenceQuitStep(
+        id: 'block_purchase_route',
+        label: 'Avoid the store route where you usually buy alcohol.',
+      ),
+      AbstinenceQuitStep(
+        id: 'prepare_replacement',
+        label: 'Prepare water or sparkling water before cravings hit.',
+      ),
+    ],
+    'smoking': <AbstinenceQuitStep>[
+      AbstinenceQuitStep(
+        id: 'discard_tools',
+        label: 'Throw away cigarettes, lighters, and ashtrays.',
+      ),
+      AbstinenceQuitStep(
+        id: 'block_purchase_route',
+        label: 'Avoid the place where you usually buy tobacco today.',
+      ),
+      AbstinenceQuitStep(
+        id: 'prepare_replacement',
+        label: 'Use a 3-minute walk or deep breathing when the urge spikes.',
+      ),
+    ],
+  };
+
   static const List<AbstinenceGuardItem> items = [
     AbstinenceGuardItem(
       id: 'sns',
@@ -213,6 +293,13 @@ class AbstinenceGuardStore {
   static String _slipKey(DateTime now, String id) =>
       'abstinence_slips_${todayKey(now)}_$id';
 
+  static String _quitProtocolStepKey(
+    DateTime now,
+    String itemId,
+    String stepId,
+  ) =>
+      'abstinence_quit_step_${todayKey(now)}_${itemId}_$stepId';
+
   static String? _currentUserId() {
     try {
       return Supabase.instance.client.auth.currentUser?.id;
@@ -244,7 +331,26 @@ class AbstinenceGuardStore {
       );
     }).toList();
 
-    return AbstinenceGuardSnapshot(states: states);
+    final protocolPrefs = prefs ?? await SharedPreferences.getInstance();
+    final stateByItemId = <String, AbstinenceGuardState>{
+      for (final state in states) state.item.id: state,
+    };
+    final quitProtocolStatuses = quitProtocolItemIds
+        .map(
+          (itemId) => _loadQuitProtocolStatus(
+            date: date,
+            itemId: itemId,
+            itemState: stateByItemId[itemId],
+            prefs: protocolPrefs,
+          ),
+        )
+        .whereType<AbstinenceQuitProtocolStatus>()
+        .toList();
+
+    return AbstinenceGuardSnapshot(
+      states: states,
+      quitProtocolStatuses: quitProtocolStatuses,
+    );
   }
 
   static Future<void> setEnabled({
@@ -375,6 +481,21 @@ class AbstinenceGuardStore {
     await _clearSlipInPrefs(store: store, date: date, itemId: itemId);
   }
 
+  static Future<void> setQuitProtocolStep({
+    required String itemId,
+    required String stepId,
+    required bool isCompleted,
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {
+    final date = _startOfDay(now ?? DateTime.now());
+    final store = prefs ?? await SharedPreferences.getInstance();
+    await store.setBool(
+      _quitProtocolStepKey(date, itemId, stepId),
+      isCompleted,
+    );
+  }
+
   static Future<Map<String, _StoredAbstinenceState>> _loadStatesForDate({
     required DateTime date,
     SharedPreferences? prefs,
@@ -492,6 +613,35 @@ class AbstinenceGuardStore {
     required String itemId,
   }) async {
     await store.setInt(_slipKey(date, itemId), 0);
+  }
+
+  static AbstinenceQuitProtocolStatus? _loadQuitProtocolStatus({
+    required DateTime date,
+    required String itemId,
+    required AbstinenceGuardState? itemState,
+    SharedPreferences? prefs,
+  }) {
+    final state = itemState;
+    final steps = quitProtocolSteps[itemId];
+    if (state == null || steps == null || steps.isEmpty) {
+      return null;
+    }
+
+    final stepStates = steps.map((step) {
+      final isCompleted =
+          prefs?.getBool(_quitProtocolStepKey(date, itemId, step.id)) ?? false;
+      return AbstinenceQuitStepState(
+        step: step,
+        isCompleted: isCompleted,
+      );
+    }).toList();
+
+    return AbstinenceQuitProtocolStatus(
+      item: state.item,
+      isEnabled: state.isEnabled,
+      slipCount: state.slipCount,
+      steps: stepStates,
+    );
   }
 
   static Future<_StoredAbstinenceState?> _loadSupabaseItemState({

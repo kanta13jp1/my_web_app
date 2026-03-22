@@ -137,6 +137,26 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     return snapshot.priorityStates;
   }
 
+  List<AbstinenceQuitProtocolStatus> _quitProtocolStatuses(
+    AbstinenceGuardSnapshot snapshot,
+  ) {
+    return snapshot.quitProtocolStatuses;
+  }
+
+  Future<void> _setQuitProtocolStep(
+    String itemId,
+    String stepId,
+    bool isCompleted,
+  ) async {
+    await AbstinenceGuardStore.setQuitProtocolStep(
+      itemId: itemId,
+      stepId: stepId,
+      isCompleted: isCompleted,
+      now: _selectedDate,
+    );
+    await _loadSnapshot();
+  }
+
   Future<void> _moveDay(int offset) async {
     final candidate = _startOfDay(
       _selectedDate.add(Duration(days: offset)),
@@ -332,6 +352,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   ),
                   const SizedBox(height: 16),
                   _buildPriorityPanel(snapshot),
+                  _buildAbsoluteQuitPanel(snapshot),
                   _buildPresetPanel(),
                   ...snapshot.states.map(_buildGuardCard),
                 ],
@@ -404,6 +425,146 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbsoluteQuitPanel(AbstinenceGuardSnapshot snapshot) {
+    final protocols = _quitProtocolStatuses(snapshot);
+
+    return Container(
+      key: const Key('abstinence_guard_absolute_quit_panel'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Absolute quit: alcohol and smoking',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Finish every blocking step for today before cravings hit. This is the hard-stop layer for 酒 and 煙草.',
+          ),
+          const SizedBox(height: 12),
+          if (protocols.isEmpty)
+            const Text('No absolute quit protocol is available for today.')
+          else
+            ...protocols.map((protocol) {
+              final progressText =
+                  '${protocol.completedCount}/${protocol.totalCount} done';
+              final statusColor = protocol.isLockedForToday
+                  ? Colors.green
+                  : protocol.isEnabled
+                      ? Colors.orange
+                      : Colors.blueGrey;
+
+              return Container(
+                key: Key('abstinence_guard_absolute_quit_${protocol.item.id}'),
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            protocol.item.label,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            protocol.isLockedForToday
+                                ? 'locked'
+                                : protocol.isEnabled
+                                    ? 'arming'
+                                    : 'off',
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Today: $progressText / slips ${protocol.slipCount}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    if (!protocol.isEnabled)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: FilledButton.tonalIcon(
+                          key: Key(
+                            'abstinence_guard_absolute_enable_${protocol.item.id}',
+                          ),
+                          onPressed: () => _setEnabled(protocol.item.id, true),
+                          icon: const Icon(Icons.shield_outlined),
+                          label: Text(
+                            'Enable ${protocol.item.label} guard first',
+                          ),
+                        ),
+                      ),
+                    ...protocol.steps.map((stepState) {
+                      return CheckboxListTile(
+                        key: Key(
+                          'abstinence_guard_absolute_step_${protocol.item.id}_${stepState.step.id}',
+                        ),
+                        value: stepState.isCompleted,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text(stepState.step.label),
+                        subtitle: Text(
+                          'Fallback: ${protocol.item.replacementAction}',
+                        ),
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          _setQuitProtocolStep(
+                            protocol.item.id,
+                            stepState.step.id,
+                            value,
+                          );
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );

@@ -78,4 +78,65 @@ void main() {
     expect(snapshot.primaryInterference?.item.interruptionSignal, isNotEmpty);
     expect(snapshot.primaryInterference?.item.eliminationAction, isNotEmpty);
   });
+
+  test('loadSnapshot exposes alcohol and smoking quit protocol progress',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime(2026, 3, 21);
+
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'alcohol',
+      isEnabled: true,
+      prefs: prefs,
+      now: now,
+    );
+    await AbstinenceGuardStore.setQuitProtocolStep(
+      itemId: 'alcohol',
+      stepId: 'remove_stock',
+      isCompleted: true,
+      prefs: prefs,
+      now: now,
+    );
+
+    var snapshot = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: now,
+    );
+
+    expect(
+      snapshot.quitProtocolStatuses.map((status) => status.item.id),
+      containsAll(<String>['alcohol', 'smoking']),
+    );
+
+    final alcoholProtocol = snapshot.quitProtocolStatuses.firstWhere(
+      (status) => status.item.id == 'alcohol',
+    );
+    expect(alcoholProtocol.completedCount, 1);
+    expect(alcoholProtocol.totalCount, 3);
+    expect(alcoholProtocol.isLockedForToday, isFalse);
+
+    await AbstinenceGuardStore.setQuitProtocolStep(
+      itemId: 'alcohol',
+      stepId: 'block_purchase_route',
+      isCompleted: true,
+      prefs: prefs,
+      now: now,
+    );
+    await AbstinenceGuardStore.setQuitProtocolStep(
+      itemId: 'alcohol',
+      stepId: 'prepare_replacement',
+      isCompleted: true,
+      prefs: prefs,
+      now: now,
+    );
+
+    snapshot = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: now,
+    );
+    final lockedAlcoholProtocol = snapshot.quitProtocolStatuses.firstWhere(
+      (status) => status.item.id == 'alcohol',
+    );
+    expect(lockedAlcoholProtocol.isLockedForToday, isTrue);
+  });
 }
