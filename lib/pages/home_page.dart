@@ -39,6 +39,7 @@ import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
 import 'memory_drill_page.dart';
+import 'behavior_review_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
@@ -3936,6 +3937,12 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(context, const MindMapPage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
+                                '行動・発言レビュー',
+                                Icons.history_edu,
+                                Colors.blueGrey,
+                                () => _nav(context, BehaviorReviewPage()),
                               ),
                             ]),
                             const SizedBox(height: 40),
