@@ -11,6 +11,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/services/waste_tracking_service.dart';
 
 enum AssetManagementInitialFocus {
   overview,
@@ -93,6 +94,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _selectedSource = '[三井住友銀行大塚支店]';
   String _selectedTransferDestination = '[PayPayカード]';
   String _selectedFlowType = '支出'; // 支出 / 収入 / 振替
+  String? _selectedWasteCategory;
   final TextEditingController _flowMemoController = TextEditingController();
   final TextEditingController _flowAmountController = TextEditingController();
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
@@ -252,6 +254,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   bool _isTransferActionType(String actionType) => actionType == 'transfer';
 
+  bool get _isExpenseFlowSelected => _selectedFlowType == '支出';
+
   String _flowAmountPrefix(String actionType) {
     if (_isIncomeActionType(actionType)) return '+';
     if (_isTransferActionType(actionType)) return '↔';
@@ -278,6 +282,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _selectedSource,
           preferred: _selectedTransferDestination,
         );
+      }
+      if (label != '支出') {
+        _selectedWasteCategory = null;
       }
     });
   }
@@ -1289,7 +1296,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .where((entry) => _assetTypes.contains(entry.assetType))
         .toList();
     entries.sort((a, b) {
-      final groupCompare = a.group.toLowerCase().compareTo(b.group.toLowerCase());
+      final groupCompare =
+          a.group.toLowerCase().compareTo(b.group.toLowerCase());
       if (groupCompare != 0) {
         if (a.group.isEmpty) return 1;
         if (b.group.isEmpty) return -1;
@@ -1366,7 +1374,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (existing != null)
               TextButton(
                 onPressed: () async {
-                  final entries = await widget.watchlistService.removeEntry(type);
+                  final entries =
+                      await widget.watchlistService.removeEntry(type);
                   if (!mounted) return;
                   setState(() {
                     _setWatchlistEntries(entries);
@@ -1977,9 +1986,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String source,
     required String memo,
     String? destination,
+    String? wasteCategory,
   }) {
     final normalizedSource = source.trim();
     final normalizedMemo = memo.trim();
+    final String description;
     if (flowType == '振替') {
       final normalizedDestination = (destination ?? '').trim();
       final route = '$normalizedSource -> $normalizedDestination';
@@ -1989,21 +2000,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return '$route $normalizedMemo';
     }
     if (normalizedMemo.isEmpty) {
-      return normalizedSource;
+      description = normalizedSource;
+    } else {
+      description = '$normalizedSource $normalizedMemo';
     }
-    return '$normalizedSource $normalizedMemo';
+    if (flowType != '支出') {
+      return description;
+    }
+    return WasteTrackingService.attachWasteCategory(description, wasteCategory);
   }
 
   ({
     String source,
     String destination,
     String memo,
+    String? wasteCategory,
     bool isTransfer,
   }) _parseFlowDescription(
     String description, {
     String? actionType,
   }) {
-    final normalized = description.trim();
+    final normalizedDescription = description.trim();
+    final isExpense = _isExpenseActionType(actionType ?? '');
+    final wasteCategory = isExpense
+        ? WasteTrackingService.extractWasteCategory(normalizedDescription)
+        : null;
+    final normalized = isExpense
+        ? WasteTrackingService.stripWasteMarker(normalizedDescription)
+        : normalizedDescription;
     if (_isTransferActionType(actionType ?? '')) {
       final transferMatch =
           RegExp(r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$')
@@ -2013,6 +2037,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           source: transferMatch.group(1)?.trim() ?? '',
           destination: transferMatch.group(2)?.trim() ?? '',
           memo: transferMatch.group(3)?.trim() ?? '',
+          wasteCategory: wasteCategory,
           isTransfer: true,
         );
       }
@@ -2024,6 +2049,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         source: match.group(1)?.trim() ?? '',
         destination: '',
         memo: match.group(2)?.trim() ?? '',
+        wasteCategory: wasteCategory,
         isTransfer: _isTransferActionType(actionType ?? ''),
       );
     }
@@ -2032,6 +2058,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       source: '',
       destination: '',
       memo: normalized,
+      wasteCategory: wasteCategory,
       isTransfer: _isTransferActionType(actionType ?? ''),
     );
   }
@@ -2128,6 +2155,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           source: _selectedSource,
           destination: isTransfer ? _selectedTransferDestination : null,
           memo: memo,
+          wasteCategory: _isExpenseFlowSelected ? _selectedWasteCategory : null,
         ),
         'occurred_at': _selectedFlowDate.toUtc().toIso8601String(),
       });
@@ -2137,6 +2165,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         setState(() {
           _selectedFlowHistoryMonth = _monthStart(_selectedFlowDate);
+          _selectedWasteCategory = null;
         });
       }
       await _fetchRecentFlows();
@@ -2189,6 +2218,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       selectedSource,
       preferred: parsed.destination,
     );
+    String? selectedWasteCategory = parsed.wasteCategory;
     var selectedDate =
         DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
             DateTime.now();
@@ -2227,6 +2257,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             selectedSource,
                             preferred: selectedDestination,
                           );
+                        }
+                        if (value != '支出') {
+                          selectedWasteCategory = null;
                         }
                       });
                     },
@@ -2315,6 +2348,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       },
                     ),
                   ],
+                  if (selectedType == '支出') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String?>(
+                      initialValue: selectedWasteCategory,
+                      decoration: const InputDecoration(
+                        labelText: '浪費カテゴリ',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('分類なし'),
+                        ),
+                        ...WasteTrackingService.categoryLabels.map(
+                          (label) => DropdownMenuItem<String?>(
+                            value: label,
+                            child: Text(label),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedWasteCategory =
+                              WasteTrackingService.normalizeCategory(value);
+                        });
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: memoController,
@@ -2383,6 +2445,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           source: selectedSource,
           destination: isTransfer ? selectedDestination : null,
           memo: memo,
+          wasteCategory: selectedType == '支出' ? selectedWasteCategory : null,
         ),
         'occurred_at': selectedDate.toUtc().toIso8601String(),
       }).eq('id', flowId);
@@ -4157,9 +4220,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           : 'Edit watchlist',
                       onPressed: () => _showWatchlistDialog(type),
                       icon: Icon(
-                        watchlistEntry == null
-                            ? Icons.star_border
-                            : Icons.star,
+                        watchlistEntry == null ? Icons.star_border : Icons.star,
                         color: watchlistEntry == null
                             ? Colors.grey[500]
                             : Colors.amber[800],
@@ -4373,7 +4434,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         IconButton(
                           tooltip: 'Edit watchlist',
-                          onPressed: () => _showWatchlistDialog(entry.assetType),
+                          onPressed: () =>
+                              _showWatchlistDialog(entry.assetType),
                           icon: const Icon(Icons.edit_outlined),
                         ),
                       ],
@@ -5100,6 +5162,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (_isExpenseFlowSelected) ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String?>(
+                initialValue: _selectedWasteCategory,
+                decoration: const InputDecoration(
+                  labelText: '浪費カテゴリ',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: <DropdownMenuItem<String?>>[
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('分類なし'),
+                  ),
+                  ...WasteTrackingService.categoryLabels.map(
+                    (label) => DropdownMenuItem<String?>(
+                      value: label,
+                      child: Text(label),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedWasteCategory =
+                        WasteTrackingService.normalizeCategory(value);
+                  });
+                },
+              ),
+            ],
             if (isTransferSelected) ...[
               const SizedBox(height: 8),
               TextField(
@@ -5236,6 +5327,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ];
                   if (!parsed.isTransfer && parsed.source.isNotEmpty) {
                     subtitleParts.add(_sourceLabel(parsed.source));
+                  }
+                  if (parsed.wasteCategory != null) {
+                    subtitleParts.add('浪費:${parsed.wasteCategory}');
                   }
                   subtitleParts.add('タップで編集');
 

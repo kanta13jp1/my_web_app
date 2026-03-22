@@ -16,6 +16,7 @@ import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
 import '../services/theme_service.dart';
+import '../services/waste_tracking_service.dart';
 
 // Pages
 import 'abstinence_guard_page.dart';
@@ -473,18 +474,28 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      final dynamic rowsRaw = await Supabase.instance.client
-          .from('cfo_assets')
-          .select('title,amount,created_at')
-          .eq('user_id', userId)
-          .order('created_at', ascending: true);
-      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      final results = await Future.wait<dynamic>([
+        Supabase.instance.client
+            .from('cfo_assets')
+            .select('title,amount,created_at')
+            .eq('user_id', userId)
+            .order('created_at', ascending: true),
+        Supabase.instance.client
+            .from('wealth_struggles')
+            .select('amount,description,occurred_at,action_type')
+            .eq('user_id', userId)
+            .order('occurred_at', ascending: true),
+      ]);
+      final rows = results[0] is List ? results[0] as List<dynamic> : const [];
+      final wasteRows =
+          results[1] is List ? results[1] as List<dynamic> : const [];
       if (rows.isEmpty) {
         return const _HomeKpiOverview();
       }
 
       final rawByDate = <String, Map<String, double>>{};
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
+      for (final rawRow in rows.whereType<Map>()) {
+        final row = Map<String, dynamic>.from(rawRow);
         final createdAtRaw = row['created_at']?.toString();
         final createdAt = createdAtRaw == null
             ? null
@@ -505,16 +516,64 @@ class _HomePageState extends State<HomePage> {
         return const _HomeKpiOverview();
       }
 
-      final sortedDateKeys = rawByDate.keys.toList()..sort();
+      final wasteByDate = <String, double>{};
+      final wasteBreakdown = <String, double>{};
+      var totalWaste = 0.0;
+      var wasteRecordCount = 0;
+
+      for (final rawRow in wasteRows.whereType<Map>()) {
+        final row = Map<String, dynamic>.from(rawRow);
+        final actionType = row['action_type']?.toString() ?? '';
+        if (actionType != 'expense') continue;
+
+        final amount = (row['amount'] as num?)?.toDouble();
+        if (amount == null || amount <= 0) continue;
+
+        final occurredAtRaw = row['occurred_at']?.toString();
+        final occurredAt = occurredAtRaw == null
+            ? null
+            : DateTime.tryParse(occurredAtRaw)?.toLocal();
+        if (occurredAt == null) continue;
+
+        final description = row['description']?.toString() ?? '';
+        final category = WasteTrackingService.extractWasteCategory(description);
+        if (category == null) continue;
+
+        final dateKey = DateFormat('yyyy-MM-dd').format(occurredAt);
+        wasteByDate.update(dateKey, (value) => value + amount,
+            ifAbsent: () => amount);
+        wasteBreakdown.update(
+          category,
+          (value) => value + amount,
+          ifAbsent: () => amount,
+        );
+        totalWaste += amount;
+        wasteRecordCount += 1;
+      }
+
+      final sortedDateKeys = <String>{
+        ...rawByDate.keys,
+        ...wasteByDate.keys,
+      }.toList()
+        ..sort();
       final running = <String, double>{};
       final trendPoints = <_KpiTrendPoint>[];
       var latestBreakdown = <String, double>{};
+      var hasAssetSnapshot = false;
 
       for (final dateKey in sortedDateKeys) {
-        final updates = rawByDate[dateKey]!;
-        updates.forEach((key, value) {
-          running[key] = value;
-        });
+        final updates = rawByDate[dateKey];
+        if (updates != null) {
+          updates.forEach((key, value) {
+            running[key] = value;
+          });
+          latestBreakdown = Map<String, double>.from(running);
+          hasAssetSnapshot = true;
+        }
+        if (!hasAssetSnapshot) {
+          continue;
+        }
+
         var total = 0.0;
         for (final value in running.values) {
           total += value;
@@ -522,8 +581,13 @@ class _HomePageState extends State<HomePage> {
 
         final pointDate = DateTime.tryParse(dateKey);
         if (pointDate == null) continue;
-        trendPoints.add(_KpiTrendPoint(date: pointDate, total: total));
-        latestBreakdown = Map<String, double>.from(running);
+        trendPoints.add(
+          _KpiTrendPoint(
+            date: pointDate,
+            total: total,
+            waste: wasteByDate[dateKey] ?? 0,
+          ),
+        );
       }
 
       if (trendPoints.isEmpty) {
@@ -575,6 +639,9 @@ class _HomePageState extends State<HomePage> {
         cashAndCryptoTotal: cashAndCryptoTotal + otherTotal,
         equityTotal: equityTotal,
         trendPoints: trendPoints,
+        totalWaste: totalWaste,
+        wasteRecordCount: wasteRecordCount,
+        wasteBreakdown: wasteBreakdown,
       );
     } catch (e) {
       debugPrint('Error loading home KPI overview: $e');
@@ -3776,7 +3843,7 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.indigo,
                                 () => _nav(context, const MemoryDrillPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '蜈医↓蠢・亥ｰ守ｷ壹ｒ螳御ｺ・＠縺ｦ縺上□縺輔＞縲・,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                             ]),
                             const SizedBox(height: 24),
@@ -4758,6 +4825,13 @@ abstinence_slip_details: $slipDetailsText
                 isDark: isDark,
                 points: filteredTrend,
               ),
+              if (overview.hasWasteData) ...[
+                const SizedBox(height: 14),
+                _buildWasteOverviewSection(
+                  isDark: isDark,
+                  overview: overview,
+                ),
+              ],
             ],
           ),
         );
@@ -4897,10 +4971,11 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
-    final spots = <FlSpot>[
+    final assetSpots = <FlSpot>[
       for (var i = 0; i < points.length; i++)
         FlSpot(i.toDouble(), points[i].total),
     ];
+    final hasWasteSeries = points.any((point) => point.waste > 0);
 
     var minY = points.first.total;
     var maxY = points.first.total;
@@ -4912,139 +4987,480 @@ abstinence_slip_details: $slipDetailsText
     final yPadding = math.max(ySpan * 0.14, 10000);
     final chartMinY = minY - yPadding;
     final chartMaxY = maxY + yPadding;
+    final wasteMax = hasWasteSeries
+        ? points.fold<double>(
+            0,
+            (currentMax, point) => math.max(currentMax, point.waste),
+          )
+        : 0.0;
 
-    return SizedBox(
-      height: 260,
-      child: LineChart(
-        LineChartData(
-          minX: 0,
-          maxX: (spots.length - 1).toDouble(),
-          minY: chartMinY,
-          maxY: chartMaxY,
-          backgroundColor: isDark
-              ? Colors.black.withValues(alpha: 0.14)
-              : Colors.white.withValues(alpha: 0.72),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: _kpiChartHorizontalInterval(
-              chartMaxY - chartMinY,
+    double mapWasteToPrimaryAxis(double value) {
+      if (!hasWasteSeries || wasteMax <= 0) {
+        return chartMinY;
+      }
+      return chartMinY + (value / wasteMax) * (chartMaxY - chartMinY);
+    }
+
+    final wasteSpots = hasWasteSeries
+        ? <FlSpot>[
+            for (var i = 0; i < points.length; i++)
+              FlSpot(i.toDouble(), mapWasteToPrimaryAxis(points[i].waste)),
+          ]
+        : const <FlSpot>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            _buildTrendLegendChip(
+              isDark: isDark,
+              label: '資産',
+              color: Colors.redAccent,
             ),
-            getDrawingHorizontalLine: (_) {
-              return FlLine(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.1),
-                strokeWidth: 1,
+            if (hasWasteSeries)
+              _buildTrendLegendChip(
+                isDark: isDark,
+                label: '浪費',
+                color: Colors.orangeAccent,
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 260,
+          child: LineChart(
+            LineChartData(
+              minX: 0,
+              maxX: (assetSpots.length - 1).toDouble(),
+              minY: chartMinY,
+              maxY: chartMaxY,
+              backgroundColor: isDark
+                  ? Colors.black.withValues(alpha: 0.14)
+                  : Colors.white.withValues(alpha: 0.72),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: _kpiChartHorizontalInterval(
+                  chartMaxY - chartMinY,
+                ),
+                getDrawingHorizontalLine: (_) {
+                  return FlLine(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.1),
+                    strokeWidth: 1,
+                  );
+                },
+              ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: hasWasteSeries,
+                    reservedSize: 62,
+                    interval:
+                        hasWasteSeries ? (chartMaxY - chartMinY) / 4 : null,
+                    getTitlesWidget: (value, meta) {
+                      if (!hasWasteSeries || wasteMax <= 0) {
+                        return const SizedBox.shrink();
+                      }
+                      final normalized =
+                          ((value - chartMinY) / (chartMaxY - chartMinY))
+                              .clamp(0.0, 1.0)
+                              .toDouble();
+                      final wasteValue = normalized * wasteMax;
+                      return Text(
+                        _formatCompactYen(wasteValue),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                        textAlign: TextAlign.right,
+                      );
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 54,
+                    getTitlesWidget: (value, meta) {
+                      return Text(
+                        _formatManLabel(value),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+                      if (index < 0 || index >= points.length) {
+                        return const SizedBox.shrink();
+                      }
+                      final isEdge = index == 0 || index == points.length - 1;
+                      final isMiddle = index == points.length ~/ 2;
+                      if (!isEdge && !isMiddle) {
+                        return const SizedBox.shrink();
+                      }
+                      return SideTitleWidget(
+                        axisSide: meta.axisSide,
+                        child: Text(
+                          DateFormat('M/d').format(points[index].date),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(
+                show: true,
+                border: Border(
+                  left: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.2),
+                  ),
+                  bottom: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.2),
+                  ),
+                  right: hasWasteSeries
+                      ? BorderSide(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.14)
+                              : Colors.black.withValues(alpha: 0.14),
+                        )
+                      : BorderSide.none,
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => isDark
+                      ? Colors.black.withValues(alpha: 0.8)
+                      : Colors.white.withValues(alpha: 0.95),
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((spot) {
+                      final idx = spot.x.toInt();
+                      final point = points[idx];
+                      final isWasteSpot = spot.barIndex == 1;
+                      return LineTooltipItem(
+                        isWasteSpot
+                            ? '浪費 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.waste)}'
+                            : '資産 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
+                        TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: assetSpots,
+                  isCurved: false,
+                  color: Colors.redAccent,
+                  barWidth: 2.8,
+                  dotData: FlDotData(show: assetSpots.length <= 40),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.blue.withValues(alpha: 0.6),
+                        Colors.blue.withValues(alpha: 0.18),
+                      ],
+                    ),
+                  ),
+                ),
+                if (hasWasteSeries)
+                  LineChartBarData(
+                    spots: wasteSpots,
+                    isCurved: false,
+                    color: Colors.orangeAccent,
+                    barWidth: 2.4,
+                    dashArray: const [8, 4],
+                    dotData: FlDotData(show: wasteSpots.length <= 40),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrendLegendChip({
+    required bool isDark,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWasteOverviewSection({
+    required bool isDark,
+    required _HomeKpiOverview overview,
+  }) {
+    final breakdownEntries = overview.wasteBreakdown.entries
+        .where((entry) => entry.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    if (breakdownEntries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final palette = <Color>[
+      Colors.orange,
+      Colors.redAccent,
+      Colors.indigo,
+      Colors.teal,
+      Colors.purple,
+      Colors.blue,
+      Colors.green,
+      Colors.brown,
+      Colors.pink,
+      Colors.amber,
+      Colors.cyan,
+    ];
+    final total = breakdownEntries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.value,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.16)
+            : Colors.white.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '浪費の内訳',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildWasteMetricCard(
+                isDark: isDark,
+                title: '累計浪費',
+                value: _formatYen(overview.totalWaste),
+                accent: Colors.orange,
+              ),
+              _buildWasteMetricCard(
+                isDark: isDark,
+                title: '記録件数',
+                value: '${overview.wasteRecordCount}件',
+                accent: Colors.redAccent,
+              ),
+              _buildWasteMetricCard(
+                isDark: isDark,
+                title: '最大カテゴリ',
+                value: overview.topWasteCategory ?? '--',
+                accent: Colors.blueGrey,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 720;
+              final pieChart = SizedBox(
+                width: 240,
+                height: 240,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 42,
+                    sections: [
+                      for (var i = 0; i < breakdownEntries.length; i++)
+                        PieChartSectionData(
+                          color: palette[i % palette.length],
+                          value: breakdownEntries[i].value,
+                          radius: 72,
+                          title: breakdownEntries[i].value / total >= 0.08
+                              ? '${(breakdownEntries[i].value / total * 100).toStringAsFixed(0)}%'
+                              : '',
+                          titleStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+              final legend = Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (var i = 0; i < breakdownEntries.length; i++)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : Colors.white.withValues(alpha: 0.86),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: palette[i % palette.length].withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: palette[i % palette.length],
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            breakdownEntries[i].key,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatYen(breakdownEntries[i].value),
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    pieChart,
+                    const SizedBox(height: 14),
+                    Align(alignment: Alignment.centerLeft, child: legend),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  pieChart,
+                  const SizedBox(width: 18),
+                  Expanded(child: legend),
+                ],
               );
             },
           ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 54,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    _formatManLabel(value),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white70 : Colors.black54,
-                    ),
-                  );
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index < 0 || index >= points.length) {
-                    return const SizedBox.shrink();
-                  }
-                  final isEdge = index == 0 || index == points.length - 1;
-                  final isMiddle = index == points.length ~/ 2;
-                  if (!isEdge && !isMiddle) {
-                    return const SizedBox.shrink();
-                  }
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    child: Text(
-                      DateFormat('M/d').format(points[index].date),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark ? Colors.white70 : Colors.black54,
-                      ),
-                    ),
-                  );
-                },
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWasteMetricCard({
+    required bool isDark,
+    required String title,
+    required String value,
+    required Color accent,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.black54,
             ),
           ),
-          borderData: FlBorderData(
-            show: true,
-            border: Border(
-              left: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.2),
-              ),
-              bottom: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.2),
-              ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: accent,
             ),
           ),
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => isDark
-                  ? Colors.black.withValues(alpha: 0.8)
-                  : Colors.white.withValues(alpha: 0.95),
-              getTooltipItems: (touchedSpots) {
-                return touchedSpots.map((spot) {
-                  final idx = spot.x.toInt();
-                  final point = points[idx];
-                  return LineTooltipItem(
-                    '${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
-                    TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  );
-                }).toList();
-              },
-            ),
-          ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: false,
-              color: Colors.redAccent,
-              barWidth: 2.8,
-              dotData: FlDotData(show: spots.length <= 40),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.6),
-                    Colors.blue.withValues(alpha: 0.18),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -5123,6 +5539,16 @@ abstinence_slip_details: $slipDetailsText
             ? '-'
             : '';
     return '$sign$absText%';
+  }
+
+  String _formatCompactYen(double value) {
+    final absValue = value.abs();
+    if (absValue >= 10000) {
+      final man = value / 10000;
+      final digits = man.abs() >= 100 ? 0 : 1;
+      return '${man.toStringAsFixed(digits)}万';
+    }
+    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
   }
 
   String _formatPercentRatio(double part, double total) {
@@ -5361,10 +5787,12 @@ class _HomeDailyStatusRecord {
 class _KpiTrendPoint {
   final DateTime date;
   final double total;
+  final double waste;
 
   const _KpiTrendPoint({
     required this.date,
     required this.total,
+    this.waste = 0,
   });
 }
 
@@ -5377,6 +5805,9 @@ class _HomeKpiOverview {
   final double cashAndCryptoTotal;
   final double equityTotal;
   final List<_KpiTrendPoint> trendPoints;
+  final double totalWaste;
+  final int wasteRecordCount;
+  final Map<String, double> wasteBreakdown;
 
   const _HomeKpiOverview({
     this.latestTotal = 0,
@@ -5387,9 +5818,13 @@ class _HomeKpiOverview {
     this.cashAndCryptoTotal = 0,
     this.equityTotal = 0,
     this.trendPoints = const [],
+    this.totalWaste = 0,
+    this.wasteRecordCount = 0,
+    this.wasteBreakdown = const <String, double>{},
   });
 
   bool get hasData => trendPoints.isNotEmpty;
+  bool get hasWasteData => totalWaste > 0 && wasteBreakdown.isNotEmpty;
   double get dayDelta => latestTotal - previousTotal;
   double? get weekDelta =>
       weekBaseTotal == null ? null : latestTotal - weekBaseTotal!;
@@ -5397,6 +5832,13 @@ class _HomeKpiOverview {
       monthBaseTotal == null ? null : latestTotal - monthBaseTotal!;
   double? get yearDelta =>
       yearBaseTotal == null ? null : latestTotal - yearBaseTotal!;
+
+  String? get topWasteCategory {
+    if (wasteBreakdown.isEmpty) return null;
+    final sorted = wasteBreakdown.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.first.key;
+  }
 }
 
 class _HomeMarketingKpiSummary {
