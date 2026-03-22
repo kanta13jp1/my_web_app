@@ -52,5 +52,42 @@ void main() {
       expect(prompt, contains('1. 全体所見'));
       expect(prompt, contains('浪費・飲酒'));
     });
+    test('builds my struggle column prompt with title and concrete logs', () {
+      final prompt = BehaviorReviewService.buildMyStruggleColumnPrompt(
+        [
+          BehaviorReviewEntry(
+            id: 'a1',
+            kind: BehaviorReviewEntryKind.action,
+            source: '資産フロー',
+            title: '浪費・飲酒 ¥4,800',
+            detail: '居酒屋で二次会まで使った',
+            timestamp: DateTime(2026, 3, 22, 10, 30),
+          ),
+          BehaviorReviewEntry(
+            id: 'n1',
+            kind: BehaviorReviewEntryKind.utterance,
+            source: 'メモ',
+            title: '今日の反省',
+            detail: '読書を途中でやめて動画を見た',
+            timestamp: DateTime(2026, 3, 22, 22, 0),
+          ),
+        ],
+        days: 30,
+        summary: const BehaviorReviewSummary(
+          totalCount: 2,
+          actionCount: 1,
+          utteranceCount: 1,
+          sourceCounts: <String, int>{
+            '資産フロー': 1,
+            'メモ': 1,
+          },
+        ),
+      );
+
+      expect(prompt, contains('タイトルは必ず「我が闘争」'));
+      expect(prompt, contains('明日の一手:'));
+      expect(prompt, contains('浪費・飲酒'));
+      expect(prompt, contains('読書を途中でやめて動画を見た'));
+    });
   });
 }

@@ -37,7 +37,9 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
   _BehaviorReviewWindow _window = _BehaviorReviewWindow.thirtyDays;
   bool _isLoading = true;
   bool _isGeneratingReflection = false;
+  bool _isGeneratingColumn = false;
   String? _reflection;
+  String? _myStruggleColumn;
   List<BehaviorReviewEntry> _entries = const <BehaviorReviewEntry>[];
   BehaviorReviewSummary _summary = const BehaviorReviewSummary(
     totalCount: 0,
@@ -66,6 +68,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
         );
         _isLoading = false;
         _reflection = null;
+        _myStruggleColumn = null;
       });
       return;
     }
@@ -73,6 +76,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
     setState(() {
       _isLoading = true;
       _reflection = null;
+      _myStruggleColumn = null;
     });
 
     final since = DateTime.now().subtract(Duration(days: _window.days));
@@ -185,6 +189,34 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
     }
   }
 
+  Future<void> _generateMyStruggleColumn() async {
+    if (_entries.isEmpty || _isGeneratingColumn) return;
+
+    setState(() => _isGeneratingColumn = true);
+
+    try {
+      final prompt = BehaviorReviewService.buildMyStruggleColumnPrompt(
+        _entries,
+        days: _window.days,
+        summary: _summary,
+      );
+      final column = await widget.aiService.runCustomPrompt(prompt);
+      if (!mounted) return;
+      setState(() {
+        _myStruggleColumn = column.trim();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AIコラムの生成に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingColumn = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,9 +259,33 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                       _isGeneratingReflection ? '考察を生成中...' : 'AIで考察する',
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed:
+                        _entries.isEmpty || _isGeneratingColumn
+                            ? null
+                            : _generateMyStruggleColumn,
+                    icon: _isGeneratingColumn
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_stories_outlined),
+                    label: Text(
+                      _isGeneratingColumn
+                          ? 'コラムを生成中...'
+                          : '「我が闘争」を生成',
+                    ),
+                  ),
                   if (_reflection != null && _reflection!.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _buildReflectionCard(_reflection!),
+                  ],
+                  if (_myStruggleColumn != null &&
+                      _myStruggleColumn!.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildMyStruggleColumnCard(_myStruggleColumn!),
                   ],
                   const SizedBox(height: 16),
                   Text(
@@ -369,6 +425,35 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
             SelectableText(
               reflection,
               style: const TextStyle(height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMyStruggleColumnCard(String column) {
+    return Card(
+      color: Colors.orange.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.auto_stories_outlined, color: Colors.deepOrange),
+                SizedBox(width: 8),
+                Text(
+                  'AIコラム「我が闘争」',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SelectableText(
+              column,
+              style: const TextStyle(height: 1.6),
             ),
           ],
         ),

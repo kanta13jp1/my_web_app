@@ -192,6 +192,46 @@ class BehaviorReviewService {
     return buffer.toString();
   }
 
+  static String buildMyStruggleColumnPrompt(
+    List<BehaviorReviewEntry> entries, {
+    required int days,
+    required BehaviorReviewSummary summary,
+  }) {
+    final buffer = StringBuffer()
+      ..writeln('あなたは生活コラムニストです。')
+      ..writeln('以下のログだけを根拠に、日本語で短い生活コラムを書いてください。')
+      ..writeln('タイトルは必ず「我が闘争」にしてください。')
+      ..writeln('ここでの「我が闘争」は、日々の暮らし・習慣・仕事・浪費・言葉遣いとの格闘を意味します。')
+      ..writeln('政治思想、差別、暴力、扇動、憎悪表現は含めないでください。')
+      ..writeln('精神論だけで終わらせず、ログ中の具体的な事実を最低3つ引用してください。')
+      ..writeln('不明な事実は推測しないでください。')
+      ..writeln('構成は次の順にしてください。')
+      ..writeln('1. タイトル「我が闘争」')
+      ..writeln('2. 本文 4〜6段落')
+      ..writeln('3. 最後に「明日の一手:」で始まる具体策を1〜3個')
+      ..writeln()
+      ..writeln('[集計]')
+      ..writeln('- 対象期間: 過去$days日')
+      ..writeln('- 総件数: ${summary.totalCount}')
+      ..writeln('- 行動件数: ${summary.actionCount}')
+      ..writeln('- 発言件数: ${summary.utteranceCount}')
+      ..writeln('- 最多ソース: ${summary.topSource ?? 'なし'}')
+      ..writeln()
+      ..writeln('[ログ]');
+
+    for (final entry in entries.take(60)) {
+      buffer.writeln(
+        '- ${DateFormat('yyyy/MM/dd HH:mm').format(entry.timestamp)}'
+        ' | ${entry.kind == BehaviorReviewEntryKind.action ? '行動' : '発言'}'
+        ' | ${entry.source}'
+        ' | ${entry.title}'
+        '${entry.detail.isNotEmpty ? ' | ${entry.detail}' : ''}',
+      );
+    }
+
+    return buffer.toString();
+  }
+
   static String _compactText(String value) {
     final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (normalized.length <= 120) {
