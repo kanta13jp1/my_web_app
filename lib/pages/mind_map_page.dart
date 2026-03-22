@@ -15,7 +15,6 @@ class MindMapPage extends StatefulWidget {
 class _MindMapPageState extends State<MindMapPage> {
   final _topicController = TextEditingController();
   final MindMapGraphBuilderService _graphBuilder = MindMapGraphBuilderService();
-  final GraphViewController _graphViewController = GraphViewController();
   final Map<String, String> _nodeLabels = <String, String>{};
   Graph _graph = Graph();
   final BuchheimWalkerConfiguration _algorithmConfig =
@@ -244,11 +243,6 @@ class _MindMapPageState extends State<MindMapPage> {
         }
         _buildGraphFromJson(decoded);
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _graph.nodes.isEmpty) return;
-        _graphViewController.resetView();
-        _graphViewController.zoomToFit();
-      });
     } catch (e) {
       setState(() {
         _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
@@ -307,10 +301,7 @@ class _MindMapPageState extends State<MindMapPage> {
                         child: GraphView.builder(
                           key: ValueKey('mind_map_graph_view_$_graphVersion'),
                           graph: _graph,
-                          controller: _graphViewController,
                           animated: false,
-                          autoZoomToFit: true,
-                          centerGraph: true,
                           algorithm: BuchheimWalkerAlgorithm(
                             _algorithmConfig,
                             TreeEdgeRenderer(_algorithmConfig),
