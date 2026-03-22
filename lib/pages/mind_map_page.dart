@@ -24,6 +24,7 @@ class _MindMapPageState extends State<MindMapPage> {
       BuchheimWalkerConfiguration();
 
   Graph _graph = Graph();
+  Widget? _graphCanvas;
   bool _isLoading = false;
   bool _isDownloading = false;
   String? _errorMessage;
@@ -369,6 +370,38 @@ class _MindMapPageState extends State<MindMapPage> {
     _nodeLabels
       ..clear()
       ..addAll(result.nodeLabels);
+    _graphCanvas = _createGraphCanvas();
+  }
+
+  Widget _createGraphCanvas() {
+    return RepaintBoundary(
+      key: _graphCaptureKey,
+      child: ColoredBox(
+        color: const Color(0xFFF8FAFC),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: GraphView.builder(
+            key: ValueKey(
+              'mind_map_graph_view_$_graphVersion',
+            ),
+            graph: _graph,
+            animated: false,
+            algorithm: BuchheimWalkerAlgorithm(
+              _algorithmConfig,
+              TreeEdgeRenderer(_algorithmConfig),
+            ),
+            builder: (Node node) {
+              final value = node.key?.value;
+              final nodeId = value?.toString();
+              final text = (nodeId != null && _nodeLabels.containsKey(nodeId))
+                  ? _nodeLabels[nodeId]!
+                  : '(empty)';
+              return _buildNode(text);
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -435,35 +468,7 @@ class _MindMapPageState extends State<MindMapPage> {
                     ? _buildEmptyGraphState()
                     : Padding(
                         padding: const EdgeInsets.all(16),
-                        child: RepaintBoundary(
-                          key: _graphCaptureKey,
-                          child: ColoredBox(
-                            color: const Color(0xFFF8FAFC),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: GraphView.builder(
-                                key: ValueKey(
-                                  'mind_map_graph_view_$_graphVersion',
-                                ),
-                                graph: _graph,
-                                animated: false,
-                                algorithm: BuchheimWalkerAlgorithm(
-                                  _algorithmConfig,
-                                  TreeEdgeRenderer(_algorithmConfig),
-                                ),
-                                builder: (Node node) {
-                                  final value = node.key?.value;
-                                  final nodeId = value?.toString();
-                                  final text = (nodeId != null &&
-                                          _nodeLabels.containsKey(nodeId))
-                                      ? _nodeLabels[nodeId]!
-                                      : '(empty)';
-                                  return _buildNode(text);
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
+                        child: _graphCanvas ?? _buildEmptyGraphState(),
                       ),
           ),
         ],
