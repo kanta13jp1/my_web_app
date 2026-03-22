@@ -245,4 +245,53 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('can update MAGI system settings from the status page', (
+    WidgetTester tester,
+  ) async {
+    final modelsResponse = {
+      'success': true,
+      'models': [
+        {'model': 'gpt-4o-mini', 'provider': 'openai'},
+        {'model': 'gpt-5.4', 'provider': 'openai'},
+        {'model': 'claude-sonnet-4-6', 'provider': 'anthropic'},
+        {'model': 'gemini-2.5-flash', 'provider': 'google'},
+      ],
+    };
+    final mockResponse = MockFunctionResponse();
+    when(mockResponse.data).thenReturn(modelsResponse);
+    when(mockResponse.status).thenReturn(200);
+
+    when(
+      mockFunctionsClient.invoke(
+        'ai-assistant',
+        body: {'action': 'get_models'},
+      ),
+    ).thenAnswer((_) async => mockResponse);
+
+    await tester.pumpWidget(createTestWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('ai_status_magi_system_card')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('ai_status_magi_enabled_switch')));
+    await tester.pumpAndSettle();
+
+    var prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('magi_system_enabled_v1'), isFalse);
+
+    await tester.tap(find.byKey(const Key('ai_status_magi_enabled_switch')));
+    await tester.pumpAndSettle();
+
+    prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('magi_system_enabled_v1'), isTrue);
+
+    await tester.tap(find.byKey(const Key('ai_status_melchior_dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('gpt-5.4').last);
+    await tester.pumpAndSettle();
+
+    prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('magi_system_melchior_model_v1'), 'gpt-5.4');
+  });
 }

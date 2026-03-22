@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'landing_share_service.dart';
+import 'magi_system_settings_service.dart';
 
 class LandingPageAuthUnavailableException implements Exception {
   const LandingPageAuthUnavailableException();
@@ -81,7 +82,12 @@ abstract interface class LandingPageAdapter {
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
-  const SupabaseLandingPageAdapter();
+  final MagiSystemSettingsService _magiSettingsService;
+
+  const SupabaseLandingPageAdapter({
+    MagiSystemSettingsService magiSettingsService =
+        const MagiSystemSettingsService(),
+  }) : _magiSettingsService = magiSettingsService;
 
   SupabaseClient? get _supabaseClientOrNull {
     try {
@@ -173,10 +179,12 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
 
     final response = await client.functions.invoke(
       'ai-assistant',
-      body: <String, dynamic>{
-        'action': 'improve',
-        'content': prompt,
-      },
+      body: await _magiSettingsService.buildAiAssistantPayload(
+        baseBody: <String, dynamic>{
+          'action': 'improve',
+          'content': prompt,
+        },
+      ),
     );
     final data =
         response.data is Map<String, dynamic>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../services/magi_system_settings_service.dart';
 import '../../services/theme_service.dart';
 
 class AiAssistantMenu extends StatefulWidget {
@@ -11,6 +12,7 @@ class AiAssistantMenu extends StatefulWidget {
   final String? model;
   final String? styleName;
   final String? styleInstruction;
+  final MagiSystemSettingsService magiSettingsService;
 
   const AiAssistantMenu({
     super.key,
@@ -20,6 +22,7 @@ class AiAssistantMenu extends StatefulWidget {
     this.model,
     this.styleName,
     this.styleInstruction,
+    this.magiSettingsService = const MagiSystemSettingsService(),
   });
 
   @override
@@ -73,9 +76,8 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
     setState(() => _isLoading = true);
     try {
       final supabase = widget.supabaseClient ?? Supabase.instance.client;
-      final response = await supabase.functions.invoke(
-        'ai-assistant',
-        body: {
+      final payload = await widget.magiSettingsService.buildAiAssistantPayload(
+        baseBody: {
           'action': action,
           'content': widget.contentController.text,
           if (widget.model != null && widget.model!.trim().isNotEmpty)
@@ -87,6 +89,10 @@ class _AiAssistantMenuState extends State<AiAssistantMenu> {
               widget.styleInstruction!.trim().isNotEmpty)
             'styleInstruction': widget.styleInstruction,
         },
+      );
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: payload,
       );
 
       if (!mounted) {

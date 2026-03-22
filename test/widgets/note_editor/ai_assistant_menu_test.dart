@@ -88,7 +88,15 @@ void main() {
     when(
       mockFunctionsClient.invoke(
         'ai-assistant',
-        body: {'action': 'improve', 'content': 'Initial content'},
+        body: {
+          'action': 'improve',
+          'content': 'Initial content',
+          'useMagi': true,
+          'melchiorModel': 'gpt-4o-mini',
+          'balthasarModel': 'claude-sonnet-4-6',
+          'casperModel': 'gemini-2.5-flash',
+          'synthesisModel': 'claude-sonnet-4-6',
+        },
       ),
     ).thenAnswer((_) async {
       // Simulate network delay

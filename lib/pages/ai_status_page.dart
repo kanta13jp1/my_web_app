@@ -2,16 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/ai_model_preference_service.dart';
+import '../services/magi_system_settings_service.dart';
 
 class AiStatusPage extends StatefulWidget {
   // テスト時に SupabaseClient を注入できるようにする
   final SupabaseClient? supabaseClient;
   final AiModelPreferenceService modelPreferenceService;
+  final MagiSystemSettingsService magiSettingsService;
 
   const AiStatusPage({
     super.key,
     this.supabaseClient,
     this.modelPreferenceService = const AiModelPreferenceService(),
+    this.magiSettingsService = const MagiSystemSettingsService(),
   });
 
   @override
@@ -23,6 +26,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
   bool _isLoading = true;
   String? _error;
   String? _preferredModel;
+  MagiSystemSettings _magiSettings = const MagiSystemSettings();
 
   // テスト実行の状態管理
   final Map<String, String> _testResults = {}; // 'testing', 'success', 'error'
@@ -37,6 +41,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
   void initState() {
     super.initState();
     _loadPreferredModel();
+    _loadMagiSettings();
     _fetchAvailableModels();
   }
 
@@ -63,6 +68,50 @@ class _AiStatusPageState extends State<AiStatusPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('既定の AI モデルを $modelName に設定しました')),
+    );
+  }
+
+  Future<void> _loadMagiSettings() async {
+    final settings = await widget.magiSettingsService.loadSettings();
+    if (!mounted) {
+      _magiSettings = settings;
+      return;
+    }
+    setState(() {
+      _magiSettings = settings;
+    });
+  }
+
+  Future<void> _setMagiEnabled(bool enabled) async {
+    final settings = await widget.magiSettingsService.saveEnabled(enabled);
+    if (!mounted) {
+      _magiSettings = settings;
+      return;
+    }
+    setState(() {
+      _magiSettings = settings;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(enabled ? 'MAGI システムを全体で有効にしました' : 'MAGI システムを全体で無効にしました'),
+      ),
+    );
+  }
+
+  Future<void> _setMagiNodeModel(MagiNodeRole role, String modelName) async {
+    final settings = await widget.magiSettingsService.saveNodeModel(
+      role,
+      modelName,
+    );
+    if (!mounted) {
+      _magiSettings = settings;
+      return;
+    }
+    setState(() {
+      _magiSettings = settings;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${role.label} のモデルを $modelName に設定しました')),
     );
   }
 
@@ -244,170 +293,314 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     ),
                   ),
                 )
-              : ListView.builder(
+              : ListView(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _models.length + (_preferredModel != null ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_preferredModel != null && index == 0) {
-                      return _buildDefaultModelBanner(navy);
-                    }
-                    final modelIndex = _preferredModel != null ? index - 1 : index;
-                    final modelMap = _models[modelIndex];
-                    final provider =
-                        modelMap['provider'] as String? ?? '不明';
-                    // score は null でも落ちないように扱う
-                    final score = modelMap['score'] as int? ?? 0;
-                    final modelName = modelMap['model'] as String? ?? '不明';
-                    final status = _testResults[modelName];
-                    final nodeCode = _resolveMagiNode(provider, modelName);
-
-                    return Card(
-                      key: ValueKey(modelName),
-                      elevation: 0,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      child: InkWell(
-                        onTap: () => _testSingleModel(modelName),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // ヘッダー表示
-                              Row(
-                                children: [
-                                  Stack(
-                                    alignment: Alignment.bottomRight,
-                                    children: [
-                                      _buildProviderBadge(provider, modelName),
-                                      if (status != null)
-                                        Container(
-                                          width: 14,
-                                          height: 14,
-                                          decoration: BoxDecoration(
-                                            color: status == 'testing'
-                                                ? Colors.orange
-                                                : (status == 'success'
-                                                    ? Colors.green
-                                                    : Colors.red),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          modelName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        Text(
-                                          'MAGIノード: $nodeCode (${provider.toUpperCase()})',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // スコア表示
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '$score',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: score >= 900
-                                              ? Colors.green
-                                              : (score >= 500
-                                                  ? Colors.orange
-                                                  : Colors.grey),
-                                        ),
-                                      ),
-                                      const Text(
-                                        'スコア',
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      if (_preferredModel == modelName)
-                                        Container(
-                                          key: Key(
-                                            'ai_status_default_model_badge_$modelName',
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: navy.withValues(alpha: 0.08),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            '既定',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        OutlinedButton(
-                                          key: Key(
-                                            'ai_status_default_model_button_$modelName',
-                                          ),
-                                          onPressed: () =>
-                                              _setPreferredModel(modelName),
-                                          child: const Text('既定にする'),
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-
-                              // ベンチマーク結果の表示
-                              _buildBenchmarkResult(modelName),
-
-                              // エラー表示
-                              if (_testErrors.containsKey(modelName))
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                    _testErrors[modelName]!,
-                                    style: const TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  children: [
+                    if (_preferredModel != null) _buildDefaultModelBanner(navy),
+                    _buildMagiSystemCard(navy),
+                    ..._models.map((modelMap) => _buildModelCard(navy, modelMap)),
+                  ],
                 ),
     );
+  }
+
+  Widget _buildModelCard(Color navy, Map<String, dynamic> modelMap) {
+    final provider = modelMap['provider'] as String? ?? '不明';
+    final score = modelMap['score'] as int? ?? 0;
+    final modelName = modelMap['model'] as String? ?? '不明';
+    final status = _testResults[modelName];
+    final nodeCode = _resolveMagiNode(provider, modelName);
+
+    return Card(
+      key: ValueKey(modelName),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: InkWell(
+        onTap: () => _testSingleModel(modelName),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      _buildProviderBadge(provider, modelName),
+                      if (status != null)
+                        Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: status == 'testing'
+                                ? Colors.orange
+                                : (status == 'success'
+                                    ? Colors.green
+                                    : Colors.red),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          modelName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          'MAGIノード: $nodeCode (${provider.toUpperCase()})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '$score',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: score >= 900
+                              ? Colors.green
+                              : (score >= 500 ? Colors.orange : Colors.grey),
+                        ),
+                      ),
+                      const Text(
+                        'スコア',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_preferredModel == modelName)
+                        Container(
+                          key: Key(
+                            'ai_status_default_model_badge_$modelName',
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: navy.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '既定',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        )
+                      else
+                        OutlinedButton(
+                          key: Key(
+                            'ai_status_default_model_button_$modelName',
+                          ),
+                          onPressed: () => _setPreferredModel(modelName),
+                          child: const Text('既定にする'),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              _buildBenchmarkResult(modelName),
+              if (_testErrors.containsKey(modelName))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _testErrors[modelName]!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMagiSystemCard(Color navy) {
+    return Container(
+      key: const Key('ai_status_magi_system_card'),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: navy.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hub_outlined, color: navy),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'MAGI システム全体設定',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: navy.withValues(alpha: 0.92),
+                      ),
+                    ),
+                    Text(
+                      '改善、要約、翻訳、カスタムプロンプト、役員会議へ共通反映します。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: navy.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile.adaptive(
+            key: const Key('ai_status_magi_enabled_switch'),
+            contentPadding: EdgeInsets.zero,
+            value: _magiSettings.enabled,
+            title: const Text('MAGI を全体で使う'),
+            subtitle: Text(
+              _magiSettings.enabled
+                  ? '各ノードの意見を合成して回答します。'
+                  : '単一モデルで回答します。',
+            ),
+            onChanged: (value) {
+              _setMagiEnabled(value);
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildMagiModelDropdown(role: MagiNodeRole.melchior),
+          const SizedBox(height: 12),
+          _buildMagiModelDropdown(role: MagiNodeRole.balthasar),
+          const SizedBox(height: 12),
+          _buildMagiModelDropdown(role: MagiNodeRole.casper),
+          const SizedBox(height: 12),
+          _buildMagiModelDropdown(role: MagiNodeRole.synthesis),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMagiModelDropdown({
+    required MagiNodeRole role,
+  }) {
+    final options = _modelsForRole(role);
+    final selectedModel = _selectedRoleModel(role, options);
+
+    return DropdownButtonFormField<String>(
+      key: Key('ai_status_${role.name}_dropdown'),
+      initialValue: selectedModel,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: '${role.label} (${role.description})',
+        helperText: _magiRoleHelperText(role),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: _magiSettings.enabled
+            ? Colors.white
+            : Colors.grey.withValues(alpha: 0.05),
+      ),
+      items: options
+          .map(
+            (modelName) => DropdownMenuItem<String>(
+              value: modelName,
+              child: Text(modelName),
+            ),
+          )
+          .toList(),
+      onChanged: !_magiSettings.enabled
+          ? null
+          : (value) {
+              if (value == null || value.isEmpty) {
+                return;
+              }
+              _setMagiNodeModel(role, value);
+            },
+    );
+  }
+
+  List<String> _modelsForRole(MagiNodeRole role) {
+    final values = <String>{_magiSettings.modelFor(role)};
+
+    for (final modelMap in _models) {
+      final modelName = modelMap['model'] as String? ?? '';
+      if (modelName.isEmpty) {
+        continue;
+      }
+      if (role == MagiNodeRole.synthesis) {
+        values.add(modelName);
+        continue;
+      }
+      final provider = modelMap['provider'] as String? ?? '';
+      if (_resolveMagiNode(provider, modelName) == role.label) {
+        values.add(modelName);
+      }
+    }
+
+    final list = values.where((value) => value.trim().isNotEmpty).toList();
+    list.sort();
+    return list;
+  }
+
+  String _selectedRoleModel(MagiNodeRole role, List<String> options) {
+    final configured = _magiSettings.modelFor(role);
+    if (options.contains(configured)) {
+      return configured;
+    }
+    return options.first;
+  }
+
+  String _magiRoleHelperText(MagiNodeRole role) {
+    switch (role) {
+      case MagiNodeRole.melchior:
+        return '論理・分析担当。OpenAI / DeepSeek 系が向いています。';
+      case MagiNodeRole.balthasar:
+        return '共感・人間理解担当。Claude 系が向いています。';
+      case MagiNodeRole.casper:
+        return '批判・リスク検討担当。Gemini / Gemma 系が向いています。';
+      case MagiNodeRole.synthesis:
+        return '最終回答を統合するモデルです。';
+    }
   }
 
   /// 既定モデルバナーの Widget

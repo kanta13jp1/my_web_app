@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
+import '../services/magi_system_settings_service.dart';
 
 class CmoPage extends StatefulWidget {
   final String? initialChannel;
@@ -21,6 +22,8 @@ class CmoPage extends StatefulWidget {
 }
 
 class _CmoPageState extends State<CmoPage> {
+  final MagiSystemSettingsService _magiSettingsService =
+      const MagiSystemSettingsService();
   bool _isLoading = false;
   Map<String, dynamic>? _pressRelease;
 
@@ -303,12 +306,15 @@ $hashtags
 
     setState(() => _isLoading = true);
     try {
-      final response = await supabase.functions.invoke(
-        'ai-assistant',
-        body: <String, dynamic>{
+      final payload = await _magiSettingsService.buildAiAssistantPayload(
+        baseBody: <String, dynamic>{
           'action': 'improve',
           'text': _buildDraftPrompt(channelKey),
         },
+      );
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: payload,
       );
 
       if (response.status != 200) {

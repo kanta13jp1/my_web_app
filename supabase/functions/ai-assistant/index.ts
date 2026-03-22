@@ -78,6 +78,7 @@ interface AIRequest {
     action: string;
     model?: string;
     content?: string;
+    text?: string;
     styleName?: string;
     styleInstruction?: string;
     imageBase64?: string;
@@ -87,12 +88,61 @@ interface AIRequest {
     recentNotes?: Record<string, unknown>[];
     userStats?: Record<string, unknown>;
     participants?: string[];
+    useMagi?: boolean;
+    melchiorModel?: string;
+    balthasarModel?: string;
+    casperModel?: string;
+    synthesisModel?: string;
 }
 
 interface Fighter {
     provider: string;
     model: string;
 }
+
+interface MagiNodeProfile {
+    nodeName: string;
+    viewpoint: string;
+    instruction: string;
+    provider: string;
+    defaultModel: string;
+}
+
+interface MagiOpinion {
+    nodeName: string;
+    viewpoint: string;
+    content: string;
+}
+
+const MAGI_OPINION_MAX_LENGTH = 900;
+const DEFAULT_MELCHIOR_MODEL = 'gpt-4o-mini';
+const DEFAULT_BALTHASAR_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_CASPER_MODEL = 'gemini-2.5-flash';
+const DEFAULT_SYNTHESIS_MODEL = 'claude-sonnet-4-6';
+
+const MAGI_NODE_PROFILES: MagiNodeProfile[] = [
+    {
+        nodeName: 'MELCHIOR',
+        viewpoint: '論理・分析重視',
+        instruction: 'Provide logical, evidence-based analysis with clear tradeoffs and practical recommendations.',
+        provider: 'openai',
+        defaultModel: DEFAULT_MELCHIOR_MODEL,
+    },
+    {
+        nodeName: 'BALTHASAR',
+        viewpoint: '共感・人間理解重視',
+        instruction: 'Focus on emotional nuance, empathy, and how the response will feel for the user.',
+        provider: 'anthropic',
+        defaultModel: DEFAULT_BALTHASAR_MODEL,
+    },
+    {
+        nodeName: 'CASPER',
+        viewpoint: '批判・リスク検討',
+        instruction: 'Look for blind spots, edge cases, and strategic risks before making a recommendation.',
+        provider: 'gemini',
+        defaultModel: DEFAULT_CASPER_MODEL,
+    },
+];
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -112,7 +162,11 @@ serve(async (req) => {
         const requestData: AIRequest = await req.json()
         const { action, model: targetModel } = requestData
 
-        const tryAIChain = async (originalPrompt: string, image?: { base64: string, mime: string }) => {
+        const requestContent = requestData.content ?? requestData.text;
+        const runFallbackChain = async (
+            originalPrompt: string,
+            image?: { base64: string, mime: string },
+        ) => {
             if (targetModel) {
                  const fighter = { provider: inferProvider(targetModel), model: targetModel };
                  if (!isProviderAvailable(fighter.provider)) {
@@ -131,6 +185,27 @@ serve(async (req) => {
                 }
             }
             throw lastError || new Error("All AI models failed.");
+        };
+
+        const runPromptWithStrategy = async (
+            originalPrompt: string,
+            image?: { base64: string, mime: string },
+        ) => {
+            const shouldUseMagi = requestData.useMagi ?? true;
+            if (!shouldUseMagi) {
+                return await runFallbackChain(originalPrompt, image);
+            }
+            return await runMagiChain({
+                prompt: originalPrompt,
+                requestData: {
+                    ...requestData,
+                    content: originalPrompt,
+                    imageBase64: image?.base64,
+                    mimeType: image?.mime,
+                },
+                image,
+                fallback: runFallbackChain,
+            });
         };
 
         // --- 1. GET MODELS ---
@@ -168,7 +243,7 @@ serve(async (req) => {
             }
             `;
 
-            const resultStr = await tryAIChain(prompt, { base64: requestData.imageBase64!, mime: requestData.mimeType || 'image/jpeg' });
+            const resultStr = await runFallbackChain(prompt, { base64: requestData.imageBase64!, mime: requestData.mimeType || 'image/jpeg' });
             const cleanJson = resultStr.replace(/```json|```/g, '').trim();
             const result = JSON.parse(cleanJson);
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
@@ -176,7 +251,7 @@ serve(async (req) => {
 
         // --- 3. Board Meeting ---
         if (action === 'hold_board_meeting') {
-            const contextFromClient = requestData.content;
+            const contextFromClient = requestContent ?? '';
             const systemPrompt = `
 あなたは「自分株式会社」の緊急役員会議 BI レポート生成システムです。
 雑談ではなく、受け取った現状データだけを根拠に、4名の役員が短く具体的な分析を返してください。
@@ -220,7 +295,7 @@ serve(async (req) => {
 `;
 
             const finalPrompt = `${systemPrompt}\n\n[CURRENT BOARD CONTEXT]\n${contextFromClient}`;
-            const resultStr = await tryAIChain(finalPrompt);
+            const resultStr = await runPromptWithStrategy(finalPrompt);
             const match = resultStr.match(/\{[\s\S]*\}/);
             if (!match) {
                 throw new Error("AI response did not contain valid JSON.");
@@ -260,7 +335,7 @@ serve(async (req) => {
                 'Reply with the exact text "ping-ok" and nothing else.',
             ].join('\n');
             const startedAt = Date.now();
-            const result = await tryAIChain(benchmarkPrompt);
+            const result = await runFallbackChain(benchmarkPrompt);
             const latency = Date.now() - startedAt;
             const normalized = result.trim();
             const passed = normalized === 'ping-ok';
@@ -304,13 +379,17 @@ serve(async (req) => {
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title', 'custom_prompt'].includes(action)) {
              const normalizedStyleInstruction = requestData.styleInstruction?.trim();
+             const targetLanguagePrompt =
+                action === 'translate' && requestData.targetLanguage?.trim()
+                    ? `\nTarget language: ${requestData.targetLanguage.trim()}`
+                    : '';
              const stylePrompt = normalizedStyleInstruction
                 ? `\nStyle preset: ${requestData.styleName || 'custom'}\nStyle instruction: ${normalizedStyleInstruction}\nFollow this style while completing the action.`
                 : '';
              const prompt = action === 'custom_prompt'
-                ? `Action: custom_prompt${stylePrompt}\nSaved prompt:\n${requestData.content}`
-                : `Action: ${action}${stylePrompt}\nContent: ${requestData.content}`;
-             const result = await tryAIChain(prompt);
+                ? `Action: custom_prompt${stylePrompt}${targetLanguagePrompt}\nSaved prompt:\n${requestContent ?? ''}`
+                : `Action: ${action}${stylePrompt}${targetLanguagePrompt}\nContent: ${requestContent ?? ''}`;
+             const result = await runPromptWithStrategy(prompt);
              return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
@@ -334,6 +413,206 @@ function inferProvider(modelName: string): string {
     if (normalized.startsWith('gemini') || normalized.startsWith('gemma')) return 'gemini';
     if (normalized.startsWith('gpt') || normalized.startsWith('o')) return 'openai';
     return 'openai';
+}
+
+function normalizeMagiText(text: string | null | undefined): string | null {
+    const normalized = text?.trim();
+    if (!normalized) {
+        return null;
+    }
+    if (normalized.length <= MAGI_OPINION_MAX_LENGTH) {
+        return normalized;
+    }
+    return normalized.slice(0, MAGI_OPINION_MAX_LENGTH);
+}
+
+function buildMagiNodePrompt(originalPrompt: string, profile: MagiNodeProfile): string {
+    return [
+        `You are MAGI system node "${profile.nodeName}".`,
+        `Viewpoint: ${profile.viewpoint}`,
+        `Additional instruction: ${profile.instruction}`,
+        'Preserve the user\'s requested output language and any explicit format constraints from the original prompt.',
+        '',
+        '[USER_PROMPT]',
+        originalPrompt,
+    ].join('\n');
+}
+
+function buildMagiSynthesisPrompt(originalPrompt: string, opinions: MagiOpinion[]): string {
+    const sections = opinions.flatMap((opinion) => [
+        `[${opinion.nodeName} / ${opinion.viewpoint}]`,
+        opinion.content,
+        '',
+    ]);
+
+    return [
+        'You are the MAGI synthesis node.',
+        'Review the opinions from the other nodes, compare tradeoffs, and merge them into one final answer.',
+        'Return exactly one JSON object with the merged recommendation and key reasoning.',
+        'Keep the answer concise and do not use Markdown code fences.',
+        'Preserve the original prompt language and any explicit format constraints.',
+        '',
+        '[ORIGINAL_PROMPT]',
+        originalPrompt,
+        '',
+        ...sections,
+    ].join('\n');
+}
+
+function resolveMagiNodeModel(profile: MagiNodeProfile, requestData: AIRequest): string {
+    const requestedModel = requestData.model?.trim();
+    const safeGeminiModel =
+        requestedModel && inferProvider(requestedModel) === 'gemini'
+            ? requestedModel
+            : DEFAULT_CASPER_MODEL;
+
+    switch (profile.nodeName) {
+        case 'MELCHIOR':
+            return requestData.melchiorModel?.trim() || DEFAULT_MELCHIOR_MODEL;
+        case 'BALTHASAR':
+            return requestData.balthasarModel?.trim() || DEFAULT_BALTHASAR_MODEL;
+        case 'CASPER':
+            return requestData.casperModel?.trim() || safeGeminiModel;
+        default:
+            return profile.defaultModel;
+    }
+}
+
+function buildMagiSynthesisFighters(requestData: AIRequest): Fighter[] {
+    const fighters: Fighter[] = [];
+    const addedProviders = new Set<string>();
+
+    const addFighter = (modelName: string | undefined) => {
+        const normalized = modelName?.trim();
+        if (!normalized) {
+            return;
+        }
+        const provider = inferProvider(normalized);
+        if (addedProviders.has(provider) || !isProviderAvailable(provider)) {
+            return;
+        }
+        fighters.push({ provider, model: normalized });
+        addedProviders.add(provider);
+    };
+
+    addFighter(requestData.synthesisModel || DEFAULT_SYNTHESIS_MODEL);
+    addFighter(requestData.casperModel || DEFAULT_CASPER_MODEL);
+    addFighter(requestData.melchiorModel || DEFAULT_MELCHIOR_MODEL);
+    addFighter(requestData.balthasarModel || DEFAULT_BALTHASAR_MODEL);
+    addFighter('deepseek-chat');
+
+    return fighters;
+}
+
+async function runMagiNode(params: {
+    prompt: string;
+    profile: MagiNodeProfile;
+    requestData: AIRequest;
+    image?: { base64: string; mime: string };
+}): Promise<MagiOpinion | null> {
+    const { prompt, profile, requestData, image } = params;
+    const model = resolveMagiNodeModel(profile, requestData);
+    const provider = inferProvider(model);
+    if (!isProviderAvailable(provider)) {
+        console.info(`MAGI node skipped: ${profile.nodeName} (${provider}, no API key)`);
+        return null;
+    }
+
+    try {
+        const response = await callAI(
+            { provider, model },
+            KEYS,
+            {
+                ...requestData,
+                content: buildMagiNodePrompt(prompt, profile),
+                imageBase64: image?.base64,
+                mimeType: image?.mime,
+            },
+        );
+        const content = normalizeMagiText(response);
+        if (!content) {
+            return null;
+        }
+        return {
+            nodeName: profile.nodeName,
+            viewpoint: profile.viewpoint,
+            content,
+        };
+    } catch (error) {
+        console.error(`MAGI node failed: ${profile.nodeName}`, error);
+        return null;
+    }
+}
+
+async function runMagiBestEffort(params: {
+    prompt: string;
+    requestData: AIRequest;
+    image?: { base64: string; mime: string };
+}): Promise<string> {
+    const { prompt, requestData, image } = params;
+    let lastError: unknown;
+    for (const fighter of buildMagiSynthesisFighters(requestData)) {
+        try {
+            const response = await callAI(
+                fighter,
+                KEYS,
+                {
+                    ...requestData,
+                    content: prompt,
+                    imageBase64: image?.base64,
+                    mimeType: image?.mime,
+                },
+            );
+            const normalized = normalizeMagiText(response);
+            if (normalized) {
+                return normalized;
+            }
+        } catch (error) {
+            console.error(`MAGI synthesis fallback failed: ${fighter.model}`, error);
+            lastError = error;
+        }
+    }
+    if (lastError instanceof Error) {
+        throw lastError;
+    }
+    throw new Error('MAGI synthesis fallback failed.');
+}
+
+async function runMagiChain(params: {
+    prompt: string;
+    requestData: AIRequest;
+    image?: { base64: string; mime: string };
+    fallback: (originalPrompt: string, image?: { base64: string; mime: string }) => Promise<string>;
+}): Promise<string> {
+    const { prompt, requestData, image, fallback } = params;
+    const opinions = (await Promise.all(
+        MAGI_NODE_PROFILES.map((profile) =>
+            runMagiNode({ prompt, profile, requestData, image }),
+        ),
+    )).filter((opinion): opinion is MagiOpinion => opinion !== null);
+
+    if (opinions.length === 0) {
+        try {
+            return await runMagiBestEffort({ prompt, requestData, image });
+        } catch {
+            return await fallback(prompt, image);
+        }
+    }
+
+    if (opinions.length === 1) {
+        return opinions[0].content;
+    }
+
+    const synthesisPrompt = buildMagiSynthesisPrompt(prompt, opinions);
+    try {
+        return await runMagiBestEffort({
+            prompt: synthesisPrompt,
+            requestData,
+            image,
+        });
+    } catch {
+        return opinions[0].content;
+    }
 }
 
 // キーの型定義

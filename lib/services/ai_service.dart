@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import '../main.dart';
 import 'dart:math';
+import 'magi_system_settings_service.dart';
 
 class AIServiceException implements Exception {
   final String message;
@@ -28,13 +29,16 @@ class AIService {
   final String? _anthropicApiKey;
   final String? _deepSeekApiKey;
   final http.Client _httpClient;
+  final MagiSystemSettingsService _magiSettingsService;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
-  static const bool _magiDefaultEnabled = true;
   static const int _magiOpinionMaxLength = 900;
-  static const String _defaultOpenAIModel = 'gpt-4o-mini';
-  static const String _defaultAnthropicModel = 'claude-sonnet-4-6';
-  static const String _defaultGeminiModel = 'gemini-2.5-flash';
+  static const String _defaultOpenAIModel =
+      MagiSystemSettings.defaultMelchiorModel;
+  static const String _defaultAnthropicModel =
+      MagiSystemSettings.defaultBalthasarModel;
+  static const String _defaultGeminiModel =
+      MagiSystemSettings.defaultCasperModel;
   static const String _defaultDeepSeekModel = 'deepseek-chat';
 
   AIService([
@@ -44,11 +48,14 @@ class AIService {
     String? anthropicApiKey,
     String? deepSeekApiKey,
     http.Client? httpClient,
+    MagiSystemSettingsService magiSettingsService =
+        const MagiSystemSettingsService(),
   ])  : _supabase = supabaseClient ?? supabase,
         _openAIApiKey = openAIApiKey,
         _anthropicApiKey = anthropicApiKey,
         _deepSeekApiKey = deepSeekApiKey,
-        _httpClient = httpClient ?? http.Client();
+        _httpClient = httpClient ?? http.Client(),
+        _magiSettingsService = magiSettingsService;
 
   AIService.withMagiKeys({
     SupabaseClient? supabaseClient,
@@ -57,6 +64,8 @@ class AIService {
     String? anthropicApiKey,
     String? deepSeekApiKey,
     http.Client? httpClient,
+    MagiSystemSettingsService magiSettingsService =
+        const MagiSystemSettingsService(),
   }) : this(
           supabaseClient,
           geminiApiKey,
@@ -64,6 +73,7 @@ class AIService {
           anthropicApiKey,
           deepSeekApiKey,
           httpClient,
+          magiSettingsService,
         );
 
   /// レート制限エラー時に指数バックオフで再試行するヘルパー
@@ -190,13 +200,32 @@ class AIService {
   Future<String?> generateContent({
     required String model,
     required String prompt,
-    bool useMagi = _magiDefaultEnabled,
+    bool? useMagi,
     String? melchiorModel,
     String? balthasarModel,
     String? casperModel,
     String? synthesisModel,
   }) async {
-    if (useMagi && !_hasAnyMagiProvider) {
+    final magiSettings = await _loadMagiSettings();
+    final effectiveUseMagi = useMagi ?? magiSettings.enabled;
+    final resolvedMelchiorModel = _resolveMagiSettingModel(
+      overrideValue: melchiorModel,
+      fallback: magiSettings.melchiorModel,
+    );
+    final resolvedBalthasarModel = _resolveMagiSettingModel(
+      overrideValue: balthasarModel,
+      fallback: magiSettings.balthasarModel,
+    );
+    final resolvedCasperModel = _resolveMagiSettingModel(
+      overrideValue: casperModel,
+      fallback: magiSettings.casperModel,
+    );
+    final resolvedSynthesisModel = _resolveMagiSettingModel(
+      overrideValue: synthesisModel,
+      fallback: magiSettings.synthesisModel,
+    );
+
+    if (effectiveUseMagi && !_hasAnyMagiProvider) {
       throw AIServiceException(
         'MAGI providers are not configured. Set at least one API key.',
       );
@@ -204,7 +233,7 @@ class AIService {
 
     return _retryWithBackoff(
       () async {
-        if (!useMagi) {
+        if (!effectiveUseMagi) {
           final provider = _inferProviderFromModel(model);
           return _generateSingleContentByProvider(
             provider: provider,
@@ -215,20 +244,47 @@ class AIService {
         return _generateContentWithMagi(
           model: model,
           prompt: prompt,
-          melchiorModel: melchiorModel,
-          balthasarModel: balthasarModel,
-          casperModel: casperModel,
-          synthesisModel: synthesisModel,
+          melchiorModel: resolvedMelchiorModel,
+          balthasarModel: resolvedBalthasarModel,
+          casperModel: resolvedCasperModel,
+          synthesisModel: resolvedSynthesisModel,
         );
       },
-      operationName: useMagi ? 'generateContent(MAGI)' : 'generateContent',
+      operationName:
+          effectiveUseMagi ? 'generateContent(MAGI)' : 'generateContent',
     );
   }
 
   bool get _hasAnyMagiProvider {
     return _isProviderConfigured(_MagiProvider.openai) ||
         _isProviderConfigured(_MagiProvider.anthropic) ||
-        _isProviderConfigured(_MagiProvider.gemini);
+        _isProviderConfigured(_MagiProvider.gemini) ||
+        _isProviderConfigured(_MagiProvider.deepseek);
+  }
+
+  Future<MagiSystemSettings> _loadMagiSettings() {
+    return _magiSettingsService.loadSettings();
+  }
+
+  String _resolveMagiSettingModel({
+    required String? overrideValue,
+    required String fallback,
+  }) {
+    final normalized = overrideValue?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return fallback;
+    }
+    return normalized;
+  }
+
+  Future<Map<String, dynamic>> _buildAiAssistantPayload(
+    Map<String, dynamic> baseBody, {
+    bool? useMagi,
+  }) {
+    return _magiSettingsService.buildAiAssistantPayload(
+      baseBody: baseBody,
+      useMagi: useMagi,
+    );
   }
 
   bool _isProviderConfigured(_MagiProvider provider) {
@@ -651,6 +707,7 @@ class AIService {
           ? balthasarModel.trim()
           : _defaultAnthropicModel,
     );
+    addPlan(_MagiProvider.deepseek, _defaultDeepSeekModel);
 
     return plans;
   }
@@ -735,8 +792,11 @@ class AIService {
     required String prompt,
     required _MagiNodeProfile profile,
   }) async {
-    if (!_isProviderConfigured(profile.provider)) {
-      AppLogger.info('MAGI node skipped: ${profile.nodeName} (no API key)');
+    final provider = _inferProviderFromModel(model);
+    if (!_isProviderConfigured(provider)) {
+      AppLogger.info(
+        'MAGI node skipped: ${profile.nodeName} (${provider.name}, no API key)',
+      );
       return null;
     }
 
@@ -746,7 +806,7 @@ class AIService {
     );
     try {
       final text = await _generateSingleContentByProvider(
-        provider: profile.provider,
+        provider: provider,
         model: model,
         prompt: nodePrompt,
       );
@@ -777,6 +837,7 @@ class AIService {
 You are MAGI system node "${profile.nodeName}".
 Viewpoint: ${profile.viewpoint}
 Additional instruction: ${profile.instruction}
+Preserve the user's requested output language and any explicit format constraints from the original prompt.
 
 [USER_PROMPT]
 $originalPrompt
@@ -796,6 +857,9 @@ $originalPrompt
         'Return exactly one JSON object with the merged recommendation and key reasoning.',
       )
       ..writeln('Keep the answer concise and do not use Markdown code fences.')
+      ..writeln(
+        'Preserve the original prompt language and any explicit format constraints.',
+      )
       ..writeln()
       ..writeln('[ORIGINAL_PROMPT]')
       ..writeln(originalPrompt)
@@ -950,8 +1014,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'improve',
             'content': content,
@@ -961,6 +1024,10 @@ Generate a mind map for the following topic: **"{topic}"**
               styleInstruction: styleInstruction,
             ),
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return data['result'] as String;
       },
@@ -977,8 +1044,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'summarize',
             'content': content,
@@ -988,6 +1054,10 @@ Generate a mind map for the following topic: **"{topic}"**
               styleInstruction: styleInstruction,
             ),
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return data['result'] as String;
       },
@@ -999,12 +1069,15 @@ Generate a mind map for the following topic: **"{topic}"**
   Future<String> expandText(String content) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'expand',
             'content': content,
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return data['result'] as String;
       },
@@ -1022,8 +1095,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'translate',
             'content': content,
@@ -1034,6 +1106,10 @@ Generate a mind map for the following topic: **"{topic}"**
               styleInstruction: styleInstruction,
             ),
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return data['result'] as String;
       },
@@ -1048,13 +1124,16 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'suggest_title',
             'content': content,
             if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return _parseTitles(data['result'] as String);
       },
@@ -1070,8 +1149,7 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
+        final payload = await _buildAiAssistantPayload(
           {
             'action': 'custom_prompt',
             'content': prompt,
@@ -1081,6 +1159,10 @@ Generate a mind map for the following topic: **"{topic}"**
               styleInstruction: styleInstruction,
             ),
           },
+        );
+        final data = await _invokeFunction(
+          'ai-assistant',
+          payload,
         );
         return data['result'] as String;
       },
@@ -1095,9 +1177,10 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        Future<Map<String, dynamic>> invokeBoardMeeting({String? targetModel}) {
-          return _invokeFunction(
-            'ai-assistant',
+        Future<Map<String, dynamic>> invokeBoardMeeting({
+          String? targetModel,
+        }) async {
+          final payload = await _buildAiAssistantPayload(
             <String, dynamic>{
               'action': 'hold_board_meeting',
               'content': context,
@@ -1105,6 +1188,7 @@ Generate a mind map for the following topic: **"{topic}"**
                 'model': targetModel.trim(),
             },
           );
+          return _invokeFunction('ai-assistant', payload);
         }
 
         Map<String, dynamic> data;

@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../main.dart';
 import '../models/note.dart';
+import '../services/magi_system_settings_service.dart';
 import '../services/attachment_service.dart';
 import '../services/agent_org_service.dart';
 import '../utils/ai_secretary_content.dart';
@@ -34,6 +35,8 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
 
   final ImagePicker _picker = ImagePicker();
   final AgentOrgService _agentOrgService = AgentOrgService();
+  final MagiSystemSettingsService _magiSettingsService =
+      const MagiSystemSettingsService();
 
   Map<String, dynamic> _normalizeFunctionPayload(dynamic rawPayload) {
     if (rawPayload is Map) {
@@ -107,13 +110,16 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
 
   Future<String?> _translateText(String text) async {
     try {
-      final response = await supabase.functions.invoke(
-        'ai-assistant',
-        body: {
+      final payload = await _magiSettingsService.buildAiAssistantPayload(
+        baseBody: {
           'action': 'translate',
           'content': text,
           'targetLanguage': 'Japanese',
         },
+      );
+      final response = await supabase.functions.invoke(
+        'ai-assistant',
+        body: payload,
       );
       if (response.status != 200) {
         throw Exception('Server error: ${response.status}');
@@ -190,10 +196,12 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
 
       final response = await supabase.functions.invoke(
         'ai-assistant',
-        body: {
-          'action': 'improve',
-          'content': prompt,
-        },
+        body: await _magiSettingsService.buildAiAssistantPayload(
+          baseBody: {
+            'action': 'improve',
+            'content': prompt,
+          },
+        ),
       );
 
       if (response.status != 200) {
