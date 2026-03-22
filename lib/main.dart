@@ -14,6 +14,7 @@ import 'pages/gemini_university_v2_page.dart';
 import 'pages/danshari_page.dart';
 import 'pages/memory_drill_page.dart';
 import 'pages/behavior_review_page.dart';
+import 'pages/digest_queue_page.dart';
 
 import 'services/theme_service.dart';
 import 'widgets/global_header_clock_bar.dart';
@@ -144,6 +145,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const DanshariPage());
           case '/memory-drill':
             return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
+          case '/digest-queue':
+            return MaterialPageRoute(builder: (_) => const DigestQueuePage());
           case '/behavior-review':
             return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
           default:
