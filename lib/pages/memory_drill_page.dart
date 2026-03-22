@@ -1,0 +1,524 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:my_web_app/services/memory_drill_service.dart';
+
+class MemoryDrillPage extends StatefulWidget {
+  const MemoryDrillPage({
+    super.key,
+    this.service,
+    this.nowProvider,
+  });
+
+  final MemoryDrillService? service;
+  final DateTime Function()? nowProvider;
+
+  @override
+  State<MemoryDrillPage> createState() => _MemoryDrillPageState();
+}
+
+class _MemoryDrillPageState extends State<MemoryDrillPage> {
+  late final MemoryDrillService _service;
+  late MemoryDrillPack _selectedPack;
+  late List<String> _displayItems;
+
+  MemoryDrillStats _stats = MemoryDrillStats.empty();
+  bool _isLoading = true;
+  bool _showHints = true;
+  bool _showAnswers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = widget.service ?? MemoryDrillService();
+    _selectedPack = MemoryDrillService.builtinPacks.first;
+    _displayItems = List<String>.from(_selectedPack.items);
+    _loadStats();
+  }
+
+  DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
+
+  Future<void> _loadStats() async {
+    final stats = await _service.loadStats(now: _now());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _stats = stats;
+      _isLoading = false;
+    });
+  }
+
+  void _selectPack(MemoryDrillPack pack) {
+    setState(() {
+      _selectedPack = pack;
+      _displayItems = List<String>.from(pack.items);
+      _showAnswers = false;
+    });
+  }
+
+  void _shuffleItems() {
+    final nextItems = List<String>.from(_selectedPack.items);
+    nextItems.shuffle(Random(_now().millisecondsSinceEpoch));
+    setState(() {
+      _displayItems = nextItems;
+    });
+  }
+
+  Future<void> _markTodayCompleted() async {
+    final updated = await _service.markCompleted(
+      _selectedPack.id,
+      now: _now(),
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _stats = updated;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('今日の暗記ドリルを記録しました: ${_selectedPack.title}'),
+      ),
+    );
+  }
+
+  String _buildHint(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return 'ヒントなし';
+    }
+    final first = trimmed.substring(0, 1);
+    final last = trimmed.length > 1
+        ? trimmed.substring(trimmed.length - 1)
+        : '';
+    final charCount = trimmed.runes.length;
+    if (last.isEmpty) {
+      return '$first で始まる / $charCount文字';
+    }
+    return '$first ... $last / $charCount文字';
+  }
+
+  IconData _iconForCategory(String category) {
+    switch (category) {
+      case '地理':
+        return Icons.public;
+      case '音楽':
+        return Icons.music_note;
+      case '理科':
+        return Icons.science;
+      case '歴史':
+        return Icons.account_balance;
+      default:
+        return Icons.memory_rounded;
+    }
+  }
+
+  Color _colorForCategory(String category) {
+    switch (category) {
+      case '地理':
+        return Colors.teal;
+      case '音楽':
+        return Colors.deepPurple;
+      case '理科':
+        return Colors.orange;
+      case '歴史':
+        return Colors.brown;
+      default:
+        return Colors.indigo;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompletedToday = _stats.isCompletedToday(_selectedPack.id);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('暗記ドリル'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildHeroCard(),
+                const SizedBox(height: 16),
+                _buildStatsRow(),
+                const SizedBox(height: 20),
+                Text(
+                  '暗記セット',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                ...MemoryDrillService.builtinPacks.map(_buildPackCard),
+                const SizedBox(height: 20),
+                _buildSelectedPackCard(isCompletedToday),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildHeroCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: <Color>[
+            Color(0xFF0F172A),
+            Color(0xFF1D4ED8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '毎日の丸暗記を固定する',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            '世界の国、ビートルズの楽曲、元素などを10個ずつ反復して、列挙の速度を日課として鍛えます。',
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        _StatChip(
+          icon: Icons.today,
+          label: '今日の完了',
+          value: '${_stats.completedTodayCount}セット',
+          color: Colors.indigo,
+        ),
+        _StatChip(
+          icon: Icons.local_fire_department,
+          label: '連続日数',
+          value: '${_stats.currentStreak}日',
+          color: Colors.orange,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPackCard(MemoryDrillPack pack) {
+    final isSelected = pack.id == _selectedPack.id;
+    final isCompletedToday = _stats.isCompletedToday(pack.id);
+    final color = _colorForCategory(pack.category);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => _selectPack(pack),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: 0.12)
+                : Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? color
+                  : Theme.of(context).dividerColor.withValues(alpha: 0.4),
+              width: isSelected ? 1.8 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: color.withValues(alpha: 0.16),
+                foregroundColor: color,
+                child: Icon(_iconForCategory(pack.category)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            pack.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (isCompletedToday)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              '今日完了',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      pack.description,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedPackCard(bool isCompletedToday) {
+    final accent = _colorForCategory(_selectedPack.category);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _selectedPack.title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _selectedPack.description,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _selectedPack.category,
+                  style: TextStyle(
+                    color: accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilterChip(
+                label: const Text('ヒント'),
+                selected: _showHints,
+                onSelected: (value) {
+                  setState(() => _showHints = value);
+                },
+              ),
+              FilterChip(
+                label: const Text('答え'),
+                selected: _showAnswers,
+                onSelected: (value) {
+                  setState(() => _showAnswers = value);
+                },
+              ),
+              OutlinedButton.icon(
+                onPressed: _shuffleItems,
+                icon: const Icon(Icons.shuffle),
+                label: const Text('順番を入れ替え'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ..._displayItems.asMap().entries.map((entry) {
+            final index = entry.key + 1;
+            final value = entry.value;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 15,
+                    backgroundColor: accent.withValues(alpha: 0.12),
+                    foregroundColor: accent,
+                    child: Text(
+                      '$index',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _showAnswers ? value : '思い出してから答えを見る',
+                          style: TextStyle(
+                            fontWeight: _showAnswers
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: _showAnswers
+                                ? Colors.black87
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                        if (!_showAnswers && _showHints) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            _buildHint(value),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: isCompletedToday ? null : _markTodayCompleted,
+              icon: Icon(
+                isCompletedToday ? Icons.check_circle : Icons.task_alt,
+              ),
+              label: Text(
+                isCompletedToday ? '今日は完了済み' : '今日の暗記を完了',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: color.withValues(alpha: 0.88),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

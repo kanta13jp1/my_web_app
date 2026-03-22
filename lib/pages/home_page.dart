@@ -37,6 +37,7 @@ import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'mind_map_page.dart';
+import 'memory_drill_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
@@ -3768,6 +3769,14 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(context, const WardrobePage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
+                                '暗記ドリル (日課)',
+                                Icons.memory_rounded,
+                                Colors.indigo,
+                                () => _nav(context, const MemoryDrillPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '蜈医↓蠢・亥ｰ守ｷ壹ｒ螳御ｺ・＠縺ｦ縺上□縺輔＞縲・,
                               ),
                             ]),
                             const SizedBox(height: 24),
