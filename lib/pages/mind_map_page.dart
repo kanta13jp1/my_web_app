@@ -15,6 +15,7 @@ class MindMapPage extends StatefulWidget {
 class _MindMapPageState extends State<MindMapPage> {
   final _topicController = TextEditingController();
   final MindMapGraphBuilderService _graphBuilder = MindMapGraphBuilderService();
+  final GraphViewController _graphViewController = GraphViewController();
   final Map<String, String> _nodeLabels = <String, String>{};
   Graph _graph = Graph();
   final BuchheimWalkerConfiguration _algorithmConfig =
@@ -22,6 +23,7 @@ class _MindMapPageState extends State<MindMapPage> {
 
   bool _isLoading = false;
   String? _errorMessage;
+  int _graphVersion = 0;
 
   String? _geminiApiKey;
   String _selectedModel = 'gemini-2.0-flash';
@@ -40,6 +42,12 @@ class _MindMapPageState extends State<MindMapPage> {
       ..levelSeparation = (150)
       ..subtreeSeparation = (150)
       ..orientation = (BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM);
+  }
+
+  @override
+  void dispose() {
+    _topicController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {
@@ -236,6 +244,11 @@ class _MindMapPageState extends State<MindMapPage> {
         }
         _buildGraphFromJson(decoded);
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _graph.nodes.isEmpty) return;
+        _graphViewController.resetView();
+        _graphViewController.zoomToFit();
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
@@ -250,6 +263,7 @@ class _MindMapPageState extends State<MindMapPage> {
   void _buildGraphFromJson(Map<String, dynamic> json) {
     final result = _graphBuilder.build(json);
     _graph = result.graph;
+    _graphVersion++;
     _nodeLabels
       ..clear()
       ..addAll(result.nodeLabels);
@@ -288,13 +302,15 @@ class _MindMapPageState extends State<MindMapPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : _graph.nodes.isEmpty
                     ? _buildEmptyGraphState()
-                    : InteractiveViewer(
-                        constrained: false,
-                        boundaryMargin: const EdgeInsets.all(100),
-                        minScale: 0.01,
-                        maxScale: 5.6,
-                        child: GraphView(
+                    : Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: GraphView.builder(
+                          key: ValueKey('mind_map_graph_view_$_graphVersion'),
                           graph: _graph,
+                          controller: _graphViewController,
+                          animated: false,
+                          autoZoomToFit: true,
+                          centerGraph: true,
                           algorithm: BuchheimWalkerAlgorithm(
                             _algorithmConfig,
                             TreeEdgeRenderer(_algorithmConfig),
