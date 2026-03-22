@@ -1,9 +1,8 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:graphview/GraphView.dart';
 import 'package:my_web_app/services/ai_service.dart';
-import 'package:my_web_app/services/mind_map_graph_builder_service.dart';
 import 'package:my_web_app/services/note_card_service.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,38 +15,32 @@ class MindMapPage extends StatefulWidget {
 }
 
 class _MindMapPageState extends State<MindMapPage> {
-  final _topicController = TextEditingController();
-  final _graphBuilder = MindMapGraphBuilderService();
-  final _graphCaptureKey = GlobalKey();
-  final Map<String, String> _nodeLabels = <String, String>{};
-  final BuchheimWalkerConfiguration _algorithmConfig =
-      BuchheimWalkerConfiguration();
-
-  Graph _graph = Graph();
-  Widget? _graphCanvas;
-  bool _isLoading = false;
-  bool _isDownloading = false;
-  String? _errorMessage;
-  int _graphVersion = 0;
-
-  String? _geminiApiKey;
-  String _selectedModel = 'gemini-2.5-flash';
-
   static const List<String> _mindMapFallbackModels = <String>[
     'gemini-2.5-flash',
     'gemma-3n-e2b-it',
     'gemini-2.0-flash',
   ];
+  static const double _canvasPadding = 32;
+  static const double _horizontalGap = 32;
+  static const double _verticalGap = 88;
+  static const double _minNodeWidth = 120;
+  static const double _maxNodeWidth = 220;
+  static const double _minNodeHeight = 56;
+
+  final _topicController = TextEditingController();
+  final _graphCaptureKey = GlobalKey();
+
+  _MindMapLayoutResult? _layoutResult;
+  bool _isLoading = false;
+  bool _isDownloading = false;
+  String? _errorMessage;
+  String? _geminiApiKey;
+  String _selectedModel = 'gemini-2.5-flash';
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
-    _algorithmConfig
-      ..siblingSeparation = 100
-      ..levelSeparation = 150
-      ..subtreeSeparation = 150
-      ..orientation = BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM;
   }
 
   @override
@@ -249,7 +242,7 @@ class _MindMapPageState extends State<MindMapPage> {
             outputLanguage: outputLanguage,
           );
           if (result == null || result.trim().isEmpty) {
-            throw Exception('AIからの応答がありません。');
+            throw Exception('AI からの応答がありません。');
           }
           responseText = result;
           usedModel = model;
@@ -263,7 +256,7 @@ class _MindMapPageState extends State<MindMapPage> {
       }
 
       if (responseText == null) {
-        throw Exception(lastError?.toString() ?? 'AIからの応答がありません。');
+        throw Exception(lastError?.toString() ?? 'AI からの応答がありません。');
       }
 
       final decoded = _decodeMindMapJson(responseText);
@@ -284,7 +277,7 @@ class _MindMapPageState extends State<MindMapPage> {
         if (usedModel != null) {
           _selectedModel = usedModel;
         }
-        _buildGraphFromJson(decoded);
+        _layoutResult = _buildLayoutFromJson(decoded, topic);
       });
     } catch (e) {
       if (!mounted) {
@@ -301,7 +294,7 @@ class _MindMapPageState extends State<MindMapPage> {
   }
 
   Future<void> _downloadMindMapAsPng() async {
-    if (_graph.nodes.isEmpty) {
+    if (_layoutResult == null || _layoutResult!.nodes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ダウンロードするマインドマップがありません。')),
       );
@@ -363,55 +356,192 @@ class _MindMapPageState extends State<MindMapPage> {
     return 'mind_map_${safeTopic}_$timestamp.png';
   }
 
-  void _buildGraphFromJson(Map<String, dynamic> json) {
-    final result = _graphBuilder.build(json);
-    _graph = result.graph;
-    _graphVersion++;
-    _nodeLabels
-      ..clear()
-      ..addAll(result.nodeLabels);
-    _graphCanvas = _createGraphCanvas();
+  _MindMapLayoutResult _buildLayoutFromJson(
+    Map<String, dynamic> json,
+    String topic,
+  ) {
+    final root = _buildTree(json, topic);
+    final nodeSizes = <String, Size>{};
+    final subtreeWidths = <String, double>{};
+
+    Size measureNode(_MindMapTreeNode node) {
+      return nodeSizes.putIfAbsent(node.id, () => _measureNode(node.label));
+    }
+
+    double computeSubtreeWidth(_MindMapTreeNode node) {
+      final nodeWidth = measureNode(node).width;
+      if (node.children.isEmpty) {
+        subtreeWidths[node.id] = nodeWidth;
+        return nodeWidth;
+      }
+
+      final childrenWidth = node.children
+              .map(computeSubtreeWidth)
+              .fold<double>(0, (sum, width) => sum + width) +
+          (_horizontalGap * math.max(0, node.children.length - 1));
+      final subtreeWidth = math.max(nodeWidth, childrenWidth);
+      subtreeWidths[node.id] = subtreeWidth;
+      return subtreeWidth;
+    }
+
+    int computeMaxDepth(_MindMapTreeNode node) {
+      if (node.children.isEmpty) {
+        return 0;
+      }
+      return 1 +
+          node.children
+              .map(computeMaxDepth)
+              .fold<int>(0, (maxDepth, depth) => math.max(maxDepth, depth));
+    }
+
+    final rootWidth = computeSubtreeWidth(root);
+    final maxDepth = computeMaxDepth(root);
+    final maxNodeHeight = nodeSizes.values.fold<double>(
+      _minNodeHeight,
+      (maxHeight, size) => math.max(maxHeight, size.height),
+    );
+    final levelStride = maxNodeHeight + _verticalGap;
+
+    final positionedNodes = <_MindMapLayoutNode>[];
+    final edges = <_MindMapLayoutEdge>[];
+    final rectsById = <String, Rect>{};
+
+    void place(_MindMapTreeNode node, double left, int depth) {
+      final nodeSize = nodeSizes[node.id]!;
+      final subtreeWidth = subtreeWidths[node.id]!;
+      final centerX = _canvasPadding + left + (subtreeWidth / 2);
+      final top = _canvasPadding + (depth * levelStride);
+      final rect = Rect.fromLTWH(
+        centerX - (nodeSize.width / 2),
+        top,
+        nodeSize.width,
+        nodeSize.height,
+      );
+      rectsById[node.id] = rect;
+      positionedNodes.add(
+        _MindMapLayoutNode(
+          id: node.id,
+          label: node.label,
+          rect: rect,
+        ),
+      );
+
+      if (node.children.isEmpty) {
+        return;
+      }
+
+      final childrenTotalWidth = node.children
+              .map((child) => subtreeWidths[child.id]!)
+              .fold<double>(0, (sum, width) => sum + width) +
+          (_horizontalGap * math.max(0, node.children.length - 1));
+      var childLeft = left + ((subtreeWidth - childrenTotalWidth) / 2);
+
+      for (final child in node.children) {
+        place(child, childLeft, depth + 1);
+        final childRect = rectsById[child.id]!;
+        edges.add(
+          _MindMapLayoutEdge(
+            start: Offset(rect.center.dx, rect.bottom),
+            end: Offset(childRect.center.dx, childRect.top),
+          ),
+        );
+        childLeft += subtreeWidths[child.id]! + _horizontalGap;
+      }
+    }
+
+    place(root, 0, 0);
+
+    final canvasWidth = math.max(640.0, rootWidth + (_canvasPadding * 2));
+    final canvasHeight = math.max(
+      420.0,
+      (_canvasPadding * 2) +
+          ((maxDepth + 1) * maxNodeHeight) +
+          (maxDepth * _verticalGap),
+    );
+
+    return _MindMapLayoutResult(
+      nodes: positionedNodes,
+      edges: edges,
+      size: Size(canvasWidth, canvasHeight),
+    );
   }
 
-  Widget _createGraphCanvas() {
-    return RepaintBoundary(
-      key: _graphCaptureKey,
-      child: ColoredBox(
-        color: const Color(0xFFF8FAFC),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: GraphView.builder(
-            key: ValueKey(
-              'mind_map_graph_view_$_graphVersion',
-            ),
-            graph: _graph,
-            animated: false,
-            algorithm: BuchheimWalkerAlgorithm(
-              _algorithmConfig,
-              TreeEdgeRenderer(_algorithmConfig),
-            ),
-            builder: (Node node) {
-              final value = node.key?.value;
-              final nodeId = value?.toString();
-              final text = (nodeId != null && _nodeLabels.containsKey(nodeId))
-                  ? _nodeLabels[nodeId]!
-                  : '(empty)';
-              return _buildNode(text);
-            },
-          ),
+  _MindMapTreeNode _buildTree(Map<String, dynamic> json, String topic) {
+    var nextNodeIndex = 0;
+
+    _MindMapTreeNode buildBranch(String label, dynamic rawChildren) {
+      final childrenMap = rawChildren is Map<String, dynamic>
+          ? rawChildren
+          : (rawChildren is Map
+              ? Map<String, dynamic>.from(rawChildren)
+              : null);
+      final children = childrenMap == null
+          ? const <_MindMapTreeNode>[]
+          : childrenMap.entries
+              .map((entry) => buildBranch(entry.key, entry.value))
+              .toList(growable: false);
+      final normalizedLabel = label.trim().isEmpty ? '(empty)' : label.trim();
+      return _MindMapTreeNode(
+        id: 'mind_map_node_${nextNodeIndex++}',
+        label: normalizedLabel,
+        children: children,
+      );
+    }
+
+    final roots = json.entries
+        .map((entry) => buildBranch(entry.key, entry.value))
+        .toList(growable: false);
+
+    if (roots.isEmpty) {
+      return _MindMapTreeNode(
+        id: 'mind_map_node_${nextNodeIndex++}',
+        label: topic.trim().isEmpty ? 'マインドマップ' : topic.trim(),
+        children: const <_MindMapTreeNode>[],
+      );
+    }
+
+    if (roots.length == 1) {
+      return roots.first;
+    }
+
+    return _MindMapTreeNode(
+      id: 'mind_map_node_${nextNodeIndex++}',
+      label: topic.trim().isEmpty ? 'マインドマップ' : topic.trim(),
+      children: roots,
+    );
+  }
+
+  Size _measureNode(String label) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          height: 1.3,
         ),
       ),
-    );
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+      maxLines: 3,
+      ellipsis: '...',
+    )..layout(maxWidth: _maxNodeWidth - 32);
+
+    final width = (painter.width + 32).clamp(_minNodeWidth, _maxNodeWidth);
+    final height = math.max(_minNodeHeight, painter.height + 28);
+    return Size(width.toDouble(), height);
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasMindMap = _layoutResult != null && _layoutResult!.nodes.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('マインドマップ生成'),
         actions: [
           IconButton(
-            onPressed: _isLoading || _isDownloading || _graph.nodes.isEmpty
+            onPressed: _isLoading || _isDownloading || !hasMindMap
                 ? null
                 : _downloadMindMapAsPng,
             icon: _isDownloading
@@ -464,12 +594,12 @@ class _MindMapPageState extends State<MindMapPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _graph.nodes.isEmpty
-                    ? _buildEmptyGraphState()
-                    : Padding(
+                : hasMindMap
+                    ? Padding(
                         padding: const EdgeInsets.all(16),
-                        child: _graphCanvas ?? _buildEmptyGraphState(),
-                      ),
+                        child: _buildMindMapCanvas(_layoutResult!),
+                      )
+                    : _buildEmptyGraphState(),
           ),
         ],
       ),
@@ -481,9 +611,59 @@ class _MindMapPageState extends State<MindMapPage> {
     );
   }
 
+  Widget _buildMindMapCanvas(_MindMapLayoutResult layout) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minCanvasWidth = math.max(0.0, constraints.maxWidth - 32);
+
+        return ColoredBox(
+          color: const Color(0xFFF8FAFC),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              child: RepaintBoundary(
+                key: _graphCaptureKey,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: minCanvasWidth),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: layout.size.width,
+                      height: layout.size.height,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _MindMapEdgePainter(layout.edges),
+                            ),
+                          ),
+                          ...layout.nodes.map(
+                            (node) => Positioned(
+                              left: node.rect.left,
+                              top: node.rect.top,
+                              width: node.rect.width,
+                              height: node.rect.height,
+                              child: _buildNode(node.label),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildNode(String text) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.blue.shade100,
         borderRadius: BorderRadius.circular(8),
@@ -495,16 +675,102 @@ class _MindMapPageState extends State<MindMapPage> {
           ),
         ],
       ),
-      child: Text(text, textAlign: TextAlign.center),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 
   Widget _buildEmptyGraphState() {
     return const Center(
       child: Text(
-        '中心トピックを入力して「生成」を押すとマインドマップを表示します。',
+        '中心トピックを入力して、「生成」を押すとマインドマップを表示します。',
         textAlign: TextAlign.center,
       ),
     );
+  }
+}
+
+class _MindMapTreeNode {
+  const _MindMapTreeNode({
+    required this.id,
+    required this.label,
+    required this.children,
+  });
+
+  final String id;
+  final String label;
+  final List<_MindMapTreeNode> children;
+}
+
+class _MindMapLayoutNode {
+  const _MindMapLayoutNode({
+    required this.id,
+    required this.label,
+    required this.rect,
+  });
+
+  final String id;
+  final String label;
+  final Rect rect;
+}
+
+class _MindMapLayoutEdge {
+  const _MindMapLayoutEdge({
+    required this.start,
+    required this.end,
+  });
+
+  final Offset start;
+  final Offset end;
+}
+
+class _MindMapLayoutResult {
+  const _MindMapLayoutResult({
+    required this.nodes,
+    required this.edges,
+    required this.size,
+  });
+
+  final List<_MindMapLayoutNode> nodes;
+  final List<_MindMapLayoutEdge> edges;
+  final Size size;
+}
+
+class _MindMapEdgePainter extends CustomPainter {
+  const _MindMapEdgePainter(this.edges);
+
+  final List<_MindMapLayoutEdge> edges;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (final edge in edges) {
+      final midY = (edge.start.dy + edge.end.dy) / 2;
+      final path = Path()
+        ..moveTo(edge.start.dx, edge.start.dy)
+        ..cubicTo(
+          edge.start.dx,
+          midY,
+          edge.end.dx,
+          midY,
+          edge.end.dx,
+          edge.end.dy,
+        );
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MindMapEdgePainter oldDelegate) {
+    return oldDelegate.edges != edges;
   }
 }
