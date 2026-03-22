@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 
@@ -111,6 +112,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isLoadingTasks = false;
 
   // --- 返済計画用 ---
+  final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
   bool _isGeneratingDebtPlan = false;
@@ -120,6 +122,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetDebtPlannerMode _debtPlannerMode = AssetDebtPlannerMode.ask;
   Set<String> _selectedDebtExecutionTaskIds = <String>{};
   bool _isApplyingDebtExecutionTasks = false;
+  DebtLockdownSnapshot? _debtLockdownSnapshot;
+  bool _isLoadingDebtLockdown = false;
+  double? _debtLockdownLoadedForDebt;
 
   final List<Color> _colors = [
     Colors.blue,
@@ -538,6 +543,234 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       (a, b) => (b['balance'] as double).compareTo(a['balance'] as double),
     );
     return liabilities;
+  }
+
+  void _ensureDebtLockdownSnapshotLoaded(double remainingDebt) {
+    final loadedForDebt = _debtLockdownLoadedForDebt;
+    if (_isLoadingDebtLockdown) {
+      return;
+    }
+    if (loadedForDebt != null && (loadedForDebt - remainingDebt).abs() < 1) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isLoadingDebtLockdown) {
+        return;
+      }
+      final latestLoadedDebt = _debtLockdownLoadedForDebt;
+      if (latestLoadedDebt != null &&
+          (latestLoadedDebt - remainingDebt).abs() < 1) {
+        return;
+      }
+      _loadDebtLockdownSnapshot(remainingDebt);
+    });
+  }
+
+  Future<void> _loadDebtLockdownSnapshot(double remainingDebt) async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isLoadingDebtLockdown = true;
+    });
+
+    try {
+      final snapshot = await _debtLockdownService.loadSnapshot(
+        remainingDebt: remainingDebt,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _debtLockdownSnapshot = snapshot;
+        _debtLockdownLoadedForDebt = remainingDebt;
+      });
+    } finally {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingDebtLockdown = false;
+      });
+    }
+  }
+
+  Future<void> _setDebtLockdownEnabled(
+    bool enabled,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _debtLockdownService.setEnabled(
+      enabled,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _debtLockdownSnapshot = snapshot;
+      _debtLockdownLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled ? '完済までの収監モードを開始しました' : '完済までの収監モードを中断しました',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _toggleDebtLockdownRule(
+    String ruleId,
+    bool completed,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _debtLockdownService.toggleRule(
+      ruleId,
+      completed,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _debtLockdownSnapshot = snapshot;
+      _debtLockdownLoadedForDebt = remainingDebt;
+    });
+  }
+
+  Future<void> _recordDebtLockdownViolation({
+    required String category,
+    required String note,
+    required double amount,
+    required double remainingDebt,
+  }) async {
+    final snapshot = await _debtLockdownService.recordViolation(
+      category: category,
+      note: note,
+      amount: amount,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _debtLockdownSnapshot = snapshot;
+      _debtLockdownLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('違反を記録しました')),
+    );
+  }
+
+  Future<void> _showDebtLockdownViolationDialog(double remainingDebt) async {
+    final categories = DebtLockdownService.violationCategories;
+    var selectedCategory = categories.first;
+    final noteController = TextEditingController();
+    final amountController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('収監モード違反を記録'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: '違反カテゴリ',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: categories
+                        .map(
+                          (category) => DropdownMenuItem<String>(
+                            value: category,
+                            child: Text(category),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setDialogState(() {
+                        selectedCategory = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: noteController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: '何が起きたか',
+                      hintText: '例: 飲み会でハイボールを2杯飲んだ',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '浪費額（任意）',
+                      hintText: '0',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('記録'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      final note = noteController.text.trim();
+      if (note.isEmpty) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('違反内容を入力してください')),
+        );
+        return;
+      }
+
+      final amount =
+          double.tryParse(amountController.text.replaceAll(',', '').trim()) ??
+              0;
+      await _recordDebtLockdownViolation(
+        category: selectedCategory,
+        note: note,
+        amount: amount,
+        remainingDebt: remainingDebt,
+      );
+    } finally {
+      noteController.dispose();
+      amountController.dispose();
+    }
   }
 
   Future<void> _showDebtPlanDialog() async {
@@ -3539,6 +3772,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort((a, b) => a.value.compareTo(b.value));
     final totalDebt =
         liabilities.fold<double>(0, (sum, e) => sum + e.value.abs());
+    _ensureDebtLockdownSnapshotLoaded(totalDebt);
 
     return Card(
       elevation: 2,
@@ -3579,6 +3813,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _buildDebtLockdownPanel(totalDebt),
             const SizedBox(height: 12),
             _isCompact
                 ? Column(
@@ -3721,6 +3957,210 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   : _buildDebtCodeModePanel(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDebtLockdownPanel(double remainingDebt) {
+    final snapshot = _debtLockdownSnapshot;
+    final isReleased = remainingDebt <= 0;
+    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final rules = snapshot?.rules ?? DebtLockdownService.builtinRules;
+    final completedRuleIds = snapshot?.completedRuleIds ?? const <String>{};
+    final todayViolations =
+        snapshot?.todayViolations ?? const <DebtLockdownViolation>[];
+    final recentViolations =
+        snapshot?.recentViolations ?? const <DebtLockdownViolation>[];
+    final statusLabel = isReleased
+        ? '釈放'
+        : isEnabled
+            ? '収監中'
+            : '未開始';
+    final statusColor = isReleased
+        ? Colors.green
+        : isEnabled
+            ? Colors.red
+            : Colors.blueGrey;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isReleased ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isReleased ? Colors.green.shade200 : Colors.red.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isReleased ? Icons.lock_open : Icons.lock_outline,
+                color: statusColor,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '完済までの収監モード',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isReleased
+                ? '借金は完済済みです。収監モードは解除されました。'
+                : '借金がゼロになるまでは、生活を最小化し、返済以外の逃避と浪費を止める前提で毎日を管理します。',
+            style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+          ),
+          if (_isLoadingDebtLockdown && snapshot == null) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(minHeight: 3),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '状態',
+                value: statusLabel,
+                color: statusColor,
+              ),
+              _buildOverviewStatChip(
+                label: '本日違反',
+                value: '${todayViolations.length}件',
+                color: todayViolations.isEmpty ? Colors.teal : Colors.red,
+              ),
+              _buildOverviewStatChip(
+                label: '連続遵守',
+                value: '${snapshot?.currentCompliantStreakDays ?? 0}日',
+                color: Colors.indigo,
+              ),
+              _buildOverviewStatChip(
+                label: '日課達成',
+                value: '${completedRuleIds.length}/${rules.length}',
+                color: Colors.deepPurple,
+              ),
+            ],
+          ),
+          if (snapshot?.startedAt != null && !isReleased) ...[
+            const SizedBox(height: 8),
+            Text(
+              '開始日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
+              style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+            ),
+          ],
+          const SizedBox(height: 12),
+          _isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: isReleased
+                          ? null
+                          : () => _setDebtLockdownEnabled(
+                              !isEnabled, remainingDebt),
+                      icon: Icon(isEnabled ? Icons.pause_circle : Icons.shield),
+                      label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: isEnabled
+                          ? () =>
+                              _showDebtLockdownViolationDialog(remainingDebt)
+                          : null,
+                      icon: const Icon(Icons.report_problem_outlined),
+                      label: const Text('違反を記録'),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: isReleased
+                            ? null
+                            : () => _setDebtLockdownEnabled(
+                                  !isEnabled,
+                                  remainingDebt,
+                                ),
+                        icon: Icon(
+                          isEnabled ? Icons.pause_circle : Icons.shield,
+                        ),
+                        label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: isEnabled
+                          ? () =>
+                              _showDebtLockdownViolationDialog(remainingDebt)
+                          : null,
+                      icon: const Icon(Icons.report_problem_outlined),
+                      label: const Text('違反を記録'),
+                    ),
+                  ],
+                ),
+          const SizedBox(height: 12),
+          const Text(
+            '本日の規律',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          ...rules.map((rule) {
+            final checked = completedRuleIds.contains(rule.id);
+            return CheckboxListTile(
+              key: Key('debt_lockdown_rule_${rule.id}'),
+              dense: true,
+              value: checked,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(
+                rule.label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(rule.description),
+              onChanged: isEnabled
+                  ? (value) => _toggleDebtLockdownRule(
+                        rule.id,
+                        value ?? false,
+                        remainingDebt,
+                      )
+                  : null,
+            );
+          }),
+          const SizedBox(height: 8),
+          const Text(
+            '最近の違反',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          if (recentViolations.isEmpty)
+            Text(
+              isEnabled
+                  ? 'まだ違反記録はありません。今日も浪費と逃避を止めて返済だけに集中します。'
+                  : '収監モードを開始すると、ここに違反ログが溜まります。',
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            )
+          else
+            ...recentViolations.take(3).map((violation) {
+              final amountLabel = violation.amount > 0
+                  ? ' / ${_formatYen(violation.amount)}'
+                  : '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '${DateFormat('MM/dd HH:mm').format(violation.createdAt)}  ${violation.category}$amountLabel  ${violation.note}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+                ),
+              );
+            }),
+        ],
       ),
     );
   }
