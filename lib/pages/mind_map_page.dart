@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:my_web_app/services/ai_service.dart';
+import 'package:my_web_app/services/mind_map_graph_builder_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MindMapPage extends StatefulWidget {
@@ -13,7 +14,9 @@ class MindMapPage extends StatefulWidget {
 
 class _MindMapPageState extends State<MindMapPage> {
   final _topicController = TextEditingController();
-  final Graph _graph = Graph();
+  final MindMapGraphBuilderService _graphBuilder = MindMapGraphBuilderService();
+  final Map<String, String> _nodeLabels = <String, String>{};
+  Graph _graph = Graph();
   final BuchheimWalkerConfiguration _algorithmConfig =
       BuchheimWalkerConfiguration();
 
@@ -231,7 +234,7 @@ class _MindMapPageState extends State<MindMapPage> {
         if (usedModel != null) {
           _selectedModel = usedModel;
         }
-        _buildGraphFromJson(decoded, null);
+        _buildGraphFromJson(decoded);
       });
     } catch (e) {
       setState(() {
@@ -244,30 +247,12 @@ class _MindMapPageState extends State<MindMapPage> {
     }
   }
 
-  void _buildGraphFromJson(Map<String, dynamic> json, Node? parent) {
-    if (parent == null) {
-      _graph.nodes.clear();
-      _graph.edges.clear();
-    }
-
-    for (var key in json.keys) {
-      final node = Node.Id(key);
-      _graph.addNode(node);
-
-      if (parent != null) {
-        _graph.addEdge(parent, node);
-      }
-
-      final rawChildren = json[key];
-      final children = rawChildren is Map<String, dynamic>
-          ? rawChildren
-          : (rawChildren is Map
-              ? Map<String, dynamic>.from(rawChildren)
-              : null);
-      if (children != null && children.isNotEmpty) {
-        _buildGraphFromJson(children, node);
-      }
-    }
+  void _buildGraphFromJson(Map<String, dynamic> json) {
+    final result = _graphBuilder.build(json);
+    _graph = result.graph;
+    _nodeLabels
+      ..clear()
+      ..addAll(result.nodeLabels);
   }
 
   @override
@@ -316,8 +301,10 @@ class _MindMapPageState extends State<MindMapPage> {
                           ),
                           builder: (Node node) {
                             final value = node.key?.value;
-                            final text = value is String && value.isNotEmpty
-                                ? value
+                            final nodeId = value?.toString();
+                            final text = (nodeId != null &&
+                                    _nodeLabels.containsKey(nodeId))
+                                ? _nodeLabels[nodeId]!
                                 : '(empty)';
                             return _buildNode(text);
                           },

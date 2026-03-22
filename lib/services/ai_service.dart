@@ -816,7 +816,11 @@ The JSON object should have a single root key representing the central topic. Th
 Generate a mind map for the following topic: **"{topic}"**
 ''';
     final prompt = promptTemplate.replaceFirst('{topic}', topic);
-    return generateContent(model: model, prompt: prompt);
+    return generateContent(
+      model: model,
+      prompt: prompt,
+      useMagi: false,
+    );
   }
 
   // =========================================================================
