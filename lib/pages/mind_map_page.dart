@@ -1,8 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:my_web_app/services/ai_service.dart';
 import 'package:my_web_app/services/mind_map_graph_builder_service.dart';
+import 'package:my_web_app/services/note_card_service.dart';
+import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MindMapPage extends StatefulWidget {
@@ -14,18 +17,21 @@ class MindMapPage extends StatefulWidget {
 
 class _MindMapPageState extends State<MindMapPage> {
   final _topicController = TextEditingController();
-  final MindMapGraphBuilderService _graphBuilder = MindMapGraphBuilderService();
+  final _graphBuilder = MindMapGraphBuilderService();
+  final _graphCaptureKey = GlobalKey();
   final Map<String, String> _nodeLabels = <String, String>{};
-  Graph _graph = Graph();
   final BuchheimWalkerConfiguration _algorithmConfig =
       BuchheimWalkerConfiguration();
 
+  Graph _graph = Graph();
   bool _isLoading = false;
+  bool _isDownloading = false;
   String? _errorMessage;
   int _graphVersion = 0;
 
   String? _geminiApiKey;
   String _selectedModel = 'gemini-2.5-flash';
+
   static const List<String> _mindMapFallbackModels = <String>[
     'gemini-2.5-flash',
     'gemma-3n-e2b-it',
@@ -37,10 +43,10 @@ class _MindMapPageState extends State<MindMapPage> {
     super.initState();
     _loadSettings();
     _algorithmConfig
-      ..siblingSeparation = (100)
-      ..levelSeparation = (150)
-      ..subtreeSeparation = (150)
-      ..orientation = (BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM);
+      ..siblingSeparation = 100
+      ..levelSeparation = 150
+      ..subtreeSeparation = 150
+      ..orientation = BuchheimWalkerConfiguration.ORIENTATION_TOP_BOTTOM;
   }
 
   @override
@@ -64,12 +70,14 @@ class _MindMapPageState extends State<MindMapPage> {
               orElse: () => 'gemini-2.5-flash',
             );
 
-    if (mounted) {
-      setState(() {
-        _geminiApiKey = prefs.getString('gemini_api_key');
-        _selectedModel = resolvedModel;
-      });
+    if (!mounted) {
+      return;
     }
+
+    setState(() {
+      _geminiApiKey = prefs.getString('gemini_api_key');
+      _selectedModel = resolvedModel;
+    });
   }
 
   List<String> _modelCandidatesForMindMap() {
@@ -81,7 +89,9 @@ class _MindMapPageState extends State<MindMapPage> {
     final seen = <String>{};
     for (final model in candidates) {
       final normalized = model.trim();
-      if (normalized.isEmpty || seen.contains(normalized)) continue;
+      if (normalized.isEmpty || seen.contains(normalized)) {
+        continue;
+      }
       seen.add(normalized);
       unique.add(normalized);
     }
@@ -100,7 +110,9 @@ class _MindMapPageState extends State<MindMapPage> {
   String _extractFirstJsonObject(String text) {
     final trimmed = text.trim();
     final firstBrace = trimmed.indexOf('{');
-    if (firstBrace == -1) return trimmed;
+    if (firstBrace == -1) {
+      return trimmed;
+    }
 
     var inString = false;
     var escaped = false;
@@ -124,7 +136,9 @@ class _MindMapPageState extends State<MindMapPage> {
         continue;
       }
       if (ch == '{') {
-        if (depth == 0) start = i;
+        if (depth == 0) {
+          start = i;
+        }
         depth++;
       } else if (ch == '}') {
         depth--;
@@ -143,7 +157,7 @@ class _MindMapPageState extends State<MindMapPage> {
         ? decoded
         : (decoded is Map ? Map<String, dynamic>.from(decoded) : null);
     if (map == null) {
-      throw const FormatException('マインドマップJSONがオブジェクトではありません。');
+      throw const FormatException('マインドマップの JSON を読み取れませんでした。');
     }
 
     final embeddedText = _extractTextFromGeminiEnvelope(map);
@@ -156,13 +170,19 @@ class _MindMapPageState extends State<MindMapPage> {
 
   String? _extractTextFromGeminiEnvelope(Map<String, dynamic> payload) {
     final candidates = payload['candidates'];
-    if (candidates is! List) return null;
+    if (candidates is! List) {
+      return null;
+    }
 
     for (final candidate in candidates.whereType<Map>()) {
       final content = candidate['content'];
-      if (content is! Map) continue;
+      if (content is! Map) {
+        continue;
+      }
       final parts = content['parts'];
-      if (parts is! List) continue;
+      if (parts is! List) {
+        continue;
+      }
       for (final part in parts.whereType<Map>()) {
         final text = part['text']?.toString();
         if (text != null && text.trim().isNotEmpty) {
@@ -174,11 +194,28 @@ class _MindMapPageState extends State<MindMapPage> {
     return null;
   }
 
+  String _preferredOutputLanguage(String topic) {
+    final trimmed = topic.trim();
+    if (trimmed.isEmpty) {
+      return 'Japanese';
+    }
+    if (RegExp(r'[\u3040-\u30FF\uFF66-\uFF9F]').hasMatch(trimmed)) {
+      return 'Japanese';
+    }
+    if (RegExp(r'[A-Za-z]').hasMatch(trimmed)) {
+      return 'English';
+    }
+    if (RegExp(r'[\uAC00-\uD7AF]').hasMatch(trimmed)) {
+      return 'Korean';
+    }
+    return 'Japanese';
+  }
+
   Future<void> _generateMindMap() async {
-    final topic = _topicController.text;
+    final topic = _topicController.text.trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('トピックを入力してください。')),
+        const SnackBar(content: Text('中心トピックを入力してください。')),
       );
       return;
     }
@@ -187,7 +224,6 @@ class _MindMapPageState extends State<MindMapPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gemini APIキーが設定されていません。')),
       );
-      // Here we could open the settings dialog
       return;
     }
 
@@ -199,6 +235,7 @@ class _MindMapPageState extends State<MindMapPage> {
     try {
       final aiService = AIService(null, _geminiApiKey);
       final candidates = _modelCandidatesForMindMap();
+      final outputLanguage = _preferredOutputLanguage(topic);
       String? responseText;
       String? usedModel;
       Object? lastError;
@@ -208,6 +245,7 @@ class _MindMapPageState extends State<MindMapPage> {
           final result = await aiService.generateMindMap(
             model: model,
             topic: topic,
+            outputLanguage: outputLanguage,
           );
           if (result == null || result.trim().isEmpty) {
             throw Exception('AIからの応答がありません。');
@@ -229,12 +267,16 @@ class _MindMapPageState extends State<MindMapPage> {
 
       final decoded = _decodeMindMapJson(responseText);
       if (decoded.isEmpty) {
-        throw const FormatException('マインドマップJSONが空です。');
+        throw const FormatException('マインドマップの JSON が空です。');
       }
 
       if (usedModel != null && usedModel != _selectedModel) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('gemini_model_mind_map', usedModel);
+      }
+
+      if (!mounted) {
+        return;
       }
 
       setState(() {
@@ -244,6 +286,9 @@ class _MindMapPageState extends State<MindMapPage> {
         _buildGraphFromJson(decoded);
       });
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _errorMessage = 'マインドマップの生成に失敗しました: ${e.toString()}';
       });
@@ -252,6 +297,69 @@ class _MindMapPageState extends State<MindMapPage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _downloadMindMapAsPng() async {
+    if (_graph.nodes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ダウンロードするマインドマップがありません。')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isDownloading = true;
+    });
+
+    try {
+      final imageBytes = await NoteCardService.captureWidgetSimple(
+        _graphCaptureKey,
+      );
+      if (imageBytes == null) {
+        throw Exception('PNG の生成に失敗しました。');
+      }
+
+      final fileName = _buildMindMapFileName(_topicController.text);
+      downloadImageFile(imageBytes, fileName);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PNG をダウンロードしました: $fileName')),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PNG のダウンロードに失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
+    }
+  }
+
+  String _buildMindMapFileName(String topic) {
+    final normalizedTopic = topic
+        .trim()
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .replaceAll(RegExp(r'\s+'), '_');
+    final safeTopic = normalizedTopic.isEmpty ? 'mind_map' : normalizedTopic;
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+    return 'mind_map_${safeTopic}_$timestamp.png';
   }
 
   void _buildGraphFromJson(Map<String, dynamic> json) {
@@ -268,11 +376,26 @@ class _MindMapPageState extends State<MindMapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('マインドマップ生成'),
+        actions: [
+          IconButton(
+            onPressed: _isLoading || _isDownloading || _graph.nodes.isEmpty
+                ? null
+                : _downloadMindMapAsPng,
+            icon: _isDownloading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download_outlined),
+            tooltip: 'PNGをダウンロード',
+          ),
+        ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _topicController,
               decoration: const InputDecoration(
@@ -283,9 +406,23 @@ class _MindMapPageState extends State<MindMapPage> {
               onSubmitted: (_) => _generateMindMap(),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '使用モデル: $_selectedModel',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           if (_errorMessage != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _errorMessage!,
                 style: const TextStyle(color: Colors.red),
@@ -298,23 +435,34 @@ class _MindMapPageState extends State<MindMapPage> {
                     ? _buildEmptyGraphState()
                     : Padding(
                         padding: const EdgeInsets.all(16),
-                        child: GraphView.builder(
-                          key: ValueKey('mind_map_graph_view_$_graphVersion'),
-                          graph: _graph,
-                          animated: false,
-                          algorithm: BuchheimWalkerAlgorithm(
-                            _algorithmConfig,
-                            TreeEdgeRenderer(_algorithmConfig),
+                        child: RepaintBoundary(
+                          key: _graphCaptureKey,
+                          child: ColoredBox(
+                            color: const Color(0xFFF8FAFC),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: GraphView.builder(
+                                key: ValueKey(
+                                  'mind_map_graph_view_$_graphVersion',
+                                ),
+                                graph: _graph,
+                                animated: false,
+                                algorithm: BuchheimWalkerAlgorithm(
+                                  _algorithmConfig,
+                                  TreeEdgeRenderer(_algorithmConfig),
+                                ),
+                                builder: (Node node) {
+                                  final value = node.key?.value;
+                                  final nodeId = value?.toString();
+                                  final text = (nodeId != null &&
+                                          _nodeLabels.containsKey(nodeId))
+                                      ? _nodeLabels[nodeId]!
+                                      : '(empty)';
+                                  return _buildNode(text);
+                                },
+                              ),
+                            ),
                           ),
-                          builder: (Node node) {
-                            final value = node.key?.value;
-                            final nodeId = value?.toString();
-                            final text = (nodeId != null &&
-                                    _nodeLabels.containsKey(nodeId))
-                                ? _nodeLabels[nodeId]!
-                                : '(empty)';
-                            return _buildNode(text);
-                          },
                         ),
                       ),
           ),

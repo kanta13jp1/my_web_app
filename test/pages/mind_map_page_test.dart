@@ -8,7 +8,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('renders topic input and generate action', (
+  testWidgets('renders topic input, generate action, and download action', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -20,5 +20,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.download_outlined), findsOneWidget);
+    expect(find.text('マインドマップ生成'), findsOneWidget);
   });
 }
