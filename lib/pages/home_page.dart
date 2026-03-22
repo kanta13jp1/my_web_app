@@ -42,6 +42,7 @@ import 'memory_drill_page.dart';
 import 'behavior_review_page.dart';
 import 'digest_queue_page.dart';
 import 'reality_check_page.dart';
+import 'thought_anchor_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
@@ -3856,6 +3857,14 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.restaurant_menu,
                                 Colors.cyan,
                                 () => _nav(context, const DigestQueuePage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
+                                '思考アンカー',
+                                Icons.center_focus_strong,
+                                Colors.indigo,
+                                () => _nav(context, const ThoughtAnchorPage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
                               ),
