@@ -29,6 +29,25 @@ class EmergencyMeetingPage extends StatefulWidget {
 }
 
 class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
+  static const List<String> _boardMeetingSupportedModels = <String>[
+    'gemini-2.0-flash',
+    'gpt-4o-mini',
+    'claude-3-haiku-20240307',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-pro-latest',
+  ];
+
+  static List<Map<String, dynamic>> _defaultBoardMeetingModels() {
+    return _boardMeetingSupportedModels
+        .map(
+          (name) => <String, dynamic>{
+            'name': name,
+            'methods': const <String>['hold_board_meeting'],
+          },
+        )
+        .toList();
+  }
+
   final ScrollController _scrollController = ScrollController();
   final AgentOrgService _agentOrgService = AgentOrgService();
   final EmergencyMeetingBiReportService _meetingReportService =
@@ -38,7 +57,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   String _loadingStatus = '';
 
   String? _geminiApiKey;
-  String _selectedModel = 'gemma-3-4b-it';
+  String _selectedModel = _boardMeetingSupportedModels.first;
   MeetingFocus _selectedFocus = MeetingFocus.balanced;
   List<String> _continuationPlan = <String>[];
   List<String> _abstinenceRules = <String>[];
@@ -67,24 +86,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   bool _lockSubscriptionAdditions = false;
   DateTime? _abstinenceRecoveryDueAt;
   DateTime? _lastReviewAt;
-  List<Map<String, dynamic>> _selectableModels = [
-    {
-      'name': 'gemma-3-1b-it',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemma-3-4b-it',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemini-1.5-flash',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemini-1.5-pro',
-      'methods': ['generateContent'],
-    },
-  ];
+  List<Map<String, dynamic>> _selectableModels = _defaultBoardMeetingModels();
   final String _customPromptInstructions = _defaultPromptInstructions;
   static const String _prefsAbstinenceViolationCount =
       'emergency_abstinence_violation_count';
@@ -218,25 +220,27 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final savedModel = prefs.getString('gemini_model_emergency_meeting') ??
+        prefs.getString('gemini_model');
+    final normalizedModel = _normalizeBoardMeetingModel(savedModel);
     if (mounted) {
       setState(() {
         _geminiApiKey = prefs.getString('gemini_api_key');
-        // A model saved for the daily report can be reused here for consistency
-        final String? savedModel =
-            prefs.getString('gemini_model_emergency_meeting') ??
-                prefs.getString('gemini_model');
-        if (savedModel != null) {
-          _selectedModel = savedModel;
-        }
-        // Ensure the selected model is in the list, if not, add it.
-        if (!_selectableModels.any((m) => m['name'] == _selectedModel)) {
-          _selectableModels.insert(0, {
-            'name': _selectedModel,
-            'methods': ['generateContent'],
-          });
-        }
+        _selectedModel = normalizedModel;
+        _selectableModels = _defaultBoardMeetingModels();
       });
     }
+    if (savedModel != normalizedModel) {
+      await prefs.setString('gemini_model_emergency_meeting', normalizedModel);
+    }
+  }
+
+  String _normalizeBoardMeetingModel(String? model) {
+    final normalized = model?.trim() ?? '';
+    if (_boardMeetingSupportedModels.contains(normalized)) {
+      return normalized;
+    }
+    return _boardMeetingSupportedModels.first;
   }
 
   Future<void> _loadPdcaState() async {
@@ -1024,27 +1028,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   Future<void> _ensureSelectedModelIsAvailable() async {
-    final apiKey = _geminiApiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) return;
-
-    final fetchedModels = await fetchGeminiModels(apiKey);
-    if (fetchedModels.isEmpty) return;
-
-    final names = fetchedModels
-        .map((m) => m['name']?.toString() ?? '')
-        .where((name) => name.trim().isNotEmpty)
-        .toList();
-    if (names.isEmpty) return;
-
     final current = _selectedModel;
-    var next = current;
-    if (!names.contains(current)) {
-      next = names.first;
-    }
+    final next = _normalizeBoardMeetingModel(current);
 
     if (!mounted) return;
     setState(() {
-      _selectableModels = fetchedModels;
+      _selectableModels = _defaultBoardMeetingModels();
       _selectedModel = next;
     });
 
@@ -1226,10 +1215,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               ),
               FilledButton(
                 onPressed: () async {
+                  final normalizedSelectedModel =
+                      _normalizeBoardMeetingModel(tempSelectedModel);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString(
                     'gemini_model_emergency_meeting',
-                    tempSelectedModel,
+                    normalizedSelectedModel,
                   );
                   if (apiKeyController.text.isNotEmpty) {
                     await prefs.setString(
@@ -1239,11 +1230,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   }
                   if (mounted) {
                     setState(() {
-                      _selectedModel = tempSelectedModel;
+                      _selectedModel = normalizedSelectedModel;
                       if (apiKeyController.text.isNotEmpty) {
                         _geminiApiKey = apiKeyController.text;
                       }
-                      _selectableModels = currentSelectableModels;
+                      _selectableModels = _defaultBoardMeetingModels();
                     });
                   }
                   if (context.mounted) Navigator.pop(context);

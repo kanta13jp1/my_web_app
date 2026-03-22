@@ -997,14 +997,35 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
-        final data = await _invokeFunction(
-          'ai-assistant',
-          <String, dynamic>{
-            'action': 'hold_board_meeting',
-            'content': context,
-            if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
-          },
-        );
+        Future<Map<String, dynamic>> invokeBoardMeeting({String? targetModel}) {
+          return _invokeFunction(
+            'ai-assistant',
+            <String, dynamic>{
+              'action': 'hold_board_meeting',
+              'content': context,
+              if (targetModel != null && targetModel.trim().isNotEmpty)
+                'model': targetModel.trim(),
+            },
+          );
+        }
+
+        Map<String, dynamic> data;
+        try {
+          data = await invokeBoardMeeting(targetModel: model);
+        } on AIServiceException catch (error) {
+          final errorText = error.toString().toLowerCase();
+          final hasExplicitModel = model != null && model.trim().isNotEmpty;
+          final shouldRetryWithoutModel = hasExplicitModel &&
+              (errorText.contains('does not exist') ||
+                  errorText.contains('do not have access') ||
+                  errorText.contains('model_not_found') ||
+                  errorText.contains('unknown model'));
+          if (!shouldRetryWithoutModel) {
+            rethrow;
+          }
+          data = await invokeBoardMeeting();
+        }
+
         final result = data['result'];
         if (result is Map<String, dynamic>) {
           return result;
