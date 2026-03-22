@@ -41,6 +41,7 @@ import 'mind_map_page.dart';
 import 'memory_drill_page.dart';
 import 'behavior_review_page.dart';
 import 'digest_queue_page.dart';
+import 'reality_check_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
@@ -3955,6 +3956,14 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.history_edu,
                                 Colors.blueGrey,
                                 () => _nav(context, BehaviorReviewPage()),
+                              ),
+                              _MenuData(
+                                '現実直視ノート',
+                                Icons.fact_check,
+                                Colors.redAccent,
+                                () => _nav(context, const RealityCheckPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
                               ),
                             ]),
                             const SizedBox(height: 40),
