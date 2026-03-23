@@ -79,9 +79,8 @@ class ImportPreviewResult {
 
   bool get usedEdgeFunction => previewMode == 'edge-function';
 
-  String get previewModeLabel => usedEdgeFunction
-      ? 'Edge Function preview'
-      : 'Local fallback preview';
+  String get previewModeLabel =>
+      usedEdgeFunction ? 'Edge Function preview' : 'Local fallback preview';
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -198,7 +197,8 @@ class ImportService {
           previewMode: 'local-fallback',
         );
       default:
-        throw ArgumentError.value(sourceType, 'sourceType', 'Unsupported source');
+        throw ArgumentError.value(
+            sourceType, 'sourceType', 'Unsupported source');
     }
   }
 
@@ -281,7 +281,8 @@ class ImportService {
       final strippedContent = _normalizeWhitespace(
         _stripHtml(
           contentBlock
-              .replaceAll(RegExp(r'<!\[CDATA\[|\]\]>', caseSensitive: false), '')
+              .replaceAll(
+                  RegExp(r'<!\[CDATA\[|\]\]>', caseSensitive: false), '')
               .replaceAll('&nbsp;', ' ')
               .replaceAll('&amp;', '&')
               .replaceAll('&lt;', '<')

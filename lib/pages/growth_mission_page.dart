@@ -23,7 +23,9 @@ class GrowthMissionPage extends StatefulWidget {
 
 class _GrowthMissionPageState extends State<GrowthMissionPage> {
   bool _isLoading = true;
+  bool _briefLoading = true;
   GrowthMissionDashboard _dashboard = GrowthMissionDashboard.empty();
+  GrowthCommandCenterBrief _commandCenter = GrowthCommandCenterBrief.empty();
 
   @override
   void initState() {
@@ -33,12 +35,16 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
 
   Future<void> _reload() async {
     final dashboard = await widget.growthService.loadDashboard();
+    final commandCenter =
+        await widget.growthService.loadCommandCenterBrief(dashboard);
     if (!mounted) {
       return;
     }
     setState(() {
       _dashboard = dashboard;
       _isLoading = false;
+      _commandCenter = commandCenter;
+      _briefLoading = false;
     });
   }
 
@@ -78,6 +84,80 @@ $inviteUrl
       return;
     }
     _showMessage('Referral message copied.');
+  }
+
+  void _openLandingPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LandingPage(),
+      ),
+    );
+  }
+
+  Future<void> _handleDepartmentAction(String departmentId) async {
+    switch (departmentId) {
+      case 'development':
+        await Navigator.of(context).pushNamed('/import');
+        return;
+      case 'product':
+        await Navigator.of(context).pushNamed('/behavior-review');
+        return;
+      case 'advertising':
+        _openLandingPage();
+        return;
+      case 'pr':
+      case 'marketing':
+        await Navigator.of(context).pushNamed('/public-memos');
+        return;
+      case 'sales':
+        await Navigator.of(context).pushNamed('/import');
+        return;
+      case 'finance':
+      case 'procurement':
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const AdminAnalyticsPage(),
+          ),
+        );
+        return;
+      case 'hr':
+      case 'business-planning':
+        await Clipboard.setData(
+          const ClipboardData(text: 'docs/GROWTH_STRATEGY_ROADMAP.md'),
+        );
+        if (!mounted) {
+          return;
+        }
+        _showMessage('Roadmap path copied for the next operating review.');
+        return;
+    }
+  }
+
+  String _departmentActionLabel(String departmentId) {
+    switch (departmentId) {
+      case 'development':
+        return 'Open import pipeline';
+      case 'product':
+        return 'Open product review';
+      case 'advertising':
+        return 'Open landing page';
+      case 'pr':
+        return 'Open public memos';
+      case 'sales':
+        return 'Open import demo';
+      case 'marketing':
+        return 'Open SEO memos';
+      case 'finance':
+        return 'Open analytics';
+      case 'procurement':
+        return 'Open vendor metrics';
+      case 'hr':
+        return 'Copy hiring roadmap';
+      case 'business-planning':
+        return 'Copy roadmap path';
+      default:
+        return 'Open next step';
+    }
   }
 
   void _showMessage(String message) {
@@ -186,6 +266,53 @@ $inviteUrl
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
+                      'Cross-functional command center',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Stage: ${_commandCenter.stageLabel} - ${_commandCenter.stageReason}',
+                    ),
+                    const SizedBox(height: 12),
+                    if (_commandCenter.focusTags.isNotEmpty)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _commandCenter.focusTags
+                            .map((tag) => Chip(label: Text(tag)))
+                            .toList(),
+                      ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: _commandCenter.departments
+                          .map(_departmentCard)
+                          .toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Brief generated: ${DateFormat('yyyy/MM/dd HH:mm').format(_commandCenter.generatedAt)}',
+                    ),
+                    if (_briefLoading) ...[
+                      const SizedBox(height: 16),
+                      const LinearProgressIndicator(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
                       'Competitor gap',
                       style: TextStyle(
                         fontSize: 20,
@@ -238,6 +365,10 @@ $inviteUrl
                           icon: Icons.share,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Verified public benchmark references on 2026/03/23: Notion says "Over 100M users worldwide" on its homepage, and Evernote says it serves "more than 250 million customers" in its official acquisition announcement.',
                     ),
                   ],
                 ),
@@ -348,11 +479,7 @@ $inviteUrl
                       children: [
                         FilledButton.icon(
                           onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const LandingPage(),
-                              ),
-                            );
+                            _openLandingPage();
                           },
                           icon: const Icon(Icons.language),
                           label: const Text('Open landing page'),
@@ -461,7 +588,7 @@ $inviteUrl
         const SizedBox(height: 6),
         LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
         const SizedBox(height: 6),
-        Text('${percent.toStringAsFixed(6)}% • $detail'),
+        Text('${percent.toStringAsFixed(6)}% - $detail'),
       ],
     );
   }
@@ -491,6 +618,52 @@ $inviteUrl
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _departmentCard(GrowthDepartmentBrief department) {
+    return SizedBox(
+      width: 320,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    department.label,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Chip(label: Text(department.priority)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('Owner: ${department.owner}'),
+            const SizedBox(height: 10),
+            Text(department.objective),
+            const SizedBox(height: 10),
+            ...department.actions.map(
+              (action) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('- $action'),
+              ),
+            ),
+            const SizedBox(height: 6),
+            FilledButton.tonalIcon(
+              onPressed: () => _handleDepartmentAction(department.id),
+              icon: const Icon(Icons.arrow_forward),
+              label: Text(_departmentActionLabel(department.id)),
+            ),
+          ],
+        ),
       ),
     );
   }

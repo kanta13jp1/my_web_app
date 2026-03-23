@@ -184,15 +184,15 @@ class _NoteListPageState extends State<NoteListPage> {
     return Colors.teal.shade700;
   }
 
-  List<Map<String, dynamic>> _reminderEntries(List<Map<String, dynamic>> notes) {
-    final reminders = notes
-        .where((note) => _reminderDateOf(note) != null)
-        .toList()
-      ..sort((a, b) {
-        final aReminder = _reminderDateOf(a) ?? DateTime(9999);
-        final bReminder = _reminderDateOf(b) ?? DateTime(9999);
-        return aReminder.compareTo(bReminder);
-      });
+  List<Map<String, dynamic>> _reminderEntries(
+      List<Map<String, dynamic>> notes) {
+    final reminders =
+        notes.where((note) => _reminderDateOf(note) != null).toList()
+          ..sort((a, b) {
+            final aReminder = _reminderDateOf(a) ?? DateTime(9999);
+            final bReminder = _reminderDateOf(b) ?? DateTime(9999);
+            return aReminder.compareTo(bReminder);
+          });
     return reminders;
   }
 
@@ -787,10 +787,12 @@ class _NoteListPageState extends State<NoteListPage> {
     final accentColor = highlightShareCandidate
         ? Colors.deepPurple
         : (highlightReminder
-              ? Colors.teal
-              : (isPinned ? Colors.orange : Colors.blue));
-    final fallbackAccentColor =
-        isFavorite && !highlightReminder && !highlightShareCandidate && !isPinned
+            ? Colors.teal
+            : (isPinned ? Colors.orange : Colors.blue));
+    final fallbackAccentColor = isFavorite &&
+            !highlightReminder &&
+            !highlightShareCandidate &&
+            !isPinned
         ? Colors.amber.shade700
         : accentColor;
 
@@ -813,11 +815,11 @@ class _NoteListPageState extends State<NoteListPage> {
                 ? Icons.campaign
                 : highlightReminder
                     ? Icons.alarm
-                : isPinned
+                    : isPinned
                         ? Icons.push_pin
                         : isFavorite
-                        ? Icons.star
-                        : Icons.description,
+                            ? Icons.star
+                            : Icons.description,
             color: fallbackAccentColor,
             size: 20,
           ),
@@ -1010,14 +1012,11 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleNotes = _showFavoritesOnly
-        ? _notes.where(_isFavorite).toList()
-        : _notes;
+    final visibleNotes =
+        _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
     final reminderEntries = _reminderEntries(visibleNotes);
-    final reminderIds = reminderEntries
-        .map(_noteId)
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    final reminderIds =
+        reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
     final reminderExcludedNotes = visibleNotes
         .where((note) => !reminderIds.contains(_noteId(note)))
         .toList();
@@ -1034,9 +1033,8 @@ class _NoteListPageState extends State<NoteListPage> {
             .toList()
         : reminderExcludedNotes;
     final hasAnyEntries = _draftEntries.isNotEmpty || visibleNotes.isNotEmpty;
-    final pageTitle = _showFavoritesOnly
-        ? 'CKO OFFICE (お気に入り)'
-        : 'CKO OFFICE (メモ一覧)';
+    final pageTitle =
+        _showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)';
 
     return Scaffold(
       key: const Key('note_list_page_scaffold'),
@@ -1085,10 +1083,9 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _showFavoritesOnly
-                            ? 'お気に入りのメモはまだありません'
-                            : 'まだメモがありません',
-                        style: const TextStyle(fontSize: 18, color: Colors.grey),
+                        _showFavoritesOnly ? 'お気に入りのメモはまだありません' : 'まだメモがありません',
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                       if (_showFavoritesOnly) ...[
                         const SizedBox(height: 12),
@@ -1110,7 +1107,8 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).pushNamed('/import'),
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/import'),
                         icon: const Icon(Icons.file_upload_outlined),
                         label: const Text('Notion / Evernote を取り込む'),
                       ),
@@ -1168,14 +1166,12 @@ class _NoteListPageState extends State<NoteListPage> {
                     ],
                     if (remainingNotes.isNotEmpty)
                       _buildSectionHeader(
-                        widget.prioritizeShareCandidates
-                            ? 'すべてのメモ'
-                            : 'メモ一覧',
+                        widget.prioritizeShareCandidates ? 'すべてのメモ' : 'メモ一覧',
                         _showFavoritesOnly
                             ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
                             : widget.prioritizeShareCandidates
-                            ? '共有候補の下に、残りのメモを時系列で表示します。'
-                            : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
+                                ? '共有候補の下に、残りのメモを時系列で表示します。'
+                                : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
                       ),
                     ...remainingNotes.map(
                       (note) => _buildNoteCard(context, note),

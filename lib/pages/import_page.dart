@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../pages/landing_page.dart';
 import '../services/gamification_service.dart';
 import '../services/import_service.dart';
 
@@ -119,6 +120,14 @@ class _ImportPageState extends State<ImportPage> {
     );
   }
 
+  void _openLandingPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LandingPage(),
+      ),
+    );
+  }
+
   List<String> _extensionsFor(String sourceType) {
     switch (sourceType) {
       case 'notion':
@@ -135,6 +144,7 @@ class _ImportPageState extends State<ImportPage> {
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
+    final currentUser = Supabase.instance.client.auth.currentUser;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Import')),
@@ -213,6 +223,12 @@ class _ImportPageState extends State<ImportPage> {
                     Text('File: ${preview.fileName}'),
                     const SizedBox(height: 4),
                     Text('Notes ready to import: ${preview.notes.length}'),
+                    if (currentUser == null) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Preview is ready. Sign in or create an account from the landing page, then come back to import the full batch.',
+                      ),
+                    ],
                     if (preview.warnings.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       ...preview.warnings.map(
@@ -231,10 +247,18 @@ class _ImportPageState extends State<ImportPage> {
                     FilledButton.icon(
                       onPressed: _isImporting || preview.notes.isEmpty
                           ? null
-                          : _importPreview,
-                      icon: const Icon(Icons.download_done),
+                          : currentUser == null
+                              ? _openLandingPage
+                              : _importPreview,
+                      icon: Icon(
+                        currentUser == null ? Icons.login : Icons.download_done,
+                      ),
                       label: Text(
-                        _isImporting ? 'Importing...' : 'Import these notes',
+                        _isImporting
+                            ? 'Importing...'
+                            : currentUser == null
+                                ? 'Open sign-up to import'
+                                : 'Import these notes',
                       ),
                     ),
                   ],

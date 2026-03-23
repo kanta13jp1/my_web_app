@@ -306,11 +306,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   String _resolvePriorityAcquisitionChannel(Map<String, int> sources) {
     final actionableEntries = sources.entries
-        .where((entry) => entry.key != 'direct' && entry.value > 0)
+        .where(
+          (entry) => _isAcquisitionSourceKey(entry.key) && entry.value > 0,
+        )
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     if (actionableEntries.isEmpty) return 'x_share';
     return actionableEntries.first.key;
+  }
+
+  bool _isAcquisitionSourceKey(String key) {
+    switch (key) {
+      case 'direct':
+      case 'x_share':
+      case 'qr_scan':
+      case 'facebook':
+      case 'line':
+      case 'copy_link':
+        return true;
+      default:
+        return false;
+    }
   }
 
   String _buildAcquisitionButtonLabel(
@@ -1978,6 +1994,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'share_line':
       case 'share_facebook':
       case 'share_copy':
+      case 'public_memo_share':
+      case 'public_memo_copy':
         return true;
       default:
         return false;
@@ -2006,6 +2024,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Facebook シェア';
       case 'share_copy':
         return 'リンクコピー';
+      case 'public_memo_share':
+        return 'Public memo share';
+      case 'public_memo_copy':
+        return 'Public memo copy';
       default:
         return key;
     }
@@ -2033,6 +2055,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFF1877F2);
       case 'share_copy':
         return Colors.deepPurple.shade300;
+      case 'public_memo_share':
+        return Colors.orange.shade400;
+      case 'public_memo_copy':
+        return Colors.amber.shade700;
       default:
         return Colors.indigo.shade300;
     }

@@ -1141,3 +1141,55 @@ firebase deploy --only hosting
     - Move import commit batching into an Edge Function.
     - Add share analytics for public memo detail pages.
     - Add backend-generated SEO/share summaries for public memos.
+- 2026-03-23: ✅ Cross-functional growth command center + public memo share analytics
+  - Benchmark floor update for this roadmap:
+    - Notion floor: 100,000,000+ users (official homepage wording checked on 2026-03-23)
+    - Evernote floor: 250,000,000+ customers (official Evernote acquisition announcement checked on 2026-03-23)
+  - Development
+    - Growth command center now runs from a Supabase Edge Function (`supabase/functions/growth-command-center/index.ts`) with a local fallback in Flutter.
+    - Public memo share analytics now run through a dedicated Supabase Edge Function (`supabase/functions/growth-share-signal/index.ts`) instead of staying only in frontend code.
+    - Linter-zero remains the bar for every growth slice.
+  - Product
+    - `Growth Mission` now shows a cross-functional command center with department-level next actions.
+    - `Import` now pushes unsigned visitors toward sign-up at the point of highest intent, right after preview.
+  - Advertising
+    - Paid spend remains gated on instrumented funnels; the next ad budget only unlocks after import preview -> sign-up -> import completion can be measured cleanly.
+  - PR / 宣伝
+    - Public memo detail sharing is now measurable, so weekly shipping summaries can promote real usage instead of vanity updates.
+  - Sales
+    - Import remains the wedge for pilot-team outreach; demos should start from migrated content, not empty workspaces.
+  - Marketing
+    - Public memo SEO + public memo share analytics are now part of the same operating loop.
+    - Comparison content for switching from Notion / Evernote stays on the short-term backlog.
+  - HR
+    - Hiring remains trigger-based: no full-time growth hires until repeatable acquisition is proven.
+    - Contractor scopes should be defined for backend operations, content, and growth design first.
+  - Finance / 経理
+    - Growth spend should stay capped weekly until CAC assumptions are backed by measured conversion data.
+  - Procurement / 調達
+    - Prefer the current Supabase + Flutter stack before adding new paid growth tooling.
+  - Business Planning / 事業計画
+    - The immediate milestone ladder remains:
+      - 100 users
+      - 1,000 users
+      - 10,000 users
+      - 100,000 users
+      - 1,000,000 users
+      - 100,000,001+ users to clear the Notion floor
+      - 250,000,001+ users to clear the Evernote floor
+    - Roadmap updates must continue weekly in this file, and every cross-functional owner should map back to a measurable funnel or cost control metric.
+  - New implementation in this slice:
+    - `lib/pages/growth_mission_page.dart`
+      - Added department-by-department execution actions on top of the command center brief.
+    - `lib/pages/import_page.dart`
+      - Added sign-up CTA behavior when a visitor has previewed import data but is not authenticated yet.
+    - `lib/services/public_memo_service.dart`
+      - Added backend-first share signal recording with direct database fallback.
+    - `lib/pages/public_memo_detail_page.dart`
+      - Share and copy-link actions now emit growth analytics signals.
+    - `lib/pages/admin_analytics_page.dart`
+      - Added public memo share signal labeling and safer acquisition-channel filtering.
+  - Next backend migration targets after this slice:
+    - Move import commit batching into an Edge Function.
+    - Add backend-generated SEO/share summaries for public memos.
+    - Add route-level acquisition signal aggregation that can distinguish LP, import, public memo, and referral assisted conversions.

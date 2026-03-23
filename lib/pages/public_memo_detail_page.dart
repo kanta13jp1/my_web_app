@@ -47,7 +47,8 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     var isLiked = false;
     if (userId != null) {
-      isLiked = await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
+      isLiked =
+          await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
     }
 
     if (!mounted) {
@@ -84,11 +85,23 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     await SharePlus.instance.share(
       ShareParams(text: PublicMemoService.buildShareMessage(memo)),
     );
+    await _publicMemoService.recordShareSignal(
+      memoId: widget.memoId,
+      signalKey: PublicMemoService.publicMemoShareSignal,
+    );
+    if (!mounted) {
+      return;
+    }
+    _showMessage('Share sheet opened.');
   }
 
   Future<void> _copyLink() async {
     final url = PublicMemoService.buildPublicMemoUrl(widget.memoId);
     await Clipboard.setData(ClipboardData(text: url));
+    await _publicMemoService.recordShareSignal(
+      memoId: widget.memoId,
+      signalKey: PublicMemoService.publicMemoCopySignal,
+    );
     if (!mounted) {
       return;
     }

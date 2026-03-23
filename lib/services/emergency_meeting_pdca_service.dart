@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:my_web_app/models/board_meeting.dart';
 
@@ -564,4 +564,3 @@ $jsonPayload
 ''';
   }
 }
-

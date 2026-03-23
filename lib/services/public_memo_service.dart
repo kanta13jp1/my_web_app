@@ -5,6 +5,9 @@ import '../utils/app_logger.dart';
 import 'app_share_service.dart';
 
 class PublicMemoService {
+  static const String publicMemoShareSignal = 'public_memo_share';
+  static const String publicMemoCopySignal = 'public_memo_copy';
+
   final SupabaseClient _supabase;
 
   PublicMemoService(this._supabase);
@@ -38,10 +41,7 @@ class PublicMemoService {
   }
 
   static String _buildShareExcerpt(String? content) {
-    final normalized = content
-            ?.replaceAll(RegExp(r'\s+'), ' ')
-            .trim() ??
-        '';
+    final normalized = content?.replaceAll(RegExp(r'\s+'), ' ').trim() ?? '';
     if (normalized.isEmpty) {
       return '';
     }
@@ -49,6 +49,52 @@ class PublicMemoService {
       return normalized;
     }
     return '${normalized.substring(0, 137)}...';
+  }
+
+  Future<void> recordShareSignal({
+    required int memoId,
+    required String signalKey,
+    DateTime? now,
+  }) async {
+    if (signalKey != publicMemoShareSignal &&
+        signalKey != publicMemoCopySignal) {
+      throw ArgumentError.value(
+        signalKey,
+        'signalKey',
+        'Unsupported public memo share signal',
+      );
+    }
+
+    final dateKey = _formatDate(now ?? DateTime.now());
+
+    try {
+      final response = await _supabase.functions.invoke(
+        'growth-share-signal',
+        body: <String, dynamic>{
+          'memoId': memoId,
+          'signalKey': signalKey,
+          'dateKey': dateKey,
+        },
+      );
+      final payload = _asMap(response.data);
+      if (payload['success'] == true) {
+        return;
+      }
+      AppLogger.warning(
+        'Growth share signal function returned an unexpected payload: $payload',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.warning(
+        'Growth share signal fallback activated',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+
+    await _recordShareSignalFallback(
+      signalKey: signalKey,
+      dateKey: dateKey,
+    );
   }
 
   // Publish a note as public memo
@@ -379,5 +425,88 @@ class PublicMemoService {
       );
       return [];
     }
+  }
+
+  Future<void> _recordShareSignalFallback({
+    required String signalKey,
+    required String dateKey,
+  }) async {
+    try {
+      final existing = await _supabase
+          .from('app_analytics')
+          .select(
+              'date, landing_views, conversions, share_count, source_details')
+          .eq('date', dateKey)
+          .maybeSingle();
+
+      if (existing == null) {
+        await _supabase.from('app_analytics').upsert(<String, dynamic>{
+          'date': dateKey,
+          'landing_views': 0,
+          'conversions': 0,
+          'share_count': 1,
+          'source_details': <String, int>{signalKey: 1},
+        });
+        return;
+      }
+
+      final row = _asMap(existing);
+      final sourceDetails = _normalizeSourceDetails(row['source_details'])
+        ..update(signalKey, (count) => count + 1, ifAbsent: () => 1);
+
+      await _supabase.from('app_analytics').update(<String, dynamic>{
+        'share_count': _toInt(row['share_count']) + 1,
+        'source_details': sourceDetails,
+      }).eq('date', dateKey);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to record public memo share signal',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return <String, dynamic>{};
+  }
+
+  Map<String, int> _normalizeSourceDetails(dynamic raw) {
+    if (raw is! Map) {
+      return <String, int>{};
+    }
+
+    final result = <String, int>{};
+    raw.forEach((key, value) {
+      result[key.toString()] = _toInt(value);
+    });
+    result.removeWhere((_, value) => value <= 0);
+    return result;
+  }
+
+  int _toInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
+  String _formatDate(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final month = normalized.month.toString().padLeft(2, '0');
+    final day = normalized.day.toString().padLeft(2, '0');
+    return '${normalized.year}-$month-$day';
   }
 }
