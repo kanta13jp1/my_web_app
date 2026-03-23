@@ -57,6 +57,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - route / import / public memo / referral の獲得シグナル記録
 - import と public memo から sign-up へ流す CTA 計測
 - Growth Mission から note / Qiita / Zenn / Medium / dev.to / Hashnode / Substack 向けの配信ブリーフをコピー可能にした
+- HomePage の operations calendar で日別の収入 / 支出を月単位で俯瞰できるようにした
 
 ### 残課題
 

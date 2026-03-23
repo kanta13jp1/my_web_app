@@ -287,6 +287,65 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<Map<String, _HomeDailyCashflowSummary>> _loadCalendarCashflowMap({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      return <String, _HomeDailyCashflowSummary>{};
+    }
+
+    final normalizedStart = _startOfDay(startDate);
+    final normalizedEndExclusive =
+        _startOfDay(endDate).add(const Duration(days: 1));
+
+    try {
+      final dynamic rowsRaw = await Supabase.instance.client
+          .from('wealth_struggles')
+          .select('action_type,amount,occurred_at')
+          .eq('user_id', userId)
+          .gte('occurred_at', normalizedStart.toUtc().toIso8601String())
+          .lt('occurred_at', normalizedEndExclusive.toUtc().toIso8601String())
+          .order('occurred_at', ascending: true);
+      final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+      final result = <String, _HomeDailyCashflowSummary>{};
+
+      for (final row in rows.whereType<Map<String, dynamic>>()) {
+        final occurredAt = DateTime.tryParse(
+          row['occurred_at']?.toString() ?? '',
+        )?.toLocal();
+        if (occurredAt == null) continue;
+
+        final dateKey = _statusDateKey(occurredAt);
+        final current = result[dateKey] ?? const _HomeDailyCashflowSummary();
+        final actionType = row['action_type']?.toString() ?? '';
+        final amount = _toIntValue(row['amount']);
+
+        result[dateKey] = switch (actionType) {
+          'conquer' => current.copyWith(
+              incomeTotal: current.incomeTotal + amount,
+              incomeCount: current.incomeCount + 1,
+            ),
+          'expense' => current.copyWith(
+              expenseTotal: current.expenseTotal + amount,
+              expenseCount: current.expenseCount + 1,
+            ),
+          'transfer' => current.copyWith(
+              transferTotal: current.transferTotal + amount,
+              transferCount: current.transferCount + 1,
+            ),
+          _ => current,
+        };
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('Error loading calendar cashflow map: $e');
+      return <String, _HomeDailyCashflowSummary>{};
+    }
+  }
+
   Future<DailyCompletionGoalSnapshot> _loadDailyCompletionGoalSnapshot({
     required DateTime now,
   }) async {
@@ -940,6 +999,10 @@ class _HomePageState extends State<HomePage> {
       startDate: startDay,
       endDate: endDay,
     );
+    final cashflowByDate = await _loadCalendarCashflowMap(
+      startDate: startDay,
+      endDate: endDay,
+    );
     final tasksByDate = await _fetchHomeCalendarTaskMap(
       startDate: startDay,
       endDate: endDay,
@@ -965,6 +1028,8 @@ class _HomePageState extends State<HomePage> {
       final tasks = List<_HomeCalendarTask>.from(
         tasksByDate[dateKey] ?? const <_HomeCalendarTask>[],
       );
+      final cashflow =
+          cashflowByDate[dateKey] ?? const _HomeDailyCashflowSummary();
       final hasProtection = abstinence.enabledCount > 0;
       final hasSlip = abstinence.totalSlipCount > 0;
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
@@ -1000,6 +1065,7 @@ class _HomePageState extends State<HomePage> {
           slipDetails: abstinence.slipDetails,
           missingItems: missingItems,
           relapsePreventionAction: relapsePreventionAction,
+          cashflow: cashflow,
           tasks: tasks,
         ),
       );
@@ -2245,6 +2311,8 @@ abstinence_slip_details: $slipDetailsText
     final cleanDaysCount = recentDays
         .where((day) => day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
         .length;
+    final cashflowRecordedDaysCount =
+        recentDays.where((day) => day.hasCashflow).length;
     final slipDaysCount =
         recentDays.where((day) => day.hasAbstinenceSlip).length;
     final unsetDaysCount =
@@ -2344,6 +2412,15 @@ abstinence_slip_details: $slipDetailsText
           const Text(
             '朝の固定、残高確認、禁欲の安定を月単位で見る。',
           ),
+          const SizedBox(height: 4),
+          Text(
+            '各日の「収」「支」で、その日の入出金を月単位で俯瞰できます。',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.blueGrey.shade600,
+            ),
+          ),
           if (filterLabel != null) ...[
             const SizedBox(height: 6),
             Text(
@@ -2378,6 +2455,18 @@ abstinence_slip_details: $slipDetailsText
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusPill(
+                label: '収支記録',
+                value: '$cashflowRecordedDaysCount日',
+                color: Colors.indigo,
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Row(
             children: weekLabels.map((label) {
@@ -2403,7 +2492,7 @@ abstinence_slip_details: $slipDetailsText
               crossAxisCount: 7,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              mainAxisExtent: 62,
+              mainAxisExtent: 86,
             ),
             itemCount: snapshot.calendarDays.length,
             itemBuilder: (context, index) {
@@ -2476,6 +2565,31 @@ abstinence_slip_details: $slipDetailsText
                                   : Colors.blueGrey.shade300,
                             ),
                           ),
+                          if (day.isCurrentMonth && day.hasCashflow) ...[
+                            const SizedBox(height: 4),
+                            if (day.cashflow.incomeCount > 0)
+                              _buildCalendarCashflowLine(
+                                key: Key(
+                                  'calendar_day_income_${DateFormat('yyyy-MM-dd').format(day.date)}',
+                                ),
+                                label: '収',
+                                amount: day.cashflow.incomeTotal,
+                                color: Colors.green.shade700,
+                                sign: '+',
+                                isEmphasized: matchesFilter,
+                              ),
+                            if (day.cashflow.expenseCount > 0)
+                              _buildCalendarCashflowLine(
+                                key: Key(
+                                  'calendar_day_expense_${DateFormat('yyyy-MM-dd').format(day.date)}',
+                                ),
+                                label: '支',
+                                amount: day.cashflow.expenseTotal,
+                                color: Colors.red.shade600,
+                                sign: '-',
+                                isEmphasized: matchesFilter,
+                              ),
+                          ],
                           const Spacer(),
                           Wrap(
                             spacing: 3,
@@ -2530,6 +2644,15 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 10),
           _buildSelectedDayTaskPreviewPanel(context, selectedDay),
           const SizedBox(height: 14),
+          const Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              _CalendarLegend(color: Colors.green, label: '収入'),
+              _CalendarLegend(color: Colors.red, label: '支出'),
+            ],
+          ),
+          const SizedBox(height: 8),
           const Wrap(
             spacing: 10,
             runSpacing: 8,
@@ -3064,6 +3187,33 @@ abstinence_slip_details: $slipDetailsText
     return color.withValues(alpha: 0.22);
   }
 
+  Widget _buildCalendarCashflowLine({
+    required Key key,
+    required String label,
+    required int amount,
+    required Color color,
+    required String sign,
+    required bool isEmphasized,
+  }) {
+    final textColor = isEmphasized ? color : color.withValues(alpha: 0.74);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 1),
+      child: Text(
+        '$label $sign${_formatCalendarCashflowAmount(amount)}',
+        key: key,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCalendarSummaryPill({
     required String label,
     required String value,
@@ -3361,6 +3511,8 @@ abstinence_slip_details: $slipDetailsText
                     ),
                   ],
                   const SizedBox(height: 12),
+                  _buildCalendarCashflowDetailSection(parentContext, day),
+                  const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: '登録タスク',
                     accent: Colors.indigo,
@@ -3404,6 +3556,140 @@ abstinence_slip_details: $slipDetailsText
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCalendarCashflowDetailSection(
+    BuildContext parentContext,
+    _HomeCalendarDay day,
+  ) {
+    final cashflow = day.cashflow;
+    final dateKey = _statusDateKey(day.date);
+
+    return Container(
+      key: Key('calendar_day_detail_cashflow_$dateKey'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '収支サマリ',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Colors.indigo,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (!cashflow.hasAnyEntry)
+            Text(
+              day.isFuture ? 'この日の収支記録はまだありません。' : 'この日の収支記録はまだありません。',
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCalendarCashflowMetricTile(
+                    label: '収入',
+                    value: _formatYen(cashflow.incomeTotal.toDouble()),
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCalendarCashflowMetricTile(
+                    label: '支出',
+                    value: _formatYen(cashflow.expenseTotal.toDouble()),
+                    color: Colors.redAccent,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCalendarCashflowMetricTile(
+                    label: '差額',
+                    value: _formatSignedYen(cashflow.netTotal.toDouble()),
+                    color:
+                        cashflow.netTotal >= 0 ? Colors.indigo : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '入出金 ${cashflow.recordCount} 件'
+              '${cashflow.transferCount > 0 ? ' / 振替 ${cashflow.transferCount} 件 (${_formatYen(cashflow.transferTotal.toDouble())})' : ''}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.blueGrey.shade700,
+              ),
+            ),
+          ],
+          if (!day.isFuture) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: Key('calendar_day_detail_open_cashflow_$dateKey'),
+                onPressed: () {
+                  Navigator.pop(parentContext);
+                  _nav(
+                    parentContext,
+                    const AssetManagementPage(
+                      initialFocus: AssetManagementInitialFocus.flow,
+                      emphasizeMonthlyFlow: true,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('資産管理で詳細を見る'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarCashflowMetricTile({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -5588,6 +5874,16 @@ abstinence_slip_details: $slipDetailsText
     return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
   }
 
+  String _formatCalendarCashflowAmount(int value) {
+    final absValue = value.abs();
+    if (absValue >= 10000) {
+      final man = absValue / 10000;
+      final digits = man >= 100 ? 0 : 1;
+      return '${man.toStringAsFixed(digits)}万';
+    }
+    return NumberFormat('#,##0', 'ja_JP').format(absValue);
+  }
+
   String _formatPercentRatio(double part, double total) {
     if (total == 0) return '--';
     return '${(part / total * 100).toStringAsFixed(2)}%';
@@ -5999,6 +6295,7 @@ class _HomeCalendarDay {
   final List<String> slipDetails;
   final List<String> missingItems;
   final String relapsePreventionAction;
+  final _HomeDailyCashflowSummary cashflow;
   final List<_HomeCalendarTask> tasks;
 
   const _HomeCalendarDay({
@@ -6016,12 +6313,59 @@ class _HomeCalendarDay {
     required this.slipDetails,
     required this.missingItems,
     required this.relapsePreventionAction,
+    this.cashflow = const _HomeDailyCashflowSummary(),
     this.tasks = const <_HomeCalendarTask>[],
   });
+
+  bool get hasCashflow => cashflow.hasCashflow;
 
   int get totalTaskCount => tasks.length;
 
   int get completedTaskCount => tasks.where((task) => task.isCompleted).length;
+}
+
+class _HomeDailyCashflowSummary {
+  final int incomeTotal;
+  final int expenseTotal;
+  final int transferTotal;
+  final int incomeCount;
+  final int expenseCount;
+  final int transferCount;
+
+  const _HomeDailyCashflowSummary({
+    this.incomeTotal = 0,
+    this.expenseTotal = 0,
+    this.transferTotal = 0,
+    this.incomeCount = 0,
+    this.expenseCount = 0,
+    this.transferCount = 0,
+  });
+
+  _HomeDailyCashflowSummary copyWith({
+    int? incomeTotal,
+    int? expenseTotal,
+    int? transferTotal,
+    int? incomeCount,
+    int? expenseCount,
+    int? transferCount,
+  }) {
+    return _HomeDailyCashflowSummary(
+      incomeTotal: incomeTotal ?? this.incomeTotal,
+      expenseTotal: expenseTotal ?? this.expenseTotal,
+      transferTotal: transferTotal ?? this.transferTotal,
+      incomeCount: incomeCount ?? this.incomeCount,
+      expenseCount: expenseCount ?? this.expenseCount,
+      transferCount: transferCount ?? this.transferCount,
+    );
+  }
+
+  int get recordCount => incomeCount + expenseCount;
+
+  int get netTotal => incomeTotal - expenseTotal;
+
+  bool get hasCashflow => recordCount > 0;
+
+  bool get hasAnyEntry => hasCashflow || transferCount > 0;
 }
 
 enum _HomeCalendarTaskSource {
