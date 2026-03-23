@@ -7,7 +7,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/public_memo.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/public_memo_service.dart';
+import 'landing_page.dart';
 
 class PublicMemoDetailPage extends StatefulWidget {
   final int memoId;
@@ -24,6 +26,8 @@ class PublicMemoDetailPage extends StatefulWidget {
 }
 
 class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
+  final GrowthAcquisitionService _acquisitionService =
+      const GrowthAcquisitionService();
   late final PublicMemoService _publicMemoService;
   PublicMemo? _memo;
   bool _isLoading = true;
@@ -108,6 +112,18 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     _showMessage('Public memo link copied.');
   }
 
+  Future<void> _openLandingPageForSignUp() async {
+    await _acquisitionService.recordPublicMemoSignUpCta();
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LandingPage(),
+      ),
+    );
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -117,6 +133,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   @override
   Widget build(BuildContext context) {
     final memo = _memo;
+    final currentUser = Supabase.instance.client.auth.currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Public memo detail'),
@@ -176,6 +193,37 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                         ),
                       ],
                     ),
+                    if (currentUser == null) ...[
+                      const SizedBox(height: 16),
+                      Card(
+                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Save ideas like this in your own workspace',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Create an account to save imports, AI suggestions, and public memo ideas in one place.',
+                              ),
+                              const SizedBox(height: 12),
+                              FilledButton.icon(
+                                onPressed: _openLandingPageForSignUp,
+                                icon: const Icon(Icons.login),
+                                label: const Text('Create account to save ideas'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     SelectableText(
                       memo.content?.trim().isNotEmpty == true

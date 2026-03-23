@@ -70,7 +70,7 @@ serve(async (req) => {
         objective:
           "Keep lint at zero and continue moving growth-critical logic into Supabase Edge Functions.",
         actions: [
-          "Instrument route-level acquisition signals across landing, import, referral, and public memo flows.",
+          "Keep route-level acquisition signals live across landing, import, referral, and public memo flows, then expand assisted conversion reporting.",
           "Keep competitor migration flows backend-first from preview through commit.",
           "Keep growth-facing screens analyzable with zero lint issues.",
         ],
@@ -83,8 +83,8 @@ serve(async (req) => {
         objective:
           "Tighten activation from landing page to first imported note or first public memo.",
         actions: [
-          "Add a clearer sign-up CTA after import preview.",
-          "Connect public memo reading to account creation prompts.",
+          "Keep import preview and public memo sign-up prompts measurable and easy to reach.",
+          "Carry acquisition touchpoints into sign-up intent tracking.",
           "Reduce first-value time from visit to first saved note.",
         ],
       },

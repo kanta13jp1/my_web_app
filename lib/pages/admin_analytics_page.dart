@@ -2028,6 +2028,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo share';
       case 'public_memo_copy':
         return 'Public memo copy';
+      case 'touch_landing':
+        return 'Landing touch';
+      case 'touch_import':
+        return 'Import touch';
+      case 'touch_public_memo':
+        return 'Public memo touch';
+      case 'touch_referral':
+        return 'Referral touch';
+      case 'import_preview_notion':
+        return 'Import preview: Notion';
+      case 'import_preview_evernote':
+        return 'Import preview: Evernote';
+      case 'import_preview_markdown':
+        return 'Import preview: Markdown';
+      case 'import_signup_cta':
+        return 'Import sign-up CTA';
+      case 'public_memo_signup_cta':
+        return 'Public memo sign-up CTA';
+      case 'signup_submit_landing':
+        return 'Sign-up submit: Landing';
+      case 'signup_submit_import':
+        return 'Sign-up submit: Import';
+      case 'signup_submit_public_memo':
+        return 'Sign-up submit: Public memo';
+      case 'signup_submit_referral':
+        return 'Sign-up submit: Referral';
       default:
         return key;
     }
@@ -2059,6 +2085,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return Colors.orange.shade400;
       case 'public_memo_copy':
         return Colors.amber.shade700;
+      case 'touch_landing':
+        return Colors.blueGrey.shade300;
+      case 'touch_import':
+        return Colors.indigo.shade400;
+      case 'touch_public_memo':
+        return Colors.orange.shade300;
+      case 'touch_referral':
+        return Colors.green.shade400;
+      case 'import_preview_notion':
+        return Colors.blue.shade400;
+      case 'import_preview_evernote':
+        return Colors.green.shade600;
+      case 'import_preview_markdown':
+        return Colors.brown.shade400;
+      case 'import_signup_cta':
+        return Colors.deepPurple.shade400;
+      case 'public_memo_signup_cta':
+        return Colors.pink.shade300;
+      case 'signup_submit_landing':
+        return Colors.teal.shade400;
+      case 'signup_submit_import':
+        return Colors.indigo.shade700;
+      case 'signup_submit_public_memo':
+        return Colors.deepOrange.shade400;
+      case 'signup_submit_referral':
+        return Colors.green.shade700;
       default:
         return Colors.indigo.shade300;
     }

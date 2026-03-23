@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/public_memo.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_share_service.dart';
@@ -41,6 +42,8 @@ class _LandingPageState extends State<LandingPage> {
   final _emailFocusNode = FocusNode();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
+  final GrowthAcquisitionService _acquisitionService =
+      const GrowthAcquisitionService();
 
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _magicLinkCooldownTimer;
@@ -224,6 +227,7 @@ class _LandingPageState extends State<LandingPage> {
     setState(() => _isLoading = true);
     try {
       if (_isSignUp) {
+        unawaited(_acquisitionService.recordLandingSignupSubmit());
         final result = await widget.adapter.signUp(
           email: email,
           password: password,
@@ -286,6 +290,7 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
+      unawaited(_acquisitionService.recordLandingSignupSubmit());
       await widget.adapter.sendMagicLink(
         email: email,
         emailRedirectTo: _webRedirectUrl,

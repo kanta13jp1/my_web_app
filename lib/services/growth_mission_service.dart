@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../models/referral_code.dart';
 import '../models/site_statistics.dart';
 import 'app_share_service.dart';
+import 'growth_acquisition_service.dart';
 
 class GrowthBenchmarks {
   static const int notionUsersFloor = 100000000;
@@ -241,6 +242,7 @@ $inviteUrl
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_pendingReferralCodeKey, refCode);
+    unawaited(const GrowthAcquisitionService().recordReferralTouch());
   }
 
   Future<String?> loadPendingReferralCode() async {
@@ -667,7 +669,7 @@ $inviteUrl
           objective:
               'Keep linter at zero and continue moving growth-critical logic into Supabase Edge Functions.',
           actions: <String>[
-            'Instrument route-level acquisition signals across landing, import, referral, and public memo flows.',
+            'Keep route-level acquisition signals live across landing, import, referral, and public memo flows, then expand assisted conversion reporting.',
             'Keep competitor migration flows backend-first from preview through commit.',
             'Keep growth-facing screens analyzable with zero lint issues.',
           ],
@@ -680,8 +682,8 @@ $inviteUrl
           objective:
               'Tighten activation from landing page to first imported note or first public memo.',
           actions: <String>[
-            'Add a clearer sign-up CTA after import preview.',
-            'Connect public memo reading to account creation prompts.',
+            'Keep import preview and public memo sign-up prompts measurable and easy to reach.',
+            'Carry acquisition touchpoints into sign-up intent tracking.',
             'Reduce first-value time for new users from visit to first saved note.',
           ],
         ),
@@ -797,12 +799,16 @@ $inviteUrl
 
 class GrowthPresenceNavigatorObserver extends NavigatorObserver {
   final GrowthMissionService _service;
+  final GrowthAcquisitionService _acquisitionService;
   Timer? _heartbeatTimer;
   String _currentPagePath = '/';
 
   GrowthPresenceNavigatorObserver({
     GrowthMissionService service = const GrowthMissionService(),
-  }) : _service = service;
+    GrowthAcquisitionService acquisitionService =
+        const GrowthAcquisitionService(),
+  })  : _service = service,
+        _acquisitionService = acquisitionService;
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -831,6 +837,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
 
   void _trackRoute(Route<dynamic> route) {
     _currentPagePath = _resolvePagePath(route);
+    unawaited(_acquisitionService.recordTouchpointForPagePath(_currentPagePath));
     unawaited(_service.capturePendingReferralFromUri());
     unawaited(_service.applyPendingReferralIfPossible());
     _heartbeatTimer?.cancel();

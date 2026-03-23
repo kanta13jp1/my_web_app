@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/landing_page.dart';
 import '../services/gamification_service.dart';
+import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
 
 class ImportPage extends StatefulWidget {
@@ -17,6 +20,8 @@ class ImportPage extends StatefulWidget {
 class _ImportPageState extends State<ImportPage> {
   bool _isLoading = false;
   bool _isImporting = false;
+  final GrowthAcquisitionService _acquisitionService =
+      const GrowthAcquisitionService();
   late ImportService _importService;
   ImportPreviewResult? _preview;
   ImportExecutionResult? _lastImportResult;
@@ -67,6 +72,7 @@ class _ImportPageState extends State<ImportPage> {
       setState(() {
         _preview = preview;
       });
+      unawaited(_acquisitionService.recordImportPreview(sourceType));
     } catch (error) {
       if (!mounted) {
         return;
@@ -124,7 +130,11 @@ class _ImportPageState extends State<ImportPage> {
     );
   }
 
-  void _openLandingPage() {
+  Future<void> _openLandingPage() async {
+    await _acquisitionService.recordImportSignUpCta();
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const LandingPage(),

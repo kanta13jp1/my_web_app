@@ -50,16 +50,19 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - growth-import-preview
 - growth-import-commit
 - growth-command-center
+- growth-acquisition-signal
 - growth-share-signal
 - import 画面の backend-first execution result 表示
 - public memo の共有導線と成長シグナル記録
+- route / import / public memo / referral の獲得シグナル記録
+- import と public memo から sign-up へ流す CTA 計測
 
 ### 残課題
 
-- route 単位の流入計測の集約
 - referral の本実装
 - widget test の残件整理
 - wasm build blocker の解消
+- assisted conversion の週次集計
 
 ---
 
@@ -111,10 +114,10 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 ## 6. 2026-03-23 時点の最優先事項
 
-1. import から登録までの転換率を上げる
-2. 共有から登録までの計測精度を上げる
+1. import から登録までの転換率をさらに上げる
+2. 共有、公開メモ、referral の assisted conversion を可視化する
 3. flutter test --coverage の残件を解消する
-4. route 単位の流入 KPI を可視化する
+4. route 単位の流入 KPI を週次レポートへ載せる
 5. referral の本運用を開始する
 
 ---
@@ -123,7 +126,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 ### 開発
 
-- route-level acquisition signal aggregation を Edge Function で実装する
+- route-level acquisition signal aggregation を weekly digest と assisted conversion 集計へ拡張する
 - referral コードと紹介リンクを実装する
 - import 成功後 onboarding を最適化する
 - 公開メモの SEO と OGP を強化する
@@ -224,12 +227,12 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 優先度順に進める。
 
-1. route attribution 集計
-2. referral activation 集計
-3. onboarding brief 生成
-4. public memo recommendation
-5. growth weekly digest 生成
-6. LP、import、public memo、referral の assisted conversion 集計
+1. referral activation 集計
+2. onboarding brief 生成
+3. public memo recommendation
+4. growth weekly digest 生成
+5. LP、import、public memo、referral の assisted conversion 集計
+6. acquisition touchpoint ごとの cohort 分析
 
 ---
 
@@ -237,9 +240,9 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 1. ai_status_page_test の残件を解消する
 2. memory_drill_page_test の残件を解消する
-3. route-level acquisition signal を実装する
-4. referral registration と activation の計測を追加する
-5. import success 後 onboarding をさらに改善する
+3. referral registration と activation の計測を追加する
+4. import success 後 onboarding をさらに改善する
+5. acquisition touchpoint ごとの assisted conversion レポートを追加する
 6. 毎週このファイルへ実績値を反映する
 
 ---
@@ -253,10 +256,20 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - 共有数
 - referral 数
 - SEO 流入
+- import 起点 sign-up submit 数
+- public memo 起点 sign-up submit 数
+- referral 起点 sign-up submit 数
 - 広告 CPA
 - 営業面談数
 - チーム導入数
 - analyze と test の状態
+
+---
+
+## 16. ベンチマーク参照元
+
+- Notion product page: https://www.notion.com/product
+- Evernote official / company references used in planning: https://evernote.com/blog/bending-spoons-to-acquire-evernote
 
 ---
 
