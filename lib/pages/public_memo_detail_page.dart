@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/public_memo.dart';
@@ -45,8 +47,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     var isLiked = false;
     if (userId != null) {
-      isLiked =
-          await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
+      isLiked = await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
     }
 
     if (!mounted) {
@@ -62,9 +63,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   Future<void> _toggleLike() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('いいねにはログインが必要です。')),
-      );
+      _showMessage('Log in before liking public memos.');
       return;
     }
 
@@ -76,17 +75,43 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     await _load();
   }
 
+  Future<void> _shareMemo() async {
+    final memo = _memo;
+    if (memo == null) {
+      return;
+    }
+
+    await SharePlus.instance.share(
+      ShareParams(text: PublicMemoService.buildShareMessage(memo)),
+    );
+  }
+
+  Future<void> _copyLink() async {
+    final url = PublicMemoService.buildPublicMemoUrl(widget.memoId);
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) {
+      return;
+    }
+    _showMessage('Public memo link copied.');
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final memo = _memo;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('公開メモ詳細'),
+        title: const Text('Public memo detail'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : memo == null
-              ? const Center(child: Text('公開メモが見つかりません。'))
+              ? const Center(child: Text('Public memo not found.'))
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -102,7 +127,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        Chip(label: Text(memo.category ?? 'カテゴリなし')),
+                        Chip(label: Text(memo.category ?? 'Uncategorized')),
                         Chip(
                           label: Text(
                             DateFormat(
@@ -115,16 +140,34 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    FilledButton.tonalIcon(
-                      onPressed: _toggleLike,
-                      icon: Icon(
-                        _isLiked ? Icons.favorite : Icons.favorite_border,
-                      ),
-                      label: Text(_isLiked ? 'いいねを外す' : 'いいねする'),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        FilledButton.tonalIcon(
+                          onPressed: _toggleLike,
+                          icon: Icon(
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
+                          ),
+                          label: Text(_isLiked ? 'Unlike' : 'Like'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: _shareMemo,
+                          icon: const Icon(Icons.share),
+                          label: const Text('Share'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: _copyLink,
+                          icon: const Icon(Icons.link),
+                          label: const Text('Copy link'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     SelectableText(
-                      memo.content ?? '',
+                      memo.content?.trim().isNotEmpty == true
+                          ? memo.content!.trim()
+                          : 'This memo does not have body text yet.',
                       style: const TextStyle(fontSize: 16, height: 1.6),
                     ),
                   ],

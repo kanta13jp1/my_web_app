@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -43,7 +45,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
   Future<void> _copyInviteLink() async {
     final inviteUrl = _dashboard.referralSnapshot.inviteUrl;
     if (inviteUrl == null || inviteUrl.isEmpty) {
-      _showMessage('ログインすると招待リンクを発行できます。');
+      _showMessage('Generate your referral link by signing in first.');
       return;
     }
 
@@ -51,38 +53,48 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
     if (!mounted) {
       return;
     }
-    _showMessage('招待リンクをコピーしました。');
+    _showMessage('Referral link copied.');
   }
 
   Future<void> _copyInviteMessage() async {
     final inviteUrl = _dashboard.referralSnapshot.inviteUrl;
     if (inviteUrl == null || inviteUrl.isEmpty) {
-      _showMessage('ログインすると招待文をコピーできます。');
+      _showMessage('Generate your referral link by signing in first.');
       return;
     }
 
-    final message = GrowthMissionService.buildInviteCopyText(
-      inviteUrl: inviteUrl,
-      totalRegisteredUsers: _dashboard.totalRegisteredUsers,
-      liveViewers: _dashboard.liveViewers,
-    );
+    final message = '''
+Trying to grow this note app past Notion and Evernote takes real users, not just plans.
+
+Current snapshot:
+- Registered users: ${_dashboard.totalRegisteredUsers}
+- Live viewers: ${_dashboard.liveViewers}
+
+Join from this invite:
+$inviteUrl
+''';
     await Clipboard.setData(ClipboardData(text: message));
     if (!mounted) {
       return;
     }
-    _showMessage('招待文をコピーしました。');
+    _showMessage('Referral message copied.');
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double _progress(double value) {
+    return math.max(0, math.min(100, value * 100));
   }
 
   @override
   Widget build(BuildContext context) {
     final numberFormat = NumberFormat.decimalPattern('ja');
-    final referralCode = _dashboard.referralSnapshot.referralCode ?? 'ログインで発行';
+    final referralCode =
+        _dashboard.referralSnapshot.referralCode ?? 'Sign in to generate one';
     final inviteUrl = _dashboard.referralSnapshot.inviteUrl ?? '--';
 
     return Scaffold(
@@ -92,7 +104,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
           IconButton(
             onPressed: _reload,
             icon: const Icon(Icons.refresh),
-            tooltip: '再読み込み',
+            tooltip: 'Reload',
           ),
         ],
       ),
@@ -103,8 +115,9 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
           children: [
             LiveGrowthBanner(
               growthService: widget.growthService,
-              title: '登録者数を増やすライブ指標',
-              subtitle: '流入・登録・ライブ閲覧をひとつの面で追います。',
+              title: 'Live growth counter',
+              subtitle:
+                  'Track registered users, active viewers, and referral momentum in real time.',
             ),
             const SizedBox(height: 16),
             Card(
@@ -114,7 +127,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '現在地と勝ち筋',
+                      'North-star metrics',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -122,34 +135,211 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '2026年3月23日時点の公開ベンチマークでは、Notion は 100M+、Evernote は 250M+ が計画の最低ラインです。まずは LP 流入、登録、紹介の 3 つを毎日改善し、公開メモ・共有・移行導線で中長期の獲得を広げます。',
+                      'Target: build past the user floors we set for Notion and Evernote, while keeping the dashboard and roadmap honest about where we are today.',
                     ),
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 12,
                       runSpacing: 12,
                       children: [
-                        _summaryStat(
-                          '今日のLP閲覧',
-                          numberFormat.format(_dashboard.todayLandingViews),
-                          Icons.trending_up,
+                        _statTile(
+                          label: 'Registered users',
+                          value: numberFormat.format(
+                            _dashboard.totalRegisteredUsers,
+                          ),
+                          icon: Icons.groups,
                         ),
-                        _summaryStat(
-                          '今日の登録',
-                          numberFormat.format(_dashboard.todayRegistrations),
-                          Icons.person_add,
+                        _statTile(
+                          label: 'Today registrations',
+                          value: numberFormat.format(
+                            _dashboard.todayRegistrations,
+                          ),
+                          icon: Icons.person_add,
                         ),
-                        _summaryStat(
-                          '今日のシェア',
-                          numberFormat.format(_dashboard.todayShares),
-                          Icons.ios_share,
+                        _statTile(
+                          label: 'Today landing views',
+                          value: numberFormat.format(
+                            _dashboard.todayLandingViews,
+                          ),
+                          icon: Icons.trending_up,
                         ),
-                        _summaryStat(
-                          'アクティブ登録者',
-                          numberFormat.format(_dashboard.activeUsersToday),
-                          Icons.groups,
+                        _statTile(
+                          label: 'Live viewers',
+                          value: numberFormat.format(_dashboard.liveViewers),
+                          icon: Icons.visibility,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Refreshed: ${DateFormat('yyyy/MM/dd HH:mm').format(_dashboard.refreshedAt)}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Competitor gap',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _progressRow(
+                      label: 'Beat Notion floor',
+                      progress: _dashboard.progressToBeatNotion,
+                      detail:
+                          '${numberFormat.format(_dashboard.gapToBeatNotion)} users to go',
+                    ),
+                    const SizedBox(height: 12),
+                    _progressRow(
+                      label: 'Beat Evernote floor',
+                      progress: _dashboard.progressToBeatEvernote,
+                      detail:
+                          '${numberFormat.format(_dashboard.gapToBeatEvernote)} users to go',
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _statTile(
+                          label: 'Notion floor',
+                          value: numberFormat.format(
+                            GrowthBenchmarks.beatNotionTarget,
+                          ),
+                          icon: Icons.flag,
+                        ),
+                        _statTile(
+                          label: 'Evernote floor',
+                          value: numberFormat.format(
+                            GrowthBenchmarks.beatEvernoteTarget,
+                          ),
+                          icon: Icons.flag_circle,
+                        ),
+                        _statTile(
+                          label: 'Month landing views',
+                          value: numberFormat.format(
+                            _dashboard.monthLandingViews,
+                          ),
+                          icon: Icons.calendar_month,
+                        ),
+                        _statTile(
+                          label: 'Today shares',
+                          value: numberFormat.format(_dashboard.todayShares),
+                          icon: Icons.share,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Referral engine',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Keep the invitation loop simple: generate a personal code, copy a ready-made invite, and measure how many completed registrations came from it.',
+                    ),
+                    const SizedBox(height: 16),
+                    SelectableText(
+                      'Referral code: $referralCode',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText('Invite URL: $inviteUrl'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _statTile(
+                          label: 'Total referrals',
+                          value: numberFormat.format(
+                            _dashboard.referralSnapshot.totalReferrals,
+                          ),
+                          icon: Icons.outbound,
+                        ),
+                        _statTile(
+                          label: 'Completed referrals',
+                          value: numberFormat.format(
+                            _dashboard.referralSnapshot.successfulReferrals,
+                          ),
+                          icon: Icons.verified,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: _copyInviteLink,
+                          icon: const Icon(Icons.link),
+                          label: const Text('Copy invite link'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: _copyInviteMessage,
+                          icon: const Icon(Icons.copy_all),
+                          label: const Text('Copy invite message'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Acquisition engines shipped',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _implementedItem(
+                      'Public memo SEO loop',
+                      'Visitors can browse public memos and now share memo detail links directly from the detail page.',
+                    ),
+                    _implementedItem(
+                      'Edge-backed import preview',
+                      'Notion / Evernote / Markdown preview parsing now runs on a Supabase Edge Function first, which keeps browser code thinner and backend logic reusable.',
+                    ),
+                    _implementedItem(
+                      'Referral attribution',
+                      'Referral codes, pending referral capture, and completion tracking are active in the growth dashboard.',
+                    ),
+                    _implementedItem(
+                      'Live counters',
+                      'Presence-based viewer counts and dashboard counters refresh from Supabase-backed metrics.',
                     ),
                     const SizedBox(height: 16),
                     Wrap(
@@ -165,7 +355,21 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                             );
                           },
                           icon: const Icon(Icons.language),
-                          label: const Text('LP を開く'),
+                          label: const Text('Open landing page'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed('/import');
+                          },
+                          icon: const Icon(Icons.file_upload),
+                          label: const Text('Open import'),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed('/public-memos');
+                          },
+                          icon: const Icon(Icons.public),
+                          label: const Text('Open public memos'),
                         ),
                         FilledButton.tonalIcon(
                           onPressed: () {
@@ -176,7 +380,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                             );
                           },
                           icon: const Icon(Icons.analytics),
-                          label: const Text('管理分析を見る'),
+                          label: const Text('Open analytics'),
                         ),
                       ],
                     ),
@@ -192,7 +396,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '紹介プログラム',
+                      'Roadmap discipline',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -200,112 +404,12 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '登録者数を最短で増やすには、共有リンクではなく「誰が誰を連れてきたか」が見える紹介ループを回す必要があります。',
+                      'The active execution source is docs/GROWTH_STRATEGY_ROADMAP.md. This slice updates the roadmap with the new backend import preview, public memo sharing, and the remaining backend migration work.',
                     ),
-                    const SizedBox(height: 16),
-                    SelectableText(
-                      'あなたの紹介コード: $referralCode',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 8),
-                    SelectableText('招待リンク: $inviteUrl'),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _summaryStat(
-                          '紹介数',
-                          numberFormat.format(
-                            _dashboard.referralSnapshot.totalReferrals,
-                          ),
-                          Icons.share,
-                        ),
-                        _summaryStat(
-                          '成立数',
-                          numberFormat.format(
-                            _dashboard.referralSnapshot.successfulReferrals,
-                          ),
-                          Icons.verified,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: _copyInviteLink,
-                          icon: const Icon(Icons.link),
-                          label: const Text('招待リンクをコピー'),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: _copyInviteMessage,
-                          icon: const Icon(Icons.copy_all),
-                          label: const Text('招待文をコピー'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '実装済みの獲得施策',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _implementedItem(
-                      'ライブ成長メーター',
-                      '登録者数、ログイン中、ゲスト閲覧、LP閲覧を更新しながら見える化',
-                    ),
-                    _implementedItem(
-                      '紹介コードと招待リンク',
-                      'ユーザーごとの referral code を発行し、招待リンクをコピー可能',
-                    ),
-                    _implementedItem(
-                      'LP シェア計測',
-                      'X / LINE / Facebook / コピー導線と、その後の流入を計測',
-                    ),
-                    _implementedItem(
-                      'Notion / Evernote 超えの目標管理',
-                      '100M+ / 250M+ を基準に毎日の差分を確認',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '短中長期の開発計画',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'docs/NOTION_EVERNOTE_SURPASS_PLAN_2026-03-23.md に、Notion / Evernote を上回るための逆算計画を保存しています。',
-                    ),
-                    const SizedBox(height: 16),
-                    if (_isLoading) const LinearProgressIndicator(),
+                    if (_isLoading) ...[
+                      const SizedBox(height: 16),
+                      const LinearProgressIndicator(),
+                    ],
                   ],
                 ),
               ),
@@ -316,7 +420,11 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
     );
   }
 
-  Widget _summaryStat(String label, String value, IconData icon) {
+  Widget _statTile({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
     return Container(
       width: 180,
       padding: const EdgeInsets.all(14),
@@ -337,6 +445,24 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
           Text(label),
         ],
       ),
+    );
+  }
+
+  Widget _progressRow({
+    required String label,
+    required double progress,
+    required String detail,
+  }) {
+    final percent = _progress(progress);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
+        const SizedBox(height: 6),
+        Text('${percent.toStringAsFixed(6)}% • $detail'),
+      ],
     );
   }
 

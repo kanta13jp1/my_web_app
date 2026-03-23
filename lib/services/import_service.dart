@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'gamification_service.dart';
@@ -17,20 +16,83 @@ class ImportedNoteDraft {
     required this.source,
     this.tags = const <String>[],
   });
+
+  factory ImportedNoteDraft.fromJson(Map<String, dynamic> json) {
+    return ImportedNoteDraft(
+      title: json['title']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
+      source: json['source']?.toString() ?? 'import',
+      tags: (json['tags'] as List<dynamic>? ?? const <dynamic>[])
+          .map((tag) => tag.toString())
+          .where((tag) => tag.trim().isNotEmpty)
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'title': title,
+      'content': content,
+      'source': source,
+      'tags': tags,
+    };
+  }
 }
 
 class ImportPreviewResult {
+  final String sourceType;
   final String sourceLabel;
   final String fileName;
   final List<ImportedNoteDraft> notes;
   final List<String> warnings;
+  final String previewMode;
 
   const ImportPreviewResult({
+    required this.sourceType,
     required this.sourceLabel,
     required this.fileName,
     required this.notes,
     this.warnings = const <String>[],
+    this.previewMode = 'edge-function',
   });
+
+  factory ImportPreviewResult.fromJson(Map<String, dynamic> json) {
+    return ImportPreviewResult(
+      sourceType: json['sourceType']?.toString() ?? 'import',
+      sourceLabel: json['sourceLabel']?.toString() ?? 'Import',
+      fileName: json['fileName']?.toString() ?? '',
+      notes: (json['notes'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map(
+            (note) => ImportedNoteDraft.fromJson(
+              Map<String, dynamic>.from(note),
+            ),
+          )
+          .toList(),
+      warnings: (json['warnings'] as List<dynamic>? ?? const <dynamic>[])
+          .map((warning) => warning.toString())
+          .where((warning) => warning.trim().isNotEmpty)
+          .toList(),
+      previewMode: json['previewMode']?.toString() ?? 'edge-function',
+    );
+  }
+
+  bool get usedEdgeFunction => previewMode == 'edge-function';
+
+  String get previewModeLabel => usedEdgeFunction
+      ? 'Edge Function preview'
+      : 'Local fallback preview';
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'sourceType': sourceType,
+      'sourceLabel': sourceLabel,
+      'fileName': fileName,
+      'notes': notes.map((note) => note.toJson()).toList(),
+      'warnings': warnings,
+      'previewMode': previewMode,
+    };
+  }
 }
 
 class ImportService {
@@ -49,32 +111,91 @@ class ImportService {
     required String fileName,
     required Uint8List bytes,
   }) async {
+    try {
+      return await _buildPreviewViaEdgeFunction(
+        sourceType: sourceType,
+        fileName: fileName,
+        bytes: bytes,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Edge import preview failed. Falling back locally: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return _buildPreviewLocally(
+        sourceType: sourceType,
+        fileName: fileName,
+        bytes: bytes,
+        fallbackWarning:
+            'Edge Function preview is unavailable right now, so a local preview was used.',
+      );
+    }
+  }
+
+  Future<ImportPreviewResult> _buildPreviewViaEdgeFunction({
+    required String sourceType,
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final response = await _client.functions.invoke(
+      'growth-import-preview',
+      body: <String, dynamic>{
+        'sourceType': sourceType,
+        'fileName': fileName,
+        'contentBase64': base64Encode(bytes),
+      },
+    );
+
+    final data = _asMap(response.data);
+    if (data['success'] != true) {
+      throw Exception(data['error']?.toString() ?? 'Import preview failed.');
+    }
+
+    final previewJson = _asMap(data['preview']);
+    return ImportPreviewResult.fromJson(previewJson);
+  }
+
+  ImportPreviewResult _buildPreviewLocally({
+    required String sourceType,
+    required String fileName,
+    required Uint8List bytes,
+    String? fallbackWarning,
+  }) {
     switch (sourceType) {
       case 'notion':
         return ImportPreviewResult(
+          sourceType: 'notion',
           sourceLabel: 'Notion',
           fileName: fileName,
           notes: parseNotionCsvBytes(bytes),
-          warnings: const <String>[
-            'Notion CSV は Title / Name / Content / Text 系の列を優先して解析します。',
+          warnings: <String>[
+            'The preview checks Title / Name / Content / Text columns when available.',
+            if (fallbackWarning != null) fallbackWarning,
           ],
+          previewMode: 'local-fallback',
         );
       case 'evernote':
         return ImportPreviewResult(
+          sourceType: 'evernote',
           sourceLabel: 'Evernote',
           fileName: fileName,
           notes: parseEvernoteEnexBytes(bytes),
-          warnings: const <String>[
-            'Evernote ENEX は本文の HTML を落としてプレーンテキストとして取り込みます。',
+          warnings: <String>[
+            'The preview strips ENEX markup and imports the plain text body plus tags.',
+            if (fallbackWarning != null) fallbackWarning,
           ],
+          previewMode: 'local-fallback',
         );
       case 'markdown':
         return ImportPreviewResult(
+          sourceType: 'markdown',
           sourceLabel: 'Markdown',
           fileName: fileName,
           notes: <ImportedNoteDraft>[
             parseMarkdownBytes(bytes, fileName: fileName),
           ],
+          warnings: fallbackWarning == null
+              ? const <String>[]
+              : <String>[fallbackWarning],
+          previewMode: 'local-fallback',
         );
       default:
         throw ArgumentError.value(sourceType, 'sourceType', 'Unsupported source');
@@ -235,6 +356,16 @@ class ImportService {
     );
 
     return inserted;
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    throw Exception('Expected a JSON object response.');
   }
 
   List<List<String>> _parseCsv(String input) {

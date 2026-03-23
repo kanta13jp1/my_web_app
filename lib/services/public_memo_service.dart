@@ -1,11 +1,55 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/public_memo.dart';
 import '../utils/app_logger.dart';
+import 'app_share_service.dart';
 
 class PublicMemoService {
   final SupabaseClient _supabase;
 
   PublicMemoService(this._supabase);
+
+  static String buildPublicMemoUrl(int memoId) {
+    final baseUri = Uri.parse(AppShareService.appUrl);
+    return baseUri.replace(
+      path: '/public-memo',
+      queryParameters: <String, String>{
+        'id': memoId.toString(),
+        'utm_source': 'public_memo',
+        'utm_medium': 'share',
+        'utm_campaign': 'growth_mission',
+      },
+    ).toString();
+  }
+
+  static String buildShareMessage(PublicMemo memo) {
+    final excerpt = _buildShareExcerpt(memo.content);
+    final category = memo.category?.trim();
+    final title = (category == null || category.isEmpty)
+        ? memo.title
+        : '[$category] ${memo.title}';
+
+    return [
+      title,
+      if (excerpt.isNotEmpty) excerpt,
+      'Read the full memo:',
+      buildPublicMemoUrl(memo.id),
+    ].join('\n\n');
+  }
+
+  static String _buildShareExcerpt(String? content) {
+    final normalized = content
+            ?.replaceAll(RegExp(r'\s+'), ' ')
+            .trim() ??
+        '';
+    if (normalized.isEmpty) {
+      return '';
+    }
+    if (normalized.length <= 140) {
+      return normalized;
+    }
+    return '${normalized.substring(0, 137)}...';
+  }
 
   // Publish a note as public memo
   Future<bool> publishMemo({
