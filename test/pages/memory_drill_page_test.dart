@@ -21,7 +21,13 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    final answerChip = find.byType(FilterChip).at(1);
+    final answerChip = find.byKey(const Key('memory_drill_show_answers_chip'));
+    await tester.scrollUntilVisible(
+      answerChip,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(tester.widget<FilterChip>(answerChip).selected, isFalse);
 
     await tester.tap(answerChip);
@@ -29,7 +35,17 @@ void main() {
 
     expect(tester.widget<FilterChip>(answerChip).selected, isTrue);
 
-    await tester.tap(find.byType(FilledButton));
+    final completeButton = find.byKey(
+      const Key('memory_drill_mark_completed_button'),
+    );
+    await tester.scrollUntilVisible(
+      completeButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(completeButton);
     await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();

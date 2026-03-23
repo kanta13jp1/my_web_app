@@ -32,6 +32,19 @@ void main() {
     );
   }
 
+  Future<void> revealInScrollView(
+    WidgetTester tester,
+    Finder finder, {
+    double delta = 300,
+  }) async {
+    await tester.scrollUntilVisible(
+      finder,
+      delta,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('normalizes providers and hides xai entries', (
     WidgetTester tester,
   ) async {
@@ -66,13 +79,14 @@ void main() {
     expect(find.textContaining('CASPER (GEMINI)'), findsOneWidget);
     expect(find.text('80'), findsOneWidget);
 
-    expect(find.byKey(const ValueKey<String>('o4-mini')), findsOneWidget);
+    final openAiCard = find.byKey(const ValueKey<String>('o4-mini'));
+    await revealInScrollView(tester, openAiCard);
+    expect(openAiCard, findsOneWidget);
     expect(find.textContaining('MELCHIOR (GPT)'), findsOneWidget);
 
-    expect(
-      find.byKey(const ValueKey<String>('deepseek-chat')),
-      findsOneWidget,
-    );
+    final deepSeekCard = find.byKey(const ValueKey<String>('deepseek-chat'));
+    await revealInScrollView(tester, deepSeekCard);
+    expect(deepSeekCard, findsOneWidget);
     expect(find.textContaining('MELCHIOR (DEEPSEEK)'), findsOneWidget);
 
     expect(find.byKey(const ValueKey<String>('grok-2')), findsNothing);
@@ -122,7 +136,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final modelCard = find.byKey(const ValueKey<String>('test-model'));
-    await tester.ensureVisible(modelCard);
+    await revealInScrollView(tester, modelCard);
     await tester.tap(modelCard);
     await tester.pump();
     await tester.pumpAndSettle();
@@ -236,10 +250,16 @@ void main() {
     final defaultButton = find.byKey(
       const Key('ai_status_default_model_button_claude-sonnet-4-6'),
     );
-    await tester.ensureVisible(defaultButton);
+    await revealInScrollView(tester, defaultButton);
     await tester.tap(defaultButton);
     await tester.pump();
     await tester.pumpAndSettle();
+
+    await revealInScrollView(
+      tester,
+      find.byKey(const Key('ai_status_default_model_banner')),
+      delta: -300,
+    );
 
     expect(
       find.byKey(const Key('ai_status_default_model_banner')),

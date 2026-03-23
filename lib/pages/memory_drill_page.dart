@@ -310,6 +310,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
     final accent = _colorForCategory(_selectedPack.category);
 
     return Container(
+      key: const Key('memory_drill_selected_pack_card'),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -374,6 +375,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
             children: [
               FilterChip(
                 label: const Text('ヒント'),
+                key: const Key('memory_drill_show_hints_chip'),
                 selected: _showHints,
                 onSelected: (value) {
                   setState(() => _showHints = value);
@@ -381,12 +383,14 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
               ),
               FilterChip(
                 label: const Text('答え'),
+                key: const Key('memory_drill_show_answers_chip'),
                 selected: _showAnswers,
                 onSelected: (value) {
                   setState(() => _showAnswers = value);
                 },
               ),
               OutlinedButton.icon(
+                key: const Key('memory_drill_shuffle_button'),
                 onPressed: _shuffleItems,
                 icon: const Icon(Icons.shuffle),
                 label: const Text('順番を入れ替え'),
@@ -456,6 +460,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
+              key: const Key('memory_drill_mark_completed_button'),
               onPressed: isCompletedToday ? null : _markTodayCompleted,
               icon: Icon(
                 isCompletedToday ? Icons.check_circle : Icons.task_alt,
