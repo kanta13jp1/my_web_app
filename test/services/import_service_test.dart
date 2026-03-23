@@ -72,5 +72,16 @@ void main() {
       expect(preview.notes.single.title, 'Title');
       expect(preview.warnings.single, 'Edge preview active');
     });
+
+    test('ImportExecutionResult.fromJson reads execution metadata', () {
+      final result = ImportExecutionResult.fromJson(<String, dynamic>{
+        'insertedCount': 24,
+        'importMode': 'edge-function',
+      });
+
+      expect(result.insertedCount, 24);
+      expect(result.usedEdgeFunction, isTrue);
+      expect(result.importModeLabel, 'Edge Function import');
+    });
   });
 }

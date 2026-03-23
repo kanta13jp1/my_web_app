@@ -94,6 +94,28 @@ class ImportPreviewResult {
   }
 }
 
+class ImportExecutionResult {
+  final int insertedCount;
+  final String importMode;
+
+  const ImportExecutionResult({
+    required this.insertedCount,
+    this.importMode = 'edge-function',
+  });
+
+  factory ImportExecutionResult.fromJson(Map<String, dynamic> json) {
+    return ImportExecutionResult(
+      insertedCount: ImportService._toIntValue(json['insertedCount']),
+      importMode: json['importMode']?.toString() ?? 'edge-function',
+    );
+  }
+
+  bool get usedEdgeFunction => importMode == 'edge-function';
+
+  String get importModeLabel =>
+      usedEdgeFunction ? 'Edge Function import' : 'Local fallback import';
+}
+
 class ImportService {
   final GamificationService _gamificationService;
   final SupabaseClient? _clientOverride;
@@ -325,12 +347,63 @@ class ImportService {
     );
   }
 
-  Future<int> importNotes({
+  Future<ImportExecutionResult> importNotes({
     required String userId,
     required List<ImportedNoteDraft> notes,
   }) async {
     if (notes.isEmpty) {
-      return 0;
+      return const ImportExecutionResult(
+        insertedCount: 0,
+        importMode: 'edge-function',
+      );
+    }
+
+    try {
+      return await _importNotesViaEdgeFunction(
+        userId: userId,
+        notes: notes,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Edge import commit failed. Falling back locally: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return _importNotesLocally(
+        userId: userId,
+        notes: notes,
+      );
+    }
+  }
+
+  Future<ImportExecutionResult> _importNotesViaEdgeFunction({
+    required String userId,
+    required List<ImportedNoteDraft> notes,
+  }) async {
+    final response = await _client.functions.invoke(
+      'growth-import-commit',
+      body: <String, dynamic>{
+        'userId': userId,
+        'notes': notes.map((note) => note.toJson()).toList(),
+      },
+    );
+
+    final data = _asMap(response.data);
+    if (data['success'] != true) {
+      throw Exception(data['error']?.toString() ?? 'Import commit failed.');
+    }
+
+    final result = ImportExecutionResult.fromJson(data);
+    await _awardImportPoints(result.insertedCount);
+    return result;
+  }
+
+  Future<ImportExecutionResult> _importNotesLocally({
+    required String userId,
+    required List<ImportedNoteDraft> notes,
+  }) async {
+    if (notes.isEmpty) {
+      return const ImportExecutionResult(
+        insertedCount: 0,
+        importMode: 'local-fallback',
+      );
     }
 
     final rows = notes
@@ -356,12 +429,22 @@ class ImportService {
       inserted += chunk.length;
     }
 
-    await _gamificationService.awardPoints(
-      inserted * 10,
-      reason: 'Imported $inserted notes',
-    );
+    await _awardImportPoints(inserted);
 
-    return inserted;
+    return ImportExecutionResult(
+      insertedCount: inserted,
+      importMode: 'local-fallback',
+    );
+  }
+
+  Future<void> _awardImportPoints(int insertedCount) async {
+    if (insertedCount <= 0) {
+      return;
+    }
+    await _gamificationService.awardPoints(
+      insertedCount * 10,
+      reason: 'Imported $insertedCount notes',
+    );
   }
 
   Map<String, dynamic> _asMap(dynamic value) {
@@ -372,6 +455,19 @@ class ImportService {
       return Map<String, dynamic>.from(value);
     }
     throw Exception('Expected a JSON object response.');
+  }
+
+  static int _toIntValue(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
   }
 
   List<List<String>> _parseCsv(String input) {

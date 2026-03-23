@@ -70,8 +70,8 @@ serve(async (req) => {
         objective:
           "Keep lint at zero and continue moving growth-critical logic into Supabase Edge Functions.",
         actions: [
-          "Move import commit batching into an Edge Function.",
-          "Add share analytics for public memo detail pages.",
+          "Instrument route-level acquisition signals across landing, import, referral, and public memo flows.",
+          "Keep competitor migration flows backend-first from preview through commit.",
           "Keep growth-facing screens analyzable with zero lint issues.",
         ],
       },

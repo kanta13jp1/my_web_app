@@ -1190,9 +1190,9 @@ firebase deploy --only hosting
     - `lib/pages/admin_analytics_page.dart`
       - Added public memo share signal labeling and safer acquisition-channel filtering.
   - Next backend migration targets after this slice:
-    - Move import commit batching into an Edge Function.
     - Add backend-generated SEO/share summaries for public memos.
     - Add route-level acquisition signal aggregation that can distinguish LP, import, public memo, and referral assisted conversions.
+    - Add backend-generated migration battlecards for Notion / Evernote switchers right after preview.
 - 2026-03-23: ✅ Growth QA hardening for test stability and backend-first safety
   - Development
     - `GrowthPresenceNavigatorObserver` no longer starts heartbeat timers when Supabase is unavailable, which keeps widget tests isolated while preserving production presence sync.
@@ -1206,3 +1206,26 @@ firebase deploy --only hosting
     - Test-stable releases reduce wasted spend on traffic sent to regressed funnels.
   - Business Planning
     - "Beat Notion / Evernote" still requires the same user milestones, but this step improves release cadence by keeping linter-zero and regression coverage aligned with the roadmap.
+- 2026-03-23: ✅ Backend-first import commit pipeline for competitor migrations
+  - Development
+    - Added `supabase/functions/growth-import-commit/index.ts` so full note import now runs through a Supabase Edge Function first, with Flutter-side chunking kept only as a fallback.
+    - `lib/services/import_service.dart` now distinguishes preview execution from import execution and reports whether the batch ran through the Edge Function or the local fallback.
+    - `Growth Mission` command-center guidance now treats backend-first competitor migration as shipped and moves the engineering focus to route-level acquisition instrumentation.
+  - Product
+    - The import screen now explains that both preview and commit are backend-first, which should make large Notion / Evernote migrations feel safer and more credible for new users.
+  - Advertising
+    - Paid acquisition can now send higher-intent switchers into an import funnel with less browser-side fragility.
+  - PR / 宣伝
+    - "We can migrate your workspace through a backend pipeline" is a stronger launch message than "upload and hope the browser survives it."
+  - Sales
+    - Founder-led demos for Notion / Evernote replacements can now emphasize backend-assisted migration reliability for pilot accounts.
+  - Marketing
+    - Import remains the primary wedge for competitor replacement pages, and this slice strengthens the promise behind those landing pages.
+  - HR
+    - No hiring trigger changes yet, but backend migration reliability reduces future support burden on the first growth / success hires.
+  - Finance / 経理
+    - Improving migration completion should lift activation before any new paid spend is unlocked.
+  - Procurement / 調達
+    - This keeps the current Supabase + Flutter stack doing more work instead of adding another import vendor.
+  - Business Planning / 事業計画
+    - To beat Notion and Evernote, we still need much larger top-of-funnel volume, but this slice improves the conversion quality of the highest-intent cohort: users already trying to leave those products.

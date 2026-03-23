@@ -19,6 +19,7 @@ class _ImportPageState extends State<ImportPage> {
   bool _isImporting = false;
   late ImportService _importService;
   ImportPreviewResult? _preview;
+  ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
 
   @override
@@ -91,16 +92,19 @@ class _ImportPageState extends State<ImportPage> {
 
     setState(() => _isImporting = true);
     try {
-      final importedCount = await _importService.importNotes(
+      final result = await _importService.importNotes(
         userId: user.id,
         notes: preview.notes,
       );
       if (!mounted) {
         return;
       }
-      _showMessage('Imported $importedCount notes.');
+      _showMessage(
+        'Imported ${result.insertedCount} notes via ${result.importModeLabel.toLowerCase()}.',
+      );
       setState(() {
         _preview = null;
+        _lastImportResult = result;
       });
     } catch (error) {
       if (!mounted) {
@@ -159,6 +163,10 @@ class _ImportPageState extends State<ImportPage> {
           const Text(
             'This page is part of the growth roadmap. Preview parsing now runs on a Supabase Edge Function first, with a local fallback only when the function is unavailable.',
           ),
+          const SizedBox(height: 8),
+          const Text(
+            'Full note import now also runs on a Supabase Edge Function first, so larger competitor migrations do not depend entirely on browser-side batching.',
+          ),
           const SizedBox(height: 20),
           Wrap(
             spacing: 12,
@@ -189,6 +197,42 @@ class _ImportPageState extends State<ImportPage> {
           ),
           const SizedBox(height: 24),
           if (_isLoading) const LinearProgressIndicator(),
+          if (_lastImportResult != null) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      _lastImportResult!.usedEdgeFunction
+                          ? Icons.cloud_done
+                          : Icons.computer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Latest import execution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_lastImportResult!.insertedCount} notes imported via ${_lastImportResult!.importModeLabel}.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           if (preview != null) ...[
             Card(
               child: Padding(
@@ -227,6 +271,11 @@ class _ImportPageState extends State<ImportPage> {
                       const SizedBox(height: 12),
                       const Text(
                         'Preview is ready. Sign in or create an account from the landing page, then come back to import the full batch.',
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'When you confirm import, the full batch will use the Edge Function pipeline first and fall back locally only if needed.',
                       ),
                     ],
                     if (preview.warnings.isNotEmpty) ...[
