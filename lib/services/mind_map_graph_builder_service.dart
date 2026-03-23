@@ -31,7 +31,9 @@ class MindMapGraphBuilderService {
         final rawChildren = entry.value;
         final children = rawChildren is Map<String, dynamic>
             ? rawChildren
-            : (rawChildren is Map ? Map<String, dynamic>.from(rawChildren) : null);
+            : (rawChildren is Map
+                ? Map<String, dynamic>.from(rawChildren)
+                : null);
         if (children != null && children.isNotEmpty) {
           walk(children, node);
         }

@@ -37,7 +37,8 @@ void main() {
       expect(snapshot.recentViolations.first.amount, 280);
     });
 
-    test('marks snapshot as released when remaining debt reaches zero', () async {
+    test('marks snapshot as released when remaining debt reaches zero',
+        () async {
       final service = DebtLockdownService(
         nowProvider: () => DateTime(2026, 3, 23, 9, 0),
       );
@@ -49,7 +50,8 @@ void main() {
       expect(snapshot.isEnabled, isFalse);
     });
 
-    test('counts compliant streak across consecutive fully completed days', () async {
+    test('counts compliant streak across consecutive fully completed days',
+        () async {
       var now = DateTime(2026, 3, 23, 7, 0);
       final service = DebtLockdownService(nowProvider: () => now);
 

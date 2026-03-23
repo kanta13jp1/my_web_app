@@ -22,7 +22,7 @@ class DigestProgressEntry {
       note: json['note']?.toString() ?? '',
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
-          DateTime.now(),
+              DateTime.now(),
     );
   }
 
@@ -70,19 +70,20 @@ class DigestQueueItem {
       status: DigestQueueService.parseStatus(json['status']?.toString()),
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
-          DateTime.now(),
+              DateTime.now(),
       updatedAt:
           DateTime.tryParse(json['updated_at']?.toString() ?? '')?.toLocal() ??
-          DateTime.now(),
+              DateTime.now(),
       note: json['note']?.toString() ?? '',
-      progressEntries: ((json['progress_entries'] as List<dynamic>?) ?? const [])
-          .whereType<Map>()
-          .map(
-            (entry) => DigestProgressEntry.fromJson(
-              Map<String, dynamic>.from(entry),
-            ),
-          )
-          .toList(),
+      progressEntries:
+          ((json['progress_entries'] as List<dynamic>?) ?? const [])
+              .whereType<Map>()
+              .map(
+                (entry) => DigestProgressEntry.fromJson(
+                  Map<String, dynamic>.from(entry),
+                ),
+              )
+              .toList(),
     );
   }
 
@@ -95,9 +96,8 @@ class DigestQueueItem {
       'created_at': createdAt.toUtc().toIso8601String(),
       'updated_at': updatedAt.toUtc().toIso8601String(),
       'note': note,
-      'progress_entries': progressEntries
-          .map((entry) => entry.toJson())
-          .toList(),
+      'progress_entries':
+          progressEntries.map((entry) => entry.toJson()).toList(),
     };
   }
 
@@ -203,7 +203,8 @@ class DigestQueueService {
       throw ArgumentError('title must not be empty');
     }
 
-    final normalizedDomain = domain.trim().isEmpty ? otherDomain : domain.trim();
+    final normalizedDomain =
+        domain.trim().isEmpty ? otherDomain : domain.trim();
     final now = _now();
     final current = await loadItems();
     final hasActiveInDomain = current.any(
@@ -394,7 +395,8 @@ class DigestQueueService {
   static List<DigestQueueItem> sortItems(Iterable<DigestQueueItem> items) {
     final sorted = items.toList()
       ..sort((a, b) {
-        final statusRank = _statusRank(a.status).compareTo(_statusRank(b.status));
+        final statusRank =
+            _statusRank(a.status).compareTo(_statusRank(b.status));
         if (statusRank != 0) {
           return statusRank;
         }

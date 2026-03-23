@@ -164,7 +164,8 @@ class EmergencyMeetingBiReportService {
       ..writeln('- danshari_items: ${context.danshariCount}')
       ..writeln()
       ..writeln('[PDCA metrics JSON]')
-      ..writeln(const JsonEncoder.withIndent('  ').convert(context.metrics.toJson()))
+      ..writeln(
+          const JsonEncoder.withIndent('  ').convert(context.metrics.toJson()))
       ..writeln()
       ..writeln('[発言ルール]')
       ..writeln('- CFO: サブスク、ポイント、固定費、投資対効果を報告する。')
@@ -214,14 +215,15 @@ class EmergencyMeetingBiReportService {
         ? _limitToThree(abstinenceRules)
         : buildAbstinenceRules(context);
     final normalizedRiskAlert = rawRiskAlert ?? buildRiskAlert(context);
-    final normalizedConclusion = (rawConclusion != null && rawConclusion.isNotEmpty)
-        ? rawConclusion
-        : buildConclusion(
-            context: context,
-            continuationPlan: normalizedContinuationPlan,
-            abstinenceRules: normalizedAbstinenceRules,
-            riskAlert: normalizedRiskAlert,
-          );
+    final normalizedConclusion =
+        (rawConclusion != null && rawConclusion.isNotEmpty)
+            ? rawConclusion
+            : buildConclusion(
+                context: context,
+                continuationPlan: normalizedContinuationPlan,
+                abstinenceRules: normalizedAbstinenceRules,
+                riskAlert: normalizedRiskAlert,
+              );
 
     final fallbackMessages = _buildFallbackMessages(
       context: context,
@@ -250,9 +252,7 @@ class EmergencyMeetingBiReportService {
       abstinenceRules: normalizedAbstinenceRules,
       riskAlert: normalizedRiskAlert,
       nextMeetingMetrics: nextMeetingMetrics,
-      decodeNotice: usedFallback
-          ? 'AI出力が不完全だったため、BI テンプレートで安全に補完しました。'
-          : null,
+      decodeNotice: usedFallback ? 'AI出力が不完全だったため、BI テンプレートで安全に補完しました。' : null,
     );
   }
 
@@ -294,7 +294,8 @@ class EmergencyMeetingBiReportService {
     if (metrics.activeDeterrenceLocks.isEmpty) {
       rules.add('最も危険なトリガーに対して、今日中に1つロックを有効化する。');
     } else {
-      rules.add('有効化したロック（${metrics.activeDeterrenceLocks.join(' / ')}）を自分判断で解除しない。');
+      rules.add(
+          '有効化したロック（${metrics.activeDeterrenceLocks.join(' / ')}）を自分判断で解除しない。');
     }
 
     if (metrics.abstinenceRecoveryWindowMissedCount > 0) {
@@ -405,9 +406,8 @@ class EmergencyMeetingBiReportService {
     required List<String> continuationPlan,
   }) {
     final metrics = context.metrics;
-    final firstAction = continuationPlan.isNotEmpty
-        ? continuationPlan.first
-        : '最重要案件を1件着手する';
+    final firstAction =
+        continuationPlan.isNotEmpty ? continuationPlan.first : '最重要案件を1件着手する';
 
     return <BoardMessage>[
       BoardMessage(

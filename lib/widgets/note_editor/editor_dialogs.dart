@@ -14,9 +14,8 @@ Future<void> showReminderDialog({
           currentReminder.month,
           currentReminder.day,
         );
-  TimeOfDay? selectedTime = currentReminder == null
-      ? null
-      : TimeOfDay.fromDateTime(currentReminder);
+  TimeOfDay? selectedTime =
+      currentReminder == null ? null : TimeOfDay.fromDateTime(currentReminder);
 
   await showDialog(
     context: context,

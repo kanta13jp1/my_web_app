@@ -87,7 +87,8 @@ class _FakePostgrestFilterBuilder extends Fake
   List<Map<String, dynamic>> _filtered() {
     return rows
         .where((row) {
-          return _filters.entries.every((entry) => row[entry.key] == entry.value);
+          return _filters.entries
+              .every((entry) => row[entry.key] == entry.value);
         })
         .map((row) => Map<String, dynamic>.from(row))
         .toList();

@@ -674,9 +674,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       fallback: _dailyReminderEnabled,
     );
 
-    final parsedLocks = _extractStringList(nextMetrics['active_deterrence_locks']);
+    final parsedLocks =
+        _extractStringList(nextMetrics['active_deterrence_locks']);
     if (nextMetrics.containsKey('active_deterrence_locks')) {
-      final normalizedLocks = parsedLocks.map((item) => item.toLowerCase()).toList();
+      final normalizedLocks =
+          parsedLocks.map((item) => item.toLowerCase()).toList();
       _lockImpulsePurchase = normalizedLocks.any(
         (item) =>
             item.contains('impulse') ||
@@ -1314,12 +1316,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
   String _resolvedFocusInstruction(MeetingFocus focus) {
     return switch (focus) {
-      MeetingFocus.balanced =>
-        '継続実行と禁欲リスクを同時に確認し、48時間以内の実行策を決めます。',
-      MeetingFocus.continuation =>
-        '重要案件の着手、時間確保、進捗ログを最優先で見直します。',
-      MeetingFocus.abstinence =>
-        '誘惑の兆候、回復行動、ロック運用を最優先で点検します。',
+      MeetingFocus.balanced => '継続実行と禁欲リスクを同時に確認し、48時間以内の実行策を決めます。',
+      MeetingFocus.continuation => '重要案件の着手、時間確保、進捗ログを最優先で見直します。',
+      MeetingFocus.abstinence => '誘惑の兆候、回復行動、ロック運用を最優先で点検します。',
     };
   }
 
@@ -2592,7 +2591,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _runBoardMeetingBiReport,
+                          onPressed:
+                              _isLoading ? null : _runBoardMeetingBiReport,
                           icon: const Icon(Icons.notifications_active),
                           label: const Text(
                             '衝動を止めて、嫌な必須行動へ戻す',

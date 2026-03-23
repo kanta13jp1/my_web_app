@@ -36,14 +36,15 @@ class RealityCheckEntry {
   factory RealityCheckEntry.fromJson(Map<String, dynamic> json) {
     return RealityCheckEntry(
       id: json['id']?.toString() ?? '',
-      category: json['category']?.toString() ?? RealityCheckService.otherCategory,
+      category:
+          json['category']?.toString() ?? RealityCheckService.otherCategory,
       claim: json['claim']?.toString() ?? '',
       observableFacts: json['observable_facts']?.toString() ?? '',
       interpretation: json['interpretation']?.toString() ?? '',
       nextAction: json['next_action']?.toString() ?? '',
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
-          DateTime.now(),
+              DateTime.now(),
     );
   }
 
@@ -112,30 +113,31 @@ class RealityCheckService {
 
   static const List<RealityCheckTemplate> builtinTemplates =
       <RealityCheckTemplate>[
-        RealityCheckTemplate(
-          id: 'power',
-          title: '権力と構造',
-          prompt: '自分の願望ではなく、構造上の制約は何か。',
-        ),
-        RealityCheckTemplate(
-          id: 'work_money',
-          title: '仕事と金',
-          prompt: '今の収入構造と生活費から見て、何が現実的か。',
-        ),
-        RealityCheckTemplate(
-          id: 'relationships',
-          title: '人間関係',
-          prompt: '孤独感や願望ではなく、観測できる関係の事実は何か。',
-        ),
-        RealityCheckTemplate(
-          id: 'competence',
-          title: '能力と言論',
-          prompt: '勝敗の感情ではなく、実績・弱点・改善余地は何か。',
-        ),
-      ];
+    RealityCheckTemplate(
+      id: 'power',
+      title: '権力と構造',
+      prompt: '自分の願望ではなく、構造上の制約は何か。',
+    ),
+    RealityCheckTemplate(
+      id: 'work_money',
+      title: '仕事と金',
+      prompt: '今の収入構造と生活費から見て、何が現実的か。',
+    ),
+    RealityCheckTemplate(
+      id: 'relationships',
+      title: '人間関係',
+      prompt: '孤独感や願望ではなく、観測できる関係の事実は何か。',
+    ),
+    RealityCheckTemplate(
+      id: 'competence',
+      title: '能力と言論',
+      prompt: '勝敗の感情ではなく、実績・弱点・改善余地は何か。',
+    ),
+  ];
 
   static const String _entriesKey = 'reality_check_entries_v1';
-  static const String _lastReviewedDateKey = 'reality_check_last_reviewed_date_v1';
+  static const String _lastReviewedDateKey =
+      'reality_check_last_reviewed_date_v1';
   static const String _streakKey = 'reality_check_streak_v1';
   static const String _todayDateKey = 'reality_check_today_date_v1';
   static const String _todayCategoriesKey = 'reality_check_today_categories_v1';

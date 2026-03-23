@@ -33,12 +33,13 @@ class DebtLockdownViolation {
   factory DebtLockdownViolation.fromJson(Map<String, dynamic> json) {
     return DebtLockdownViolation(
       id: json['id']?.toString() ?? '',
-      category: json['category']?.toString() ?? DebtLockdownService.otherCategory,
+      category:
+          json['category']?.toString() ?? DebtLockdownService.otherCategory,
       note: json['note']?.toString() ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
-          DateTime.now(),
+              DateTime.now(),
     );
   }
 
@@ -127,9 +128,9 @@ class DebtLockdownService {
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
 
   static List<String> get violationCategories => <String>[
-    ...WasteTrackingService.categoryLabels,
-    otherCategory,
-  ];
+        ...WasteTrackingService.categoryLabels,
+        otherCategory,
+      ];
 
   Future<DebtLockdownSnapshot> loadSnapshot({
     required double remainingDebt,
@@ -224,7 +225,7 @@ class DebtLockdownService {
 
     final normalizedCategory =
         WasteTrackingService.normalizeCategory(category) ??
-        (category.trim().isEmpty ? otherCategory : category.trim());
+            (category.trim().isEmpty ? otherCategory : category.trim());
     final store = prefs ?? await SharedPreferences.getInstance();
     final now = _now();
     final history = _readHistory(store.getString(_historyKey));
@@ -244,7 +245,8 @@ class DebtLockdownService {
       ),
     );
 
-    todayRecord['violations'] = violations.map((entry) => entry.toJson()).toList();
+    todayRecord['violations'] =
+        violations.map((entry) => entry.toJson()).toList();
     todayRecord['updated_at'] = now.toUtc().toIso8601String();
     history[todayKey] = todayRecord;
 
@@ -318,9 +320,8 @@ class DebtLockdownService {
   List<DebtLockdownViolation> _recentViolations(
     Map<String, Map<String, dynamic>> history,
   ) {
-    final values = history.values
-        .expand(_readViolations)
-        .toList(growable: false);
+    final values =
+        history.values.expand(_readViolations).toList(growable: false);
     final sorted = _sortViolations(values);
     if (sorted.length <= 5) {
       return sorted;

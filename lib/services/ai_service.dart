@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
@@ -582,9 +582,10 @@ class AIService {
     String? casperModel,
     String? synthesisModel,
   }) async {
-    final safeGeminiModel = _inferProviderFromModel(model) == _MagiProvider.gemini
-        ? model
-        : _defaultGeminiModel;
+    final safeGeminiModel =
+        _inferProviderFromModel(model) == _MagiProvider.gemini
+            ? model
+            : _defaultGeminiModel;
     final profiles = _magiProfiles;
     final results = await Future.wait<_MagiOpinion?>(
       profiles.map((profile) {
@@ -655,10 +656,9 @@ class AIService {
         (casperModel != null && casperModel.trim().isNotEmpty)
             ? casperModel.trim()
             : fallbackGeminiModel,
-      _MagiProvider.deepseek =>
-        profile.defaultModel.isNotEmpty
-            ? profile.defaultModel
-            : _defaultDeepSeekModel,
+      _MagiProvider.deepseek => profile.defaultModel.isNotEmpty
+          ? profile.defaultModel
+          : _defaultDeepSeekModel,
     };
   }
 

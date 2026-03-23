@@ -70,10 +70,8 @@ class PublicMemoService {
     String sortBy = 'published_at', // published_at, like_count, view_count
   }) async {
     try {
-      var builder = _supabase
-          .from('public_memos')
-          .select()
-          .eq('is_public', true);
+      var builder =
+          _supabase.from('public_memos').select().eq('is_public', true);
 
       if (category != null && category.isNotEmpty) {
         builder = builder.eq('category', category);

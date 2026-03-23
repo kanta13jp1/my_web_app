@@ -50,7 +50,11 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       }
 
       final results = await Future.wait<dynamic>([
-        _supabase.from('user_stats').select().eq('user_id', userId).maybeSingle(),
+        _supabase
+            .from('user_stats')
+            .select()
+            .eq('user_id', userId)
+            .maybeSingle(),
         _agentOrgService.loadWorkspaceBySlug('cmo'),
       ]);
 

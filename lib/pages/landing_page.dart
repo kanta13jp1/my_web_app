@@ -22,8 +22,8 @@ class LandingPage extends StatefulWidget {
     super.key,
     LandingPageAdapter? adapter,
     GrowthMissionService? growthService,
-  }) : adapter = adapter ?? const SupabaseLandingPageAdapter(),
-       growthService = growthService ?? const GrowthMissionService();
+  })  : adapter = adapter ?? const SupabaseLandingPageAdapter(),
+        growthService = growthService ?? const GrowthMissionService();
 
   @override
   State<LandingPage> createState() => _LandingPageState();

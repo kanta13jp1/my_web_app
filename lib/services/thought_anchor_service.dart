@@ -30,12 +30,13 @@ class ThoughtAnchorRecord {
       whyNow: json['why_now']?.toString() ?? '',
       returnPhrase: json['return_phrase']?.toString() ?? '',
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
-      distractionNotes: ((json['distraction_notes'] as List<dynamic>?) ?? const [])
-          .map((item) => item.toString())
-          .where((item) => item.trim().isNotEmpty)
-          .toList(),
-      completedAt:
-          DateTime.tryParse(json['completed_at']?.toString() ?? '')?.toLocal() ??
+      distractionNotes:
+          ((json['distraction_notes'] as List<dynamic>?) ?? const [])
+              .map((item) => item.toString())
+              .where((item) => item.trim().isNotEmpty)
+              .toList(),
+      completedAt: DateTime.tryParse(json['completed_at']?.toString() ?? '')
+              ?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -98,8 +99,10 @@ class ThoughtAnchorService {
   static const String _recordsKey = 'thought_anchor_records_v1';
   static const String _todayDateKey = 'thought_anchor_today_date_v1';
   static const String _todayCountKey = 'thought_anchor_today_count_v1';
-  static const String _todayDistractionsKey = 'thought_anchor_today_distractions_v1';
-  static const String _lastCompletedDateKey = 'thought_anchor_last_completed_date_v1';
+  static const String _todayDistractionsKey =
+      'thought_anchor_today_distractions_v1';
+  static const String _lastCompletedDateKey =
+      'thought_anchor_last_completed_date_v1';
   static const String _streakKey = 'thought_anchor_streak_v1';
 
   final DateTime Function()? nowProvider;

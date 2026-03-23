@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -155,9 +154,8 @@ $inviteUrl
   Future<void> capturePendingReferralFromUri({
     Uri? currentUri,
   }) async {
-    final refCode = (currentUri ?? Uri.base).queryParameters['ref']
-        ?.trim()
-        .toUpperCase();
+    final refCode =
+        (currentUri ?? Uri.base).queryParameters['ref']?.trim().toUpperCase();
     if (refCode == null || refCode.isEmpty) {
       return;
     }
@@ -217,7 +215,10 @@ $inviteUrl
           onConflict: 'user_id,session_id',
         );
 
-        await client.from('guest_presence').delete().eq('session_id', sessionId);
+        await client
+            .from('guest_presence')
+            .delete()
+            .eq('session_id', sessionId);
       } else {
         await client.from('guest_presence').upsert(
           <String, dynamic>{
@@ -372,9 +373,9 @@ $inviteUrl
           .from('referrals')
           .select('status')
           .eq('referrer_user_id', user.id);
-      final referralRows = rows is List ? rows : const <dynamic>[];
+      final referralRows = rows;
       final successful = referralRows.where((row) {
-        return row is Map && row['status']?.toString() == 'completed';
+        return row['status']?.toString() == 'completed';
       }).length;
 
       return ReferralGrowthSnapshot(
@@ -436,22 +437,24 @@ $inviteUrl
         loadReferralSnapshot(),
       ]);
 
-      final statRow =
-          results[0] is Map ? Map<String, dynamic>.from(results[0] as Map) : null;
+      final statRow = results[0] is Map
+          ? Map<String, dynamic>.from(results[0] as Map)
+          : null;
       final latestStat =
           statRow == null ? null : SiteStatistics.fromJson(statRow);
       final activeUserRows =
           results[1] is List ? results[1] as List<dynamic> : const <dynamic>[];
       final guestRows =
           results[2] is List ? results[2] as List<dynamic> : const <dynamic>[];
-      final lpStats =
-          results[3] is Map ? Map<String, dynamic>.from(results[3] as Map) : <String, dynamic>{};
-      final analyticsRow =
-          results[4] is Map ? Map<String, dynamic>.from(results[4] as Map) : <String, dynamic>{};
-      final referralSnapshot =
-          results[5] is ReferralGrowthSnapshot
-              ? results[5] as ReferralGrowthSnapshot
-              : const ReferralGrowthSnapshot.empty();
+      final lpStats = results[3] is Map
+          ? Map<String, dynamic>.from(results[3] as Map)
+          : <String, dynamic>{};
+      final analyticsRow = results[4] is Map
+          ? Map<String, dynamic>.from(results[4] as Map)
+          : <String, dynamic>{};
+      final referralSnapshot = results[5] is ReferralGrowthSnapshot
+          ? results[5] as ReferralGrowthSnapshot
+          : const ReferralGrowthSnapshot.empty();
 
       return GrowthMissionDashboard(
         totalRegisteredUsers: latestStat?.totalUsers ?? 0,

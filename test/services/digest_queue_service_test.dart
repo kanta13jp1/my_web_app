@@ -7,7 +7,8 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  test('queues second item in same domain while first item is active', () async {
+  test('queues second item in same domain while first item is active',
+      () async {
     var tick = 0;
     final service = DigestQueueService(
       nowProvider: () => DateTime(2026, 3, 23, 8, 0, tick++),

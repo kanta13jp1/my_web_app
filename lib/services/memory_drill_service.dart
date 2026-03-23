@@ -38,7 +38,8 @@ class MemoryDrillStats {
   final int currentStreak;
   final String? lastCompletedDateKey;
 
-  bool isCompletedToday(String packId) => completedPackIdsToday.contains(packId);
+  bool isCompletedToday(String packId) =>
+      completedPackIdsToday.contains(packId);
 }
 
 class MemoryDrillService {
@@ -117,10 +118,12 @@ class MemoryDrillService {
     ),
   ];
 
-  static const String _completedTodayDateKey = 'memory_drill_completed_today_date';
+  static const String _completedTodayDateKey =
+      'memory_drill_completed_today_date';
   static const String _completedTodayPackIdsKey =
       'memory_drill_completed_today_pack_ids';
-  static const String _lastCompletedDateKey = 'memory_drill_last_completed_date';
+  static const String _lastCompletedDateKey =
+      'memory_drill_last_completed_date';
   static const String _streakKey = 'memory_drill_streak';
 
   Future<MemoryDrillStats> loadStats({DateTime? now}) async {

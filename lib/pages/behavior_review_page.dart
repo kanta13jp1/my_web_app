@@ -107,14 +107,17 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
             .limit(120),
       ]);
 
-      final noteRows = results[0] is List ? results[0] as List<dynamic> : const [];
+      final noteRows =
+          results[0] is List ? results[0] as List<dynamic> : const [];
       final messageRows =
           results[1] is List ? results[1] as List<dynamic> : const [];
-      final actionRows = results[2] is List ? results[2] as List<dynamic> : const [];
+      final actionRows =
+          results[2] is List ? results[2] as List<dynamic> : const [];
 
       final entries = <BehaviorReviewEntry>[];
       for (final row in noteRows.whereType<Map>()) {
-        final entry = BehaviorReviewService.mapNote(Map<String, dynamic>.from(row));
+        final entry =
+            BehaviorReviewService.mapNote(Map<String, dynamic>.from(row));
         if (entry != null) {
           entries.add(entry);
         }
@@ -244,10 +247,9 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                   _buildSummaryRow(),
                   const SizedBox(height: 12),
                   FilledButton.icon(
-                    onPressed:
-                        _entries.isEmpty || _isGeneratingReflection
-                            ? null
-                            : _generateReflection,
+                    onPressed: _entries.isEmpty || _isGeneratingReflection
+                        ? null
+                        : _generateReflection,
                     icon: _isGeneratingReflection
                         ? const SizedBox(
                             width: 18,
@@ -261,10 +263,9 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed:
-                        _entries.isEmpty || _isGeneratingColumn
-                            ? null
-                            : _generateMyStruggleColumn,
+                    onPressed: _entries.isEmpty || _isGeneratingColumn
+                        ? null
+                        : _generateMyStruggleColumn,
                     icon: _isGeneratingColumn
                         ? const SizedBox(
                             width: 18,
@@ -273,9 +274,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                           )
                         : const Icon(Icons.auto_stories_outlined),
                     label: Text(
-                      _isGeneratingColumn
-                          ? 'コラムを生成中...'
-                          : '「我が闘争」を生成',
+                      _isGeneratingColumn ? 'コラムを生成中...' : '「我が闘争」を生成',
                     ),
                   ),
                   if (_reflection != null && _reflection!.isNotEmpty) ...[
@@ -358,7 +357,8 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
       runSpacing: 10,
       children: [
         _buildSummaryCard('総件数', '${_summary.totalCount}件', Icons.timeline),
-        _buildSummaryCard('行動', '${_summary.actionCount}件', Icons.directions_run),
+        _buildSummaryCard(
+            '行動', '${_summary.actionCount}件', Icons.directions_run),
         _buildSummaryCard(
           '発言',
           '${_summary.utteranceCount}件',

@@ -210,10 +210,9 @@ class _ImportPageState extends State<ImportPage> {
                     ],
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      onPressed:
-                          _isImporting || _preview!.notes.isEmpty
-                              ? null
-                              : _importPreview,
+                      onPressed: _isImporting || _preview!.notes.isEmpty
+                          ? null
+                          : _importPreview,
                       icon: const Icon(Icons.download_done),
                       label: Text(
                         _isImporting ? '取り込み中...' : 'この preview をインポート',
@@ -225,28 +224,28 @@ class _ImportPageState extends State<ImportPage> {
             ),
             const SizedBox(height: 16),
             ..._preview!.notes.take(12).map(
-              (note) => Card(
-                child: ListTile(
-                  title: Text(note.title),
-                  subtitle: Text(
-                    note.content,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                  (note) => Card(
+                    child: ListTile(
+                      title: Text(note.title),
+                      subtitle: Text(
+                        note.content,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: note.tags.isEmpty
+                          ? null
+                          : SizedBox(
+                              width: 140,
+                              child: Text(
+                                note.tags.join(', '),
+                                textAlign: TextAlign.right,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                    ),
                   ),
-                  trailing: note.tags.isEmpty
-                      ? null
-                      : SizedBox(
-                          width: 140,
-                          child: Text(
-                            note.tags.join(', '),
-                            textAlign: TextAlign.right,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
                 ),
-              ),
-            ),
             if (_preview!.notes.length > 12)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

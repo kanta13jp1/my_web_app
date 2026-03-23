@@ -186,10 +186,9 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
         },
       ),
     );
-    final data =
-        response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : Map<String, dynamic>.from(response.data as Map);
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
     final result = data['result'];
     if (data['success'] == true && result is String) {
       return result;

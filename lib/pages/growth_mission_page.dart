@@ -82,8 +82,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
   @override
   Widget build(BuildContext context) {
     final numberFormat = NumberFormat.decimalPattern('ja');
-    final referralCode =
-        _dashboard.referralSnapshot.referralCode ?? 'ログインで発行';
+    final referralCode = _dashboard.referralSnapshot.referralCode ?? 'ログインで発行';
     final inviteUrl = _dashboard.referralSnapshot.inviteUrl ?? '--';
 
     return Scaffold(
@@ -122,7 +121,7 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    const Text(
                       '2026年3月23日時点の公開ベンチマークでは、Notion は 100M+、Evernote は 250M+ が計画の最低ラインです。まずは LP 流入、登録、紹介の 3 つを毎日改善し、公開メモ・共有・移行導線で中長期の獲得を広げます。',
                     ),
                     const SizedBox(height: 16),

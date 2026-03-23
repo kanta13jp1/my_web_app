@@ -45,7 +45,8 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     var isLiked = false;
     if (userId != null) {
-      isLiked = await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
+      isLiked =
+          await _publicMemoService.hasUserLikedMemo(widget.memoId, userId);
     }
 
     if (!mounted) {

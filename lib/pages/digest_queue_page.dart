@@ -243,7 +243,8 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
       _items = items;
     });
 
-    final nextActive = DigestQueueService.findActiveForDomain(items, item.domain);
+    final nextActive =
+        DigestQueueService.findActiveForDomain(items, item.domain);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -567,14 +568,14 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
             ),
             const SizedBox(height: 8),
             ...waiting.take(2).map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  '・${item.title}',
-                  style: TextStyle(color: Colors.grey.shade700),
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '・${item.title}',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ],
           const SizedBox(height: 14),
           Wrap(
@@ -703,7 +704,8 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
   }
 
   Widget _buildCompletedSection() {
-    final completed = DigestQueueService.completedItems(_items).take(8).toList();
+    final completed =
+        DigestQueueService.completedItems(_items).take(8).toList();
     if (completed.isEmpty) {
       return const Card(
         child: Padding(

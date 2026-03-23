@@ -13,75 +13,75 @@ class WasteTrackingService {
 
   static const List<WasteCategoryDefinition> categories =
       <WasteCategoryDefinition>[
-        WasteCategoryDefinition(
-          label: '飲酒',
-          keywords: <String>[
-            '飲酒',
-            '酒',
-            'ビール',
-            'ハイボール',
-            'チューハイ',
-            '焼酎',
-            'ワイン',
-            '日本酒',
-          ],
-        ),
-        WasteCategoryDefinition(
-          label: '喫煙',
-          keywords: <String>[
-            '喫煙',
-            'たばこ',
-            'タバコ',
-            '煙草',
-            'iqos',
-            'アイコス',
-          ],
-        ),
-        WasteCategoryDefinition(
-          label: 'キャバクラ',
-          keywords: <String>['キャバクラ'],
-        ),
-        WasteCategoryDefinition(
-          label: 'スナック',
-          keywords: <String>['スナック'],
-        ),
-        WasteCategoryDefinition(
-          label: 'ガールズバー',
-          keywords: <String>['ガールズバー', 'girls bar'],
-        ),
-        WasteCategoryDefinition(
-          label: '風俗',
-          keywords: <String>['風俗'],
-        ),
-        WasteCategoryDefinition(
-          label: 'デリヘル',
-          keywords: <String>['デリヘル'],
-        ),
-        WasteCategoryDefinition(
-          label: 'ピンサロ',
-          keywords: <String>['ピンサロ'],
-        ),
-        WasteCategoryDefinition(
-          label: 'セクキャバ',
-          keywords: <String>['セクキャバ'],
-        ),
-        WasteCategoryDefinition(
-          label: 'ゲーム',
-          keywords: <String>['ゲーム', '課金', 'steam', 'switch', 'ps5'],
-        ),
-        WasteCategoryDefinition(
-          label: 'ギャンブル',
-          keywords: <String>[
-            'ギャンブル',
-            'パチンコ',
-            'スロット',
-            '競馬',
-            '競艇',
-            '競輪',
-            'カジノ',
-          ],
-        ),
-      ];
+    WasteCategoryDefinition(
+      label: '飲酒',
+      keywords: <String>[
+        '飲酒',
+        '酒',
+        'ビール',
+        'ハイボール',
+        'チューハイ',
+        '焼酎',
+        'ワイン',
+        '日本酒',
+      ],
+    ),
+    WasteCategoryDefinition(
+      label: '喫煙',
+      keywords: <String>[
+        '喫煙',
+        'たばこ',
+        'タバコ',
+        '煙草',
+        'iqos',
+        'アイコス',
+      ],
+    ),
+    WasteCategoryDefinition(
+      label: 'キャバクラ',
+      keywords: <String>['キャバクラ'],
+    ),
+    WasteCategoryDefinition(
+      label: 'スナック',
+      keywords: <String>['スナック'],
+    ),
+    WasteCategoryDefinition(
+      label: 'ガールズバー',
+      keywords: <String>['ガールズバー', 'girls bar'],
+    ),
+    WasteCategoryDefinition(
+      label: '風俗',
+      keywords: <String>['風俗'],
+    ),
+    WasteCategoryDefinition(
+      label: 'デリヘル',
+      keywords: <String>['デリヘル'],
+    ),
+    WasteCategoryDefinition(
+      label: 'ピンサロ',
+      keywords: <String>['ピンサロ'],
+    ),
+    WasteCategoryDefinition(
+      label: 'セクキャバ',
+      keywords: <String>['セクキャバ'],
+    ),
+    WasteCategoryDefinition(
+      label: 'ゲーム',
+      keywords: <String>['ゲーム', '課金', 'steam', 'switch', 'ps5'],
+    ),
+    WasteCategoryDefinition(
+      label: 'ギャンブル',
+      keywords: <String>[
+        'ギャンブル',
+        'パチンコ',
+        'スロット',
+        '競馬',
+        '競艇',
+        '競輪',
+        'カジノ',
+      ],
+    ),
+  ];
 
   static const String markerPrefix = '[浪費:';
 
@@ -104,9 +104,7 @@ class WasteTrackingService {
   }
 
   static String stripWasteMarker(String description) {
-    return description
-        .replaceAll(RegExp(r'\s*\[浪費:[^\]]+\]\s*$'), '')
-        .trim();
+    return description.replaceAll(RegExp(r'\s*\[浪費:[^\]]+\]\s*$'), '').trim();
   }
 
   static String? extractWasteCategory(String description) {

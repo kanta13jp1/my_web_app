@@ -179,7 +179,8 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
               child: const Text('キャンセル'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, controller.text.trim()),
               child: const Text('退避する'),
             ),
           ],
@@ -379,7 +380,9 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
 
     final progress = _selectedDuration == 0
         ? 0.0
-        : 1 - (_remaining.inSeconds / Duration(minutes: _selectedDuration).inSeconds);
+        : 1 -
+            (_remaining.inSeconds /
+                Duration(minutes: _selectedDuration).inSeconds);
 
     return Card(
       color: Colors.indigo.shade50,

@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/behavior_review_page.dart';
+import 'package:my_web_app/pages/danshari_page.dart';
+import 'package:my_web_app/pages/digest_queue_page.dart';
+import 'package:my_web_app/pages/gemini_university_v2_page.dart';
+import 'package:my_web_app/pages/growth_mission_page.dart';
+import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/pages/import_page.dart';
+import 'package:my_web_app/pages/landing_page.dart';
+import 'package:my_web_app/pages/memory_drill_page.dart';
+import 'package:my_web_app/pages/onboarding_page.dart';
+import 'package:my_web_app/pages/public_memo_detail_page.dart';
+import 'package:my_web_app/pages/public_memo_directory_page.dart';
+import 'package:my_web_app/pages/reality_check_page.dart';
+import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
+import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
-import 'pages/home_page.dart';
-import 'pages/onboarding_page.dart';
-import 'pages/landing_page.dart';
-import 'pages/agent_org_page.dart';
-import 'pages/gemini_university_v2_page.dart';
-import 'pages/danshari_page.dart';
-import 'pages/memory_drill_page.dart';
-import 'pages/behavior_review_page.dart';
-import 'pages/digest_queue_page.dart';
-import 'pages/growth_mission_page.dart';
-import 'pages/import_page.dart';
-import 'pages/public_memo_detail_page.dart';
-import 'pages/public_memo_directory_page.dart';
-import 'pages/reality_check_page.dart';
-import 'pages/thought_anchor_page.dart';
-
-import 'services/growth_mission_service.dart';
-import 'services/theme_service.dart';
-import 'widgets/global_header_clock_bar.dart';
+import 'package:my_web_app/services/theme_service.dart';
+import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 
 SupabaseClient? _testSupabaseClient;
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =

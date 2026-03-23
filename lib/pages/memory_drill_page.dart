@@ -91,9 +91,8 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
       return 'ヒントなし';
     }
     final first = trimmed.substring(0, 1);
-    final last = trimmed.length > 1
-        ? trimmed.substring(trimmed.length - 1)
-        : '';
+    final last =
+        trimmed.length > 1 ? trimmed.substring(trimmed.length - 1) : '';
     final charCount = trimmed.runes.length;
     if (last.isEmpty) {
       return '$first で始まる / $charCount文字';
@@ -352,7 +351,8 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),

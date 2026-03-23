@@ -60,7 +60,8 @@ class BehaviorReviewService {
     final actionType = row['action_type']?.toString() ?? 'expense';
     final rawDescription = row['description']?.toString() ?? '';
     final detail = WasteTrackingService.stripWasteMarker(rawDescription);
-    final wasteCategory = WasteTrackingService.extractWasteCategory(rawDescription);
+    final wasteCategory =
+        WasteTrackingService.extractWasteCategory(rawDescription);
 
     final title = switch (actionType) {
       'conquer' => '収入 ${_formatYen(amount)}',
@@ -139,7 +140,8 @@ class BehaviorReviewService {
     return sorted;
   }
 
-  static BehaviorReviewSummary summarize(Iterable<BehaviorReviewEntry> entries) {
+  static BehaviorReviewSummary summarize(
+      Iterable<BehaviorReviewEntry> entries) {
     var actionCount = 0;
     var utteranceCount = 0;
     final sourceCounts = <String, int>{};
@@ -150,7 +152,8 @@ class BehaviorReviewService {
       } else {
         utteranceCount += 1;
       }
-      sourceCounts.update(entry.source, (value) => value + 1, ifAbsent: () => 1);
+      sourceCounts.update(entry.source, (value) => value + 1,
+          ifAbsent: () => 1);
     }
 
     return BehaviorReviewSummary(

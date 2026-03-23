@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/ai_model_preference_service.dart';
@@ -93,7 +93,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(enabled ? 'MAGI システムを全体で有効にしました' : 'MAGI システムを全体で無効にしました'),
+        content:
+            Text(enabled ? 'MAGI システムを全体で有効にしました' : 'MAGI システムを全体で無効にしました'),
       ),
     );
   }
@@ -298,7 +299,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   children: [
                     if (_preferredModel != null) _buildDefaultModelBanner(navy),
                     _buildMagiSystemCard(navy),
-                    ..._models.map((modelMap) => _buildModelCard(navy, modelMap)),
+                    ..._models
+                        .map((modelMap) => _buildModelCard(navy, modelMap)),
                   ],
                 ),
     );
@@ -500,9 +502,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
             value: _magiSettings.enabled,
             title: const Text('MAGI を全体で使う'),
             subtitle: Text(
-              _magiSettings.enabled
-                  ? '各ノードの意見を合成して回答します。'
-                  : '単一モデルで回答します。',
+              _magiSettings.enabled ? '各ノードの意見を合成して回答します。' : '単一モデルで回答します。',
             ),
             onChanged: (value) {
               _setMagiEnabled(value);
