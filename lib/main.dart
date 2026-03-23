@@ -15,13 +15,17 @@ import 'pages/danshari_page.dart';
 import 'pages/memory_drill_page.dart';
 import 'pages/behavior_review_page.dart';
 import 'pages/digest_queue_page.dart';
+import 'pages/growth_mission_page.dart';
 import 'pages/reality_check_page.dart';
 import 'pages/thought_anchor_page.dart';
 
+import 'services/growth_mission_service.dart';
 import 'services/theme_service.dart';
 import 'widgets/global_header_clock_bar.dart';
 
 SupabaseClient? _testSupabaseClient;
+final GrowthPresenceNavigatorObserver _growthPresenceObserver =
+    GrowthPresenceNavigatorObserver();
 
 @visibleForTesting
 set supabaseClientForTesting(SupabaseClient client) =>
@@ -124,6 +128,7 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('ja'), Locale('en')],
       locale: const Locale('ja'),
+      navigatorObservers: <NavigatorObserver>[_growthPresenceObserver],
       initialRoute: '/',
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
@@ -149,6 +154,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const MemoryDrillPage());
           case '/digest-queue':
             return MaterialPageRoute(builder: (_) => const DigestQueuePage());
+          case '/growth-mission':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthMissionPage(),
+              settings: const RouteSettings(name: '/growth-mission'),
+            );
           case '/behavior-review':
             return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
           case '/reality-check':

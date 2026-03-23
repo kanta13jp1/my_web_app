@@ -7,16 +7,21 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_share_service.dart';
+import '../widgets/live_growth_banner.dart';
 
 class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
+  final GrowthMissionService growthService;
 
   const LandingPage({
     super.key,
     LandingPageAdapter? adapter,
-  }) : adapter = adapter ?? const SupabaseLandingPageAdapter();
+    GrowthMissionService? growthService,
+  }) : adapter = adapter ?? const SupabaseLandingPageAdapter(),
+       growthService = growthService ?? const GrowthMissionService();
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -65,9 +70,11 @@ class _LandingPageState extends State<LandingPage> {
     _authSubscription = widget.adapter.authStateChanges().listen((data) {
       if (!mounted) return;
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+        unawaited(widget.growthService.applyPendingReferralIfPossible());
         _goToAuthenticatedEntry();
       }
     });
+    unawaited(widget.growthService.capturePendingReferralFromUri());
     _initLpViewStats();
     _loadShareSnapshot();
   }
@@ -824,6 +831,15 @@ $input
     );
   }
 
+  Widget _buildGrowthSection() {
+    return LiveGrowthBanner(
+      growthService: widget.growthService,
+      compact: true,
+      title: '登録者数と閲覧者数をライブ表示',
+      subtitle: '今どれだけ人が見ていて、どれだけ登録されているかをその場で追えます。',
+    );
+  }
+
   Widget _pvKpi(String label, String value) {
     return Container(
       width: 112,
@@ -1405,6 +1421,8 @@ $input
                 children: [
                   _buildHeroSection(),
                   const SizedBox(height: 24),
+                  _buildGrowthSection(),
+                  const SizedBox(height: 20),
                   _buildTrialSection(),
                   const SizedBox(height: 20),
                   _buildAuthSection(),

@@ -41,6 +41,7 @@ import 'mind_map_page.dart';
 import 'memory_drill_page.dart';
 import 'behavior_review_page.dart';
 import 'digest_queue_page.dart';
+import 'growth_mission_page.dart';
 import 'reality_check_page.dart';
 import 'thought_anchor_page.dart';
 import 'settings_page.dart';
@@ -58,8 +59,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // ✅ 改善ポイント:
-  // build() のたびに _fetchTotalAssets() が走るのを防ぐため Future をキャッシュする
+  // ✁E改喁E�EインチE
+  // build() のた�Eに _fetchTotalAssets() が走る�Eを防ぐためEFuture をキャチE��ュする
   late Future<String> _totalAssetsFuture;
   late Future<_HomeOpsSnapshot> _opsSnapshotFuture;
   late Future<_HomeKpiOverview> _kpiOverviewFuture;
@@ -106,7 +107,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ Pull-to-Refresh 用（必要なときだけKPIを再取得）
+  // ✁EPull-to-Refresh 用�E�忁E��なときだけKPIを�E取得！E
   Future<void> _refreshKpis() async {
     setState(() {
       _reloadHomeSignals();
@@ -157,7 +158,7 @@ class _HomePageState extends State<HomePage> {
           .eq('user_id', userId)
           .eq('task_date', dateStr)
           .eq('is_completed', false)
-          .ilike('content', '%必須:%');
+          .ilike('content', '%忁E��E%');
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
       return rows.length;
     } catch (e) {
@@ -183,7 +184,7 @@ class _HomePageState extends State<HomePage> {
           .eq('is_completed', false)
           .gte('task_date', startKey)
           .lte('task_date', endKey)
-          .ilike('content', '%必須:%');
+          .ilike('content', '%忁E��E%');
       final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
       final counts = <String, int>{};
       for (final row in rows.whereType<Map<String, dynamic>>()) {
@@ -454,10 +455,10 @@ class _HomePageState extends State<HomePage> {
 
   String _dailyTodoCategoryLabel(String? category) {
     return switch (category) {
-      'work' => '仕事',
+      'work' => '仕亁E,
       'health' => '健康',
       'household' => '生活',
-      'study' => '学習',
+      'study' => '学翁E,
       'personal' => '個人',
       _ => '今日タスク',
     };
@@ -511,7 +512,7 @@ class _HomePageState extends State<HomePage> {
         final dateKey = DateFormat('yyyy-MM-dd').format(createdAt);
         final title = (row['title']?.toString().trim().isNotEmpty ?? false)
             ? row['title'].toString().trim()
-            : 'その他';
+            : 'そ�E仁E;
         rawByDate.putIfAbsent(dateKey, () => <String, double>{});
         rawByDate[dateKey]![title] = amount;
       }
@@ -739,9 +740,9 @@ class _HomePageState extends State<HomePage> {
       return _AssetBucket.equity;
     }
 
-    if (title.contains('預金') ||
-        title.contains('現金') ||
-        title.contains('銀行') ||
+    if (title.contains('預��') ||
+        title.contains('現釁E) ||
+        title.contains('銀衁E) ||
         title.contains('暗号') ||
         title.contains('仮想通貨') ||
         title.toLowerCase().contains('crypto') ||
@@ -788,9 +789,9 @@ class _HomePageState extends State<HomePage> {
         return 'Facebook';
       case 'share_copy':
       case 'copy':
-        return 'リンクコピー';
+        return 'リンクコピ�E';
       default:
-        return '未検出';
+        return '未検�E';
     }
   }
 
@@ -970,10 +971,10 @@ class _HomePageState extends State<HomePage> {
       final isFuture = day.isAfter(DateTime(now.year, now.month, now.day));
       final missingItems = <String>[
         if (!isFuture && !morningDone) 'モーニング・ブリーフィング',
-        if (!isFuture && !balanceDone) '口座残高確認',
+        if (!isFuture && !balanceDone) '口座残高確誁E,
         if (!isFuture && pendingCriticalTaskCountForDay > 0)
-          '必須タスク $pendingCriticalTaskCountForDay件',
-        if (!isFuture && !hasProtection) '禁欲ガード設定',
+          '忁E��タスク $pendingCriticalTaskCountForDay件',
+        if (!isFuture && !hasProtection) '禁欲ガード設宁E,
       ];
       final relapsePreventionAction = _buildRelapsePreventionAction(
         abstinence: abstinence,
@@ -1016,7 +1017,7 @@ class _HomePageState extends State<HomePage> {
     required bool hasSlip,
   }) {
     if (isFuture) {
-      return '前日までの逸脱傾向を見て、禁止対象を1件だけ先に固定する。';
+      return '前日までの逸脱傾向を見て、禁止対象めE件だけ�Eに固定する、E;
     }
 
     if (hasSlip) {
@@ -1024,21 +1025,21 @@ class _HomePageState extends State<HomePage> {
         ..sort((a, b) => b.slipCount.compareTo(a.slipCount));
       if (sortedSlips.isNotEmpty) {
         final top = sortedSlips.first;
-        return '${top.item.label}が崩れやすい日。${top.item.replacementAction}';
+        return '${top.item.label}が崩れやすい日、E{top.item.replacementAction}';
       }
     }
 
     if (!hasProtection) {
-      return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
+      return '朝いちで禁止対象めE件だけ固定して、�Eに送E��道を塞ぐ、E;
     }
     if (!morningDone) {
-      return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
+      return '朝�E最初にブリーフィングを実施し、優先頁E��を固定する、E;
     }
     if (!balanceDone) {
-      return '口座残高確認を先に終えて、意思決定を数字に戻す。';
+      return '口座残高確認を先に終えて、意思決定を数字に戻す、E;
     }
 
-    return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる。';
+    return '同じ禁止対象を維持し、夜に逸脱ゼロを確認して日次を閉じる、E;
   }
 
   Future<_HomeDailyStatusRecord?> _fetchHomeDailyStatusFromSupabase(
@@ -1184,10 +1185,10 @@ class _HomePageState extends State<HomePage> {
           ? 'none'
           : snapshot.abstinenceSlipDetails.join(' / ');
       final prompt = '''
-あなたはホーム画面の運用アシスタントです。
-次アクションに対して、実行を後押しする短い補足を日本語で1文だけ返してください。
-出力は1文のみ（句点あり、絵文字なし）。
-abstinence_slip_details がある場合は、逸脱項目を1つ具体的に入れてください。
+あなた�Eホ�Eム画面の運用アシスタントです、E
+次アクションに対して、実行を後押しする短ぁE��足を日本語で1斁E��け返してください、E
+出力�E1斁E�Eみ�E�句点あり、絵斁E��なし）、E
+abstinence_slip_details がある場合�E、E��脱頁E��めEつ具体的に入れてください、E
 
 action_title: ${command.title}
 action_detail: ${command.detail}
@@ -1218,8 +1219,8 @@ abstinence_slip_details: $slipDetailsText
     if (snapshot.abstinenceSlipCount > 0) {
       return _HomeActionCommand(
         type: _HomeActionType.abstinenceGuard,
-        title: '逸脱が発生。禁欲ガードを最優先',
-        detail: '今日の逸脱は${snapshot.abstinenceSlipCount}回。先に再設定して再発を止める。',
+        title: '逸脱が発生。禁欲ガードを最優允E,
+        detail: '今日の逸脱は${snapshot.abstinenceSlipCount}回。�Eに再設定して再発を止める、E,
         icon: Icons.shield_moon,
         color: Colors.redAccent,
       );
@@ -1228,7 +1229,7 @@ abstinence_slip_details: $slipDetailsText
     if (snapshot.monthlyCashflowSummary.needsReview) {
       return _HomeActionCommand(
         type: _HomeActionType.monthlyFlowReview,
-        title: '今月の収支を先に把握する',
+        title: '今月の収支を�Eに把握する',
         detail: snapshot.monthlyCashflowSummary.summaryLine,
         icon: Icons.receipt_long,
         color: Colors.green.shade700,
@@ -1238,8 +1239,8 @@ abstinence_slip_details: $slipDetailsText
     if (!snapshot.morningBriefingDone && hour < 12) {
       return const _HomeActionCommand(
         type: _HomeActionType.morningBriefing,
-        title: 'モーニング・ブリーフィングを先に実施',
-        detail: '朝の優先順位を確定してから他メニューへ進む。',
+        title: 'モーニング・ブリーフィングを�Eに実施',
+        detail: '朝�E優先頁E��を確定してから他メニューへ進む、E,
         icon: Icons.wb_sunny,
         color: Colors.amber,
       );
@@ -1248,8 +1249,8 @@ abstinence_slip_details: $slipDetailsText
     if (!snapshot.balanceCheckDone) {
       return const _HomeActionCommand(
         type: _HomeActionType.balanceCheck,
-        title: '今日の口座残高を確認',
-        detail: 'まず資金状態を把握して、日次の打ち手を決める。',
+        title: '今日の口座残高を確誁E,
+        detail: 'まず賁E��状態を把握して、日次の打ち手を決める、E,
         icon: Icons.account_balance_wallet,
         color: Colors.green,
       );
@@ -1258,8 +1259,8 @@ abstinence_slip_details: $slipDetailsText
     if (snapshot.pendingCriticalTaskCount > 0) {
       return _HomeActionCommand(
         type: _HomeActionType.criticalTasks,
-        title: '必須タスクを先に完了',
-        detail: '思考停止ログの必須タスクが${snapshot.pendingCriticalTaskCount}件残っています。',
+        title: '忁E��タスクを�Eに完亁E,
+        detail: '思老E��止ログの忁E��タスクぁE{snapshot.pendingCriticalTaskCount}件残ってぁE��す、E,
         icon: Icons.lock_clock,
         color: Colors.redAccent,
       );
@@ -1268,9 +1269,9 @@ abstinence_slip_details: $slipDetailsText
     if (!snapshot.completionGoalSnapshot.isAchieved) {
       return _HomeActionCommand(
         type: _HomeActionType.beatYesterdayGoal,
-        title: '今日は昨日より1件多く完了する',
+        title: '今日は昨日より1件多く完亁E��めE,
         detail:
-            '昨日 ${snapshot.completionGoalSnapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.completionGoalSnapshot.todayCompletedCount}件 / 目標 ${snapshot.completionGoalSnapshot.targetCount}件',
+            '昨日 ${snapshot.completionGoalSnapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.completionGoalSnapshot.todayCompletedCount}件 / 目樁E${snapshot.completionGoalSnapshot.targetCount}件',
         icon: Icons.trending_up,
         color: Colors.indigo,
       );
@@ -1281,8 +1282,8 @@ abstinence_slip_details: $slipDetailsText
         _now().weekday == DateTime.saturday) {
       return _HomeActionCommand(
         type: _HomeActionType.stockReview,
-        title: '週末ストックを見直す',
-        detail: '土曜リマインド: 未完了ストックが${snapshot.pendingStockTaskCount}件あります。',
+        title: '週末ストックを見直ぁE,
+        detail: '土曜リマインチE 未完亁E��トックぁE{snapshot.pendingStockTaskCount}件あります、E,
         icon: Icons.inventory_2,
         color: Colors.teal,
       );
@@ -1290,8 +1291,8 @@ abstinence_slip_details: $slipDetailsText
 
     return const _HomeActionCommand(
       type: _HomeActionType.none,
-      title: '今日の必須導線は完了済み',
-      detail: '次は通常メニューを優先度順に実行。',
+      title: '今日の忁E��導線�E完亁E��み',
+      detail: '次は通常メニューを優先度頁E��実行、E,
       icon: Icons.verified,
       color: Colors.blueGrey,
     );
@@ -1401,7 +1402,7 @@ abstinence_slip_details: $slipDetailsText
     String? aiNudge,
     bool isAiNudgeLoading = false,
   }) {
-    String buttonLabel = '最新化';
+    String buttonLabel = '最新匁E;
     VoidCallback? onPressed = () {
       _refreshKpis();
     };
@@ -1417,12 +1418,12 @@ abstinence_slip_details: $slipDetailsText
         _openMonthlyCashflowReview(context);
       };
     } else if (command.type == _HomeActionType.balanceCheck) {
-      buttonLabel = '財務管理へ';
+      buttonLabel = '財務管琁E��';
       onPressed = () {
         _openCfoOffice(context);
       };
     } else if (command.type == _HomeActionType.criticalTasks) {
-      buttonLabel = '必須タスクへ';
+      buttonLabel = '忁E��タスクへ';
       onPressed = () {
         _nav(context, const MindlessTaskPage());
       };
@@ -1543,7 +1544,7 @@ abstinence_slip_details: $slipDetailsText
                 if (snapshot.pendingCriticalTaskCount > 0) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '未完了の必須タスク: ${snapshot.pendingCriticalTaskCount}件',
+                    '未完亁E�E忁E��タスク: ${snapshot.pendingCriticalTaskCount}件',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1555,7 +1556,7 @@ abstinence_slip_details: $slipDetailsText
                     snapshot.pendingStockTaskCount > 0) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '未完了の週末ストック: ${snapshot.pendingStockTaskCount}件',
+                    '未完亁E�E週末ストック: ${snapshot.pendingStockTaskCount}件',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1640,7 +1641,7 @@ abstinence_slip_details: $slipDetailsText
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$monthLabelの収支を最優先',
+                      '$monthLabelの収支を最優允E,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -1687,7 +1688,7 @@ abstinence_slip_details: $slipDetailsText
             runSpacing: 10,
             children: [
               _buildMonthlyCashflowMetric(
-                label: '収入',
+                label: '収�E',
                 value: _formatYen(summary.incomeTotal.toDouble()),
                 color: Colors.green.shade700,
               ),
@@ -1697,7 +1698,7 @@ abstinence_slip_details: $slipDetailsText
                 color: Colors.redAccent,
               ),
               _buildMonthlyCashflowMetric(
-                label: '差額',
+                label: '差顁E,
                 value: _formatSignedYen(summary.netTotal.toDouble()),
                 color: accentColor,
               ),
@@ -1734,7 +1735,7 @@ abstinence_slip_details: $slipDetailsText
             onPressed: () => _openMonthlyCashflowReview(context),
             icon: const Icon(Icons.arrow_forward),
             label: Text(
-              summary.recordCount == 0 ? '今月の収支を記録する' : '今月の収支を確認する',
+              summary.recordCount == 0 ? '今月の収支を記録する' : '今月の収支を確認すめE,
             ),
             style: FilledButton.styleFrom(
               backgroundColor: accentColor,
@@ -1824,26 +1825,26 @@ abstinence_slip_details: $slipDetailsText
     _HomeOpsSnapshot snapshot,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    var title = '嫌でも先にやる1件を固定';
-    var detail = '強制導線は解除済みです。次の通常メニューへ進めます。';
+    var title = '嫌でも�EにめE��1件を固宁E;
+    var detail = '強制導線�E解除済みです。次の通常メニューへ進めます、E;
     var buttonLabel = '状態を更新';
     Color color = Colors.blueGrey;
     var icon = Icons.verified;
     VoidCallback onPressed = _refreshKpis;
 
     if (snapshot.pendingCriticalTaskCount > 0) {
-      title = 'まず嫌な必須タスクを片付ける';
-      detail = '未完了の必須タスクが${snapshot.pendingCriticalTaskCount}件あります。'
-          ' 他メニューより先に思考停止ログを消化してください。';
-      buttonLabel = '必須タスクへ';
+      title = 'まず嫌な忁E��タスクを片付けめE;
+      detail = '未完亁E�E忁E��タスクぁE{snapshot.pendingCriticalTaskCount}件あります、E
+          ' 他メニューより先に思老E��止ログを消化してください、E;
+      buttonLabel = '忁E��タスクへ';
       color = Colors.redAccent;
       icon = Icons.lock_clock;
       onPressed = () {
         _nav(context, const MindlessTaskPage());
       };
     } else if (!snapshot.morningBriefingDone) {
-      title = '朝の固定を先に終える';
-      detail = '気分で動く前に、朝の優先順位を先に固定します。';
+      title = '朝�E固定を先に終えめE;
+      detail = '気�Eで動く前に、朝の優先頁E��を先に固定します、E;
       buttonLabel = 'ブリーフィングへ';
       color = Colors.amber;
       icon = Icons.wb_sunny;
@@ -1851,18 +1852,18 @@ abstinence_slip_details: $slipDetailsText
         _openMorningBriefing(context);
       };
     } else if (!snapshot.balanceCheckDone) {
-      title = '数字確認を先に終える';
-      detail = 'なんとなく触りたいメニューに行く前に、口座残高を確認します。';
-      buttonLabel = '財務管理へ';
+      title = '数字確認を先に終えめE;
+      detail = 'なんとなく触りたぁE��ニューに行く前に、口座残高を確認します、E;
+      buttonLabel = '財務管琁E��';
       color = Colors.green;
       icon = Icons.account_balance_wallet;
       onPressed = () {
         _openCfoOffice(context);
       };
     } else if (snapshot.abstinenceSlipCount > 0) {
-      title = '逸脱復旧を先にやる';
-      detail = '今日は${snapshot.abstinenceSlipCount}回の逸脱があります。'
-          ' 先に禁欲ガードを再設定してください。';
+      title = '逸脱復旧を�EにめE��';
+      detail = '今日は${snapshot.abstinenceSlipCount}回�E逸脱があります、E
+          ' 先に禁欲ガードを再設定してください、E;
       buttonLabel = '禁欲ガードへ';
       color = Colors.deepOrange;
       icon = Icons.shield_moon;
@@ -1912,7 +1913,7 @@ abstinence_slip_details: $slipDetailsText
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '強制導線',
+                  '強制導緁E,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -1962,12 +1963,12 @@ abstinence_slip_details: $slipDetailsText
     final achieved = goal.isAchieved;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = achieved ? Colors.green : Colors.indigo;
-    final headline = achieved ? '前日超えを達成中' : '今日は昨日より1件多く終える';
+    final headline = achieved ? '前日趁E��を達成中' : '今日は昨日より1件多く終えめE;
     final detail =
-        '昨日 ${goal.yesterdayCompletedCount}件 / 今日 ${goal.todayCompletedCount}件 / 目標 ${goal.targetCount}件';
+        '昨日 ${goal.yesterdayCompletedCount}件 / 今日 ${goal.todayCompletedCount}件 / 目樁E${goal.targetCount}件';
     final helper = achieved
-        ? 'このまま維持して、次の1件は短く終わるタスクから取ります。'
-        : 'あと ${goal.remainingCount}件で前日超えです。5分で終わるものから先に片付けます。';
+        ? 'こ�Eまま維持して、次の1件は短く終わるタスクから取ります、E
+        : 'あと ${goal.remainingCount}件で前日趁E��です、E刁E��終わるものから先に牁E��けます、E;
     final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
 
     return Container(
@@ -2015,7 +2016,7 @@ abstinence_slip_details: $slipDetailsText
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '前日超えチャレンジ',
+                      '前日趁E��チャレンジ',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -2041,7 +2042,7 @@ abstinence_slip_details: $slipDetailsText
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  achieved ? '達成中' : '未達',
+                  achieved ? '達�E中' : '未遁E,
                   style: TextStyle(
                     color: accent,
                     fontSize: 12,
@@ -2132,7 +2133,7 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
-                  'やらないことガード',
+                  'めE��なぁE��とガーチE,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -2141,13 +2142,13 @@ abstinence_slip_details: $slipDetailsText
               ),
               FilledButton.tonal(
                 onPressed: () => _openAbstinenceGuard(context),
-                child: const Text('設定'),
+                child: const Text('設宁E),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
-            '今日の害悪行動を先に禁止して、逸脱は回数で管理する。',
+            '今日の害悪行動を�Eに禁止して、E��脱は回数で管琁E��る、E,
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -2161,7 +2162,7 @@ abstinence_slip_details: $slipDetailsText
               ),
               _buildStatusPill(
                 label: '逸脱',
-                value: '${snapshot.abstinenceSlipCount}回',
+                value: '${snapshot.abstinenceSlipCount}囁E,
                 color: snapshot.abstinenceSlipCount > 0
                     ? Colors.orange
                     : Colors.green,
@@ -2171,9 +2172,9 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 10),
           Text(
             activeLabels.isEmpty
-                ? 'まだ今日の禁止対象が固定されていません。酒・スマホ・動画などから先に封鎖してください。'
+                ? 'まだ今日の禁止対象が固定されてぁE��せん。�E・スマ�E・動画などから先に封E��してください、E
                 : '今日の禁止対象: ${activeLabels.join(' / ')}'
-                    '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほか' : ''}',
+                    '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほぁE : ''}',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white70 : Colors.black87,
@@ -2200,14 +2201,14 @@ abstinence_slip_details: $slipDetailsText
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '切断サイン: $primarySignal',
+                    '刁E��サイン: $primarySignal',
                     style: TextStyle(
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '排除手順: $primaryAction',
+                    '排除手頁E $primaryAction',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Colors.redAccent,
@@ -2230,11 +2231,11 @@ abstinence_slip_details: $slipDetailsText
     final monthAnchor = _calendarAnchorMonth();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedDay = _resolveSelectedCalendarDay(snapshot);
-    final visibleMonthLabel = DateFormat('yyyy年M月').format(monthAnchor);
+    final visibleMonthLabel = DateFormat('yyyy年M朁E).format(monthAnchor);
     final isViewingCurrentMonth =
         monthAnchor.year == now.year && monthAnchor.month == now.month;
-    final currentMonthLabel = DateFormat('yyyy年M月').format(now);
-    const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    final currentMonthLabel = DateFormat('yyyy年M朁E).format(now);
+    const weekLabels = ['日', '朁E, '火', '水', '木', '釁E, '圁E];
     final displayedMonthDays =
         snapshot.calendarDays.where((day) => day.isCurrentMonth).toList();
     final recentDays = isViewingCurrentMonth
@@ -2251,9 +2252,9 @@ abstinence_slip_details: $slipDetailsText
         recentDays.where((day) => !day.hasAbstinenceProtection).length;
     final filterLabel = switch (_calendarHighlightFilter) {
       _CalendarHighlightFilter.all => null,
-      _CalendarHighlightFilter.slip => '表示中: 逸脱日数のみハイライト',
-      _CalendarHighlightFilter.clean => '表示中: 無傷日数のみハイライト',
-      _CalendarHighlightFilter.unset => '表示中: 未設定日数のみハイライト',
+      _CalendarHighlightFilter.slip => '表示中: 逸脱日数のみハイライチE,
+      _CalendarHighlightFilter.clean => '表示中: 無傷日数のみハイライチE,
+      _CalendarHighlightFilter.unset => '表示中: 未設定日数のみハイライチE,
     };
 
     return Container(
@@ -2342,7 +2343,7 @@ abstinence_slip_details: $slipDetailsText
           ),
           const SizedBox(height: 6),
           const Text(
-            '朝の固定、残高確認、禁欲の安定を月単位で見る。',
+            '朝�E固定、残高確認、禁欲の安定を月単位で見る、E,
           ),
           if (filterLabel != null) ...[
             const SizedBox(height: 6),
@@ -2362,17 +2363,17 @@ abstinence_slip_details: $slipDetailsText
             runSpacing: 8,
             children: [
               _buildStatusPill(
-                label: '朝固定',
+                label: '朝固宁E,
                 value: '$morningDoneCount日',
                 color: Colors.amber,
               ),
               _buildStatusPill(
-                label: '残高確認',
+                label: '残高確誁E,
                 value: '$balanceDoneCount日',
                 color: Colors.green,
               ),
               _buildStatusPill(
-                label: '禁欲安定',
+                label: '禁欲安宁E,
                 value: '$cleanDaysCount日',
                 color: Colors.redAccent,
               ),
@@ -2419,7 +2420,7 @@ abstinence_slip_details: $slipDetailsText
                               ? 0.18
                               : status.label == '無傷'
                                   ? 0.14
-                                  : status.label == '未設定'
+                                  : status.label == '未設宁E
                                       ? 0.08
                                       : 0.1,
                         )
@@ -2465,7 +2466,7 @@ abstinence_slip_details: $slipDetailsText
                               fontWeight: FontWeight.w800,
                               color: day.isCurrentMonth
                                   ? matchesFilter
-                                      ? (status.label == '未設定'
+                                      ? (status.label == '未設宁E
                                           ? (isDark
                                               ? Colors.white70
                                               : Colors.black87)
@@ -2534,9 +2535,9 @@ abstinence_slip_details: $slipDetailsText
             spacing: 10,
             runSpacing: 8,
             children: [
-              _CalendarLegend(color: Colors.amber, label: '朝'),
-              _CalendarLegend(color: Colors.green, label: '残高'),
-              _CalendarLegend(color: Colors.redAccent, label: '禁欲安定'),
+              _CalendarLegend(color: Colors.amber, label: '朁E),
+              _CalendarLegend(color: Colors.green, label: '残髁E),
+              _CalendarLegend(color: Colors.redAccent, label: '禁欲安宁E),
               _CalendarLegend(color: Colors.orange, label: '逸脱'),
               _CalendarLegend(color: Colors.teal, label: '土曜'),
             ],
@@ -2646,7 +2647,7 @@ abstinence_slip_details: $slipDetailsText
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
+                      '完亁E$completedCount / 全佁E${day.totalTaskCount} / 未完亁E$remainingCount',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blueGrey.shade600,
@@ -2674,11 +2675,11 @@ abstinence_slip_details: $slipDetailsText
                 filter: _CalendarTaskPreviewFilter.all,
               ),
               _buildCalendarTaskPreviewFilterChip(
-                label: '未完了のみ',
+                label: '未完亁E�Eみ',
                 filter: _CalendarTaskPreviewFilter.incompleteOnly,
               ),
               _buildCalendarTaskPreviewFilterChip(
-                label: '重要のみ',
+                label: '重要�Eみ',
                 filter: _CalendarTaskPreviewFilter.importantOnly,
               ),
             ],
@@ -2694,7 +2695,7 @@ abstinence_slip_details: $slipDetailsText
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                'この日に登録されているタスクはありません。',
+                'こ�E日に登録されてぁE��タスクはありません、E,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             )
@@ -2757,7 +2758,7 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
-                                  label: '重要',
+                                  label: '重要E,
                                   color: Colors.redAccent,
                                 ),
                             ],
@@ -2773,7 +2774,7 @@ abstinence_slip_details: $slipDetailsText
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                '他 ${day.tasks.length - 6} 件のタスクがあります。',
+                '仁E${day.tasks.length - 6} 件のタスクがあります、E,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.blueGrey.shade600,
@@ -2831,7 +2832,7 @@ abstinence_slip_details: $slipDetailsText
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
+                      '完亁E$completedCount / 全佁E${day.totalTaskCount} / 未完亁E$remainingCount',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blueGrey.shade600,
@@ -2859,11 +2860,11 @@ abstinence_slip_details: $slipDetailsText
                 filter: _CalendarTaskPreviewFilter.all,
               ),
               _buildCalendarTaskPreviewFilterChip(
-                label: '未完了のみ',
+                label: '未完亁E�Eみ',
                 filter: _CalendarTaskPreviewFilter.incompleteOnly,
               ),
               _buildCalendarTaskPreviewFilterChip(
-                label: '重要のみ',
+                label: '重要�Eみ',
                 filter: _CalendarTaskPreviewFilter.importantOnly,
               ),
             ],
@@ -2879,7 +2880,7 @@ abstinence_slip_details: $slipDetailsText
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                'この日に該当するタスクはありません。',
+                'こ�E日に該当するタスクはありません、E,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             )
@@ -2942,7 +2943,7 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
-                                  label: '重要',
+                                  label: '重要E,
                                   color: Colors.redAccent,
                                 ),
                             ],
@@ -2958,7 +2959,7 @@ abstinence_slip_details: $slipDetailsText
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                '他 $hiddenTaskCount 件のタスクがあります。',
+                '仁E$hiddenTaskCount 件のタスクがあります、E,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.blueGrey.shade600,
@@ -3038,7 +3039,7 @@ abstinence_slip_details: $slipDetailsText
 
   String _formatCalendarTaskForDetail(_HomeCalendarTask task) {
     final sourceLabel = _calendarTaskSourceLabel(task);
-    final stateLabel = task.isCompleted ? '完了' : '未完了';
+    final stateLabel = task.isCompleted ? '完亁E : '未完亁E;
     final secondary =
         task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
     final important = task.isImportant ? ' [重要]' : '';
@@ -3139,8 +3140,8 @@ abstinence_slip_details: $slipDetailsText
   _CalendarDayStatus _resolveCalendarDayStatus(_HomeCalendarDay day) {
     if (day.isFuture) {
       return const _CalendarDayStatus(
-        label: '未設定',
-        detail: '未来の日付です。まだ運用状態は確定していません。',
+        label: '未設宁E,
+        detail: '未来の日付です。まだ運用状態�E確定してぁE��せん、E,
         color: Colors.blueGrey,
         icon: Icons.radio_button_unchecked,
       );
@@ -3148,22 +3149,22 @@ abstinence_slip_details: $slipDetailsText
     if (day.hasAbstinenceSlip) {
       return const _CalendarDayStatus(
         label: '逸脱あり',
-        detail: 'その日は抑止ラインを突破しています。',
+        detail: 'そ�E日は抑止ラインを突破してぁE��す、E,
         color: Colors.orange,
         icon: Icons.warning_amber_rounded,
       );
     }
     if (!day.hasAbstinenceProtection) {
       return const _CalendarDayStatus(
-        label: '未設定',
-        detail: 'その日の禁止対象が固定されていません。',
+        label: '未設宁E,
+        detail: 'そ�E日の禁止対象が固定されてぁE��せん、E,
         color: Colors.blueGrey,
         icon: Icons.radio_button_unchecked,
       );
     }
     return const _CalendarDayStatus(
       label: '無傷',
-      detail: '禁止対象を保ったまま終えています。',
+      detail: '禁止対象を保ったまま終えてぁE��す、E,
       color: Colors.green,
       icon: Icons.verified,
     );
@@ -3189,9 +3190,9 @@ abstinence_slip_details: $slipDetailsText
         final status = _resolveCalendarDayStatus(day);
         final completedItems = <String>[
           if (day.morningDone) 'モーニング・ブリーフィング',
-          if (day.balanceDone) '口座残高確認',
-          if (day.pendingCriticalTaskCount == 0) '必須タスク完了',
-          if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip) '禁欲ガード安定',
+          if (day.balanceDone) '口座残高確誁E,
+          if (day.pendingCriticalTaskCount == 0) '忁E��タスク完亁E,
+          if (day.hasAbstinenceProtection && !day.hasAbstinenceSlip) '禁欲ガード安宁E,
         ];
         final taskItems = day.tasks
             .map((task) => _formatCalendarTaskForDetail(task))
@@ -3216,7 +3217,7 @@ abstinence_slip_details: $slipDetailsText
                     children: [
                       Expanded(
                         child: Text(
-                          '$title の状態',
+                          '$title の状慁E,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -3294,12 +3295,12 @@ abstinence_slip_details: $slipDetailsText
                       );
                     },
                     icon: const Icon(Icons.shield_moon, size: 18),
-                    label: const Text('その日の禁欲ガードへ'),
+                    label: const Text('そ�E日の禁欲ガードへ'),
                   ),
                   if (canQuickRecover) ...[
                     const SizedBox(height: 8),
                     const Text(
-                      '未達項目へショートカット',
+                      '未達頁E��へショートカチE��',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                       ),
@@ -3344,7 +3345,7 @@ abstinence_slip_details: $slipDetailsText
                             },
                             icon: const Icon(Icons.lock_clock, size: 18),
                             label: Text(
-                              '必須タスクへ (${day.pendingCriticalTaskCount}件)',
+                              '忁E��タスクへ (${day.pendingCriticalTaskCount}件)',
                             ),
                           ),
                       ],
@@ -3352,12 +3353,12 @@ abstinence_slip_details: $slipDetailsText
                   ],
                   const SizedBox(height: 8),
                   if (day.isFuture) ...[
-                    const Text('未来の日付です。まだ実績はありません。'),
+                    const Text('未来の日付です。まだ実績はありません、E),
                   ] else ...[
                     Text(
                       day.isCurrentMonth
-                          ? 'その日の継続状態と逸脱内容を確認できます。'
-                          : '前後月の補助セルです。',
+                          ? 'そ�E日の継続状態と逸脱冁E��を確認できます、E
+                          : '前後月の補助セルです、E,
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -3365,37 +3366,37 @@ abstinence_slip_details: $slipDetailsText
                     title: '登録タスク',
                     accent: Colors.indigo,
                     emptyLabel: day.isFuture
-                        ? 'まだこの日のタスクは登録されていません。'
-                        : 'この日のタスクはありません。',
+                        ? 'まだこ�E日のタスクは登録されてぁE��せん、E
+                        : 'こ�E日のタスクはありません、E,
                     items: taskItems,
                   ),
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
-                    title: '逸脱内容',
+                    title: '逸脱冁E��',
                     accent: Colors.orange,
-                    emptyLabel: day.isFuture ? 'まだ記録はありません。' : '逸脱はありません。',
+                    emptyLabel: day.isFuture ? 'まだ記録はありません、E : '逸脱はありません、E,
                     items: day.slipDetails,
                   ),
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
-                    title: '未達成項目',
+                    title: '未達�E頁E��',
                     accent: Colors.redAccent,
                     emptyLabel:
-                        day.isFuture ? 'まだ未達成判定はありません。' : '未達成項目はありません。',
+                        day.isFuture ? 'まだ未達�E判定�Eありません、E : '未達�E頁E��はありません、E,
                     items: day.missingItems,
                   ),
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
-                    title: '実施できた項目',
+                    title: '実施できた頁E��',
                     accent: Colors.green,
-                    emptyLabel: day.isFuture ? 'まだ実施記録はありません。' : '実施項目はありません。',
+                    emptyLabel: day.isFuture ? 'まだ実施記録はありません、E : '実施頁E��はありません、E,
                     items: completedItems,
                   ),
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
-                    title: 'その日に設定していた禁止対象',
+                    title: 'そ�E日に設定してぁE��禁止対象',
                     accent: Colors.blueGrey,
-                    emptyLabel: day.isFuture ? 'まだ設定はありません。' : '禁止対象は未設定です。',
+                    emptyLabel: day.isFuture ? 'まだ設定�Eありません、E : '禁止対象は未設定です、E,
                     items: day.enabledLabels,
                   ),
                 ],
@@ -3478,7 +3479,7 @@ abstinence_slip_details: $slipDetailsText
     }
 
     try {
-      // ✅ RPC: スカラー(numeric)が返ってくる想定
+      // ✁ERPC: スカラー(numeric)が返ってくる想宁E
       final res = await Supabase.instance.client.rpc('cfo_total_assets');
 
       final total = (res as num?)?.toDouble() ?? 0.0;
@@ -3515,7 +3516,7 @@ abstinence_slip_details: $slipDetailsText
           key: Key('home_page_title'),
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('経営コックピット'),
+            Text('経営コチE��ピッチE),
           ],
         ),
         flexibleSpace: DecoratedBox(
@@ -3543,7 +3544,7 @@ abstinence_slip_details: $slipDetailsText
           IconButton(
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeService.toggleTheme(),
-            tooltip: 'テーマ切替',
+            tooltip: 'チE�Eマ�E替',
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -3551,17 +3552,17 @@ abstinence_slip_details: $slipDetailsText
               context,
               MaterialPageRoute(builder: (_) => const SettingsPage()),
             ),
-            tooltip: '設定',
+            tooltip: '設宁E,
           ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),
-            tooltip: 'ログアウト',
+            tooltip: 'ログアウチE,
           ),
         ],
       ),
 
-      // ✅ 改善: RefreshIndicator を追加（KPIのみ再取得できる）
+      // ✁E改喁E RefreshIndicator を追加�E�EPIのみ再取得できる�E�E
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -3744,7 +3745,7 @@ abstinence_slip_details: $slipDetailsText
                                     ),
                                   ),
                                   title: const Text(
-                                    '2026 衆院選 勝利戦略室',
+                                    '2026 衁E��選 勝利戦略室',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -3752,7 +3753,7 @@ abstinence_slip_details: $slipDetailsText
                                     ),
                                   ),
                                   subtitle: const Text(
-                                    'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                                    'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します、E,
                                     style: TextStyle(color: Colors.white70),
                                   ),
                                   trailing: const Icon(
@@ -3779,7 +3780,7 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             _buildGridMenu(context, isCompact, [
                               _MenuData(
-                                '禁欲ガード',
+                                '禁欲ガーチE,
                                 Icons.shield_moon,
                                 Colors.redAccent,
                                 () => _openAbstinenceGuard(context),
@@ -3792,12 +3793,12 @@ abstinence_slip_details: $slipDetailsText
                                         : null,
                               ),
                               _MenuData(
-                                '断捨離 (デジタル)',
+                                '断捨離 (チE��タル)',
                                 Icons.cleaning_services,
                                 Colors.orange,
                                 () => _nav(context, const DanshariPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 '断捨離 (リアル)',
@@ -3810,7 +3811,7 @@ abstinence_slip_details: $slipDetailsText
                                   ),
                                 ),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 'AI稼働モニター',
@@ -3818,10 +3819,10 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.orange,
                                 () => _nav(context, const AiStatusPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
-                                '週末ストック / 思考ネタ',
+                                '週末ストック / 思老E��タ',
                                 Icons.check_circle_outline,
                                 Colors.teal,
                                 () => _nav(context, const StockTasksPage()),
@@ -3829,7 +3830,7 @@ abstinence_slip_details: $slipDetailsText
                                 badgeLabel: highlightStock ? 'SAT' : null,
                               ),
                               _MenuData(
-                                '思考停止ログ（読書ループ）',
+                                '思老E��止ログ�E�読書ループ！E,
                                 Icons.access_time_filled,
                                 Colors.indigo,
                                 () => _nav(context, const MindlessTaskPage()),
@@ -3837,12 +3838,12 @@ abstinence_slip_details: $slipDetailsText
                                 badgeLabel: highlightCritical ? 'NEXT' : null,
                               ),
                               _MenuData(
-                                'ワードローブ整理',
+                                'ワードローブ整琁E,
                                 Icons.checkroom,
                                 Colors.brown,
                                 () => _nav(context, const WardrobePage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 '暗記ドリル (日課)',
@@ -3850,7 +3851,7 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.indigo,
                                 () => _nav(context, const MemoryDrillPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 '消化してから次へ',
@@ -3858,15 +3859,15 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.cyan,
                                 () => _nav(context, const DigestQueuePage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
-                                '思考アンカー',
+                                '思老E��ンカー',
                                 Icons.center_focus_strong,
                                 Colors.indigo,
                                 () => _nav(context, const ThoughtAnchorPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                             ]),
                             const SizedBox(height: 24),
@@ -3877,7 +3878,7 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             _buildGridMenu(context, isCompact, [
                               _MenuData(
-                                '財務管理 (CFO)',
+                                '財務管琁E(CFO)',
                                 Icons.account_balance_wallet,
                                 Colors.green,
                                 () => _openCfoOffice(context),
@@ -3890,13 +3891,13 @@ abstinence_slip_details: $slipDetailsText
                                         : null,
                               ),
                               _MenuData(
-                                '健康管理 (CHO)',
+                                '健康管琁E(CHO)',
                                 Icons.medical_services,
                                 Colors.teal,
                                 () => _nav(context, const ChoOfficePage()),
                               ),
                               _MenuData(
-                                '人事厚生 (CHRO)',
+                                '人事厚甁E(CHRO)',
                                 Icons.diversity_3,
                                 Colors.indigo,
                                 () => _nav(context, const ChroOfficePage()),
@@ -3910,20 +3911,26 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             _buildGridMenu(context, isCompact, [
                               _MenuData(
-                                '市場分析 (CMO)',
+                                '市場刁E�� (CMO)',
                                 Icons.trending_up,
                                 Colors.pink,
                                 () => _nav(context, const CmoOfficePage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
-                                'AI組織OS',
+                                'Growth Mission',
+                                Icons.rocket_launch,
+                                Colors.pinkAccent,
+                                () => _nav(context, const GrowthMissionPage()),
+                              ),
+                              _MenuData(
+                                'AI�g�D',
                                 Icons.account_tree,
                                 Colors.deepPurple,
                                 () => _nav(context, AgentOrgPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 'メモ一覧 (CKO)',
@@ -3931,15 +3938,15 @@ abstinence_slip_details: $slipDetailsText
                                 Colors.blue,
                                 () => _nav(context, const NoteListPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
-                                '新規事業起案',
+                                '新規事業起桁E,
                                 Icons.edit_note,
                                 Colors.blue,
                                 () => _nav(context, const NoteEditorPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 'Gemini大学',
@@ -3950,15 +3957,15 @@ abstinence_slip_details: $slipDetailsText
                                   const GeminiUniversityV2Page(),
                                 ),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
-                                'マインドマップ (思考整理)',
+                                'マインド�EチE�E (思老E��琁E',
                                 Icons.hub,
                                 Colors.blue,
                                 () => _nav(context, const MindMapPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                               _MenuData(
                                 '行動・発言レビュー',
@@ -3967,12 +3974,12 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(context, BehaviorReviewPage()),
                               ),
                               _MenuData(
-                                '現実直視ノート',
+                                '現実直視ノーチE,
                                 Icons.fact_check,
                                 Colors.redAccent,
                                 () => _nav(context, const RealityCheckPage()),
                                 isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
+                                lockedReason: '先に忁E��導線を完亁E��てください、E,
                               ),
                             ]),
                             const SizedBox(height: 40),
@@ -4074,7 +4081,7 @@ abstinence_slip_details: $slipDetailsText
           '緊急役員会議',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
+        subtitle: const Text('CEOとして全AI役員を招雁E��、直面してぁE��課題を解決します、E),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => Navigator.push(
           context,
@@ -4126,11 +4133,11 @@ abstinence_slip_details: $slipDetailsText
           child: const Icon(Icons.wb_sunny, color: Colors.white, size: 28),
         ),
         title: Text(
-          isHighlighted ? 'モーニング・ブリーフィング（最優先）' : 'モーニング・ブリーフィング',
+          isHighlighted ? 'モーニング・ブリーフィング�E�最優先！E : 'モーニング・ブリーフィング',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Text(
-          isHighlighted ? 'まず朝の優先順位を固定してください。' : '今日のタスクと優先順位を確認します。',
+          isHighlighted ? 'まず朝の優先頁E��を固定してください、E : '今日のタスクと優先頁E��を確認します、E,
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => _openMorningBriefing(context),
@@ -4198,7 +4205,7 @@ abstinence_slip_details: $slipDetailsText
                   ? () {
                       _showLockedMenuSnackBar(
                         context,
-                        item.lockedReason ?? '先に必須導線を完了してください。',
+                        item.lockedReason ?? '先に忁E��導線を完亁E��てください、E,
                       );
                     }
                   : item.onTap,
@@ -4335,20 +4342,20 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_ceo'),
                   isDark: isDark,
                   officeLabel: 'CEO',
-                  title: '全体進行',
+                  title: '全体進衁E,
                   headline: '$coreFlowDone/3',
-                  subtitle: '今日の必須導線',
+                  subtitle: '今日の忁E��導緁E,
                   icon: Icons.business_center,
                   accentColor: Colors.redAccent,
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem('次アクション', nextAction.title),
                     _OfficeKpiMetricItem(
-                      '必須タスク残',
+                      '忁E��タスク殁E,
                       '${snapshot.pendingCriticalTaskCount}件',
                     ),
                     _OfficeKpiMetricItem(
-                      '前日超え目標',
-                      goal.isAchieved ? '達成済み' : 'あと ${goal.remainingCount}件',
+                      '前日趁E��目樁E,
+                      goal.isAchieved ? '達�E済み' : 'あと ${goal.remainingCount}件',
                     ),
                   ],
                   actionLabel: '役員会議へ',
@@ -4361,15 +4368,15 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_cfo'),
                   isDark: isDark,
                   officeLabel: 'CFO',
-                  title: '財務',
+                  title: '財勁E,
                   headline:
                       hasAssetData ? _formatYen(overview.latestTotal) : '--',
-                  subtitle: '総資産',
+                  subtitle: '総賁E��',
                   icon: Icons.account_balance_wallet,
                   accentColor: Colors.green,
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
-                      '今月差額',
+                      '今月差顁E,
                       _formatSignedYen(
                         snapshot.monthlyCashflowSummary.netTotal.toDouble(),
                       ),
@@ -4395,7 +4402,7 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_cmo'),
                   isDark: isDark,
                   officeLabel: 'CMO',
-                  title: '流入',
+                  title: '流�E',
                   headline: '${marketing.todayViews}',
                   subtitle: '今日のLP View',
                   icon: Icons.campaign,
@@ -4411,7 +4418,7 @@ abstinence_slip_details: $slipDetailsText
                       _shareChannelLabel(marketing.topShareChannelKey),
                     ),
                   ],
-                  actionLabel: '分析を見る',
+                  actionLabel: '刁E��を見る',
                   onTap: () => _nav(context, const AdminAnalyticsPage()),
                 ),
               ),
@@ -4421,22 +4428,22 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_cho'),
                   isDark: isDark,
                   officeLabel: 'CHO',
-                  title: '集中防衛',
+                  title: '雁E��防衁E,
                   headline: '${snapshot.abstinenceFocusCount}件',
-                  subtitle: '遮断中の邪魔',
+                  subtitle: '遮断中の邪魁E,
                   icon: Icons.shield_moon,
                   accentColor: Colors.teal,
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
                       '逸脱回数',
-                      '${snapshot.abstinenceSlipCount}回',
+                      '${snapshot.abstinenceSlipCount}囁E,
                     ),
                     _OfficeKpiMetricItem(
-                      '主犯候補',
-                      snapshot.abstinencePrimaryLabel ?? '未検出',
+                      '主犯候裁E,
+                      snapshot.abstinencePrimaryLabel ?? '未検�E',
                     ),
                     _OfficeKpiMetricItem(
-                      '切断サイン',
+                      '刁E��サイン',
                       snapshot.abstinencePrimarySignal ?? '監視中',
                     ),
                   ],
@@ -4450,22 +4457,22 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_chro'),
                   isDark: isDark,
                   officeLabel: 'CHRO',
-                  title: '実行管理',
+                  title: '実行管琁E,
                   headline: '${goal.todayCompletedCount}/${goal.targetCount}',
-                  subtitle: '今日の完了数 / 目標',
+                  subtitle: '今日の完亁E�� / 目樁E,
                   icon: Icons.groups_2,
                   accentColor: Colors.indigo,
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
-                      '昨日の完了',
+                      '昨日の完亁E,
                       '${goal.yesterdayCompletedCount}件',
                     ),
                     _OfficeKpiMetricItem(
                       '残り',
-                      goal.isAchieved ? '達成済み' : '${goal.remainingCount}件',
+                      goal.isAchieved ? '達�E済み' : '${goal.remainingCount}件',
                     ),
                     _OfficeKpiMetricItem(
-                      '重要タスク残',
+                      '重要タスク殁E,
                       '${snapshot.pendingCriticalTaskCount}件',
                     ),
                   ],
@@ -4703,7 +4710,7 @@ abstinence_slip_details: $slipDetailsText
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '総資産',
+                '総賁E��',
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
@@ -4726,7 +4733,7 @@ abstinence_slip_details: $slipDetailsText
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '${_formatYen(latest)} (前日比) ${_formatSignedYen(dayDelta)} (${_formatSignedPercent(dayRate)})',
+                  '${_formatYen(latest)} (前日毁E ${_formatSignedYen(dayDelta)} (${_formatSignedPercent(dayRate)})',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -4740,7 +4747,7 @@ abstinence_slip_details: $slipDetailsText
                 children: [
                   _buildKpiTableCard(
                     context,
-                    title: '増減',
+                    title: '増渁E,
                     isDark: isDark,
                     flexes: const [1.2, 1.1, 1.5],
                     rows: [
@@ -4763,12 +4770,12 @@ abstinence_slip_details: $slipDetailsText
                   ),
                   _buildKpiTableCard(
                     context,
-                    title: '内訳',
+                    title: '冁E��',
                     isDark: isDark,
                     flexes: const [2.0, 1.2, 1.0],
                     rows: [
                       [
-                        '預金・現金・暗号資産',
+                        '預��・現金�E暗号賁E��',
                         _formatYen(overview.cashAndCryptoTotal),
                         _formatPercentRatio(
                           overview.cashAndCryptoTotal,
@@ -4776,7 +4783,7 @@ abstinence_slip_details: $slipDetailsText
                         ),
                       ],
                       [
-                        '株式(現物)',
+                        '株弁E現物)',
                         _formatYen(overview.equityTotal),
                         _formatPercentRatio(
                           overview.equityTotal,
@@ -4793,12 +4800,12 @@ abstinence_slip_details: $slipDetailsText
                 child: TextButton.icon(
                   onPressed: () => _nav(context, const CfoOfficePage()),
                   icon: const Icon(Icons.arrow_circle_right, size: 18),
-                  label: const Text('詳細(資産内訳)を見る'),
+                  label: const Text('詳細(賁E��冁E��)を見る'),
                 ),
               ),
               const SizedBox(height: 6),
               const Text(
-                '資産の時系列推移',
+                '賁E��の時系列推移',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -4895,7 +4902,7 @@ abstinence_slip_details: $slipDetailsText
         _buildAsyncKpiCard(
           context,
           isDark,
-          '総資産 (CFO)',
+          '総賁E�� (CFO)',
           Icons.account_balance,
           Colors.green,
           _totalAssetsFuture,
@@ -4911,7 +4918,7 @@ abstinence_slip_details: $slipDetailsText
         _buildKpiCard(
           context,
           isDark,
-          '必須タスク残',
+          '忁E��タスク殁E,
           '${snapshot.pendingCriticalTaskCount}件',
           Icons.lock_clock,
           Colors.indigo,
@@ -4919,7 +4926,7 @@ abstinence_slip_details: $slipDetailsText
         _buildKpiCard(
           context,
           isDark,
-          '週末ストック残',
+          '週末ストック殁E,
           '${snapshot.pendingStockTaskCount}件',
           Icons.inventory_2,
           Colors.teal,
@@ -5004,7 +5011,7 @@ abstinence_slip_details: $slipDetailsText
     if (points.isEmpty) {
       return const SizedBox(
         height: 240,
-        child: Center(child: Text('資産推移データがありません')),
+        child: Center(child: Text('賁E��推移チE�Eタがありません')),
       );
     }
 
@@ -5054,7 +5061,7 @@ abstinence_slip_details: $slipDetailsText
           children: [
             _buildTrendLegendChip(
               isDark: isDark,
-              label: '資産',
+              label: '賁E��',
               color: Colors.redAccent,
             ),
             if (hasWasteSeries)
@@ -5200,7 +5207,7 @@ abstinence_slip_details: $slipDetailsText
                       return LineTooltipItem(
                         isWasteSpot
                             ? '浪費 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.waste)}'
-                            : '資産 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
+                            : '賁E�� ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
                         TextStyle(
                           color: isDark ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.w700,
@@ -5326,7 +5333,7 @@ abstinence_slip_details: $slipDetailsText
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '浪費の内訳',
+            '浪費の冁E��',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
@@ -5348,7 +5355,7 @@ abstinence_slip_details: $slipDetailsText
               ),
               _buildWasteMetricCard(
                 isDark: isDark,
-                title: '最大カテゴリ',
+                title: '最大カチE��リ',
                 value: overview.topWasteCategory ?? '--',
                 accent: Colors.blueGrey,
               ),
@@ -5504,9 +5511,9 @@ abstinence_slip_details: $slipDetailsText
 
   String _kpiTrendRangeLabel(_KpiTrendRange range) {
     return switch (range) {
-      _KpiTrendRange.oneMonth => '1ヶ月',
-      _KpiTrendRange.threeMonths => '3ヶ月',
-      _KpiTrendRange.sixMonths => '6ヶ月',
+      _KpiTrendRange.oneMonth => '1ヶ朁E,
+      _KpiTrendRange.threeMonths => '3ヶ朁E,
+      _KpiTrendRange.sixMonths => '6ヶ朁E,
       _KpiTrendRange.oneYear => '1年',
       _KpiTrendRange.all => '全期間',
     };
@@ -5554,16 +5561,16 @@ abstinence_slip_details: $slipDetailsText
   }
 
   String _formatYen(double value) {
-    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
+    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}冁E;
   }
 
   String _formatSignedYen(double? value) {
     if (value == null) return '--';
     final rounded = value.round();
-    if (rounded == 0) return '0円';
+    if (rounded == 0) return '0冁E;
     final absText = NumberFormat('#,##0', 'ja_JP').format(rounded.abs());
     final sign = rounded > 0 ? '+' : '-';
-    return '$sign$absText円';
+    return '$sign$absText冁E;
   }
 
   String _formatSignedPercent(double? ratio) {
@@ -5583,9 +5590,9 @@ abstinence_slip_details: $slipDetailsText
     if (absValue >= 10000) {
       final man = value / 10000;
       final digits = man.abs() >= 100 ? 0 : 1;
-      return '${man.toStringAsFixed(digits)}万';
+      return '${man.toStringAsFixed(digits)}丁E;
     }
-    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}円';
+    return '${NumberFormat('#,##0', 'ja_JP').format(value.round())}冁E;
   }
 
   String _formatPercentRatio(double part, double total) {
@@ -5604,12 +5611,12 @@ abstinence_slip_details: $slipDetailsText
   String _formatManLabel(double value) {
     final man = value / 10000;
     if (man.abs() >= 100) {
-      return '${man.toStringAsFixed(0)}万円';
+      return '${man.toStringAsFixed(0)}丁E�E';
     }
-    return '${man.toStringAsFixed(1)}万円';
+    return '${man.toStringAsFixed(1)}丁E�E';
   }
 
-  // 非同期データ用KPIカード
+  // 非同期データ用KPIカーチE
   Widget _buildAsyncKpiCard(
     BuildContext context,
     bool isDark,
@@ -5621,7 +5628,7 @@ abstinence_slip_details: $slipDetailsText
     return FutureBuilder<String>(
       future: futureValue,
       builder: (context, snapshot) {
-        // ローディング中はインジケータ
+        // ローチE��ング中はインジケータ
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Card(
             elevation: 2,
@@ -5649,7 +5656,7 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
-  // 通常のKPIカード
+  // 通常のKPIカーチE
   Widget _buildKpiCard(
     BuildContext context,
     bool isDark,
@@ -5734,7 +5741,7 @@ abstinence_slip_details: $slipDetailsText
   }
 }
 
-// 時計表示（独立Widget）
+// 時計表示�E�独立Widget�E�E
 class _MenuData {
   final String title;
   final IconData icon;
@@ -5923,20 +5930,20 @@ class _HomeMonthlyCashflowSummary {
   bool get needsReview => !reviewDone;
 
   String get monthLabel =>
-      month == null ? '今月' : DateFormat('M月').format(month!);
+      month == null ? '今月' : DateFormat('M朁E).format(month!);
 
   String get summaryLine {
     if (recordCount == 0) {
-      return '$monthLabelの収支がまだ記録されていません。先に全体像を把握してください。';
+      return '$monthLabelの収支がまだ記録されてぁE��せん。�Eに全体像を把握してください、E;
     }
     if (incomeCount == 0) {
-      return '$monthLabelは支出のみ記録されています。収入側も含めて差額を確認してください。';
+      return '$monthLabelは支出のみ記録されてぁE��す。収入側も含めて差額を確認してください、E;
     }
     if (expenseCount == 0) {
-      return '$monthLabelは収入のみ記録されています。支出側も含めて差額を確認してください。';
+      return '$monthLabelは収�Eのみ記録されてぁE��す。支出側も含めて差額を確認してください、E;
     }
-    final netLabel = netTotal >= 0 ? '黒字' : '赤字';
-    return '$monthLabelの収入${NumberFormat('#,##0').format(incomeTotal)}円、支出${NumberFormat('#,##0').format(expenseTotal)}円、差額${NumberFormat('#,##0').format(netTotal.abs())}円の$netLabelです。';
+    final netLabel = netTotal >= 0 ? '黒孁E : '赤孁E;
+    return '$monthLabelの収�E${NumberFormat('#,##0').format(incomeTotal)}冁E��支出${NumberFormat('#,##0').format(expenseTotal)}冁E��差顁E{NumberFormat('#,##0').format(netTotal.abs())}冁E�E$netLabelです、E;
   }
 }
 
