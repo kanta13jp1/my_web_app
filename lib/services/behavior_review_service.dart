@@ -141,7 +141,8 @@ class BehaviorReviewService {
   }
 
   static BehaviorReviewSummary summarize(
-      Iterable<BehaviorReviewEntry> entries) {
+    Iterable<BehaviorReviewEntry> entries,
+  ) {
     var actionCount = 0;
     var utteranceCount = 0;
     final sourceCounts = <String, int>{};
@@ -152,8 +153,11 @@ class BehaviorReviewService {
       } else {
         utteranceCount += 1;
       }
-      sourceCounts.update(entry.source, (value) => value + 1,
-          ifAbsent: () => 1);
+      sourceCounts.update(
+        entry.source,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
     }
 
     return BehaviorReviewSummary(

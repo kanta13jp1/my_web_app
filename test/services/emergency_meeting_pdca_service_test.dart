@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/board_meeting.dart';
@@ -256,9 +256,9 @@ void main() {
       expect(report.abstinenceRules, hasLength(3));
       expect(report.riskAlert, isNotEmpty);
       expect(report.decodeNotice, isNotNull);
-      expect(report.nextMeetingMetrics['continuation_completion_rate_percent'],
-          25);
+      expect(report.nextMeetingMetrics['continuation_completion_rate_percent'], 25,);
       expect(report.nextMeetingMetrics['abstinence_violation_count'], 2);
     });
   });
 }
+

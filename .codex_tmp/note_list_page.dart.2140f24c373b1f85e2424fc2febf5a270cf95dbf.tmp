@@ -5,13 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   duplicate,
-  publish,
-  unpublish,
   delete,
 }
 
@@ -51,19 +48,16 @@ class NoteListPage extends StatefulWidget {
 
 class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
-  late final PublicMemoService _publicMemoService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
-  Set<String> _publishedNoteIds = <String>{};
 
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
-    _publicMemoService = PublicMemoService(_supabase);
     _fetchNotes();
   }
 
@@ -76,7 +70,6 @@ class _NoteListPageState extends State<NoteListPage> {
           setState(() {
             _notes = [];
             _draftEntries = drafts;
-            _publishedNoteIds = <String>{};
             _isLoading = false;
           });
         }
@@ -94,18 +87,12 @@ class _NoteListPageState extends State<NoteListPage> {
           .order('is_favorite', ascending: false)
           .order('created_at', ascending: false);
       final notes = List<Map<String, dynamic>>.from(data);
-      final results = await Future.wait<dynamic>([
-        _loadDraftEntries(notes),
-        _loadPublishedNoteIds(userId),
-      ]);
-      final drafts = results[0] as List<_LocalDraftEntry>;
-      final publishedNoteIds = results[1] as Set<String>;
+      final drafts = await _loadDraftEntries(notes);
 
       if (!mounted) return;
       setState(() {
         _notes = notes;
         _draftEntries = drafts;
-        _publishedNoteIds = publishedNoteIds;
         _isLoading = false;
       });
     } catch (e) {
@@ -121,11 +108,6 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
-  Future<Set<String>> _loadPublishedNoteIds(String userId) async {
-    final memos = await _publicMemoService.getUserPublicMemos(userId);
-    return memos.map((memo) => memo.noteId.toString()).toSet();
-  }
-
   DateTime _createdAtOf(Map<String, dynamic> note) {
     final raw = note['created_at']?.toString();
     final parsed = raw == null ? null : DateTime.tryParse(raw);
@@ -133,8 +115,6 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   String _noteId(Map<String, dynamic> note) => note['id']?.toString() ?? '';
-
-  int? _noteNumericId(Map<String, dynamic> note) => int.tryParse(_noteId(note));
 
   String _noteTitle(Map<String, dynamic> note) {
     final title = (note['title'] as String? ?? '').trim();
@@ -145,9 +125,6 @@ class _NoteListPageState extends State<NoteListPage> {
       (note['content'] as String? ?? '').trim();
 
   bool _isFavorite(Map<String, dynamic> note) => note['is_favorite'] == true;
-
-  bool _isPublished(Map<String, dynamic> note) =>
-      _publishedNoteIds.contains(_noteId(note));
 
   DateTime? _reminderDateOf(Map<String, dynamic> note) {
     final raw = note['reminder_date']?.toString();
@@ -328,79 +305,6 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
-  Future<void> _publishNote(
-    BuildContext context,
-    Map<String, dynamic> note,
-  ) async {
-    final userId = _supabase.auth.currentUser?.id;
-    final noteId = _noteNumericId(note);
-    if (userId == null || noteId == null) {
-      if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開するには保存済みメモが必要です')),
-      );
-      return;
-    }
-
-    final success = await _publicMemoService.publishMemo(
-      noteId: noteId,
-      userId: userId,
-      title: _noteTitle(note),
-      content: _noteContent(note),
-      category: null,
-    );
-
-    if (!mounted || !context.mounted) return;
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開メモの公開に失敗しました')),
-      );
-      return;
-    }
-
-    setState(() {
-      _publishedNoteIds = <String>{..._publishedNoteIds, _noteId(note)};
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('「${_noteTitle(note)}」を公開メモにしました'),
-        action: SnackBarAction(
-          label: '公開一覧',
-          onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _unpublishNote(
-    BuildContext context,
-    Map<String, dynamic> note,
-  ) async {
-    final userId = _supabase.auth.currentUser?.id;
-    final noteId = _noteNumericId(note);
-    if (userId == null || noteId == null) {
-      return;
-    }
-
-    final success = await _publicMemoService.unpublishMemo(noteId, userId);
-    if (!mounted || !context.mounted) return;
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開メモの公開停止に失敗しました')),
-      );
-      return;
-    }
-
-    setState(() {
-      _publishedNoteIds = _publishedNoteIds
-          .where((publishedId) => publishedId != _noteId(note))
-          .toSet();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('「${_noteTitle(note)}」の公開を停止しました')),
-    );
-  }
-
   Future<bool> _confirmDeleteNote(
     BuildContext context,
     Map<String, dynamic> note,
@@ -438,8 +342,6 @@ class _NoteListPageState extends State<NoteListPage> {
 
     final deletedTitle = _noteTitle(note);
     final now = DateTime.now().toIso8601String();
-    final userId = _supabase.auth.currentUser?.id;
-    final numericNoteId = _noteNumericId(note);
 
     try {
       await _supabase.from('notes').update({
@@ -448,10 +350,6 @@ class _NoteListPageState extends State<NoteListPage> {
         'updated_at': now,
       }).eq('id', noteId);
 
-      if (userId != null && numericNoteId != null) {
-        await _publicMemoService.unpublishMemo(numericNoteId, userId);
-      }
-
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('$_draftKeyPrefix$noteId');
 
@@ -459,7 +357,6 @@ class _NoteListPageState extends State<NoteListPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('「$deletedTitle」を削除しました')),
       );
-      _publishedNoteIds.remove(noteId);
       await _fetchNotes();
     } catch (e) {
       if (!mounted || !context.mounted) return;
@@ -949,20 +846,12 @@ class _NoteListPageState extends State<NoteListPage> {
                 switch (action) {
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
-                    break;
-                  case _NoteCardAction.publish:
-                    _publishNote(context, note);
-                    break;
-                  case _NoteCardAction.unpublish:
-                    _unpublishNote(context, note);
-                    break;
                   case _NoteCardAction.delete:
                     _deleteNote(context, note);
-                    break;
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem<_NoteCardAction>(
+              itemBuilder: (context) => const [
+                PopupMenuItem<_NoteCardAction>(
                   value: _NoteCardAction.duplicate,
                   child: Row(
                     children: [
@@ -973,23 +862,6 @@ class _NoteListPageState extends State<NoteListPage> {
                   ),
                 ),
                 PopupMenuItem<_NoteCardAction>(
-                  value: _isPublished(note)
-                      ? _NoteCardAction.unpublish
-                      : _NoteCardAction.publish,
-                  child: Row(
-                    children: [
-                      Icon(
-                        _isPublished(note)
-                            ? Icons.public_off_outlined
-                            : Icons.public,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(_isPublished(note) ? '公開停止' : '公開する'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<_NoteCardAction>(
                   value: _NoteCardAction.delete,
                   child: Row(
                     children: [
@@ -1059,16 +931,6 @@ class _NoteListPageState extends State<NoteListPage> {
             icon: const Icon(Icons.refresh),
             onPressed: _fetchNotes,
           ),
-          IconButton(
-            icon: const Icon(Icons.public),
-            tooltip: '公開メモ一覧',
-            onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.file_upload_outlined),
-            tooltip: 'インポート',
-            onPressed: () => Navigator.of(context).pushNamed('/import'),
-          ),
         ],
       ),
       body: _isLoading
@@ -1107,12 +969,6 @@ class _NoteListPageState extends State<NoteListPage> {
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _navigateToEditor(context),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).pushNamed('/import'),
-                        icon: const Icon(Icons.file_upload_outlined),
-                        label: const Text('Notion / Evernote を取り込む'),
                       ),
                     ],
                   ),

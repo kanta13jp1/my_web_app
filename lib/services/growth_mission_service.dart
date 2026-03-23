@@ -296,9 +296,10 @@ $inviteUrl
           .select()
           .eq('user_id', userId)
           .maybeSingle();
-      if (existing is Map) {
-        return ReferralCode.fromJson(Map<String, dynamic>.from(existing));
+      if (existing == null) {
+        return null;
       }
+      return ReferralCode.fromJson(existing);
     } catch (error) {
       debugPrint('Referral code fetch failed: $error');
     }
@@ -329,11 +330,12 @@ $inviteUrl
           .select('user_id, referral_code')
           .eq('referral_code', pendingCode)
           .maybeSingle();
-      if (referrer is! Map) {
+      if (referrer == null) {
         return;
       }
+      final referrerMap = Map<String, dynamic>.from(referrer);
 
-      final referrerUserId = referrer['user_id']?.toString();
+      final referrerUserId = referrerMap['user_id']?.toString();
       if (referrerUserId == null || referrerUserId == user.id) {
         await clearPendingReferralCode();
         return;

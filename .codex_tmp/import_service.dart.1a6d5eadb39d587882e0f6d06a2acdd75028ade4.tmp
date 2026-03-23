@@ -56,7 +56,7 @@ class ImportService {
           fileName: fileName,
           notes: parseNotionCsvBytes(bytes),
           warnings: const <String>[
-            'Notion CSV „ÅØ Title / Name / Content / Text Á≥ª„ÅÆÂàó„ÇíÂÑ™ÂÖà„Åó„Å¶Ëß£Êûê„Åó„Åæ„Åô„ÄÇ',
+            'Notion CSV ÇÕ Title / Name / Content / Text ånÇÃóÒÇóDêÊÇµÇƒâêÕÇµÇ‹Ç∑ÅB',
           ],
         );
       case 'evernote':
@@ -65,7 +65,7 @@ class ImportService {
           fileName: fileName,
           notes: parseEvernoteEnexBytes(bytes),
           warnings: const <String>[
-            'Evernote ENEX „ÅØÊú¨Êñá„ÅÆ HTML „ÇíËêΩ„Å®„Åó„Å¶„Éó„É¨„Éº„É≥„ÉÜ„Ç≠„Çπ„Éà„Å®„Åó„Å¶Âèñ„ÇäËæº„Åø„Åæ„Åô„ÄÇ',
+            'Evernote ENEX ÇÕñ{ï∂ÇÃ HTML ÇóéÇ∆ÇµÇƒÉvÉåÅ[ÉìÉeÉLÉXÉgÇ∆ÇµÇƒéÊÇËçûÇ›Ç‹Ç∑ÅB',
           ],
         );
       case 'markdown':
@@ -95,11 +95,11 @@ class ImportService {
     final header = rows.first.map((cell) => cell.trim().toLowerCase()).toList();
     final titleIndex = _findColumnIndex(
       header,
-      const <String>['title', 'name', 'note', '„Éö„Éº„Ç∏', '„Çø„Ç§„Éà„É´'],
+      const <String>['title', 'name', 'note', '„Éö„ÅE„Ç∏', '„Çø„Ç§„Éà„É´'],
     );
     final contentIndex = _findColumnIndex(
       header,
-      const <String>['content', 'text', 'body', 'plain text', 'Êú¨Êñá'],
+      const <String>['content', 'text', 'body', 'plain text', 'ñ{ï∂'],
     );
     final tagsIndex = _findColumnIndex(
       header,
@@ -237,59 +237,13 @@ class ImportService {
     return inserted;
   }
 
-  List<List<String>> _parseCsv(String input) {
-    final rows = <List<String>>[];
-    final currentRow = <String>[];
-    final currentCell = StringBuffer();
-    var inQuotes = false;
-
-    for (var i = 0; i < input.length; i++) {
-      final char = input[i];
-      final next = i + 1 < input.length ? input[i + 1] : null;
-
-      if (char == '"') {
-        if (inQuotes && next == '"') {
-          currentCell.write('"');
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-        continue;
-      }
-
-      if (char == ',' && !inQuotes) {
-        currentRow.add(currentCell.toString());
-        currentCell.clear();
-        continue;
-      }
-
-      if ((char == '\n' || char == '\r') && !inQuotes) {
-        if (char == '\r' && next == '\n') {
-          i++;
-        }
-        currentRow.add(currentCell.toString());
-        rows.add(List<String>.from(currentRow));
-        currentRow.clear();
-        currentCell.clear();
-        continue;
-      }
-
-      currentCell.write(char);
-    }
-
-    if (currentCell.isNotEmpty || currentRow.isNotEmpty) {
-      currentRow.add(currentCell.toString());
-      rows.add(List<String>.from(currentRow));
-    }
-
-    return rows;
-  }
-
   int _findColumnIndex(List<String> header, List<String> candidates) {
-    for (final candidate in candidates) {
-      final index = header.indexOf(candidate);
-      if (index != -1) {
-        return index;
+    for (var i = 0; i < header.length; i++) {
+      final value = header[i];
+      for (final candidate in candidates) {
+        if (value == candidate || value.contains(candidate)) {
+          return i;
+        }
       }
     }
     return -1;
@@ -302,46 +256,89 @@ class ImportService {
     return row[index];
   }
 
+  List<List<String>> _parseCsv(String text) {
+    final rows = <List<String>>[];
+    final row = <String>[];
+    var cell = StringBuffer();
+    var inQuotes = false;
+
+    for (var i = 0; i < text.length; i++) {
+      final char = text[i];
+
+      if (char == '"') {
+        if (inQuotes && i + 1 < text.length && text[i + 1] == '"') {
+          cell.write('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char == ',' && !inQuotes) {
+        row.add(cell.toString());
+        cell = StringBuffer();
+        continue;
+      }
+
+      if ((char == '\n' || char == '\r') && !inQuotes) {
+        if (char == '\r' && i + 1 < text.length && text[i + 1] == '\n') {
+          i++;
+        }
+        row.add(cell.toString());
+        cell = StringBuffer();
+        if (row.any((value) => value.isNotEmpty)) {
+          rows.add(List<String>.from(row));
+        }
+        row.clear();
+        continue;
+      }
+
+      cell.write(char);
+    }
+
+    row.add(cell.toString());
+    if (row.any((value) => value.isNotEmpty)) {
+      rows.add(List<String>.from(row));
+    }
+
+    return rows;
+  }
+
   String _extractTag(String source, String tagName) {
     final match = RegExp(
-      '<$tagName[^>]*>([\\s\\S]*?)</$tagName>',
+      '<$tagName>([\\s\\S]*?)</$tagName>',
       caseSensitive: false,
     ).firstMatch(source);
     return match?.group(1) ?? '';
   }
 
-  String _stripHtml(String value) {
-    return value
+  String _stripHtml(String source) {
+    return source
         .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</div\s*>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</p\s*>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '');
+        .replaceAll(RegExp(r'</div>|</p>|</li>|</h[1-6]>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<[^>]+>'), ' ');
   }
 
-  String _normalizeWhitespace(String value) {
-    return value
+  String _normalizeWhitespace(String source) {
+    final lines = source
         .split('\n')
-        .map((line) => line.trim())
+        .map((line) => line.replaceAll(RegExp(r'\s+'), ' ').trim())
         .where((line) => line.isNotEmpty)
-        .join('\n');
+        .toList();
+    return lines.join('\n');
   }
 
   String _deriveTitleFromMarkdown(String text, String fileName) {
-    final lines = const LineSplitter().convert(text);
+    final lines = text.split('\n');
     for (final line in lines) {
       final trimmed = line.trim();
       if (trimmed.startsWith('# ')) {
         return trimmed.substring(2).trim();
       }
-      if (trimmed.isNotEmpty) {
-        break;
-      }
     }
 
-    final dotIndex = fileName.lastIndexOf('.');
-    if (dotIndex > 0) {
-      return fileName.substring(0, dotIndex);
-    }
-    return fileName;
+    final normalizedName = fileName.replaceAll(RegExp(r'\.[^.]+$'), '').trim();
+    return normalizedName.isEmpty ? 'Markdown import' : normalizedName;
   }
 }

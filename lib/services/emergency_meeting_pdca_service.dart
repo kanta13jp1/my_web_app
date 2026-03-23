@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:my_web_app/models/board_meeting.dart';
 
@@ -165,7 +165,10 @@ class EmergencyMeetingBiReportService {
       ..writeln()
       ..writeln('[PDCA metrics JSON]')
       ..writeln(
-          const JsonEncoder.withIndent('  ').convert(context.metrics.toJson()))
+        const JsonEncoder.withIndent(
+          '  ',
+        ).convert(context.metrics.toJson()),
+      )
       ..writeln()
       ..writeln('[発言ルール]')
       ..writeln('- CFO: サブスク、ポイント、固定費、投資対効果を報告する。')
@@ -292,22 +295,23 @@ class EmergencyMeetingBiReportService {
     final rules = <String>[];
 
     if (metrics.activeDeterrenceLocks.isEmpty) {
-      rules.add('最も危険なトリガーに対して、今日中に1つロックを有効化する。');
+      rules.add('今日中に 1 つだけ防止ロックを有効化する。');
     } else {
       rules.add(
-          '有効化したロック（${metrics.activeDeterrenceLocks.join(' / ')}）を自分判断で解除しない。');
+        '有効中のロック (${metrics.activeDeterrenceLocks.join(' / ')}) を今日中は解除しない。',
+      );
     }
 
     if (metrics.abstinenceRecoveryWindowMissedCount > 0) {
-      rules.add('誘惑が出たら10分以内に回復行動を実行し、未実施のまま放置しない。');
+      rules.add('違反が出たら 10 分以内に回復行動を記録する。');
     } else {
-      rules.add('誘惑の兆候を感じた時点で席を立ち、5分以内に環境を切り替える。');
+      rules.add('回復フローを維持し、次回も 10 分以内の立て直しを続ける。');
     }
 
     if (!metrics.reminderEnabled) {
-      rules.add('今日中にリマインダーを有効化し、夜の油断時間に自動で警告を出す。');
+      rules.add('今日中にリマインダーを 1 件だけ設定する。');
     } else {
-      rules.add('夜に意思決定しない。迷った案件は翌朝レビューへ送る。');
+      rules.add('有効なリマインダーは夜まで切らさない。');
     }
 
     return _dedupeAndTakeThree(rules);
@@ -560,3 +564,4 @@ $jsonPayload
 ''';
   }
 }
+

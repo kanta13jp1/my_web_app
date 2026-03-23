@@ -111,13 +111,10 @@ class PublicMemoService {
           .eq('is_public', true)
           .maybeSingle();
 
-      if (response is Map<String, dynamic>) {
-        return PublicMemo.fromJson(response);
+      if (response == null) {
+        return null;
       }
-      if (response is Map) {
-        return PublicMemo.fromJson(Map<String, dynamic>.from(response));
-      }
-      return null;
+      return PublicMemo.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to get public memo by id',

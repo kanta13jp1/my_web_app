@@ -1,3 +1,5 @@
+// ignore_for_file: argument_type_not_assignable
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
