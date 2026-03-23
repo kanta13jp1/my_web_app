@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/public_memo_service.dart';
 import 'note_editor_page.dart';
 
 enum _NoteCardAction {
   duplicate,
+  publish,
+  unpublish,
   delete,
 }
 
@@ -48,16 +51,19 @@ class NoteListPage extends StatefulWidget {
 
 class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
+  late final PublicMemoService _publicMemoService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
+  Set<String> _publishedNoteIds = <String>{};
 
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
+    _publicMemoService = PublicMemoService(_supabase);
     _fetchNotes();
   }
 
@@ -70,6 +76,7 @@ class _NoteListPageState extends State<NoteListPage> {
           setState(() {
             _notes = [];
             _draftEntries = drafts;
+            _publishedNoteIds = <String>{};
             _isLoading = false;
           });
         }
@@ -87,12 +94,18 @@ class _NoteListPageState extends State<NoteListPage> {
           .order('is_favorite', ascending: false)
           .order('created_at', ascending: false);
       final notes = List<Map<String, dynamic>>.from(data);
-      final drafts = await _loadDraftEntries(notes);
+      final results = await Future.wait<dynamic>([
+        _loadDraftEntries(notes),
+        _loadPublishedNoteIds(userId),
+      ]);
+      final drafts = results[0] as List<_LocalDraftEntry>;
+      final publishedNoteIds = results[1] as Set<String>;
 
       if (!mounted) return;
       setState(() {
         _notes = notes;
         _draftEntries = drafts;
+        _publishedNoteIds = publishedNoteIds;
         _isLoading = false;
       });
     } catch (e) {
@@ -108,6 +121,11 @@ class _NoteListPageState extends State<NoteListPage> {
     }
   }
 
+  Future<Set<String>> _loadPublishedNoteIds(String userId) async {
+    final memos = await _publicMemoService.getUserPublicMemos(userId);
+    return memos.map((memo) => memo.noteId.toString()).toSet();
+  }
+
   DateTime _createdAtOf(Map<String, dynamic> note) {
     final raw = note['created_at']?.toString();
     final parsed = raw == null ? null : DateTime.tryParse(raw);
@@ -116,15 +134,20 @@ class _NoteListPageState extends State<NoteListPage> {
 
   String _noteId(Map<String, dynamic> note) => note['id']?.toString() ?? '';
 
+  int? _noteNumericId(Map<String, dynamic> note) => int.tryParse(_noteId(note));
+
   String _noteTitle(Map<String, dynamic> note) {
     final title = (note['title'] as String? ?? '').trim();
-    return title.isEmpty ? '無題のメモ' : title;
+    return title.isEmpty ? '無題�Eメモ' : title;
   }
 
   String _noteContent(Map<String, dynamic> note) =>
       (note['content'] as String? ?? '').trim();
 
   bool _isFavorite(Map<String, dynamic> note) => note['is_favorite'] == true;
+
+  bool _isPublished(Map<String, dynamic> note) =>
+      _publishedNoteIds.contains(_noteId(note));
 
   DateTime? _reminderDateOf(Map<String, dynamic> note) {
     final raw = note['reminder_date']?.toString();
@@ -143,7 +166,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   String _reminderLabel(DateTime reminderDate) {
     if (_isReminderOverdue(reminderDate)) {
-      return '期限超過 ${_formatReminderDate(reminderDate)}';
+      return '期限趁E�� ${_formatReminderDate(reminderDate)}';
     }
     if (_isReminderDueToday(reminderDate)) {
       return '今日 ${DateFormat('HH:mm').format(reminderDate)}';
@@ -233,15 +256,15 @@ class _NoteListPageState extends State<NoteListPage> {
       return title;
     }
     if (draft.isNewNoteDraft) {
-      return '新規メモの下書き';
+      return '新規メモの下書ぁE;
     }
 
     for (final note in _notes) {
       if (_noteId(note) == draft.noteId) {
-        return '${_noteTitle(note)} の下書き';
+        return '${_noteTitle(note)} の下書ぁE;
       }
     }
-    return '編集中のメモ';
+    return '編雁E��のメモ';
   }
 
   String _draftPreview(_LocalDraftEntry draft) {
@@ -250,12 +273,12 @@ class _NoteListPageState extends State<NoteListPage> {
       return content;
     }
     if (draft.isFavorite) {
-      return 'お気に入りに追加したメモをここから再開できます。';
+      return 'お気に入りに追加したメモをここから�E開できます、E;
     }
     if (draft.isNewNoteDraft) {
-      return '途中まで書いた新規メモをここから再開できます。';
+      return '途中まで書ぁE��新規メモをここから�E開できます、E;
     }
-    return '保存前の変更があります。';
+    return '保存前の変更があります、E;
   }
 
   Future<void> _deleteDraft(_LocalDraftEntry draft) async {
@@ -300,9 +323,82 @@ class _NoteListPageState extends State<NoteListPage> {
     } catch (e) {
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('お気に入りの更新に失敗しました: $e')),
+        SnackBar(content: Text('お気に入り�E更新に失敗しました: $e')),
       );
     }
+  }
+
+  Future<void> _publishNote(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    final noteId = _noteNumericId(note);
+    if (userId == null || noteId == null) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開するにはログイン済みの保存済みメモが忁E��でぁE)),
+      );
+      return;
+    }
+
+    final success = await _publicMemoService.publishMemo(
+      noteId: noteId,
+      userId: userId,
+      title: _noteTitle(note),
+      content: _noteContent(note),
+      category: null,
+    );
+
+    if (!mounted || !context.mounted) return;
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開メモの公開に失敗しました')),
+      );
+      return;
+    }
+
+    setState(() {
+      _publishedNoteIds = <String>{..._publishedNoteIds, _noteId(note)};
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('、E{_noteTitle(note)}」を公開メモにしました'),
+        action: SnackBarAction(
+          label: '公開一覧',
+          onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _unpublishNote(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    final noteId = _noteNumericId(note);
+    if (userId == null || noteId == null) {
+      return;
+    }
+
+    final success = await _publicMemoService.unpublishMemo(noteId, userId);
+    if (!mounted || !context.mounted) return;
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開メモの公開停止に失敗しました')),
+      );
+      return;
+    }
+
+    setState(() {
+      _publishedNoteIds = _publishedNoteIds
+          .where((publishedId) => publishedId != _noteId(note))
+          .toSet();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('、E{_noteTitle(note)}」�E公開を停止しました')),
+    );
   }
 
   Future<bool> _confirmDeleteNote(
@@ -314,7 +410,7 @@ class _NoteListPageState extends State<NoteListPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('メモを削除'),
-        content: Text('「$title」を削除しますか？\n一覧から非表示になり、下書きも削除されます。'),
+        content: Text('、Etitle」を削除しますか�E�\n一覧から非表示になり、下書きも削除されます、E),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -342,6 +438,8 @@ class _NoteListPageState extends State<NoteListPage> {
 
     final deletedTitle = _noteTitle(note);
     final now = DateTime.now().toIso8601String();
+    final userId = _supabase.auth.currentUser?.id;
+    final numericNoteId = _noteNumericId(note);
 
     try {
       await _supabase.from('notes').update({
@@ -350,12 +448,21 @@ class _NoteListPageState extends State<NoteListPage> {
         'updated_at': now,
       }).eq('id', noteId);
 
+      if (userId != null && numericNoteId != null) {
+        await _publicMemoService.unpublishMemo(numericNoteId, userId);
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('$_draftKeyPrefix$noteId');
 
       if (!mounted || !context.mounted) return;
+      setState(() {
+        _publishedNoteIds = _publishedNoteIds
+            .where((publishedId) => publishedId != noteId)
+            .toSet();
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('「$deletedTitle」を削除しました')),
+        SnackBar(content: Text('、EdeletedTitle」を削除しました')),
       );
       await _fetchNotes();
     } catch (e) {
@@ -369,17 +476,17 @@ class _NoteListPageState extends State<NoteListPage> {
   String _buildDuplicateTitle(String title) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) {
-      return '無題のメモ (コピー)';
+      return '無題�Eメモ (コピ�E)';
     }
 
-    final match = RegExp(r'^(.*) \(コピー(?: (\d+))?\)$').firstMatch(trimmed);
+    final match = RegExp(r'^(.*) \(コピ�E(?: (\d+))?\)$').firstMatch(trimmed);
     if (match == null) {
-      return '$trimmed (コピー)';
+      return '$trimmed (コピ�E)';
     }
 
     final baseTitle = (match.group(1) ?? trimmed).trim();
     final currentCopyNumber = int.tryParse(match.group(2) ?? '1') ?? 1;
-    return '$baseTitle (コピー ${currentCopyNumber + 1})';
+    return '$baseTitle (コピ�E ${currentCopyNumber + 1})';
   }
 
   Future<void> _duplicateNote(
@@ -411,7 +518,7 @@ class _NoteListPageState extends State<NoteListPage> {
       final duplicatedId = inserted?['id']?.toString();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('「$duplicateTitle」を複製しました'),
+          content: Text('、EduplicateTitle」を褁E��しました'),
           action: duplicatedId == null
               ? null
               : SnackBarAction(
@@ -423,7 +530,7 @@ class _NoteListPageState extends State<NoteListPage> {
     } catch (e) {
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('メモの複製に失敗しました: $e')),
+        SnackBar(content: Text('メモの褁E��に失敗しました: $e')),
       );
     }
   }
@@ -447,12 +554,12 @@ class _NoteListPageState extends State<NoteListPage> {
     final haystack = '$title $content'.toLowerCase();
 
     const keywordRules = <Map<String, dynamic>>[
-      {'keyword': '共有', 'label': '共有語', 'score': 3},
-      {'keyword': '投稿', 'label': '投稿語', 'score': 3},
-      {'keyword': '導線', 'label': '導線語', 'score': 3},
-      {'keyword': '告知', 'label': '告知語', 'score': 3},
-      {'keyword': '紹介', 'label': '紹介語', 'score': 3},
-      {'keyword': '登録', 'label': '登録語', 'score': 3},
+      {'keyword': '共朁E, 'label': '共有誁E, 'score': 3},
+      {'keyword': '投稿', 'label': '投稿誁E, 'score': 3},
+      {'keyword': '導緁E, 'label': '導線誁E, 'score': 3},
+      {'keyword': '告知', 'label': '告知誁E, 'score': 3},
+      {'keyword': '紹仁E, 'label': '紹介誁E, 'score': 3},
+      {'keyword': '登録', 'label': '登録誁E, 'score': 3},
       {'keyword': 'line', 'label': 'LINE向け', 'score': 3},
       {'keyword': 'facebook', 'label': 'Facebook向け', 'score': 3},
       {'keyword': 'qr', 'label': 'QR向け', 'score': 3},
@@ -474,7 +581,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
     if (content.isNotEmpty) {
       score += 2;
-      reasons.add('本文あり');
+      reasons.add('本斁E��めE);
     }
 
     if (content.length >= 80) {
@@ -484,7 +591,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
     if (content.length >= 160) {
       score += 1;
-      reasons.add('長文素材');
+      reasons.add('長斁E��杁E);
     }
 
     final keywordMatch = _keywordMatch(haystack, keywordRules);
@@ -615,7 +722,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        draft.isNewNoteDraft ? '新規メモの下書き' : '既存メモの下書き',
+                        draft.isNewNoteDraft ? '新規メモの下書ぁE : '既存メモの下書ぁE,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade600,
@@ -646,7 +753,7 @@ class _NoteListPageState extends State<NoteListPage> {
               children: [
                 Expanded(
                   child: Text(
-                    '最終保存: $savedAtLabel',
+                    '最終保孁E $savedAtLabel',
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.grey.shade500,
@@ -656,7 +763,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 FilledButton.icon(
                   onPressed: () => _navigateToEditor(context, draft.noteId),
                   icon: const Icon(Icons.edit_note),
-                  label: const Text('続きから編集'),
+                  label: const Text('続きから編雁E),
                 ),
               ],
             ),
@@ -743,7 +850,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
-                      '共有候補',
+                      '共有候裁E,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -841,23 +948,46 @@ class _NoteListPageState extends State<NoteListPage> {
               },
             ),
             PopupMenuButton<_NoteCardAction>(
-              tooltip: 'メモ操作',
+              tooltip: '��������',
               onSelected: (action) {
                 switch (action) {
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
+                    break;
+                  case _NoteCardAction.publish:
+                    _publishNote(context, note);
+                    break;
+                  case _NoteCardAction.unpublish:
+                    _unpublishNote(context, note);
+                    break;
                   case _NoteCardAction.delete:
                     _deleteNote(context, note);
+                    break;
                 }
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => <PopupMenuEntry<_NoteCardAction>>[
                 PopupMenuItem<_NoteCardAction>(
                   value: _NoteCardAction.duplicate,
                   child: Row(
                     children: [
                       Icon(Icons.copy_outlined, size: 18),
                       SizedBox(width: 8),
-                      Text('複製'),
+                      Text('褁E��'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<_NoteCardAction>(
+                  value: _isPublished(note)
+                      ? _NoteCardAction.unpublish
+                      : _NoteCardAction.publish,
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isPublished(note) ? Icons.public_off : Icons.public,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(_isPublished(note) ? '���J��~' : '���J����'),
                     ],
                   ),
                 ),
@@ -907,7 +1037,7 @@ class _NoteListPageState extends State<NoteListPage> {
         : reminderExcludedNotes;
     final hasAnyEntries = _draftEntries.isNotEmpty || visibleNotes.isNotEmpty;
     final pageTitle = _showFavoritesOnly
-        ? 'CKO OFFICE (お気に入り)'
+        ? 'CKO OFFICE (お気に入めE'
         : 'CKO OFFICE (メモ一覧)';
 
     return Scaffold(
@@ -921,10 +1051,26 @@ class _NoteListPageState extends State<NoteListPage> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.public),
+            tooltip: '公開メモ一覧',
+            onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Notion / Evernote import',
+            onPressed: () {
+              Navigator.of(context).pushNamed('/import').then((_) {
+                if (mounted) {
+                  _fetchNotes();
+                }
+              });
+            },
+          ),
+          IconButton(
             key: const Key('note_list_page_favorites_filter'),
             icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
             color: _showFavoritesOnly ? Colors.amber.shade200 : Colors.white,
-            tooltip: _showFavoritesOnly ? 'すべてのメモを表示' : 'お気に入りのみ表示',
+            tooltip: _showFavoritesOnly ? 'すべてのメモを表示' : 'お気に入り�Eみ表示',
             onPressed: _toggleFavoritesOnly,
           ),
           IconButton(
@@ -948,7 +1094,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       const SizedBox(height: 16),
                       Text(
                         _showFavoritesOnly
-                            ? 'お気に入りのメモはまだありません'
+                            ? 'お気に入り�Eメモはまだありません'
                             : 'まだメモがありません',
                         style: const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
@@ -963,12 +1109,24 @@ class _NoteListPageState extends State<NoteListPage> {
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.add),
-                        label: const Text('新しいメモを作成'),
+                        label: const Text('新しいメモを作�E'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _navigateToEditor(context),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Notion / Evernote import'),
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/import').then((_) {
+                            if (mounted) {
+                              _fetchNotes();
+                            }
+                          });
+                        },
                       ),
                     ],
                   ),
@@ -978,8 +1136,8 @@ class _NoteListPageState extends State<NoteListPage> {
                   children: [
                     if (_draftEntries.isNotEmpty) ...[
                       _buildSectionHeader(
-                        '下書き',
-                        'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
+                        '下書ぁE,
+                        'X の下書き�Eように、書きかけ�Eメモを一覧からすぐ再開できます、E,
                       ),
                       ..._draftEntries.map(
                         (draft) => _buildDraftCard(context, draft),
@@ -989,7 +1147,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     if (reminderEntries.isNotEmpty) ...[
                       _buildSectionHeader(
                         'リマインダー',
-                        'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
+                        'Evernote のように、期限付きノ�Eトを先頭でまとめて確認できます、E,
                       ),
                       ...reminderEntries.map(
                         (note) => _buildNoteCard(
@@ -1003,8 +1161,8 @@ class _NoteListPageState extends State<NoteListPage> {
                     if (widget.prioritizeShareCandidates &&
                         shareCandidateEntries.isNotEmpty) ...[
                       _buildSectionHeader(
-                        '共有向け候補',
-                        'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
+                        '共有向け候裁E,
+                        'ピン留め・共有語�E導線語�E説明量をスコア化して上佁E件を固定表示します、E,
                       ),
                       ...shareCandidateEntries.map((entry) {
                         final note = entry['note'] as Map<String, dynamic>;
@@ -1028,10 +1186,10 @@ class _NoteListPageState extends State<NoteListPage> {
                             ? 'すべてのメモ'
                             : 'メモ一覧',
                         _showFavoritesOnly
-                            ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
+                            ? 'Evernote のスター付きノ�Eト�Eように、お気に入りだけをまとめて見返せます、E
                             : widget.prioritizeShareCandidates
-                            ? '共有候補の下に、残りのメモを時系列で表示します。'
-                            : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
+                            ? '共有候補�E下に、残りのメモを時系列で表示します、E
+                            : 'ピン留めとお気に入りを優先し、その後�E新しい頁E��表示します、E,
                       ),
                     ...remainingNotes.map(
                       (note) => _buildNoteCard(context, note),

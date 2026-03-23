@@ -16,6 +16,9 @@ import 'pages/memory_drill_page.dart';
 import 'pages/behavior_review_page.dart';
 import 'pages/digest_queue_page.dart';
 import 'pages/growth_mission_page.dart';
+import 'pages/import_page.dart';
+import 'pages/public_memo_detail_page.dart';
+import 'pages/public_memo_directory_page.dart';
 import 'pages/reality_check_page.dart';
 import 'pages/thought_anchor_page.dart';
 
@@ -158,6 +161,23 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const GrowthMissionPage(),
               settings: const RouteSettings(name: '/growth-mission'),
+            );
+          case '/import':
+            return MaterialPageRoute(builder: (_) => const ImportPage());
+          case '/public-memos':
+            return MaterialPageRoute(
+              builder: (_) => const PublicMemoDirectoryPage(),
+            );
+          case '/public-memo':
+            final memoId = int.tryParse(uri.queryParameters['id'] ?? '');
+            if (memoId == null) {
+              return MaterialPageRoute(
+                builder: (_) => const PublicMemoDirectoryPage(),
+              );
+            }
+            return MaterialPageRoute(
+              builder: (_) => PublicMemoDetailPage(memoId: memoId),
+              settings: RouteSettings(name: settings.name),
             );
           case '/behavior-review':
             return MaterialPageRoute(builder: (_) => BehaviorReviewPage());

@@ -7,9 +7,11 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/public_memo.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
 import '../services/landing_share_service.dart';
+import '../services/public_memo_service.dart';
 import '../widgets/live_growth_banner.dart';
 
 class LandingPage extends StatefulWidget {
@@ -63,6 +65,8 @@ class _LandingPageState extends State<LandingPage> {
   String? _trialReason;
   String? _lastMagicLinkEmail;
   LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
+  List<PublicMemo> _publicMemos = const <PublicMemo>[];
+  bool _isLoadingPublicMemos = true;
 
   @override
   void initState() {
@@ -77,6 +81,7 @@ class _LandingPageState extends State<LandingPage> {
     unawaited(widget.growthService.capturePendingReferralFromUri());
     _initLpViewStats();
     _loadShareSnapshot();
+    _loadPublicMemos();
   }
 
   @override
@@ -118,6 +123,22 @@ class _LandingPageState extends State<LandingPage> {
       debugPrint('Landing share snapshot failed: $error');
       if (!mounted) return;
       setState(() => _isLoadingShareStats = false);
+    }
+  }
+
+  Future<void> _loadPublicMemos() async {
+    try {
+      final service = PublicMemoService(Supabase.instance.client);
+      final memos = await service.getPublicMemos(limit: 4);
+      if (!mounted) return;
+      setState(() {
+        _publicMemos = memos;
+        _isLoadingPublicMemos = false;
+      });
+    } catch (error) {
+      debugPrint('Landing public memo load failed: $error');
+      if (!mounted) return;
+      setState(() => _isLoadingPublicMemos = false);
     }
   }
 
@@ -831,6 +852,55 @@ $input
     );
   }
 
+  Widget _buildPublicMemoSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '公開メモ',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '登録前でも読めるメモを増やして、検索流入と共有流入の入口を作ります。',
+            ),
+            const SizedBox(height: 16),
+            if (_isLoadingPublicMemos)
+              const Center(child: CircularProgressIndicator())
+            else if (_publicMemos.isEmpty)
+              const Text('公開メモはまだありません。')
+            else
+              ..._publicMemos.map(
+                (memo) => Card(
+                  child: ListTile(
+                    title: Text(memo.title),
+                    subtitle: Text(
+                      memo.content ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Text('${memo.viewCount} views'),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).pushNamed('/public-memo?id=${memo.id}'),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('公開メモ一覧を見る'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGrowthSection() {
     return LiveGrowthBanner(
       growthService: widget.growthService,
@@ -1426,6 +1496,8 @@ $input
                   _buildTrialSection(),
                   const SizedBox(height: 20),
                   _buildAuthSection(),
+                  const SizedBox(height: 20),
+                  _buildPublicMemoSection(),
                   const SizedBox(height: 20),
                   _buildShareSection(),
                   const SizedBox(height: 20),

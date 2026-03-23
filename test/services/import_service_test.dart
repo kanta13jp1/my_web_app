@@ -1,47 +1,53 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_web_app/services/import_service.dart';
 import 'package:my_web_app/services/gamification_service.dart';
-
-// モック用のGamificationService
-class MockGamificationService extends GamificationService {
-  int awardedPoints = 0;
-  String? lastReason;
-
-  @override
-  Future<void> awardPoints(int points, {String? reason}) async {
-    awardedPoints += points;
-    lastReason = reason;
-  }
-}
+import 'package:my_web_app/services/import_service.dart';
 
 void main() {
-  group('ImportService Tests', () {
-    late ImportService importService;
-    late MockGamificationService mockGamificationService;
+  late ImportService service;
 
-    setUp(() {
-      mockGamificationService = MockGamificationService();
-      importService = ImportService(mockGamificationService);
+  setUp(() {
+    service = ImportService(GamificationService());
+  });
+
+  group('ImportService', () {
+    test('parseNotionCsvText reads title content and tags', () {
+      const csv = 'Title,Content,Tags\n'
+          '"読書メモ","Notion から持ってきた本文","books,import"\n';
+
+      final drafts = service.parseNotionCsvText(csv);
+
+      expect(drafts, hasLength(1));
+      expect(drafts.first.title, '読書メモ');
+      expect(drafts.first.content, 'Notion から持ってきた本文');
+      expect(drafts.first.tags, <String>['books', 'import']);
+      expect(drafts.first.source, 'notion');
     });
 
-    test('importData awards correct points', () async {
-      await importService.importData();
-      expect(mockGamificationService.awardedPoints, 50);
-      expect(mockGamificationService.lastReason, 'Import Data');
-    });
+    test('parseEvernoteEnexText strips markup and extracts tags', () {
+      const enex = '''
+<?xml version="1.0" encoding="UTF-8"?>
+<en-export>
+  <note>
+    <title>Evernote メモ</title>
+    <content><![CDATA[
+      <en-note>
+        <div>最初の行</div>
+        <div><b>次の行</b></div>
+      </en-note>
+    ]]></content>
+    <tag>archive</tag>
+    <tag>ideas</tag>
+  </note>
+</en-export>
+''';
 
-    test('importNotes awards points based on note count', () async {
-      final notes = List.generate(5, (index) => {'title': 'Note $index'});
+      final drafts = service.parseEvernoteEnexText(enex);
 
-      await importService.importNotes(
-        userId: 'test-user',
-        notes: notes,
-        categoryId: 'general',
-      );
-
-      // 10 points per note * 5 notes = 50 points
-      expect(mockGamificationService.awardedPoints, 50);
-      expect(mockGamificationService.lastReason, 'Imported 5 notes');
+      expect(drafts, hasLength(1));
+      expect(drafts.first.title, 'Evernote メモ');
+      expect(drafts.first.content, '最初の行\n次の行');
+      expect(drafts.first.tags, <String>['archive', 'ideas']);
+      expect(drafts.first.source, 'evernote');
     });
   });
 }

@@ -66,16 +66,28 @@ class PublicMemoService {
     int limit = 20,
     int offset = 0,
     String? category,
+    String? searchQuery,
     String sortBy = 'published_at', // published_at, like_count, view_count
   }) async {
     try {
-      var query = _supabase.from('public_memos').select().eq('is_public', true);
+      var builder = _supabase
+          .from('public_memos')
+          .select()
+          .eq('is_public', true);
 
       if (category != null && category.isNotEmpty) {
-        query = query.eq('category', category);
+        builder = builder.eq('category', category);
       }
 
-      final response = await query
+      final normalizedQuery = searchQuery?.trim();
+      if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
+        final escaped = normalizedQuery.replaceAll(',', ' ');
+        builder = builder.or(
+          'title.ilike.%$escaped%,content.ilike.%$escaped%,category.ilike.%$escaped%',
+        );
+      }
+
+      final response = await builder
           .order(sortBy, ascending: false)
           .range(offset, offset + limit - 1);
 
@@ -89,6 +101,32 @@ class PublicMemoService {
         stackTrace: stackTrace,
       );
       return [];
+    }
+  }
+
+  Future<PublicMemo?> getPublicMemoById(int memoId) async {
+    try {
+      final response = await _supabase
+          .from('public_memos')
+          .select()
+          .eq('id', memoId)
+          .eq('is_public', true)
+          .maybeSingle();
+
+      if (response is Map<String, dynamic>) {
+        return PublicMemo.fromJson(response);
+      }
+      if (response is Map) {
+        return PublicMemo.fromJson(Map<String, dynamic>.from(response));
+      }
+      return null;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to get public memo by id',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
     }
   }
 
