@@ -435,7 +435,8 @@ class PublicMemoService {
       final existing = await _supabase
           .from('app_analytics')
           .select(
-              'date, landing_views, conversions, share_count, source_details')
+            'date, landing_views, conversions, share_count, source_details',
+          )
           .eq('date', dateKey)
           .maybeSingle();
 

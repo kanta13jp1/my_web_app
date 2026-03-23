@@ -206,6 +206,8 @@ class GrowthMissionService {
     }
   }
 
+  bool get isPresenceTrackingAvailable => _client != null;
+
   static String buildInviteUrlForCode(String code) {
     final baseUri = Uri.parse(AppShareService.appUrl);
     final nextQuery = Map<String, String>.from(baseUri.queryParameters)
@@ -831,9 +833,12 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
     _currentPagePath = _resolvePagePath(route);
     unawaited(_service.capturePendingReferralFromUri());
     unawaited(_service.applyPendingReferralIfPossible());
-    unawaited(_service.syncPresence(pagePath: _currentPagePath));
-
     _heartbeatTimer?.cancel();
+    if (!_service.isPresenceTrackingAvailable) {
+      return;
+    }
+
+    unawaited(_service.syncPresence(pagePath: _currentPagePath));
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       unawaited(_service.syncPresence(pagePath: _currentPagePath));
     });

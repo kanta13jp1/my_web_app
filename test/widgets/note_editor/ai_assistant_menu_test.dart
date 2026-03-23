@@ -12,7 +12,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'ai_assistant_menu_test.mocks.dart';
 
-// Mock Supabase classes
 @GenerateMocks([SupabaseClient, GoTrueClient, FunctionsClient])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +23,7 @@ void main() {
   late TextEditingController controller;
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     mockSupabaseClient = MockSupabaseClient();
     mockGoTrueClient = MockGoTrueClient();
     mockFunctionsClient = MockFunctionsClient();
@@ -34,11 +33,10 @@ void main() {
     when(mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
 
-    // Default stub for a successful function invocation
     when(mockFunctionsClient.invoke(any, body: anyNamed('body'))).thenAnswer(
       (_) async => FunctionResponse(
         status: 200,
-        data: {'result': 'Improved content'},
+        data: <String, dynamic>{'result': 'Improved content'},
       ),
     );
   });
@@ -47,7 +45,6 @@ void main() {
     controller.dispose();
   });
 
-  // Wrapper function to build the widget with necessary providers
   Widget buildTestWidget({required Function(String) onApply}) {
     return ChangeNotifierProvider<ThemeService>.value(
       value: themeService,
@@ -56,7 +53,7 @@ void main() {
           body: AiAssistantMenu(
             contentController: controller,
             onApply: onApply,
-            supabaseClient: mockSupabaseClient, // Inject the mock client
+            supabaseClient: mockSupabaseClient,
           ),
         ),
       ),
@@ -70,122 +67,122 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
-  testWidgets('tapping icon opens popup menu with correct items',
-      (WidgetTester tester) async {
+  testWidgets('tapping icon opens popup menu with current items', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
 
     await tester.tap(find.byIcon(Icons.auto_awesome));
-    await tester.pumpAndSettle(); // Wait for menu to appear
+    await tester.pumpAndSettle();
 
-    expect(find.text('文章を洗練'), findsOneWidget);
-    expect(find.text('要約'), findsOneWidget);
-    expect(find.text('CSO分析'), findsOneWidget);
+    expect(find.text('Improve Writing'), findsOneWidget);
+    expect(find.text('Summarize'), findsOneWidget);
+    expect(find.text('Expand Ideas'), findsOneWidget);
   });
 
   testWidgets(
-      'selecting "文章を洗練" calls Supabase function and onApply on success',
-      (WidgetTester tester) async {
-    String? appliedResult;
+    'selecting improve calls Supabase function and onApply on success',
+    (WidgetTester tester) async {
+      String? appliedResult;
 
-    when(
-      mockFunctionsClient.invoke(
-        'ai-assistant',
-        body: {
-          'action': 'improve',
-          'content': 'Initial content',
-          'useMagi': true,
-          'melchiorModel': 'gpt-4o-mini',
-          'balthasarModel': 'claude-sonnet-4-6',
-          'casperModel': 'gemini-2.5-flash',
-          'synthesisModel': 'claude-sonnet-4-6',
-        },
-      ),
-    ).thenAnswer((_) async {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 100));
-      return FunctionResponse(
-        status: 200,
-        data: {'result': 'Improved content'},
+      when(
+        mockFunctionsClient.invoke(
+          'ai-assistant',
+          body: <String, dynamic>{
+            'action': 'improve',
+            'content': 'Initial content',
+            'useMagi': true,
+            'melchiorModel': 'gpt-4o-mini',
+            'balthasarModel': 'claude-sonnet-4-6',
+            'casperModel': 'gemini-2.5-flash',
+            'synthesisModel': 'claude-sonnet-4-6',
+          },
+        ),
+      ).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        return FunctionResponse(
+          status: 200,
+          data: <String, dynamic>{'result': 'Improved content'},
+        );
+      });
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          onApply: (result) {
+            appliedResult = result;
+          },
+        ),
       );
-    });
 
-    await tester.pumpWidget(
-      buildTestWidget(
-        onApply: (result) {
-          appliedResult = result;
-        },
-      ),
+      await tester.tap(find.byIcon(Icons.auto_awesome));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Improve Writing'));
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(appliedResult, 'Improved content');
+
+      await tester.pumpAndSettle();
+      expect(find.text('AI action completed.'), findsOneWidget);
+    },
+  );
+
+  testWidgets('shows error snackbar when the function returns a failure status',
+      (
+    WidgetTester tester,
+  ) async {
+    when(mockFunctionsClient.invoke(any, body: anyNamed('body'))).thenAnswer(
+      (_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return FunctionResponse(status: 500, data: 'Server Error');
+      },
     );
 
-    // Open menu
-    await tester.tap(find.byIcon(Icons.auto_awesome));
-    await tester.pumpAndSettle();
-
-    // Select item
-    await tester.tap(find.text('文章を洗練'));
-    await tester.pump(); // Start the async operation
-
-    // Verify loading state
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    await tester
-        .pump(const Duration(milliseconds: 150)); // Wait for future to complete
-
-    // Verify loading is gone
-    expect(find.byType(CircularProgressIndicator), findsNothing);
-
-    // Verify onApply was called
-    expect(appliedResult, 'Improved content');
-
-    // Verify snackbar appears
-    await tester.pumpAndSettle();
-    expect(find.text('AIがimproveを実行しました。'), findsOneWidget);
-  });
-
-  testWidgets(
-      'shows error snackbar when function call fails with non-200 status',
-      (WidgetTester tester) async {
-    when(mockFunctionsClient.invoke(any, body: anyNamed('body')))
-        .thenAnswer((_) async {
-      await Future.delayed(const Duration(milliseconds: 10));
-      return FunctionResponse(status: 500, data: 'Server Error');
-    });
-
     await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
 
     await tester.tap(find.byIcon(Icons.auto_awesome));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('要約'));
-    await tester.pump(); // Start loading
-
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    await tester.pumpAndSettle(); // Wait for future and snackbar
-
-    expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text('AI機能の呼び出しに失敗しました: Server Error'), findsOneWidget);
-  });
-
-  testWidgets('shows error snackbar when function call throws an exception',
-      (WidgetTester tester) async {
-    final exception = Exception('Network Error');
-    when(mockFunctionsClient.invoke(any, body: anyNamed('body')))
-        .thenAnswer((_) async {
-      await Future.delayed(const Duration(milliseconds: 10));
-      throw exception;
-    });
-
-    await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
-
-    await tester.tap(find.byIcon(Icons.auto_awesome));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('CSO分析'));
+    await tester.tap(find.text('Summarize'));
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await tester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text('AI機能でエラーが発生しました: $exception'), findsOneWidget);
+    expect(find.text('AI action failed: Server Error'), findsOneWidget);
+  });
+
+  testWidgets('shows error snackbar when the function throws', (
+    WidgetTester tester,
+  ) async {
+    final exception = Exception('Network Error');
+    when(mockFunctionsClient.invoke(any, body: anyNamed('body'))).thenAnswer(
+      (_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        throw exception;
+      },
+    );
+
+    await tester.pumpWidget(buildTestWidget(onApply: (_) {}));
+
+    await tester.tap(find.byIcon(Icons.auto_awesome));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Expand Ideas'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(
+      find.text('AI action errored: $exception'),
+      findsOneWidget,
+    );
   });
 }

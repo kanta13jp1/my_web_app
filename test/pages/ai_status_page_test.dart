@@ -59,17 +59,23 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('gemma-3n-e2b-it'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('gemma-3n-e2b-it')),
+      findsOneWidget,
+    );
     expect(find.textContaining('CASPER (GEMINI)'), findsOneWidget);
     expect(find.text('80'), findsOneWidget);
 
-    expect(find.text('o4-mini'), findsOneWidget);
+    expect(find.byKey(const ValueKey<String>('o4-mini')), findsOneWidget);
     expect(find.textContaining('MELCHIOR (GPT)'), findsOneWidget);
 
-    expect(find.text('deepseek-chat'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('deepseek-chat')),
+      findsOneWidget,
+    );
     expect(find.textContaining('MELCHIOR (DEEPSEEK)'), findsOneWidget);
 
-    expect(find.text('grok-2'), findsNothing);
+    expect(find.byKey(const ValueKey<String>('grok-2')), findsNothing);
   });
 
   testWidgets('updates score and benchmark details after a successful test', (
@@ -115,7 +121,9 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('test-model'));
+    final modelCard = find.byKey(const ValueKey<String>('test-model'));
+    await tester.ensureVisible(modelCard);
+    await tester.tap(modelCard);
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -225,11 +233,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(
-        const Key('ai_status_default_model_button_claude-sonnet-4-6'),
-      ),
+    final defaultButton = find.byKey(
+      const Key('ai_status_default_model_button_claude-sonnet-4-6'),
     );
+    await tester.ensureVisible(defaultButton);
+    await tester.tap(defaultButton);
     await tester.pump();
     await tester.pumpAndSettle();
 

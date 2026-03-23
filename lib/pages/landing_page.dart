@@ -68,6 +68,16 @@ class _LandingPageState extends State<LandingPage> {
   List<PublicMemo> _publicMemos = const <PublicMemo>[];
   bool _isLoadingPublicMemos = true;
 
+  SupabaseClient? get _supabaseClientOrNull {
+    try {
+      return Supabase.instance.client;
+    } on AssertionError {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -127,8 +137,15 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> _loadPublicMemos() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      if (!mounted) return;
+      setState(() => _isLoadingPublicMemos = false);
+      return;
+    }
+
     try {
-      final service = PublicMemoService(Supabase.instance.client);
+      final service = PublicMemoService(client);
       final memos = await service.getPublicMemos(limit: 4);
       if (!mounted) return;
       setState(() {

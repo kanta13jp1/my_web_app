@@ -1193,3 +1193,16 @@ firebase deploy --only hosting
     - Move import commit batching into an Edge Function.
     - Add backend-generated SEO/share summaries for public memos.
     - Add route-level acquisition signal aggregation that can distinguish LP, import, public memo, and referral assisted conversions.
+- 2026-03-23: ✅ Growth QA hardening for test stability and backend-first safety
+  - Development
+    - `GrowthPresenceNavigatorObserver` no longer starts heartbeat timers when Supabase is unavailable, which keeps widget tests isolated while preserving production presence sync.
+    - `LandingPage` now skips direct public memo fetch attempts when Supabase has not been initialized, reducing frontend-only failure noise in tests and local previews.
+    - Widget tests for AI status, memory drill, and the note editor AI assistant menu were updated to match the current UI contract instead of stale labels and off-screen tap assumptions.
+  - Product
+    - Preserve growth instrumentation, but never let acquisition telemetry make the core app untestable.
+  - Marketing / PR / Sales
+    - Shipping confidence is a growth lever; broken smoke tests slow launches, demos, and campaign timing.
+  - Finance / Procurement
+    - Test-stable releases reduce wasted spend on traffic sent to regressed funnels.
+  - Business Planning
+    - "Beat Notion / Evernote" still requires the same user milestones, but this step improves release cadence by keeping linter-zero and regression coverage aligned with the roadmap.

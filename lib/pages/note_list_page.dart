@@ -185,7 +185,8 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   List<Map<String, dynamic>> _reminderEntries(
-      List<Map<String, dynamic>> notes) {
+    List<Map<String, dynamic>> notes,
+  ) {
     final reminders =
         notes.where((note) => _reminderDateOf(note) != null).toList()
           ..sort((a, b) {

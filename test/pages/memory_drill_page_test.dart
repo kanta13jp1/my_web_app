@@ -8,7 +8,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('shows answers and completes today drill', (
+  testWidgets('shows answers and stores today completion', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -21,17 +21,25 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('暗記ドリル'), findsOneWidget);
-    expect(find.text('世界の国 10個'), findsOneWidget);
+    final answerChip = find.byType(FilterChip).at(1);
+    expect(tester.widget<FilterChip>(answerChip).selected, isFalse);
 
-    await tester.tap(find.text('答え'));
+    await tester.tap(answerChip);
     await tester.pumpAndSettle();
 
-    expect(find.text('日本'), findsOneWidget);
+    expect(tester.widget<FilterChip>(answerChip).selected, isTrue);
 
-    await tester.tap(find.text('今日の暗記を完了'));
+    await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('今日完了'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(
+      prefs.getString('memory_drill_completed_today_date'),
+      '2026-03-22',
+    );
+    expect(
+      prefs.getStringList('memory_drill_completed_today_pack_ids'),
+      contains('countries_10'),
+    );
   });
 }

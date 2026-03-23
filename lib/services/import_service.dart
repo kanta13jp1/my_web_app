@@ -198,7 +198,10 @@ class ImportService {
         );
       default:
         throw ArgumentError.value(
-            sourceType, 'sourceType', 'Unsupported source');
+          sourceType,
+          'sourceType',
+          'Unsupported source',
+        );
     }
   }
 
@@ -282,7 +285,9 @@ class ImportService {
         _stripHtml(
           contentBlock
               .replaceAll(
-                  RegExp(r'<!\[CDATA\[|\]\]>', caseSensitive: false), '')
+                RegExp(r'<!\[CDATA\[|\]\]>', caseSensitive: false),
+                '',
+              )
               .replaceAll('&nbsp;', ' ')
               .replaceAll('&amp;', '&')
               .replaceAll('&lt;', '<')
