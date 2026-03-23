@@ -110,7 +110,7 @@ serve(async (req) => {
           "Tell a credible underdog story tied to product progress and user wins.",
         actions: [
           "Publish weekly product-shipping summaries.",
-          "Turn public memos into founder updates that can be shared externally.",
+          "Turn public memos into founder updates for note and Substack.",
           "Prepare a Product Hunt / indie launch narrative with proof points.",
         ],
       },
@@ -137,7 +137,7 @@ serve(async (req) => {
         actions: [
           "Ship comparison pages and public memo content for replacement keywords.",
           "Use public memo shares as reusable social content.",
-          "Publish how-to content around switching from Notion and Evernote.",
+          "Cross-post technical and migration articles to Qiita, Zenn, Medium, dev.to, and Hashnode.",
         ],
       },
       {

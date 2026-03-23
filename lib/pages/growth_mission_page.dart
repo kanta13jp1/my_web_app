@@ -27,6 +27,59 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
   GrowthMissionDashboard _dashboard = GrowthMissionDashboard.empty();
   GrowthCommandCenterBrief _commandCenter = GrowthCommandCenterBrief.empty();
 
+  static const List<_PublishingChannel> _publishingChannels =
+      <_PublishingChannel>[
+    _PublishingChannel(
+      name: 'note',
+      audience: 'Japanese general knowledge workers and founders',
+      cadence: 'Weekly founder memo',
+      angle: 'Story-driven launch updates and product lessons.',
+      cta: 'Invite readers to try the landing page and public memos.',
+    ),
+    _PublishingChannel(
+      name: 'Qiita',
+      audience: 'Japanese engineers',
+      cadence: '1 technical post per shipped growth slice',
+      angle: 'Supabase Edge Functions, Flutter architecture, and migration flows.',
+      cta: 'Show the import pipeline and developer-facing product depth.',
+    ),
+    _PublishingChannel(
+      name: 'Zenn',
+      audience: 'Japanese developers and indie builders',
+      cadence: 'Biweekly deep dive',
+      angle: 'Implementation detail, product reasoning, and technical tradeoffs.',
+      cta: 'Turn shipped features into recurring search traffic.',
+    ),
+    _PublishingChannel(
+      name: 'Medium',
+      audience: 'Global product and engineering readers',
+      cadence: 'Monthly narrative post',
+      angle: 'Replacing fragmented note workflows with AI-first execution.',
+      cta: 'Push English discovery beyond Japan.',
+    ),
+    _PublishingChannel(
+      name: 'dev.to',
+      audience: 'Global developers',
+      cadence: 'Per launch or architecture milestone',
+      angle: 'Practical engineering writeups with code and lessons learned.',
+      cta: 'Attract technical early adopters and contributors.',
+    ),
+    _PublishingChannel(
+      name: 'Hashnode',
+      audience: 'Developer communities and startup engineers',
+      cadence: 'Monthly migration or AI workflow article',
+      angle: 'Build-in-public posts tied to the product roadmap.',
+      cta: 'Create long-tail search entry points around migration and AI workflows.',
+    ),
+    _PublishingChannel(
+      name: 'Substack',
+      audience: 'Founder and operator subscribers',
+      cadence: 'Weekly growth letter',
+      angle: 'Cross-functional operating notes, growth experiments, and user stories.',
+      cta: 'Build a durable audience that compounds launches and referrals.',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +137,36 @@ $inviteUrl
       return;
     }
     _showMessage('Referral message copied.');
+  }
+
+  Future<void> _copyPublishingBrief(_PublishingChannel channel) async {
+    final brief = '''
+Channel: ${channel.name}
+Audience: ${channel.audience}
+Cadence: ${channel.cadence}
+Angle: ${channel.angle}
+
+Suggested outline:
+1. Start with the Notion / Evernote workflow pain.
+2. Show the shipped MyMemo feature or growth experiment.
+3. Explain why the backend-first architecture matters.
+4. Add one screenshot, metric, or before/after example.
+5. Close with this CTA: ${channel.cta}
+
+Current proof points:
+- Registered users: ${_dashboard.totalRegisteredUsers}
+- Today landing views: ${_dashboard.todayLandingViews}
+- Today shares: ${_dashboard.todayShares}
+- Referral completions: ${_dashboard.referralSnapshot.successfulReferrals}
+
+Roadmap source:
+docs/GROWTH_STRATEGY_ROADMAP.md
+''';
+    await Clipboard.setData(ClipboardData(text: brief));
+    if (!mounted) {
+      return;
+    }
+    _showMessage('${channel.name} publishing brief copied.');
   }
 
   void _openLandingPage() {
@@ -253,6 +336,36 @@ $inviteUrl
                     const SizedBox(height: 16),
                     Text(
                       'Refreshed: ${DateFormat('yyyy/MM/dd HH:mm').format(_dashboard.refreshedAt)}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Publishing engine',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Turn every shipped growth slice into channel-ready content for note, Qiita, Zenn, Medium, dev.to, Hashnode, and Substack. This keeps PR, marketing, and founder distribution tied to the roadmap instead of ad-hoc posting.',
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: _publishingChannels
+                          .map(_publishingChannelCard)
+                          .toList(),
                     ),
                   ],
                 ),
@@ -531,7 +644,7 @@ $inviteUrl
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'The active execution source is docs/GROWTH_STRATEGY_ROADMAP.md. This slice updates the roadmap with the new backend import preview, public memo sharing, and the remaining backend migration work.',
+                      'The active execution source is docs/GROWTH_STRATEGY_ROADMAP.md. This slice updates the roadmap with backend-first acquisition tracking, sign-up attribution, publishing-channel execution, and the remaining backend migration work.',
                     ),
                     if (_isLoading) ...[
                       const SizedBox(height: 16),
@@ -667,4 +780,59 @@ $inviteUrl
       ),
     );
   }
+
+  Widget _publishingChannelCard(_PublishingChannel channel) {
+    return SizedBox(
+      width: 320,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              channel.name,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text('Audience: ${channel.audience}'),
+            const SizedBox(height: 8),
+            Text('Cadence: ${channel.cadence}'),
+            const SizedBox(height: 8),
+            Text(channel.angle),
+            const SizedBox(height: 8),
+            Text(
+              'CTA: ${channel.cta}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: () => _copyPublishingBrief(channel),
+              icon: const Icon(Icons.content_copy),
+              label: const Text('Copy publishing brief'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PublishingChannel {
+  final String name;
+  final String audience;
+  final String cadence;
+  final String angle;
+  final String cta;
+
+  const _PublishingChannel({
+    required this.name,
+    required this.audience,
+    required this.cadence,
+    required this.angle,
+    required this.cta,
+  });
 }

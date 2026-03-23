@@ -56,6 +56,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - public memo の共有導線と成長シグナル記録
 - route / import / public memo / referral の獲得シグナル記録
 - import と public memo から sign-up へ流す CTA 計測
+- Growth Mission から note / Qiita / Zenn / Medium / dev.to / Hashnode / Substack 向けの配信ブリーフをコピー可能にした
 
 ### 残課題
 
@@ -149,6 +150,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - 公開メモの weekly share 運用を始める
 - ship log と改善ログを週次発信する
 - Notion 比較、Evernote 比較の記事を継続公開する
+- note と Substack で founder update を定期配信する
 
 ### 営業
 
@@ -160,6 +162,8 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - SEO 着地面を比較記事、公開メモ、テンプレートで拡大する
 - referral 施策の導線と報酬設計を固める
 - Growth dashboard を毎週レビューする
+- Qiita、Zenn、Medium、dev.to、Hashnode に技術記事を横展開して指名検索以外の入口を増やす
+- 1つの shipped feature から 日本語記事、英語記事、公開メモ、SNS 要約 を派生させる
 
 ### 人事
 
@@ -259,6 +263,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - import 起点 sign-up submit 数
 - public memo 起点 sign-up submit 数
 - referral 起点 sign-up submit 数
+- note / Qiita / Zenn / Medium / dev.to / Hashnode / Substack ごとの流入と登録数
 - 広告 CPA
 - 営業面談数
 - チーム導入数
