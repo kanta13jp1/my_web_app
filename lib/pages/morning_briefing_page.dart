@@ -802,8 +802,71 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     }
   }
 
-  Future<void> deleteTodo(String id) async {
-    await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
+  Future<bool> _deleteTodoWithFeedback(
+    String id, {
+    required String taskTitle,
+  }) async {
+    try {
+      await Supabase.instance.client
+          .from('daily_subtasks')
+          .delete()
+          .eq('todo_id', id);
+      await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('「$taskTitle」を削除しました。'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting todo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('タスクの削除に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<bool> _confirmDeleteTodo(Map<String, dynamic> todo) async {
+    final id = todo['id']?.toString();
+    if (id == null || id.isEmpty) {
+      return false;
+    }
+
+    final taskTitle = (todo['task'] as String? ?? 'このタスク').trim();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('タスクを削除'),
+        content: Text('「$taskTitle」を削除しますか？\nサブタスクもまとめて削除されます。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true) {
+      return false;
+    }
+
+    return _deleteTodoWithFeedback(id, taskTitle: taskTitle);
   }
 
   bool _isMissingDailyTodoDetailsColumn(Object error) {
@@ -1057,6 +1120,24 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               ),
             ),
             actions: [
+              TextButton.icon(
+                onPressed: () async {
+                  final deleted = await _confirmDeleteTodo(<String, dynamic>{
+                    'id': id,
+                    'task': editController.text.trim().isNotEmpty
+                        ? editController.text.trim()
+                        : currentTask,
+                  });
+                  if (deleted && context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                label: const Text(
+                  '削除',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('キャンセル'),
@@ -3140,7 +3221,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                                 icon: const Icon(
                                                   Icons.delete_outline,
                                                 ),
-                                                onPressed: () => deleteTodo(id),
+                                                onPressed: () =>
+                                                    _confirmDeleteTodo(
+                                                  todo,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -3597,9 +3681,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    color: Colors.grey.shade500,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (todoId != null)
+                        IconButton(
+                          key: Key('morning_briefing_calendar_delete_$todoId'),
+                          onPressed: () => _confirmDeleteTodo(todo),
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'タスクを削除',
+                          color: Colors.redAccent,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey.shade500,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -4796,6 +4894,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             ),
             onPressed: () => toggleImportant(id, isImportant),
           ),
+          IconButton(
+            key: Key('morning_briefing_delete_todo_$id'),
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            tooltip: 'タスクを削除',
+            onPressed: () => _confirmDeleteTodo(todo),
+          ),
           if (isReorderable)
             ReorderableDragStartListener(
               index: index,
@@ -4817,6 +4921,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
+      confirmDismiss: (direction) => _confirmDeleteTodo(todo),
+      /*
       confirmDismiss: (direction) async {
         return await showDialog(
           context: context,
@@ -4840,6 +4946,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         );
       },
       onDismissed: (_) => deleteTodo(id),
+      */
+      onDismissed: (_) {},
       child: isLocked ? Opacity(opacity: 0.5, child: content) : content,
     );
   }
