@@ -203,6 +203,7 @@
 - フロントエンドで実装している複雑な処理を優先的に Supabase Edge Function に移行する
 - ユーザーマニュアルを実装済み機能に合わせて随時更新する
 - 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude works, Chatwork, Slack, ジョブカン）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
+- ホーム画面のKPIデータ集約用 Edge Function (`get-home-dashboard`) を本実装し、フロントエンドの複数リクエストを単一化 (2026-03-25)
 - 常に Linter エラー 0 を維持し、CIパイプラインで厳格にブロックすることで、技術的負債ゼロのクリーンなコードベースと高速開発を実現する
 
 ### 企画
@@ -374,11 +375,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ### 1. ホーム画面データ集約 (最優先)
 
-- 内容: ホーム画面の表示に必要な運用スナップショット(`_loadOpsSnapshot`)とKPIサマリー(`_loadHomeKpiOverview`)の生成処理を、単一の `get-home-dashboard` Edge Function に統合する。
-- 目的:
-  - クライアント側の複数DBアクセスを単一化し、初期表示パフォーマンスを向上させる。
-  - 複雑な状態判断・計算ロジックをバックエンドに集約し、フロントエンドを簡素化する。
-  - Web/モバイルアプリ間で表示ロジックの一貫性を担保する。
+- **済**: `get-home-dashboard` Edge Function の本実装を完了し、フロントエンドの集計処理を完全にバックエンドへ移行 (2026-03-25)
 
 ### その他の移行候補 (優先度順)
 
@@ -403,12 +400,12 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 3. ~~referral reward と anti-abuse ルールを追加する~~ ✓ 完了
 4. ~~import success 後 onboarding をさらに改善する~~ ✓ 完了
 5. ~~acquisition touchpoint ごとの weekly digest を追加する~~ ✓ 完了 (growth-weekly-digest Edge Function)
-6. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
-7. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
-8. wasm build blocker の原因を特定して解消する
-9. 公開メモの SEO / OGP タグを強化して organic 流入を増やす
-10. B2B 向け移行代行 LP の最初のドラフトを作る
-11. 技術ブログ第 1 弾を Zenn に投稿する (「Flutter + Supabase で growth dashboard を作った」)
+6. ~~技術ブログ第 1 弾を Zenn に投稿する~~ ✓ Zenn向け技術記事ドラフト作成完了 (`zenn_growth_dashboard_20260325.md`)
+7. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
+8. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
+9. wasm build blocker の原因を特定して解消する
+10. 公開メモの SEO / OGP タグを強化して organic 流入を増やす
+11. B2B 向け移行代行 LP の最初のドラフトを作る
 12. はてなブログで週次 progress bar 付き成長記録を開始する
 
 ---
@@ -514,6 +511,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - 今週 ship した機能 (weekly digest, anti-abuse, import CTA, growth progress card) を note / Zenn / dev.to に投稿する
 - build in public として referral anti-abuse の設計思想を公開メモにする
 - 技術ブログ発信テンプレートを確立: 1 feature → Zenn (実装) → Qiita (実用) → dev.to (英語) → note (エッセイ)
+- エンジニア獲得向けに Zenn 投稿用の技術ブログドラフト (`zenn_growth_dashboard_20260325.md`) を執筆完了
 - はてなブログで登録者数 weekly progress bar を見せながら成長記録を開始する
 
 ### 営業 — 2026-03-25
