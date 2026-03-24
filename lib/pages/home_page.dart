@@ -3915,6 +3915,8 @@ abstinence_slip_details: $slipDetailsText
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const GrowthRoadmapProgressCard(),
+                            const SizedBox(height: 10),
+                            const NotionFeatureComparisonCard(),
                             const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
