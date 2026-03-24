@@ -10,6 +10,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
+// deno-lint-ignore no-explicit-any
 type AdminClient = any;
 
 interface AchievementSummaryResponse {

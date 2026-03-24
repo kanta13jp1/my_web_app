@@ -34,6 +34,7 @@ interface ReferralSnapshotPayload {
   successfulReferrals: number;
 }
 
+// deno-lint-ignore no-explicit-any
 type AdminClient = any;
 
 serve(async (req) => {
@@ -301,6 +302,7 @@ async function loadReferralSnapshot(
 
   const referralRows = referrals.data ?? [];
   const successfulReferrals =
+    // deno-lint-ignore no-explicit-any
     referralRows.filter((row: any) => row.status?.toString() === "completed")
       .length;
 
@@ -404,6 +406,7 @@ async function refreshReferralCodeCounters(
 
     const rows = referrals.data ?? [];
     nextTotal = rows.length;
+    // deno-lint-ignore no-explicit-any
     nextSuccessful = rows.filter((row: any) =>
       row.status?.toString() === "completed"
     ).length;

@@ -7,7 +7,11 @@
       "Bash(deno lint:*)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(grep -n \"^\\\\*\\\\*[^*].*\\\\*\\\\*$\" c:/Users/kanta/GitHub/my_web_app/docs/GROWTH_STRATEGY_ROADMAP.md)",
-      "Bash(grep \"\\\\.dart$\")"
+      "Bash(grep \"\\\\.dart$\")",
+      "Bash(deno --version)",
+      "Bash(sed -n '34,40p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)",
+      "Bash(sed -n '301,308p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)",
+      "Bash(sed -n '404,410p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)"
     ]
   }
 }
