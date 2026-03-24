@@ -1975,6 +1975,10 @@ class _CompetitorFeatureComparisonCardState
   bool _expanded = false;
   late TabController _tabController;
 
+  /// Remote data loaded from get-competitor-features Edge Function.
+  /// When null, falls back to the local hardcoded lists.
+  List<List<_FeatureRow>>? _remoteFeatureLists;
+
   static const _competitors = [
     'Notion',
     'EverNote',
@@ -2017,6 +2021,53 @@ class _CompetitorFeatureComparisonCardState
         setState(() => _filterCategory = 'すべて');
       }
     });
+    _loadRemoteFeatures();
+  }
+
+  Future<void> _loadRemoteFeatures() async {
+    try {
+      final client = Supabase.instance.client;
+      final response =
+          await client.functions.invoke('get-competitor-features');
+      final data = response.data;
+      if (data is! Map || data['success'] != true) return;
+      final competitors = data['competitors'];
+      if (competitors is! List) return;
+
+      final lists = <List<_FeatureRow>>[];
+      for (final comp in competitors) {
+        if (comp is! Map) continue;
+        final features = comp['features'];
+        if (features is! List) continue;
+        final rows = <_FeatureRow>[];
+        for (final f in features) {
+          if (f is! Map) continue;
+          final status = switch (f['status']?.toString()) {
+            'done' => _FeatureStatus.done,
+            'partial' => _FeatureStatus.partial,
+            'inProgress' => _FeatureStatus.inProgress,
+            'unique' => _FeatureStatus.unique,
+            _ => _FeatureStatus.notYet,
+          };
+          rows.add(
+            _FeatureRow(
+              category: f['category']?.toString() ?? '',
+              feature: f['feature']?.toString() ?? '',
+              competitorDetail: f['competitorDetail']?.toString() ?? '',
+              status: status,
+              appDetail: f['appDetail']?.toString() ?? '',
+            ),
+          );
+        }
+        lists.add(rows);
+      }
+
+      if (lists.length == _competitors.length && mounted) {
+        setState(() => _remoteFeatureLists = lists);
+      }
+    } catch (_) {
+      // Silently fall back to local hardcoded data.
+    }
   }
 
   @override
@@ -2026,7 +2077,7 @@ class _CompetitorFeatureComparisonCardState
   }
 
   List<_FeatureRow> get _currentRows =>
-      _featureLists[_tabController.index];
+      (_remoteFeatureLists ?? _featureLists)[_tabController.index];
 
   List<String> get _categories {
     final cats = <String>['すべて'];
