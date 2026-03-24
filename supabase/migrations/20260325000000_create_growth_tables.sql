@@ -17,12 +17,16 @@ create table if not exists public.development_achievements (
 -- 全ユーザーが読み取り可能（開発実績は公開情報）
 alter table public.development_achievements enable row level security;
 
+drop policy if exists "Anyone can read development_achievements"
+  on public.development_achievements;
 create policy "Anyone can read development_achievements"
   on public.development_achievements
   for select
   using (true);
 
 -- 認証ユーザーのみ追加可能
+drop policy if exists "Authenticated users can insert development_achievements"
+  on public.development_achievements;
 create policy "Authenticated users can insert development_achievements"
   on public.development_achievements
   for insert
@@ -44,12 +48,16 @@ create table if not exists public.growth_plans (
 
 alter table public.growth_plans enable row level security;
 
+drop policy if exists "Anyone can read growth_plans"
+  on public.growth_plans;
 create policy "Anyone can read growth_plans"
   on public.growth_plans
   for select
   using (true);
 
 -- Service role (Edge Function) のみ書き込み可
+drop policy if exists "Service role can manage growth_plans"
+  on public.growth_plans;
 create policy "Service role can manage growth_plans"
   on public.growth_plans
   for all
@@ -72,6 +80,8 @@ create table if not exists public.home_daily_status (
 
 alter table public.home_daily_status enable row level security;
 
+drop policy if exists "Users manage own home_daily_status"
+  on public.home_daily_status;
 create policy "Users manage own home_daily_status"
   on public.home_daily_status
   for all

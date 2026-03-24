@@ -11,7 +11,16 @@
       "Bash(deno --version)",
       "Bash(sed -n '34,40p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)",
       "Bash(sed -n '301,308p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)",
-      "Bash(sed -n '404,410p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)"
+      "Bash(sed -n '404,410p' /c/Users/kanta/GitHub/my_web_app/supabase/functions/growth-referral/index.ts)",
+      "Bash(supabase migration:*)",
+      "Bash(flutter build:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase --version)",
+      "Bash(pnpm install:*)",
+      "Bash(npm install:*)",
+      "Bash(where firebase:*)",
+      "Bash(C:/Users/kanta/AppData/Roaming/npm/firebase --version)",
+      "Bash(C:/Users/kanta/AppData/Roaming/npm/firebase deploy:*)"
     ]
   }
 }
