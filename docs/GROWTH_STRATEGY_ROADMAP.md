@@ -118,9 +118,9 @@
 - 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork、Slack、ジョブカン タブを追加し、13タブ構成に拡張
 - DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で完了タスクをリスト表示
 - ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
-- DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
+- DevelopmentAchievementsCard の本実装を完了 (2026-03-26)
   - growth-achievement-summary Edge Function でバックエンド集計
-  - 期間選択に応じて完了済みタスク（取り消し線付き）のテキストリストを一覧表示
+  - データベースから実績と完了日を取得し、打消し線を廃止して「タスク名＋日付」の複数行フォーマットで表示するように改修
 
 ### 残課題
 

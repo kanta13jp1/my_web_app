@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+class _TaskItem {
+  final String title;
+  final String dateStr;
+  _TaskItem({required this.title, required this.dateStr});
+}
+
 class DevelopmentAchievementsCard extends StatefulWidget {
   const DevelopmentAchievementsCard({super.key});
 
@@ -13,7 +19,7 @@ class _DevelopmentAchievementsCardState
     extends State<DevelopmentAchievementsCard> {
   String _selectedPeriod = '今日の実績';
   bool _isLoading = false;
-  List<String> _currentTasks = [];
+  List<_TaskItem> _currentTasks = [];
 
   static const List<String> _periods = [
     '今日の実績',
@@ -45,7 +51,13 @@ class _DevelopmentAchievementsCardState
         body: {'period': period},
       );
       final data = res.data as Map<String, dynamic>;
-      final list = (data['achievements'] as List?)?.cast<String>() ?? [];
+      final list = (data['achievements'] as List?)?.map((e) {
+            final map = e as Map<String, dynamic>;
+            return _TaskItem(
+              title: map['title']?.toString() ?? '',
+              dateStr: map['dateStr']?.toString() ?? '',
+            );
+          }).toList() ?? [];
       if (mounted) {
         setState(() {
           _currentTasks = list;
@@ -56,7 +68,7 @@ class _DevelopmentAchievementsCardState
       debugPrint('Error fetching achievements: $e');
       if (mounted) {
         setState(() {
-          _currentTasks = ['実績の取得に失敗しました'];
+          _currentTasks = [_TaskItem(title: '実績の取得に失敗しました', dateStr: '')];
           _isLoading = false;
         });
       }
