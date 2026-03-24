@@ -63,6 +63,7 @@ class _LandingPageState extends State<LandingPage> {
   List<FlSpot> _pvSpots = const <FlSpot>[];
   List<String> _pvLabels = const <String>[];
   String? _activeShareChannel;
+  int _achievementCount = 0;
 
   String? _trialAction;
   String? _trialReason;
@@ -96,6 +97,7 @@ class _LandingPageState extends State<LandingPage> {
     _initLpViewStats();
     _loadShareSnapshot();
     _loadPublicMemos();
+    unawaited(_loadAchievementCount());
   }
 
   @override
@@ -147,6 +149,23 @@ class _LandingPageState extends State<LandingPage> {
       debugPrint('Landing share snapshot failed: $error');
       if (!mounted) return;
       setState(() => _isLoadingShareStats = false);
+    }
+  }
+
+  Future<void> _loadAchievementCount() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) return;
+    try {
+      final response = await client.functions.invoke(
+        'development-achievements',
+        body: {'action': 'get', 'period': 'すべての実績'},
+      );
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final count = (data['achievements'] as List<dynamic>?)?.length ?? 0;
+      if (!mounted) return;
+      setState(() => _achievementCount = count);
+    } catch (_) {
+      // Silently ignore; count stays 0
     }
   }
 
@@ -705,6 +724,67 @@ $input
       return 'Magic Link の送信に失敗しました。メール設定と入力内容を確認してください。';
     }
     return 'Magic Link の送信に失敗しました。通信状況を確認してから再試行してください。';
+  }
+
+  Widget _buildBuildInPublicSection() {
+    final launchDate = DateTime(2026, 3, 1);
+    final daysBuilding = DateTime.now().difference(launchDate).inDays + 1;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.construction, color: Colors.amber, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Build in Public 🚀',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '13製品に挑戦中 · $daysBuilding日目'
+                  '${_achievementCount > 0 ? ' · 実装済み$_achievementCount件' : ''}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white60,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Text(
+              'LIVE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.amber,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildHeroSection() {
@@ -1725,7 +1805,9 @@ $input
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeroSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+                  _buildBuildInPublicSection(),
+                  const SizedBox(height: 20),
                   _buildUniqueValueSection(),
                   const SizedBox(height: 20),
                   _buildImportCtaSection(),
