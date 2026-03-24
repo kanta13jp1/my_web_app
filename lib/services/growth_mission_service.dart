@@ -378,6 +378,112 @@ class GrowthCommandCenterBrief {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Weekly Digest
+// ---------------------------------------------------------------------------
+
+class WeeklyDigestChannelMetrics {
+  final String id;
+  final String label;
+  final int touches;
+  final int signupSubmits;
+  final int cvr;
+  final int touchesDelta;
+  final int signupSubmitsDelta;
+
+  const WeeklyDigestChannelMetrics({
+    required this.id,
+    required this.label,
+    required this.touches,
+    required this.signupSubmits,
+    required this.cvr,
+    required this.touchesDelta,
+    required this.signupSubmitsDelta,
+  });
+
+  factory WeeklyDigestChannelMetrics.fromJson(Map<String, dynamic> json) {
+    return WeeklyDigestChannelMetrics(
+      id: json['id']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      touches: (json['touches'] as num?)?.toInt() ?? 0,
+      signupSubmits: (json['signupSubmits'] as num?)?.toInt() ?? 0,
+      cvr: (json['cvr'] as num?)?.toInt() ?? 0,
+      touchesDelta: (json['touchesDelta'] as num?)?.toInt() ?? 0,
+      signupSubmitsDelta: (json['signupSubmitsDelta'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class WeeklyDigestSnapshot {
+  final String currentWeekStart;
+  final String currentWeekEnd;
+  final List<WeeklyDigestChannelMetrics> channels;
+  final int signupSubmitTotal;
+  final int signupSubmitDelta;
+  final int referralsCompleted;
+  final int referralsDelta;
+  final int importCtaClicks;
+  final int publicMemoCtaClicks;
+  final String brief;
+
+  const WeeklyDigestSnapshot({
+    required this.currentWeekStart,
+    required this.currentWeekEnd,
+    required this.channels,
+    required this.signupSubmitTotal,
+    required this.signupSubmitDelta,
+    required this.referralsCompleted,
+    required this.referralsDelta,
+    required this.importCtaClicks,
+    required this.publicMemoCtaClicks,
+    required this.brief,
+  });
+
+  const WeeklyDigestSnapshot.empty()
+      : currentWeekStart = '',
+        currentWeekEnd = '',
+        channels = const [],
+        signupSubmitTotal = 0,
+        signupSubmitDelta = 0,
+        referralsCompleted = 0,
+        referralsDelta = 0,
+        importCtaClicks = 0,
+        publicMemoCtaClicks = 0,
+        brief = '';
+
+  factory WeeklyDigestSnapshot.fromJson(Map<String, dynamic> json) {
+    final currentWeek = json['currentWeek'];
+    final channels = <WeeklyDigestChannelMetrics>[];
+    if (json['channels'] is List) {
+      for (final c in json['channels'] as List<dynamic>) {
+        if (c is Map) {
+          channels.add(
+            WeeklyDigestChannelMetrics.fromJson(Map<String, dynamic>.from(c)),
+          );
+        }
+      }
+    }
+    return WeeklyDigestSnapshot(
+      currentWeekStart: (currentWeek is Map
+              ? currentWeek['startDate']
+              : null)
+          ?.toString() ??
+          '',
+      currentWeekEnd: (currentWeek is Map ? currentWeek['endDate'] : null)
+          ?.toString() ??
+          '',
+      channels: channels,
+      signupSubmitTotal: (json['signupSubmitTotal'] as num?)?.toInt() ?? 0,
+      signupSubmitDelta: (json['signupSubmitDelta'] as num?)?.toInt() ?? 0,
+      referralsCompleted: (json['referralsCompleted'] as num?)?.toInt() ?? 0,
+      referralsDelta: (json['referralsDelta'] as num?)?.toInt() ?? 0,
+      importCtaClicks: (json['importCtaClicks'] as num?)?.toInt() ?? 0,
+      publicMemoCtaClicks: (json['publicMemoCtaClicks'] as num?)?.toInt() ?? 0,
+      brief: json['brief']?.toString() ?? '',
+    );
+  }
+}
+
 class GrowthMissionService {
   static const _guestSessionIdKey = 'growth_guest_session_id';
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
@@ -931,6 +1037,32 @@ $inviteUrl
     } catch (error) {
       debugPrint('Growth command center fallback: $error');
       return _buildLocalCommandCenterBrief(dashboard);
+    }
+  }
+
+  Future<WeeklyDigestSnapshot> loadWeeklyDigest() async {
+    final client = _client;
+    if (client == null) {
+      return const WeeklyDigestSnapshot.empty();
+    }
+
+    try {
+      final response = await client.functions.invoke(
+        'growth-weekly-digest',
+        body: <String, dynamic>{},
+      );
+
+      final data = _toMapValue(response.data);
+      if (data['success'] != true) {
+        throw Exception(
+          data['error']?.toString() ?? 'Weekly digest failed.',
+        );
+      }
+
+      return WeeklyDigestSnapshot.fromJson(data);
+    } catch (error) {
+      debugPrint('Weekly digest fallback: $error');
+      return const WeeklyDigestSnapshot.empty();
     }
   }
 

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 2件新規作成・deno lint 0件・ランディングページ改善)
+最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 2件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI実装)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -80,6 +80,11 @@
 - growth-share-signal
 - growth-referral
 - growth-acquisition-report
+- **Weekly Digest UI** (2026-03-25 実装完了): Growth Mission ページに週次ダイジェストカードを追加
+  - `WeeklyDigestChannelMetrics` / `WeeklyDigestSnapshot` モデルクラスを `growth_mission_service.dart` に追加
+  - `loadWeeklyDigest()` メソッドで `growth-weekly-digest` Edge Function を呼び出す実装
+  - GrowthMissionPage に週次チャネル別メトリクス（touches/sign-ups/CVR/delta）カードを表示
+  - 週次 sign-up submits・referrals・import CTA・public memo CTA の集計タイルを表示
 - **ランディングページ改善** (2026-03-25 追加): ユーザー獲得強化のため2セクション追加
   - `_buildUniqueValueSection()`: AI役員会議・記憶ドリル・経営コックピット・インポート・マインドマップ・公開メモ の6機能をアイコン付きグリッドで訴求
   - `_buildImportCtaSection()`: 「登録なしでインポートを試す」ダークカード CTA を追加、/import への直接導線を設置

@@ -24,8 +24,10 @@ class GrowthMissionPage extends StatefulWidget {
 class _GrowthMissionPageState extends State<GrowthMissionPage> {
   bool _isLoading = true;
   bool _briefLoading = true;
+  bool _digestLoading = true;
   GrowthMissionDashboard _dashboard = GrowthMissionDashboard.empty();
   GrowthCommandCenterBrief _commandCenter = GrowthCommandCenterBrief.empty();
+  WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
 
   static const List<_PublishingChannel> _publishingChannels =
       <_PublishingChannel>[
@@ -91,7 +93,12 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
   }
 
   Future<void> _reload() async {
-    final dashboard = await widget.growthService.loadDashboard();
+    final results = await Future.wait<dynamic>([
+      widget.growthService.loadDashboard(),
+      widget.growthService.loadWeeklyDigest(),
+    ]);
+    final dashboard = results[0] as GrowthMissionDashboard;
+    final digest = results[1] as WeeklyDigestSnapshot;
     final commandCenter =
         await widget.growthService.loadCommandCenterBrief(dashboard);
     if (!mounted) {
@@ -102,6 +109,8 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
       _isLoading = false;
       _commandCenter = commandCenter;
       _briefLoading = false;
+      _weeklyDigest = digest;
+      _digestLoading = false;
     });
   }
 
@@ -719,6 +728,90 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Weekly digest',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (_digestLoading)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      ],
+                    ),
+                    if (_weeklyDigest.currentWeekStart.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_weeklyDigest.currentWeekStart} – ${_weeklyDigest.currentWeekEnd}',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    if (_weeklyDigest.channels.isEmpty && !_digestLoading)
+                      const Text('No data yet for this week.')
+                    else
+                      ..._weeklyDigest.channels.map(_weeklyDigestChannelRow),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      children: [
+                        _statTile(
+                          label: 'Sign-up submits',
+                          value:
+                              '${_weeklyDigest.signupSubmitTotal}${_weeklyDigest.signupSubmitDelta >= 0 ? ' (+${_weeklyDigest.signupSubmitDelta})' : ' (${_weeklyDigest.signupSubmitDelta})'}',
+                          icon: Icons.how_to_reg,
+                        ),
+                        _statTile(
+                          label: 'Referrals completed',
+                          value:
+                              '${_weeklyDigest.referralsCompleted}${_weeklyDigest.referralsDelta >= 0 ? ' (+${_weeklyDigest.referralsDelta})' : ' (${_weeklyDigest.referralsDelta})'}',
+                          icon: Icons.verified,
+                        ),
+                        _statTile(
+                          label: 'Import CTA clicks',
+                          value: '${_weeklyDigest.importCtaClicks}',
+                          icon: Icons.upload_file,
+                        ),
+                        _statTile(
+                          label: 'Public memo CTA',
+                          value: '${_weeklyDigest.publicMemoCtaClicks}',
+                          icon: Icons.public,
+                        ),
+                      ],
+                    ),
+                    if (_weeklyDigest.brief.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(_weeklyDigest.brief),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     const Text(
                       'Roadmap discipline',
                       style: TextStyle(
@@ -787,6 +880,33 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         const SizedBox(height: 6),
         Text('${percent.toStringAsFixed(6)}% - $detail'),
       ],
+    );
+  }
+
+  Widget _weeklyDigestChannelRow(WeeklyDigestChannelMetrics channel) {
+    final deltaSign = channel.touchesDelta >= 0 ? '+' : '';
+    final submitDeltaSign = channel.signupSubmitsDelta >= 0 ? '+' : '';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              channel.label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'touches: ${channel.touches} ($deltaSign${channel.touchesDelta})  '
+              'sign-ups: ${channel.signupSubmits} ($submitDeltaSign${channel.signupSubmitsDelta})  '
+              'CVR: ${channel.cvr}%',
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
