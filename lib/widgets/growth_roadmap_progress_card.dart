@@ -1666,7 +1666,7 @@ const _codexFeatureRows = <_FeatureRow>[
     category: 'ナレッジ管理',
     feature: 'コードベース検索・Q&A',
     competitorDetail: 'コードの意味を理解した自然言語検索',
-    status: _FeatureStatus.partiallyDone,
+    status: _FeatureStatus.partial,
     appDetail: 'MAGI System + AI Secretary でドキュメント Q&A 実装済み',
   ),
   _FeatureRow(
@@ -1739,7 +1739,7 @@ const _netkeibaFeatureRows = <_FeatureRow>[
     category: 'コミュニティ',
     feature: '予想投稿・コメント',
     competitorDetail: 'ユーザーが予想を投稿してコメントし合える',
-    status: _FeatureStatus.partiallyDone,
+    status: _FeatureStatus.partial,
     appDetail: '公開メモ機能で意見・予想の投稿・共有が可能',
   ),
   _FeatureRow(
@@ -1768,7 +1768,7 @@ const _netkeibaFeatureRows = <_FeatureRow>[
     category: '収支管理',
     feature: '的中率・回収率の自動計算',
     competitorDetail: '勝率・ROI を自動計算して表示',
-    status: _FeatureStatus.partiallyDone,
+    status: _FeatureStatus.partial,
     appDetail: 'ノートと収支を組み合わせて手動管理可能。自動集計は一部実装',
   ),
   // ---- 自分株式会社 独自機能 ----
