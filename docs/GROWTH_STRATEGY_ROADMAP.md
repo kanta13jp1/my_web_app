@@ -1,4 +1,4 @@
-﻿# 成長戦略ロードマップ - MyMemo
+# 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
 最終更新: 2026-03-25
@@ -10,12 +10,12 @@
 
 ## 1. ビジョン
 
-MyMemo を、AI が伴走する知的生産プラットフォームに進化させる。
+自分株式会社 を、AI が伴走する知的生産プラットフォームに進化させる。
 単なるメモ保存ではなく、整理、共有、思考補助、行動変換、チーム運用までを支える。
 
 勝ち筋は次の 4 本柱で作る。
 
-1. 競合から移行しやすいこと
+1. 競合から移行しやすいこと (Notion、Evernote、MoneyForward、X からのユーザーを取り込む)
 2. AI が自然に価値を生むこと
 3. 共有と紹介が新規流入に変わること
 4. 個人利用から法人導入まで伸びること
@@ -28,13 +28,17 @@ MyMemo を、AI が伴走する知的生産プラットフォームに進化さ�
 
 - Notion: 100,000,000+ users 規模
 - Evernote: 250,000,000+ customer 規模
+- MoneyForward: ~15,000,000 users 規模
+- X (Twitter/X): ~600,000,000 monthly active users 規模
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
 - Notion product page: `Over 100M users worldwide`
 - Evernote official announcement dated 2022-11-16: `Serving more than 250 million customers`
+- MoneyForward: ~1,500 万ユーザー
+- X (Twitter/X): ~6 億 monthly active users
 
-MyMemo はこの 2 サービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこの 4 サービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -77,6 +81,11 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
   - vs NOTION (1億ユーザー) / vs EverNote (2.5億ユーザー) 比較バー
   - user_profiles テーブルから登録者数をリアルタイム取得
 - 技術ブログ発信戦略を GROWTH_STRATEGY_ROADMAP.md に追加 (Zenn / Qiita / はてなブログ / note / dev.to / Hashnode / Medium / Substack / GitHub Pages)
+- ホーム画面に vs X 進捗バーを追加 (2026-03-24 追加)
+- 競合機能比較カードに X タブを追加 (X: SNS・コンテンツ配信機能との比較) (2026-03-24 追加)
+- ホーム画面に CompetitorFeatureComparisonCard を Notion/EverNote/MoneyForward/X の4タブで実装 (2026-03-24 追加)
+- ユーザーマニュアルページを追加 (実装済み全機能の操作手順書) (2026-03-24 追加)
+- vs MoneyForward 進捗バーを追加 (2026-03-24 追加)
 
 ### 残課題
 
@@ -154,6 +163,8 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - 公開メモの SEO と OGP を強化する
 - ai_status_page_test と memory_drill_page_test の残件を解消する
 - flutter_secure_storage_web の wasm blocker を調査する
+- ユーザーマニュアルを実装済み機能に合わせて随時更新する
+- X (Twitter) との機能比較ページを SEO コンテンツとして活用する
 
 ### 企画
 
@@ -161,6 +172,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - referral landing で約束する価値を `登録 -> import -> first memo` の 3 ステップに固定する
 - AI の価値訴求を 要約、整理、次アクション生成 の 3 本に絞る
 - 勝ちテンプレート群を定義する
+- X (SNS) からの流入導線を設計する (公開メモの X シェアボタン → 自分株式会社 登録)
 
 ### 広告
 
@@ -183,7 +195,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 #### 国内技術メディア
 
 - **Zenn**: Flutter / Supabase / Edge Function の実装詳細記事。コードスニペットを充実させる。
-- **Qiita**: 「Notion → MyMemo 移行スクリプトを作った」「Evernote ENEX を Flutter で解析する」など実用系。
+- **Qiita**: 「Notion → 自分株式会社 移行スクリプトを作った」「Evernote ENEX を Flutter で解析する」など実用系。
 - **はてなブログ**: 週次 build-in-public 日記。登録者数の推移グラフ付きで毎週公開する。
 
 #### 国内コンテンツ
@@ -290,9 +302,9 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **カレンダー/ガントビュー**
 - **Web クリッパー**: ブラウザ拡張
 
-### MyMemo 独自優位点 (Notion にない機能)
+### 自分株式会社 独自優位点 (Notion にない機能)
 
-以下は Notion が持たず MyMemo が先行している機能。訴求に積極活用する。
+以下は Notion が持たず 自分株式会社 が先行している機能。訴求に積極活用する。
 
 1. **マインドマップ** — ノートをビジュアル構造化
 2. **記憶ドリル** — スペーシング反復学習
@@ -545,7 +557,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## 15. 現時点の結論
 
-今の MyMemo は規模ではまだ競合に遠く及ばない。
+今の 自分株式会社 は規模ではまだ競合に遠く及ばない。
 ただし、移行、AI、共有、referral、チーム導入を一貫した成長ループとして設計できれば、Notion と Evernote を上回る余地はある。
 
 そのために当面は次を最優先にする。

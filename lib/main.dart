@@ -6,6 +6,7 @@ import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
+import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
@@ -183,6 +184,8 @@ class MyApp extends StatelessWidget {
               builder: (_) => PublicMemoDetailPage(memoId: memoId),
               settings: RouteSettings(name: settings.name),
             );
+          case '/user-manual':
+            return MaterialPageRoute(builder: (_) => const UserManualPage());
           case '/behavior-review':
             return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
           case '/reality-check':

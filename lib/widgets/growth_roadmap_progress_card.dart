@@ -65,6 +65,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs MoneyForward',
       target: 15000000,
     ),
+    _PlanItem(
+      label: 'vs X',
+      target: 600000000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1033,10 +1037,221 @@ const _moneyforwardFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — X (Twitter)
+// ---------------------------------------------------------------------------
+
+const _xFeatureRows = <_FeatureRow>[
+  // ---- 投稿・コンテンツ ----
+  _FeatureRow(
+    category: '投稿・コンテンツ',
+    feature: 'テキスト投稿',
+    competitorDetail: '最大4000文字 (Premium) / 280文字 (無料)',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdown ノート作成実装済み (文字数制限なし)',
+  ),
+  _FeatureRow(
+    category: '投稿・コンテンツ',
+    feature: '画像・動画添付',
+    competitorDetail: '最大4枚の画像、または動画を投稿に添付',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '投稿・コンテンツ',
+    feature: 'スレッド投稿',
+    competitorDetail: '連続ポストをスレッドとして繋げる',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — ノートのリンク機能で代替可能',
+  ),
+  _FeatureRow(
+    category: '投稿・コンテンツ',
+    feature: 'ポーリング (投票)',
+    competitorDetail: '最大4択の投票をポストに埋め込み',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '投稿・コンテンツ',
+    feature: '引用ポスト',
+    competitorDetail: '他ユーザーのポストにコメントを添えて共有',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- タイムライン・発見 ----
+  _FeatureRow(
+    category: 'タイムライン・発見',
+    feature: 'アルゴリズムタイムライン',
+    competitorDetail: 'エンゲージメント予測に基づくコンテンツ推薦',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 長期計画でレコメンドエンジン対応予定',
+  ),
+  _FeatureRow(
+    category: 'タイムライン・発見',
+    feature: 'トレンド',
+    competitorDetail: '地域・世界のリアルタイムトレンドを表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'タイムライン・発見',
+    feature: 'ハッシュタグ',
+    competitorDetail: 'ハッシュタグでコンテンツを横断検索',
+    status: _FeatureStatus.partial,
+    appDetail: 'タグ機能実装済み (クロスカテゴリ検索で代替)',
+  ),
+  _FeatureRow(
+    category: 'タイムライン・発見',
+    feature: '全文・ユーザー検索',
+    competitorDetail: 'キーワード・ユーザー・日付・メディアで絞り込み検索',
+    status: _FeatureStatus.partial,
+    appDetail: 'AI 埋め込み検索を部分実装',
+  ),
+  // ---- エンゲージメント ----
+  _FeatureRow(
+    category: 'エンゲージメント',
+    feature: 'いいね',
+    competitorDetail: 'ポストへのリアクション (いいね)',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'エンゲージメント',
+    feature: 'リポスト',
+    competitorDetail: '他ユーザーのポストをそのまま拡散',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'エンゲージメント',
+    feature: 'リプライ',
+    competitorDetail: 'ポストへの返信',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'エンゲージメント',
+    feature: 'ブックマーク',
+    competitorDetail: 'ポストを非公開でコレクションに保存',
+    status: _FeatureStatus.done,
+    appDetail: 'ノートへの保存・お気に入り機能実装済み',
+  ),
+  // ---- コミュニケーション ----
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'ダイレクトメッセージ (DM)',
+    competitorDetail: '1対1またはグループでのプライベートメッセージ',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'X スペース (音声ライブ)',
+    competitorDetail: 'リアルタイム音声配信・参加',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- コミュニティ ----
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: 'コミュニティ機能',
+    competitorDetail: 'テーマ別のクローズドグループを作成・参加',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — チームワークスペースで中期対応予定',
+  ),
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: 'フォロー/フォロワー',
+    competitorDetail: 'ユーザー間の非対称フォロー関係',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 収益化 ----
+  _FeatureRow(
+    category: '収益化',
+    feature: 'X Premium (有料プラン)',
+    competitorDetail: '長文投稿・認証バッジ・広告収益分配',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Pro/Team/Enterprise プラン設計中',
+  ),
+  _FeatureRow(
+    category: '収益化',
+    feature: 'Super Follows (有料フォロー)',
+    competitorDetail: '有料フォロワーへの限定コンテンツ配信',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 中長期計画でコンテンツ収益化対応予定',
+  ),
+  _FeatureRow(
+    category: '収益化',
+    feature: '広告収益分配',
+    competitorDetail: 'Premium ユーザーの広告インプレッション収益分配',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- プラットフォーム ----
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'Web アプリ',
+    competitorDetail: 'ブラウザで全機能利用可能',
+    status: _FeatureStatus.done,
+    appDetail: 'Flutter Web 実装済み',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'iOS/Android アプリ',
+    competitorDetail: 'ネイティブモバイルアプリ',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI エージェント組織',
+    competitorDetail: '— X にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'CEO/CFO/CMO/CHRO 役員会議 AI 実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '長文プライベートノート管理',
+    competitorDetail: '— X は短文パブリック投稿が主軸',
+    status: _FeatureStatus.unique,
+    appDetail: 'Markdown ノート・カテゴリ・AI 整理実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '家計・資産管理',
+    competitorDetail: '— X にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '収支カレンダー・資産管理・月次収支分析実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— X にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'ビジュアルマインドマップ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— X にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'Growth ロードマップ進捗表示',
+    competitorDetail: '— X にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'このカードがその機能です',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合3社 (Notion / EverNote / MoneyForward) の機能一覧と
+/// 競合4社 (Notion / EverNote / MoneyForward / X) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1055,11 +1270,12 @@ class _CompetitorFeatureComparisonCardState
   bool _expanded = false;
   late TabController _tabController;
 
-  static const _competitors = ['Notion', 'EverNote', 'MoneyForward'];
+  static const _competitors = ['Notion', 'EverNote', 'MoneyForward', 'X'];
   static const _featureLists = [
     _notionFeatureRows,
     _evernoteFeatureRows,
     _moneyforwardFeatureRows,
+    _xFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
