@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(deno check:*)",
+      "Bash(deno lint:*)"
+    ]
+  }
+}

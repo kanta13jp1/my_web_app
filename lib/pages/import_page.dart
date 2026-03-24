@@ -208,38 +208,10 @@ class _ImportPageState extends State<ImportPage> {
           const SizedBox(height: 24),
           if (_isLoading) const LinearProgressIndicator(),
           if (_lastImportResult != null) ...[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      _lastImportResult!.usedEdgeFunction
-                          ? Icons.cloud_done
-                          : Icons.computer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Latest import execution',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${_lastImportResult!.insertedCount} notes imported via ${_lastImportResult!.importModeLabel}.',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            _buildImportSuccessOnboarding(
+              result: _lastImportResult!,
+              currentUser: currentUser,
+              sourceType: _selectedSource,
             ),
             const SizedBox(height: 16),
           ],
@@ -412,6 +384,104 @@ class _ImportPageState extends State<ImportPage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImportSuccessOnboarding({
+    required ImportExecutionResult result,
+    required User? currentUser,
+    String? sourceType,
+  }) {
+    final sourceName = switch (sourceType) {
+      'notion' => 'Notion',
+      'evernote' => 'Evernote',
+      'markdown' => 'Markdown',
+      _ => '競合ツール',
+    };
+    final count = result.insertedCount;
+    final isSignedIn = currentUser != null;
+
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$sourceName から $count 件のノートを移行しました',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              result.importModeLabel,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (!isSignedIn) ...[
+              Text(
+                'ノートを永続的に保存するには無料アカウントを作成してください。',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'AI による整理・検索・要約機能も無料で使えます。',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _openLandingPage,
+                icon: const Icon(Icons.person_add_outlined),
+                label: const Text('無料アカウントを作成してノートを保存'),
+              ),
+            ] else ...[
+              Text(
+                '次は AI でノートを整理してみましょう。',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushReplacementNamed('/notes'),
+                icon: const Icon(Icons.notes_outlined),
+                label: const Text('インポートしたノートを見る'),
+              ),
+            ],
+          ],
         ),
       ),
     );

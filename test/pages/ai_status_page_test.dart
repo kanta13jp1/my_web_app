@@ -266,12 +266,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('claude-sonnet-4-6'), findsWidgets);
-    expect(
-      find.byKey(
-        const Key('ai_status_default_model_badge_claude-sonnet-4-6'),
-      ),
-      findsOneWidget,
+
+    final badge = find.byKey(
+      const Key('ai_status_default_model_badge_claude-sonnet-4-6'),
     );
+    await revealInScrollView(tester, badge);
+    expect(badge, findsOneWidget);
   });
 
   testWidgets('can update MAGI system settings from the status page', (

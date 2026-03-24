@@ -12,8 +12,16 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const REFERRAL_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const REFERRAL_LENGTH = 8;
 const REFERRAL_BONUS_POINTS = 500;
+/** Max referral applications a single account can trigger in one UTC day. */
+const MAX_REFERRALS_PER_DAY = 5;
+/** Min account age in milliseconds before the account may be referred. */
+const MIN_ACCOUNT_AGE_MS = 60 * 60 * 1000; // 1 hour
 
-type GrowthReferralAction = "ensure_code" | "apply_pending" | "load_snapshot";
+type GrowthReferralAction =
+  | "ensure_code"
+  | "apply_pending"
+  | "load_snapshot"
+  | "check_abuse";
 
 interface GrowthReferralRequest {
   action?: GrowthReferralAction;
@@ -83,6 +91,14 @@ serve(async (req) => {
           ...result,
         });
       }
+      case "check_abuse": {
+        const abuseReport = await checkAbuseReport(admin, user.id);
+        return jsonResponse({
+          success: true,
+          action,
+          ...abuseReport,
+        });
+      }
       case "load_snapshot":
       default: {
         const snapshot = await loadReferralSnapshot(admin, user.id);
@@ -101,7 +117,7 @@ serve(async (req) => {
 
 function isSupportedAction(value: string): value is GrowthReferralAction {
   return value === "ensure_code" || value === "apply_pending" ||
-    value === "load_snapshot";
+    value === "load_snapshot" || value === "check_abuse";
 }
 
 async function requireUser(
@@ -218,6 +234,36 @@ async function applyPendingReferral({
     };
   }
 
+  // ---- Anti-abuse: rate limit ----------------------------------------
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const dailyCount = await admin
+    .from("referrals")
+    .select("id", { count: "exact", head: true })
+    .eq("referrer_user_id", referrerUserId)
+    .gte("completed_at", todayStart.toISOString());
+  if (!dailyCount.error && (dailyCount.count ?? 0) >= MAX_REFERRALS_PER_DAY) {
+    return {
+      applied: false,
+      clearPendingCode: false,
+      reason: "rate_limit_exceeded",
+    };
+  }
+
+  // ---- Anti-abuse: minimum account age --------------------------------
+  const userMeta = await admin.auth.admin.getUserById(referredUserId);
+  if (!userMeta.error && userMeta.data?.user?.created_at) {
+    const createdAt = new Date(userMeta.data.user.created_at).getTime();
+    const ageMs = Date.now() - createdAt;
+    if (ageMs < MIN_ACCOUNT_AGE_MS) {
+      return {
+        applied: false,
+        clearPendingCode: false,
+        reason: "account_too_new",
+      };
+    }
+  }
+
   const insertResult = await admin.from("referrals").insert({
     referrer_user_id: referrerUserId,
     referred_user_id: referredUserId,
@@ -278,6 +324,63 @@ async function loadReferralSnapshot(
     referralCode: refreshedCode.data ?? referralCode,
     totalReferrals: referralRows.length,
     successfulReferrals,
+  };
+}
+
+/**
+ * Scans the referrals table for patterns that indicate abuse:
+ * - Users who received more than MAX_REFERRALS_PER_DAY referrals in one day
+ * - Users with referral attempts blocked in the last 24 hours (via reason field)
+ * Returns a summary that the admin analytics page can display.
+ */
+async function checkAbuseReport(admin: AdminClient, _requestingUserId: string) {
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - 7);
+
+  const referrals = await admin
+    .from("referrals")
+    .select("referrer_user_id, referred_user_id, status, completed_at")
+    .gte("completed_at", since.toISOString())
+    .order("completed_at", { ascending: false });
+
+  if (referrals.error) {
+    throw referrals.error;
+  }
+
+  const rows: Array<Record<string, unknown>> = referrals.data ?? [];
+
+  // Group by referrer, count completions per UTC day
+  const referrerDayCounts: Record<string, Record<string, number>> = {};
+  for (const row of rows) {
+    if (row["status"]?.toString() !== "completed") continue;
+    const referrerId = row["referrer_user_id"]?.toString() ?? "";
+    const dayKey = (row["completed_at"]?.toString() ?? "").slice(0, 10);
+    if (!referrerId || !dayKey) continue;
+    referrerDayCounts[referrerId] ??= {};
+    referrerDayCounts[referrerId][dayKey] =
+      (referrerDayCounts[referrerId][dayKey] ?? 0) + 1;
+  }
+
+  const suspiciousReferrers: Array<{
+    referrerId: string;
+    maxPerDay: number;
+    totalCompleted: number;
+  }> = [];
+
+  for (const [referrerId, dayCounts] of Object.entries(referrerDayCounts)) {
+    const maxPerDay = Math.max(...Object.values(dayCounts));
+    const totalCompleted = Object.values(dayCounts).reduce((a, b) => a + b, 0);
+    if (maxPerDay >= MAX_REFERRALS_PER_DAY) {
+      suspiciousReferrers.push({ referrerId, maxPerDay, totalCompleted });
+    }
+  }
+
+  return {
+    windowDays: 7,
+    since: since.toISOString(),
+    totalRows: rows.length,
+    suspiciousReferrers,
+    flagged: suspiciousReferrers.length > 0,
   };
 }
 

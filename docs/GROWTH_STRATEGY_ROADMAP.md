@@ -1,7 +1,7 @@
 ﻿# 成長戦略ロードマップ - MyMemo
 
 作成日: 2025-11-10
-最終更新: 2026-03-24
+最終更新: 2026-03-25
 現時点の登録者数: 2人
 最重要目的: Notion と Evernote を上回る規模の知的生産プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -59,6 +59,7 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - growth-share-signal
 - growth-referral
 - growth-acquisition-report
+- growth-weekly-digest (2026-03-25 追加)
 - import 画面の backend-first execution result 表示
 - public memo の共有導線と成長シグナル記録
 - route / import / public memo / referral の獲得シグナル記録
@@ -68,13 +69,16 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - Growth Mission に assisted conversion proxy と import preview 集計を追加
 - Growth Mission から note / Qiita / Zenn / Medium / dev.to / Hashnode / Substack 向けの配信ブリーフをコピー可能にした
 - HomePage の operations calendar で日別の収入 / 支出を月単位で俯瞰できるようにした
+- referral anti-abuse: rate limit (1日5件) + 1時間未満アカウントブロック + check_abuse アクション (2026-03-25 追加)
+- import 成功後の onboarding CTA を personalized card に刷新 (2026-03-25 追加)
+- ai_status_page_test の残件 "can set and show the default ai model" を解消 (2026-03-25 完了)
 
 ### 残課題
 
-- referral reward 運用と anti-abuse の本実装
-- widget test の残件整理
 - wasm build blocker の解消
-- assisted conversion の週次 digest 化
+- weekly digest を admin analytics page / growth mission page から呼び出す UI
+- referral reward ポイント付与の実際の運用確認
+- B2B 営業資料の整備開始
 
 ---
 
@@ -266,14 +270,18 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 ---
 
-## 11. 次の 2 週間でやること
+## 11. 次の 2 週間でやること (2026-03-25 更新)
 
-1. ai_status_page_test の残件を解消する
-2. memory_drill_page_test の残件を解消する
-3. referral reward と anti-abuse ルールを追加する
-4. import success 後 onboarding をさらに改善する
-5. acquisition touchpoint ごとの weekly digest を追加する
-6. 毎週このファイルへ実績値を反映する
+1. ~~ai_status_page_test の残件を解消する~~ ✓ 完了
+2. ~~memory_drill_page_test の残件を解消する~~ ✓ 完了
+3. ~~referral reward と anti-abuse ルールを追加する~~ ✓ 完了
+4. ~~import success 後 onboarding をさらに改善する~~ ✓ 完了
+5. ~~acquisition touchpoint ごとの weekly digest を追加する~~ ✓ 完了 (growth-weekly-digest Edge Function)
+6. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
+7. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
+8. wasm build blocker の原因を特定して解消する
+9. 公開メモの SEO / OGP タグを強化して organic 流入を増やす
+10. B2B 向け移行代行 LP の最初のドラフトを作る
 
 ---
 
@@ -299,63 +307,118 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 ## 12A. 2026-03-24 cross-functional execution board
 
-### 開発
+### 開発 — 2026-03-24
 
 - `growth-referral` と `growth-acquisition-report` を Edge Function として運用開始する
 - `/referral` と landing の invite section の CVR を追う
 - flutter analyze 0、deno check / deno lint を壊さない
 
-### 企画
+### 企画 — 2026-03-24
 
 - referral の価値訴求を `招待 -> import -> first memo` に固定する
 - Notion 比較、Evernote 比較、referral LP の訴求を同じ言葉にそろえる
 
-### 広告
+### 広告 — 2026-03-24
 
 - referral / import / AI の 3 クリエイティブで少額テストを回す
 - Sign-up submit 計測が安定した訴求だけに予算を寄せる
 
-### 宣伝
+### 宣伝 — 2026-03-24
 
 - note、Substack、SNS で `今週 ship した growth 機能` を定例化する
 - 公開メモと build log を referral と import の流入導線に使う
 
-### 営業
+### 営業 — 2026-03-24
 
 - 小規模チーム向けに `Notion / Evernote からの移行代行` を最初の提案軸にする
 - referral 経由で流入した法人候補を founder sales が即対応する
 
-### マーケティング
+### マーケティング — 2026-03-24
 
 - public memo、比較記事、template、referral LP を同じキーワード設計で増やす
 - assisted conversion proxy をもとに週次でチャネル配分を更新する
 
-### 人事
+### 人事 — 2026-03-24
 
 - growth backend contractor と content marketer の JD を確定する
 - 100 users / 1,000 users 到達時の採用トリガーを先に決める
 
-### 経理
+### 経理 — 2026-03-24
 
 - referral reward の上限予算と会計処理ルールを決める
 - CAC 回収期間の目標レンジを広告前に固定する
 
-### 調達
+### 調達 — 2026-03-24
 
 - attribution、CRM、support tool の追加要件を整理する
 - 既存 stack で代替できるものは新規契約しない
 
-### 事業計画
+### 事業計画 — 2026-03-24
 
 - 100、1,000、10,000 users の各段階で必要な org / infra / revenue model を分けて管理する
 - Notion / Evernote を上回る目標は長期旗印として持ちつつ、短期は PMF と repeatable channel を先に取る
 
 ---
 
+## 12B. 2026-03-25 cross-functional execution board
+
+### 開発 — 2026-03-25
+
+- `growth-weekly-digest` Edge Function を追加し、7 日間のチャネル別 CVR と前週比を返せるようにした
+- `growth-referral` に rate limit (1 日 5 件)、1 時間未満アカウントブロック、`check_abuse` アクションを追加した
+- import 成功後の onboarding CTA を personalized card に刷新した (Notion / Evernote / Markdown 別に訴求文を変える)
+- `ai_status_page_test` の残件 1 件を解消した (ListView lazy rendering によるバッジ未検出)
+- flutter analyze 0 を維持。deno check growth-weekly-digest / growth-referral を確認した
+
+### 企画 — 2026-03-25
+
+- import 成功後の CTA を「無料アカウントを作成してノートを保存」に統一した
+- weekly digest を週次 KPI レビューの基盤として位置づける
+- B2B 向け移行代行 LP のドラフト要件を次スプリントで定義する
+
+### 広告 — 2026-03-25
+
+- import CTA 改善後の sign-up submit 数を weekly digest で追い始める
+- 今週の数値が出たら import / referral / landing クリエイティブの予算配分を更新する
+
+### 宣伝 — 2026-03-25
+
+- 今週 ship した機能 (weekly digest, anti-abuse, import CTA) を note / Zenn / dev.to に投稿する
+- build in public として referral anti-abuse の設計思想を公開メモにする
+
+### 営業 — 2026-03-25
+
+- import 成功後 CTA の「ノートを保存」導線を法人向け移行代行の入口として活用する
+- weekly digest で CVR が高いチャネルからのリードを founder sales に優先対応させる
+
+### マーケティング — 2026-03-25
+
+- weekly digest による週次チャネルレビューを今週から開始する
+- import → sign-up の CVR baseline を今週中に計測して記録する
+
+### 人事 — 2026-03-25
+
+- weekly digest が安定したら growth analytics contractor の採用要件に「digest 設計理解」を追加する
+
+### 経理 — 2026-03-25
+
+- referral anti-abuse 導入後、referral reward の実際の発行件数と上限予算の整合を確認する
+
+### 調達 — 2026-03-25
+
+- weekly digest で attribution の精度が足りなくなった時点で attribution tool の導入を検討する
+
+### 事業計画 — 2026-03-25
+
+- import CTA 改善後の CVR 数値が出たら、import チャネルの CAC / LTV 試算に使う
+- 週次 digest を investor update の数値源として確立する
+
+---
+
 ## 16. ベンチマーク参照元
 
-- 2026-03-24 verified: Notion product page: https://www.notion.com/product
-- 2026-03-24 verified: Evernote official announcement: https://evernote.com/blog/bending-spoons-to-acquire-evernote
+- 2026-03-24 verified: [Notion product page](https://www.notion.com/product)
+- 2026-03-24 verified: [Evernote official announcement](https://evernote.com/blog/bending-spoons-to-acquire-evernote)
 
 ---
 
