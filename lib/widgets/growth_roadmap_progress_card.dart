@@ -89,6 +89,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs OpenClaw',
       target: 1000000,
     ),
+    _PlanItem(
+      label: 'vs Claude works',
+      target: 500000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1865,10 +1869,61 @@ const _openClawFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Claude works
+// ---------------------------------------------------------------------------
+
+const _claudeWorksFeatureRows = <_FeatureRow>[
+  // ---- チーム・法人向け AI ----
+  _FeatureRow(
+    category: '法人・チーム AI',
+    feature: '社内ナレッジ連携 (RAG)',
+    competitorDetail: '社内ドキュメント・WikiとAIを統合',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 中期計画で Team workspace と合わせて対応予定',
+  ),
+  _FeatureRow(
+    category: '法人・チーム AI',
+    feature: 'Artifacts 共同編集',
+    competitorDetail: 'AIが生成したコードや文書をチームで閲覧・編集',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '法人・チーム AI',
+    feature: 'エンタープライズセキュリティ',
+    competitorDetail: 'SOC2 / SSO / データプライバシー管理',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 長期計画で法人向け管理機能を整備',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '個人資産・収支との統合',
+    competitorDetail: '— Claude works にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '個人の収支・資産トラッキングを AI 支援と一元化',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI 役員会議 (MAGI System)',
+    competitorDetail: '— Claude works にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '複数ペルソナ (CEO/CFO/CMO/CHRO) の AI が同時に議論・提案',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'スペーシング記憶ドリル',
+    competitorDetail: '— Claude works にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '学習定着化システムを実装済み',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合9社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw) の機能一覧と
+/// 競合10社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1897,6 +1952,7 @@ class _CompetitorFeatureComparisonCardState
     'Codex',
     'netkeiba',
     'OpenClaw',
+    'Claude works',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -1908,6 +1964,7 @@ class _CompetitorFeatureComparisonCardState
     _codexFeatureRows,
     _netkeibaFeatureRows,
     _openClawFeatureRows,
+    _claudeWorksFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
