@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25
+最終更新: 2026-03-25 (本日追加: Lintエラー0件達成・ホーム画面GROWTH導線追加・ユーザーマニュアル正確化)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -124,6 +124,17 @@
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
+
+- CompetitorFeatureComparisonCard の `_FeatureRow.competitorName` 不要フィールドを削除し、全 `_FeatureRow` インスタンスの missing_required_argument エラー 13件を解消 (2026-03-25)
+- CompetitorFeatureComparisonCard の `_isLoading = true` 永続バグ（展開時に無限ローディングスピナーが表示され続ける）を修正し、ハードコードデータを即座に表示するよう改修 (2026-03-25)
+- growth_roadmap_progress_card.dart の bracket 不整合（`Expected to find ']'`）および unused_field・prefer_final_fields エラーを解消 (2026-03-25)
+- development_achievements_card.dart の require_trailing_commas エラーを解消 (2026-03-25)
+- user_manual_page.dart の unnecessary_const エラーを解消 (2026-03-25)
+- flutter analyze 216件エラー → **0件** 達成 (2026-03-25)
+- ホーム画面に「GROWTH / 成長導線」セクションを新設し、インポート・成長ミッション・公開メモ一覧への直接リンクを追加 (2026-03-25)
+- ユーザーマニュアル (`user_manual_page.dart`) を全面刷新：実際のホーム画面ナビゲーション（CEO/CSO/CFO/CMO/GROWTH の各セクション）に準拠した正確な手順書に改版 (2026-03-25)
+  - 存在しない「ナビゲーションメニュー」への言及を削除し、実在するグリッドメニューの操作手順を記載
+  - 8セクション構成（ホーム画面・ノート・独自機能・インポート・公開メモ・タイマー・成長ロードマップ・AI/ブリーフィング）に拡充
 
 ### 残課題
 

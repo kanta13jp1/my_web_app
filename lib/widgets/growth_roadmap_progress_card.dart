@@ -318,7 +318,6 @@ extension _FeatureStatusExt on _FeatureStatus {
 }
 
 class _FeatureRow {
-  final String competitorName;
   final String category;
   final String feature;
   final String competitorDetail;
@@ -326,7 +325,6 @@ class _FeatureRow {
   final String appDetail;
 
   const _FeatureRow({
-    required this.competitorName,
     required this.category,
     required this.feature,
     required this.competitorDetail,
@@ -1976,9 +1974,6 @@ class _CompetitorFeatureComparisonCardState
     with SingleTickerProviderStateMixin {
   bool _expanded = false;
   late TabController _tabController;
-  
-  List<_FeatureRow> _allFeatures = [];
-  bool _isLoading = true;
 
   static const _competitors = [
     'Notion',
@@ -2180,14 +2175,8 @@ class _CompetitorFeatureComparisonCardState
           // ---- Expandable body -------------------------------------------
           if (_expanded) ...[
             Divider(height: 1, color: borderColor),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else ...[
-              // Tab bar
-              TabBar(
+            // Tab bar
+            TabBar(
                 controller: _tabController,
                 onTap: (_) => setState(() => _filterCategory = 'すべて'),
               tabs: _competitors

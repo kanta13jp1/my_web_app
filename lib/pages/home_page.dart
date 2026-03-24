@@ -47,6 +47,9 @@ import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
 import 'wardrobe_page.dart'; // 先頭のimport群に追加
+import 'import_page.dart';
+import 'growth_mission_page.dart';
+import 'public_memo_directory_page.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 
@@ -4269,6 +4272,36 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(context, const RealityCheckPage()),
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
+                              ),
+                            ]),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
+                              'GROWTH / 成長導線',
+                              Icons.rocket_launch,
+                              Colors.green,
+                              key: const Key('home_section_growth'),
+                            ),
+                            _buildGridMenu(context, isCompact, [
+                              _MenuData(
+                                'インポート',
+                                Icons.upload_file,
+                                Colors.teal,
+                                () => _nav(context, const ImportPage()),
+                              ),
+                              _MenuData(
+                                '成長ミッション',
+                                Icons.flag,
+                                Colors.green,
+                                () => _nav(context, const GrowthMissionPage()),
+                              ),
+                              _MenuData(
+                                '公開メモ一覧',
+                                Icons.public,
+                                Colors.blue,
+                                () => _nav(
+                                  context,
+                                  const PublicMemoDirectoryPage(),
+                                ),
                               ),
                             ]),
                             const SizedBox(height: 40),

@@ -86,7 +86,7 @@ const rawData = [
   ['ジョブカン','自分株式会社 独自機能','個人生産性からのシームレスな統合','— 管理者主体のツール設計','unique','従業員個人のノートやタスク管理の延長でバックオフィスが完結'],
 ];
 
-serve(async (req) => {
+serve((req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
