@@ -47,6 +47,7 @@ import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
 import 'wardrobe_page.dart'; // 先頭のimport群に追加
+import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -3919,6 +3920,8 @@ abstinence_slip_details: $slipDetailsText
                             const NotionFeatureComparisonCard(),
                             const SizedBox(height: 10),
                             _UserManualBanner(),
+                            const SizedBox(height: 10),
+                            const DevelopmentAchievementsCard(),
                             const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,

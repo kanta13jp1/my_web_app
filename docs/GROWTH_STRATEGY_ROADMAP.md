@@ -31,6 +31,7 @@
 - MoneyForward: ~15,000,000 users 規模
 - X (Twitter/X): ~600,000,000 monthly active users 規模
 - Animaworks: ~500,000 users 規模 (国内パーソナル生産性アプリ)
+- Claude Code (Anthropic): ~500,000 users 規模 (AI コーディングアシスタント)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -91,6 +92,13 @@
 - vs Animaworks 進捗バーを追加 (目標: ~50万ユーザー) (2026-03-24 追加)
 - 競合機能比較カードに Animaworks タブを追加 (目標・習慣管理/振り返り/ライフデザイン機能との比較) (2026-03-24 追加)
 - CompetitorFeatureComparisonCard を5タブ構成に拡張 (Notion/EverNote/MoneyForward/X/Animaworks) (2026-03-24 追加)
+- vs Claude Code 進捗バーを追加 (目標: ~50万ユーザー) (2026-03-24 追加)
+- 競合機能比較カードに Claude Code タブを追加 (AI コーディング支援機能との比較) (2026-03-24 追加)
+- CompetitorFeatureComparisonCard を6タブ構成に拡張 (+ Claude Code) (2026-03-24 追加)
+- DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
+  - 13区間の期間セレクター (今日〜すべて) で開発実績を切り替え表示
+  - 新規ユーザー / 成長シグナル / 紹介成立 / インポートプレビュー の4指標
+  - growth-achievement-summary Edge Function でバックエンド集計
 
 ### 残課題
 

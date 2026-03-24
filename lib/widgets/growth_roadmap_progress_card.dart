@@ -73,6 +73,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs Animaworks',
       target: 500000,
     ),
+    _PlanItem(
+      label: 'vs Claude Code',
+      target: 500000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1434,10 +1438,177 @@ const _animaworksFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Claude Code
+// ---------------------------------------------------------------------------
+
+const _claudeCodeFeatureRows = <_FeatureRow>[
+  // ---- AI コーディング支援 ----
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'AI コード生成・補完',
+    competitorDetail: '自然言語の指示でコードを自動生成・補完',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — コーディング機能は対象外 (別の価値軸で差別化)',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'バグ検出・自動修正',
+    competitorDetail: 'エラーを解析して修正案を提案・適用',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'コードレビュー',
+    competitorDetail: 'プルリクエスト・コード全体のレビューコメント生成',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'テスト自動生成',
+    competitorDetail: 'ユニットテスト・E2E テストコードを自動生成',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'ドキュメント生成',
+    competitorDetail: 'コードからコメント・README を自動生成',
+    status: _FeatureStatus.done,
+    appDetail: 'AI Secretary でノート・レポート生成実装済み (汎用文書生成)',
+  ),
+  // ---- ファイル・環境操作 ----
+  _FeatureRow(
+    category: 'ファイル・環境操作',
+    feature: 'ファイル読み書き・編集',
+    competitorDetail: 'プロジェクト内の任意ファイルを読み取り・編集',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdown ノート作成・編集実装済み',
+  ),
+  _FeatureRow(
+    category: 'ファイル・環境操作',
+    feature: 'ターミナルコマンド実行',
+    competitorDetail: 'シェルコマンドを直接実行して結果をフィードバック',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — Web/モバイル環境では対象外',
+  ),
+  _FeatureRow(
+    category: 'ファイル・環境操作',
+    feature: 'Git 操作支援',
+    competitorDetail: 'コミット・PR・ブランチ操作を AI が補助',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ファイル・環境操作',
+    feature: 'マルチファイル横断編集',
+    competitorDetail: '複数ファイルにまたがる変更を一括実行',
+    status: _FeatureStatus.partial,
+    appDetail: 'ノートのリンク・カテゴリ横断検索で部分対応',
+  ),
+  // ---- 拡張・統合 ----
+  _FeatureRow(
+    category: '拡張・統合',
+    feature: 'MCP (Model Context Protocol) 拡張',
+    competitorDetail: 'カスタムツールを MCP サーバーとして接続',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '拡張・統合',
+    feature: 'IDE / エディタ統合',
+    competitorDetail: 'VS Code 等のエディタにシームレスに統合',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — Web アプリとして独立',
+  ),
+  _FeatureRow(
+    category: '拡張・統合',
+    feature: 'ブラウザ操作 (Computer Use)',
+    competitorDetail: 'ブラウザを自律制御して Web タスクを実行',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '拡張・統合',
+    feature: 'カスタムシステムプロンプト (CLAUDE.md)',
+    competitorDetail: 'プロジェクト固有の指示書でふるまいをカスタマイズ',
+    status: _FeatureStatus.partial,
+    appDetail: 'AI エージェントへの役割設定機能で部分対応',
+  ),
+  // ---- AI モデル ----
+  _FeatureRow(
+    category: 'AI モデル',
+    feature: 'マルチモデル対応',
+    competitorDetail: 'Claude Opus / Sonnet / Haiku を用途別に切り替え',
+    status: _FeatureStatus.done,
+    appDetail: 'AI ステータス画面で Claude / Gemini / GPT 等を切り替え可能',
+  ),
+  _FeatureRow(
+    category: 'AI モデル',
+    feature: 'コンテキスト長 (長い会話)',
+    competitorDetail: '200K トークン超の長いコンテキストを保持',
+    status: _FeatureStatus.partial,
+    appDetail: 'ノート・チャット履歴でコンテキスト管理、長文対応拡張予定',
+  ),
+  // ---- プラットフォーム ----
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'CLI (コマンドラインインターフェース)',
+    competitorDetail: 'ターミナルから直接起動して使用',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — Web/モバイルが主軸',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'Web アプリ / GUI',
+    competitorDetail: 'ブラウザ / GUI での操作',
+    status: _FeatureStatus.done,
+    appDetail: 'Flutter Web 実装済み',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '個人生産性統合 (ノート + 習慣 + 家計)',
+    competitorDetail: '— Claude Code にはない機能 (コーディング専用ツール)',
+    status: _FeatureStatus.unique,
+    appDetail: 'ノート / 習慣トラッカー / 収支管理 / 資産管理を一元化',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI エージェント組織 (CEO/CFO/CMO/CHRO)',
+    competitorDetail: '— Claude Code にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '役員会議 AI で戦略的意思決定を支援',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— Claude Code にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'ビジュアルマインドマップ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— Claude Code にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'Growth ロードマップ + 競合比較',
+    competitorDetail: '— Claude Code にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'このカードがその機能です',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合5社 (Notion / EverNote / MoneyForward / X / Animaworks) の機能一覧と
+/// 競合6社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1462,6 +1633,7 @@ class _CompetitorFeatureComparisonCardState
     'MoneyForward',
     'X',
     'Animaworks',
+    'Claude Code',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -1469,6 +1641,7 @@ class _CompetitorFeatureComparisonCardState
     _moneyforwardFeatureRows,
     _xFeatureRows,
     _animaworksFeatureRows,
+    _claudeCodeFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
