@@ -48,6 +48,196 @@ class ReferralGrowthSnapshot {
   }
 }
 
+class GrowthAcquisitionTouchpointSnapshot {
+  final String id;
+  final String label;
+  final int touchCount;
+  final int signupSubmitCount;
+
+  const GrowthAcquisitionTouchpointSnapshot({
+    required this.id,
+    required this.label,
+    required this.touchCount,
+    required this.signupSubmitCount,
+  });
+
+  factory GrowthAcquisitionTouchpointSnapshot.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return GrowthAcquisitionTouchpointSnapshot(
+      id: json['id']?.toString() ?? 'touchpoint',
+      label: json['label']?.toString() ?? 'Touchpoint',
+      touchCount: _toInt(json['touchCount']),
+      signupSubmitCount: _toInt(json['signupSubmitCount']),
+    );
+  }
+
+  double get signupSubmitRate {
+    if (touchCount <= 0) {
+      return 0;
+    }
+    return signupSubmitCount / touchCount;
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+}
+
+class GrowthImportPreviewSnapshot {
+  final String id;
+  final String label;
+  final int previewCount;
+
+  const GrowthImportPreviewSnapshot({
+    required this.id,
+    required this.label,
+    required this.previewCount,
+  });
+
+  factory GrowthImportPreviewSnapshot.fromJson(Map<String, dynamic> json) {
+    return GrowthImportPreviewSnapshot(
+      id: json['id']?.toString() ?? 'preview',
+      label: json['label']?.toString() ?? 'Preview',
+      previewCount: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['previewCount'],
+      ),
+    );
+  }
+}
+
+class GrowthAcquisitionSnapshot {
+  final int windowDays;
+  final DateTime startDate;
+  final DateTime endDate;
+  final List<GrowthAcquisitionTouchpointSnapshot> touchpoints;
+  final List<GrowthImportPreviewSnapshot> importPreviews;
+  final int importSignupCtaCount;
+  final int publicMemoSignupCtaCount;
+
+  const GrowthAcquisitionSnapshot({
+    required this.windowDays,
+    required this.startDate,
+    required this.endDate,
+    required this.touchpoints,
+    required this.importPreviews,
+    required this.importSignupCtaCount,
+    required this.publicMemoSignupCtaCount,
+  });
+
+  factory GrowthAcquisitionSnapshot.empty({
+    int windowDays = 30,
+  }) {
+    final now = DateTime.now();
+    final startDate = now.subtract(Duration(days: math.max(0, windowDays - 1)));
+    return GrowthAcquisitionSnapshot(
+      windowDays: windowDays,
+      startDate: DateTime(startDate.year, startDate.month, startDate.day),
+      endDate: DateTime(now.year, now.month, now.day),
+      touchpoints: const <GrowthAcquisitionTouchpointSnapshot>[
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'landing',
+          label: 'Landing',
+          touchCount: 0,
+          signupSubmitCount: 0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'import',
+          label: 'Import',
+          touchCount: 0,
+          signupSubmitCount: 0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'public_memo',
+          label: 'Public memo',
+          touchCount: 0,
+          signupSubmitCount: 0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'referral',
+          label: 'Referral',
+          touchCount: 0,
+          signupSubmitCount: 0,
+        ),
+      ],
+      importPreviews: const <GrowthImportPreviewSnapshot>[
+        GrowthImportPreviewSnapshot(
+          id: 'notion',
+          label: 'Notion previews',
+          previewCount: 0,
+        ),
+        GrowthImportPreviewSnapshot(
+          id: 'evernote',
+          label: 'Evernote previews',
+          previewCount: 0,
+        ),
+        GrowthImportPreviewSnapshot(
+          id: 'markdown',
+          label: 'Markdown previews',
+          previewCount: 0,
+        ),
+      ],
+      importSignupCtaCount: 0,
+      publicMemoSignupCtaCount: 0,
+    );
+  }
+
+  factory GrowthAcquisitionSnapshot.fromJson(Map<String, dynamic> json) {
+    final windowDays = GrowthAcquisitionTouchpointSnapshot._toInt(
+      json['windowDays'],
+    );
+    return GrowthAcquisitionSnapshot(
+      windowDays: windowDays <= 0 ? 30 : windowDays,
+      startDate: DateTime.tryParse(json['startDate']?.toString() ?? '') ??
+          DateTime.now(),
+      endDate: DateTime.tryParse(json['endDate']?.toString() ?? '') ??
+          DateTime.now(),
+      touchpoints: (json['touchpoints'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map(
+            (item) => GrowthAcquisitionTouchpointSnapshot.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList(),
+      importPreviews:
+          (json['importPreviews'] as List<dynamic>? ?? const <dynamic>[])
+              .whereType<Map>()
+              .map(
+                (item) => GrowthImportPreviewSnapshot.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .toList(),
+      importSignupCtaCount: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['importSignupCtaCount'],
+      ),
+      publicMemoSignupCtaCount: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['publicMemoSignupCtaCount'],
+      ),
+    );
+  }
+
+  int get totalTouches => touchpoints.fold<int>(
+        0,
+        (sum, item) => sum + item.touchCount,
+      );
+
+  int get totalSignupSubmits => touchpoints.fold<int>(
+        0,
+        (sum, item) => sum + item.signupSubmitCount,
+      );
+}
+
 class GrowthMissionDashboard {
   final int totalRegisteredUsers;
   final int todayRegistrations;
@@ -59,6 +249,7 @@ class GrowthMissionDashboard {
   final int totalLandingViews;
   final int todayShares;
   final ReferralGrowthSnapshot referralSnapshot;
+  final GrowthAcquisitionSnapshot acquisitionSnapshot;
   final DateTime refreshedAt;
 
   const GrowthMissionDashboard({
@@ -72,6 +263,7 @@ class GrowthMissionDashboard {
     required this.totalLandingViews,
     required this.todayShares,
     required this.referralSnapshot,
+    required this.acquisitionSnapshot,
     required this.refreshedAt,
   });
 
@@ -87,6 +279,7 @@ class GrowthMissionDashboard {
       totalLandingViews: 0,
       todayShares: 0,
       referralSnapshot: const ReferralGrowthSnapshot.empty(),
+      acquisitionSnapshot: GrowthAcquisitionSnapshot.empty(),
       refreshedAt: DateTime.now(),
     );
   }
@@ -216,7 +409,12 @@ class GrowthMissionService {
       ..['utm_source'] = 'referral'
       ..['utm_medium'] = 'invite'
       ..['utm_campaign'] = 'growth_mission';
-    return baseUri.replace(queryParameters: nextQuery).toString();
+    return baseUri
+        .replace(
+          path: '/referral',
+          queryParameters: nextQuery,
+        )
+        .toString();
   }
 
   static String buildInviteCopyText({
@@ -231,11 +429,30 @@ $inviteUrl
 ''';
   }
 
+  static String buildReferralInviteMessage({
+    required String inviteUrl,
+    required int totalRegisteredUsers,
+    required int liveViewers,
+  }) {
+    return '''
+Trying to build a note app that can eventually beat Notion and Evernote takes real users and honest feedback.
+
+Current live snapshot:
+- Registered users: $totalRegisteredUsers
+- Live viewers: $liveViewers
+
+Join from this invite:
+$inviteUrl
+''';
+  }
+
   Future<void> capturePendingReferralFromUri({
     Uri? currentUri,
   }) async {
-    final refCode =
-        (currentUri ?? Uri.base).queryParameters['ref']?.trim().toUpperCase();
+    final uri = currentUri ?? Uri.base;
+    final refCode = (uri.queryParameters['ref'] ?? uri.queryParameters['code'])
+        ?.trim()
+        .toUpperCase();
     if (refCode == null || refCode.isEmpty) {
       return;
     }
@@ -343,6 +560,24 @@ $inviteUrl
       return null;
     }
 
+    try {
+      final response = await client.functions.invoke(
+        'growth-referral',
+        body: const <String, dynamic>{
+          'action': 'ensure_code',
+        },
+      );
+      final data = _toMapValue(response.data);
+      if (data['success'] == true) {
+        final referralCode = _toMapValue(data['referralCode']);
+        if (referralCode.isNotEmpty) {
+          return ReferralCode.fromJson(referralCode);
+        }
+      }
+    } catch (error) {
+      debugPrint('Referral ensure edge function fallback: $error');
+    }
+
     final existingCode = await _fetchMyReferralCode(
       client: client,
       userId: user.id,
@@ -393,6 +628,25 @@ $inviteUrl
     final pendingCode = await loadPendingReferralCode();
     if (client == null || user == null || pendingCode == null) {
       return;
+    }
+
+    try {
+      final response = await client.functions.invoke(
+        'growth-referral',
+        body: <String, dynamic>{
+          'action': 'apply_pending',
+          'pendingCode': pendingCode,
+        },
+      );
+      final data = _toMapValue(response.data);
+      if (data['success'] == true) {
+        if (data['clearPendingCode'] == true) {
+          await clearPendingReferralCode();
+        }
+        return;
+      }
+    } catch (error) {
+      debugPrint('Referral apply edge function fallback: $error');
     }
 
     try {
@@ -450,6 +704,29 @@ $inviteUrl
       );
     }
 
+    try {
+      final response = await client.functions.invoke(
+        'growth-referral',
+        body: const <String, dynamic>{
+          'action': 'load_snapshot',
+        },
+      );
+      final data = _toMapValue(response.data);
+      if (data['success'] == true) {
+        final referralCodeRow = _toMapValue(data['referralCode']);
+        return ReferralGrowthSnapshot(
+          myReferralCode: referralCodeRow.isEmpty
+              ? null
+              : ReferralCode.fromJson(referralCodeRow),
+          totalReferrals: _toIntValue(data['totalReferrals']),
+          successfulReferrals: _toIntValue(data['successfulReferrals']),
+          pendingReferralCode: pendingCode,
+        );
+      }
+    } catch (error) {
+      debugPrint('Referral snapshot edge function fallback: $error');
+    }
+
     final myCode = await ensureMyReferralCode();
     try {
       final rows = await client
@@ -475,6 +752,56 @@ $inviteUrl
         successfulReferrals: 0,
         pendingReferralCode: pendingCode,
       );
+    }
+  }
+
+  Future<GrowthAcquisitionSnapshot> loadAcquisitionSnapshot({
+    int windowDays = 30,
+  }) async {
+    final client = _client;
+    if (client == null) {
+      return GrowthAcquisitionSnapshot.empty(windowDays: windowDays);
+    }
+
+    try {
+      final response = await client.functions.invoke(
+        'growth-acquisition-report',
+        body: <String, dynamic>{
+          'windowDays': windowDays,
+        },
+      );
+      final data = _toMapValue(response.data);
+      if (data['success'] == true) {
+        return GrowthAcquisitionSnapshot.fromJson(_toMapValue(data['report']));
+      }
+    } catch (error) {
+      debugPrint('Acquisition snapshot edge function fallback: $error');
+    }
+
+    try {
+      final now = DateTime.now();
+      final startDate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: math.max(0, windowDays - 1)));
+      final rows = await client
+          .from('app_analytics')
+          .select('source_details')
+          .gte('date', _formatDate(startDate))
+          .lte('date', _formatDate(now));
+      final aggregated = <String, int>{};
+      for (final row in rows) {
+        _mergeSourceCounts(aggregated, row['source_details']);
+      }
+      return _buildAcquisitionSnapshotFromSourceCounts(
+        aggregated,
+        windowDays: windowDays,
+        now: now,
+      );
+    } catch (error) {
+      debugPrint('Acquisition snapshot fallback failed: $error');
+      return GrowthAcquisitionSnapshot.empty(windowDays: windowDays);
     }
   }
 
@@ -518,6 +845,7 @@ $inviteUrl
             .eq('date', todayKey)
             .maybeSingle(),
         loadReferralSnapshot(),
+        loadAcquisitionSnapshot(),
       ]);
 
       final statRow = results[0] is Map
@@ -538,6 +866,9 @@ $inviteUrl
       final referralSnapshot = results[5] is ReferralGrowthSnapshot
           ? results[5] as ReferralGrowthSnapshot
           : const ReferralGrowthSnapshot.empty();
+      final acquisitionSnapshot = results[6] is GrowthAcquisitionSnapshot
+          ? results[6] as GrowthAcquisitionSnapshot
+          : GrowthAcquisitionSnapshot.empty();
 
       return GrowthMissionDashboard(
         totalRegisteredUsers: latestStat?.totalUsers ?? 0,
@@ -550,6 +881,7 @@ $inviteUrl
         totalLandingViews: _toIntValue(lpStats['total']),
         todayShares: _toIntValue(analyticsRow['share_count']),
         referralSnapshot: referralSnapshot,
+        acquisitionSnapshot: acquisitionSnapshot,
         refreshedAt: now,
       );
     } catch (error) {
@@ -633,6 +965,106 @@ $inviteUrl
       return Map<String, dynamic>.from(value);
     }
     return <String, dynamic>{};
+  }
+
+  void _mergeSourceCounts(Map<String, int> target, dynamic raw) {
+    if (raw is! Map) {
+      return;
+    }
+
+    raw.forEach((key, value) {
+      final signalKey = key.toString();
+      final count = _toIntValue(value);
+      if (signalKey.isEmpty || count <= 0) {
+        return;
+      }
+      target.update(
+        signalKey,
+        (current) => current + count,
+        ifAbsent: () => count,
+      );
+    });
+  }
+
+  GrowthAcquisitionSnapshot _buildAcquisitionSnapshotFromSourceCounts(
+    Map<String, int> sourceCounts, {
+    required int windowDays,
+    required DateTime now,
+  }) {
+    final startDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: math.max(0, windowDays - 1)));
+
+    return GrowthAcquisitionSnapshot(
+      windowDays: windowDays,
+      startDate: startDate,
+      endDate: DateTime(now.year, now.month, now.day),
+      touchpoints: <GrowthAcquisitionTouchpointSnapshot>[
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'landing',
+          label: 'Landing',
+          touchCount: sourceCounts[GrowthAcquisitionService.touchLanding] ?? 0,
+          signupSubmitCount:
+              sourceCounts[GrowthAcquisitionService.signupSubmitLanding] ?? 0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'import',
+          label: 'Import',
+          touchCount: sourceCounts[GrowthAcquisitionService.touchImport] ?? 0,
+          signupSubmitCount:
+              sourceCounts[GrowthAcquisitionService.signupSubmitImport] ?? 0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'public_memo',
+          label: 'Public memo',
+          touchCount:
+              sourceCounts[GrowthAcquisitionService.touchPublicMemo] ?? 0,
+          signupSubmitCount:
+              sourceCounts[GrowthAcquisitionService.signupSubmitPublicMemo] ??
+                  0,
+        ),
+        GrowthAcquisitionTouchpointSnapshot(
+          id: 'referral',
+          label: 'Referral',
+          touchCount: sourceCounts[GrowthAcquisitionService.touchReferral] ?? 0,
+          signupSubmitCount:
+              sourceCounts[GrowthAcquisitionService.signupSubmitReferral] ?? 0,
+        ),
+      ],
+      importPreviews: <GrowthImportPreviewSnapshot>[
+        GrowthImportPreviewSnapshot(
+          id: 'notion',
+          label: 'Notion previews',
+          previewCount:
+              sourceCounts[GrowthAcquisitionService.importPreviewNotion] ?? 0,
+        ),
+        GrowthImportPreviewSnapshot(
+          id: 'evernote',
+          label: 'Evernote previews',
+          previewCount:
+              sourceCounts[GrowthAcquisitionService.importPreviewEvernote] ?? 0,
+        ),
+        GrowthImportPreviewSnapshot(
+          id: 'markdown',
+          label: 'Markdown previews',
+          previewCount:
+              sourceCounts[GrowthAcquisitionService.importPreviewMarkdown] ?? 0,
+        ),
+      ],
+      importSignupCtaCount:
+          sourceCounts[GrowthAcquisitionService.importSignupCta] ?? 0,
+      publicMemoSignupCtaCount:
+          sourceCounts[GrowthAcquisitionService.publicMemoSignupCta] ?? 0,
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final month = normalized.month.toString().padLeft(2, '0');
+    final day = normalized.day.toString().padLeft(2, '0');
+    return '${normalized.year}-$month-$day';
   }
 
   GrowthCommandCenterBrief _buildLocalCommandCenterBrief(
@@ -837,7 +1269,9 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
 
   void _trackRoute(Route<dynamic> route) {
     _currentPagePath = _resolvePagePath(route);
-    unawaited(_acquisitionService.recordTouchpointForPagePath(_currentPagePath));
+    unawaited(
+      _acquisitionService.recordTouchpointForPagePath(_currentPagePath),
+    );
     unawaited(_service.capturePendingReferralFromUri());
     unawaited(_service.applyPendingReferralIfPossible());
     _heartbeatTimer?.cancel();

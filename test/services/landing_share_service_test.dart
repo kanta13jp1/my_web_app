@@ -9,6 +9,7 @@ import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/services/agent_org_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:my_web_app/services/landing_page_adapter.dart';
 import 'package:my_web_app/services/landing_share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -617,6 +618,35 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
+  });
+
+  testWidgets(
+      'LandingPage shows referral invite context when a code is pending',
+      (WidgetTester tester) async {
+    final adapter = _FakeLandingPageAdapter();
+    const growthService = GrowthMissionService();
+    await growthService.capturePendingReferralFromUri(
+      currentUri: Uri.parse('https://example.com/referral?ref=invite42'),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LandingPage(
+          adapter: adapter,
+          growthService: growthService,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('landing_referral_invite_section')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('INVITE42'), findsOneWidget);
+    expect(find.text('Create account'), findsOneWidget);
+    expect(find.text('See import flow'), findsOneWidget);
   });
 
   testWidgets('AgentOrgPage filters board timeline by channel',

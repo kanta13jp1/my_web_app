@@ -67,6 +67,7 @@ class _LandingPageState extends State<LandingPage> {
   String? _trialAction;
   String? _trialReason;
   String? _lastMagicLinkEmail;
+  String? _pendingReferralCode;
   LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
   List<PublicMemo> _publicMemos = const <PublicMemo>[];
   bool _isLoadingPublicMemos = true;
@@ -91,7 +92,7 @@ class _LandingPageState extends State<LandingPage> {
         _goToAuthenticatedEntry();
       }
     });
-    unawaited(widget.growthService.capturePendingReferralFromUri());
+    unawaited(_bootstrapReferralInvite());
     _initLpViewStats();
     _loadShareSnapshot();
     _loadPublicMemos();
@@ -115,6 +116,16 @@ class _LandingPageState extends State<LandingPage> {
 
   void _goToAuthenticatedEntry() {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  Future<void> _bootstrapReferralInvite() async {
+    await widget.growthService.capturePendingReferralFromUri();
+    final pendingReferralCode =
+        await widget.growthService.loadPendingReferralCode();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _pendingReferralCode = pendingReferralCode);
   }
 
   void _showMessage(String message) {
@@ -489,6 +500,13 @@ $input
     }
   }
 
+  Future<void> _openImportPage() async {
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).pushNamed('/import');
+  }
+
   bool get _isMagicLinkCoolingDown => _magicLinkCooldownSeconds > 0;
 
   (String, String) _parseTrialAiResponse(String raw) {
@@ -768,6 +786,63 @@ $input
           child: const Text('保存から始める'),
         ),
       ],
+    );
+  }
+
+  Widget _buildReferralInviteSection() {
+    final pendingReferralCode = _pendingReferralCode;
+    if (pendingReferralCode == null || pendingReferralCode.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      key: const Key('landing_referral_invite_section'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.recommend_outlined, color: Colors.green),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Referral invite active: $pendingReferralCode',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'You arrived from an invite link. Create your account to keep the referral attribution, import notes from Notion or Evernote, and get to first value faster.',
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: _scrollToAuthSection,
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Create account'),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _openImportPage,
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('See import flow'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1513,6 +1588,8 @@ $input
                 children: [
                   _buildHeroSection(),
                   const SizedBox(height: 24),
+                  _buildReferralInviteSection(),
+                  if (_pendingReferralCode != null) const SizedBox(height: 20),
                   _buildGrowthSection(),
                   const SizedBox(height: 20),
                   _buildTrialSection(),

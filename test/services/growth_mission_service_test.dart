@@ -17,6 +17,7 @@ void main() {
         totalLandingViews: 18,
         todayShares: 0,
         referralSnapshot: const ReferralGrowthSnapshot.empty(),
+        acquisitionSnapshot: GrowthAcquisitionSnapshot.empty(),
         refreshedAt: DateTime(2026, 3, 23, 10),
       );
 
@@ -56,6 +57,7 @@ void main() {
         totalLandingViews: 3000,
         todayShares: 12,
         referralSnapshot: const ReferralGrowthSnapshot.empty(),
+        acquisitionSnapshot: GrowthAcquisitionSnapshot.empty(),
         refreshedAt: DateTime(2026, 3, 23, 12),
       );
 
@@ -66,6 +68,18 @@ void main() {
         brief.stageReason,
         contains('process'),
       );
+    });
+
+    test('buildInviteUrlForCode uses referral route and tracking params', () {
+      final inviteUrl = GrowthMissionService.buildInviteUrlForCode('ABCD1234');
+      final uri = Uri.parse(inviteUrl);
+
+      expect(uri.path, '/referral');
+      expect(uri.queryParameters['ref'], 'ABCD1234');
+      expect(uri.queryParameters['utm_source'], 'referral');
+      expect(uri.queryParameters['utm_medium'], 'invite');
+      expect(uri.queryParameters['utm_campaign'], 'growth_mission');
+      expect(uri.queryParameters['v'], 'test2025');
     });
   });
 }

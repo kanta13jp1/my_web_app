@@ -53,6 +53,8 @@ class GrowthAcquisitionService {
       case '/public-memo':
       case '/public-memos':
         return touchPublicMemo;
+      case '/referral':
+        return touchReferral;
       default:
         return null;
     }

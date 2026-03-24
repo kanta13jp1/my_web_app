@@ -16,6 +16,10 @@ void main() {
       GrowthAcquisitionService.touchPublicMemo,
     );
     expect(
+      GrowthAcquisitionService.signalForPagePath('/referral'),
+      GrowthAcquisitionService.touchReferral,
+    );
+    expect(
       GrowthAcquisitionService.signalForPagePath('/unknown'),
       isNull,
     );

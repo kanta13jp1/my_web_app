@@ -40,14 +40,16 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
       name: 'Qiita',
       audience: 'Japanese engineers',
       cadence: '1 technical post per shipped growth slice',
-      angle: 'Supabase Edge Functions, Flutter architecture, and migration flows.',
+      angle:
+          'Supabase Edge Functions, Flutter architecture, and migration flows.',
       cta: 'Show the import pipeline and developer-facing product depth.',
     ),
     _PublishingChannel(
       name: 'Zenn',
       audience: 'Japanese developers and indie builders',
       cadence: 'Biweekly deep dive',
-      angle: 'Implementation detail, product reasoning, and technical tradeoffs.',
+      angle:
+          'Implementation detail, product reasoning, and technical tradeoffs.',
       cta: 'Turn shipped features into recurring search traffic.',
     ),
     _PublishingChannel(
@@ -69,13 +71,15 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
       audience: 'Developer communities and startup engineers',
       cadence: 'Monthly migration or AI workflow article',
       angle: 'Build-in-public posts tied to the product roadmap.',
-      cta: 'Create long-tail search entry points around migration and AI workflows.',
+      cta:
+          'Create long-tail search entry points around migration and AI workflows.',
     ),
     _PublishingChannel(
       name: 'Substack',
       audience: 'Founder and operator subscribers',
       cadence: 'Weekly growth letter',
-      angle: 'Cross-functional operating notes, growth experiments, and user stories.',
+      angle:
+          'Cross-functional operating notes, growth experiments, and user stories.',
       cta: 'Build a durable audience that compounds launches and referrals.',
     ),
   ];
@@ -122,16 +126,11 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
       return;
     }
 
-    final message = '''
-Trying to grow this note app past Notion and Evernote takes real users, not just plans.
-
-Current snapshot:
-- Registered users: ${_dashboard.totalRegisteredUsers}
-- Live viewers: ${_dashboard.liveViewers}
-
-Join from this invite:
-$inviteUrl
-''';
+    final message = GrowthMissionService.buildReferralInviteMessage(
+      inviteUrl: inviteUrl,
+      totalRegisteredUsers: _dashboard.totalRegisteredUsers,
+      liveViewers: _dashboard.liveViewers,
+    );
     await Clipboard.setData(ClipboardData(text: message));
     if (!mounted) {
       return;
@@ -481,7 +480,92 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Verified public benchmark references on 2026/03/23: Notion says "Over 100M users worldwide" on its homepage, and Evernote says it serves "more than 250 million customers" in its official acquisition announcement.',
+                      'Verified public benchmark references on 2026/03/24: Notion says "Over 100M users worldwide" on its product page, and Evernote says it serves "more than 250 million customers" in its official acquisition announcement.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Acquisition instrumentation',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Last ${_dashboard.acquisitionSnapshot.windowDays} days. This backend-first report uses touchpoint and sign-up submit signals as an assisted-conversion proxy while full registration joins keep maturing.',
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _statTile(
+                          label: 'Tracked touches',
+                          value: numberFormat.format(
+                            _dashboard.acquisitionSnapshot.totalTouches,
+                          ),
+                          icon: Icons.ads_click,
+                        ),
+                        _statTile(
+                          label: 'Sign-up submits',
+                          value: numberFormat.format(
+                            _dashboard.acquisitionSnapshot.totalSignupSubmits,
+                          ),
+                          icon: Icons.person_add_alt,
+                        ),
+                        _statTile(
+                          label: 'Import CTA clicks',
+                          value: numberFormat.format(
+                            _dashboard.acquisitionSnapshot.importSignupCtaCount,
+                          ),
+                          icon: Icons.file_upload,
+                        ),
+                        _statTile(
+                          label: 'Public memo CTA clicks',
+                          value: numberFormat.format(
+                            _dashboard
+                                .acquisitionSnapshot.publicMemoSignupCtaCount,
+                          ),
+                          icon: Icons.public,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ..._dashboard.acquisitionSnapshot.touchpoints.map(
+                      (touchpoint) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _acquisitionTouchpointRow(
+                          label: touchpoint.label,
+                          touches: numberFormat.format(touchpoint.touchCount),
+                          signupSubmits:
+                              numberFormat.format(touchpoint.signupSubmitCount),
+                          rate: touchpoint.signupSubmitRate,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: _dashboard.acquisitionSnapshot.importPreviews
+                          .map(
+                            (preview) => _statTile(
+                              label: preview.label,
+                              value: numberFormat.format(preview.previewCount),
+                              icon: Icons.visibility_outlined,
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
@@ -703,6 +787,39 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         const SizedBox(height: 6),
         Text('${percent.toStringAsFixed(6)}% - $detail'),
       ],
+    );
+  }
+
+  Widget _acquisitionTouchpointRow({
+    required String label,
+    required String touches,
+    required String signupSubmits,
+    required double rate,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text('Touches: $touches'),
+          Text('Sign-up submits: $signupSubmits'),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: rate.clamp(0.0, 1.0)),
+          const SizedBox(height: 6),
+          Text(
+            'Touch-to-submit rate: ${(rate * 100).toStringAsFixed(1)}%',
+          ),
+        ],
+      ),
     );
   }
 

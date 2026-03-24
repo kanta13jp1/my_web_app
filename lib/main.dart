@@ -161,6 +161,11 @@ class MyApp extends StatelessWidget {
               builder: (_) => const GrowthMissionPage(),
               settings: const RouteSettings(name: '/growth-mission'),
             );
+          case '/referral':
+            return MaterialPageRoute(
+              builder: (_) => const LandingPage(),
+              settings: RouteSettings(name: settings.name),
+            );
           case '/import':
             return MaterialPageRoute(builder: (_) => const ImportPage());
           case '/public-memos':
