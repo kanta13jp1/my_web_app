@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 2件新規作成・deno lint 0件)
+最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 2件新規作成・deno lint 0件・ランディングページ改善)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -80,6 +80,9 @@
 - growth-share-signal
 - growth-referral
 - growth-acquisition-report
+- **ランディングページ改善** (2026-03-25 追加): ユーザー獲得強化のため2セクション追加
+  - `_buildUniqueValueSection()`: AI役員会議・記憶ドリル・経営コックピット・インポート・マインドマップ・公開メモ の6機能をアイコン付きグリッドで訴求
+  - `_buildImportCtaSection()`: 「登録なしでインポートを試す」ダークカード CTA を追加、/import への直接導線を設置
 - **development-achievements** (2026-03-25 新規作成): 開発実績の GET (期間フィルタ) / ADD (新規追加) を提供する Edge Function。DevelopmentAchievementsCard が呼び出す。
 - **get-growth-roadmap-progress** (2026-03-25 新規作成): user_profiles からユーザー数、growth_plans テーブルから計画データを取得して返す Edge Function。GrowthRoadmapProgressCard が呼び出す。growth_plans が空の場合は16項目のデフォルトデータを自動シードする。
 - growth-weekly-digest (2026-03-25 追加)

@@ -998,6 +998,144 @@ $input
     );
   }
 
+  Widget _buildUniqueValueSection() {
+    const features = [
+      (Icons.smart_toy, '0xFF6366F1', 'AI役員会議 (MAGI)', 'CEO/CFO/CMO/CHROのAIペルソナが多角的にアドバイス。Notionにもない独自機能。'),
+      (Icons.memory, '0xFF10B981', '記憶ドリル', '忘却曲線に基づく反復学習。Evernoteにはない学習機能。'),
+      (Icons.account_balance_wallet, '0xFFF59E0B', '経営コックピット', '収支・資産・KPIを一画面で管理。MoneyForwardの代替として使える。'),
+      (Icons.upload_file, '0xFF3B82F6', 'Notion/Evernoteから移行', 'CSVやENEXをそのままインポート。移行コストゼロ。'),
+      (Icons.hub, '0xFFA855F7', 'マインドマップ', '思考の整理をビジュアルで。ノートと連携。'),
+      (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF8FAFF), Color(0xFFF0F4FF)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '自分株式会社でしかできない6つのこと',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Notion・Evernote・MoneyForward の良いとこ取りに、AIと記憶ドリルをプラス。',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 16),
+          ...features.map((f) {
+            final (icon, colorHex, title, desc) = f;
+            final color = Color(int.parse(colorHex.replaceFirst('0x', '0xFF')));
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, size: 18, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          desc,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImportCtaSection() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.upload_file, color: Colors.white70, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Notion / Evernote / Markdown から移行',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'ファイルをアップロードするだけで、過去のデータがそのまま引き継げます。移行後も元のサービスを使い続けながら、少しずつ切り替えられます。',
+            style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.6),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white,
+              side: const BorderSide(color: Colors.white38),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onPressed: () => Navigator.of(context).pushNamed('/import'),
+            icon: const Icon(Icons.arrow_forward, size: 16),
+            label: const Text(
+              '登録なしでインポートを試す',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGrowthSection() {
     return LiveGrowthBanner(
       growthService: widget.growthService,
@@ -1588,6 +1726,10 @@ $input
                 children: [
                   _buildHeroSection(),
                   const SizedBox(height: 24),
+                  _buildUniqueValueSection(),
+                  const SizedBox(height: 20),
+                  _buildImportCtaSection(),
+                  const SizedBox(height: 20),
                   _buildReferralInviteSection(),
                   if (_pendingReferralCode != null) const SizedBox(height: 20),
                   _buildGrowthSection(),
