@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-24
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -34,6 +34,7 @@
 - Claude Code (Anthropic): ~500,000 users 規模 (AI コーディングアシスタント)
 - Codex: ~1,000,000 users 規模
 - netkeiba: ~17,000,000 users 規模
+- OpenClaw: ~1,000,000 users 規模 (オープンソース AI エージェント)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -44,8 +45,9 @@
 - Animaworks: 国内パーソナル生産性・習慣管理アプリ (~50 万ユーザー推定)
 - Codex: 開発者向け AI 支援ツール (~100 万ユーザー推定)
 - netkeiba: 国内最大級の競馬情報・コミュニティサイト (~1,700 万ユーザー)
+- OpenClaw: オープンソースの自律型 AI エージェント (~100 万ユーザー推定)
 
-自分株式会社 はこれら 8 つのサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 9 つのサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -100,8 +102,9 @@
 - 競合機能比較カードに Claude Code タブを追加 (AI コーディング支援機能との比較) (2026-03-24 追加)
 - vs Codex 進捗バーを追加 (目標: ~100万ユーザー)
 - vs netkeiba 進捗バーを追加 (目標: ~1700万ユーザー)
-- 競合機能比較カードに Codex と netkeiba タブを追加し、8タブ構成に拡張
-- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべて) で実績を切り替え表示
+- vs OpenClaw 進捗バーを追加 (目標: ~100万ユーザー)
+- 競合機能比較カードに Codex、netkeiba、OpenClaw タブを追加し、9タブ構成に拡張
+- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で実績を切り替え表示
 - ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
 - DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
   - 新規ユーザー / 成長シグナル / 紹介成立 / インポートプレビュー の4指標
@@ -185,6 +188,7 @@
 - flutter_secure_storage_web の wasm blocker を調査する
 - ユーザーマニュアルを実装済み機能に合わせて随時更新する
 - X (Twitter) との機能比較ページを SEO コンテンツとして活用する
+- OpenClaw との機能比較を追加し、自律型 AI ではなく人間と協調する AI (MAGI System) の優位性を押し出す
 
 ### 企画
 
@@ -281,7 +285,7 @@
 - 0 -> 1 の勝ち筋を文章化する
 - 資金調達の条件と bootstrapping 継続条件を明文化する
 - 100 users、1,000 users、10,000 users の段階ごとに org / budget / infra 前提を分ける
-- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba を上回るという圧倒的なビジョンを対外向け資料のコアに据える
+- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw を上回るという圧倒的なビジョンを対外向け資料のコアに据える
 
 ---
 
