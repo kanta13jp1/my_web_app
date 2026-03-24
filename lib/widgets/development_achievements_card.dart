@@ -233,9 +233,8 @@ class _DevelopmentAchievementsCardState
                     }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
-                        setState(() {
-                          _selectedPeriod = newValue;
-                        });
+                        setState(() => _selectedPeriod = newValue);
+                        _fetchTasks(newValue);
                       }
                     },
                   ),
