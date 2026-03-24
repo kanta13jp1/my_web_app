@@ -285,6 +285,47 @@
     </main>
   </div>
   <script>
+    // -----------------------------------------------------------------------
+    // SEO shell: dynamic meta tags for public memo pages
+    // When the URL is /public-memo?id=XXX, fetch memo metadata from the
+    // get-public-memo-preview Edge Function and update OGP/title tags before
+    // Flutter loads, so social crawlers and search engines see real content.
+    // -----------------------------------------------------------------------
+    (function () {
+      var SUPABASE_FUNC_BASE =
+        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+
+      function setMeta(property, content) {
+        var el = document.querySelector(
+          'meta[property="' + property + '"], meta[name="' + property + '"]'
+        );
+        if (el) el.setAttribute('content', content);
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      var path = window.location.pathname;
+      var memoId = params.get('id');
+
+      if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
+        fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data || !data.success) return;
+            document.title = data.pageTitle || document.title;
+            setMeta('og:title', data.pageTitle || document.title);
+            setMeta('og:description', data.ogDescription || '');
+            setMeta('twitter:title', data.pageTitle || document.title);
+            setMeta('twitter:description', data.ogDescription || '');
+            setMeta('description', data.ogDescription || '');
+            var h1 = document.getElementById('seo-title');
+            if (h1) h1.textContent = data.title || h1.textContent;
+            var desc = document.querySelector('.seo-card p[lang="ja"]');
+            if (desc && data.excerpt) desc.textContent = data.excerpt;
+          })
+          .catch(function () { /* ignore, keep default */ });
+      }
+    })();
+
     window.addEventListener('flutter-first-frame', function () {
       var seoShell = document.getElementById('seo-shell');
       if (seoShell) {
