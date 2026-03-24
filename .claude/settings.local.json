@@ -20,7 +20,12 @@
       "Bash(npm install:*)",
       "Bash(where firebase:*)",
       "Bash(C:/Users/kanta/AppData/Roaming/npm/firebase --version)",
-      "Bash(C:/Users/kanta/AppData/Roaming/npm/firebase deploy:*)"
+      "Bash(C:/Users/kanta/AppData/Roaming/npm/firebase deploy:*)",
+      "Bash(flutter --version)",
+      "Bash(gh run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
