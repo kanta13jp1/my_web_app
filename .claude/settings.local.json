@@ -5,7 +5,8 @@
       "Bash(flutter test:*)",
       "Bash(deno check:*)",
       "Bash(deno lint:*)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -n \"^\\\\*\\\\*[^*].*\\\\*\\\\*$\" c:/Users/kanta/GitHub/my_web_app/docs/GROWTH_STRATEGY_ROADMAP.md)"
     ]
   }
 }

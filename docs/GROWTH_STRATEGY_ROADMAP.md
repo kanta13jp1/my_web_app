@@ -366,19 +366,22 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 優先度順に進める。
 
-**1. ホーム画面データ集約 (最優先)**
-   - **内容:** ホーム画面の表示に必要な運用スナップショット(`_loadOpsSnapshot`)とKPIサマリー(`_loadHomeKpiOverview`)の生成処理を、単一の `get-home-dashboard` Edge Function に統合する。
-   - **目的:**
-     - クライアント側の複数DBアクセスを単一化し、初期表示パフォーマンスを向上させる。
-     - 複雑な状態判断・計算ロジックをバックエンドに集約し、フロントエンドを簡素化する。
-     - Web/モバイルアプリ間で表示ロジックの一貫性を担保する。
+### 1. ホーム画面データ集約 (最優先)
 
-2. referral activation 集計
-3. onboarding brief 生成
-4. public memo recommendation
-5. growth weekly digest 生成
-6. LP、import、public memo、referral の assisted conversion 集計
-7. acquisition touchpoint ごとの cohort 分析
+- 内容: ホーム画面の表示に必要な運用スナップショット(`_loadOpsSnapshot`)とKPIサマリー(`_loadHomeKpiOverview`)の生成処理を、単一の `get-home-dashboard` Edge Function に統合する。
+- 目的:
+  - クライアント側の複数DBアクセスを単一化し、初期表示パフォーマンスを向上させる。
+  - 複雑な状態判断・計算ロジックをバックエンドに集約し、フロントエンドを簡素化する。
+  - Web/モバイルアプリ間で表示ロジックの一貫性を担保する。
+
+### その他の移行候補 (優先度順)
+
+- referral activation 集計
+- onboarding brief 生成
+- public memo recommendation
+- growth weekly digest 生成
+- LP、import、public memo、referral の assisted conversion 集計
+- acquisition touchpoint ごとの cohort 分析
 
 2026-03-24 実装済み:
 
