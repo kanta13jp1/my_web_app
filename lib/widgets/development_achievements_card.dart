@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DevelopmentAchievementsCard extends StatefulWidget {
   const DevelopmentAchievementsCard({super.key});
@@ -11,6 +12,8 @@ class DevelopmentAchievementsCard extends StatefulWidget {
 class _DevelopmentAchievementsCardState
     extends State<DevelopmentAchievementsCard> {
   String _selectedPeriod = '今日の実績';
+  bool _isLoading = false;
+  List<String> _currentTasks = [];
 
   static const List<String> _periods = [
     '今日の実績',
@@ -28,34 +31,35 @@ class _DevelopmentAchievementsCardState
     'すべての実績',
   ];
 
-  List<String> _getTasksForPeriod(String period) {
-    final allTasks = [
-      '競合比較に Slack / ジョブカン などを追加し13社体制へ拡張する',
-      '技術ブログ基盤・ロードマップをビジネスSaaS領域に対応させる',
-      'acquisition touchpoint ごとの weekly digest を追加する',
-      'import success 後 onboarding をさらに改善する',
-      'referral reward と anti-abuse ルールを追加する',
-      'memory_drill_page_test の残件を解消する',
-      'ai_status_page_test の残件を解消する',
-      'GrowthRoadmapProgressCard を追加する',
-      'CompetitorFeatureComparisonCard をトを表示する',
-      'Supabase Edge Function の基盤を整備する',
-      'Linterエラーをすべて解消する',
-      'ZennやQiita等での技術ブログ投稿基盤を準備する',
-    ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchTasks(_selectedPeriod);
+  }
 
-    switch (period) {
-      case '今日の実績': return allTasks.sublist(0, 1);
-      case '今週の実績': return allTasks.sublist(0, 2);
-      case '直近2週間の実績': return allTasks.sublist(0, 3);
-      case '今月の実績': return allTasks.sublist(0, 4);
-      case '直近2ヶ月の実績': return allTasks.sublist(0, 5);
-      case '直近3ヶ月の実績': return allTasks.sublist(0, 7);
-      case '直近半年の実績': return allTasks.sublist(0, 8);
-      case '直近1年の実績': return allTasks.sublist(0, 9);
-      case '直近2年の実績': return allTasks.sublist(0, 10);
-      default:
-        return allTasks;
+  Future<void> _fetchTasks(String period) async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await Supabase.instance.client.functions.invoke(
+        'growth-achievement-summary',
+        body: {'period': period},
+      );
+      final data = res.data as Map<String, dynamic>;
+      final list = (data['achievements'] as List?)?.cast<String>() ?? [];
+      if (mounted) {
+        setState(() {
+          _currentTasks = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching achievements: $e');
+      if (mounted) {
+        setState(() {
+          _currentTasks = ['実績の取得に失敗しました'];
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -69,8 +73,6 @@ class _DevelopmentAchievementsCardState
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final subTextColor =
         isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-
-    final currentTasks = _getTasksForPeriod(_selectedPeriod);
 
     return Container(
       decoration: BoxDecoration(
@@ -140,12 +142,21 @@ class _DevelopmentAchievementsCardState
             ],
           ),
           const SizedBox(height: 16),
-          if (currentTasks.isEmpty)
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_currentTasks.isEmpty)
             Text('この期間の実績はまだありません', style: TextStyle(fontSize: 12, color: subTextColor))
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: currentTasks.map((task) {
+              children: _currentTasks.map((task) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
