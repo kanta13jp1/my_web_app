@@ -50,10 +50,7 @@ serve(async (req) => {
 
     let achievements: string[] = [];
 
-    if (error || !data || data.length === 0) {
-      // テーブルが存在しない、またはデータが0件の場合はフォールバック(初期データ)を返す
-      achievements = getFallbackAchievements(startDate);
-    } else {
+    if (!error && data && data.length > 0) {
       achievements = data.map((d: { title: string }) => d.title);
     }
 
@@ -68,15 +65,3 @@ serve(async (req) => {
     });
   }
 });
-
-function getFallbackAchievements(startDate: Date): string[] {
-  const now = new Date();
-  const day = 24 * 60 * 60 * 1000;
-  const allTasks = [
-    { title: '競合比較に Slack / ジョブカン などを追加し13社体制へ拡張する', date: new Date(now.getTime() - 0 * day) },
-    { title: '技術ブログ基盤・ロードマップをビジネスSaaS領域に対応させる', date: new Date(now.getTime() - 1 * day) },
-    { title: 'acquisition touchpoint ごとの weekly digest を追加する', date: new Date(now.getTime() - 2 * day) },
-    { title: 'import success 後 onboarding をさらに改善する', date: new Date(now.getTime() - 3 * day) },
-  ];
-  return allTasks.filter(t => t.date.getTime() >= startDate.getTime()).map(t => t.title);
-}

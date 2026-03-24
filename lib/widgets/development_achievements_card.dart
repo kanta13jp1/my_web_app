@@ -93,7 +93,7 @@ class _DevelopmentAchievementsCardState
           }).toList();
       if (mounted) {
         setState(() {
-          _currentTasks = list.isNotEmpty ? list : _getFallbackData(startDate);
+          _currentTasks = list;
           _isLoading = false;
         });
       }
@@ -101,37 +101,11 @@ class _DevelopmentAchievementsCardState
       debugPrint('Error fetching achievements: $e');
       if (mounted) {
         setState(() {
-          _currentTasks = _getFallbackData(DateTime(2000));
+          _currentTasks = [];
           _isLoading = false;
         });
       }
     }
-  }
-
-  List<_TaskItem> _getFallbackData(DateTime startDate) {
-    final now = DateTime.now();
-    return [
-      _TaskItem(
-        title: 'ホーム画面に vs X 進捗バーを追加',
-        dateStr: '(${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} 追加)',
-      ),
-      _TaskItem(
-        title: '競合機能比較カードに X タブを追加 (X: SNS・コンテンツ配信機能との比較)',
-        dateStr: '(${now.year}-${now.month.toString().padLeft(2, '0')}-${(now.day - 1).toString().padLeft(2, '0')} 追加)',
-      ),
-      _TaskItem(
-        title: 'ホーム画面に CompetitorFeatureComparisonCard を Notion/EverNote/MoneyForward/X の4タブで実装',
-        dateStr: '(${now.year}-${now.month.toString().padLeft(2, '0')}-${(now.day - 2).toString().padLeft(2, '0')} 追加)',
-      ),
-      _TaskItem(
-        title: 'ユーザーマニュアルページを追加 (実装済み全機能の操作手順書)',
-        dateStr: '(${now.year}-${now.month.toString().padLeft(2, '0')}-${(now.day - 3).toString().padLeft(2, '0')} 追加)',
-      ),
-      _TaskItem(
-        title: 'vs MoneyForward 進捗バーを追加',
-        dateStr: '(${now.year}-${now.month.toString().padLeft(2, '0')}-${(now.day - 4).toString().padLeft(2, '0')} 追加)',
-      ),
-    ];
   }
 
   @override
