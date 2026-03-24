@@ -93,6 +93,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs Claude works',
       target: 500000,
     ),
+    _PlanItem(
+      label: 'vs Chatwork',
+      target: 6000000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1920,10 +1924,56 @@ const _claudeWorksFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Chatwork
+// ---------------------------------------------------------------------------
+
+const _chatworkFeatureRows = <_FeatureRow>[
+  // ---- チャット・コミュニケーション ----
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'グループチャット・DM',
+    competitorDetail: 'チーム内でのテキストコミュニケーション',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 中期計画 (Team workspace) で対応予定',
+  ),
+  // ---- タスク管理 ----
+  _FeatureRow(
+    category: 'タスク管理',
+    feature: 'タスクのアサインと通知',
+    competitorDetail: 'メッセージからタスクを作成し担当者へ通知',
+    status: _FeatureStatus.partial,
+    appDetail: '個人向けタスク管理・リマインダーは実装済み',
+  ),
+  // ---- ファイル管理 ----
+  _FeatureRow(
+    category: 'ファイル管理',
+    feature: 'ファイル添付と共有',
+    competitorDetail: 'チャットへのファイル添付・一覧表示',
+    status: _FeatureStatus.partial,
+    appDetail: 'ノートへのファイル・画像添付は部分実装済み',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI 役員会議 (MAGI System)',
+    competitorDetail: '— Chatwork にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '単なるチャットではなく、AI ペルソナと多角的な議論が可能',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '個人の収支・資産・習慣の一元化',
+    competitorDetail: '— Chatwork にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'パーソナルな生産性管理とビジネスを統合',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合10社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works) の機能一覧と
+/// 競合11社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1953,6 +2003,7 @@ class _CompetitorFeatureComparisonCardState
     'netkeiba',
     'OpenClaw',
     'Claude works',
+    'Chatwork',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -1965,6 +2016,7 @@ class _CompetitorFeatureComparisonCardState
     _netkeibaFeatureRows,
     _openClawFeatureRows,
     _claudeWorksFeatureRows,
+    _chatworkFeatureRows,
   ];
 
   String _filterCategory = 'すべて';

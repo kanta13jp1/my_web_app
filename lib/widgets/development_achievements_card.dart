@@ -28,15 +28,34 @@ class _DevelopmentAchievementsCardState
     'すべての実績',
   ];
 
-  // ※ 実際は期間に応じて Supabase 等から実績データをフェッチする処理に置き換えます
-  Map<String, int> _getDummyDataForPeriod(String period) {
-    final multiplier = _periods.indexOf(period) + 1;
-    return {
-      '新規ユーザー登録': 2 * multiplier,
-      'インポート完了': 5 * multiplier,
-      '紹介(Referral)成立': 1 * multiplier,
-      '機能改善コミット': 3 * multiplier,
-    };
+  List<String> _getTasksForPeriod(String period) {
+    final allTasks = [
+      'acquisition touchpoint ごとの weekly digest を追加する',
+      'import success 後 onboarding をさらに改善する',
+      'referral reward と anti-abuse ルールを追加する',
+      'memory_drill_page_test の残件を解消する',
+      'ai_status_page_test の残件を解消する',
+      'GrowthRoadmapProgressCard を追加する',
+      'CompetitorFeatureComparisonCard を11社に拡張する',
+      'DevelopmentAchievementsCard で実績リストを表示する',
+      'Supabase Edge Function の基盤を整備する',
+      'Linterエラーをすべて解消する',
+      'ZennやQiita等での技術ブログ投稿基盤を準備する',
+    ];
+
+    switch (period) {
+      case '今日の実績': return allTasks.sublist(0, 1);
+      case '今週の実績': return allTasks.sublist(0, 2);
+      case '直近2週間の実績': return allTasks.sublist(0, 3);
+      case '今月の実績': return allTasks.sublist(0, 4);
+      case '直近2ヶ月の実績': return allTasks.sublist(0, 5);
+      case '直近3ヶ月の実績': return allTasks.sublist(0, 7);
+      case '直近半年の実績': return allTasks.sublist(0, 8);
+      case '直近1年の実績': return allTasks.sublist(0, 9);
+      case '直近2年の実績': return allTasks.sublist(0, 10);
+      default:
+        return allTasks;
+    }
   }
 
   @override
@@ -50,7 +69,7 @@ class _DevelopmentAchievementsCardState
     final subTextColor =
         isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-    final currentData = _getDummyDataForPeriod(_selectedPeriod);
+    final currentTasks = _getTasksForPeriod(_selectedPeriod);
 
     return Container(
       decoration: BoxDecoration(
@@ -120,36 +139,33 @@ class _DevelopmentAchievementsCardState
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: currentData.entries.map((entry) {
-              return Container(
-                width: (MediaQuery.of(context).size.width - 76) / 2, // 2カラム
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.15)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(entry.key, style: TextStyle(fontSize: 11, color: subTextColor)),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${entry.value}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: textColor,
+          if (currentTasks.isEmpty)
+            Text('この期間の実績はまだありません', style: TextStyle(fontSize: 12, color: subTextColor))
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: currentTasks.map((task) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('・ ', style: TextStyle(color: subTextColor, fontSize: 13)),
+                      Expanded(
+                        child: Text(
+                          task,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textColor.withValues(alpha: 0.8),
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

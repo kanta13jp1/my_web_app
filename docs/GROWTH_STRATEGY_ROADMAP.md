@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-24
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -36,6 +36,7 @@
 - netkeiba: ~17,000,000 users 規模
 - OpenClaw: ~1,000,000 users 規模 (オープンソース AI エージェント)
 - Claude works: ~500,000 users 規模 (法人向け AI ワークスペース)
+- Chatwork: ~6,000,000 users 規模 (国内ビジネスチャット)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -48,8 +49,9 @@
 - netkeiba: 国内最大級の競馬情報・コミュニティサイト (~1,700 万ユーザー)
 - OpenClaw: オープンソースの自律型 AI エージェント (~100 万ユーザー推定)
 - Claude works: Anthropic の法人向け次世代 AI ワークスペース (~50 万ユーザー推定)
+- Chatwork: 国内シェアトップクラスのビジネスチャット (~600 万ユーザー)
 
-自分株式会社 はこれら 10 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 11 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -106,12 +108,13 @@
 - vs netkeiba 進捗バーを追加 (目標: ~1700万ユーザー)
 - vs OpenClaw 進捗バーを追加 (目標: ~100万ユーザー)
 - vs Claude works 進捗バーを追加 (目標: ~50万ユーザー)
-- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works タブを追加し、10タブ構成に拡張
-- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で実績を切り替え表示
+- vs Chatwork 進捗バーを追加 (目標: ~600万ユーザー)
+- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork タブを追加し、11タブ構成に拡張
+- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で完了タスクをリスト表示
 - ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
 - DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
-  - 新規ユーザー / 成長シグナル / 紹介成立 / インポートプレビュー の4指標
   - growth-achievement-summary Edge Function でバックエンド集計
+  - 期間選択に応じて完了済みタスク（取り消し線付き）のテキストリストを一覧表示
 
 ### 残課題
 
@@ -193,6 +196,7 @@
 - X (Twitter) との機能比較ページを SEO コンテンツとして活用する
 - OpenClaw との機能比較を追加し、自律型 AI ではなく人間と協調する AI (MAGI System) の優位性を押し出す
 - Claude works の企業向け AI 機能に対抗する、パーソナライズされた AI エージェント機能の拡充を企画する
+- Chatwork などのレガシービジネスチャットから「AIファーストのワークスペース」への移行メリットを訴求するランディングページを企画する
 
 ### 企画
 
@@ -252,8 +256,9 @@
 
 ### 営業
 
-- 小規模チーム向け導入提案を開始する
+- 小規模チーム向け導入提案を founder sales として開始する
 - 移行代行付き PoC を試す
+- Chatwork や Slack に情報が散在しているチームに対し、情報集約プラットフォームとしての自分株式会社を提案する
 - referral で流入した小規模チーム候補を founder sales へ handoff する
 
 ### マーケティング
@@ -277,12 +282,14 @@
 - 成長投資の月次予算上限を決める
 - CAC、LTV、回収期間を試算する
 - referral reward の会計処理方針を決める
+- バックエンド移行（Supabase Edge Function）によるインフラコスト最適化と予算推移をトラッキングする
 
 ### 調達
 
 - 必要 SaaS を選定する
 - 記事制作、動画制作、広告運用の外注候補を確保する
 - 既存 stack で不足する attribution / CRM / support tool の優先順位を決める
+- 技術ブログ展開（Zenn/Qiita/note等）に必要な編集・校正リソースの外部調達を検討する
 
 ### 事業計画
 
@@ -290,7 +297,7 @@
 - 0 -> 1 の勝ち筋を文章化する
 - 資金調達の条件と bootstrapping 継続条件を明文化する
 - 100 users、1,000 users、10,000 users の段階ごとに org / budget / infra 前提を分ける
-- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works を上回るという圧倒的なビジョンを対外向け資料のコアに据える
+- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork を上回るという圧倒的なビジョンを対外向け資料のコアに据える
 
 ---
 
