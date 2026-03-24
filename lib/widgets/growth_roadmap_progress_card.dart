@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 // ---------------------------------------------------------------------------
 // Data model
 // ---------------------------------------------------------------------------
@@ -61,6 +60,10 @@ class _GrowthRoadmapProgressCardState
     _PlanItem(
       label: 'vs EverNote',
       target: 250000000,
+    ),
+    _PlanItem(
+      label: 'vs MoneyForward',
+      target: 15000000,
     ),
   ];
 
@@ -359,7 +362,7 @@ class _SegmentedBar extends StatelessWidget {
 }
 
 // ===========================================================================
-// Notion Feature Comparison Card
+// Competitor Feature Comparison Card
 // ===========================================================================
 
 /// 実装ステータスの種別
@@ -368,7 +371,7 @@ enum _FeatureStatus {
   partial, // 部分実装
   inProgress, // 開発中
   notYet, // 未実装
-  unique, // MyMemo 独自機能 (Notion にない)
+  unique, // 自分株式会社 独自機能 (競合にない)
 }
 
 extension _FeatureStatusExt on _FeatureStatus {
@@ -400,254 +403,632 @@ extension _FeatureStatusExt on _FeatureStatus {
 class _FeatureRow {
   final String category;
   final String feature;
-  final String notionDetail;
+  final String competitorDetail;
   final _FeatureStatus status;
-  final String myMemoDetail;
+  final String appDetail;
 
   const _FeatureRow({
     required this.category,
     required this.feature,
-    required this.notionDetail,
+    required this.competitorDetail,
     required this.status,
-    required this.myMemoDetail,
+    required this.appDetail,
   });
 }
 
 // ---------------------------------------------------------------------------
-// Feature data
+// Feature data — Notion
 // ---------------------------------------------------------------------------
 
-const _featureRows = <_FeatureRow>[
+const _notionFeatureRows = <_FeatureRow>[
   // ---- ノート編集 ----
   _FeatureRow(
     category: 'ノート編集',
     feature: 'リッチテキスト編集',
-    notionDetail: 'Markdown + スラッシュコマンドでブロック挿入',
+    competitorDetail: 'Markdown + スラッシュコマンドでブロック挿入',
     status: _FeatureStatus.done,
-    myMemoDetail: 'Markdown 対応エディタ実装済み',
+    appDetail: 'Markdown 対応エディタ実装済み',
   ),
   _FeatureRow(
     category: 'ノート編集',
     feature: 'AI 文章補助',
-    notionDetail: 'Notion AI: 文章生成・改善・要約',
+    competitorDetail: 'Notion AI: 文章生成・改善・要約',
     status: _FeatureStatus.done,
-    myMemoDetail: 'AI Secretary / MAGI System で複数モデル対応',
+    appDetail: 'AI Secretary / MAGI System で複数モデル対応',
   ),
   _FeatureRow(
     category: 'ノート編集',
     feature: 'バージョン履歴',
-    notionDetail: '無料プランは7日間、有料は無制限',
+    competitorDetail: '無料プランは7日間、有料は無制限',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — ロードマップに追加予定',
+    appDetail: '未実装 — ロードマップに追加予定',
   ),
   _FeatureRow(
     category: 'ノート編集',
     feature: 'ファイル添付',
-    notionDetail: '画像・PDF 等をブロックとして埋め込み',
+    competitorDetail: '画像・PDF 等をブロックとして埋め込み',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装',
+    appDetail: '未実装',
   ),
   _FeatureRow(
     category: 'ノート編集',
     feature: 'コードブロック',
-    notionDetail: 'シンタックスハイライト付きコードブロック',
+    competitorDetail: 'シンタックスハイライト付きコードブロック',
     status: _FeatureStatus.partial,
-    myMemoDetail: 'Markdown コードフェンス対応済み',
+    appDetail: 'Markdown コードフェンス対応済み',
   ),
   // ---- 整理・検索 ----
   _FeatureRow(
     category: '整理・検索',
     feature: 'タグ・カテゴリ',
-    notionDetail: 'ページにタグ付け・フィルタリング',
+    competitorDetail: 'ページにタグ付け・フィルタリング',
     status: _FeatureStatus.done,
-    myMemoDetail: 'カテゴリページ実装済み',
+    appDetail: 'カテゴリページ実装済み',
   ),
   _FeatureRow(
     category: '整理・検索',
     feature: '全文検索',
-    notionDetail: 'ページ横断検索・クイックファインド',
+    competitorDetail: 'ページ横断検索・クイックファインド',
     status: _FeatureStatus.partial,
-    myMemoDetail: 'AI 検索・埋め込み検索を部分実装',
+    appDetail: 'AI 検索・埋め込み検索を部分実装',
   ),
   _FeatureRow(
     category: '整理・検索',
     feature: 'テンプレート',
-    notionDetail: '公式テンプレートギャラリー + コミュニティ共有',
+    competitorDetail: '公式テンプレートギャラリー + コミュニティ共有',
     status: _FeatureStatus.partial,
-    myMemoDetail: 'テンプレートマーケットプレイス画面実装済み',
+    appDetail: 'テンプレートマーケットプレイス画面実装済み',
   ),
   // ---- データベース ----
   _FeatureRow(
     category: 'データベース',
     feature: 'テーブルビュー',
-    notionDetail: 'スプレッドシート形式でプロパティ管理',
+    competitorDetail: 'スプレッドシート形式でプロパティ管理',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 中期計画で対応予定',
+    appDetail: '未実装 — 中期計画で対応予定',
   ),
   _FeatureRow(
     category: 'データベース',
     feature: 'カンバン/ボード',
-    notionDetail: 'ステータス別カードビュー',
+    competitorDetail: 'ステータス別カードビュー',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 中期計画で対応予定',
+    appDetail: '未実装 — 中期計画で対応予定',
   ),
   _FeatureRow(
     category: 'データベース',
     feature: 'カレンダービュー',
-    notionDetail: '日付プロパティをカレンダーで表示',
+    competitorDetail: '日付プロパティをカレンダーで表示',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装',
+    appDetail: '未実装',
   ),
   _FeatureRow(
     category: 'データベース',
     feature: 'ガントチャート',
-    notionDetail: 'タイムラインビューでスケジュール管理',
+    competitorDetail: 'タイムラインビューでスケジュール管理',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装',
+    appDetail: '未実装',
   ),
   _FeatureRow(
     category: 'データベース',
     feature: 'リレーション・ロールアップ',
-    notionDetail: 'DB 間リンクと集計フィールド',
+    competitorDetail: 'DB 間リンクと集計フィールド',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 長期計画で対応予定',
+    appDetail: '未実装 — 長期計画で対応予定',
   ),
   // ---- 共有・コラボ ----
   _FeatureRow(
     category: '共有・コラボ',
     feature: 'ページ公開',
-    notionDetail: 'URLで誰でも閲覧可能なページ公開',
+    competitorDetail: 'URLで誰でも閲覧可能なページ公開',
     status: _FeatureStatus.done,
-    myMemoDetail: '公開メモ機能実装済み・OGP対応',
+    appDetail: '公開メモ機能実装済み・OGP対応',
   ),
   _FeatureRow(
     category: '共有・コラボ',
     feature: 'リアルタイム共同編集',
-    notionDetail: '複数人が同時に編集可能',
+    competitorDetail: '複数人が同時に編集可能',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 中期計画 (Team workspace) で対応予定',
+    appDetail: '未実装 — 中期計画 (Team workspace) で対応予定',
   ),
   _FeatureRow(
     category: '共有・コラボ',
     feature: 'コメント・メンション',
-    notionDetail: 'ブロックへのインラインコメント',
+    competitorDetail: 'ブロックへのインラインコメント',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装',
+    appDetail: '未実装',
   ),
   _FeatureRow(
     category: '共有・コラボ',
     feature: 'チームワークスペース',
-    notionDetail: '組織単位でのページ・権限管理',
+    competitorDetail: '組織単位でのページ・権限管理',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 中期計画で Team/Enterprise 対応予定',
+    appDetail: '未実装 — 中期計画で Team/Enterprise 対応予定',
   ),
   // ---- 移行・連携 ----
   _FeatureRow(
     category: '移行・連携',
     feature: 'Notion からインポート',
-    notionDetail: 'Notion 公式はエクスポートのみ提供',
+    competitorDetail: 'Notion 公式はエクスポートのみ提供',
     status: _FeatureStatus.done,
-    myMemoDetail: 'CSV インポート実装済み・Edge Function first',
+    appDetail: 'CSV インポート実装済み・Edge Function first',
   ),
   _FeatureRow(
     category: '移行・連携',
     feature: 'Evernote からインポート',
-    notionDetail: 'ENEX インポート対応',
+    competitorDetail: 'ENEX インポート対応',
     status: _FeatureStatus.done,
-    myMemoDetail: 'ENEX インポート実装済み・Edge Function first',
+    appDetail: 'ENEX インポート実装済み・Edge Function first',
   ),
   _FeatureRow(
     category: '移行・連携',
     feature: 'Markdown インポート',
-    notionDetail: 'Markdown ファイルのインポート可能',
+    competitorDetail: 'Markdown ファイルのインポート可能',
     status: _FeatureStatus.done,
-    myMemoDetail: 'Markdown インポート実装済み',
+    appDetail: 'Markdown インポート実装済み',
   ),
   _FeatureRow(
     category: '移行・連携',
     feature: 'Web クリッパー',
-    notionDetail: 'ブラウザ拡張でウェブページを保存',
+    competitorDetail: 'ブラウザ拡張でウェブページを保存',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装',
+    appDetail: '未実装',
   ),
   _FeatureRow(
     category: '移行・連携',
     feature: '外部サービス連携 (Zapier 等)',
-    notionDetail: 'API + Zapier/Make/IFTTT 連携',
+    competitorDetail: 'API + Zapier/Make/IFTTT 連携',
     status: _FeatureStatus.partial,
-    myMemoDetail: 'Supabase Edge Function 経由で API 公開中',
+    appDetail: 'Supabase Edge Function 経由で API 公開中',
   ),
   // ---- プラットフォーム ----
   _FeatureRow(
     category: 'プラットフォーム',
     feature: 'Web アプリ',
-    notionDetail: 'ブラウザで全機能利用可能',
+    competitorDetail: 'ブラウザで全機能利用可能',
     status: _FeatureStatus.done,
-    myMemoDetail: 'Flutter Web 実装済み',
+    appDetail: 'Flutter Web 実装済み',
   ),
   _FeatureRow(
     category: 'プラットフォーム',
     feature: 'モバイルアプリ (iOS/Android)',
-    notionDetail: 'ネイティブアプリ提供',
+    competitorDetail: 'ネイティブアプリ提供',
     status: _FeatureStatus.inProgress,
-    myMemoDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
+    appDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
   ),
   _FeatureRow(
     category: 'プラットフォーム',
     feature: 'デスクトップアプリ',
-    notionDetail: 'Mac/Windows Electron アプリ',
+    competitorDetail: 'Mac/Windows Electron アプリ',
     status: _FeatureStatus.inProgress,
-    myMemoDetail: 'Flutter Desktop 対応可能 — リリース準備中',
+    appDetail: 'Flutter Desktop 対応可能 — リリース準備中',
   ),
   _FeatureRow(
     category: 'プラットフォーム',
     feature: 'オフライン対応',
-    notionDetail: 'オフラインでも閲覧・編集可能',
+    competitorDetail: 'オフラインでも閲覧・編集可能',
     status: _FeatureStatus.notYet,
-    myMemoDetail: '未実装 — 長期計画で対応予定',
+    appDetail: '未実装 — 長期計画で対応予定',
   ),
-  // ---- MyMemo 独自機能 ----
+  // ---- 自分株式会社 独自機能 ----
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: 'マインドマップ',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'ビジュアルマインドマップ実装済み',
+    appDetail: 'ビジュアルマインドマップ実装済み',
   ),
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: '記憶ドリル',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'スペーシング反復学習ドリル実装済み',
+    appDetail: 'スペーシング反復学習ドリル実装済み',
   ),
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: 'AI エージェント組織',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'CEO/CFO/CMO/CHRO 役員会議 AI 実装済み',
+    appDetail: 'CEO/CFO/CMO/CHRO 役員会議 AI 実装済み',
   ),
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: '経営コックピット',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'KPI・資産・習慣を一画面で管理',
+    appDetail: 'KPI・資産・習慣を一画面で管理',
   ),
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: 'Growth ロードマップ進捗表示',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'このカードがその機能です',
+    appDetail: 'このカードがその機能です',
   ),
   _FeatureRow(
-    category: 'MyMemo 独自機能',
+    category: '自分株式会社 独自機能',
     feature: 'Referral 紹介プログラム',
-    notionDetail: '— Notion にはない機能',
+    competitorDetail: '— Notion にはない機能',
     status: _FeatureStatus.unique,
-    myMemoDetail: 'anti-abuse 付き referral code 発行・管理実装済み',
+    appDetail: 'anti-abuse 付き referral code 発行・管理実装済み',
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Feature data — EverNote
+// ---------------------------------------------------------------------------
+
+const _evernoteFeatureRows = <_FeatureRow>[
+  // ---- ノート作成 ----
+  _FeatureRow(
+    category: 'ノート作成',
+    feature: 'リッチテキスト編集',
+    competitorDetail: 'フォント・色・レイアウト等のリッチエディタ',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdown 対応エディタ実装済み',
+  ),
+  _FeatureRow(
+    category: 'ノート作成',
+    feature: 'Web クリッパー',
+    competitorDetail: 'ブラウザ拡張でウェブページ全体を保存',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ノート作成',
+    feature: '手書きメモ / スケッチ',
+    competitorDetail: 'タブレット/スタイラスでの手書き入力',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ノート作成',
+    feature: '音声メモ',
+    competitorDetail: 'マイクで録音した音声をノートに添付',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ノート作成',
+    feature: 'PDF 注釈',
+    competitorDetail: 'PDF に直接注釈を書き込み',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 整理・検索 ----
+  _FeatureRow(
+    category: '整理・検索',
+    feature: 'ノートブック',
+    competitorDetail: '階層型ノートブックでノートを分類',
+    status: _FeatureStatus.done,
+    appDetail: 'カテゴリページ実装済み',
+  ),
+  _FeatureRow(
+    category: '整理・検索',
+    feature: 'タグ',
+    competitorDetail: '複数タグでノートをクロスカテゴリ管理',
+    status: _FeatureStatus.done,
+    appDetail: 'タグ機能実装済み',
+  ),
+  _FeatureRow(
+    category: '整理・検索',
+    feature: 'スタック (ノートブックグループ)',
+    competitorDetail: 'ノートブックをまとめるスタック機能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '整理・検索',
+    feature: '全文検索',
+    competitorDetail: 'ノート本文・添付ファイル・手書きも検索',
+    status: _FeatureStatus.partial,
+    appDetail: 'AI 検索・埋め込み検索を部分実装',
+  ),
+  _FeatureRow(
+    category: '整理・検索',
+    feature: 'OCR (画像内文字検索)',
+    competitorDetail: 'スキャンや写真内のテキストを検索可能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- タスク・リマインダー ----
+  _FeatureRow(
+    category: 'タスク・リマインダー',
+    feature: 'リマインダー設定',
+    competitorDetail: 'ノートに日時リマインダーを設定',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'タスク・リマインダー',
+    feature: 'タスク管理',
+    competitorDetail: 'チェックリスト・締切・担当者付きタスク',
+    status: _FeatureStatus.partial,
+    appDetail: '習慣トラッカー・KPI 管理で部分対応',
+  ),
+  _FeatureRow(
+    category: 'タスク・リマインダー',
+    feature: 'Google カレンダー連携',
+    competitorDetail: 'カレンダーイベントをノートに紐付け',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 共有 ----
+  _FeatureRow(
+    category: '共有',
+    feature: 'ノート共有 (閲覧リンク)',
+    competitorDetail: 'URLで誰でも閲覧可能なノート公開',
+    status: _FeatureStatus.done,
+    appDetail: '公開メモ機能実装済み・OGP対応',
+  ),
+  _FeatureRow(
+    category: '共有',
+    feature: 'ワークチャット',
+    competitorDetail: 'Evernote 内でのメッセージ・共有機能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '共有',
+    feature: 'プレゼンテーションモード',
+    competitorDetail: 'ノートをスライド風に全画面表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- プラットフォーム ----
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'Web アプリ',
+    competitorDetail: 'ブラウザで全機能利用可能',
+    status: _FeatureStatus.done,
+    appDetail: 'Flutter Web 実装済み',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'iOS/Android アプリ',
+    competitorDetail: 'ネイティブモバイルアプリ',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'デスクトップアプリ',
+    competitorDetail: 'Mac/Windows ネイティブアプリ',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Flutter Desktop 対応可能 — リリース準備中',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'オフライン対応',
+    competitorDetail: 'オフラインでノートの閲覧・編集が可能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 長期計画で対応予定',
+  ),
+  // ---- 移行・連携 ----
+  _FeatureRow(
+    category: '移行・連携',
+    feature: 'ENEX エクスポート/インポート',
+    competitorDetail: 'Evernote 標準フォーマットで移行対応',
+    status: _FeatureStatus.done,
+    appDetail: 'ENEX インポート実装済み・Edge Function first',
+  ),
+  _FeatureRow(
+    category: '移行・連携',
+    feature: 'Slack / Google Drive 連携',
+    competitorDetail: '外部ツールとのファイル共有連携',
+    status: _FeatureStatus.partial,
+    appDetail: 'Supabase Edge Function 経由で API 公開中',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI エージェント組織',
+    competitorDetail: '— EverNote にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'CEO/CFO/CMO/CHRO 役員会議 AI 実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— EverNote にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'ビジュアルマインドマップ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— EverNote にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '経営コックピット',
+    competitorDetail: '— EverNote にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'KPI・資産・習慣を一画面で管理',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '家計・資産管理',
+    competitorDetail: '— EverNote にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '収支カレンダー・資産管理・月次収支分析実装済み',
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Feature data — MoneyForward
+// ---------------------------------------------------------------------------
+
+const _moneyforwardFeatureRows = <_FeatureRow>[
+  // ---- 家計管理 ----
+  _FeatureRow(
+    category: '家計管理',
+    feature: '口座・カード自動連携',
+    competitorDetail: '銀行・クレカ・電子マネーを自動取得',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 金融 API 連携は長期計画',
+  ),
+  _FeatureRow(
+    category: '家計管理',
+    feature: '収支グラフ分析',
+    competitorDetail: '月次・カテゴリ別の収支を可視化',
+    status: _FeatureStatus.done,
+    appDetail: '月間カレンダー収支・KPI ダッシュボード実装済み',
+  ),
+  _FeatureRow(
+    category: '家計管理',
+    feature: '自動カテゴリ分類',
+    competitorDetail: '取引を AI で自動カテゴリ分け',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '家計管理',
+    feature: 'レシートスキャン',
+    competitorDetail: 'カメラでレシートを撮影して自動入力',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '家計管理',
+    feature: '手動収支入力',
+    competitorDetail: '手動での収支記録',
+    status: _FeatureStatus.done,
+    appDetail: '収支入力・振替機能実装済み',
+  ),
+  // ---- 資産管理 ----
+  _FeatureRow(
+    category: '資産管理',
+    feature: '総資産表示',
+    competitorDetail: '全口座の資産合計をリアルタイム表示',
+    status: _FeatureStatus.done,
+    appDetail: '資産管理画面実装済み',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '資産推移グラフ',
+    competitorDetail: '資産の時系列変化を折れ線グラフで表示',
+    status: _FeatureStatus.partial,
+    appDetail: 'KPI チャートで部分対応',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '銀行残高リアルタイム連携',
+    competitorDetail: '主要銀行の残高を自動取得',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 金融 API 連携は長期計画',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '証券・株式管理',
+    competitorDetail: '株・投信・ETF の保有状況を自動取得',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '年金・iDeCo 管理',
+    competitorDetail: '年金ねっと連携で将来受取額を確認',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 予算管理 ----
+  _FeatureRow(
+    category: '予算管理',
+    feature: '月次予算設定',
+    competitorDetail: 'カテゴリ別に月の支出上限を設定',
+    status: _FeatureStatus.partial,
+    appDetail: 'KPI 目標設定で部分対応',
+  ),
+  _FeatureRow(
+    category: '予算管理',
+    feature: '予実比較',
+    competitorDetail: '予算に対して実際の支出を比較表示',
+    status: _FeatureStatus.done,
+    appDetail: '月間収支カレンダーで収入・支出・差額を表示',
+  ),
+  // ---- 投資 ----
+  _FeatureRow(
+    category: '投資',
+    feature: '投資運用状況',
+    competitorDetail: '保有投資信託・株式の損益を表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '投資',
+    feature: 'ポートフォリオ分析',
+    competitorDetail: 'アセットクラス別配分をグラフ表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 税務 ----
+  _FeatureRow(
+    category: '税務',
+    feature: '確定申告サポート',
+    competitorDetail: '家計簿データを確定申告に活用',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '税務',
+    feature: 'ふるさと納税管理',
+    competitorDetail: '寄付記録・控除額計算をサポート',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- プラットフォーム ----
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'Web アプリ',
+    competitorDetail: 'ブラウザで全機能利用可能',
+    status: _FeatureStatus.done,
+    appDetail: 'Flutter Web 実装済み',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'iOS/Android アプリ',
+    competitorDetail: 'ネイティブモバイルアプリ',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI エージェント組織 (CFO 含む)',
+    competitorDetail: '— MoneyForward にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'CFO AI による財務分析・アドバイス実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'ノートメモ機能',
+    competitorDetail: '— MoneyForward にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'Markdown メモ・AI 整理・公開メモ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— MoneyForward にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'ビジュアルマインドマップ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル',
+    competitorDetail: '— MoneyForward にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'Growth ロードマップ進捗表示',
+    competitorDetail: '— MoneyForward にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'このカードがその機能です',
   ),
 ];
 
@@ -655,46 +1036,80 @@ const _featureRows = <_FeatureRow>[
 // Widget
 // ---------------------------------------------------------------------------
 
-/// Notion の機能一覧と MyMemo の実装状況を比較表示するカード。
-class NotionFeatureComparisonCard extends StatefulWidget {
-  const NotionFeatureComparisonCard({super.key});
+/// 競合3社 (Notion / EverNote / MoneyForward) の機能一覧と
+/// 自分株式会社 の実装状況を比較表示するカード。
+class CompetitorFeatureComparisonCard extends StatefulWidget {
+  const CompetitorFeatureComparisonCard({super.key});
 
   @override
-  State<NotionFeatureComparisonCard> createState() =>
-      _NotionFeatureComparisonCardState();
+  State<CompetitorFeatureComparisonCard> createState() =>
+      _CompetitorFeatureComparisonCardState();
 }
 
-class _NotionFeatureComparisonCardState
-    extends State<NotionFeatureComparisonCard> {
+// Keep old name as alias for backward compatibility
+typedef NotionFeatureComparisonCard = CompetitorFeatureComparisonCard;
+
+class _CompetitorFeatureComparisonCardState
+    extends State<CompetitorFeatureComparisonCard>
+    with SingleTickerProviderStateMixin {
   bool _expanded = false;
+  late TabController _tabController;
+
+  static const _competitors = ['Notion', 'EverNote', 'MoneyForward'];
+  static const _featureLists = [
+    _notionFeatureRows,
+    _evernoteFeatureRows,
+    _moneyforwardFeatureRows,
+  ];
+
   String _filterCategory = 'すべて';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _competitors.length, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() => _filterCategory = 'すべて');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<_FeatureRow> get _currentRows =>
+      _featureLists[_tabController.index];
 
   List<String> get _categories {
     final cats = <String>['すべて'];
-    for (final row in _featureRows) {
+    for (final row in _currentRows) {
       if (!cats.contains(row.category)) cats.add(row.category);
     }
     return cats;
   }
 
   List<_FeatureRow> get _filtered => _filterCategory == 'すべて'
-      ? _featureRows
-      : _featureRows.where((r) => r.category == _filterCategory).toList();
+      ? _currentRows
+      : _currentRows.where((r) => r.category == _filterCategory).toList();
 
-  // Summary counts
-  int get _doneCount =>
-      _featureRows.where((r) => r.status == _FeatureStatus.done).length;
-  int get _partialCount =>
-      _featureRows.where((r) => r.status == _FeatureStatus.partial).length;
-  int get _inProgressCount =>
-      _featureRows.where((r) => r.status == _FeatureStatus.inProgress).length;
-  int get _notYetCount =>
-      _featureRows.where((r) => r.status == _FeatureStatus.notYet).length;
-  int get _uniqueCount =>
-      _featureRows.where((r) => r.status == _FeatureStatus.unique).length;
-  int get _totalNotUnique =>
-      _featureRows.where((r) => r.status != _FeatureStatus.unique).length;
-  int get _implemented => _doneCount + _partialCount + _inProgressCount;
+  int _doneCount(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status == _FeatureStatus.done).length;
+  int _partialCount(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status == _FeatureStatus.partial).length;
+  int _inProgressCount(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status == _FeatureStatus.inProgress).length;
+  int _notYetCount(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status == _FeatureStatus.notYet).length;
+  int _uniqueCount(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status == _FeatureStatus.unique).length;
+  int _totalNotUnique(List<_FeatureRow> rows) =>
+      rows.where((r) => r.status != _FeatureStatus.unique).length;
+  int _implemented(List<_FeatureRow> rows) =>
+      _doneCount(rows) + _partialCount(rows) + _inProgressCount(rows);
 
   @override
   Widget build(BuildContext context) {
@@ -707,8 +1122,10 @@ class _NotionFeatureComparisonCardState
     final subColor =
         isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
+    final rows = _currentRows;
+
     return Container(
-      key: const Key('notion_feature_comparison_card'),
+      key: const Key('competitor_feature_comparison_card'),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -744,7 +1161,7 @@ class _NotionFeatureComparisonCardState
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'NOTION 機能比較',
+                          '競合機能比較',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
@@ -770,27 +1187,27 @@ class _NotionFeatureComparisonCardState
                     children: [
                       _SummaryChip(
                         label: '実装済み',
-                        count: _doneCount,
+                        count: _doneCount(rows),
                         color: _FeatureStatus.done.color,
                       ),
                       _SummaryChip(
                         label: '部分実装',
-                        count: _partialCount,
+                        count: _partialCount(rows),
                         color: _FeatureStatus.partial.color,
                       ),
                       _SummaryChip(
                         label: '開発中',
-                        count: _inProgressCount,
+                        count: _inProgressCount(rows),
                         color: _FeatureStatus.inProgress.color,
                       ),
                       _SummaryChip(
                         label: '未実装',
-                        count: _notYetCount,
+                        count: _notYetCount(rows),
                         color: _FeatureStatus.notYet.color,
                       ),
                       _SummaryChip(
                         label: '独自機能',
-                        count: _uniqueCount,
+                        count: _uniqueCount(rows),
                         color: _FeatureStatus.unique.color,
                       ),
                     ],
@@ -798,8 +1215,10 @@ class _NotionFeatureComparisonCardState
                   const SizedBox(height: 8),
                   // Overall progress bar
                   _OverallProgressBar(
-                    implemented: _implemented,
-                    total: _totalNotUnique,
+                    implemented: _implemented(rows),
+                    total: _totalNotUnique(rows),
+                    competitorName:
+                        _competitors[_tabController.index],
                     isDark: isDark,
                     textColor: textColor,
                     subColor: subColor,
@@ -811,9 +1230,25 @@ class _NotionFeatureComparisonCardState
 
           // ---- Expandable body -------------------------------------------
           if (_expanded) ...[
-            Divider(
-              height: 1,
-              color: borderColor,
+            Divider(height: 1, color: borderColor),
+            // Tab bar
+            TabBar(
+              controller: _tabController,
+              onTap: (_) => setState(() => _filterCategory = 'すべて'),
+              tabs: _competitors
+                  .map((c) => Tab(
+                        child: Text(
+                          c,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),)
+                  .toList(),
+              labelColor: const Color(0xFF6366F1),
+              unselectedLabelColor: subColor,
+              indicatorColor: const Color(0xFF6366F1),
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: borderColor,
+              padding: EdgeInsets.zero,
             ),
             // Category filter chips
             SingleChildScrollView(
@@ -848,6 +1283,7 @@ class _NotionFeatureComparisonCardState
             // Feature rows
             ..._buildGroupedRows(
               _filtered,
+              competitorName: _competitors[_tabController.index],
               textColor: textColor,
               subColor: subColor,
               borderColor: borderColor,
@@ -862,6 +1298,7 @@ class _NotionFeatureComparisonCardState
 
   List<Widget> _buildGroupedRows(
     List<_FeatureRow> rows, {
+    required String competitorName,
     required Color textColor,
     required Color subColor,
     required Color borderColor,
@@ -874,11 +1311,9 @@ class _NotionFeatureComparisonCardState
 
     final widgets = <Widget>[];
     for (final entry in groups.entries) {
-      // Category header
       widgets.add(
         Padding(
-          padding:
-              const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
           child: Text(
             entry.key,
             style: TextStyle(
@@ -890,11 +1325,11 @@ class _NotionFeatureComparisonCardState
           ),
         ),
       );
-      // Feature rows
       for (final row in entry.value) {
         widgets.add(
           _FeatureRowTile(
             row: row,
+            competitorName: competitorName,
             textColor: textColor,
             subColor: subColor,
             borderColor: borderColor,
@@ -946,6 +1381,7 @@ class _SummaryChip extends StatelessWidget {
 class _OverallProgressBar extends StatelessWidget {
   final int implemented;
   final int total;
+  final String competitorName;
   final bool isDark;
   final Color textColor;
   final Color subColor;
@@ -953,6 +1389,7 @@ class _OverallProgressBar extends StatelessWidget {
   const _OverallProgressBar({
     required this.implemented,
     required this.total,
+    required this.competitorName,
     required this.isDark,
     required this.textColor,
     required this.subColor,
@@ -969,7 +1406,7 @@ class _OverallProgressBar extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Notion 機能カバー率',
+              '$competitorName 機能カバー率',
               style: TextStyle(fontSize: 12, color: subColor),
             ),
             const Spacer(),
@@ -1004,6 +1441,7 @@ class _OverallProgressBar extends StatelessWidget {
 
 class _FeatureRowTile extends StatelessWidget {
   final _FeatureRow row;
+  final String competitorName;
   final Color textColor;
   final Color subColor;
   final Color borderColor;
@@ -1011,6 +1449,7 @@ class _FeatureRowTile extends StatelessWidget {
 
   const _FeatureRowTile({
     required this.row,
+    required this.competitorName,
     required this.textColor,
     required this.subColor,
     required this.borderColor,
@@ -1083,12 +1522,12 @@ class _FeatureRowTile extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Notion detail
+                  // Competitor detail
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Notion: ',
+                        '$competitorName: ',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1097,7 +1536,7 @@ class _FeatureRowTile extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          row.notionDetail,
+                          row.competitorDetail,
                           style: TextStyle(
                             fontSize: 11,
                             color: subColor,
@@ -1107,12 +1546,12 @@ class _FeatureRowTile extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  // MyMemo detail
+                  // 自分株式会社 detail
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'MyMemo: ',
+                        '自分株式会社: ',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1121,7 +1560,7 @@ class _FeatureRowTile extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          row.myMemoDetail,
+                          row.appDetail,
                           style: TextStyle(
                             fontSize: 11,
                             color: statusColor.withValues(alpha: 0.85),

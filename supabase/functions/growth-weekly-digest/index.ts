@@ -283,7 +283,7 @@ function buildBrief({
 }): string {
   const arrow = (n: number) => n > 0 ? `↑${n}` : n < 0 ? `↓${Math.abs(n)}` : "→";
   const lines: string[] = [
-    `## MyMemo 週次 Growth Digest`,
+    `## 自分株式会社 週次 Growth Digest`,
     `期間: ${currentWeek.startDate} ～ ${currentWeek.endDate}`,
     ``,
     `### サインアップ CTA クリック 合計: ${signupSubmitTotal} ${arrow(signupSubmitDelta)}`,

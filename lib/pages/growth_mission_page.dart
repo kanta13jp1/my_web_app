@@ -147,7 +147,7 @@ Angle: ${channel.angle}
 
 Suggested outline:
 1. Start with the Notion / Evernote workflow pain.
-2. Show the shipped MyMemo feature or growth experiment.
+2. Show the shipped 自分株式会社 feature or growth experiment.
 3. Explain why the backend-first architecture matters.
 4. Add one screenshot, metric, or before/after example.
 5. Close with this CTA: ${channel.cta}
