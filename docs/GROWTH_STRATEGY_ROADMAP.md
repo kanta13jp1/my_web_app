@@ -202,7 +202,7 @@
 - 公開メモの SEO と OGP を強化する
 - フロントエンドで実装している複雑な処理を優先的に Supabase Edge Function に移行する
 - ユーザーマニュアルを実装済み機能に合わせて随時更新する
-- 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude works, Chatwork, Slack, ジョブカン）との機能比較データを、フロントエンドのハードコードから Edge Function (`get-competitor-features`) へ移行する計画を立てる
+- 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude works, Chatwork, Slack, ジョブカン）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
 - 常に Linter エラー 0 を維持し、CIパイプラインで厳格にブロックすることで、技術的負債ゼロのクリーンなコードベースと高速開発を実現する
 
 ### 企画
