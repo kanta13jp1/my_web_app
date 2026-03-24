@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 3件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善)
+最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 3件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善・公開メモ SEO 強化: get-public-memo-preview Edge Function + index.html 動的メタタグ)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す

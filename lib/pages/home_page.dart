@@ -721,71 +721,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<_HomeMarketingKpiSummary> _loadHomeMarketingKpiSummary() async {
-    final today = _startOfDay(_now());
-    final todayKey = _statusDateKey(today);
-    final tomorrow = today.add(const Duration(days: 1));
-
     try {
-      final results = await Future.wait<dynamic>([
-        Supabase.instance.client
-            .from('app_analytics')
-            .select('date,landing_views,share_count,source_details')
-            .eq('date', todayKey)
-            .maybeSingle(),
-        Supabase.instance.client
-            .from('user_profiles')
-            .select('created_at')
-            .gte('created_at', today.toIso8601String())
-            .lt('created_at', tomorrow.toIso8601String()),
-        Supabase.instance.client.rpc('get_lp_view_stats'),
-      ]);
-
-      final analyticsRow = results[0] is Map
-          ? Map<String, dynamic>.from(results[0] as Map)
-          : <String, dynamic>{};
-      final profileRows =
-          results[1] is List ? results[1] as List<dynamic> : const [];
-      final lpStats = results[2] is Map
-          ? Map<String, dynamic>.from(results[2] as Map)
-          : <String, dynamic>{};
-
-      var todayViews = _toIntValue(analyticsRow['landing_views']);
-      if (lpStats.isNotEmpty) {
-        todayViews = _toIntValue(lpStats['today']);
-        final rawSeries = lpStats['series'];
-        if (todayViews == 0 && rawSeries is List) {
-          for (final row in rawSeries.whereType<Map>()) {
-            final dateKey = _normalizeDateKey(row['date']);
-            if (dateKey == todayKey) {
-              todayViews = _toIntValue(row['count']);
-              break;
-            }
-          }
-        }
+      final response = await Supabase.instance.client.functions
+          .invoke('get-home-dashboard', body: <String, dynamic>{});
+      final data = response.data;
+      if (data is! Map || data['success'] != true) {
+        return const _HomeMarketingKpiSummary();
       }
-
-      String? topShareChannelKey;
-      var topShareChannelCount = 0;
-      final rawSourceDetails = analyticsRow['source_details'];
-      if (rawSourceDetails is Map) {
-        for (final entry in rawSourceDetails.entries) {
-          final sourceKey = entry.key.toString();
-          if (!sourceKey.startsWith('share_') && sourceKey != 'x_share') {
-            continue;
-          }
-          final count = _toIntValue(entry.value);
-          if (count > topShareChannelCount) {
-            topShareChannelCount = count;
-            topShareChannelKey = sourceKey;
-          }
-        }
-      }
-
       return _HomeMarketingKpiSummary(
-        todayViews: todayViews,
-        todayRegistrations: profileRows.length,
-        todayShares: _toIntValue(analyticsRow['share_count']),
-        topShareChannelKey: topShareChannelKey,
+        todayViews: _toIntValue(data['todayViews']),
+        todayRegistrations: _toIntValue(data['todaySignups']),
+        todayShares: _toIntValue(data['todayShares']),
+        topShareChannelKey: data['topShareChannelKey']?.toString(),
       );
     } catch (e) {
       debugPrint('Error loading home marketing summary: $e');
@@ -824,19 +771,6 @@ class _HomePageState extends State<HomePage> {
     if (value is num) return value.toInt();
     if (value is String) return int.tryParse(value) ?? 0;
     return 0;
-  }
-
-  String? _normalizeDateKey(dynamic value) {
-    if (value == null) return null;
-    final raw = value.toString().trim();
-    if (raw.isEmpty) return null;
-
-    final parsed = DateTime.tryParse(raw);
-    if (parsed != null) {
-      return _statusDateKey(parsed.toLocal());
-    }
-
-    return raw.length >= 10 ? raw.substring(0, 10) : raw;
   }
 
   String _shareChannelLabel(String? sourceKey) {
