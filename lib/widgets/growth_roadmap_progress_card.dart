@@ -37,89 +37,7 @@ class GrowthRoadmapProgressCard extends StatefulWidget {
 
 class _GrowthRoadmapProgressCardState
     extends State<GrowthRoadmapProgressCard> {
-  static const _plans = [
-    _PlanItem(
-      label: '短期計画',
-      deadline: '2026年06月30日',
-      target: 100,
-    ),
-    _PlanItem(
-      label: '中期計画',
-      deadline: '2027年03月25日',
-      target: 10000,
-    ),
-    _PlanItem(
-      label: '長期計画',
-      deadline: '2029年03月25日',
-      target: 100000000,
-    ),
-    _PlanItem(
-      label: 'vs NOTION',
-      deadline: '2029年03月25日',
-      target: 100000000,
-    ),
-    _PlanItem(
-      label: 'vs EverNote',
-      deadline: '2030年03月25日',
-      target: 250000000,
-    ),
-    _PlanItem(
-      label: 'vs MoneyForward',
-      deadline: '2028年03月25日',
-      target: 15000000,
-    ),
-    _PlanItem(
-      label: 'vs X',
-      deadline: '2031年03月25日',
-      target: 600000000,
-    ),
-    _PlanItem(
-      label: 'vs Animaworks',
-      deadline: '2026年12月31日',
-      target: 500000,
-    ),
-    _PlanItem(
-      label: 'vs Claude Code',
-      deadline: '2026年12月31日',
-      target: 500000,
-    ),
-    _PlanItem(
-      label: 'vs Codex',
-      deadline: '2027年06月30日',
-      target: 1000000,
-    ),
-    _PlanItem(
-      label: 'vs netkeiba',
-      deadline: '2028年06月30日',
-      target: 10000000,
-    ),
-    _PlanItem(
-      label: 'vs OpenClaw',
-      deadline: '2027年06月30日',
-      target: 1000000,
-    ),
-    _PlanItem(
-      label: 'vs Claude works',
-      deadline: '2026年12月31日',
-      target: 500000,
-    ),
-    _PlanItem(
-      label: 'vs Chatwork',
-      deadline: '2027年12月31日',
-      target: 6000000,
-    ),
-    _PlanItem(
-      label: 'vs Slack',
-      deadline: '2029年12月31日',
-      target: 65000000,
-    ),
-    _PlanItem(
-      label: 'vs ジョブカン',
-      deadline: '2027年12月31日',
-      target: 5000000,
-    ),
-  ];
-
+  List<_PlanItem> _plans = [];
   int _userCount = 0;
   bool _isLoading = true;
 
@@ -129,18 +47,34 @@ class _GrowthRoadmapProgressCardState
   @override
   void initState() {
     super.initState();
-    _loadUserCount();
+    _loadProgressData();
   }
 
-  Future<void> _loadUserCount() async {
+  Future<void> _loadProgressData() async {
     try {
-      final response = await _supabase
-          .from('user_profiles')
-          .select('user_id')
-          .count(CountOption.exact);
+      // フロントエンドでの直接的な DB Count アクセスとハードコードを廃止
+      // Edge Function で安全に実データを集計し、目標データと統合して取得する
+      final response = await _supabase.functions.invoke(
+        'get-growth-roadmap-progress',
+      );
+
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final count = data['userCount'] as int? ?? 0;
+      final plansData = data['plans'] as List<dynamic>? ?? [];
+
+      final loadedPlans = plansData.map((e) {
+        final map = e as Map<String, dynamic>;
+        return _PlanItem(
+          label: map['label']?.toString() ?? '',
+          deadline: map['deadline']?.toString(),
+          target: map['target'] as int? ?? 0,
+        );
+      }).toList();
+
       if (!mounted) return;
       setState(() {
-        _userCount = response.count;
+        _userCount = count;
+        _plans = loadedPlans;
         _isLoading = false;
       });
     } catch (_) {

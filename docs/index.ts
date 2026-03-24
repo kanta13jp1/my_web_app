@@ -12,9 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const action = body.action || "get";
-
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
     const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
@@ -22,56 +19,38 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    if (action === "add") {
-      const title = body.title;
-      if (!title) throw new Error("title is required");
-      
-      const { error } = await admin
-        .from("development_achievements")
-        .insert({
-          title,
-          completed_at: new Date().toISOString(),
-        });
+    // user_profiles テーブルから現在の登録者数を取得 (実データ集計)
+    const { count, error } = await admin
+      .from("user_profiles")
+      .select("*", { count: "exact", head: true });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } else {
-      const period = body.period || "今日の実績";
-      let startDate = new Date(0);
-      const now = new Date();
+    const userCount = count || 0;
 
-      switch (period) {
-        case '今日の実績': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
-        case '今週の実績': startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()); break;
-        case '直近2週間の実績': startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); break;
-        case '今月の実績': startDate = new Date(now.getFullYear(), now.getMonth(), 1); break;
-        case '直近2ヶ月の実績': startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1); break;
-        case '直近3ヶ月の実績': startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1); break;
-        case '直近半年の実績': startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1); break;
-        case '直近1年の実績': startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()); break;
-        case '直近2年の実績': startDate = new Date(now.getFullYear() - 2, now.getMonth(), now.getDate()); break;
-        case '直近3年の実績': startDate = new Date(now.getFullYear() - 3, now.getMonth(), now.getDate()); break;
-        case '直近5年の実績': startDate = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate()); break;
-        case '直近10年の実績': startDate = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate()); break;
-        case 'すべての実績':
-        default: startDate = new Date(0); break;
-      }
+    // 目標計画のリスト (将来的には DB の growth_plans テーブル等から動的に取得する想定)
+    const plans = [
+      { label: '短期計画', deadline: '2026年06月30日', target: 100 },
+      { label: '中期計画', deadline: '2027年03月25日', target: 10000 },
+      { label: '長期計画', deadline: '2029年03月25日', target: 100000000 },
+      { label: 'vs NOTION', deadline: '2029年03月25日', target: 100000000 },
+      { label: 'vs EverNote', deadline: '2030年03月25日', target: 250000000 },
+      { label: 'vs MoneyForward', deadline: '2028年03月25日', target: 15000000 },
+      { label: 'vs X', deadline: '2031年03月25日', target: 600000000 },
+      { label: 'vs Animaworks', deadline: '2026年12月31日', target: 500000 },
+      { label: 'vs Claude Code', deadline: '2026年12月31日', target: 500000 },
+      { label: 'vs Codex', deadline: '2027年06月30日', target: 1000000 },
+      { label: 'vs netkeiba', deadline: '2028年06月30日', target: 10000000 },
+      { label: 'vs OpenClaw', deadline: '2027年06月30日', target: 1000000 },
+      { label: 'vs Claude works', deadline: '2026年12月31日', target: 500000 },
+      { label: 'vs Chatwork', deadline: '2027年12月31日', target: 6000000 },
+      { label: 'vs Slack', deadline: '2029年12月31日', target: 65000000 },
+      { label: 'vs ジョブカン', deadline: '2027年12月31日', target: 5000000 },
+    ];
 
-      const { data, error } = await admin
-        .from("development_achievements")
-        .select("title, completed_at")
-        .gte("completed_at", startDate.toISOString())
-        .order("completed_at", { ascending: false });
-
-      if (error) throw error;
-
-      return new Response(JSON.stringify({ achievements: data || [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    return new Response(JSON.stringify({ userCount, plans }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: errorMessage }), {
