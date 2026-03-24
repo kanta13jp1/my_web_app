@@ -62,7 +62,7 @@ ORDER BY cmd, policyname;
 **期待される結果**:
 
 | policyname | cmd | qual | with_check |
-|:-----------|:----|:-----|:-----------|
+|   :--------- -  -  |   :- - - -  | : - ----  | :---- ------- |
 | Anyone can view user stats for leaderboard | SELECT | true | (NULL) |
 | Users can insert their own stats | INSERT | (NULL) | (auth.uid() = user_id) |
 | Users can update their own stats | UPDATE | (auth.uid() = user_id) | (auth.uid() = user_id) |

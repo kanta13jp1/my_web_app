@@ -50,7 +50,7 @@ WHERE tablename = 'user_stats' AND cmd = 'SELECT';
 
 **期待される結果**:
 | policyname | cmd | qual | with_check |
-|:-----------|:----|:-----|:-----------|
+| :----------- | :---- | :----- | :----------- |
 | Anyone can view user stats for leaderboard | SELECT | true | NULL |
 
 **判定**:
@@ -130,7 +130,7 @@ SELECT user_id, total_points FROM user_stats ORDER BY total_points DESC LIMIT 5;
 **エラーパターンと原因**:
 
 | エラーメッセージ | 原因 | 修正先 |
-|:----------------|:-----|:-------|
+| :---------------- | :----- | :------- |
 | `CORS policy` | CORS設定不足 | Supabase Storage |
 | `LateInitializationError` | file_picker初期化問題 | コード |
 | `403 Forbidden` | 署名付きURL必要 | コード or Storage |
@@ -147,7 +147,7 @@ SELECT user_id, total_points FROM user_stats ORDER BY total_points DESC LIMIT 5;
 **Status Code別の対処**:
 
 | Status Code | 原因 | 対処 |
-|:------------|:-----|:-----|
+| :------------ | :----- | :----- |
 | 0 | CORS問題 | CORS設定 |
 | 403 | 認証/RLS問題 | RLS確認 |
 | 413 | ファイルサイズ超過 | サイズ制限確認 |

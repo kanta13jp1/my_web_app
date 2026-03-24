@@ -215,7 +215,7 @@ try {
 #### Type一覧
 
 | Type | 説明 | 例 |
-|------|------|-----|
+| ------ | ------ | ----- |
 | `feat` | 新機能 | `feat: Add user authentication` |
 | `fix` | バグ修正 | `fix: Resolve login error` |
 | `docs` | ドキュメント変更 | `docs: Update README` |
