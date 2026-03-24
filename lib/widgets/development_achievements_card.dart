@@ -46,33 +46,17 @@ class _DevelopmentAchievementsCardState
   Future<void> _fetchTasks(String period) async {
     setState(() => _isLoading = true);
     try {
-      final now = DateTime.now();
-      DateTime startDate;
-      switch (period) {
-        case '今日の実績': startDate = DateTime(now.year, now.month, now.day); break;
-        case '今週の実績': startDate = DateTime(now.year, now.month, now.day - now.weekday % 7); break;
-        case '直近2週間の実績': startDate = now.subtract(const Duration(days: 14)); break;
-        case '今月の実績': startDate = DateTime(now.year, now.month, 1); break;
-        case '直近2ヶ月の実績': startDate = DateTime(now.year, now.month - 1, 1); break;
-        case '直近3ヶ月の実績': startDate = DateTime(now.year, now.month - 2, 1); break;
-        case '直近半年の実績': startDate = DateTime(now.year, now.month - 5, 1); break;
-        case '直近1年の実績': startDate = DateTime(now.year - 1, now.month, now.day); break;
-        case '直近2年の実績': startDate = DateTime(now.year - 2, now.month, now.day); break;
-        case '直近3年の実績': startDate = DateTime(now.year - 3, now.month, now.day); break;
-        case '直近5年の実績': startDate = DateTime(now.year - 5, now.month, now.day); break;
-        case '直近10年の実績': startDate = DateTime(now.year - 10, now.month, now.day); break;
-        case 'すべての実績':
-        default: startDate = DateTime(2000); break;
-      }
+      // フロントエンドでの複雑な期間計算とDB直接アクセスを廃止し、
+      // Edge Function に処理を委譲 (実データ本実装)
+      final response = await Supabase.instance.client.functions.invoke(
+        'development-achievements',
+        body: {'action': 'get', 'period': period},
+      );
 
-      // ダミーデータを排し、DBから直接本物の実績データを取得する本実装
-      final response = await Supabase.instance.client
-          .from('development_achievements')
-          .select('title, completed_at')
-          .gte('completed_at', startDate.toIso8601String())
-          .order('completed_at', ascending: false);
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final achievements = (data['achievements'] as List<dynamic>?) ?? [];
 
-      final list = (response as List).map((e) {
+      final list = achievements.map((e) {
             final map = e as Map<String, dynamic>;
             final title = map['title']?.toString() ?? '';
             final completedAtStr = map['completed_at']?.toString();
@@ -141,12 +125,10 @@ class _DevelopmentAchievementsCardState
                           if (text.isEmpty) return;
                           setStateDialog(() => isSubmitting = true);
                           try {
-                            await Supabase.instance.client
-                                .from('development_achievements')
-                                .insert({
-                              'title': text,
-                              'completed_at': DateTime.now().toIso8601String(),
-                            });
+                            await Supabase.instance.client.functions.invoke(
+                              'development-achievements',
+                              body: {'action': 'add', 'title': text},
+                            );
                             if (ctx.mounted) {
                               Navigator.of(ctx).pop(true);
                             }

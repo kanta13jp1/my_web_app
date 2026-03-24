@@ -1,9 +1,9 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28
+最終更新: 2026-03-25
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカンの全13製品を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -121,7 +121,7 @@
   - 取得失敗時や0件時のフォールバック(ダミーデータ)を廃止し、純粋な実データのみを表示するよう本実装
 - GrowthRoadmapProgressCard のプログレスバーをテキストベース (■□□) に変更し、全13競合の目標期日を実設定 (2026-03-27)
 - ユーザー向け操作マニュアル (`user_manual_page.dart`) を本実装完了 (2026-03-28)
-- 開発実績をUIから直接Supabaseへ追加する登録機能 (Add Achievement Dialog) を本実装完了 (2026-03-28)
+- 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 
 ### 残課題
 
@@ -205,7 +205,6 @@
 - Claude works の企業向け AI 機能に対抗する、パーソナライズされた AI エージェント機能の拡充を企画する
 - Chatwork などのレガシービジネスチャットから「AIファーストのワークスペース」への移行メリットを訴求するランディングページを企画する
 - 常に Linter エラー 0 を維持し、CIパイプラインで厳格にブロックすることでクリーンなコードベースと高速開発を実現する
-- 開発実績入力機能でフロントエンドに実装した登録処理を、より安全な Supabase Edge Function へ移行する検討
 
 ### 企画
 
