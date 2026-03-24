@@ -3917,6 +3917,8 @@ abstinence_slip_details: $slipDetailsText
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
+                            const SizedBox(height: 10),
+                            _UserManualBanner(),
                             const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
@@ -6446,4 +6448,75 @@ class _CalendarDayStatus {
     required this.color,
     required this.icon,
   });
+}
+
+// ---------------------------------------------------------------------------
+// User manual banner
+// ---------------------------------------------------------------------------
+
+class _UserManualBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor =
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF);
+    final borderColor =
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.of(context).pushNamed('/user-manual'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.menu_book_outlined,
+                size: 20,
+                color: Color(0xFF6366F1),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ユーザーマニュアル',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6366F1),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '実装済み全機能の操作手順を確認できます',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: Color(0xFF6366F1),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
