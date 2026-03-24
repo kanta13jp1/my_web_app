@@ -47,6 +47,7 @@ import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
 import 'wardrobe_page.dart'; // 先頭のimport群に追加
+import '../widgets/growth_roadmap_progress_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3913,6 +3914,8 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const GrowthRoadmapProgressCard(),
+                            const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
                               opsSnapshot,

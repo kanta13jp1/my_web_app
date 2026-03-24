@@ -72,6 +72,11 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - referral anti-abuse: rate limit (1日5件) + 1時間未満アカウントブロック + check_abuse アクション (2026-03-25 追加)
 - import 成功後の onboarding CTA を personalized card に刷新 (2026-03-25 追加)
 - ai_status_page_test の残件 "can set and show the default ai model" を解消 (2026-03-25 完了)
+- ホーム画面最上部に GrowthRoadmapProgressCard を追加 (2026-03-25 追加)
+  - 短期/中期/長期計画の目標期日・達成率・■□バーをリアルタイム表示
+  - vs NOTION (1億ユーザー) / vs EverNote (2.5億ユーザー) 比較バー
+  - user_profiles テーブルから登録者数をリアルタイム取得
+- 技術ブログ発信戦略を GROWTH_STRATEGY_ROADMAP.md に追加 (Zenn / Qiita / はてなブログ / note / dev.to / Hashnode / Medium / Substack / GitHub Pages)
 
 ### 残課題
 
@@ -170,6 +175,39 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 - Notion 比較、Evernote 比較の記事を継続公開する
 - note と Substack で founder update を定期配信する
 - `/referral` と import の改善ログを build in public で見せる
+
+### 技術ブログ・コンテンツ発信
+
+各媒体の特性に合わせて記事を最大化する。1 shipped feature → 1 article seed → 複数媒体への展開を習慣にする。
+
+#### 国内技術メディア
+
+- **Zenn**: Flutter / Supabase / Edge Function の実装詳細記事。コードスニペットを充実させる。
+- **Qiita**: 「Notion → MyMemo 移行スクリプトを作った」「Evernote ENEX を Flutter で解析する」など実用系。
+- **はてなブログ**: 週次 build-in-public 日記。登録者数の推移グラフ付きで毎週公開する。
+
+#### 国内コンテンツ
+
+- **note**: founder 視点の growth 戦略 essay。技術非エンジニア層にも読める温度で書く。
+
+#### 海外技術メディア
+
+- **dev.to**: English 記事。Flutter + Supabase の実装記事で検索流入を狙う。
+- **Hashnode**: Personal dev blog として位置づけ、英語コンテンツを蓄積する。
+- **Medium**: Growth hacking / product building の英語エッセイ。
+- **Substack**: 英語版 founder newsletter として月次配信する。
+
+#### OSS・ドキュメント
+
+- **GitHub Pages**: Public changelog / release notes を公開する。import ツールの使い方ドキュメントも置く。
+
+#### 発信テンプレート (1 feature → 多媒体展開)
+
+1. **機能リリース直後**: はてなブログで日本語速報 + X/Twitter スレッド
+2. **実装詳細**: Zenn に技術記事 (日本語) → dev.to に英語版
+3. **ユーザー視点**: Qiita に「移行してみた」系記事 + note に使い方エッセイ
+4. **週次 growth update**: はてなブログ週記 + Substack newsletter
+5. **月次まとめ**: Medium essay (英語) + note まとめ記事
 
 ### 営業
 
@@ -282,6 +320,8 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 8. wasm build blocker の原因を特定して解消する
 9. 公開メモの SEO / OGP タグを強化して organic 流入を増やす
 10. B2B 向け移行代行 LP の最初のドラフトを作る
+11. 技術ブログ第 1 弾を Zenn に投稿する (「Flutter + Supabase で growth dashboard を作った」)
+12. はてなブログで週次 progress bar 付き成長記録を開始する
 
 ---
 
@@ -383,8 +423,10 @@ MyMemo はこの 2 サービスを上回るために、移行、AI、共有、�
 
 ### 宣伝 — 2026-03-25
 
-- 今週 ship した機能 (weekly digest, anti-abuse, import CTA) を note / Zenn / dev.to に投稿する
+- 今週 ship した機能 (weekly digest, anti-abuse, import CTA, growth progress card) を note / Zenn / dev.to に投稿する
 - build in public として referral anti-abuse の設計思想を公開メモにする
+- 技術ブログ発信テンプレートを確立: 1 feature → Zenn (実装) → Qiita (実用) → dev.to (英語) → note (エッセイ)
+- はてなブログで登録者数 weekly progress bar を見せながら成長記録を開始する
 
 ### 営業 — 2026-03-25
 
