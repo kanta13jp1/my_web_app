@@ -69,6 +69,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs X',
       target: 600000000,
     ),
+    _PlanItem(
+      label: 'vs Animaworks',
+      target: 500000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1248,10 +1252,192 @@ const _xFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Animaworks
+// ---------------------------------------------------------------------------
+
+const _animaworksFeatureRows = <_FeatureRow>[
+  // ---- 目標・習慣管理 ----
+  _FeatureRow(
+    category: '目標・習慣管理',
+    feature: '目標設定・管理',
+    competitorDetail: '短期・長期の目標をツリー構造で設定・追跡',
+    status: _FeatureStatus.partial,
+    appDetail: 'KPI 目標設定・Growth ロードマップで部分対応',
+  ),
+  _FeatureRow(
+    category: '目標・習慣管理',
+    feature: '習慣トラッカー',
+    competitorDetail: '毎日の習慣を記録・継続率を可視化',
+    status: _FeatureStatus.done,
+    appDetail: '習慣トラッカー実装済み (チェックイン・連続記録・グラフ)',
+  ),
+  _FeatureRow(
+    category: '目標・習慣管理',
+    feature: 'OKR / KPI 管理',
+    competitorDetail: '目標と主要結果 (OKR) を階層管理',
+    status: _FeatureStatus.done,
+    appDetail: 'KPI ダッシュボード実装済み',
+  ),
+  _FeatureRow(
+    category: '目標・習慣管理',
+    feature: 'マイルストーン設定',
+    competitorDetail: '目標達成に向けた中間マイルストーンを管理',
+    status: _FeatureStatus.partial,
+    appDetail: 'Growth ロードマップの短期/中期/長期計画で対応',
+  ),
+  // ---- 振り返り・ジャーナル ----
+  _FeatureRow(
+    category: '振り返り・ジャーナル',
+    feature: '日次振り返り',
+    competitorDetail: '今日の出来事・感情・成果を記録',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdown ノートで日記・振り返り記録可能',
+  ),
+  _FeatureRow(
+    category: '振り返り・ジャーナル',
+    feature: '週次/月次レビュー',
+    competitorDetail: '週・月単位で振り返りテンプレートを提供',
+    status: _FeatureStatus.partial,
+    appDetail: 'Growth 週次 digest・月間収支カレンダーで部分対応',
+  ),
+  _FeatureRow(
+    category: '振り返り・ジャーナル',
+    feature: 'ムード・感情トラッキング',
+    competitorDetail: '気分・感情を毎日記録してグラフ化',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '振り返り・ジャーナル',
+    feature: '感謝ジャーナル',
+    competitorDetail: '毎日の感謝を3つ記録するマインドフルネス機能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- タスク・プロジェクト ----
+  _FeatureRow(
+    category: 'タスク・プロジェクト',
+    feature: 'タスク管理',
+    competitorDetail: 'To-Do リスト・優先度・締切管理',
+    status: _FeatureStatus.partial,
+    appDetail: 'ノート内チェックリスト・習慣トラッカーで部分対応',
+  ),
+  _FeatureRow(
+    category: 'タスク・プロジェクト',
+    feature: 'プロジェクト管理',
+    competitorDetail: 'プロジェクトごとにタスクをグループ管理',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 中期計画で対応予定',
+  ),
+  _FeatureRow(
+    category: 'タスク・プロジェクト',
+    feature: 'タイムボックス',
+    competitorDetail: '作業時間をブロック単位でカレンダーに割り当て',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- ライフデザイン ----
+  _FeatureRow(
+    category: 'ライフデザイン',
+    feature: 'ライフホイール評価',
+    competitorDetail: '人生の各領域 (仕事/健康/人間関係等) をバランス評価',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ライフデザイン',
+    feature: 'ビジョンボード',
+    competitorDetail: '目標イメージを視覚的にコラージュして動機付け',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'ライフデザイン',
+    feature: 'ライフイベント記録',
+    competitorDetail: '人生の重要な出来事を時系列で記録',
+    status: _FeatureStatus.partial,
+    appDetail: '月間カレンダーで日別記録可能',
+  ),
+  // ---- 通知・リマインダー ----
+  _FeatureRow(
+    category: '通知・リマインダー',
+    feature: '習慣リマインダー通知',
+    competitorDetail: '習慣実行を促すプッシュ通知',
+    status: _FeatureStatus.done,
+    appDetail: '通知サービス実装済み (土曜リマインダー等)',
+  ),
+  _FeatureRow(
+    category: '通知・リマインダー',
+    feature: '目標チェックインリマインダー',
+    competitorDetail: '定期的な目標進捗チェックを通知',
+    status: _FeatureStatus.partial,
+    appDetail: '通知基盤実装済み — 目標チェックイン通知は拡張可能',
+  ),
+  // ---- プラットフォーム ----
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'Web アプリ',
+    competitorDetail: 'ブラウザで利用可能',
+    status: _FeatureStatus.done,
+    appDetail: 'Flutter Web 実装済み',
+  ),
+  _FeatureRow(
+    category: 'プラットフォーム',
+    feature: 'iOS/Android アプリ',
+    competitorDetail: 'ネイティブモバイルアプリ',
+    status: _FeatureStatus.inProgress,
+    appDetail: 'Flutter クロスプラットフォーム対応可能 — リリース準備中',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI エージェント組織 (CEO/CFO/CMO/CHRO)',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '役員会議 AI で戦略的意思決定を支援',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'Markdown ノート + AI 整理',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'AI Secretary によるノート改善・要約・次アクション生成',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '家計・資産管理',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '収支カレンダー・資産管理・月次収支分析実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'ビジュアルマインドマップ実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '競合比較 Growth ロードマップ',
+    competitorDetail: '— Animaworks にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'このカードがその機能です',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合4社 (Notion / EverNote / MoneyForward / X) の機能一覧と
+/// 競合5社 (Notion / EverNote / MoneyForward / X / Animaworks) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1270,12 +1456,19 @@ class _CompetitorFeatureComparisonCardState
   bool _expanded = false;
   late TabController _tabController;
 
-  static const _competitors = ['Notion', 'EverNote', 'MoneyForward', 'X'];
+  static const _competitors = [
+    'Notion',
+    'EverNote',
+    'MoneyForward',
+    'X',
+    'Animaworks',
+  ];
   static const _featureLists = [
     _notionFeatureRows,
     _evernoteFeatureRows,
     _moneyforwardFeatureRows,
     _xFeatureRows,
+    _animaworksFeatureRows,
   ];
 
   String _filterCategory = 'すべて';

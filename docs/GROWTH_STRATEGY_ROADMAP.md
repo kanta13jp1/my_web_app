@@ -30,6 +30,7 @@
 - Evernote: 250,000,000+ customer 規模
 - MoneyForward: ~15,000,000 users 規模
 - X (Twitter/X): ~600,000,000 monthly active users 規模
+- Animaworks: ~500,000 users 規模 (国内パーソナル生産性アプリ)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -37,8 +38,9 @@
 - Evernote official announcement dated 2022-11-16: `Serving more than 250 million customers`
 - MoneyForward: ~1,500 万ユーザー
 - X (Twitter/X): ~6 億 monthly active users
+- Animaworks: 国内パーソナル生産性・習慣管理アプリ (~50 万ユーザー推定)
 
-自分株式会社 はこの 4 サービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこの 5 サービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -86,6 +88,9 @@
 - ホーム画面に CompetitorFeatureComparisonCard を Notion/EverNote/MoneyForward/X の4タブで実装 (2026-03-24 追加)
 - ユーザーマニュアルページを追加 (実装済み全機能の操作手順書) (2026-03-24 追加)
 - vs MoneyForward 進捗バーを追加 (2026-03-24 追加)
+- vs Animaworks 進捗バーを追加 (目標: ~50万ユーザー) (2026-03-24 追加)
+- 競合機能比較カードに Animaworks タブを追加 (目標・習慣管理/振り返り/ライフデザイン機能との比較) (2026-03-24 追加)
+- CompetitorFeatureComparisonCard を5タブ構成に拡張 (Notion/EverNote/MoneyForward/X/Animaworks) (2026-03-24 追加)
 
 ### 残課題
 
