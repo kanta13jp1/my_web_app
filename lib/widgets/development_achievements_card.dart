@@ -108,6 +108,72 @@ class _DevelopmentAchievementsCardState
     }
   }
 
+  Future<void> _showAddAchievementDialog(BuildContext context) async {
+    final titleController = TextEditingController();
+    bool isSubmitting = false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('開発実績の追加', style: TextStyle(fontSize: 16)),
+              content: TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: '実績内容 (例: ホーム画面に機能を追加)',
+                  hintText: '入力してください',
+                ),
+                autofocus: true,
+                maxLines: 2,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final text = titleController.text.trim();
+                          if (text.isEmpty) return;
+                          setStateDialog(() => isSubmitting = true);
+                          try {
+                            await Supabase.instance.client
+                                .from('development_achievements')
+                                .insert({
+                              'title': text,
+                              'completed_at': DateTime.now().toIso8601String(),
+                            });
+                            if (ctx.mounted) {
+                              Navigator.of(ctx).pop(true);
+                            }
+                          } catch (e) {
+                            debugPrint('Error inserting achievement: $e');
+                            setStateDialog(() => isSubmitting = false);
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('追加'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((result) {
+      if (result == true) {
+        _fetchTasks(_selectedPeriod);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -150,6 +216,15 @@ class _DevelopmentAchievementsCardState
                 ),
               ),
               const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline, size: 20),
+                color: const Color(0xFF10B981),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: '実績を追加',
+                onPressed: () => _showAddAchievementDialog(context),
+              ),
+              const SizedBox(width: 12),
               Container(
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
