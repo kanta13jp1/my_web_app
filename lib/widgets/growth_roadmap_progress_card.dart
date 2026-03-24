@@ -101,6 +101,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs Slack',
       target: 65000000,
     ),
+    _PlanItem(
+      label: 'vs ジョブカン',
+      target: 5000000,
+    ),
   ];
 
   int _userCount = 0;
@@ -2026,10 +2030,56 @@ const _slackFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — ジョブカン
+// ---------------------------------------------------------------------------
+
+const _jobcanFeatureRows = <_FeatureRow>[
+  // ---- 勤怠管理 ----
+  _FeatureRow(
+    category: 'バックオフィス (勤怠)',
+    feature: '打刻・シフト管理',
+    competitorDetail: 'ICカードやGPSでの出退勤打刻とシフト作成',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 個人タスクのトラッキングは実装済み',
+  ),
+  // ---- 経費精算 ----
+  _FeatureRow(
+    category: 'バックオフィス (経費)',
+    feature: '領収書AI読み取り・精算',
+    competitorDetail: '領収書画像を解析し経費申請を自動化',
+    status: _FeatureStatus.partial,
+    appDetail: '個人の収支入力・家計管理として部分実装',
+  ),
+  // ---- ワークフロー ----
+  _FeatureRow(
+    category: 'バックオフィス (ワークフロー)',
+    feature: '稟議・承認経路設定',
+    competitorDetail: '社内の各種申請と多段階の承認フロー',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 将来的にAIによる自動申請・代理承認を検討',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI 役員会議 (MAGI System)',
+    competitorDetail: '— ジョブカン にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '業務管理だけでなく、意思決定そのものをAIが支援',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '個人生産性からのシームレスな統合',
+    competitorDetail: '— 管理者主体のツール設計',
+    status: _FeatureStatus.unique,
+    appDetail: '従業員個人のノートやタスク管理の延長でバックオフィスが完結',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合12社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack) の機能一覧と
+/// 競合13社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2061,6 +2111,7 @@ class _CompetitorFeatureComparisonCardState
     'Claude works',
     'Chatwork',
     'Slack',
+    'ジョブカン',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2075,6 +2126,7 @@ class _CompetitorFeatureComparisonCardState
     _claudeWorksFeatureRows,
     _chatworkFeatureRows,
     _slackFeatureRows,
+    _jobcanFeatureRows,
   ];
 
   String _filterCategory = 'すべて';

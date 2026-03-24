@@ -30,14 +30,15 @@ class _DevelopmentAchievementsCardState
 
   List<String> _getTasksForPeriod(String period) {
     final allTasks = [
+      '競合比較に Slack / ジョブカン などを追加し13社体制へ拡張する',
+      '技術ブログ基盤・ロードマップをビジネスSaaS領域に対応させる',
       'acquisition touchpoint ごとの weekly digest を追加する',
       'import success 後 onboarding をさらに改善する',
       'referral reward と anti-abuse ルールを追加する',
       'memory_drill_page_test の残件を解消する',
       'ai_status_page_test の残件を解消する',
       'GrowthRoadmapProgressCard を追加する',
-      'CompetitorFeatureComparisonCard を11社に拡張する',
-      'DevelopmentAchievementsCard で実績リストを表示する',
+      'CompetitorFeatureComparisonCard をトを表示する',
       'Supabase Edge Function の基盤を整備する',
       'Linterエラーをすべて解消する',
       'ZennやQiita等での技術ブログ投稿基盤を準備する',

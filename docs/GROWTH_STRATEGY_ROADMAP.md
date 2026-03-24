@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-24
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -38,6 +38,7 @@
 - Claude works: ~500,000 users 規模 (法人向け AI ワークスペース)
 - Chatwork: ~6,000,000 users 規模 (国内ビジネスチャット)
 - Slack: ~65,000,000 users 規模 (グローバルビジネスチャット)
+- ジョブカン: ~5,000,000 users 規模 (国内バックオフィス SaaS)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -52,8 +53,9 @@
 - Claude works: Anthropic の法人向け次世代 AI ワークスペース (~50 万ユーザー推定)
 - Chatwork: 国内シェアトップクラスのビジネスチャット (~600 万ユーザー)
 - Slack: 世界的シェアを誇るビジネスチャット・連携プラットフォーム (~6,500 万ユーザー)
+- ジョブカン: 導入実績 25 万社を超える国内シェアトップクラスのバックオフィスシステム (~500 万ユーザー推定)
 
-自分株式会社 はこれら 12 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 13 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -112,7 +114,8 @@
 - vs Claude works 進捗バーを追加 (目標: ~50万ユーザー)
 - vs Chatwork 進捗バーを追加 (目標: ~600万ユーザー)
 - vs Slack 進捗バーを追加 (目標: ~6500万ユーザー)
-- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork、Slack タブを追加し、12タブ構成に拡張
+- vs ジョブカン 進捗バーを追加 (目標: ~500万ユーザー)
+- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork、Slack、ジョブカン タブを追加し、13タブ構成に拡張
 - DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で完了タスクをリスト表示
 - ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
 - DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
@@ -208,6 +211,7 @@
 - AI の価値訴求を 要約、整理、次アクション生成 の 3 本に絞る
 - 勝ちテンプレート群を定義する
 - X (SNS) からの流入導線を設計する (公開メモの X シェアボタン → 自分株式会社 登録)
+- ジョブカンに代表される「管理のための管理ツール」を廃し、「働く人を支援するAIアシスタント」としてのバックオフィス機能のコンセプトを策定する
 
 ### 広告
 
@@ -261,7 +265,7 @@
 
 - 小規模チーム向け導入提案を founder sales として開始する
 - 移行代行付き PoC を試す
-- Chatwork や Slack に情報が散在し、連携アプリ疲れを起こしているチームに対し、オールインワンの情報集約プラットフォームとしての自分株式会社を提案する
+- Chatwork や Slack、ジョブカンなど複数 SaaS の連携疲れを起こしているチームに対し、オールインワンの情報集約プラットフォームとしての自分株式会社を提案する
 - referral で流入した小規模チーム候補を founder sales へ handoff する
 
 ### マーケティング
@@ -272,6 +276,7 @@
 - Qiita、Zenn、Medium、dev.to、Hashnode に技術記事を横展開して指名検索以外の入口を増やす
 - 1つの shipped feature から 日本語記事、英語記事、公開メモ、SNS 要約 を派生させる
 - assisted conversion proxy を見ながら referral / import / public memo の勝ち筋を週次で更新する
+- 法人向けに「ビジネスチャット(Slack) + 共有ノート(Notion) + バックオフィス(ジョブカン) をAIで一元化」という圧倒的なコストパフォーマンスを訴求する
 
 ### 人事
 
@@ -300,7 +305,7 @@
 - 0 -> 1 の勝ち筋を文章化する
 - 資金調達の条件と bootstrapping 継続条件を明文化する
 - 100 users、1,000 users、10,000 users の段階ごとに org / budget / infra 前提を分ける
-- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack を上回るという圧倒的なビジョンを対外向け資料のコアに据える
+- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン を上回るという圧倒的なビジョンを対外向け資料のコアに据える
 
 ---
 

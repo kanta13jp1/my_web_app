@@ -335,13 +335,13 @@ const _sections = <_ManualSection>[
       _ManualStep(
         heading: 'ホーム画面最上部のカードを確認する',
         body: 'ホーム画面の最上部に「GROWTH ROADMAP」カードが表示されています。\n'
-            '短期・中期・長期計画の達成率と、各種競合 (Notion / EverNote / MoneyForward / X / Animaworks / Claude code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack) との'
+            '短期・中期・長期計画の達成率と、各種競合 (Notion / EverNote / MoneyForward / X / Animaworks / Claude code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン) との'
             '登録者数比較の進捗がリアルタイムで確認できます。',
       ),
       _ManualStep(
         heading: '競合機能比較カードを使う',
         body: 'GROWTH ROADMAP カードの下にある「競合機能比較」カードをタップすると展開します。\n'
-            '競合12製品のタブを切り替えて、'
+            '競合13製品のタブを切り替えて、'
             '各競合との機能カバー率と実装状況を確認できます。',
       ),
       _ManualStep(
