@@ -119,3 +119,14 @@ enabled = true
 verify_jwt = false
 # Set AGENT_RUNTIME_CRON_SECRET and call with x-cron-token for scheduler access.
 entrypoint = "./functions/agent-runtime-cycle/index.ts"
+
+# ---- Public (no auth required) Edge Functions ----
+
+[functions.get-public-memo-preview]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/get-public-memo-preview/index.ts"
+
+[functions.get-ogp-public]
+enabled = true
+verify_jwt = false

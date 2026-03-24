@@ -6,6 +6,7 @@ Allow: /
 Allow: /gemini-university
 Allow: /danshari
 Allow: /shared/
+Allow: /public-memo
 
 # Authenticated and internal routes
 Disallow: /home

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 3件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善・公開メモ SEO 強化: get-public-memo-preview Edge Function + index.html 動的メタタグ)
+最終更新: 2026-03-25 session3 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 5件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善・公開メモ SEO 強化・get-home-dashboard Edge Function・ユーザーマニュアル全セクション正確化・DevelopmentAchievementsCard ドロップダウンバグ修正・Zenn 技術ブログ原稿完成)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -140,6 +140,12 @@
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
 
+- **get-public-memo-preview Edge Function 新規作成** (2026-03-25): public_memos テーブルから Markdown 除去済みエクサープト・pageTitle・ogDescription を返す認証不要エンドポイント
+- **index.html SEO シェル動的メタタグ注入** (2026-03-25): /public-memo?id=XXX の URL で Flutter 起動前に OGP メタタグ (og:title / og:description / twitter:card) を動的書き換え → SNS シェアカードに実メモ内容を表示
+- **get-home-dashboard Edge Function 新規作成** (2026-03-25): ホーム画面マーケティング KPI (totalUsers / todaySignups / todayViews / todayShares / lpSeries) を Promise.all で並列フェッチし 1 API 呼び出しに統合。3〜4 往復 DB クエリを廃止。
+- **DevelopmentAchievementsCard ドロップダウンバグ修正** (2026-03-25): 期間変更時に _fetchTasks が呼ばれず一覧が更新されない問題を修正
+- **ユーザーマニュアル全セクション正確化** (2026-03-25): OFFICE KPI SNAPSHOT / KPI SUMMARY / OPERATIONS CALENDAR / SPECIAL PROJECT を追加・AI組織OS の正確な名称に統一・公開メモ OGP 対応記載・財務管理セクション新設
+- **Zenn 技術ブログ原稿完成** (2026-03-25): docs/zenn_growth_dashboard_20260325.md に4つの Edge Function 実装詳細・Flutter 呼び出しコード例・deno lint 0 件維持の運用原則を記載済み (published: false → Zenn アカウントで公開予定)
 - index.ts (get-competitor-features 系) の `require-await` deno-lint エラーを修正（不要な async を削除）(2026-03-25)
 - supabase/functions/deno.json に lint.rules.exclude = ["no-import-prefix"] を追加し、Deno 2.x の URL import 方式の関数全体でのエラーを解消 (2026-03-25)
 - growth-achievement-summary と growth-referral の `no-explicit-any` を `deno-lint-ignore` で抑制し、deno lint **0件** 達成 (2026-03-25)

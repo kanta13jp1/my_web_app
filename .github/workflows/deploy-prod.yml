@@ -84,6 +84,35 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
+      - name: Deploy Supabase Edge Functions
+        run: |
+          # Deploy public functions (no JWT verification required)
+          supabase functions deploy get-public-memo-preview --no-verify-jwt
+          supabase functions deploy get-ogp --no-verify-jwt
+          # Deploy authenticated functions
+          supabase functions deploy development-achievements
+          supabase functions deploy get-growth-roadmap-progress
+          supabase functions deploy get-competitor-features
+          supabase functions deploy get-home-dashboard
+          supabase functions deploy growth-weekly-digest
+          supabase functions deploy growth-acquisition-signal
+          supabase functions deploy growth-acquisition-report
+          supabase functions deploy growth-command-center
+          supabase functions deploy growth-referral
+          supabase functions deploy growth-share-signal
+          supabase functions deploy growth-import-preview
+          supabase functions deploy growth-import-commit
+          supabase functions deploy growth-achievement-summary
+          supabase functions deploy daily-judgment
+          supabase functions deploy ai-assistant
+          supabase functions deploy ai-search
+          supabase functions deploy ai-suggest-tags
+          supabase functions deploy share-quote
+          supabase functions deploy generate-quote-image
+          supabase functions deploy generate-daily-challenges
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Build Flutter Web (Production)
         run: |
           flutter build web \
