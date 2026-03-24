@@ -151,7 +151,7 @@ def analyze_candidates_cascade():
                         result = extract_json(response.text)
                         if result:
                             new_name = result.get('real_name', current_name)
-                            prob = result.get('probability', 50)
+                            prob = result.get('probability') or 50
                             comment = result.get('comment', '分析完了')
                             success_model = model_name
                             print("✅ OK")
@@ -176,7 +176,7 @@ def analyze_candidates_cascade():
             if success_model is None:
                 print("  🚨 All models failed. Using SIMULATION.")
                 is_simulated = True
-                base_prob = candidate.get('win_probability', 50)
+                base_prob = candidate.get('win_probability') or 50
                 change = random.randint(-5, 5)
                 prob = max(0, min(100, base_prob + change))
                 comment = "※全AIモデル制限のため推定値を表示"
