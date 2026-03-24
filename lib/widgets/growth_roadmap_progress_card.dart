@@ -55,54 +55,67 @@ class _GrowthRoadmapProgressCardState
     ),
     _PlanItem(
       label: 'vs NOTION',
+      deadline: '2029年03月25日',
       target: 100000000,
     ),
     _PlanItem(
       label: 'vs EverNote',
+      deadline: '2030年03月25日',
       target: 250000000,
     ),
     _PlanItem(
       label: 'vs MoneyForward',
+      deadline: '2028年03月25日',
       target: 15000000,
     ),
     _PlanItem(
       label: 'vs X',
+      deadline: '2031年03月25日',
       target: 600000000,
     ),
     _PlanItem(
       label: 'vs Animaworks',
+      deadline: '2026年12月31日',
       target: 500000,
     ),
     _PlanItem(
       label: 'vs Claude Code',
+      deadline: '2026年12月31日',
       target: 500000,
     ),
     _PlanItem(
       label: 'vs Codex',
+      deadline: '2027年06月30日',
       target: 1000000,
     ),
     _PlanItem(
       label: 'vs netkeiba',
+      deadline: '2028年06月30日',
       target: 10000000,
     ),
     _PlanItem(
       label: 'vs OpenClaw',
+      deadline: '2027年06月30日',
       target: 1000000,
     ),
     _PlanItem(
       label: 'vs Claude works',
+      deadline: '2026年12月31日',
       target: 500000,
     ),
     _PlanItem(
       label: 'vs Chatwork',
+      deadline: '2027年12月31日',
       target: 6000000,
     ),
     _PlanItem(
       label: 'vs Slack',
+      deadline: '2029年12月31日',
       target: 65000000,
     ),
     _PlanItem(
       label: 'vs ジョブカン',
+      deadline: '2027年12月31日',
       target: 5000000,
     ),
   ];
@@ -241,7 +254,6 @@ class _PlanProgressRow extends StatelessWidget {
     final filledSegments = (ratio * _barSegments).round();
     final barText = _buildBarText(filledSegments);
 
-    // Format numbers with commas
     final currentStr = _fmt(currentCount);
     final targetStr = _fmt(plan.target);
 
@@ -251,60 +263,53 @@ class _PlanProgressRow extends StatelessWidget {
         : const Color(0xFF6366F1);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  plan.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                  ),
+              Text(
+                plan.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
                 ),
               ),
+              const SizedBox(width: 8),
               if (plan.deadline != null)
                 Text(
-                  '目標期日 ${plan.deadline}',
+                  '　目標期日 ${plan.deadline}',
                   style: TextStyle(fontSize: 11, color: subTextColor),
                 ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Row(
             children: [
+              const SizedBox(width: 8),
               Text(
-                '$pct%',
+                '$pct% ($currentStr / $targetStr 完了) ',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: barColor,
                 ),
               ),
-              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '($currentStr / $targetStr ユーザー完了)',
-                  style: TextStyle(fontSize: 11, color: subTextColor),
+                  barText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: filledSegments > 0 ? barColor : subTextColor.withValues(alpha: 0.5),
+                    letterSpacing: 2,
+                  ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          _SegmentedBar(
-            filledSegments: filledSegments,
-            totalSegments: _barSegments,
-            filledColor: barColor,
-            emptyColor: isDark
-                ? const Color(0xFF2D3748)
-                : const Color(0xFFE2E8F0),
-            barText: barText,
-            textColor: textColor,
           ),
         ],
       ),
@@ -338,68 +343,6 @@ class _PlanProgressRow extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Segmented progress bar (visual + text fallback)
-// ---------------------------------------------------------------------------
-
-class _SegmentedBar extends StatelessWidget {
-  final int filledSegments;
-  final int totalSegments;
-  final Color filledColor;
-  final Color emptyColor;
-  final String barText;
-  final Color textColor;
-
-  const _SegmentedBar({
-    required this.filledSegments,
-    required this.totalSegments,
-    required this.filledColor,
-    required this.emptyColor,
-    required this.barText,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Visual segmented bar
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: SizedBox(
-              height: 10,
-              child: Row(
-                children: List.generate(totalSegments, (i) {
-                  final isFilled = i < filledSegments;
-                  return Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 1),
-                      decoration: BoxDecoration(
-                        color: isFilled ? filledColor : emptyColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Text fallback (■□ style as requested)
-        Text(
-          barText,
-          style: TextStyle(
-            fontSize: 11,
-            color: filledSegments > 0 ? filledColor : emptyColor,
-            letterSpacing: 1,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ===========================================================================
 // Competitor Feature Comparison Card

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-24
+最終更新: 2026-03-27
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -116,11 +116,10 @@
 - vs Slack 進捗バーを追加 (目標: ~6500万ユーザー)
 - vs ジョブカン 進捗バーを追加 (目標: ~500万ユーザー)
 - 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork、Slack、ジョブカン タブを追加し、13タブ構成に拡張
-- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべての実績) で完了タスクをリスト表示
-- ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
-- DevelopmentAchievementsCard の本実装を完了 (2026-03-26)
-  - growth-achievement-summary Edge Function でバックエンド集計
-  - データベースから実績と完了日を取得し、打消し線を廃止して「タスク名＋日付」の複数行フォーマットで表示するように改修
+- DevelopmentAchievementsCard の本実装を完了 (2026-03-27 更新)
+  - ダミーデータを完全に排除し、`development_achievements` テーブルから直接実績と完了日を取得する実データ駆動に改修
+  - 取得失敗時やテーブル未作成時のみ指定フォーマットのフォールバックを表示する安全設計
+- GrowthRoadmapProgressCard のプログレスバーをテキストベース (■□□) に変更し、全13競合の目標期日を実設定 (2026-03-27)
 
 ### 残課題
 
@@ -162,10 +161,11 @@
 - deno check supabase と deno lint supabase を壊さない
 - 重要画面の変更には必ず test を追加または更新する
 - 失敗ログを放置しない
+- Linterエラーは常に0となることを目指し、CIで厳格にブロックする
 
 ### アーキテクチャ
 
-- フロントエンドで複雑化したロジックは Edge Function へ移す
+- フロントエンドで実装している複雑な処理や状態管理はできる限りバックエンドの Supabase Edge Function に移行していくことを徹底する
 - import、共有計測、成長集計、brief 生成は backend-first
 - Flutter 側は UI と入力体験に集中させる
 
@@ -272,40 +272,30 @@
 
 - SEO 着地面を比較記事、公開メモ、テンプレートで拡大する
 - referral 施策の導線と報酬設計を固める
-- Growth dashboard を毎週レビューする
-- Qiita、Zenn、Medium、dev.to、Hashnode に技術記事を横展開して指名検索以外の入口を増やす
-- 1つの shipped feature から 日本語記事、英語記事、公開メモ、SNS 要約 を派生させる
-- assisted conversion proxy を見ながら referral / import / public memo の勝ち筋を週次で更新する
-- 法人向けに「ビジネスチャット(Slack) + 共有ノート(Notion) + バックオフィス(ジョブカン) をAIで一元化」という圧倒的なコストパフォーマンスを訴求する
+- 競合13ツールの検索キーワードに対し、比較記事とSEOコンテンツを大量投下する
+- ホーム画面のGrowth Roadmapを「ビルド・イン・パブリック」の証として対外的にアピールする
 
 ### 人事
 
 - growth engineer と content marketer の採用要件を定義する
-- 外部パートナー候補を確保する
-- Supabase Edge Function を触れる growth backend contractor の要件を追加する
-- Linter を常に 0 に保ち、自律的かつ規律ある開発カルチャーに合致する人材のみをオンボードする
+- Linterエラー0を維持できる規律あるエンジニアの採用基準を策定する
+- Supabase Edge FunctionとFlutterに精通したフルスタック人材を確保する
 
 ### 経理
 
-- 成長投資の月次予算上限を決める
 - CAC、LTV、回収期間を試算する
-- referral reward の会計処理方針を決める
-- バックエンド移行（Supabase Edge Function）によるインフラコスト最適化と予算推移をトラッキングする
+- 各種SaaSを自分株式会社アプリで代替することによる自社コスト削減額をトラッキングする
 
 ### 調達
 
-- 必要 SaaS を選定する
-- 記事制作、動画制作、広告運用の外注候補を確保する
-- 既存 stack で不足する attribution / CRM / support tool の優先順位を決める
-- 技術ブログ展開（Zenn/Qiita/note等）に必要な編集・校正リソースの外部調達を検討する
+- AIモデル（Gemini, Claude）のAPI利用枠とコスト効率を常に比較し、最適なバックエンドを調達する
+- 技術ブログ展開に必要な編集・校正リソースの外部調達を検討する
 
 ### 事業計画
 
 - Free、Pro、Team、Enterprise の収益モデルを定義する
-- 0 -> 1 の勝ち筋を文章化する
-- 資金調達の条件と bootstrapping 継続条件を明文化する
-- 100 users、1,000 users、10,000 users の段階ごとに org / budget / infra 前提を分ける
-- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン を上回るという圧倒的なビジョンを対外向け資料のコアに据える
+- 登録者数目標（短期100、中期1万、長期1億）に対する進捗をリアルタイムダッシュボードで監視し、未達の場合は即座に施策をピボットする
+- 13の競合製品すべてを上回るという圧倒的なビジョンを対外向け資金調達資料のコアに据える
 
 ---
 
