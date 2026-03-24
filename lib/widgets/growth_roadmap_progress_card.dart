@@ -97,6 +97,10 @@ class _GrowthRoadmapProgressCardState
       label: 'vs Chatwork',
       target: 6000000,
     ),
+    _PlanItem(
+      label: 'vs Slack',
+      target: 65000000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1970,10 +1974,62 @@ const _chatworkFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Slack
+// ---------------------------------------------------------------------------
+
+const _slackFeatureRows = <_FeatureRow>[
+  // ---- チャット・コミュニケーション ----
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'チャンネルとスレッド',
+    competitorDetail: 'トピック別の部屋とメッセージごとの返信',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — チーム機能拡張時に対応予定',
+  ),
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'ハドルミーティング',
+    competitorDetail: 'チャンネル内での手軽な音声・画面共有',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- 連携・拡張 ----
+  _FeatureRow(
+    category: '連携・拡張',
+    feature: '外部アプリ連携',
+    competitorDetail: 'Google Drive, GitHubなど多数の連携',
+    status: _FeatureStatus.partial,
+    appDetail: 'Supabase Edge Function経由でのAPI連携を部分実装',
+  ),
+  _FeatureRow(
+    category: '連携・拡張',
+    feature: 'ワークフロービルダー',
+    competitorDetail: 'ノーコードでのルーチン業務自動化',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — AI エージェントへのタスク依頼で代替予定',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI 役員会議 (MAGI System)',
+    competitorDetail: '— Slack にはない機能 (単なるボットではない)',
+    status: _FeatureStatus.unique,
+    appDetail: '複数ペルソナのAIが組織の意思決定を自律支援',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'フローとストックの統合',
+    competitorDetail: '— Slack はフロー情報中心で流れてしまう',
+    status: _FeatureStatus.unique,
+    appDetail: 'チャットとノートを AI で自動整理・構造化する思想',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合11社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork) の機能一覧と
+/// 競合12社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2004,6 +2060,7 @@ class _CompetitorFeatureComparisonCardState
     'OpenClaw',
     'Claude works',
     'Chatwork',
+    'Slack',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2017,6 +2074,7 @@ class _CompetitorFeatureComparisonCardState
     _openClawFeatureRows,
     _claudeWorksFeatureRows,
     _chatworkFeatureRows,
+    _slackFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
