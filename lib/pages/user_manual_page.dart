@@ -334,15 +334,20 @@ const _sections = <_ManualSection>[
     steps: [
       _ManualStep(
         heading: 'ホーム画面最上部のカードを確認する',
-        body: 'ホーム画面の最上部に「GROWTH ROADMAP」カードが表示されています。'
-            '短期・中期・長期計画の達成率と vs NOTION / vs EverNote / vs MoneyForward / vs X の'
-            '進捗がリアルタイムで確認できます。',
+        body: 'ホーム画面の最上部に「GROWTH ROADMAP」カードが表示されています。\n'
+            '短期・中期・長期計画の達成率と、各種競合 (Notion / EverNote / MoneyForward / X / Animaworks / Claude code / Codex / netkeiba) との'
+            '登録者数比較の進捗がリアルタイムで確認できます。',
       ),
       _ManualStep(
         heading: '競合機能比較カードを使う',
-        body: 'GROWTH ROADMAP カードの下にある「競合機能比較」カードをタップすると展開します。'
-            'Notion / EverNote / MoneyForward / X の4タブを切り替えて'
+        body: 'GROWTH ROADMAP カードの下にある「競合機能比較」カードをタップすると展開します。\n'
+            '競合8製品のタブを切り替えて、'
             '各競合との機能カバー率と実装状況を確認できます。',
+      ),
+      _ManualStep(
+        heading: '開発実績カードを確認する',
+        body: 'ホーム画面の「開発実績」カードでは、今日〜過去10年、すべての期間をドロップダウンで切り替え、'
+            'ユーザー獲得や機能利用の成長シグナルを確認できます。',
       ),
     ],
   ),

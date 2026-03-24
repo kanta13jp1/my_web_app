@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-24
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -15,7 +15,7 @@
 
 勝ち筋は次の 4 本柱で作る。
 
-1. 競合から移行しやすいこと (Notion、Evernote、MoneyForward、X からのユーザーを取り込む)
+1. 競合から移行しやすいこと (Notion、Evernote、MoneyForward、X、その他競合プラットフォームからのユーザーを取り込む)
 2. AI が自然に価値を生むこと
 3. 共有と紹介が新規流入に変わること
 4. 個人利用から法人導入まで伸びること
@@ -32,6 +32,8 @@
 - X (Twitter/X): ~600,000,000 monthly active users 規模
 - Animaworks: ~500,000 users 規模 (国内パーソナル生産性アプリ)
 - Claude Code (Anthropic): ~500,000 users 規模 (AI コーディングアシスタント)
+- Codex: ~1,000,000 users 規模
+- netkeiba: ~17,000,000 users 規模
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -40,8 +42,10 @@
 - MoneyForward: ~1,500 万ユーザー
 - X (Twitter/X): ~6 億 monthly active users
 - Animaworks: 国内パーソナル生産性・習慣管理アプリ (~50 万ユーザー推定)
+- Codex: 開発者向け AI 支援ツール (~100 万ユーザー推定)
+- netkeiba: 国内最大級の競馬情報・コミュニティサイト (~1,700 万ユーザー)
 
-自分株式会社 はこの 5 サービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 8 つのサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -94,9 +98,12 @@
 - CompetitorFeatureComparisonCard を5タブ構成に拡張 (Notion/EverNote/MoneyForward/X/Animaworks) (2026-03-24 追加)
 - vs Claude Code 進捗バーを追加 (目標: ~50万ユーザー) (2026-03-24 追加)
 - 競合機能比較カードに Claude Code タブを追加 (AI コーディング支援機能との比較) (2026-03-24 追加)
-- CompetitorFeatureComparisonCard を6タブ構成に拡張 (+ Claude Code) (2026-03-24 追加)
+- vs Codex 進捗バーを追加 (目標: ~100万ユーザー)
+- vs netkeiba 進捗バーを追加 (目標: ~1700万ユーザー)
+- 競合機能比較カードに Codex と netkeiba タブを追加し、8タブ構成に拡張
+- DevelopmentAchievementsCard (開発実績カード) をホーム画面に追加。13区間の期間セレクター (今日〜すべて) で実績を切り替え表示
+- ユーザーマニュアルを更新し、新規追加タブや開発実績カードの解説を記載
 - DevelopmentAchievementsCard をホーム画面に追加 (2026-03-24 追加)
-  - 13区間の期間セレクター (今日〜すべて) で開発実績を切り替え表示
   - 新規ユーザー / 成長シグナル / 紹介成立 / インポートプレビュー の4指標
   - growth-achievement-summary Edge Function でバックエンド集計
 
@@ -254,6 +261,7 @@
 - growth engineer と content marketer の採用要件を定義する
 - 外部パートナー候補を確保する
 - Supabase Edge Function を触れる growth backend contractor の要件を追加する
+- Linter を常に 0 に保ち、自律的かつ規律ある開発カルチャーに合致する人材のみをオンボードする
 
 ### 経理
 
@@ -273,6 +281,7 @@
 - 0 -> 1 の勝ち筋を文章化する
 - 資金調達の条件と bootstrapping 継続条件を明文化する
 - 100 users、1,000 users、10,000 users の段階ごとに org / budget / infra 前提を分ける
+- Notion / Evernote / X / MoneyForward / Animaworks / Claude Code / Codex / netkeiba を上回るという圧倒的なビジョンを対外向け資料のコアに据える
 
 ---
 

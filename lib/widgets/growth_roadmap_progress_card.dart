@@ -77,6 +77,14 @@ class _GrowthRoadmapProgressCardState
       label: 'vs Claude Code',
       target: 500000,
     ),
+    _PlanItem(
+      label: 'vs Codex',
+      target: 1000000,
+    ),
+    _PlanItem(
+      label: 'vs netkeiba',
+      target: 10000000,
+    ),
   ];
 
   int _userCount = 0;
@@ -1605,10 +1613,200 @@ const _claudeCodeFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
+// Feature data — Codex
+// ---------------------------------------------------------------------------
+
+const _codexFeatureRows = <_FeatureRow>[
+  // ---- AI コーディング支援 ----
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'クラウド上でのコード自動生成',
+    competitorDetail: 'GitHub Issues / PR をもとに自律的にコードを生成・PR 作成',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — コーディング特化は対象外。AI Secretary で文書生成は実装済み',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'マルチファイル編集',
+    competitorDetail: 'リポジトリ全体を把握して複数ファイルを一括変更',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'CI/CD パイプライン統合',
+    competitorDetail: 'GitHub Actions と連携してテスト・デプロイを自動化',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — Web アプリ向け別軸で差別化',
+  ),
+  _FeatureRow(
+    category: 'AI コーディング支援',
+    feature: 'テスト自動生成・実行',
+    competitorDetail: 'ユニット/統合テストを自動生成し sandbox 内で実行',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- コラボレーション ----
+  _FeatureRow(
+    category: 'コラボレーション',
+    feature: 'Pull Request レビュー支援',
+    competitorDetail: 'PR の差分を解析してレビューコメントを自動生成',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'コラボレーション',
+    feature: 'Issue トリアージ',
+    competitorDetail: 'GitHub Issues を分析して優先度・担当者提案',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- ナレッジ管理 ----
+  _FeatureRow(
+    category: 'ナレッジ管理',
+    feature: 'コードベース検索・Q&A',
+    competitorDetail: 'コードの意味を理解した自然言語検索',
+    status: _FeatureStatus.partiallyDone,
+    appDetail: 'MAGI System + AI Secretary でドキュメント Q&A 実装済み',
+  ),
+  _FeatureRow(
+    category: 'ナレッジ管理',
+    feature: 'ドキュメント自動生成',
+    competitorDetail: 'コードから README・API ドキュメントを自動生成',
+    status: _FeatureStatus.done,
+    appDetail: 'AI Secretary でノート・レポート生成実装済み',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '収支・資産管理',
+    competitorDetail: '— Codex にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '収支・資産トラッキング実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— Codex にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'マインドマップ',
+    competitorDetail: '— Codex にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'マインドマップ生成・閲覧実装済み',
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Feature data — netkeiba
+// ---------------------------------------------------------------------------
+
+const _netkeibaFeatureRows = <_FeatureRow>[
+  // ---- 競馬情報 ----
+  _FeatureRow(
+    category: '競馬情報',
+    feature: 'レース結果・成績データベース',
+    competitorDetail: '過去レース結果・着順・タイムの全データ閲覧',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 競馬特化機能は対象外。独自ノートで自由記録は可能',
+  ),
+  _FeatureRow(
+    category: '競馬情報',
+    feature: '馬・騎手・調教師プロフィール',
+    competitorDetail: '出走馬・関係者の詳細プロフィール・成績',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '競馬情報',
+    feature: 'オッズ・予想印リアルタイム表示',
+    competitorDetail: 'リアルタイムオッズ・公式予想印を表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: '競馬情報',
+    feature: '出馬表・馬柱',
+    competitorDetail: '出走馬の過去成績を馬柱形式で表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  // ---- コミュニティ ----
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: '予想投稿・コメント',
+    competitorDetail: 'ユーザーが予想を投稿してコメントし合える',
+    status: _FeatureStatus.partiallyDone,
+    appDetail: '公開メモ機能で意見・予想の投稿・共有が可能',
+  ),
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: '重賞予想コンテスト',
+    competitorDetail: 'ユーザー間の予想コンテスト機能',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装',
+  ),
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: 'フォロー・フォロワー',
+    competitorDetail: 'ユーザーをフォローして予想をタイムライン表示',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — Referral 経由の繋がりは実装済み',
+  ),
+  // ---- 収支管理 ----
+  _FeatureRow(
+    category: '収支管理',
+    feature: '馬券収支トラッキング',
+    competitorDetail: '馬券の購入・払戻を記録して収支をグラフ表示',
+    status: _FeatureStatus.done,
+    appDetail: '収支管理機能で任意カテゴリの収支トラッキング実装済み',
+  ),
+  _FeatureRow(
+    category: '収支管理',
+    feature: '的中率・回収率の自動計算',
+    competitorDetail: '勝率・ROI を自動計算して表示',
+    status: _FeatureStatus.partiallyDone,
+    appDetail: 'ノートと収支を組み合わせて手動管理可能。自動集計は一部実装',
+  ),
+  // ---- 自分株式会社 独自機能 ----
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI Secretary (汎用 AI アシスタント)',
+    competitorDetail: '— netkeiba にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'あらゆるジャンルの AI 分析・要約・アドバイス実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'MAGI System (多角的 AI 議論)',
+    competitorDetail: '— netkeiba にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: '3 視点 AI 議論機能実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '記憶ドリル (スペーシング反復)',
+    competitorDetail: '— netkeiba にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'スペーシング反復学習ドリル実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'Growth ロードマップ + 競合比較',
+    competitorDetail: '— netkeiba にはない機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'このカードがその機能です',
+  ),
+];
+
+// ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合6社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code) の機能一覧と
+/// 競合8社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1634,6 +1832,8 @@ class _CompetitorFeatureComparisonCardState
     'X',
     'Animaworks',
     'Claude Code',
+    'Codex',
+    'netkeiba',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -1642,6 +1842,8 @@ class _CompetitorFeatureComparisonCardState
     _xFeatureRows,
     _animaworksFeatureRows,
     _claudeCodeFeatureRows,
+    _codexFeatureRows,
+    _netkeibaFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
