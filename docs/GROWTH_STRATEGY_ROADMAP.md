@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session6 (追加: X Article対応・/morning-briefing /note-editor ルート修正・CI growth-import-preview/commit 削除・Zennブログ最終更新・GROWTH_STRATEGY_ROADMAP 事業計画拡充)
+最終更新: 2026-03-25 session7 (追加: SEO強化・競合比較キーワードmeta/OGP/SEOシェル更新・JSON-LD featureList拡充)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -177,6 +177,12 @@
 - **/morning-briefing /note-editor ルート追加** (session6): WelcomeNewUserCardのクイックアクションが未定義ルートでLandingPageに飛ぶバグを修正
 - **CI不存在Edge Function削除** (session6): growth-import-preview / growth-import-commit はディレクトリが存在しないのにデプロイ対象になっていた → 削除
 - **X Article対応** (session6): TechBlogTrackerPageにX Article（Xの長文記事機能）プラットフォームを追加（計11プラットフォーム対応）
+
+### 2026-03-25 session7 実装済み
+
+- **SEO meta description 競合比較キーワード追加** (session7): `web/index.html` の description に「Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合」を追記。keywords に Notion代替・Evernote代替・MoneyForward代替・Slack代替を追加
+- **OGP・Twitter カード競合比較訴求** (session7): og:title を「Notion・Evernote・MoneyForward を超えるAI統合プラットフォーム」に変更。twitter:title も競合比較訴求文に更新
+- **SEOシェル本文 / JSON-LD 拡充** (session7): SEOシェルのp要素に競合SaaS名を追記。JSON-LD featureList を10項目（各競合代替機能を明記）に拡充。seo-tags に日本語キーワードタグ（Notion代替・Evernote代替・MoneyForward代替・Slack代替）を追加
 
 ### 残課題
 
