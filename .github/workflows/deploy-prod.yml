@@ -86,30 +86,32 @@ jobs:
 
       - name: Deploy Supabase Edge Functions
         run: |
-          # Deploy public functions (no JWT verification required)
+          # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
+          # preflight requests (which carry no Authorization header) are not
+          # rejected by Supabase's platform-level JWT check.
+          # Auth is enforced inside each function via the Authorization header.
           supabase functions deploy get-public-memo-preview --no-verify-jwt
           supabase functions deploy get-ogp --no-verify-jwt
-          # Deploy authenticated functions
-          supabase functions deploy development-achievements
-          supabase functions deploy get-growth-roadmap-progress
-          supabase functions deploy get-competitor-features
-          supabase functions deploy get-home-dashboard
-          supabase functions deploy growth-weekly-digest
-          supabase functions deploy growth-acquisition-signal
-          supabase functions deploy growth-acquisition-report
-          supabase functions deploy growth-command-center
-          supabase functions deploy growth-referral
-          supabase functions deploy growth-share-signal
-          supabase functions deploy growth-import-preview
-          supabase functions deploy growth-import-commit
-          supabase functions deploy growth-achievement-summary
-          supabase functions deploy daily-judgment
-          supabase functions deploy ai-assistant
-          supabase functions deploy ai-search
-          supabase functions deploy ai-suggest-tags
-          supabase functions deploy share-quote
-          supabase functions deploy generate-quote-image
-          supabase functions deploy generate-daily-challenges
+          supabase functions deploy development-achievements --no-verify-jwt
+          supabase functions deploy get-growth-roadmap-progress --no-verify-jwt
+          supabase functions deploy get-competitor-features --no-verify-jwt
+          supabase functions deploy get-home-dashboard --no-verify-jwt
+          supabase functions deploy growth-weekly-digest --no-verify-jwt
+          supabase functions deploy growth-acquisition-signal --no-verify-jwt
+          supabase functions deploy growth-acquisition-report --no-verify-jwt
+          supabase functions deploy growth-command-center --no-verify-jwt
+          supabase functions deploy growth-referral --no-verify-jwt
+          supabase functions deploy growth-share-signal --no-verify-jwt
+          supabase functions deploy growth-import-preview --no-verify-jwt
+          supabase functions deploy growth-import-commit --no-verify-jwt
+          supabase functions deploy growth-achievement-summary --no-verify-jwt
+          supabase functions deploy daily-judgment --no-verify-jwt
+          supabase functions deploy ai-assistant --no-verify-jwt
+          supabase functions deploy ai-search --no-verify-jwt
+          supabase functions deploy ai-suggest-tags --no-verify-jwt
+          supabase functions deploy share-quote --no-verify-jwt
+          supabase functions deploy generate-quote-image --no-verify-jwt
+          supabase functions deploy generate-daily-challenges --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
