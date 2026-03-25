@@ -30,7 +30,7 @@ class UserManualPage extends StatelessWidget {
             'ログイン後に表示される「経営コックピット」がホーム画面です。\n\n'
             '【画面上部の固定エリア】\n'
             '・GROWTH ROADMAP カード: 短期・中期・長期計画と競合13社への進捗バーをリアルタイム表示。\n'
-            '・競合機能比較カード: 競合13製品（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude works/Chatwork/Slack/ジョブカン）との機能対比をタブで確認できます。\n'
+            '・競合機能比較カード: 競合13製品（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン）との機能対比をタブで確認できます。\n'
             '・開発・成長実績カード: 右上のドロップダウンで期間を選択すると、その期間の開発実績一覧を表示します（今日・今週・今月など）。\n\n'
             '【スクロールすると表示されるセクション（上から順）】\n'
             '1. 今月のキャッシュフロー確認ウィジェット\n'
@@ -108,7 +108,7 @@ class UserManualPage extends StatelessWidget {
 
           _buildSectionTitle('7. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
-            '・ホーム画面最上部の「GROWTH ROADMAP」カードで、短期・中期・長期計画および競合13社（Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン）に対する登録者数の進捗をリアルタイムで確認できます。\n\n'
+            '・ホーム画面最上部の「GROWTH ROADMAP」カードで、短期・中期・長期計画および競合13社（Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン）に対する登録者数の進捗をリアルタイムで確認できます。\n\n'
             '・「競合機能比較」カードをタップすると競合各社の機能一覧と本サービスの実装状況が表示されます。タブで競合を切り替えられます（実装済み・部分実装・開発中・未実装・独自機能の5段階）。\n\n'
             '・「開発・成長実績」カードの右上のドロップダウンで期間を選択し（今日・今週・今月など）、その期間の開発実績を確認できます。「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
             '・「GROWTH / 成長導線」セクション→「成長ミッション」から、KPI・獲得チャネル・週次ダイジェストを確認できます。',

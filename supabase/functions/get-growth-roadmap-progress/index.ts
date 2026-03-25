@@ -17,7 +17,7 @@ const DEFAULT_PLANS = [
   { label: "長期計画", deadline: "2027年12月31日", target: 10000 },
   { label: "vs Animaworks", deadline: "2027年12月31日", target: 500000 },
   { label: "vs Claude Code", deadline: "2027年12月31日", target: 500000 },
-  { label: "vs Claude works", deadline: "2027年12月31日", target: 500000 },
+  { label: "vs Claude Cowork", deadline: "2027年12月31日", target: 500000 },
   { label: "vs ジョブカン", deadline: "2028年06月30日", target: 5000000 },
   { label: "vs Chatwork", deadline: "2028年12月31日", target: 6000000 },
   { label: "vs Codex", deadline: "2028年06月30日", target: 1000000 },

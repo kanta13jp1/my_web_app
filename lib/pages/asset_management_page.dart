@@ -79,21 +79,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _showDailyChange = false;
 
   // --- 収支（フロー）記録用変数 ---
-  final List<String> _sourceOptions = [
-    '[三井住友銀行大塚支店]',
-    '[PayPayカード]',
-    '[auPayカード]',
-    '[auかんたん決済]',
-    '[アコムショッピング]',
-    '[横浜銀行]',
+  // 収支の支払元選択肢: DB の過去履歴から自動追加（初期デフォルトにマージ）
+  List<String> _sourceOptions = [
     '[現金]',
+    '[銀行口座]',
+    '[クレジットカード]',
+    '[電子マネー]',
     '[その他]',
   ];
   DateTime _selectedFlowDate = DateTime.now();
   DateTime _selectedFlowHistoryMonth =
       DateTime(DateTime.now().year, DateTime.now().month, 1);
-  String _selectedSource = '[三井住友銀行大塚支店]';
-  String _selectedTransferDestination = '[PayPayカード]';
+  String _selectedSource = '[現金]';
+  String _selectedTransferDestination = '[銀行口座]';
   String _selectedFlowType = '支出'; // 支出 / 収入 / 振替
   String? _selectedWasteCategory;
   final TextEditingController _flowMemoController = TextEditingController();
@@ -157,6 +155,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() => _now = DateTime.now());
     });
     _fetchTodayClosing();
+    _loadSourceOptionsFromDb();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.initialFocus == AssetManagementInitialFocus.flow) {
@@ -2193,6 +2192,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   // 4. 今月の支出と収入の記録（フロー）
   // ==========================================
+  /// DB の過去 wealth_struggles から payment_source を取得してデフォルト選択肢にマージ
+  Future<void> _loadSourceOptionsFromDb() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final data = await _supabase
+          .from('wealth_struggles')
+          .select('payment_source')
+          .eq('user_id', userId)
+          .limit(200);
+      final sources = <String>{};
+      for (final row in data) {
+        final src = row['payment_source']?.toString().trim() ?? '';
+        if (src.isNotEmpty) sources.add(src);
+      }
+      if (!mounted) return;
+      final defaults = _sourceOptions.toList();
+      for (final s in sources) {
+        if (!defaults.contains(s)) defaults.add(s);
+      }
+      setState(() => _sourceOptions = defaults);
+    } catch (e) {
+      debugPrint('_loadSourceOptionsFromDb error: $e');
+    }
+  }
+
   Future<void> _fetchRecentFlows() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;

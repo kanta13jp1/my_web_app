@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-25 session3 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 5件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善・公開メモ SEO 強化・get-home-dashboard Edge Function・ユーザーマニュアル全セクション正確化・DevelopmentAchievementsCard ドロップダウンバグ修正・Zenn 技術ブログ原稿完成)
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude works・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -35,7 +35,7 @@
 - Codex: ~1,000,000 users 規模
 - netkeiba: ~17,000,000 users 規模
 - OpenClaw: ~1,000,000 users 規模 (オープンソース AI エージェント)
-- Claude works: ~500,000 users 規模 (法人向け AI ワークスペース)
+- Claude Cowork: ~500,000 users 規模 (法人向け AI ワークスペース)
 - Chatwork: ~6,000,000 users 規模 (国内ビジネスチャット)
 - Slack: ~65,000,000 users 規模 (グローバルビジネスチャット)
 - ジョブカン: ~5,000,000 users 規模 (国内バックオフィス SaaS)
@@ -50,7 +50,7 @@
 - Codex: 開発者向け AI 支援ツール (~100 万ユーザー推定)
 - netkeiba: 国内最大級の競馬情報・コミュニティサイト (~1,700 万ユーザー)
 - OpenClaw: オープンソースの自律型 AI エージェント (~100 万ユーザー推定)
-- Claude works: Anthropic の法人向け次世代 AI ワークスペース (~50 万ユーザー推定)
+- Claude Cowork: Anthropic の法人向け次世代 AI ワークスペース (~50 万ユーザー推定)
 - Chatwork: 国内シェアトップクラスのビジネスチャット (~600 万ユーザー)
 - Slack: 世界的シェアを誇るビジネスチャット・連携プラットフォーム (~6,500 万ユーザー)
 - ジョブカン: 導入実績 25 万社を超える国内シェアトップクラスのバックオフィスシステム (~500 万ユーザー推定)
@@ -81,7 +81,7 @@
 - growth-referral
 - growth-acquisition-report
 - **get-competitor-features Edge Function** (2026-03-25 実装完了): 競合13社機能比較データをバックエンドに移行
-  - 全13競合 (Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude works/Chatwork/Slack/ジョブカン) の機能比較データを Edge Function (1697行) で提供
+  - 全13競合 (Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン) の機能比較データを Edge Function (1697行) で提供
   - `CompetitorFeatureComparisonCard` を `initState` 時に Edge Function 呼び出しへ改修（フォールバック付き）
   - フロントエンドのハードコードデータ約1600行を段階的に排除する backend-first 実装完了
 - **batch_analysis.py バグ修正** (2026-03-25): `NoneType + int` TypeError 修正・`run-batch` に `continue-on-error: true` 追加
@@ -126,11 +126,11 @@
 - vs Codex 進捗バーを追加 (目標: ~100万ユーザー)
 - vs netkeiba 進捗バーを追加 (目標: ~1700万ユーザー)
 - vs OpenClaw 進捗バーを追加 (目標: ~100万ユーザー)
-- vs Claude works 進捗バーを追加 (目標: ~50万ユーザー)
+- vs Claude Cowork 進捗バーを追加 (目標: ~50万ユーザー)
 - vs Chatwork 進捗バーを追加 (目標: ~600万ユーザー)
 - vs Slack 進捗バーを追加 (目標: ~6500万ユーザー)
 - vs ジョブカン 進捗バーを追加 (目標: ~500万ユーザー)
-- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude works、Chatwork、Slack、ジョブカン タブを追加し、13タブ構成に拡張
+- 競合機能比較カードに Codex、netkeiba、OpenClaw、Claude Cowork、Chatwork、Slack、ジョブカン タブを追加し、13タブ構成に拡張
 - DevelopmentAchievementsCard の本実装を完了 (2026-03-27 更新)
   - ダミーデータを完全に排除し、`development_achievements` テーブルから直接実績と完了日を取得する実データ駆動に改修
   - 取得失敗時や0件時のフォールバック(ダミーデータ)を廃止し、純粋な実データのみを表示するよう本実装
@@ -237,7 +237,7 @@
 - 公開メモの SEO と OGP を強化する
 - フロントエンドで実装している複雑な処理を優先的に Supabase Edge Function に移行する
 - ユーザーマニュアルを実装済み機能に合わせて随時更新する
-- 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude works, Chatwork, Slack, ジョブカン）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
+- 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
 - ホーム画面のKPIデータ集約用 Edge Function (`get-home-dashboard`) を本実装し、フロントエンドの複数リクエストを単一化 (2026-03-25)
 - 常に Linter エラー 0 を維持し、CIパイプラインで厳格にブロックすることで、技術的負債ゼロのクリーンなコードベースと高速開発を実現する
 
@@ -245,7 +245,7 @@
 
 - Notion から移行、Evernote から移行の専用導線を定義する
 - referral landing で約束する価値を `登録 -> import -> first memo` の 3 ステップに固定する
-- Notion の柔軟性、Evernote の蓄積性、MoneyForward の資産管理、X の拡散性、Animaworks の習慣化、Claude code/Codex の AI 支援、netkeiba の熱狂的コミュニティ、OpenClaw/Claude works の自律型エージェント、Chatwork/Slack のビジネス連携、ジョブカンのバックオフィス効率化。これら13の優位性をすべて包含し凌駕する「自分株式会社」としての統合体験を企画する
+- Notion の柔軟性、Evernote の蓄積性、MoneyForward の資産管理、X の拡散性、Animaworks の習慣化、Claude code/Codex の AI 支援、netkeiba の熱狂的コミュニティ、OpenClaw/Claude Cowork の自律型エージェント、Chatwork/Slack のビジネス連携、ジョブカンのバックオフィス効率化。これら13の優位性をすべて包含し凌駕する「自分株式会社」としての統合体験を企画する
 - ジョブカンに代表される「管理のための管理ツール」を廃し、「働く人を直接支援するAIアシスタント」としての自律型バックオフィス機能のコンセプトを策定する
 - ユーザーマニュアルを単なるヘルプではなく、13競合からの移行時の学習コストを劇的に下げるための「教育コンテンツ」として企画する
 
@@ -282,7 +282,7 @@
 
 - SEO 着地面を比較記事、公開メモ、テンプレートで拡大する
 - referral 施策の導線と報酬設計を固める
-- 13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude works, Chatwork, Slack, ジョブカン）すべての検索キーワードに対し、比較記事とSEOコンテンツを大量投下する
+- 13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン）すべての検索キーワードに対し、比較記事とSEOコンテンツを大量投下する
 - ダミーデータを完全排除した開発実績（DevelopmentAchievementsCard）や、進捗バー（GrowthRoadmapProgressCard）を「ビルド・イン・パブリック」の証として対外的にアピールし、透明性でファンを獲得する
 - ユーザー向け操作マニュアルをSEOコンテンツ（「〇〇から自分株式会社へ移行する方法」等）としても拡充させ、検索流入と利用開始時の離脱率防止（オンボーディング完了率向上）に直結させる
 

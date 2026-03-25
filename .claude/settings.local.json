@@ -25,7 +25,20 @@
       "Bash(gh run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(ls docs/zenn*)",
+      "Bash(grep -n \"dummy\\\\|DUMMY\\\\|ダミー\\\\|TODO.*実装\\\\|仮データ\\\\|placeholder\\\\|サンプル\\\\|test.*data\" lib/pages/home_page.dart lib/widgets/*.dart)",
+      "Bash(grep -iv \"//.*remove\\\\|debug\")",
+      "Bash(grep -v \"//.*example\\\\|//.*test\")",
+      "Bash(grep -n \"functions deploy\\\\|supabase.*deploy\\\\|functions.*push\" .github/workflows/*.yml)",
+      "Bash(grep -r \"empty\\(\\)\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -r \"= const.*\\\\[\\\\];\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -rn \"准备中\\\\|準備中\\\\|unimplemented\\\\|not implemented\\\\|stub\\\\|placeholder\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -rn \"// 他の\\\\|// その他\\\\|// TODO\\\\|// WIP\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -rn \"= const.*empty\\(\\)\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -rn \"hardcoded\\\\|mock\\\\|MOCK\\\\|dummy\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -A 2 -rn \"Future<void>.*{$\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
+      "Bash(grep -B 1 \"^--$\\\\|^[0-9]*:.*}$\")"
     ]
   }
 }

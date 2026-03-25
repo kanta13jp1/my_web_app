@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FinancialReportPage extends StatefulWidget {
   const FinancialReportPage({super.key});
@@ -31,20 +30,31 @@ class _FinancialReportPageState extends State<FinancialReportPage>
   }
 
   Future<void> _loadAssetData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? dataString = prefs.getString('asset_data_v2');
-    if (dataString != null) {
-      final Map<String, dynamic> decodedData = jsonDecode(dataString);
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await client
+          .from('cfo_assets')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: true);
+      final Map<String, Map<String, double>> loaded = {};
+      for (final item in data) {
+        final dt = DateTime.tryParse(item['created_at']?.toString() ?? '');
+        if (dt == null) continue;
+        final dateKey = DateFormat('yyyy-MM-dd').format(dt.toLocal());
+        final title = item['title']?.toString() ?? '';
+        final amount = (item['amount'] as num?)?.toDouble() ?? 0;
+        loaded.putIfAbsent(dateKey, () => {})[title] = amount;
+      }
+      if (!mounted) return;
       setState(() {
-        _assetData = decodedData.map((date, assets) {
-          return MapEntry(
-            date,
-            (assets as Map<String, dynamic>)
-                .map((k, v) => MapEntry(k, (v as num?)?.toDouble() ?? 0)),
-          );
-        });
-        _sortedDates = _assetData.keys.toList()..sort();
+        _assetData = loaded;
+        _sortedDates = loaded.keys.toList()..sort();
       });
+    } catch (e) {
+      debugPrint('FinancialReportPage load error: $e');
     }
   }
 

@@ -1467,11 +1467,11 @@ const COMPETITOR_DATA = [
   },
 
   // -------------------------------------------------------------------------
-  // Claude works
+  // Claude Cowork
   // -------------------------------------------------------------------------
   {
     id: "claude-works",
-    name: "Claude works",
+    name: "Claude Cowork",
     features: [
       // ---- 法人・チーム AI ----
       {
@@ -1500,14 +1500,14 @@ const COMPETITOR_DATA = [
       {
         category: "自分株式会社 独自機能",
         feature: "個人資産・収支との統合",
-        competitorDetail: "— Claude works にはない機能",
+        competitorDetail: "— Claude Cowork にはない機能",
         status: "unique",
         appDetail: "個人の収支・資産トラッキングを AI 支援と一元化",
       },
       {
         category: "自分株式会社 独自機能",
         feature: "AI 役員会議 (MAGI System)",
-        competitorDetail: "— Claude works にはない機能",
+        competitorDetail: "— Claude Cowork にはない機能",
         status: "unique",
         appDetail:
           "複数ペルソナ (CEO/CFO/CMO/CHRO) の AI が同時に議論・提案",
@@ -1515,7 +1515,7 @@ const COMPETITOR_DATA = [
       {
         category: "自分株式会社 独自機能",
         feature: "スペーシング記憶ドリル",
-        competitorDetail: "— Claude works にはない機能",
+        competitorDetail: "— Claude Cowork にはない機能",
         status: "unique",
         appDetail: "学習定着化システムを実装済み",
       },

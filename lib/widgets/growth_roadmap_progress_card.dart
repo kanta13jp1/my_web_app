@@ -1758,7 +1758,7 @@ const _openClawFeatureRows = <_FeatureRow>[
 ];
 
 // ---------------------------------------------------------------------------
-// Feature data — Claude works
+// Feature data — Claude Cowork
 // ---------------------------------------------------------------------------
 
 const _claudeWorksFeatureRows = <_FeatureRow>[
@@ -1788,21 +1788,21 @@ const _claudeWorksFeatureRows = <_FeatureRow>[
   _FeatureRow(
     category: '自分株式会社 独自機能',
     feature: '個人資産・収支との統合',
-    competitorDetail: '— Claude works にはない機能',
+    competitorDetail: '— Claude Cowork にはない機能',
     status: _FeatureStatus.unique,
     appDetail: '個人の収支・資産トラッキングを AI 支援と一元化',
   ),
   _FeatureRow(
     category: '自分株式会社 独自機能',
     feature: 'AI 役員会議 (MAGI System)',
-    competitorDetail: '— Claude works にはない機能',
+    competitorDetail: '— Claude Cowork にはない機能',
     status: _FeatureStatus.unique,
     appDetail: '複数ペルソナ (CEO/CFO/CMO/CHRO) の AI が同時に議論・提案',
   ),
   _FeatureRow(
     category: '自分株式会社 独自機能',
     feature: 'スペーシング記憶ドリル',
-    competitorDetail: '— Claude works にはない機能',
+    competitorDetail: '— Claude Cowork にはない機能',
     status: _FeatureStatus.unique,
     appDetail: '学習定着化システムを実装済み',
   ),
@@ -1956,7 +1956,7 @@ const _jobcanFeatureRows = <_FeatureRow>[
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合13社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude works / Chatwork / Slack / ジョブカン) の機能一覧と
+/// 競合13社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -1989,7 +1989,7 @@ class _CompetitorFeatureComparisonCardState
     'Codex',
     'netkeiba',
     'OpenClaw',
-    'Claude works',
+    'Claude Cowork',
     'Chatwork',
     'Slack',
     'ジョブカン',
