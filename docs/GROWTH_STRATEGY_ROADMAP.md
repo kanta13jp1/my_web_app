@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session10 (追加: LPヒーロー刷新・ウェイトリスト登録・機能リクエストフォーム)
+最終更新: 2026-03-25 session11 (追加: 機能リクエスト公開ページ・upvote・sitemap 拡充)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -201,6 +201,12 @@
 - **LPヒーローセクション全面刷新** (session10): キャッチコピーを「Notion・Evernote・MoneyForward・Slack を1つに。完全無料。」に変更。実装済み件数バッジ・「無料で始める（30秒）」CTA・「登録なしで1件試す」セカンダリCTAを追加
 - **ウェイトリスト登録フォーム** (session10): `newsletter_waitlist` テーブル作成（anon insert 可）。LP に「新機能リリースをメールで受け取る」フォームを追加。登録前ユーザーのメールを捕捉
 - **機能リクエストフォーム** (session10): `feature_requests` テーブル作成（anon insert・公開参照可）。LP に「こんな機能が欲しい！」フォームを追加。ユーザー要望を直接DB収集
+
+### 2026-03-25 session11 実装済み
+
+- **機能リクエスト公開ページ** (session11): `FeatureRequestsPage` を新規作成 (`/feature-requests`)。anon ユーザーも投稿・閲覧・投票が可能。投票数順ソート・上位3件ハイライト表示。ランディングページ SEO シェルのナビにリンク追加
+- **main.dart `/feature-requests` ルート追加** (session11): ディープリンクからのアクセスを有効化
+- **sitemap.xml に `/feature-requests` を追加** (session11): 検索エンジンへのクロール対象を8URLに拡充
 
 ### 残課題
 
