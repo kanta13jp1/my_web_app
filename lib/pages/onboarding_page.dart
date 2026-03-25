@@ -13,6 +13,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
   bool _isLoading = false;
+  bool _onboardingDone = false; // 就任承諾完了フラグ（4ページ目表示制御）
 
   @override
   void dispose() {
@@ -61,8 +62,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       } catch (_) {}
 
       if (mounted) {
-        // ホームへ遷移
-        Navigator.of(context).pushReplacementNamed('/home');
+        setState(() => _onboardingDone = true);
+        // 4ページ目（スタートガイド）へ
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -89,6 +94,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   _buildPhilosophyPage(),
                   _buildBoardMemberPage(),
                   _buildContractPage(),
+                  _buildFirstStepsPage(),
                 ],
               ),
             ),
@@ -249,13 +255,128 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
+  // 4. スタートガイドページ（就任完了後に表示）
+  Widget _buildFirstStepsPage() {
+    final steps = [
+      (Icons.wb_sunny, Colors.amber, 'モーニングブリーフィング',
+          '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'),
+      (Icons.edit_note, Colors.blue, '最初のメモを書く',
+          '考えていることを何でも書いてみてください。\nホーム画面「CMO/CKO OFFICE」→「新規事業起案」'),
+      (Icons.upload_file, Colors.teal, 'Notionから移行する',
+          '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.rocket_launch, size: 64, color: Colors.indigo),
+          const SizedBox(height: 20),
+          const Text(
+            '就任おめでとうございます！',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'まずこの3つから始めましょう',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 28),
+          ...steps.asMap().entries.map((entry) {
+            final i = entry.key;
+            final (icon, color, title, desc) = entry.value;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: color.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${i + 1}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(icon, size: 15, color: color),
+                            const SizedBox(width: 4),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: color,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          desc,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade700,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).pushReplacementNamed('/home'),
+              icon: const Icon(Icons.business_center),
+              label: const Text(
+                '経営コックピットへ',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomControls() {
+    // 4ページ目（スタートガイド）はボタンをページ内に持つため非表示
+    if (_onboardingDone) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // インジケーター
+          // インジケーター（3ページ分のみ）
           Row(
             children: List.generate(3, (index) {
               return Container(
