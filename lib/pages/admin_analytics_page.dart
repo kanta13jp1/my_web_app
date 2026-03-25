@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import '../services/growth_mission_service.dart';
 import 'ai_secretary_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
@@ -56,7 +57,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _blockedToolExecutionCount = 0;
   bool _hasLpViewStats = false;
   bool _isLoading = true;
+  WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   late final SupabaseClient _supabase;
+  final _growthService = const GrowthMissionService();
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -465,6 +468,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _loadStats();
+    _loadWeeklyDigest();
+  }
+
+  Future<void> _loadWeeklyDigest() async {
+    try {
+      final digest = await _growthService.loadWeeklyDigest();
+      if (mounted) setState(() => _weeklyDigest = digest);
+    } catch (e) {
+      debugPrint('weekly digest load error: $e');
+    }
   }
 
   Future<void> _loadStats() async {
@@ -844,6 +857,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildToolExecutionGuardCard(),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '週次ダイジェスト',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildWeeklyDigestCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -2114,6 +2135,134 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       default:
         return Colors.indigo.shade300;
     }
+  }
+
+  Widget _buildWeeklyDigestCard() {
+    final d = _weeklyDigest;
+    final hasData = d.currentWeekStart.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.summarize, size: 18, color: Color(0xFF3949AB)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  hasData
+                      ? '${d.currentWeekStart} 〜 ${d.currentWeekEnd}'
+                      : '読み込み中...',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasData) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _weeklyKpiChip('登録', d.signupSubmitTotal, d.signupSubmitDelta),
+                _weeklyKpiChip('紹介', d.referralsCompleted, d.referralsDelta),
+                _weeklyKpiChip('インポートCTA', d.importCtaClicks, 0),
+                _weeklyKpiChip('公開メモCTA', d.publicMemoCtaClicks, 0),
+              ],
+            ),
+            if (d.channels.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Text(
+                'チャネル別',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 6),
+              ...d.channels.map((ch) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        ch.label,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF374151)),
+                      ),
+                    ),
+                    Text(
+                      'タッチ ${ch.touches}',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '登録 ${ch.signupSubmits}',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF3949AB), fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),),
+            ],
+            if (d.brief.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                d.brief,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.5),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _weeklyKpiChip(String label, int value, int delta) {
+    final isPositive = delta > 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+          const SizedBox(height: 2),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$value',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+              ),
+              if (delta != 0) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '${isPositive ? '+' : ''}$delta',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDailyList() {

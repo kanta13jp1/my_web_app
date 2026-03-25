@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session8 (追加: ランディングページ価格比較セクション・3ステップ導入ガイド・CI/CDインポートEdge Function追加)
+最終更新: 2026-03-25 session9 (追加: Admin Analytics 週次ダイジェストUI・sitemap 拡充・Zennブログ session8 追記)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -189,6 +189,12 @@
 - **ランディングページ 価格比較セクション追加** (session8): `_buildPricingComparisonSection()` — Notion/Evernote/MoneyForward/Slack/Chatwork/ジョブカンとの月額料金比較表。「他社は有料、自分株式会社は完全無料」を強調するコンバージョン強化施策
 - **ランディングページ 3ステップ導入ガイド** (session8): `_buildGetStartedStepsSection()` — 「無料トライアル → 登録して保存 → 既存データ移行」の3ステップビジュアル表示 + 常時表示CTA
 - **CI/CD インポートEdge Function追加** (session8): `growth-import-preview` / `growth-import-commit` を `deploy-prod.yml` のデプロイ対象に追加。NotionCSV・EvernoteENEXインポートフローが自動デプロイされるよう修正
+
+### 2026-03-25 session9 実装済み
+
+- **Admin Analytics 週次ダイジェスト UI** (session9): `_buildWeeklyDigestCard()` を AdminAnalyticsPage に追加。`growth-weekly-digest` Edge Function から週次 KPI（登録/紹介/インポートCTA/公開メモCTA）を取得してチャネル別に表示
+- **sitemap.xml 拡充** (session9): `/tech-blog-tracker` / `/import` / `/user-manual` の 3 URL を追加。クロール対象が 4→7 件に増加
+- **Zennブログ原稿 session8 追記** (session9): 価格比較セクション実装の解説を追記。Markdownlint 修正完了
 
 ### 残課題
 
