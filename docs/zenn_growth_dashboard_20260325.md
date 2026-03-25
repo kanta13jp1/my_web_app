@@ -158,6 +158,53 @@ serve(async (req) => {
     SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 ```
 
+## 追加実装: CORSエラーの根本修正
+
+本日、本番環境で次のエラーが発生していることに気づきました。
+
+```text
+Access to fetch at 'https://xxx.supabase.co/functions/v1/get-home-dashboard'
+has been blocked by CORS policy: Response to preflight request doesn't pass
+access control check: It does not have HTTP ok status.
+```
+
+**原因**: Supabase Edge Functionはデフォルトで `verify_jwt = true` です。ブラウザのCORSプリフライト（OPTIONSリクエスト）はAuthorizationヘッダーを持たないため、Supabaseのプラットフォーム側で401を返していました。
+
+**修正**: 全ブラウザ向けEdge Functionを `--no-verify-jwt` でデプロイし直しました。
+
+```yaml
+# 変更前（デフォルトJWT検証あり → OPTIONSが401で失敗）
+supabase functions deploy get-home-dashboard
+
+# 変更後（JWT検証をアプリ側で処理 → OPTIONSが正常通過）
+supabase functions deploy get-home-dashboard --no-verify-jwt
+```
+
+これにより、Flutter WebからのEdge Function呼び出しが全て正常に動作するようになりました。
+
+## 追加実装: 技術ブログ投稿管理機能
+
+「毎日テックブログを書く」という習慣を支援する **TechBlogTrackerPage** を実装しました。
+
+対応プラットフォーム: Zenn / Qiita / はてなブログ / note / Medium / dev.to / Hashnode / Substack / GitHub Pages / NOTION
+
+```dart
+static const _platforms = [
+  _Platform('zenn', 'Zenn', '📝', Color(0xFF3EA8FF)),
+  _Platform('qiita', 'Qiita', '🟢', Color(0xFF55C500)),
+  _Platform('hatena', 'はてなブログ', '🔵', Color(0xFF00A4DE)),
+  // ... 10プラットフォーム
+];
+```
+
+機能:
+
+- 日付ナビゲーションで過去の投稿も記録・確認
+- 連続投稿ストリーク表示（🔥 N日連続投稿中）
+- プラットフォームごとに記事タイトル・URL・メモを記録
+- 投稿履歴（直近30日）の一覧表示
+- Supabaseの `tech_blog_posts` テーブルにRLSポリシーで安全に保存
+
 ## 13の競合を超えるために
 
 単にメモが取れるアプリでは、Notionの1億人、Evernoteの2.5億人には決して届きません。

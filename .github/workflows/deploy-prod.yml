@@ -102,8 +102,6 @@ jobs:
           supabase functions deploy growth-command-center --no-verify-jwt
           supabase functions deploy growth-referral --no-verify-jwt
           supabase functions deploy growth-share-signal --no-verify-jwt
-          supabase functions deploy growth-import-preview --no-verify-jwt
-          supabase functions deploy growth-import-commit --no-verify-jwt
           supabase functions deploy growth-achievement-summary --no-verify-jwt
           supabase functions deploy daily-judgment --no-verify-jwt
           supabase functions deploy ai-assistant --no-verify-jwt
