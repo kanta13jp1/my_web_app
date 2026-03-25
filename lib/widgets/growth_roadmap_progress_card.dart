@@ -9,10 +9,14 @@ class _PlanItem {
   final String label;
   final String? deadline; // 'yyyy年MM月dd日'
   final int target;
+  final int featuresDone;
+  final int featuresTotal;
   const _PlanItem({
     required this.label,
     this.deadline,
     required this.target,
+    this.featuresDone = 0,
+    this.featuresTotal = 0,
   });
 }
 
@@ -68,6 +72,8 @@ class _GrowthRoadmapProgressCardState
           label: map['label']?.toString() ?? '',
           deadline: map['deadline']?.toString(),
           target: map['target'] as int? ?? 0,
+          featuresDone: map['features_done'] as int? ?? 0,
+          featuresTotal: map['features_total'] as int? ?? 0,
         );
       }).toList();
 
@@ -182,19 +188,31 @@ class _PlanProgressRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio =
+    // ---- ユーザー数進捗 ----
+    final userRatio =
         plan.target > 0 ? (currentCount / plan.target).clamp(0.0, 1.0) : 0.0;
-    final pct = (ratio * 100).toStringAsFixed(ratio >= 0.01 ? 1 : 2);
-    final filledSegments = (ratio * _barSegments).round();
-    final barText = _buildBarText(filledSegments);
-
+    final userPct =
+        (userRatio * 100).toStringAsFixed(userRatio >= 0.01 ? 1 : 2);
+    final userFilled = (userRatio * _barSegments).round();
+    final userBarText = _buildBarText(userFilled);
     final currentStr = _fmt(currentCount);
     final targetStr = _fmt(plan.target);
-
-    // Colour: green when achieved, indigo otherwise
-    final barColor = ratio >= 1.0
+    final userBarColor = userRatio >= 1.0
         ? const Color(0xFF22C55E)
         : const Color(0xFF6366F1);
+
+    // ---- 機能実装進捗 ----
+    final hasFeatures = plan.featuresTotal > 0;
+    final featRatio = hasFeatures
+        ? (plan.featuresDone / plan.featuresTotal).clamp(0.0, 1.0)
+        : 0.0;
+    final featPct =
+        (featRatio * 100).toStringAsFixed(featRatio >= 0.01 ? 1 : 0);
+    final featFilled = (featRatio * _barSegments).round();
+    final featBarText = _buildBarText(featFilled);
+    final featBarColor = featRatio >= 1.0
+        ? const Color(0xFF22C55E)
+        : const Color(0xFF10B981);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -214,29 +232,32 @@ class _PlanProgressRow extends StatelessWidget {
               const SizedBox(width: 8),
               if (plan.deadline != null)
                 Text(
-                  '　目標期日 ${plan.deadline}',
+                  '目標期日 ${plan.deadline}',
                   style: TextStyle(fontSize: 11, color: subTextColor),
                 ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
+          // ユーザー数進捗バー
           Row(
             children: [
               const SizedBox(width: 8),
               Text(
-                '$pct% ($currentStr / $targetStr 完了) ',
+                '👤 $userPct% ($currentStr / $targetStr) ',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: barColor,
+                  color: userBarColor,
                 ),
               ),
               Expanded(
                 child: Text(
-                  barText,
+                  userBarText,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: filledSegments > 0 ? barColor : subTextColor.withValues(alpha: 0.5),
+                    fontSize: 11,
+                    color: userFilled > 0
+                        ? userBarColor
+                        : subTextColor.withValues(alpha: 0.5),
                     letterSpacing: 2,
                   ),
                   maxLines: 1,
@@ -245,6 +266,37 @@ class _PlanProgressRow extends StatelessWidget {
               ),
             ],
           ),
+          // 機能実装進捗バー（featuresTotal > 0 の場合のみ）
+          if (hasFeatures) ...[
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                const SizedBox(width: 8),
+                Text(
+                  '⚙️ $featPct% (${plan.featuresDone}/${plan.featuresTotal} 機能) ',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: featBarColor,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    featBarText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: featFilled > 0
+                          ? featBarColor
+                          : subTextColor.withValues(alpha: 0.5),
+                      letterSpacing: 2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
