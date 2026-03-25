@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
 /// テック技術ブログ投稿管理ページ
-/// Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION への
+/// Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article への
 /// 毎日の投稿状況を管理・記録するページ。
 class TechBlogTrackerPage extends StatefulWidget {
   const TechBlogTrackerPage({super.key});
@@ -26,6 +26,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     _Platform('substack', 'Substack', '🟠', Color(0xFFFF6719)),
     _Platform('github_pages', 'GitHub Pages', '🐙', Color(0xFF24292E)),
     _Platform('notion', 'NOTION', '⬜', Color(0xFF37352F)),
+    _Platform('x_article', 'X Article', '𝕏', Color(0xFF000000)),
   ];
 
   DateTime _selectedDate = DateTime.now();

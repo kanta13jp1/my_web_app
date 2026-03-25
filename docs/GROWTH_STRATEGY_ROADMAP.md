@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session5 (追加: CORSエラー修正・全Edge Function を --no-verify-jwt で再デプロイ・CI/CD タグ重複エラー修正・新規ユーザーウェルカムカード追加・技術ブログ投稿管理機能追加 Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION対応)
+最終更新: 2026-03-25 session6 (追加: X Article対応・/morning-briefing /note-editor ルート修正・CI growth-import-preview/commit 削除・Zennブログ最終更新・GROWTH_STRATEGY_ROADMAP 事業計画拡充)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -167,14 +167,26 @@
 - **sitemap.xml 更新** (2026-03-25 session3): /public-memo を追加・lastmod を 2026-03-25 に更新
 - **Build in Public バナー** (2026-03-25 session3): ランディングページにローンチからの経過日数・実装済み件数（DB実データ）・LIVE バッジを表示
 
+### 2026-03-25 session5-6 実装済み
+
+- **CORSエラー完全修正** (session5): 全Edge Functionを `--no-verify-jwt` で再デプロイ。ブラウザのOPTIONSプリフライトがJWT検証でブロックされていた根本原因を解消
+- **CI/CD タグ重複エラー修正** (session5): 連続プッシュで同一タグ作成エラー → `git ls-remote` で事前チェック+スキップ
+- **新規ユーザー向けウェルカムカード** (session5): `WelcomeNewUserCard` — 登録7日以内ユーザーに3クイックアクション（モーニングブリーフィング/最初のメモ/Notionインポート）を表示
+- **技術ブログ投稿管理機能** (session5): `TechBlogTrackerPage` — Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article への毎日投稿管理・連続投稿ストリーク表示
+- **deno.lock 削除** (session5): ローカルDeno v2が生成したlockfile v5がEdge Runtime Deno v1と非互換でデプロイ失敗 → 削除で解消
+- **/morning-briefing /note-editor ルート追加** (session6): WelcomeNewUserCardのクイックアクションが未定義ルートでLandingPageに飛ぶバグを修正
+- **CI不存在Edge Function削除** (session6): growth-import-preview / growth-import-commit はディレクトリが存在しないのにデプロイ対象になっていた → 削除
+- **X Article対応** (session6): TechBlogTrackerPageにX Article（Xの長文記事機能）プラットフォームを追加（計11プラットフォーム対応）
+
 ### 残課題
 
-- Zenn ブログ公開 (docs/zenn_growth_dashboard_20260325.md → published: true にして push)
+- Zenn ブログ公開 (docs/zenn_growth_dashboard_20260325.md → Zenn CLIで `zenn publish` 実行)
 - wasm build blocker の解消
-- weekly digest を admin analytics page / growth mission page から呼び出す UI
+- weekly digest を admin analytics page から呼び出す UI
 - referral reward ポイント付与の実際の運用確認
 - B2B 営業資料の整備開始
-- オンボーディングフロー改善: 登録後最初のアクション (モーニングブリーフィング OR ノート作成) への誘導を強化
+- growth-import-preview / growth-import-commit Edge Function の新規作成（インポートフローのバックエンド化）
+- 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
 
 ---
 
@@ -270,7 +282,8 @@
 - ship log と改善ログを週次発信する
 - Notion 比較、Evernote 比較の記事を継続公開する
 - note と Substack で founder update を定期配信する
-- Zenn, Qiita, はてなブログ, note, Medium, dev.to, Hashnode, Substack, GitHubPages, NOTION などの各プラットフォーム特性に合わせた技術ブログ・開発日記を配信し、「13製品に挑む個人の挑戦」としてビルド・イン・パブリックのストーリーを拡散する
+- Zenn, Qiita, はてなブログ, note, Medium, dev.to, Hashnode, Substack, GitHubPages, NOTION, X Article などの各プラットフォーム特性に合わせた技術ブログ・開発日記を配信し、「13製品に挑む個人の挑戦」としてビルド・イン・パブリックのストーリーを拡散する
+- TechBlogTrackerPage で毎日の投稿状況を管理・連続投稿ストリークを可視化し、毎日欠かさず発信する文化をシステムで支援する
 
 ### 技術ブログ・コンテンツ発信
 
