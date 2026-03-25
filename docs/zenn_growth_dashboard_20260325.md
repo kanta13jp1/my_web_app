@@ -104,6 +104,60 @@ FlutterもEdge Function呼び出しを追加するたびに `flutter analyze` �
 
 今回の移行でも、`_normalizeDateKey` のような「Edge Function移行により不要になったメソッド」を即削除することで、Linterエラーを0件に保ちました。
 
+## 追加実装: SEO・公開メモのOGP対応
+
+SNSシェア時にメモの内容がカードとして表示されるよう、`get-public-memo-preview` Edge Function を新規作成しました。
+
+```typescript
+// get-public-memo-preview/index.ts
+// verify_jwt = false でクローラーからも認証なしでアクセス可能
+serve(async (req) => {
+  const id = new URL(req.url).searchParams.get('id');
+  const { data } = await admin
+    .from('public_memos')
+    .select('title, content, category')
+    .eq('id', id)
+    .eq('is_public', true)
+    .single();
+
+  const excerpt = stripMarkdown(data.content).slice(0, 120);
+  return jsonResponse({
+    success: true,
+    pageTitle: `${data.title} | 自分株式会社`,
+    ogDescription: excerpt,
+  });
+});
+```
+
+`web/index.html` の Flutter 起動前の JavaScript でこの API を叩き、`og:title` / `og:description` / `twitter:card` を動的に書き換えることで、SPAでも正しいOGP表示を実現しています。
+
+## 今日解消したダミーデータ・バグ一覧
+
+| 修正内容 | 影響箇所 |
+| --- | --- |
+| `FinancialReportPage` を SharedPreferences → Supabase 移行 | 決算レポートがクロスデバイスで同期するように |
+| `AssetManagementPage` の個人銀行名ハードコードを撤廃 | 新規ユーザーが見ても違和感ない汎用選択肢に変更 |
+| `DevelopmentAchievementsCard` ドロップダウン非反応バグを修正 | 期間切替時に `_fetchTasks` が呼ばれなかった |
+| オンボーディング4ページ目「最初の3ステップ」を追加 | 就任後に次のアクションを明示 |
+
+## CI/CDにEdge Functions自動デプロイを追加
+
+`deploy-prod.yml` に `supabase functions deploy` ステップを追加し、`git push` だけで全関数が最新版にデプロイされるようになりました。
+
+```yaml
+- name: Deploy Supabase Edge Functions
+  run: |
+    # 公開エンドポイント（クローラー・index.htmlから認証なしアクセス）
+    supabase functions deploy get-public-memo-preview --no-verify-jwt
+    supabase functions deploy get-ogp --no-verify-jwt
+    # 認証済みユーザー向け
+    supabase functions deploy development-achievements
+    supabase functions deploy get-growth-roadmap-progress
+    # ... 他の関数も同様
+  env:
+    SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+```
+
 ## 13の競合を超えるために
 
 単にメモが取れるアプリでは、Notionの1億人、Evernoteの2.5億人には決して届きません。

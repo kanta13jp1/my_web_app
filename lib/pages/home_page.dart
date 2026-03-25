@@ -52,6 +52,7 @@ import 'growth_mission_page.dart';
 import 'public_memo_directory_page.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
+import '../widgets/welcome_new_user_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3852,6 +3853,9 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (WelcomeNewUserCard.shouldShow()) ...[
+                              const WelcomeNewUserCard(),
+                            ],
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
