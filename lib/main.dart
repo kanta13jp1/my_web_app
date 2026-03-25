@@ -11,6 +11,8 @@ import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
+import 'package:my_web_app/pages/morning_briefing_page.dart';
+import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/pages/public_memo_detail_page.dart';
 import 'package:my_web_app/pages/public_memo_directory_page.dart';
@@ -193,6 +195,14 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const RealityCheckPage());
           case '/thought-anchor':
             return MaterialPageRoute(builder: (_) => const ThoughtAnchorPage());
+          case '/morning-briefing':
+            return MaterialPageRoute(
+              builder: (_) => const MorningBriefingPage(),
+            );
+          case '/note-editor':
+            return MaterialPageRoute(
+              builder: (_) => const NoteEditorPage(),
+            );
           case '/tech-blog-tracker':
             return MaterialPageRoute(
               builder: (_) => const TechBlogTrackerPage(),
