@@ -39,6 +39,8 @@ class _LandingPageState extends State<LandingPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
+  final _waitlistEmailController = TextEditingController();
+  final _featureRequestTitleController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
@@ -100,6 +102,9 @@ class _LandingPageState extends State<LandingPage> {
     unawaited(_loadAchievementCount());
   }
 
+  bool _waitlistSubmitted = false;
+  bool _featureRequestSubmitted = false;
+
   @override
   void dispose() {
     _authSubscription?.cancel();
@@ -107,6 +112,8 @@ class _LandingPageState extends State<LandingPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _trialPromptController.dispose();
+    _waitlistEmailController.dispose();
+    _featureRequestTitleController.dispose();
     _emailFocusNode.dispose();
     super.dispose();
   }
@@ -792,78 +799,125 @@ $input
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        const Icon(
-          Icons.business_center,
-          size: 68,
-          color: Colors.blue,
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'AI提案を保存して、明日も続きから再開。',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          '最初の1件は登録前に試せます。入力なしでもサンプルで試せるので、まずは価値を確認してください。',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, color: Colors.black54),
-        ),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F7FB),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black12),
-          ),
-          child: const Column(
-            children: [
-              Text(
-                '登録すると残るもの',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.blueGrey,
-                ),
+        // アプリ名バッジ
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3949AB), Color(0xFF6366F1)],
               ),
-              SizedBox(height: 10),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
-                  _BenefitChip(icon: Icons.replay, label: '続きから再開'),
-                  _BenefitChip(icon: Icons.history, label: '履歴を残す'),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 52,
-          child: FilledButton(
-            key: const Key('landing_trial_scroll_button'),
-            onPressed: _scrollToTrialSection,
+              borderRadius: BorderRadius.circular(999),
+            ),
             child: const Text(
-              'まず1件を無料で試す',
+              '自分株式会社 — AI統合プラットフォーム',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.5,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: _scrollToAuthSection,
-          child: const Text('保存から始める'),
+        const SizedBox(height: 16),
+        // メインヘッドライン
+        const Text(
+          'Notion・Evernote・MoneyForward\nSlack を1つに。完全無料。',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          '13のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            color: Color(0xFF475569),
+            height: 1.6,
+          ),
+        ),
+        const SizedBox(height: 14),
+        // 実績バッジ
+        if (_achievementCount > 0)
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '✓ 実装済み $_achievementCount件の機能',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF15803D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        // プライマリ CTA
+        SizedBox(
+          height: 54,
+          child: FilledButton.icon(
+            key: const Key('landing_register_button'),
+            onPressed: _scrollToAuthSection,
+            icon: const Icon(Icons.rocket_launch, size: 18),
+            label: const Text(
+              '無料で始める（30秒）',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF3949AB),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // セカンダリ CTA
+        OutlinedButton.icon(
+          key: const Key('landing_trial_scroll_button'),
+          onPressed: _scrollToTrialSection,
+          icon: const Icon(Icons.play_arrow, size: 16),
+          label: const Text('登録なしで1件試す'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF3949AB),
+            side: const BorderSide(color: Color(0xFFBFD0F0)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+        const SizedBox(height: 14),
+        // 信頼バッジ行
+        const Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            _BenefitChip(icon: Icons.lock_open, label: '無料・制限なし'),
+            _BenefitChip(icon: Icons.upload_file, label: 'Notionから移行可'),
+            _BenefitChip(icon: Icons.smart_toy, label: 'AI自動整理'),
+            _BenefitChip(icon: Icons.public, label: 'メモ公開共有'),
+          ],
         ),
       ],
     );
@@ -1430,6 +1484,256 @@ $input
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _submitWaitlist() async {
+    final email = _waitlistEmailController.text.trim();
+    if (email.isEmpty) return;
+    final client = _supabaseClientOrNull;
+    if (client == null) return;
+    try {
+      await client.from('newsletter_waitlist').insert({
+        'email': email,
+        'source': 'landing',
+      });
+      if (!mounted) return;
+      setState(() => _waitlistSubmitted = true);
+      _waitlistEmailController.clear();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _waitlistSubmitted = true); // show success even on duplicate
+    }
+  }
+
+  Future<void> _submitFeatureRequest() async {
+    final title = _featureRequestTitleController.text.trim();
+    if (title.isEmpty) return;
+    final client = _supabaseClientOrNull;
+    if (client == null) return;
+    try {
+      await client.from('feature_requests').insert({'title': title});
+      if (!mounted) return;
+      setState(() => _featureRequestSubmitted = true);
+      _featureRequestTitleController.clear();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _featureRequestSubmitted = true);
+    }
+  }
+
+  /// ウェイトリスト登録・機能リクエストセクション
+  Widget _buildWaitlistAndFeatureRequestSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ウェイトリスト
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F5FF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFDDD6FE)),
+          ),
+          child: _waitlistSubmitted
+              ? const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Color(0xFF7C3AED), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '登録ありがとうございます！\nリリース情報をお届けします。',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4C1D95),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Text('📬', style: TextStyle(fontSize: 20)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '新機能リリースをメールで受け取る',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '登録不要で最新アップデートをお知らせします。',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _waitlistEmailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: 'your@email.com',
+                              hintStyle: const TextStyle(fontSize: 13),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFDDD6FE)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFDDD6FE)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: _submitWaitlist,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF7C3AED),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: const Text(
+                            '登録',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+        const SizedBox(height: 14),
+        // 機能リクエスト
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
+          child: _featureRequestSubmitted
+              ? const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Color(0xFFD97706), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'リクエストを受け付けました！\n開発計画に反映します。',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF92400E),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Text('💡', style: TextStyle(fontSize: 20)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'こんな機能が欲しい！をリクエスト',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '登録不要。要望を直接開発チームに届けられます。',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _featureRequestTitleController,
+                            decoration: InputDecoration(
+                              hintText: '例: Notionのデータベース機能が欲しい',
+                              hintStyle: const TextStyle(fontSize: 12),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFFDE68A)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFFDE68A)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: _submitFeatureRequest,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFD97706),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: const Text(
+                            '送信',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 
@@ -2044,6 +2348,8 @@ $input
                   _buildPublicMemoSection(),
                   const SizedBox(height: 20),
                   _buildShareSection(),
+                  const SizedBox(height: 20),
+                  _buildWaitlistAndFeatureRequestSection(),
                   const SizedBox(height: 20),
                   _buildPvSection(),
                 ],

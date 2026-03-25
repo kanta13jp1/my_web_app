@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session9 (追加: Admin Analytics 週次ダイジェストUI・sitemap 拡充・Zennブログ session8 追記)
+最終更新: 2026-03-25 session10 (追加: LPヒーロー刷新・ウェイトリスト登録・機能リクエストフォーム)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -195,6 +195,12 @@
 - **Admin Analytics 週次ダイジェスト UI** (session9): `_buildWeeklyDigestCard()` を AdminAnalyticsPage に追加。`growth-weekly-digest` Edge Function から週次 KPI（登録/紹介/インポートCTA/公開メモCTA）を取得してチャネル別に表示
 - **sitemap.xml 拡充** (session9): `/tech-blog-tracker` / `/import` / `/user-manual` の 3 URL を追加。クロール対象が 4→7 件に増加
 - **Zennブログ原稿 session8 追記** (session9): 価格比較セクション実装の解説を追記。Markdownlint 修正完了
+
+### 2026-03-25 session10 実装済み
+
+- **LPヒーローセクション全面刷新** (session10): キャッチコピーを「Notion・Evernote・MoneyForward・Slack を1つに。完全無料。」に変更。実装済み件数バッジ・「無料で始める（30秒）」CTA・「登録なしで1件試す」セカンダリCTAを追加
+- **ウェイトリスト登録フォーム** (session10): `newsletter_waitlist` テーブル作成（anon insert 可）。LP に「新機能リリースをメールで受け取る」フォームを追加。登録前ユーザーのメールを捕捉
+- **機能リクエストフォーム** (session10): `feature_requests` テーブル作成（anon insert・公開参照可）。LP に「こんな機能が欲しい！」フォームを追加。ユーザー要望を直接DB収集
 
 ### 残課題
 
