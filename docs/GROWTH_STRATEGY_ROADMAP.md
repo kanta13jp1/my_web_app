@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session4 (追加: 競合名「Claude works」→「Claude Cowork」全ファイル変更・決算レポートページ SharedPreferences→Supabase 移行・資産管理ページ個人銀行ハードコード撤廃・DB から payment_source 動的ロード・CI/CD Edge Functions 自動デプロイ追加・sitemap/robots.txt 更新・Build in Public バナー追加)
+最終更新: 2026-03-25 session5 (追加: CORSエラー修正・全Edge Function を --no-verify-jwt で再デプロイ・CI/CD タグ重複エラー修正・新規ユーザーウェルカムカード追加・技術ブログ投稿管理機能追加 Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION対応)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す

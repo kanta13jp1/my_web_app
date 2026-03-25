@@ -50,6 +50,7 @@ import 'wardrobe_page.dart'; // 先頭のimport群に追加
 import 'import_page.dart';
 import 'growth_mission_page.dart';
 import 'public_memo_directory_page.dart';
+import 'tech_blog_tracker_page.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/welcome_new_user_card.dart';
@@ -4239,6 +4240,15 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(
                                   context,
                                   const PublicMemoDirectoryPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                'ブログ投稿管理',
+                                Icons.edit_note,
+                                Colors.indigo,
+                                () => _nav(
+                                  context,
+                                  const TechBlogTrackerPage(),
                                 ),
                               ),
                             ]),
