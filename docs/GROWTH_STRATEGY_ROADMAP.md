@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session7 (追加: SEO強化・競合比較キーワードmeta/OGP/SEOシェル更新・JSON-LD featureList拡充)
+最終更新: 2026-03-25 session8 (追加: ランディングページ価格比較セクション・3ステップ導入ガイド・CI/CDインポートEdge Function追加)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -183,6 +183,12 @@
 - **SEO meta description 競合比較キーワード追加** (session7): `web/index.html` の description に「Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合」を追記。keywords に Notion代替・Evernote代替・MoneyForward代替・Slack代替を追加
 - **OGP・Twitter カード競合比較訴求** (session7): og:title を「Notion・Evernote・MoneyForward を超えるAI統合プラットフォーム」に変更。twitter:title も競合比較訴求文に更新
 - **SEOシェル本文 / JSON-LD 拡充** (session7): SEOシェルのp要素に競合SaaS名を追記。JSON-LD featureList を10項目（各競合代替機能を明記）に拡充。seo-tags に日本語キーワードタグ（Notion代替・Evernote代替・MoneyForward代替・Slack代替）を追加
+
+### 2026-03-25 session8 実装済み
+
+- **ランディングページ 価格比較セクション追加** (session8): `_buildPricingComparisonSection()` — Notion/Evernote/MoneyForward/Slack/Chatwork/ジョブカンとの月額料金比較表。「他社は有料、自分株式会社は完全無料」を強調するコンバージョン強化施策
+- **ランディングページ 3ステップ導入ガイド** (session8): `_buildGetStartedStepsSection()` — 「無料トライアル → 登録して保存 → 既存データ移行」の3ステップビジュアル表示 + 常時表示CTA
+- **CI/CD インポートEdge Function追加** (session8): `growth-import-preview` / `growth-import-commit` を `deploy-prod.yml` のデプロイ対象に追加。NotionCSV・EvernoteENEXインポートフローが自動デプロイされるよう修正
 
 ### 残課題
 

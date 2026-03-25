@@ -1216,6 +1216,223 @@ $input
     );
   }
 
+  /// 競合サービスとの価格・機能数比較セクション
+  Widget _buildPricingComparisonSection() {
+    final rows = [
+      const _CompetitorRow('Notion', '¥1,100〜/月', '100+', false),
+      const _CompetitorRow('Evernote', '¥1,300〜/月', '50+', false),
+      const _CompetitorRow('MoneyForward', '¥500〜/月', '30+', false),
+      const _CompetitorRow('Slack', '¥925〜/月', '80+', false),
+      const _CompetitorRow('Chatwork', '¥700〜/月', '40+', false),
+      const _CompetitorRow('ジョブカン', '¥500〜/月', '60+', false),
+      const _CompetitorRow('自分株式会社', '完全無料', '13サービス分', true),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF0),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('💰', style: TextStyle(fontSize: 20)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '他社は有料。自分株式会社は完全無料。',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '月額数千円のSaaS6本分の機能を、無料で使えます。',
+            style: TextStyle(fontSize: 13, color: Color(0xFF78350F)),
+          ),
+          const SizedBox(height: 14),
+          ...rows.map((row) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: row.isOurs
+                    ? const Color(0xFF3949AB)
+                    : const Color(0xFFFEFCE8),
+                borderRadius: BorderRadius.circular(12),
+                border: row.isOurs
+                    ? null
+                    : Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      row.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            row.isOurs ? Colors.white : const Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      row.price,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: row.isOurs ? FontWeight.w800 : FontWeight.w600,
+                        color: row.isOurs
+                            ? Colors.yellowAccent
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      '${row.featureCount}機能',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: row.isOurs
+                            ? Colors.white70
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// 3ステップで始めるセクション
+  Widget _buildGetStartedStepsSection() {
+    const steps = [
+      (Icons.play_circle_outline, '1. 無料トライアル', 'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
+          Color(0xFF6366F1)),
+      (Icons.save_outlined, '2. 無料登録して保存', 'メール認証だけで即登録。提案を保存して明日も続きから再開。',
+          Color(0xFF10B981)),
+      (Icons.upload_file_outlined, '3. 既存データを移行',
+          'NotionのCSV・EvernoteのENEXをインポート。移行コストゼロ。', Color(0xFFF59E0B)),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '3ステップで始める',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'クレジットカード不要。登録は30秒。',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 16),
+          ...steps.map((s) {
+            final (icon, title, desc, color) = s;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, size: 20, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          desc,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton.icon(
+              onPressed: _scrollToAuthSection,
+              icon: const Icon(Icons.rocket_launch, size: 18),
+              label: const Text(
+                '無料で始める（30秒）',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF3949AB),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGrowthSection() {
     return LiveGrowthBanner(
       growthService: widget.growthService,
@@ -1808,7 +2025,11 @@ $input
                   const SizedBox(height: 20),
                   _buildBuildInPublicSection(),
                   const SizedBox(height: 20),
+                  _buildPricingComparisonSection(),
+                  const SizedBox(height: 20),
                   _buildUniqueValueSection(),
+                  const SizedBox(height: 20),
+                  _buildGetStartedStepsSection(),
                   const SizedBox(height: 20),
                   _buildImportCtaSection(),
                   const SizedBox(height: 20),
@@ -1869,4 +2090,13 @@ class _BenefitChip extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CompetitorRow {
+  final String name;
+  final String price;
+  final String featureCount;
+  final bool isOurs;
+
+  const _CompetitorRow(this.name, this.price, this.featureCount, this.isOurs);
 }
