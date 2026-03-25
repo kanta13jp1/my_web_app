@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-25 session3 (本日追加: Lintエラー0件・GROWTH導線・マニュアル正確化・Edge Function 5件新規作成・deno lint 0件・ランディングページ改善・Weekly Digest UI・get-competitor-features Edge Function・batch_analysis.py バグ修正・GitHub Actions workflow 改善・公開メモ SEO 強化・get-home-dashboard Edge Function・ユーザーマニュアル全セクション正確化・DevelopmentAchievementsCard ドロップダウンバグ修正・Zenn 技術ブログ原稿完成)
+最終更新: 2026-03-25 session4 (追加: 競合名「Claude works」→「Claude Cowork」全ファイル変更・決算レポートページ SharedPreferences→Supabase 移行・資産管理ページ個人銀行ハードコード撤廃・DB から payment_source 動的ロード・CI/CD Edge Functions 自動デプロイ追加・sitemap/robots.txt 更新・Build in Public バナー追加)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -160,12 +160,21 @@
   - 存在しない「ナビゲーションメニュー」への言及を削除し、実在するグリッドメニューの操作手順を記載
   - 8セクション構成（ホーム画面・ノート・独自機能・インポート・公開メモ・タイマー・成長ロードマップ・AI/ブリーフィング）に拡充
 
+- **競合名「Claude works」→「Claude Cowork」全ファイル変更** (2026-03-25 session4): 23箇所 (Dart/TypeScript/Markdown) を一括置換・growth_plans テーブルも UPDATE マイグレーションで同期
+- **FinancialReportPage Supabase 移行** (2026-03-25 session4): SharedPreferences('asset_data_v2') 廃止 → cfo_assets テーブルから直接ロード。クロスデバイス同期が実現。
+- **AssetManagementPage 個人銀行ハードコード撤廃** (2026-03-25 session4): 「三井住友銀行大塚支店」等の個人情報をコードから削除。デフォルト汎用選択肢に変更し、_loadSourceOptionsFromDb() で過去履歴から自動補完。
+- **CI/CD Edge Functions 自動デプロイ追加** (2026-03-25 session3): supabase functions deploy ステップを deploy-prod.yml に追加。get-public-memo-preview / get-ogp は --no-verify-jwt で公開アクセス対応。
+- **sitemap.xml 更新** (2026-03-25 session3): /public-memo を追加・lastmod を 2026-03-25 に更新
+- **Build in Public バナー** (2026-03-25 session3): ランディングページにローンチからの経過日数・実装済み件数（DB実データ）・LIVE バッジを表示
+
 ### 残課題
 
+- Zenn ブログ公開 (docs/zenn_growth_dashboard_20260325.md → published: true にして push)
 - wasm build blocker の解消
 - weekly digest を admin analytics page / growth mission page から呼び出す UI
 - referral reward ポイント付与の実際の運用確認
 - B2B 営業資料の整備開始
+- オンボーディングフロー改善: 登録後最初のアクション (モーニングブリーフィング OR ノート作成) への誘導を強化
 
 ---
 
