@@ -791,7 +791,7 @@ $input
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '19製品に挑戦中 · $daysBuilding日目'
+                  '20製品に挑戦中 · $daysBuilding日目'
                   '${_achievementCount > 0 ? ' · 実装済み$_achievementCount件' : ''}',
                   style: const TextStyle(
                     fontSize: 12,
@@ -1247,6 +1247,7 @@ $input
       (key: 'discord', name: 'Discord', emoji: '🎮', color: Color(0xFF5865F2)),
       (key: 'line', name: 'LINE', emoji: '💚', color: Color(0xFF06C755)),
       (key: 'facebook', name: 'Facebook', emoji: '👥', color: Color(0xFF1877F2)),
+      (key: 'liven', name: 'Liven', emoji: '🍽️', color: Color(0xFFFF6B35)),
     ];
 
     return Card(
@@ -1637,7 +1638,7 @@ $input
       const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
       const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
       const _CompetitorRow('LINE (Business)', '¥5,000〜/月', '30+', false),
-      const _CompetitorRow('自分株式会社', '完全無料', '19サービス分', true),
+      const _CompetitorRow('自分株式会社', '完全無料', '20サービス分', true),
     ];
 
     return Container(
@@ -1668,7 +1669,7 @@ $input
           ),
           const SizedBox(height: 4),
           const Text(
-            '月額数千円のSaaS19本分の機能を、無料で使えます。',
+            '月額数千円のSaaS20本分の機能を、無料で使えます。',
             style: TextStyle(fontSize: 13, color: Color(0xFF78350F)),
           ),
           const SizedBox(height: 14),

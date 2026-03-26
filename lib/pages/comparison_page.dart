@@ -444,6 +444,27 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '広告なし・完全無料・プライバシー保護', competitorHas: false, weHave: true),
     ],
   ),
+  'liven': const _CompetitorInfo(
+    name: 'Liven',
+    emoji: '🍽️',
+    tagline: 'Livenの飲食・ロイヤルティ機能を超えた、AI統合の個人生産性アプリ。完全無料。',
+    searchKeyword: 'Liven代替 ライブン代替 飲食ロイヤルティ代替 外食管理代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      'Livenは飲食店の注文・ポイント管理に特化し、個人の生産性・資産管理・AIアシスタント機能がない',
+      '対応店舗が限られており、日常の全タスク・習慣管理には使えない',
+      'Livenのデータは飲食消費に偏り、個人の成長・目標達成・メモ管理のツールとしては力不足',
+    ],
+    features: [
+      _FeatureComparison(feature: '飲食注文・デリバリー', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'ポイント・ロイヤルティプログラム', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '完全無料・広告なし', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------

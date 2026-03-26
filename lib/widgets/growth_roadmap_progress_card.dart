@@ -2080,7 +2080,7 @@ const _googleFeatureRows = <_FeatureRow>[
   ),
   _FeatureRow(
     category: '自分株式会社 独自機能',
-    feature: '成長ロードマップ・競合19社超え進捗',
+    feature: '成長ロードマップ・競合20社超え進捗',
     competitorDetail: '— Google にはない統合生産性機能',
     status: _FeatureStatus.unique,
     appDetail: '短中長期の個人目標と競合比較を一画面で可視化',
@@ -2267,13 +2267,58 @@ const _facebookFeatureRows = <_FeatureRow>[
   ),
 ];
 
+const _livenFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: '飲食・注文',
+    feature: '飲食店注文・デリバリー',
+    competitorDetail: '対応店舗でモバイル注文・デリバリー',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 飲食注文機能は対象外。支出管理で外食費の記録は可能',
+  ),
+  _FeatureRow(
+    category: 'ロイヤルティ',
+    feature: 'ポイント・ロイヤルティプログラム',
+    competitorDetail: '飲食消費でポイント獲得・特典交換',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 習慣化スコア・実績バッジでの代替を検討中',
+  ),
+  _FeatureRow(
+    category: 'タスク・習慣管理',
+    feature: 'タスク・習慣管理',
+    competitorDetail: '— Livenに個人生産性管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '毎日の最優先タスク1件提案・習慣トラッカー・AIコーチングを実装',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: '— Livenに個人財務管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '個人CFO機能として収入・支出・資産グラフを実装',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'AI判断支援・アシスタント',
+    competitorDetail: '— LivenにAIアシスタント機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: 'MAGIシステム・AI役員会議・Gemini大学として実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '完全無料・広告なし・個人成長支援',
+    competitorDetail: 'Livenは飲食消費特化',
+    status: _FeatureStatus.unique,
+    appDetail: 'メモ・タスク・資産・習慣・AIを一画面で統合管理',
+  ),
+];
+
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合19社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
+/// 競合20社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
 /// netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン /
-/// Amazon / Google / Microsoft / Discord / LINE / Facebook) の機能一覧と
+/// Amazon / Google / Microsoft / Discord / LINE / Facebook / Liven) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2316,6 +2361,7 @@ class _CompetitorFeatureComparisonCardState
     'Discord',
     'LINE',
     'Facebook',
+    'Liven',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2337,6 +2383,7 @@ class _CompetitorFeatureComparisonCardState
     _discordFeatureRows,
     _lineFeatureRows,
     _facebookFeatureRows,
+    _livenFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
