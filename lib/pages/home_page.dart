@@ -55,6 +55,7 @@ import '../widgets/blog_post_summary_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/profile_completion_banner.dart';
+import '../widgets/referral_share_card.dart';
 import '../widgets/welcome_new_user_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -3860,6 +3861,7 @@ abstinence_slip_details: $slipDetailsText
                               const WelcomeNewUserCard(),
                             ],
                             const ProfileCompletionBanner(),
+                            const ReferralShareCard(),
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
