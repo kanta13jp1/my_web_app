@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session25 (追加: Schedule全自動化拡張・ブログ投稿管理・PRレビュー自動化・競合監視・インフラ監視・脆弱性チェック・vs Amazon 進捗バー・ユーザーマニュアル修正)
+最終更新: 2026-03-26 session24 (追加: vs Amazon 進捗バー追加・ユーザーマニュアル修正・Schedule 日次タスク登録)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -247,24 +247,6 @@
 - **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
 - **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
 - **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
-
-### 2026-03-26 session25 実装済み
-
-- **Claude Code Schedule 全自動化拡張** (session25): CLAUDE.mdに4つの新規Scheduleタスクを追加
-  - `cs-check` に **PRレビュー自動化** (Step 4): open PR を `gh pr list` で取得 → セキュリティ/パフォーマンス/Lint観点でレビュー → `gh pr comment` で自動投稿
-  - `cs-check` に **インフラヘルスチェック** (Step 5): 主要Edge Function + 本番URL を毎時監視。異常はcs-notesに記録
-  - `daily-report` に **競合モニタリング** (Step 4): Notion/Evernote/Slackトップページを日次チェック。新機能・価格変更を検知して日次レポートに追記
-  - `weekly-sns-draft` に **脆弱性チェック** (Step 2): pubspec.yaml + deno importを週次チェック。古いメジャーバージョンを検出
-- **blog-draft Scheduleタスク追加** (session25): 毎日08:00 JSTに技術ブログ下書きを自動生成 (`docs/blog-drafts/YYYY-MM-DD.md`) → `blog_posts` テーブルで投稿管理
-- **blog_posts テーブル作成** (session25): マイグレーション `20260326000016_create_blog_posts.sql`。status(draft/posted/skipped)・target_platforms・URL管理。RLS で管理者のみアクセス可
-- **CLAUDE.md X アカウント明記** (session25): `@kanta13jp1` を明示。GITHUB_PAT を必要環境変数に追加
-
-### 2026-03-26 session24 実装済み
-
-- **自動化オペレーション UI 追加** (session24): `AdminAnalyticsPage` に `_buildAutomationOpsCard()` を追加。`schedule-daily-digest` / `get-support-tickets` の結果を管理画面から手動確認できるようにし、CSキュー件数・日次ダイジェスト要約・直近実績を可視化
-- **CS返信ダイアログ追加** (session24): 機能リクエスト一覧の各行から `reply-support-request` を直接呼べる返信/編集導線を追加。返信文入力・ステータス更新・エスカレーションを1つのダイアログに統合。エスカレーション時は `in_progress` へ自動遷移
-- **X投稿テスト導線追加** (session24): `post-x-update` に `dryRun` を追加し、管理画面から `@kanta13jp1` アカウント向け投稿のプレビュー/本番投稿を実行可能に。日次ダイジェストからデフォルト投稿文を生成
-- **自動化認可ヘルパー追加** (session24): `supabase/functions/_shared/automation-auth.ts` を新規作成。`SERVICE_ROLE_KEY` に加えて allowlist 済み管理者ユーザー（`ADMIN_EMAIL` または `AUTOMATION_ADMIN_EMAILS`）からも `schedule-daily-digest` / `get-support-tickets` / `reply-support-request` / `post-x-update` を安全に実行できるように整理
 
 ### 2026-03-26 session23 実装済み
 
