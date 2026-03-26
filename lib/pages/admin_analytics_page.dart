@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/schedule_task_monitor_card.dart';
 import 'ai_secretary_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
@@ -1482,6 +1483,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    const ScheduleTaskMonitorCard(),
                     const SizedBox(height: 16),
                     _buildWaitlistCard(),
                     const SizedBox(height: 24),

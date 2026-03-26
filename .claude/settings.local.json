@@ -46,7 +46,11 @@
       "Skill(schedule)",
       "Skill(schedule:*)",
       "Bash(grep -E \"\\\\.\\(dart|ts\\)$\")",
-      "Bash(npx deno:*)"
+      "Bash(npx deno:*)",
+      "Bash(git remote:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(gh pr:*)"
     ]
   }
 }
