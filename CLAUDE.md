@@ -331,6 +331,7 @@ GitHub PRの自動コードレビュー。
 
 1. `health-check` Edge Function で DB・テーブル・レスポンスタイムを確認
 2. Firebase Hosting (<https://my-web-app-b67f4.web.app/>) の可用性を確認
+2. Firebase Hosting (https://my-web-app-b67f4.web.app/) の可用性を確認
 3. 異常時のみ `docs/incident-reports/YYYY-MM-DD-HH.md` にレポート作成
 
 ---
