@@ -791,7 +791,7 @@ $input
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '13製品に挑戦中 · $daysBuilding日目'
+                  '19製品に挑戦中 · $daysBuilding日目'
                   '${_achievementCount > 0 ? ' · 実装済み$_achievementCount件' : ''}',
                   style: const TextStyle(
                     fontSize: 12,
@@ -1523,7 +1523,7 @@ $input
           ),
           const SizedBox(height: 6),
           const Text(
-            'Notion・Evernote・MoneyForward の良いとこ取りに、AIと記憶ドリルをプラス。',
+            'Notion・Evernote・MoneyForward・Google・LINE・Facebook の良いとこ取りに、AIと記憶ドリルをプラス。',
             style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 16),
@@ -1634,9 +1634,10 @@ $input
       const _CompetitorRow('Evernote', '¥1,300〜/月', '50+', false),
       const _CompetitorRow('MoneyForward', '¥500〜/月', '30+', false),
       const _CompetitorRow('Slack', '¥925〜/月', '80+', false),
-      const _CompetitorRow('Chatwork', '¥700〜/月', '40+', false),
-      const _CompetitorRow('ジョブカン', '¥500〜/月', '60+', false),
-      const _CompetitorRow('自分株式会社', '完全無料', '13サービス分', true),
+      const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
+      const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
+      const _CompetitorRow('LINE (Business)', '¥5,000〜/月', '30+', false),
+      const _CompetitorRow('自分株式会社', '完全無料', '19サービス分', true),
     ];
 
     return Container(
@@ -1667,7 +1668,7 @@ $input
           ),
           const SizedBox(height: 4),
           const Text(
-            '月額数千円のSaaS6本分の機能を、無料で使えます。',
+            '月額数千円のSaaS19本分の機能を、無料で使えます。',
             style: TextStyle(fontSize: 13, color: Color(0xFF78350F)),
           ),
           const SizedBox(height: 14),
