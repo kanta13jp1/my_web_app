@@ -60,6 +60,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   late final SupabaseClient _supabase;
   final _growthService = const GrowthMissionService();
+  List<Map<String, dynamic>> _featureRequests = [];
+  List<Map<String, dynamic>> _waitlistEmails = [];
+  bool _featureRequestsLoading = false;
+  bool _waitlistLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -469,6 +473,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _loadStats();
     _loadWeeklyDigest();
+    _loadFeatureRequests();
+    _loadWaitlist();
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -477,6 +483,60 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) setState(() => _weeklyDigest = digest);
     } catch (e) {
       debugPrint('weekly digest load error: $e');
+    }
+  }
+
+  Future<void> _loadFeatureRequests() async {
+    if (!mounted) return;
+    setState(() => _featureRequestsLoading = true);
+    try {
+      final data = await _supabase
+          .from('feature_requests')
+          .select()
+          .order('votes', ascending: false)
+          .limit(50);
+      if (mounted) {
+        setState(() {
+          _featureRequests = List<Map<String, dynamic>>.from(data as List);
+          _featureRequestsLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('feature requests load error: $e');
+      if (mounted) setState(() => _featureRequestsLoading = false);
+    }
+  }
+
+  Future<void> _loadWaitlist() async {
+    if (!mounted) return;
+    setState(() => _waitlistLoading = true);
+    try {
+      final data = await _supabase
+          .from('newsletter_waitlist')
+          .select('id, email, source, created_at')
+          .order('created_at', ascending: false)
+          .limit(100);
+      if (mounted) {
+        setState(() {
+          _waitlistEmails = List<Map<String, dynamic>>.from(data as List);
+          _waitlistLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('waitlist load error: $e');
+      if (mounted) setState(() => _waitlistLoading = false);
+    }
+  }
+
+  Future<void> _updateFeatureRequestStatus(int id, String status) async {
+    try {
+      await _supabase
+          .from('feature_requests')
+          .update({'status': status})
+          .eq('id', id);
+      await _loadFeatureRequests();
+    } catch (e) {
+      debugPrint('feature request status update error: $e');
     }
   }
 
@@ -865,6 +925,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildWeeklyDigestCard(),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '機能リクエスト・ウェイトリスト',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFeatureRequestsAdminCard(),
+                    const SizedBox(height: 16),
+                    _buildWaitlistCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -2363,6 +2432,205 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFeatureRequestsAdminCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '機能リクエスト管理',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(
+                  '${_featureRequests.length}件',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _loadFeatureRequests,
+                  tooltip: '更新',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_featureRequestsLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_featureRequests.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('リクエストはまだありません', style: TextStyle(color: Colors.grey)),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _featureRequests.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final req = _featureRequests[index];
+                  final id = req['id'] as int;
+                  final title = req['title']?.toString() ?? '';
+                  final votes = _toInt(req['votes']);
+                  final status = req['status']?.toString() ?? 'open';
+                  final createdAt = req['created_at']?.toString() ?? '';
+                  String dateStr = createdAt;
+                  try {
+                    dateStr = DateFormat('MM/dd').format(DateTime.parse(createdAt).toLocal());
+                  } catch (_) {}
+
+                  Color statusColor;
+                  switch (status) {
+                    case 'in_progress':
+                      statusColor = Colors.blue;
+                    case 'done':
+                      statusColor = Colors.green;
+                    default:
+                      statusColor = Colors.orange;
+                  }
+
+                  return ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: index < 3 ? Colors.amber[100] : Colors.grey[100],
+                      child: Text(
+                        '$votes',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: index < 3 ? Colors.amber[800] : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    title: Text(title, style: const TextStyle(fontSize: 13)),
+                    subtitle: Text(dateStr, style: const TextStyle(fontSize: 11)),
+                    trailing: PopupMenuButton<String>(
+                      initialValue: status,
+                      onSelected: (newStatus) => _updateFeatureRequestStatus(id, newStatus),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'open', child: Text('open')),
+                        PopupMenuItem(value: 'in_progress', child: Text('in_progress')),
+                        PopupMenuItem(value: 'done', child: Text('done')),
+                        PopupMenuItem(value: 'rejected', child: Text('rejected')),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withAlpha(30),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: statusColor.withAlpha(80)),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaitlistCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.mail_outline, color: Colors.indigo),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'メールウェイトリスト',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(
+                  '${_waitlistEmails.length}件',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _loadWaitlist,
+                  tooltip: '更新',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_waitlistLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_waitlistEmails.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('登録者はまだいません', style: TextStyle(color: Colors.grey)),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _waitlistEmails.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final entry = _waitlistEmails[index];
+                  final email = entry['email']?.toString() ?? '';
+                  final source = entry['source']?.toString() ?? '';
+                  final createdAt = entry['created_at']?.toString() ?? '';
+                  String dateStr = createdAt;
+                  try {
+                    dateStr = DateFormat('MM/dd HH:mm').format(
+                      DateTime.parse(createdAt).toLocal(),
+                    );
+                  } catch (_) {}
+
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.person_outline, size: 20, color: Colors.indigo),
+                    title: Text(email, style: const TextStyle(fontSize: 13)),
+                    subtitle: Text('$source  $dateStr', style: const TextStyle(fontSize: 11)),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
