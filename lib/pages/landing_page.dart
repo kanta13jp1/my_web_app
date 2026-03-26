@@ -66,6 +66,8 @@ class _LandingPageState extends State<LandingPage> {
   List<String> _pvLabels = const <String>[];
   String? _activeShareChannel;
   int _achievementCount = 0;
+  int _totalUsers = 0;
+  int _publicMemoCount = 0;
 
   String? _trialAction;
   String? _trialReason;
@@ -100,6 +102,7 @@ class _LandingPageState extends State<LandingPage> {
     _loadShareSnapshot();
     _loadPublicMemos();
     unawaited(_loadAchievementCount());
+    unawaited(_loadSocialProofStats());
   }
 
   bool _waitlistSubmitted = false;
@@ -173,6 +176,32 @@ class _LandingPageState extends State<LandingPage> {
       setState(() => _achievementCount = count);
     } catch (_) {
       // Silently ignore; count stays 0
+    }
+  }
+
+  Future<void> _loadSocialProofStats() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) return;
+    try {
+      final results = await Future.wait<dynamic>([
+        client.from('user_profiles').select('id').count(CountOption.exact),
+        client
+            .from('public_memos')
+            .select('id')
+            .eq('is_public', true)
+            .count(CountOption.exact),
+      ]);
+      if (!mounted) return;
+      final r0 = results[0];
+      final r1 = results[1];
+      final userCount = r0 is PostgrestResponse ? r0.count : 0;
+      final memoCount = r1 is PostgrestResponse ? r1.count : 0;
+      setState(() {
+        _totalUsers = userCount;
+        _publicMemoCount = memoCount;
+      });
+    } catch (_) {
+      // Silently ignore
     }
   }
 
@@ -973,6 +1002,223 @@ $input
                   label: const Text('See import flow'),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialProofStatsSection() {
+    final stats = [
+      (
+        icon: Icons.people_alt_outlined,
+        color: const Color(0xFF3949AB),
+        value: _totalUsers > 0 ? '$_totalUsers' : '–',
+        label: '登録ユーザー数',
+      ),
+      (
+        icon: Icons.article_outlined,
+        color: const Color(0xFF0288D1),
+        value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
+        label: '公開メモ数',
+      ),
+      (
+        icon: Icons.check_circle_outline,
+        color: const Color(0xFF388E3C),
+        value: _achievementCount > 0 ? '$_achievementCount' : '–',
+        label: '実装済み機能数',
+      ),
+    ];
+
+    return Card(
+      key: const Key('landing_social_proof_stats'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.bar_chart, color: Color(0xFF3949AB), size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'リアルタイム実績',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: const Text(
+                    'LIVE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF388E3C),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: stats
+                  .map(
+                    (s) => Expanded(
+                      child: Column(
+                        children: [
+                          Icon(s.icon, color: s.color, size: 28),
+                          const SizedBox(height: 6),
+                          Text(
+                            s.value,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: s.color,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            s.label,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMigrationGuideSection() {
+    final steps = [
+      (
+        competitor: 'Notion',
+        icon: '📝',
+        color: const Color(0xFF1F2937),
+        steps: [
+          'Notionのページを開き「…」→「エクスポート」→「Markdown & CSV」を選択',
+          '自分株式会社の「インポート」画面を開く',
+          'エクスポートしたZIPをアップロード → AI整理で自動変換',
+        ],
+      ),
+      (
+        competitor: 'Evernote',
+        icon: '🐘',
+        color: const Color(0xFF00A82D),
+        steps: [
+          'Evernoteで「ファイル」→「ノートをエクスポート」→「ENEX形式」で書き出し',
+          '自分株式会社の「インポート」画面を開く',
+          'ENEXファイルをアップロード → メモ・添付ファイルを自動インポート',
+        ],
+      ),
+    ];
+
+    return Card(
+      key: const Key('landing_migration_guide'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.swap_horiz, color: Color(0xFF3949AB), size: 20),
+                SizedBox(width: 8),
+                Text(
+                  '他サービスからの移行は3ステップ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'データを失わずに、5分で完了します。',
+              style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            const SizedBox(height: 16),
+            ...steps.map((guide) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(guide.icon, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${guide.competitor} からの移行',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: guide.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...guide.steps.asMap().entries.map((e) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6, left: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: guide.color.withAlpha(26),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${e.key + 1}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: guide.color,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                e.value,
+                                style: const TextStyle(fontSize: 13, height: 1.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 4),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/import'),
+              icon: const Icon(Icons.upload_file, size: 18),
+              label: const Text('インポート画面を開く'),
             ),
           ],
         ),
@@ -2328,6 +2574,10 @@ $input
                   _buildHeroSection(),
                   const SizedBox(height: 20),
                   _buildBuildInPublicSection(),
+                  const SizedBox(height: 20),
+                  _buildSocialProofStatsSection(),
+                  const SizedBox(height: 20),
+                  _buildMigrationGuideSection(),
                   const SizedBox(height: 20),
                   _buildPricingComparisonSection(),
                   const SizedBox(height: 20),

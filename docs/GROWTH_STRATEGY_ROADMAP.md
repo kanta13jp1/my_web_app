@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session13 (追加: ウェイトリスト通知メール Edge Function・送信UI)
+最終更新: 2026-03-26 session14 (追加: LP ソーシャルプルーフ強化・移行ガイドセクション)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -219,6 +219,11 @@
 
 - **send-waitlist-notification Edge Function 実装** (session13): Resend API を使用したメール一括送信機能。`newsletter_waitlist` テーブルの全登録メールに一斉送信。HTMLメールテンプレート内蔵。認証済みユーザーのみ呼び出し可能。CI/CD に自動デプロイ追加
 - **Admin: ウェイトリスト通知送信 UI 追加** (session13): `AdminAnalyticsPage` のウェイトリストカードに「通知送信」ボタンを追加。件名・本文入力ダイアログから Edge Function を呼び出し、送信件数をスナックバーで確認
+
+### 2026-03-26 session14 実装済み
+
+- **LP: リアルタイム実績カード追加** (session14): `_buildSocialProofStatsSection()` を LandingPage に追加。登録ユーザー数・公開メモ数・実装済み機能数を Supabase から count クエリで取得し LIVE バッジ付きで表示。Build in Public の透明性を訴求
+- **LP: 移行ガイドセクション追加** (session14): `_buildMigrationGuideSection()` を LandingPage に追加。Notion/Evernote からの3ステップ移行手順を番号付きで可視化。インポート画面への直接 CTA ボタン付き。競合ユーザーの移行障壁を低減
 
 ### 残課題
 
