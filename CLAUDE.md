@@ -330,7 +330,7 @@ GitHub PRの自動コードレビュー。
 インフラヘルスチェック。
 
 1. `health-check` Edge Function で DB・テーブル・レスポンスタイムを確認
-2. Firebase Hosting (https://my-web-app-b67f4.web.app/) の可用性を確認
+2. Firebase Hosting (<https://my-web-app-b67f4.web.app/>) の可用性を確認
 3. 異常時のみ `docs/incident-reports/YYYY-MM-DD-HH.md` にレポート作成
 
 ---
@@ -343,6 +343,84 @@ GitHub PRの自動コードレビュー。
 2. Deno Edge Functions の import URL バージョンを確認
 3. 脆弱性があればパッチ更新 or レポート作成 (`docs/security-audit/YYYY-MM-DD.md`)
 4. `flutter analyze` と `deno lint` で0エラーを確認
+
+---
+
+### Task: blog-draft (毎日 08:00 JST に実行)
+
+技術ブログの下書きを生成し、投稿管理テーブルに記録する。
+
+#### Step 1: 直近の開発内容を確認
+
+```bash
+git log --oneline --since="7 days ago"
+```
+
+直近7日間のコミット一覧を取得する。
+
+#### Step 2: ブログ下書きを生成・保存
+
+ファイルパス: `docs/blog-drafts/YYYY-MM-DD.md`
+
+```markdown
+# ブログ下書き YYYY-MM-DD
+
+## タイトル案
+{実装内容を技術的に面白く表現したタイトル (3案)}
+
+## 投稿先候補
+- [ ] Zenn
+- [ ] Qiita
+- [ ] note
+- [ ] はてなブログ
+- [ ] X Article
+
+## 本文下書き (1500〜3000字)
+{以下の構成で書く}
+
+### はじめに
+{なぜこの機能を作ったか、どんな課題を解決するか}
+
+### 実装方法
+{Flutter/Supabase での具体的な実装手順、コードスニペット付き}
+
+### 詰まったポイント
+{実際にハマった部分と解決策}
+
+### まとめ
+{今後の展望、リポジトリ/サービスへのリンク}
+
+---
+URL: https://my-web-app-b67f4.web.app/
+#FlutterWeb #Supabase #buildinpublic
+```
+
+#### Step 3: 投稿記録をSupabaseに保存
+
+以下のSQLで `blog_posts` テーブルに下書きを登録:
+
+```sql
+INSERT INTO blog_posts (title, draft_path, status, target_platforms, created_at)
+VALUES ('<タイトル案1>', 'docs/blog-drafts/YYYY-MM-DD.md', 'draft', ARRAY['zenn','qiita'], NOW())
+ON CONFLICT DO NOTHING;
+```
+
+※ `blog_posts` テーブルのスキーマ:
+
+```sql
+id uuid, title text, draft_path text, status text (draft/posted/skipped),
+target_platforms text[], posted_at timestamptz, url text, created_at timestamptz
+```
+
+#### Step 4: コミット
+
+```bash
+git add docs/blog-drafts/
+git commit -m "自動: ブログ下書き YYYY-MM-DD"
+git push origin main
+```
+
+開発活動がない日 (コミット0件) はスキップ可。
 
 ---
 
