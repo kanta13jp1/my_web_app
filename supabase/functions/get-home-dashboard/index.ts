@@ -44,20 +44,15 @@ serve(async (req) => {
     tomorrow.setDate(today.getDate() + 1);
 
     // ---- Parallel fetches ---------------------------------------------
+    // Use auth.admin.listUsers for accurate counts from auth.users,
+    // not user_profiles (which may be missing entries for users who
+    // registered but never completed profile setup).
     const [
-      totalUsersResult,
-      todaySignupsResult,
+      authUsersResult,
       analyticsResult,
       lpStatsResult,
     ] = await Promise.all([
-      admin
-        .from("user_profiles")
-        .select("*", { count: "exact", head: true }),
-      admin
-        .from("user_profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", today.toISOString())
-        .lt("created_at", tomorrow.toISOString()),
+      admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
       admin
         .from("app_analytics")
         .select("date,landing_views,share_count,source_details")
@@ -66,11 +61,39 @@ serve(async (req) => {
       admin.rpc("get_lp_view_stats"),
     ]);
 
-    // ---- Total users --------------------------------------------------
-    const totalUsers = totalUsersResult.count ?? 0;
+    // ---- Total users (from auth.users) --------------------------------
+    const totalUsers = authUsersResult.data?.total ?? 0;
 
-    // ---- Today signups -----------------------------------------------
-    const todaySignups = todaySignupsResult.count ?? 0;
+    // ---- Today signups (filter from auth users by created_at) ---------
+    // Fetch a page with higher perPage to count today's signups.
+    // For small user bases this is fine; at scale, move to a DB trigger.
+    const todayIso = today.toISOString();
+    const tomorrowIso = tomorrow.toISOString();
+    let todaySignups = 0;
+    try {
+      // Fetch all users page by page to find today's signups.
+      // This is acceptable at current scale (21 users).
+      let page = 1;
+      // deno-lint-ignore no-constant-condition
+      while (true) {
+        const { data: pageData } = await admin.auth.admin.listUsers({
+          page,
+          perPage: 100,
+        });
+        const pageUsers = pageData?.users ?? [];
+        if (pageUsers.length === 0) break;
+        for (const u of pageUsers) {
+          if (u.created_at >= todayIso && u.created_at < tomorrowIso) {
+            todaySignups += 1;
+          }
+        }
+        // If returned fewer than 100, we've exhausted all users
+        if (pageUsers.length < 100) break;
+        page += 1;
+      }
+    } catch (_) {
+      // fall back to 0
+    }
 
     // ---- Analytics row -----------------------------------------------
     const analyticsRow = toMap(analyticsResult.data);

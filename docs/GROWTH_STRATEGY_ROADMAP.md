@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session15 (追加: 競合比較 SEO ページ群 /vs-notion 等5ルート)
+最終更新: 2026-03-26 session16 (追加: 登録ユーザー管理・ユーザー数カウント修正)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -229,10 +229,16 @@
 
 - **競合比較 SEO ページ群実装** (session15): `ComparisonPage` ウィジェット新規作成。`/vs-notion` / `/vs-evernote` / `/vs-moneyforward` / `/vs-slack` / `/vs-chatwork` の5ルートを追加。各ページに競合の痛点・機能比較表・移行CTA を表示。sitemap.xml に5URL追加（合計13URL）。「Notion代替」等の検索キーワードからの有機流入獲得
 
+### 2026-03-26 session16 実装済み
+
+- **get-admin-users Edge Function 実装** (session16): `auth.admin.listUsers` でサービスロールから全登録ユーザーを取得。`user_profiles` との JOIN で display_name も取得。ページネーション対応。CI/CD に自動デプロイ追加
+- **ユーザー数カウント修正** (session16): `get-home-dashboard` の集計を `user_profiles`（プロフィール未設定ユーザーが含まれない）→ `auth.admin.listUsers`（全登録ユーザーを正確に反映）に変更。実際の登録者数 21人を正しく表示
+- **Admin: 登録ユーザー管理 UI 追加** (session16): `AdminAnalyticsPage` に `_buildAdminUsersCard()` を追加。メール・表示名・登録日・最終ログイン日時・認証プロバイダー（Google/Email）を一覧表示
+
 ### 残課題
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
-- Resend API キーを Supabase secrets に設定 (`RESEND_API_KEY`)
+- Resend API キーは設定済み。送信元ドメイン認証後に FROM_EMAIL を更新
 - wasm build blocker の解消
 - referral reward ポイント付与の実際の運用確認
 - B2B 営業資料の整備開始

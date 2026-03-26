@@ -62,9 +62,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   final _growthService = const GrowthMissionService();
   List<Map<String, dynamic>> _featureRequests = [];
   List<Map<String, dynamic>> _waitlistEmails = [];
+  List<Map<String, dynamic>> _adminUsers = [];
+  int _adminUsersTotal = 0;
   bool _featureRequestsLoading = false;
   bool _waitlistLoading = false;
   bool _sendingNotification = false;
+  bool _adminUsersLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -476,6 +479,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadWeeklyDigest();
     _loadFeatureRequests();
     _loadWaitlist();
+    _loadAdminUsers();
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -526,6 +530,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('waitlist load error: $e');
       if (mounted) setState(() => _waitlistLoading = false);
+    }
+  }
+
+  Future<void> _loadAdminUsers() async {
+    if (!mounted) return;
+    setState(() => _adminUsersLoading = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'get-admin-users',
+        body: {'page': 1, 'perPage': 100},
+      );
+      final data = res.data as Map<String, dynamic>?;
+      if (mounted && data != null && data['success'] == true) {
+        setState(() {
+          _adminUsers = List<Map<String, dynamic>>.from(
+            data['users'] as List? ?? [],
+          );
+          _adminUsersTotal = (data['total'] as num?)?.toInt() ?? _adminUsers.length;
+          _adminUsersLoading = false;
+        });
+      } else {
+        if (mounted) setState(() => _adminUsersLoading = false);
+      }
+    } catch (e) {
+      debugPrint('admin users load error: $e');
+      if (mounted) setState(() => _adminUsersLoading = false);
     }
   }
 
@@ -1014,6 +1044,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildWeeklyDigestCard(),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '登録ユーザー管理',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildAdminUsersCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '機能リクエスト・ウェイトリスト',
@@ -2521,6 +2558,138 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAdminUsersCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.people_alt_outlined, color: Color(0xFF3949AB)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '登録ユーザー管理 (合計 $_adminUsersTotal 人)',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _loadAdminUsers,
+                  tooltip: '更新',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_adminUsersLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_adminUsers.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'ユーザーが取得できませんでした',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _adminUsers.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final user = _adminUsers[index];
+                  final email = user['email']?.toString() ?? '';
+                  final displayName = user['displayName']?.toString();
+                  final provider = user['provider']?.toString() ?? 'email';
+                  final createdAt = user['createdAt']?.toString() ?? '';
+                  final lastSignIn = user['lastSignInAt']?.toString() ?? '';
+
+                  String createdStr = '';
+                  String lastSignInStr = '';
+                  try {
+                    createdStr = DateFormat('yyyy/MM/dd').format(
+                      DateTime.parse(createdAt).toLocal(),
+                    );
+                  } catch (_) {}
+                  try {
+                    lastSignInStr = DateFormat('MM/dd HH:mm').format(
+                      DateTime.parse(lastSignIn).toLocal(),
+                    );
+                  } catch (_) {}
+
+                  final isGoogle = provider.contains('google');
+                  return ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: isGoogle
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFE8EAF6),
+                      child: Text(
+                        email.isNotEmpty ? email[0].toUpperCase() : '?',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: isGoogle
+                              ? const Color(0xFF388E3C)
+                              : const Color(0xFF3949AB),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      displayName != null && displayName.isNotEmpty
+                          ? '$displayName ($email)'
+                          : email,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    subtitle: Text(
+                      '登録: $createdStr　最終: $lastSignInStr　$provider',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isGoogle
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFE8EAF6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        isGoogle ? 'Google' : 'Email',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: isGoogle
+                              ? const Color(0xFF388E3C)
+                              : const Color(0xFF3949AB),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 
