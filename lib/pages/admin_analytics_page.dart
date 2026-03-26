@@ -64,6 +64,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _waitlistEmails = [];
   bool _featureRequestsLoading = false;
   bool _waitlistLoading = false;
+  bool _sendingNotification = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -538,6 +539,94 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('feature request status update error: $e');
     }
+  }
+
+  Future<void> _sendWaitlistNotification({
+    required String subject,
+    required String bodyHtml,
+  }) async {
+    if (!mounted) return;
+    setState(() => _sendingNotification = true);
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) throw Exception('Not authenticated');
+
+      final res = await _supabase.functions.invoke(
+        'send-waitlist-notification',
+        body: {'subject': subject, 'bodyHtml': bodyHtml},
+      );
+      debugPrint('send-waitlist-notification result: ${res.data}');
+      if (mounted) {
+        final data = res.data as Map<String, dynamic>?;
+        final sent = data?['sent'] ?? 0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$sent 件に送信しました')),
+        );
+      }
+    } catch (e) {
+      debugPrint('send notification error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('送信エラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sendingNotification = false);
+    }
+  }
+
+  Future<void> _showNotificationComposeDialog() async {
+    final subjectCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ウェイトリストに通知送信'),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: subjectCtrl,
+                decoration: const InputDecoration(
+                  labelText: '件名',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: bodyCtrl,
+                decoration: const InputDecoration(
+                  labelText: '本文 (HTML可)',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 5,
+                maxLines: 10,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('送信'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && subjectCtrl.text.isNotEmpty && bodyCtrl.text.isNotEmpty) {
+      await _sendWaitlistNotification(
+        subject: subjectCtrl.text.trim(),
+        bodyHtml: bodyCtrl.text.trim(),
+      );
+    }
+    subjectCtrl.dispose();
+    bodyCtrl.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -2571,17 +2660,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               children: [
                 const Icon(Icons.mail_outline, color: Colors.indigo),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'メールウェイトリスト',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    'メールウェイトリスト (${_waitlistEmails.length}件)',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
-                Text(
-                  '${_waitlistEmails.length}件',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(width: 8),
+                if (_sendingNotification)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: _waitlistEmails.isEmpty ? null : _showNotificationComposeDialog,
+                    icon: const Icon(Icons.send, size: 16),
+                    label: const Text('通知送信'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+                  ),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
                   onPressed: _loadWaitlist,

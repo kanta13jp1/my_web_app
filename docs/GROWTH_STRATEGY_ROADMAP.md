@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session12 (追加: Zenn記事公開・管理画面機能リクエスト管理・ウェイトリスト管理)
+最終更新: 2026-03-26 session13 (追加: ウェイトリスト通知メール Edge Function・送信UI)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -215,16 +215,21 @@
 - **Admin: 機能リクエスト管理 UI** (session12): `AdminAnalyticsPage` に `_buildFeatureRequestsAdminCard()` を追加。機能リクエスト一覧を投票数順に表示し、ステータス（open / in_progress / done / rejected）を PopupMenu で変更可能。上位3件ゴールドハイライト表示
 - **Admin: メールウェイトリスト管理 UI** (session12): `AdminAnalyticsPage` に `_buildWaitlistCard()` を追加。`newsletter_waitlist` テーブルから登録メール・ソース・日時を一覧表示。登録者フォローアップ計画立案に活用
 
+### 2026-03-26 session13 実装済み
+
+- **send-waitlist-notification Edge Function 実装** (session13): Resend API を使用したメール一括送信機能。`newsletter_waitlist` テーブルの全登録メールに一斉送信。HTMLメールテンプレート内蔵。認証済みユーザーのみ呼び出し可能。CI/CD に自動デプロイ追加
+- **Admin: ウェイトリスト通知送信 UI 追加** (session13): `AdminAnalyticsPage` のウェイトリストカードに「通知送信」ボタンを追加。件名・本文入力ダイアログから Edge Function を呼び出し、送信件数をスナックバーで確認
+
 ### 残課題
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
+- Resend API キーを Supabase secrets に設定 (`RESEND_API_KEY`)
 - wasm build blocker の解消
 - referral reward ポイント付与の実際の運用確認
 - B2B 営業資料の整備開始
-- growth-import-preview / growth-import-commit Edge Function の新規作成（インポートフローのバックエンド化）
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
-- ウェイトリスト登録者へのメール自動送信機能（新機能リリース通知）
 - 機能リクエスト ステータス変更時のユーザー通知機能
+- Google Search Console へのサイトマップ再送信（8 URLs）
 
 ---
 

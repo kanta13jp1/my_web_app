@@ -112,6 +112,7 @@ jobs:
           supabase functions deploy generate-daily-challenges --no-verify-jwt
           supabase functions deploy growth-import-preview --no-verify-jwt
           supabase functions deploy growth-import-commit --no-verify-jwt
+          supabase functions deploy send-waitlist-notification --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
