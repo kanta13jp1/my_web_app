@@ -2616,9 +2616,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final user = _adminUsers[index];
                   final email = user['email']?.toString() ?? '';
                   final displayName = user['displayName']?.toString();
+                  final bio = user['bio']?.toString();
+                  final location = user['location']?.toString();
                   final provider = user['provider']?.toString() ?? 'email';
                   final createdAt = user['createdAt']?.toString() ?? '';
                   final lastSignIn = user['lastSignInAt']?.toString() ?? '';
+                  final hasProfile = user['hasProfile'] as bool? ?? false;
+                  final completionPct = _toInt(user['completionPct']);
 
                   String createdStr = '';
                   String lastSignInStr = '';
@@ -2634,55 +2638,153 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   } catch (_) {}
 
                   final isGoogle = provider.contains('google');
-                  return ListTile(
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: isGoogle
-                          ? const Color(0xFFE8F5E9)
-                          : const Color(0xFFE8EAF6),
-                      child: Text(
-                        email.isNotEmpty ? email[0].toUpperCase() : '?',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: isGoogle
-                              ? const Color(0xFF388E3C)
-                              : const Color(0xFF3949AB),
+
+                  Color profileColor;
+                  if (!hasProfile || completionPct < 34) {
+                    profileColor = Colors.red;
+                  } else if (completionPct < 67) {
+                    profileColor = Colors.orange;
+                  } else {
+                    profileColor = Colors.green;
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: isGoogle
+                              ? const Color(0xFFE8F5E9)
+                              : const Color(0xFFE8EAF6),
+                          child: Text(
+                            email.isNotEmpty ? email[0].toUpperCase() : '?',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isGoogle
+                                  ? const Color(0xFF388E3C)
+                                  : const Color(0xFF3949AB),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    title: Text(
-                      displayName != null && displayName.isNotEmpty
-                          ? '$displayName ($email)'
-                          : email,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    subtitle: Text(
-                      '登録: $createdStr　最終: $lastSignInStr　$provider',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isGoogle
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFE8EAF6),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isGoogle ? 'Google' : 'Email',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isGoogle
-                              ? const Color(0xFF388E3C)
-                              : const Color(0xFF3949AB),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      displayName != null && displayName.isNotEmpty
+                                          ? displayName
+                                          : email,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isGoogle
+                                          ? const Color(0xFFE8F5E9)
+                                          : const Color(0xFFE8EAF6),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      isGoogle ? 'Google' : 'Email',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: isGoogle
+                                            ? const Color(0xFF388E3C)
+                                            : const Color(0xFF3949AB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (displayName != null && displayName.isNotEmpty)
+                                Text(
+                                  email,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              if (bio != null && bio.isNotEmpty)
+                                Text(
+                                  bio,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.black54,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              if (location != null && location.isNotEmpty)
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 11,
+                                      color: Colors.grey,
+                                    ),
+                                    Text(
+                                      location,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: completionPct / 100,
+                                        minHeight: 4,
+                                        backgroundColor: Colors.grey[200],
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          profileColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'プロフィール $completionPct%',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: profileColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '登録: $createdStr　最終ログイン: $lastSignInStr',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   );
                 },

@@ -10,7 +10,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const FROM_EMAIL = "自分株式会社 <noreply@jibun-inc.app>";
+const FROM_EMAIL = "自分株式会社 <noreply@resend.dev>";  // テスト用
+// 本番: "自分株式会社 <noreply@jibun-inc.app>"  ← ドメイン認証後
 const APP_URL = "https://my-web-app-b67f4.web.app";
 
 interface SendWaitlistRequest {

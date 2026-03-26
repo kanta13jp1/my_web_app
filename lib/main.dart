@@ -19,6 +19,7 @@ import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
+import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
@@ -212,6 +213,10 @@ class MyApp extends StatelessWidget {
           case '/feature-requests':
             return MaterialPageRoute(
               builder: (_) => const FeatureRequestsPage(),
+            );
+          case '/profile-settings':
+            return MaterialPageRoute(
+              builder: (_) => const ProfileSettingsPage(),
             );
           case '/vs-notion':
           case '/vs-evernote':

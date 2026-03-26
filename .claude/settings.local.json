@@ -38,7 +38,10 @@
       "Bash(grep -rn \"= const.*empty\\(\\)\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
       "Bash(grep -rn \"hardcoded\\\\|mock\\\\|MOCK\\\\|dummy\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
       "Bash(grep -A 2 -rn \"Future<void>.*{$\" /c/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
-      "Bash(grep -B 1 \"^--$\\\\|^[0-9]*:.*}$\")"
+      "Bash(grep -B 1 \"^--$\\\\|^[0-9]*:.*}$\")",
+      "Bash(git rm:*)",
+      "Bash(ls \"c:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\supabase\\\\migrations\"\" | grep \"20260325 \")",
+      "Bash(supabase functions:*)"
     ]
   }
 }

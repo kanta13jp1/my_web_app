@@ -53,6 +53,7 @@ import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
+import '../widgets/profile_completion_banner.dart';
 import '../widgets/welcome_new_user_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -3857,6 +3858,7 @@ abstinence_slip_details: $slipDetailsText
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                             ],
+                            const ProfileCompletionBanner(),
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),

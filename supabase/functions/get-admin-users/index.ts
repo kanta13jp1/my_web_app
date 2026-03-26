@@ -52,15 +52,26 @@ serve(async (req) => {
     const users = data.users ?? [];
     const total = data.total ?? users.length;
 
-    // Fetch user_profiles for display names
+    // Fetch user_profiles for display names and completeness
     const userIds = users.map((u: { id: string }) => u.id);
     const profilesResult = userIds.length > 0
       ? await admin
           .from("user_profiles")
-          .select("user_id, display_name, avatar_url")
+          .select(
+            "user_id, display_name, bio, avatar_url, location, twitter_handle, website_url",
+          )
           .in("user_id", userIds)
       : { data: [] };
-    const profiles: Record<string, { display_name?: string; avatar_url?: string }> = {};
+
+    type ProfileRow = {
+      display_name?: string;
+      bio?: string;
+      avatar_url?: string;
+      location?: string;
+      twitter_handle?: string;
+      website_url?: string;
+    };
+    const profiles: Record<string, ProfileRow> = {};
     for (const p of profilesResult.data ?? []) {
       profiles[p.user_id] = p;
     }
@@ -73,14 +84,38 @@ serve(async (req) => {
         last_sign_in_at?: string;
         app_metadata?: Record<string, unknown>;
         user_metadata?: Record<string, unknown>;
-      }) => ({
-        id: u.id,
-        email: u.email ?? "",
-        displayName: profiles[u.id]?.display_name ?? null,
-        createdAt: u.created_at ?? null,
-        lastSignInAt: u.last_sign_in_at ?? null,
-        provider: (u.app_metadata?.["provider"] as string) ?? "email",
-      }),
+      }) => {
+        const profile = profiles[u.id];
+        const hasProfile = !!profile;
+        const completedFields = hasProfile
+          ? [
+              profile.display_name,
+              profile.bio,
+              profile.avatar_url,
+              profile.location,
+              profile.twitter_handle,
+              profile.website_url,
+            ].filter(Boolean).length
+          : 0;
+        const totalFields = 6;
+        const completionPct = Math.round((completedFields / totalFields) * 100);
+
+        return {
+          id: u.id,
+          email: u.email ?? "",
+          displayName: profile?.display_name ?? null,
+          bio: profile?.bio ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+          location: profile?.location ?? null,
+          twitterHandle: profile?.twitter_handle ?? null,
+          websiteUrl: profile?.website_url ?? null,
+          hasProfile,
+          completionPct,
+          createdAt: u.created_at ?? null,
+          lastSignInAt: u.last_sign_in_at ?? null,
+          provider: (u.app_metadata?.["provider"] as string) ?? "email",
+        };
+      },
     );
 
     return jsonResponse({

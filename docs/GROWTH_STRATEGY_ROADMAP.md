@@ -231,9 +231,11 @@
 
 ### 2026-03-26 session16 実装済み
 
-- **get-admin-users Edge Function 実装** (session16): `auth.admin.listUsers` でサービスロールから全登録ユーザーを取得。`user_profiles` との JOIN で display_name も取得。ページネーション対応。CI/CD に自動デプロイ追加
-- **ユーザー数カウント修正** (session16): `get-home-dashboard` の集計を `user_profiles`（プロフィール未設定ユーザーが含まれない）→ `auth.admin.listUsers`（全登録ユーザーを正確に反映）に変更。実際の登録者数 21人を正しく表示
-- **Admin: 登録ユーザー管理 UI 追加** (session16): `AdminAnalyticsPage` に `_buildAdminUsersCard()` を追加。メール・表示名・登録日・最終ログイン日時・認証プロバイダー（Google/Email）を一覧表示
+- **get-admin-users Edge Function 実装** (session16): `auth.admin.listUsers` でサービスロールから全登録ユーザーを取得。`user_profiles` との JOIN で display_name/bio/avatar_url/location/twitter_handle/website_url を取得。6フィールドで `completionPct` (0-100) を算出。ページネーション対応。CI/CD に自動デプロイ追加
+- **ユーザー数カウント修正** (session16): `get-home-dashboard` の集計を `user_profiles`（プロフィール未設定ユーザーが含まれない）→ `auth.admin.listUsers`（全登録ユーザーを正確に反映）に変更。実際の登録者数を正しく表示
+- **Admin: 登録ユーザー管理 UI 追加** (session16): `AdminAnalyticsPage` に `_buildAdminUsersCard()` を追加。メール・表示名・bio・location・登録日・最終ログイン日時・認証プロバイダー（Google/Email カラーバッジ）・プロフィール完成度プログレスバー（緑≥67%/オレンジ34-66%/赤<34%）を一覧表示
+- **ProfileCompletionBanner ウィジェット追加** (session16): `lib/widgets/profile_completion_banner.dart` を新規作成。ログインユーザーの `display_name`/`bio` が未設定の場合にインディゴ色のバナーをホーム画面に表示。「設定する」→ `/profile-settings` への CTA と「後で」ワンタップ非表示機能付き
+- **ホーム画面にプロフィール促進バナー追加** (session16): `HomePage` の WelcomeNewUserCard と GrowthRoadmapProgressCard の間に `ProfileCompletionBanner` を挿入。未設定ユーザーへのプロフィール完成促進
 
 ### 残課題
 
