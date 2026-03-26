@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
+import 'package:my_web_app/pages/daily_habits_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
@@ -224,6 +225,10 @@ class MyApp extends StatelessWidget {
           case '/shopping-list':
             return MaterialPageRoute(
               builder: (_) => const ShoppingListPage(),
+            );
+          case '/daily-habits':
+            return MaterialPageRoute(
+              builder: (_) => const DailyHabitsPage(),
             );
           case '/feature-requests':
             return MaterialPageRoute(

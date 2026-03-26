@@ -3911,6 +3911,46 @@ abstinence_slip_details: $slipDetailsText
                               context,
                               isHighlighted: highlightMorning,
                             ),
+                            const SizedBox(height: 12),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(
+                                  color: Colors.grey.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEDE7F6),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.repeat,
+                                    color: Color(0xFF4338CA),
+                                  ),
+                                ),
+                                title: const Text(
+                                  '毎日の習慣',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'マネフォ更新・体重記録など',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/daily-habits',
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
