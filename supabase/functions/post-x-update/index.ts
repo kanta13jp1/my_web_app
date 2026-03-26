@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeAutomationActor } from "../_shared/automation-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,6 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const X_API_KEY = Deno.env.get("X_API_KEY") ?? "";
 const X_API_SECRET = Deno.env.get("X_API_SECRET") ?? "";
@@ -32,24 +35,34 @@ serve(async (req) => {
     if (req.method !== "POST") {
       throw new Error("Method not allowed. Use POST.");
     }
-
-    // Auth: Bearer SERVICE_ROLE_KEY
-    const authHeader = req.headers.get("authorization") ?? "";
-    const token = authHeader.toLowerCase().startsWith("bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
-    if (token === "" || token !== SERVICE_ROLE_KEY) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+    if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
+      throw new Error("Missing Supabase runtime environment variables.");
     }
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    await authorizeAutomationActor(admin, req);
 
     if (!X_API_KEY || !X_API_SECRET || !X_ACCESS_TOKEN || !X_ACCESS_TOKEN_SECRET) {
       throw new Error("X API credentials not configured. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET in Supabase secrets.");
     }
 
-    const body = (await req.json().catch(() => ({}))) as { text?: string };
-    const { text } = body;
+    const body = (await req.json().catch(() => ({}))) as {
+      text?: string;
+      dryRun?: boolean;
+    };
+    const { text, dryRun = false } = body;
     if (!text || text.trim() === "") throw new Error("text is required.");
     if (text.length > 280) throw new Error("text exceeds 280 characters.");
+    if (dryRun) {
+      return jsonResponse({
+        success: true,
+        dryRun: true,
+        account: "@kanta13jp1",
+        text,
+      });
+    }
 
     const tweetUrl = "https://api.twitter.com/2/tweets";
     const oauthHeader = await buildOAuthHeader("POST", tweetUrl);
@@ -69,7 +82,11 @@ serve(async (req) => {
     }
 
     const result = await resp.json();
-    return jsonResponse({ success: true, tweetId: result?.data?.id ?? null });
+    return jsonResponse({
+      success: true,
+      account: "@kanta13jp1",
+      tweetId: result?.data?.id ?? null,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ success: false, error: message }, 400);

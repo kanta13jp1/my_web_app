@@ -63,11 +63,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   List<Map<String, dynamic>> _featureRequests = [];
   List<Map<String, dynamic>> _waitlistEmails = [];
   List<Map<String, dynamic>> _adminUsers = [];
+  List<Map<String, dynamic>> _automationSupportTickets = [];
   int _adminUsersTotal = 0;
   bool _featureRequestsLoading = false;
   bool _waitlistLoading = false;
   bool _sendingNotification = false;
   bool _adminUsersLoading = false;
+  bool _automationLoading = false;
+  bool _automationPostingX = false;
+  Map<String, dynamic>? _automationDigest;
+  String? _automationError;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -480,6 +485,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadFeatureRequests();
     _loadWaitlist();
     _loadAdminUsers();
+    _loadAutomationOps();
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -497,7 +503,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final data = await _supabase
           .from('feature_requests')
-          .select('id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at')
+          .select(
+            'id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at',
+          )
           .order('votes', ascending: false)
           .limit(50);
       if (mounted) {
@@ -547,7 +555,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _adminUsers = List<Map<String, dynamic>>.from(
             data['users'] as List? ?? [],
           );
-          _adminUsersTotal = (data['total'] as num?)?.toInt() ?? _adminUsers.length;
+          _adminUsersTotal =
+              (data['total'] as num?)?.toInt() ?? _adminUsers.length;
           _adminUsersLoading = false;
         });
       } else {
@@ -556,6 +565,77 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('admin users load error: $e');
       if (mounted) setState(() => _adminUsersLoading = false);
+    }
+  }
+
+  Map<String, String> _adminAuthHeaders(String accessToken) => {
+        'Authorization': 'Bearer $accessToken',
+      };
+
+  Future<void> _loadAutomationOps() async {
+    if (!mounted) return;
+    setState(() {
+      _automationLoading = true;
+      _automationError = null;
+    });
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) throw Exception('Not authenticated');
+
+      final headers = _adminAuthHeaders(session.accessToken);
+      final results = await Future.wait<FunctionResponse>([
+        _supabase.functions.invoke(
+          'schedule-daily-digest',
+          headers: headers,
+          body: const {'source': 'admin_manual_check'},
+        ),
+        _supabase.functions.invoke(
+          'get-support-tickets',
+          headers: headers,
+          body: const {'source': 'admin_manual_check'},
+        ),
+      ]);
+
+      final digestResult = results[0].data as Map<String, dynamic>?;
+      final supportResult = results[1].data as Map<String, dynamic>?;
+      if (digestResult?['success'] != true) {
+        throw Exception(
+          '${digestResult?['error'] ?? 'digest load failed'}',
+        );
+      }
+      if (supportResult?['success'] != true) {
+        throw Exception(
+          supportResult?['error']?.toString() ?? 'support ticket load failed',
+        );
+      }
+
+      final rawTickets = supportResult?['tickets'];
+      final tickets = <Map<String, dynamic>>[];
+      if (rawTickets is List) {
+        for (final item in rawTickets.whereType<Map>()) {
+          tickets.add(Map<String, dynamic>.from(item));
+        }
+      }
+
+      final rawDigest = digestResult?['digest'];
+      final digest = rawDigest is Map
+          ? Map<String, dynamic>.from(rawDigest)
+          : <String, dynamic>{};
+
+      if (!mounted) return;
+      setState(() {
+        _automationDigest = digest;
+        _automationSupportTickets = tickets;
+        _automationLoading = false;
+        _automationError = null;
+      });
+    } catch (e) {
+      debugPrint('automation ops load error: $e');
+      if (!mounted) return;
+      setState(() {
+        _automationLoading = false;
+        _automationError = e.toString();
+      });
     }
   }
 
@@ -568,9 +648,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       await _supabase
           .from('feature_requests')
-          .update({'status': status})
-          .eq('id', id);
+          .update({'status': status}).eq('id', id);
       await _loadFeatureRequests();
+      await _loadAutomationOps();
       if (!mounted) return;
       // Offer to notify submitter when status changes to actionable state
       if ((status == 'done' || status == 'in_progress') &&
@@ -581,6 +661,266 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('feature request status update error: $e');
     }
+  }
+
+  Future<void> _replySupportRequest({
+    required String id,
+    String? reply,
+    required bool escalate,
+    required String newStatus,
+  }) async {
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) throw Exception('Not authenticated');
+
+      final response = await _supabase.functions.invoke(
+        'reply-support-request',
+        headers: _adminAuthHeaders(session.accessToken),
+        body: {
+          'id': id,
+          'reply': reply,
+          'escalate': escalate,
+          'newStatus': newStatus,
+        },
+      );
+      final data = response.data as Map<String, dynamic>?;
+      if (data?['success'] != true) {
+        throw Exception(data?['error']?.toString() ?? 'reply failed');
+      }
+
+      await _loadFeatureRequests();
+      await _loadAutomationOps();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            escalate ? 'チケットをエスカレーションしました' : '返信を送信しました',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('CS返信に失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showSupportReplyDialog(Map<String, dynamic> req) async {
+    final title = req['title']?.toString() ?? '(無題)';
+    final email = req['email']?.toString();
+    final existingReply = req['admin_reply']?.toString() ?? '';
+    final replyCtrl = TextEditingController(text: existingReply);
+    var selectedStatus = req['status']?.toString() ?? 'in_progress';
+
+    final action = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('CS返信: $title'),
+          content: SizedBox(
+            width: 560,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (email != null && email.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      '送信先: $email',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedStatus,
+                  decoration: const InputDecoration(
+                    labelText: '返信後ステータス',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'open', child: Text('open')),
+                    DropdownMenuItem(
+                      value: 'in_progress',
+                      child: Text('in_progress'),
+                    ),
+                    DropdownMenuItem(value: 'done', child: Text('done')),
+                    DropdownMenuItem(
+                      value: 'rejected',
+                      child: Text('rejected'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => selectedStatus = value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: replyCtrl,
+                  minLines: 6,
+                  maxLines: 10,
+                  decoration: const InputDecoration(
+                    labelText: '返信文',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                    hintText: 'ユーザーに送る返信文を入力',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, null),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, {
+                'escalate': true,
+                'status': 'in_progress',
+              }),
+              child: const Text('エスカレーション'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, {
+                'reply': replyCtrl.text.trim(),
+                'status': selectedStatus,
+              }),
+              child: const Text('返信送信'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    replyCtrl.dispose();
+    if (action == null || !mounted) return;
+    final escalate = action['escalate'] == true;
+    final reply = action['reply']?.toString().trim();
+    final newStatus = action['status']?.toString() ?? 'in_progress';
+    if (!escalate && (reply == null || reply.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('返信文を入力してください')),
+      );
+      return;
+    }
+
+    await _replySupportRequest(
+      id: req['id']?.toString() ?? '',
+      reply: reply,
+      escalate: escalate,
+      newStatus: newStatus,
+    );
+  }
+
+  String _buildDefaultXPostDraft() {
+    final digest = _automationDigest ?? <String, dynamic>{};
+    final users = digest['users'] is Map
+        ? Map<String, dynamic>.from(digest['users'] as Map)
+        : <String, dynamic>{};
+    final featureRequests = digest['featureRequests'] is Map
+        ? Map<String, dynamic>.from(digest['featureRequests'] as Map)
+        : <String, dynamic>{};
+    final totalUsers = _toInt(users['total']);
+    final newToday = _toInt(featureRequests['newToday']);
+    final openCount = _toInt(featureRequests['openCount']);
+
+    return '今日の自分株式会社\n'
+        '総ユーザー$totalUsers人、新規要望$newToday件、未対応要望$openCount件を確認。'
+        'CS自動化と改善を回し続けています。\n'
+        'https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb #Supabase';
+  }
+
+  Future<void> _postXUpdate({
+    required String text,
+    required bool dryRun,
+  }) async {
+    if (!mounted) return;
+    setState(() => _automationPostingX = true);
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) throw Exception('Not authenticated');
+
+      final response = await _supabase.functions.invoke(
+        'post-x-update',
+        headers: _adminAuthHeaders(session.accessToken),
+        body: {
+          'text': text,
+          'dryRun': dryRun,
+        },
+      );
+      final data = response.data as Map<String, dynamic>?;
+      if (data?['success'] != true) {
+        throw Exception(data?['error']?.toString() ?? 'X post failed');
+      }
+
+      if (!mounted) return;
+      final account = data?['account']?.toString() ?? '@kanta13jp1';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            dryRun ? '$account への投稿プレビューを確認しました' : '$account に投稿しました',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('X投稿に失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _automationPostingX = false);
+    }
+  }
+
+  Future<void> _showXPostDialog() async {
+    final textCtrl = TextEditingController(text: _buildDefaultXPostDraft());
+    final action = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('X投稿テスト (@kanta13jp1)'),
+        content: SizedBox(
+          width: 560,
+          child: TextField(
+            controller: textCtrl,
+            minLines: 6,
+            maxLines: 10,
+            decoration: const InputDecoration(
+              labelText: '投稿文',
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(),
+              helperText: 'プレビューは dry-run、投稿は本番アカウントへ送信します。',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('キャンセル'),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, 'preview'),
+            child: const Text('プレビュー'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'post'),
+            child: const Text('投稿'),
+          ),
+        ],
+      ),
+    );
+
+    final text = textCtrl.text.trim();
+    textCtrl.dispose();
+    if (action == null || text.isEmpty) return;
+    await _postXUpdate(text: text, dryRun: action == 'preview');
   }
 
   void _showFeatureRequestNotifyDialog(
@@ -727,7 +1067,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ],
       ),
     );
-    if (confirmed == true && subjectCtrl.text.isNotEmpty && bodyCtrl.text.isNotEmpty) {
+    if (confirmed == true &&
+        subjectCtrl.text.isNotEmpty &&
+        bodyCtrl.text.isNotEmpty) {
       await _sendWaitlistNotification(
         subject: subjectCtrl.text.trim(),
         bodyHtml: bodyCtrl.text.trim(),
@@ -1125,17 +1467,21 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 24),
                     const Text(
                       '登録ユーザー管理',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     _buildAdminUsersCard(),
                     const SizedBox(height: 24),
                     const Text(
-                      '機能リクエスト・ウェイトリスト',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      '機能リクエスト・自動化・ウェイトリスト',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureRequestsAdminCard(),
+                    const SizedBox(height: 16),
+                    _buildAutomationOpsCard(),
                     const SizedBox(height: 16),
                     _buildWaitlistCard(),
                     const SizedBox(height: 24),
@@ -2458,38 +2804,58 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(height: 12),
               const Text(
                 'チャネル別',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                ),
               ),
               const SizedBox(height: 6),
-              ...d.channels.map((ch) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        ch.label,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF374151)),
+              ...d.channels.map(
+                (ch) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          ch.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'タッチ ${ch.touches}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '登録 ${ch.signupSubmits}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF3949AB), fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                      Text(
+                        'タッチ ${ch.touches}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '登録 ${ch.signupSubmits}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF3949AB),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),),
+              ),
             ],
             if (d.brief.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
                 d.brief,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.5),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
               ),
             ],
           ],
@@ -2511,14 +2877,24 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
           const SizedBox(height: 2),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '$value',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
               ),
               if (delta != 0) ...[
                 const SizedBox(width: 4),
@@ -2527,7 +2903,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                    color: isPositive
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
                   ),
                 ),
               ],
@@ -2756,7 +3134,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      displayName != null && displayName.isNotEmpty
+                                      displayName != null &&
+                                              displayName.isNotEmpty
                                           ? displayName
                                           : email,
                                       style: const TextStyle(
@@ -2915,7 +3294,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             else if (_featureRequests.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('リクエストはまだありません', style: TextStyle(color: Colors.grey)),
+                child:
+                    Text('リクエストはまだありません', style: TextStyle(color: Colors.grey)),
               )
             else
               ListView.separated(
@@ -2935,12 +3315,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final adminRepliedAt = req['admin_replied_at']?.toString();
                   String dateStr = createdAt;
                   try {
-                    dateStr = DateFormat('MM/dd').format(DateTime.parse(createdAt).toLocal());
+                    dateStr = DateFormat('MM/dd')
+                        .format(DateTime.parse(createdAt).toLocal());
                   } catch (_) {}
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
-                      repliedAtStr = DateFormat('MM/dd HH:mm').format(DateTime.parse(adminRepliedAt).toLocal());
+                      repliedAtStr = DateFormat('MM/dd HH:mm')
+                          .format(DateTime.parse(adminRepliedAt).toLocal());
                     } catch (_) {}
                   }
 
@@ -2957,91 +3339,338 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    ListTile(
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: index < 3 ? Colors.amber[100] : Colors.grey[100],
-                      child: Text(
-                        '$votes',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: index < 3 ? Colors.amber[800] : Colors.grey[700],
+                      ListTile(
+                        dense: true,
+                        leading: CircleAvatar(
+                          radius: 16,
+                          backgroundColor:
+                              index < 3 ? Colors.amber[100] : Colors.grey[100],
+                          child: Text(
+                            '$votes',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: index < 3
+                                  ? Colors.amber[800]
+                                  : Colors.grey[700],
+                            ),
+                          ),
+                        ),
+                        title:
+                            Text(title, style: const TextStyle(fontSize: 13)),
+                        subtitle: Row(
+                          children: [
+                            Text(dateStr, style: const TextStyle(fontSize: 11)),
+                            if (adminReply != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6366F1).withAlpha(20),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color:
+                                        const Color(0xFF6366F1).withAlpha(60),
+                                  ),
+                                ),
+                                child: Text(
+                                  'AI返信済 $repliedAtStr',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF6366F1),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: adminReply == null ? '返信する' : '返信を編集',
+                              onPressed: () => _showSupportReplyDialog(req),
+                              icon: Icon(
+                                adminReply == null
+                                    ? Icons.reply_outlined
+                                    : Icons.edit_note_outlined,
+                                size: 18,
+                                color: const Color(0xFF4338CA),
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              initialValue: status,
+                              onSelected: (newStatus) =>
+                                  _updateFeatureRequestStatus(
+                                id,
+                                newStatus,
+                                title,
+                                email,
+                              ),
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'open',
+                                  child: Text('open'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'in_progress',
+                                  child: Text('in_progress'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'done',
+                                  child: Text('done'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'rejected',
+                                  child: Text('rejected'),
+                                ),
+                              ],
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: statusColor.withAlpha(80),
+                                  ),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    title: Text(title, style: const TextStyle(fontSize: 13)),
-                    subtitle: Row(
-                      children: [
-                        Text(dateStr, style: const TextStyle(fontSize: 11)),
-                        if (adminReply != null) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      if (adminReply != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withAlpha(20),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFF6366F1).withAlpha(60)),
+                              color: const Color(0xFF6366F1).withAlpha(10),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFF6366F1).withAlpha(40),
+                              ),
                             ),
                             child: Text(
-                              'AI返信済 $repliedAtStr',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF6366F1)),
+                              'AI: $adminReply',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF4338CA),
+                              ),
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      initialValue: status,
-                      onSelected: (newStatus) => _updateFeatureRequestStatus(id, newStatus, title, email),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'open', child: Text('open')),
-                        PopupMenuItem(value: 'in_progress', child: Text('in_progress')),
-                        PopupMenuItem(value: 'done', child: Text('done')),
-                        PopupMenuItem(value: 'rejected', child: Text('rejected')),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: statusColor.withAlpha(30),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: statusColor.withAlpha(80)),
                         ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: statusColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                    if (adminReply != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withAlpha(10),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFF6366F1).withAlpha(40)),
-                          ),
-                          child: Text(
-                            'AI: $adminReply',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA)),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
+                    ],
+                  );
                 },
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAutomationOpsCard() {
+    final digest = _automationDigest ?? <String, dynamic>{};
+    final users = digest['users'] is Map
+        ? Map<String, dynamic>.from(digest['users'] as Map)
+        : <String, dynamic>{};
+    final featureRequests = digest['featureRequests'] is Map
+        ? Map<String, dynamic>.from(digest['featureRequests'] as Map)
+        : <String, dynamic>{};
+    final recentAchievements =
+        digest['recentAchievements'] as List? ?? const [];
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: Color(0xFF4338CA)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '自動化オペレーション',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (_automationLoading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: _automationPostingX ? null : _showXPostDialog,
+                    icon: const Icon(Icons.send, size: 16),
+                    label: Text(_automationPostingX ? '投稿中...' : 'X投稿テスト'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF4338CA),
+                    ),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _loadAutomationOps,
+                  tooltip: '更新',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Claude Schedule の定期実行に合わせた CS キューと日次ダイジェストをここで手動確認できます。',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            if (_automationError != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(18),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withAlpha(50)),
+                ),
+                child: Text(
+                  _automationError!,
+                  style: const TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              )
+            else ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildAutomationMetricChip(
+                    label: '総ユーザー',
+                    value: '${_toInt(users['total'])}人',
+                    color: Colors.indigo,
+                  ),
+                  _buildAutomationMetricChip(
+                    label: '新規要望',
+                    value: '${_toInt(featureRequests['newToday'])}件',
+                    color: Colors.orange,
+                  ),
+                  _buildAutomationMetricChip(
+                    label: '未対応要望',
+                    value: '${_toInt(featureRequests['openCount'])}件',
+                    color: Colors.blue,
+                  ),
+                  _buildAutomationMetricChip(
+                    label: '直近実績',
+                    value: '${recentAchievements.length}件',
+                    color: Colors.green,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'CSキュー (${_automationSupportTickets.length}件)',
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              if (_automationSupportTickets.isEmpty)
+                const Text(
+                  '未返信チケットはありません',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _automationSupportTickets.length > 5
+                      ? 5
+                      : _automationSupportTickets.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final ticket = _automationSupportTickets[index];
+                    final title = ticket['title']?.toString() ?? '(無題)';
+                    final votes = _toInt(ticket['votes']);
+                    final email = ticket['email']?.toString();
+                    return ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 14,
+                        backgroundColor: Colors.indigo.withAlpha(18),
+                        child: Text(
+                          '$votes',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF4338CA),
+                          ),
+                        ),
+                      ),
+                      title: Text(title, style: const TextStyle(fontSize: 12)),
+                      subtitle: Text(
+                        email == null || email.isEmpty ? 'メール未登録' : email,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () => _showSupportReplyDialog(ticket),
+                        child: const Text('返信'),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAutomationMetricChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withAlpha(18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withAlpha(50)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -3062,7 +3691,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 Expanded(
                   child: Text(
                     'メールウェイトリスト (${_waitlistEmails.length}件)',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 if (_sendingNotification)
@@ -3073,7 +3705,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   )
                 else
                   TextButton.icon(
-                    onPressed: _waitlistEmails.isEmpty ? null : _showNotificationComposeDialog,
+                    onPressed: _waitlistEmails.isEmpty
+                        ? null
+                        : _showNotificationComposeDialog,
                     icon: const Icon(Icons.send, size: 16),
                     label: const Text('通知送信'),
                     style: TextButton.styleFrom(foregroundColor: Colors.indigo),
@@ -3118,9 +3752,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
                   return ListTile(
                     dense: true,
-                    leading: const Icon(Icons.person_outline, size: 20, color: Colors.indigo),
+                    leading: const Icon(
+                      Icons.person_outline,
+                      size: 20,
+                      color: Colors.indigo,
+                    ),
                     title: Text(email, style: const TextStyle(fontSize: 13)),
-                    subtitle: Text('$source  $dateStr', style: const TextStyle(fontSize: 11)),
+                    subtitle: Text(
+                      '$source  $dateStr',
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   );
                 },
               ),
