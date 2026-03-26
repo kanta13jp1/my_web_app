@@ -487,6 +487,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadWaitlist();
     _loadAdminUsers();
     _loadAutomationOps();
+    _loadBlogPosts();
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -4069,9 +4070,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildBlogPostsCard() {
-    if (_blogPosts.isEmpty && !_blogPostsLoading) {
-      _loadBlogPosts();
-    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Color statusColor(String status) {
