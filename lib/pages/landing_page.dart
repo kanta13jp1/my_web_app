@@ -1245,6 +1245,7 @@ $input
       (key: 'google', name: 'Google', emoji: '🔍', color: Color(0xFF4285F4)),
       (key: 'microsoft', name: 'Microsoft', emoji: '🪟', color: Color(0xFF00A4EF)),
       (key: 'discord', name: 'Discord', emoji: '🎮', color: Color(0xFF5865F2)),
+      (key: 'line', name: 'LINE', emoji: '💚', color: Color(0xFF06C755)),
     ];
 
     return Card(

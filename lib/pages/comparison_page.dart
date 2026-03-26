@@ -404,6 +404,26 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '完全無料 (Nitro不要)', competitorHas: false, weHave: true),
     ],
   ),
+  'line': const _CompetitorInfo(
+    name: 'LINE',
+    emoji: '💚',
+    tagline: 'LINEのメッセージ機能を超えた、AI統合の個人生産性アプリ。完全無料。',
+    searchKeyword: 'LINE代替 LINEメモ代替 LINEスケジュール代替',
+    accentColor: Color(0xFF06C755),
+    painPoints: [
+      'LINEはメッセージ・通話特化で、タスク管理・資産管理・習慣化機能がほぼない',
+      'LINE VOOM・KeepメモはAI機能ゼロで、個人の生産性向上ツールとして力不足',
+      'LINEビジネス機能 (LINE公式アカウント等) は月額5,000円〜と高コスト',
+    ],
+    features: [
+      _FeatureComparison(feature: 'メッセージ・通話', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'メモ・ノート (Keep相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '成長ロードマップ・自己分析', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
