@@ -4045,6 +4045,17 @@ abstinence_slip_details: $slipDetailsText
                                 lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
+                                'メール整理',
+                                Icons.mark_email_read,
+                                Colors.blue,
+                                () => Navigator.pushNamed(
+                                  context,
+                                  '/email-cleanup',
+                                ),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
                                 '断捨離 (リアル)',
                                 Icons.camera_alt,
                                 Colors.deepOrange,
