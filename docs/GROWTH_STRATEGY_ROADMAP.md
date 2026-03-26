@@ -564,7 +564,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 9. wasm build blocker の原因を特定して解消する
 10. ~~公開メモの SEO / OGP タグを強化して organic 流入を増やす~~ ✓ 完了 (SeoMetaHelper + PublicMemoDetailPage 動的 OGP 更新)
 11. B2B 向け移行代行 LP の最初のドラフトを作る
-12. はてなブログで週次 progress bar 付き成長記録を開始する
+12. ~~はてなブログで週次 progress bar 付き成長記録を開始する~~ ✓ 完了 (docs/blog-drafts/2026-03-27-hatena-weekly-growth.md)
 
 ---
 
