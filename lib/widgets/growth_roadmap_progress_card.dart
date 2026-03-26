@@ -2004,11 +2004,231 @@ const _jobcanFeatureRows = <_FeatureRow>[
   ),
 ];
 
+const _amazonFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'EC・ショッピング',
+    feature: '商品検索・購入・配送',
+    competitorDetail: '1億点以上の商品検索と即日配送 (Prime)',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — ECは対象外。個人資産管理として購入履歴管理を検討',
+  ),
+  _FeatureRow(
+    category: 'EC・ショッピング',
+    feature: 'AI 商品レコメンド',
+    competitorDetail: '閲覧・購入履歴から個別レコメンド',
+    status: _FeatureStatus.partial,
+    appDetail: 'AIアシスタントがユーザーの習慣・目標に合わせた提案を実施',
+  ),
+  _FeatureRow(
+    category: 'コンテンツ',
+    feature: 'Kindle 電子書籍・Audible',
+    competitorDetail: '電子書籍・オーディオブックの購読',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 読書記録・感想メモとして活用可能',
+  ),
+  _FeatureRow(
+    category: '生産性',
+    feature: 'Alexa AIアシスタント',
+    competitorDetail: '音声操作・スマートホーム連携',
+    status: _FeatureStatus.partial,
+    appDetail: 'テキストベースAIアシスタントとして実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: 'AI 役員会議・習慣化管理',
+    competitorDetail: '— Amazon にはない個人生産性機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'メモ・タスク・資産・習慣を統合し、AI経営コックピットとして機能',
+  ),
+];
+
+const _googleFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'メモ・ノート',
+    feature: 'Google Keep メモ',
+    competitorDetail: 'テキスト・画像・リストメモ (無料)',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdownエディタ・AIアシスト・公開メモとして実装済み',
+  ),
+  _FeatureRow(
+    category: 'タスク管理',
+    feature: 'Google Tasks / ToDo',
+    competitorDetail: 'GmailやCalendarと連携するタスク管理',
+    status: _FeatureStatus.done,
+    appDetail: '成長ミッション・断捨離・暗記ドリルなどタスク系を複数実装',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'Gemini AI (旧 Bard)',
+    competitorDetail: 'マルチモーダルAI・Workspace統合',
+    status: _FeatureStatus.done,
+    appDetail: 'Gemini大学・AIアシスタント・AI役員会議として実装済み',
+  ),
+  _FeatureRow(
+    category: '文書作成',
+    feature: 'Google Docs / Sheets',
+    competitorDetail: 'リアルタイム共同編集ドキュメント',
+    status: _FeatureStatus.partial,
+    appDetail: 'メモエディタとして部分実装。共同編集は未対応',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: '— Google に専用ツールなし',
+    status: _FeatureStatus.unique,
+    appDetail: 'MoneyForward代替として資産管理機能を実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '成長ロードマップ・競合18社超え進捗',
+    competitorDetail: '— Google にはない統合生産性機能',
+    status: _FeatureStatus.unique,
+    appDetail: '短中長期の個人目標と競合比較を一画面で可視化',
+  ),
+];
+
+const _microsoftFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'メモ・ノート',
+    feature: 'OneNote',
+    competitorDetail: 'セクション・ページ構造のノート (無料〜)',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdownエディタ・タグ・公開メモとして実装済み',
+  ),
+  _FeatureRow(
+    category: 'タスク管理',
+    feature: 'Microsoft To Do',
+    competitorDetail: 'シンプルなタスクリスト・Outlook連携',
+    status: _FeatureStatus.done,
+    appDetail: '成長ミッション・断捨離ツールとして実装済み',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'Microsoft Copilot',
+    competitorDetail: 'Office全製品に統合されたAI (上位プランのみ)',
+    status: _FeatureStatus.done,
+    appDetail: 'AIアシスタント・AI役員会議として完全無料で提供',
+  ),
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'Microsoft Teams',
+    competitorDetail: 'ビデオ会議・チャット・ファイル共有',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 個人向けコミュニケーション機能は将来検討',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: '— Microsoft に専用個人資産管理ツールなし',
+    status: _FeatureStatus.unique,
+    appDetail: '個人CFO機能として収入・支出・資産グラフを実装',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '完全無料 (365不要)',
+    competitorDetail: 'Microsoft 365 は年額14,900円〜',
+    status: _FeatureStatus.unique,
+    appDetail: '全機能を無料で提供。課金不要',
+  ),
+];
+
+const _discordFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'テキスト・音声・ビデオチャット',
+    competitorDetail: 'サーバー・チャンネルベースのリアルタイム通信',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — リアルタイム通信は将来検討',
+  ),
+  _FeatureRow(
+    category: 'コミュニティ',
+    feature: 'サーバー・コミュニティ管理',
+    competitorDetail: '最大25万人のコミュニティサーバー運営',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 個人生産性に特化した設計',
+  ),
+  _FeatureRow(
+    category: 'タスク管理',
+    feature: 'タスク・プロジェクト管理',
+    competitorDetail: '— Discord に専用タスク管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '成長ミッション・断捨離・暗記ドリルなど個人タスクを実装',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: '— Discord に財務管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '個人CFO機能として実装済み',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'AIアシスタント統合',
+    competitorDetail: 'Discord Clyde AI (限定公開)',
+    status: _FeatureStatus.done,
+    appDetail: 'AIアシスタント・AI役員会議・Gemini大学として実装済み',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '完全無料 (Nitro不要)',
+    competitorDetail: 'Discord Nitro 月額1,100円〜',
+    status: _FeatureStatus.unique,
+    appDetail: '全機能を無料で提供',
+  ),
+];
+
+const _lineFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'コミュニケーション',
+    feature: 'メッセージ・通話',
+    competitorDetail: 'LINEトーク・音声・ビデオ通話 (無料)',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — メッセージ通信は対象外',
+  ),
+  _FeatureRow(
+    category: 'メモ',
+    feature: 'LINE Keep / メモ',
+    competitorDetail: '自分宛メモ・ファイル保存 (1GB)',
+    status: _FeatureStatus.done,
+    appDetail: 'Markdownエディタ・AI要約・公開共有として大幅に上回る機能を実装',
+  ),
+  _FeatureRow(
+    category: 'タスク管理',
+    feature: 'タスク・習慣管理',
+    competitorDetail: '— LINE に専用タスク管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '成長ミッション・断捨離・暗記ドリルなど個人タスクを実装',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'AIアシスタント',
+    competitorDetail: 'LINE AIアシスタント (有料オプション)',
+    status: _FeatureStatus.done,
+    appDetail: 'AIアシスタント・AI役員会議・Gemini大学として完全無料で提供',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: 'LINE家計簿 (サービス終了)',
+    status: _FeatureStatus.unique,
+    appDetail: '個人CFO機能として収入・支出・資産グラフを実装',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '成長ロードマップ・AI経営コックピット',
+    competitorDetail: '— LINE にはない統合生産性機能',
+    status: _FeatureStatus.unique,
+    appDetail: 'メモ・タスク・資産・習慣・AIを一画面で統合管理',
+  ),
+];
+
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合13社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン) の機能一覧と
+/// 競合18社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
+/// netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン /
+/// Amazon / Google / Microsoft / Discord / LINE) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2045,6 +2265,11 @@ class _CompetitorFeatureComparisonCardState
     'Chatwork',
     'Slack',
     'ジョブカン',
+    'Amazon',
+    'Google',
+    'Microsoft',
+    'Discord',
+    'LINE',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2060,6 +2285,11 @@ class _CompetitorFeatureComparisonCardState
     _chatworkFeatureRows,
     _slackFeatureRows,
     _jobcanFeatureRows,
+    _amazonFeatureRows,
+    _googleFeatureRows,
+    _microsoftFeatureRows,
+    _discordFeatureRows,
+    _lineFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
