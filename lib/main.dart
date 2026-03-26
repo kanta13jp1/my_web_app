@@ -233,6 +233,7 @@ class MyApp extends StatelessWidget {
           case '/vs-jobcan':
           case '/vs-amazon':
           case '/vs-google':
+          case '/vs-discord':
           case '/vs-microsoft':
             return MaterialPageRoute(
               builder: (_) => ComparisonPage(

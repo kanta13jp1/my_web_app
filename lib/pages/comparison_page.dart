@@ -384,6 +384,26 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
+  'discord': const _CompetitorInfo(
+    name: 'Discord',
+    emoji: '🎮',
+    tagline: 'Discordのコミュニティ機能を超えた、個人の生産性AIアプリ。完全無料。',
+    searchKeyword: 'Discord代替 Discordコミュニティ代替',
+    accentColor: Color(0xFF5865F2),
+    painPoints: [
+      'Discordはチャット・コミュニティ特化で、個人のタスク管理や資産管理には使えない',
+      'Nitro (月額1,100円〜) がなければファイルサイズ制限や画質制限がある',
+      'メモ・習慣化・成長管理など個人の生産性向上ツールとしての機能が皆無',
+    ],
+    features: [
+      _FeatureComparison(feature: 'コミュニティ/チャット', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '完全無料 (Nitro不要)', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
