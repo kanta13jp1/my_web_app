@@ -17,6 +17,7 @@ import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/pages/public_memo_detail_page.dart';
 import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
+import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
@@ -211,6 +212,16 @@ class MyApp extends StatelessWidget {
           case '/feature-requests':
             return MaterialPageRoute(
               builder: (_) => const FeatureRequestsPage(),
+            );
+          case '/vs-notion':
+          case '/vs-evernote':
+          case '/vs-moneyforward':
+          case '/vs-slack':
+          case '/vs-chatwork':
+            return MaterialPageRoute(
+              builder: (_) => ComparisonPage(
+                competitorKey: uri.path.replaceFirst('/vs-', ''),
+              ),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

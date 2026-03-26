@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session14 (追加: LP ソーシャルプルーフ強化・移行ガイドセクション)
+最終更新: 2026-03-26 session15 (追加: 競合比較 SEO ページ群 /vs-notion 等5ルート)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -225,6 +225,10 @@
 - **LP: リアルタイム実績カード追加** (session14): `_buildSocialProofStatsSection()` を LandingPage に追加。登録ユーザー数・公開メモ数・実装済み機能数を Supabase から count クエリで取得し LIVE バッジ付きで表示。Build in Public の透明性を訴求
 - **LP: 移行ガイドセクション追加** (session14): `_buildMigrationGuideSection()` を LandingPage に追加。Notion/Evernote からの3ステップ移行手順を番号付きで可視化。インポート画面への直接 CTA ボタン付き。競合ユーザーの移行障壁を低減
 
+### 2026-03-26 session15 実装済み
+
+- **競合比較 SEO ページ群実装** (session15): `ComparisonPage` ウィジェット新規作成。`/vs-notion` / `/vs-evernote` / `/vs-moneyforward` / `/vs-slack` / `/vs-chatwork` の5ルートを追加。各ページに競合の痛点・機能比較表・移行CTA を表示。sitemap.xml に5URL追加（合計13URL）。「Notion代替」等の検索キーワードからの有機流入獲得
+
 ### 残課題
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
@@ -234,7 +238,8 @@
 - B2B 営業資料の整備開始
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
 - 機能リクエスト ステータス変更時のユーザー通知機能
-- Google Search Console へのサイトマップ再送信（8 URLs）
+- Google Search Console へのサイトマップ再送信（13 URLs）
+- 残り競合比較ページ追加（/vs-x, /vs-jobcan, /vs-claude-code 等）
 
 ---
 
