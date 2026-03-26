@@ -42,6 +42,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   late final ValueNotifier<List<Map<String, dynamic>>> _selectedEvents;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
 
   Map<String, dynamic>? _weatherData;
   late ConfettiController _confettiController;
@@ -4310,8 +4311,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         final isCompact = _useCalendarBottomSheet(context);
         final isWideSplit = !isCompact && _useWideCalendarSplit(context);
         final denseCalendar = !isCompact && constraints.maxHeight < 720;
-        final rowHeight = isCompact ? 42.0 : (denseCalendar ? 34.0 : 38.0);
-        final daysOfWeekHeight = denseCalendar ? 18.0 : 22.0;
+        final isTwoWeeks = _calendarFormat == CalendarFormat.twoWeeks;
+        final rowHeight =
+            isCompact ? 42.0 : (isTwoWeeks ? 30.0 : (denseCalendar ? 34.0 : 38.0));
+        final daysOfWeekHeight = isTwoWeeks ? 16.0 : (denseCalendar ? 18.0 : 22.0);
 
         final calendar = Container(
           width: double.infinity,
@@ -4332,7 +4335,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            calendarFormat: CalendarFormat.month,
+            calendarFormat: _calendarFormat,
+            availableCalendarFormats: const {
+              CalendarFormat.month: '月',
+              CalendarFormat.twoWeeks: '2週',
+              CalendarFormat.week: '週',
+            },
+            onFormatChanged: (format) {
+              if (_calendarFormat != format) {
+                setState(() => _calendarFormat = format);
+              }
+            },
             rowHeight: rowHeight,
             daysOfWeekHeight: daysOfWeekHeight,
             sixWeekMonthsEnforced: false,
@@ -4343,8 +4356,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               canMarkersOverflow: false,
               markersMaxCount: 1,
               cellMargin: EdgeInsets.symmetric(
-                horizontal: denseCalendar ? 1.5 : 2.5,
-                vertical: denseCalendar ? 1.5 : 2.5,
+                horizontal: isTwoWeeks ? 1.0 : (denseCalendar ? 1.5 : 2.5),
+                vertical: isTwoWeeks ? 1.0 : (denseCalendar ? 1.5 : 2.5),
               ),
               todayDecoration: BoxDecoration(
                 color: Colors.orange.shade200,
@@ -4359,30 +4372,40 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 shape: BoxShape.circle,
               ),
               defaultTextStyle: TextStyle(
-                fontSize: denseCalendar ? 13 : 14,
+                fontSize: isTwoWeeks ? 12 : (denseCalendar ? 13 : 14),
               ),
               weekendTextStyle: TextStyle(
-                fontSize: denseCalendar ? 13 : 14,
+                fontSize: isTwoWeeks ? 12 : (denseCalendar ? 13 : 14),
               ),
             ),
             daysOfWeekStyle: DaysOfWeekStyle(
               weekdayStyle: TextStyle(
-                fontSize: denseCalendar ? 11 : 12,
+                fontSize: isTwoWeeks ? 10 : (denseCalendar ? 11 : 12),
                 fontWeight: FontWeight.w600,
               ),
               weekendStyle: TextStyle(
-                fontSize: denseCalendar ? 11 : 12,
+                fontSize: isTwoWeeks ? 10 : (denseCalendar ? 11 : 12),
                 fontWeight: FontWeight.w600,
               ),
             ),
             headerStyle: HeaderStyle(
-              formatButtonVisible: false,
+              formatButtonVisible: true,
+              formatButtonShowsNext: false,
+              formatButtonDecoration: BoxDecoration(
+                border: Border.all(color: Colors.indigo.shade200),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              formatButtonTextStyle: TextStyle(
+                fontSize: 11,
+                color: Colors.indigo.shade700,
+                fontWeight: FontWeight.w600,
+              ),
               titleCentered: true,
               headerPadding: EdgeInsets.symmetric(
-                vertical: denseCalendar ? 2 : 6,
+                vertical: isTwoWeeks ? 2 : (denseCalendar ? 2 : 6),
               ),
               titleTextStyle: TextStyle(
-                fontSize: denseCalendar ? 16 : 18,
+                fontSize: isTwoWeeks ? 14 : (denseCalendar ? 16 : 18),
                 fontWeight: FontWeight.w700,
               ),
               leftChevronMargin: EdgeInsets.zero,
