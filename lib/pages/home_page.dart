@@ -4149,6 +4149,15 @@ abstinence_slip_details: $slipDetailsText
                                         : null,
                               ),
                               _MenuData(
+                                '支払いリマインダー',
+                                Icons.payments,
+                                Colors.deepPurple,
+                                () => Navigator.pushNamed(
+                                  context,
+                                  '/payment-reminders',
+                                ),
+                              ),
+                              _MenuData(
                                 '健康管理 (CHO)',
                                 Icons.medical_services,
                                 Colors.teal,
