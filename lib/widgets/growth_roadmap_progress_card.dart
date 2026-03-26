@@ -2080,7 +2080,7 @@ const _googleFeatureRows = <_FeatureRow>[
   ),
   _FeatureRow(
     category: '自分株式会社 独自機能',
-    feature: '成長ロードマップ・競合18社超え進捗',
+    feature: '成長ロードマップ・競合19社超え進捗',
     competitorDetail: '— Google にはない統合生産性機能',
     status: _FeatureStatus.unique,
     appDetail: '短中長期の個人目標と競合比較を一画面で可視化',
@@ -2222,13 +2222,58 @@ const _lineFeatureRows = <_FeatureRow>[
   ),
 ];
 
+const _facebookFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'SNS・コミュニティ',
+    feature: 'ニュースフィード・投稿・いいね',
+    competitorDetail: '30億人が利用するソーシャルネットワーク',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — SNS機能は対象外。公開メモのシェアリンクで代替可能',
+  ),
+  _FeatureRow(
+    category: 'SNS・コミュニティ',
+    feature: 'グループ・コミュニティ管理',
+    competitorDetail: '共通の関心を持つグループ作成・管理',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 個人生産性に特化した設計',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'Meta AI (Llama ベース)',
+    competitorDetail: 'Facebook/Instagram/WhatsApp に統合されたAI',
+    status: _FeatureStatus.done,
+    appDetail: 'AIアシスタント・AI役員会議・Gemini大学として実装済み',
+  ),
+  _FeatureRow(
+    category: 'メモ・ノート',
+    feature: 'メモ・ノート管理',
+    competitorDetail: '— Facebookに専用メモ機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: 'Markdownエディタ・AI要約・公開共有・タグ管理を実装',
+  ),
+  _FeatureRow(
+    category: '資産管理',
+    feature: '家計・資産管理',
+    competitorDetail: '— Facebookに個人財務管理機能なし',
+    status: _FeatureStatus.unique,
+    appDetail: '個人CFO機能として収入・支出・資産グラフを実装',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '広告なし・プライバシー保護・完全無料',
+    competitorDetail: 'Facebookは個人データを広告に活用',
+    status: _FeatureStatus.unique,
+    appDetail: '広告なし・個人データの第三者提供なし・全機能無料',
+  ),
+];
+
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合18社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
+/// 競合19社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
 /// netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン /
-/// Amazon / Google / Microsoft / Discord / LINE) の機能一覧と
+/// Amazon / Google / Microsoft / Discord / LINE / Facebook) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2270,6 +2315,7 @@ class _CompetitorFeatureComparisonCardState
     'Microsoft',
     'Discord',
     'LINE',
+    'Facebook',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2290,6 +2336,7 @@ class _CompetitorFeatureComparisonCardState
     _microsoftFeatureRows,
     _discordFeatureRows,
     _lineFeatureRows,
+    _facebookFeatureRows,
   ];
 
   String _filterCategory = 'すべて';

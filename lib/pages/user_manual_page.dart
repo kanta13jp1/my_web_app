@@ -27,11 +27,11 @@ class UserManualPage extends StatelessWidget {
             '【画面上部（スクロール不要）】\n'
             '・プロフィール未設定の場合は「プロフィールを完成させましょう」バナーが表示されます。'
             '「設定する」をタップするとプロフィール設定画面へ移動します。\n'
-            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合18社'
+            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合19社'
             '（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba'
-            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE）'
+            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE/Facebook）'
             'への進捗バーをリアルタイム表示。\n'
-            '・「競合機能比較」カード: 競合18製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
+            '・「競合機能比較」カード: 競合19製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
             '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
             '・CEO OFFICE — 朝のブリーフィング・AI緊急役員会議\n'
@@ -116,7 +116,7 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('4. 競合18製品を上回る独自機能', textColor),
+          _buildSectionTitle('4. 競合19製品を上回る独自機能', textColor),
           _buildContent(
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「AI組織OS」をタップ。\n'
@@ -158,7 +158,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('6. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
             '【GROWTH ROADMAP カード（ホーム画面上部）】\n'
-            '短期・中期・長期計画と競合18社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
+            '短期・中期・長期計画と競合19社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
             '【開発・成長実績カード】\n'
             'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近2週間など）。\n'
             '「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
@@ -167,9 +167,9 @@ class UserManualPage extends StatelessWidget {
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
-            '競合18社（Notion〜LINE）の機能一覧と本サービスの実装状況を確認できます。\n\n'
+            '競合19社（Notion〜Facebook）の機能一覧と本サービスの実装状況を確認できます。\n\n'
             '【競合比較ページ（SEO対応）】\n'
-            'アドレスバーに /vs-notion, /vs-line, /vs-google など18社分の比較ページが用意されています。',
+            'アドレスバーに /vs-notion, /vs-line, /vs-google など19社分の比較ページが用意されています。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -312,7 +312,7 @@ class UserManualPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'メモ・タスク・資産・習慣をすべて一元管理し、AIの力で自己実現をサポートする統合プラットフォームです。'
-            'Notion・Evernote・MoneyForward・LINE・Discord など18の競合サービスを超える機能を完全無料で提供します。',
+            'Notion・Evernote・MoneyForward・LINE・Facebook など19の競合サービスを超える機能を完全無料で提供します。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
         ],

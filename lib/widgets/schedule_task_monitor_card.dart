@@ -31,7 +31,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
     _TaskDef('pr-auto-review', 'PRコードレビュー', '3時間毎', Icons.rate_review),
     _TaskDef(
       'competitor-monitoring',
-      '競合18社モニタリング',
+      '競合19社モニタリング',
       '毎日 07:00',
       Icons.monitor,
     ),

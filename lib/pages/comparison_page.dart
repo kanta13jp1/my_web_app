@@ -424,6 +424,26 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '成長ロードマップ・自己分析', competitorHas: false, weHave: true),
     ],
   ),
+  'facebook': const _CompetitorInfo(
+    name: 'Facebook',
+    emoji: '👥',
+    tagline: 'Facebookのソーシャル機能を超えた、AI統合の個人生産性アプリ。完全無料。',
+    searchKeyword: 'Facebook代替 Facebook個人管理代替 Meta代替',
+    accentColor: Color(0xFF1877F2),
+    painPoints: [
+      'Facebookはソーシャル・広告に特化し、個人の生産性管理・メモ・資産管理機能がない',
+      'プライバシー問題・個人データの広告活用への懸念が根強く、機密情報を書けない',
+      'Facebookメモ・グループ機能は基本的で、AI活用・習慣化管理ツールとしては力不足',
+    ],
+    features: [
+      _FeatureComparison(feature: 'SNS・コミュニティ', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'AIアシスタント (Meta AI)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '広告なし・完全無料・プライバシー保護', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
