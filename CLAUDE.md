@@ -85,12 +85,34 @@ AIとして、上記データを踏まえた優先対応事項を3点提案す�
 特に投票数の多い機能リクエストや、ユーザー成長に繋がるアクションを優先。
 ```
 
-#### Step 3: コミット
+#### Step 3: X (Twitter) に投稿
+
+直近24時間の `git log --oneline` を確認し、ユーザーに価値のある変更があれば X に投稿する。
+
+投稿文のルール:
+
+- 140字以内
+- カジュアルで前向きなトーン
+- ハッシュタグ: `#buildinpublic #FlutterWeb #Supabase` から2〜3個
+- ユーザー数の変化や新機能を含める
+
+```http
+POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+Content-Type: application/json
+{ "text": "<生成した投稿文>" }
+```
+
+変更がない日や投稿不要と判断した場合はスキップ可。
+
+#### Step 4: コミット
 
 作成したファイルをコミットする:
+
 ```bash
 git add docs/daily-reports/YYYY-MM-DD.md
 git commit -m "自動: 日次レポート YYYY-MM-DD"
+git push origin main
 ```
 
 ---
