@@ -1226,6 +1226,111 @@ $input
     );
   }
 
+  Widget _buildComparisonLinksSection() {
+    const competitors = [
+      (key: 'notion', name: 'Notion', emoji: '📝', color: Color(0xFF1F2937)),
+      (key: 'evernote', name: 'Evernote', emoji: '🐘', color: Color(0xFF00A82D)),
+      (key: 'moneyforward', name: 'MoneyForward', emoji: '💰', color: Color(0xFF0D47A1)),
+      (key: 'x', name: 'X (Twitter)', emoji: '𝕏', color: Color(0xFF1C1C1E)),
+      (key: 'animaworks', name: 'Animaworks', emoji: '🎯', color: Color(0xFFFF6B35)),
+      (key: 'claude-code', name: 'Claude Code', emoji: '🤖', color: Color(0xFFD97706)),
+      (key: 'codex', name: 'Codex', emoji: '⚡', color: Color(0xFF10B981)),
+      (key: 'netkeiba', name: 'netkeiba', emoji: '🐎', color: Color(0xFF7C3AED)),
+      (key: 'openclaw', name: 'OpenClaw', emoji: '🦾', color: Color(0xFF0EA5E9)),
+      (key: 'claude-cowork', name: 'Claude Cowork', emoji: '🏛️', color: Color(0xFF6366F1)),
+      (key: 'chatwork', name: 'Chatwork', emoji: '🏢', color: Color(0xFFE53935)),
+      (key: 'slack', name: 'Slack', emoji: '💬', color: Color(0xFF4A154B)),
+      (key: 'jobcan', name: 'ジョブカン', emoji: '📋', color: Color(0xFF059669)),
+    ];
+
+    return Card(
+      key: const Key('landing_comparison_links'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.compare_arrows,
+                    color: Color(0xFF3949AB),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '他サービスからの移行比較',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '気になる競合と機能を比較してみましょう',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: competitors.map((c) {
+                return InkWell(
+                  onTap: () => Navigator.of(context).pushNamed('/vs-${c.key}'),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: c.color.withAlpha(15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: c.color.withAlpha(60)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(c.emoji, style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'vs ${c.name}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: c.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPvSection() {
     final fmt = NumberFormat('#,###');
     final labelInterval =
@@ -2578,6 +2683,8 @@ $input
                   _buildSocialProofStatsSection(),
                   const SizedBox(height: 20),
                   _buildMigrationGuideSection(),
+                  const SizedBox(height: 20),
+                  _buildComparisonLinksSection(),
                   const SizedBox(height: 20),
                   _buildPricingComparisonSection(),
                   const SizedBox(height: 20),

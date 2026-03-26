@@ -241,6 +241,12 @@
 
 - **競合比較 SEO ページ全13社対応完了** (session17): `ComparisonPage` に X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude Cowork / ジョブカン の8社を追加。`/vs-x` / `/vs-animaworks` / `/vs-claude-code` / `/vs-codex` / `/vs-netkeiba` / `/vs-openclaw` / `/vs-claude-cowork` / `/vs-jobcan` の8ルートを `main.dart` に追加。sitemap.xml に8URL追加（合計21URL）。全13競合の検索キーワードから有機流入を獲得
 
+### 2026-03-26 session18 実装済み
+
+- **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
+- **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
+- **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
+
 ### 残課題
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
@@ -251,6 +257,8 @@
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
 - 機能リクエスト ステータス変更時のユーザー通知機能
 - Google Search Console へのサイトマップ再送信（21 URLs）
+- 各比較ページへの個別OGP画像生成
+- 比較ページ経由の登録CVRトラッキング
 
 ---
 
