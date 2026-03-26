@@ -27,6 +27,7 @@ import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
+import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -261,6 +262,10 @@ class MyApp extends StatelessWidget {
           case '/activity-feed':
             return MaterialPageRoute(
               builder: (_) => const ActivityFeedPage(),
+            );
+          case '/rewards':
+            return MaterialPageRoute(
+              builder: (_) => const RewardsPage(),
             );
           case '/vs-liven':
           case '/vs-github':
