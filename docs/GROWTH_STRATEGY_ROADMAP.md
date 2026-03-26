@@ -1,9 +1,9 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-27 session26 (追加: Google・Microsoft を第15・16競合として追加、growth_plans テーブルに登録)
+最終更新: 2026-03-27 session27 (追加: Discord を第17競合として追加)
 現時点の登録者数: 4人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -42,6 +42,7 @@
 - Amazon: ~310,000,000 active customer accounts 規模 (グローバル EC・AI・コンテンツ)
 - Google: ~4,300,000,000 users 規模 (Google Workspace・Search・Android・YouTube・Cloud)
 - Microsoft: ~1,500,000,000 users 規模 (Microsoft 365・Windows・Azure・LinkedIn・GitHub)
+- Discord: ~200,000,000 monthly active users 規模 (ゲーム・コミュニティ・ボイスチャット・サーバー管理)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -58,7 +59,7 @@
 - Slack: 世界的シェアを誇るビジネスチャット・連携プラットフォーム (~6,500 万ユーザー)
 - ジョブカン: 導入実績 25 万社を超える国内シェアトップクラスのバックオフィスシステム (~500 万ユーザー推定)
 
-自分株式会社 はこれら 16 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 17 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
