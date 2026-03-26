@@ -1,0 +1,180 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// ログイン継続日数（ストリーク）カード。
+/// SharedPreferences でローカル管理し、毎日アクセスすることを促す。
+/// ストリークが途切れた場合でも再スタートを促す。
+class LoginStreakCard extends StatefulWidget {
+  const LoginStreakCard({super.key});
+
+  @override
+  State<LoginStreakCard> createState() => _LoginStreakCardState();
+}
+
+class _LoginStreakCardState extends State<LoginStreakCard> {
+  int _streak = 0;
+  int _bestStreak = 0;
+
+  static const _keyLastDate = 'login_streak_last_date';
+  static const _keyStreak = 'login_streak_count';
+  static const _keyBest = 'login_streak_best';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStreak();
+  }
+
+  Future<void> _updateStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = _dateKey(DateTime.now());
+    final lastDate = prefs.getString(_keyLastDate) ?? '';
+    final streak = prefs.getInt(_keyStreak) ?? 0;
+    final best = prefs.getInt(_keyBest) ?? 0;
+
+    int newStreak = streak;
+
+    if (lastDate == today) {
+      // Already recorded today
+      if (!mounted) return;
+      setState(() {
+        _streak = streak;
+        _bestStreak = best;
+        // recorded
+      });
+      return;
+    }
+
+    final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1)));
+    if (lastDate == yesterday) {
+      // Consecutive day
+      newStreak = streak + 1;
+    } else if (lastDate.isEmpty) {
+      // First ever login
+      newStreak = 1;
+    } else {
+      // Streak broken
+      newStreak = 1;
+    }
+
+    final newBest = newStreak > best ? newStreak : best;
+    await prefs.setString(_keyLastDate, today);
+    await prefs.setInt(_keyStreak, newStreak);
+    await prefs.setInt(_keyBest, newBest);
+
+    if (!mounted) return;
+    setState(() {
+      _streak = newStreak;
+      _bestStreak = newBest;
+      // recorded
+    });
+  }
+
+  String _dateKey(DateTime dt) =>
+      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
+  String get _streakEmoji {
+    if (_streak >= 365) return '👑';
+    if (_streak >= 100) return '🏆';
+    if (_streak >= 30) return '🔥';
+    if (_streak >= 7) return '⚡';
+    return '✨';
+  }
+
+  String get _streakLabel {
+    if (_streak >= 365) return '1年以上！伝説のユーザー';
+    if (_streak >= 100) return '100日達成！チャンピオン';
+    if (_streak >= 30) return '1ヶ月継続！素晴らしい';
+    if (_streak >= 7) return '1週間継続！順調です';
+    if (_streak >= 3) return '3日連続！いい調子';
+    return '継続は力なり！';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_streak == 0) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: isDark
+              ? const Color(0xFF7C3AED).withAlpha(60)
+              : const Color(0xFFDDD6FE),
+        ),
+      ),
+      color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFF5F3FF),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF7C3AED).withAlpha(isDark ? 40 : 20),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  _streakEmoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '$_streak日連続アクセス中',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? const Color(0xFFDDD6FE)
+                              : const Color(0xFF4C1D95),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _streakLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_bestStreak > _streak)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    '最高記録',
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                  Text(
+                    '$_bestStreak日',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF7C3AED),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

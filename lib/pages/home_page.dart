@@ -60,6 +60,7 @@ import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/daily_motivation_card.dart';
 import '../widgets/daily_challenge_card.dart';
 import '../widgets/welcome_new_user_card.dart';
+import '../widgets/login_streak_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3863,6 +3864,8 @@ abstinence_slip_details: $slipDetailsText
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                             ],
+                            const LoginStreakCard(),
+                            const SizedBox(height: 8),
                             const ProfileCompletionBanner(),
                             const ReferralShareCard(),
                             const GrowthRoadmapProgressCard(),

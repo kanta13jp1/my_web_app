@@ -27,11 +27,11 @@ class UserManualPage extends StatelessWidget {
             '【画面上部（スクロール不要）】\n'
             '・プロフィール未設定の場合は「プロフィールを完成させましょう」バナーが表示されます。'
             '「設定する」をタップするとプロフィール設定画面へ移動します。\n'
-            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合20社'
+            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合21社'
             '（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba'
-            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE/Facebook/Liven）'
+            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE/Facebook/Liven/GitHub）'
             'への進捗バーをリアルタイム表示。\n'
-            '・「競合機能比較」カード: 競合20製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
+            '・「競合機能比較」カード: 競合21製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
             '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n'
             '・「今日の名言」カード: 哲学者の名言が毎日更新されます。X へのシェアや画像URLのコピーが可能です。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
@@ -117,7 +117,7 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('4. 競合20製品を上回る独自機能', textColor),
+          _buildSectionTitle('4. 競合21製品を上回る独自機能', textColor),
           _buildContent(
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「AI組織OS」をタップ。\n'
@@ -171,9 +171,9 @@ class UserManualPage extends StatelessWidget {
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
-            '競合20社（Notion〜Liven）の機能一覧と本サービスの実装状況を確認できます。\n\n'
+            '競合21社（Notion〜GitHub）の機能一覧と本サービスの実装状況を確認できます。\n\n'
             '【競合比較ページ（SEO対応）】\n'
-            'アドレスバーに /vs-notion, /vs-line, /vs-liven など20社分の比較ページが用意されています。',
+            'アドレスバーに /vs-notion, /vs-line, /vs-liven, /vs-github など21社分の比較ページが用意されています。',
             subColor,
           ),
           const SizedBox(height: 24),
