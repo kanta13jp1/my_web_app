@@ -1242,6 +1242,8 @@ $input
       (key: 'slack', name: 'Slack', emoji: '💬', color: Color(0xFF4A154B)),
       (key: 'jobcan', name: 'ジョブカン', emoji: '📋', color: Color(0xFF059669)),
       (key: 'amazon', name: 'Amazon', emoji: '📦', color: Color(0xFFFF9900)),
+      (key: 'google', name: 'Google', emoji: '🔍', color: Color(0xFF4285F4)),
+      (key: 'microsoft', name: 'Microsoft', emoji: '🪟', color: Color(0xFF00A4EF)),
     ];
 
     return Card(

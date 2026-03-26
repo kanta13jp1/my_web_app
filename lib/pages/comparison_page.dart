@@ -344,6 +344,46 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
+  'google': const _CompetitorInfo(
+    name: 'Google',
+    emoji: '🔍',
+    tagline: 'Google Workspace・Keep・Tasks・カレンダーを1つに。完全無料の自分株式会社。',
+    searchKeyword: 'Google代替 GoogleKeep代替 GoogleWorkspace代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      'Google Keep・Tasks・Calendar・Docsがバラバラで横断的な生産性管理ができない',
+      'Google Workspace は月額680円〜、ビジネス向けは月額1,360円〜とコストが増える',
+      'メモ・タスク・カレンダー・資産管理を一元化できるツールがGoogleにはない',
+    ],
+    features: [
+      _FeatureComparison(feature: 'AIアシスタント (Gemini相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: 'メモ・ノート管理 (Keep相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: 'タスク・ToDo管理 (Tasks相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '広告なし・完全無料', competitorHas: false, weHave: true),
+    ],
+  ),
+  'microsoft': const _CompetitorInfo(
+    name: 'Microsoft',
+    emoji: '🪟',
+    tagline: 'OneNote・To Do・Copilot を1つに。完全無料の自分株式会社。',
+    searchKeyword: 'Microsoft代替 OneNote代替 MicrosoftToDo代替 Copilot代替',
+    accentColor: Color(0xFF00A4EF),
+    painPoints: [
+      'OneNote・To Do・Teams・Outlookがサイロ化しており統合的なライフ管理ができない',
+      'Microsoft 365 Personal は年額14,900円、Business Basic は月額750円〜と高コスト',
+      'AIコパイロット機能は上位プランに限定されており個人ユーザーには敷居が高い',
+    ],
+    features: [
+      _FeatureComparison(feature: 'AIアシスタント (Copilot相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: 'ノート管理 (OneNote相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: 'タスク管理 (To Do相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------

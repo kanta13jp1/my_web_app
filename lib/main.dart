@@ -232,6 +232,8 @@ class MyApp extends StatelessWidget {
           case '/vs-claude-cowork':
           case '/vs-jobcan':
           case '/vs-amazon':
+          case '/vs-google':
+          case '/vs-microsoft':
             return MaterialPageRoute(
               builder: (_) => ComparisonPage(
                 competitorKey: uri.path.replaceFirst('/vs-', ''),
