@@ -18,6 +18,7 @@ import 'package:my_web_app/pages/memory_drill_page.dart';
 import 'package:my_web_app/pages/morning_briefing_page.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
+import 'package:my_web_app/pages/activity_feed_page.dart';
 import 'package:my_web_app/pages/public_memo_detail_page.dart';
 import 'package:my_web_app/pages/public_memo_directory_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
@@ -257,6 +258,10 @@ class MyApp extends StatelessWidget {
           case '/vs-microsoft':
           case '/vs-line':
           case '/vs-facebook':
+          case '/activity-feed':
+            return MaterialPageRoute(
+              builder: (_) => const ActivityFeedPage(),
+            );
           case '/vs-liven':
           case '/vs-github':
             return MaterialPageRoute(

@@ -3875,6 +3875,8 @@ abstinence_slip_details: $slipDetailsText
                             _UserManualBanner(),
                             const SizedBox(height: 10),
                             const DevelopmentAchievementsCard(),
+                            const SizedBox(height: 6),
+                            _ActivityFeedBanner(),
                             const SizedBox(height: 10),
                             const BlogPostSummaryCard(),
                             const SizedBox(height: 10),
@@ -6525,6 +6527,58 @@ class _CalendarDayStatus {
 
 // ---------------------------------------------------------------------------
 // User manual banner
+// ---------------------------------------------------------------------------
+
+class _ActivityFeedBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.of(context).pushNamed('/activity-feed'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.teal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.dynamic_feed_outlined,
+                size: 18,
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'アクティビティフィード',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.teal,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: Colors.teal),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 class _UserManualBanner extends StatelessWidget {
