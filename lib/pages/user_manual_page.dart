@@ -27,18 +27,19 @@ class UserManualPage extends StatelessWidget {
             '【画面上部（スクロール不要）】\n'
             '・プロフィール未設定の場合は「プロフィールを完成させましょう」バナーが表示されます。'
             '「設定する」をタップするとプロフィール設定画面へ移動します。\n'
-            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合19社'
+            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合20社'
             '（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba'
-            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE/Facebook）'
+            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE/Facebook/Liven）'
             'への進捗バーをリアルタイム表示。\n'
-            '・「競合機能比較」カード: 競合19製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
-            '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n\n'
+            '・「競合機能比較」カード: 競合20製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
+            '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n'
+            '・「今日の名言」カード: 哲学者の名言が毎日更新されます。X へのシェアや画像URLのコピーが可能です。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
-            '・CEO OFFICE — 朝のブリーフィング・AI緊急役員会議\n'
-            '・CFO OFFICE — 財務管理・資産グラフ\n'
-            '・CMO/CKO OFFICE — メモ一覧・AI組織OS・Gemini大学\n'
-            '・CSO OFFICE — 禁欲ガード・断捨離・暗記ドリル\n'
-            '・GROWTH — インポート・成長ミッション・公開メモ一覧\n\n'
+            '・CEO OFFICE — 緊急役員会議・朝のブリーフィング\n'
+            '・CFO/CHO/CHRO OFFICE — 財務管理・健康管理・人事厚生\n'
+            '・CMO/CKO OFFICE — メモ一覧・AI組織OS・Gemini大学・行動・発言レビュー\n'
+            '・CSO OFFICE — 禁欲ガード・断捨離・暗記ドリル・思考アンカー\n'
+            '・GROWTH / 成長導線 — インポート・成長ミッション・公開メモ一覧・ブログ投稿管理\n\n'
             '※ 各セクション内のグリッドボタン（例: 「財務管理 (CFO)」「新規事業起案」）をタップして各機能を開きます。',
             subColor,
           ),
@@ -111,12 +112,12 @@ class UserManualPage extends StatelessWidget {
             '1. .md ファイルまたは .txt ファイルを用意\n'
             '2. インポート画面で「ファイルを選択」→ファイルを選択\n'
             '3.「インポート開始」をタップ\n\n'
-            '※ インポート後はホーム画面「CMO/CKO OFFICE」→「メモ一覧」でデータを確認できます。',
+            '※ インポート後は「CMO/CKO OFFICE」→「メモ一覧 (CKO)」でデータを確認できます。',
             subColor,
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('4. 競合19製品を上回る独自機能', textColor),
+          _buildSectionTitle('4. 競合20製品を上回る独自機能', textColor),
           _buildContent(
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「AI組織OS」をタップ。\n'
@@ -126,16 +127,19 @@ class UserManualPage extends StatelessWidget {
             '忘却曲線に基づいた最適タイミングで復習を促します。\n'
             'メモエディタの「記憶ドリルに追加」ボタンで教材を登録できます。\n\n'
             '【財務管理・資産管理 (CFO)】\n'
-            'ホーム画面を下にスクロール →「CFO/CHO/CHRO OFFICE」セクション →「財務管理 (CFO)」をタップ。\n'
+            'ホーム画面「CFO/CHO/CHRO OFFICE」セクション →「財務管理 (CFO)」をタップ。\n'
             '収入・支出・資産を記録すると資産グラフに自動反映されます。\n\n'
             '【禁欲ガード】\n'
             'ホーム画面「CSO OFFICE」セクション →「禁欲ガード」をタップ。\n\n'
             '【断捨離ツール】\n'
-            'ホーム画面「CSO OFFICE」セクション →「断捨離」をタップ。\n\n'
-            '【行動レビュー】\n'
-            'ホーム画面「CEO OFFICE」セクション →「行動レビュー」をタップ。\n\n'
+            'ホーム画面「CSO OFFICE」セクション →「断捨離 (デジタル)」または「断捨離 (リアル)」をタップ。\n\n'
+            '【行動・発言レビュー】\n'
+            'ホーム画面「CMO/CKO OFFICE」セクション →「行動・発言レビュー」をタップ。\n\n'
             '【思考アンカー】\n'
-            'ホーム画面「CEO OFFICE」セクション →「思考アンカー」をタップ。',
+            'ホーム画面「CSO OFFICE」セクション →「思考アンカー」をタップ。\n\n'
+            '【今日の名言・SNSシェア】\n'
+            'ホーム画面上部の「今日の名言」カード → X でシェア / リンクコピーボタンをタップ。\n'
+            '哲学者の名言を毎日1件表示し、画像付きでSNSにシェアできます。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -143,7 +147,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('5. 公開メモと共有', textColor),
           _buildContent(
             '【公開メモの作成】\n'
-            '1. ノートエディタを開く（ホーム画面「CMO/CKO OFFICE」→「新規事業起案」）\n'
+            '1. 「CMO/CKO OFFICE」セクション →「新規事業起案」をタップしてエディタを開く\n'
             '2. メモを書いたら、エディタ内の「公開」スイッチをオンにする\n'
             '3. 保存すると公開リンク（/public-memo?id=XXX）が生成されます\n\n'
             '【公開メモの一覧】\n'
@@ -158,18 +162,18 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('6. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
             '【GROWTH ROADMAP カード（ホーム画面上部）】\n'
-            '短期・中期・長期計画と競合19社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
+            '短期・中期・長期計画と競合20社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
             '【開発・成長実績カード】\n'
-            'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近2週間など）。\n'
+            'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近3ヶ月など）。\n'
             '「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
             '【成長ミッション（KPI ダッシュボード）】\n'
             'ホーム画面「GROWTH / 成長導線」セクション →「成長ミッション」をタップ。\n'
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
-            '競合19社（Notion〜Facebook）の機能一覧と本サービスの実装状況を確認できます。\n\n'
+            '競合20社（Notion〜Liven）の機能一覧と本サービスの実装状況を確認できます。\n\n'
             '【競合比較ページ（SEO対応）】\n'
-            'アドレスバーに /vs-notion, /vs-line, /vs-google など19社分の比較ページが用意されています。',
+            'アドレスバーに /vs-notion, /vs-line, /vs-liven など20社分の比較ページが用意されています。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -177,10 +181,10 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('7. AI・モーニングブリーフィング', textColor),
           _buildContent(
             '【モーニングブリーフィング】\n'
-            'ホーム画面「CEO OFFICE」セクション →「モーニングブリーフィング」をタップ。\n'
+            'ホーム画面「CEO OFFICE」セクション →「モーニング・ブリーフィング」カードをタップ。\n'
             '今日の優先事項・天気・スケジュールを AI がまとめて提示します。\n\n'
-            '【AI 緊急役員会議】\n'
-            '「CEO OFFICE」セクション →「AI緊急役員会議」ボタンをタップ。\n'
+            '【緊急役員会議】\n'
+            '「CEO OFFICE」セクション →「緊急役員会議」カードをタップ。\n'
             'AI が今日取り組むべき最重要課題を提示します。\n\n'
             '【Gemini 大学】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「Gemini大学」をタップ。\n'
@@ -215,7 +219,7 @@ class UserManualPage extends StatelessWidget {
           _buildContent(
             '毎日の技術ブログ投稿をこのアプリで管理できます。\n\n'
             '【投稿管理画面の開き方】\n'
-            '・ホーム画面を下にスクロール →「GROWTH / 成長導線」セクション →「ブログ投稿管理」をタップ\n'
+            '・ホーム画面「GROWTH / 成長導線」セクション →「ブログ投稿管理」をタップ\n'
             '・または、アドレスバーに /tech-blog-tracker を入力\n\n'
             '【対応プラットフォーム（11種類）】\n'
             'Zenn / Qiita / はてなブログ / note / Medium / dev.to / Hashnode / Substack / GitHub Pages / NOTION / X Article\n\n'
@@ -227,8 +231,8 @@ class UserManualPage extends StatelessWidget {
             '【Claude Code Schedule による自動化】\n'
             'blog-draft タスク（毎朝08:00 JST実行）が直近のコミット内容を元に\n'
             'ブログ下書きを docs/blog-drafts/ に自動生成し、blog_posts テーブルに記録します。\n'
-            '管理者ダッシュボードの「ブログ投稿管理」カードから draft → posted への\n'
-            'ステータス更新が可能です。',
+            '管理者ダッシュボード（要: 管理者権限）の「ブログ投稿管理」カードから\n'
+            'draft → posted へのステータス更新・投稿URLの記録が可能です。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -256,7 +260,10 @@ class UserManualPage extends StatelessWidget {
             'X(Twitter)・LINE・Slack などでシェアしてください。\n\n'
             '【管理者向け: スケジュールタスク監視】\n'
             'Claude Code Schedule の実行状況は管理者ダッシュボードの\n'
-            '「スケジュールタスク監視」カードで確認できます（要: 管理者権限）。',
+            '「スケジュールタスク監視」カードで確認できます（要: 管理者権限）。\n\n'
+            '【管理者ダッシュボードへのアクセス】\n'
+            'アドレスバーに /admin または管理者権限を持つアカウントでログイン後、\n'
+            'ホーム画面下部のメニューから「管理者ダッシュボード」をタップ。',
             subColor,
           ),
           const SizedBox(height: 32),
@@ -312,7 +319,7 @@ class UserManualPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'メモ・タスク・資産・習慣をすべて一元管理し、AIの力で自己実現をサポートする統合プラットフォームです。'
-            'Notion・Evernote・MoneyForward・LINE・Facebook など19の競合サービスを超える機能を完全無料で提供します。',
+            'Notion・Evernote・MoneyForward・LINE・Facebook・Liven など20の競合サービスを超える機能を完全無料で提供します。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
         ],
