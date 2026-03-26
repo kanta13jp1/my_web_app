@@ -3238,6 +3238,33 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   color: Colors.grey,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: () =>
+                                      _showUserProfileDialog(user),
+                                  icon: const Icon(
+                                    Icons.person_outline,
+                                    size: 13,
+                                  ),
+                                  label: const Text(
+                                    'プロフィール詳細',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        const Color(0xFF3949AB),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -3249,6 +3276,236 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showUserProfileDialog(Map<String, dynamic> user) {
+    final email = user['email']?.toString() ?? '';
+    final displayName = user['displayName']?.toString() ?? '';
+    final bio = user['bio']?.toString() ?? '';
+    final location = user['location']?.toString() ?? '';
+    final twitterHandle = user['twitterHandle']?.toString() ?? '';
+    final websiteUrl = user['websiteUrl']?.toString() ?? '';
+    final completionPct = _toInt(user['completionPct']);
+    final hasProfile = user['hasProfile'] as bool? ?? false;
+    final provider = user['provider']?.toString() ?? 'email';
+    final isGoogle = provider.contains('google');
+    final createdAt = user['createdAt']?.toString() ?? '';
+    final lastSignIn = user['lastSignInAt']?.toString() ?? '';
+
+    String createdStr = '';
+    String lastSignInStr = '';
+    try {
+      createdStr = DateFormat('yyyy/MM/dd HH:mm').format(
+        DateTime.parse(createdAt).toLocal(),
+      );
+    } catch (_) {}
+    try {
+      lastSignInStr = DateFormat('yyyy/MM/dd HH:mm').format(
+        DateTime.parse(lastSignIn).toLocal(),
+      );
+    } catch (_) {}
+
+    Color profileColor;
+    if (!hasProfile || completionPct < 34) {
+      profileColor = Colors.red;
+    } else if (completionPct < 67) {
+      profileColor = Colors.orange;
+    } else {
+      profileColor = Colors.green;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: isGoogle
+                  ? const Color(0xFFE8F5E9)
+                  : const Color(0xFFE8EAF6),
+              child: Text(
+                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isGoogle
+                      ? const Color(0xFF388E3C)
+                      : const Color(0xFF3949AB),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName.isNotEmpty ? displayName : email,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (displayName.isNotEmpty)
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: completionPct / 100,
+                          minHeight: 6,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            profileColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'プロフィール $completionPct%',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: profileColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                if (bio.isNotEmpty) ...[
+                  _profileFieldRow(Icons.notes_outlined, '自己紹介', bio),
+                  const SizedBox(height: 8),
+                ],
+                if (location.isNotEmpty) ...[
+                  _profileFieldRow(
+                    Icons.location_on_outlined,
+                    '場所',
+                    location,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (twitterHandle.isNotEmpty) ...[
+                  _profileFieldRow(
+                    Icons.alternate_email,
+                    'Twitter/X',
+                    '@$twitterHandle',
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (websiteUrl.isNotEmpty) ...[
+                  _profileFieldRow(
+                    Icons.link_outlined,
+                    'ウェブサイト',
+                    websiteUrl,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (!hasProfile || bio.isEmpty || location.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_outlined,
+                          size: 16,
+                          color: Colors.amber[700],
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'プロフィールが未完成です。ユーザーに入力を促してください。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.amber[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                _profileFieldRow(
+                  Icons.calendar_today_outlined,
+                  '登録日',
+                  createdStr,
+                ),
+                const SizedBox(height: 4),
+                _profileFieldRow(
+                  Icons.login_outlined,
+                  '最終ログイン',
+                  lastSignInStr,
+                ),
+                const SizedBox(height: 4),
+                _profileFieldRow(
+                  isGoogle ? Icons.g_mobiledata : Icons.email_outlined,
+                  '認証方法',
+                  isGoogle ? 'Google OAuth' : 'メール/パスワード',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileFieldRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
+          ),
+        ),
+      ],
     );
   }
 
