@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/public_memo.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/public_memo_service.dart';
+import '../utils/seo_meta_helper.dart';
 import 'landing_page.dart';
 
 class PublicMemoDetailPage extends StatefulWidget {
@@ -41,6 +42,12 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     _load();
   }
 
+  @override
+  void dispose() {
+    SeoMetaHelper.resetToDefault();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() => _isLoading = true);
     final memo = await _publicMemoService.getPublicMemoById(widget.memoId);
@@ -58,6 +65,20 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     if (!mounted) {
       return;
     }
+    // 公開メモの SEO meta タグを動的に更新
+    if (memo != null) {
+      final rawContent = memo.content ?? '';
+      final snippet = rawContent.length > 120
+          ? '${rawContent.substring(0, 120)}…'
+          : rawContent;
+      SeoMetaHelper.setPublicMemoSeo(
+        title: memo.title,
+        description: snippet,
+        url:
+            'https://my-web-app-b67f4.web.app/public-memo/${widget.memoId}',
+      );
+    }
+
     setState(() {
       _memo = memo;
       _isLiked = isLiked;
