@@ -51,6 +51,7 @@ import 'import_page.dart';
 import 'growth_mission_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
+import '../widgets/blog_post_summary_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/profile_completion_banner.dart';
@@ -3866,6 +3867,8 @@ abstinence_slip_details: $slipDetailsText
                             _UserManualBanner(),
                             const SizedBox(height: 10),
                             const DevelopmentAchievementsCard(),
+                            const SizedBox(height: 10),
+                            const BlogPostSummaryCard(),
                             const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
