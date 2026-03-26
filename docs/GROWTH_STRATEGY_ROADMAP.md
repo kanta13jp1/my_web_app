@@ -237,6 +237,10 @@
 - **ProfileCompletionBanner ウィジェット追加** (session16): `lib/widgets/profile_completion_banner.dart` を新規作成。ログインユーザーの `display_name`/`bio` が未設定の場合にインディゴ色のバナーをホーム画面に表示。「設定する」→ `/profile-settings` への CTA と「後で」ワンタップ非表示機能付き
 - **ホーム画面にプロフィール促進バナー追加** (session16): `HomePage` の WelcomeNewUserCard と GrowthRoadmapProgressCard の間に `ProfileCompletionBanner` を挿入。未設定ユーザーへのプロフィール完成促進
 
+### 2026-03-26 session17 実装済み
+
+- **競合比較 SEO ページ全13社対応完了** (session17): `ComparisonPage` に X / Animaworks / Claude Code / Codex / netkeiba / OpenClaw / Claude Cowork / ジョブカン の8社を追加。`/vs-x` / `/vs-animaworks` / `/vs-claude-code` / `/vs-codex` / `/vs-netkeiba` / `/vs-openclaw` / `/vs-claude-cowork` / `/vs-jobcan` の8ルートを `main.dart` に追加。sitemap.xml に8URL追加（合計21URL）。全13競合の検索キーワードから有機流入を獲得
+
 ### 残課題
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
@@ -246,8 +250,7 @@
 - B2B 営業資料の整備開始
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
 - 機能リクエスト ステータス変更時のユーザー通知機能
-- Google Search Console へのサイトマップ再送信（13 URLs）
-- 残り競合比較ページ追加（/vs-x, /vs-jobcan, /vs-claude-code 等）
+- Google Search Console へのサイトマップ再送信（21 URLs）
 
 ---
 
