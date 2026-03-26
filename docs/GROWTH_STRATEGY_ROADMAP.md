@@ -3,7 +3,7 @@
 作成日: 2025-11-10
 最終更新: 2026-03-26 session16 (追加: 登録ユーザー管理・ユーザー数カウント修正)
 現時点の登録者数: 2人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -39,6 +39,7 @@
 - Chatwork: ~6,000,000 users 規模 (国内ビジネスチャット)
 - Slack: ~65,000,000 users 規模 (グローバルビジネスチャット)
 - ジョブカン: ~5,000,000 users 規模 (国内バックオフィス SaaS)
+- Amazon: ~310,000,000 active customer accounts 規模 (グローバル EC・AI・コンテンツ)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -246,6 +247,12 @@
 - **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
 - **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
 - **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
+
+### 2026-03-26 session20 実装済み
+
+- **Amazon を第14競合に追加** (session20): `ComparisonPage` に amazon エントリ追加。`/vs-amazon` ルートを `main.dart` に追加。sitemap.xml に Amazon URL 追加（合計22URL）。LP 比較リンクセクション・index.html キーワードに Amazon代替/Alexa代替/Kindle代替 を追加
+- **ユーザーマニュアル全面刷新** (session20): 実際の UI ナビゲーションに完全準拠した手順書に改訂。Notion/Evernote/Markdown のエクスポート手順をステップ形式で詳細化（競合アプリの操作方法を含む）。プロフィール設定・技術ブログ投稿管理・機能リクエストの手順を追加。Amazon を含む競合14社の記述に更新
+- **ROADMAP: Amazon を競合14社目として追加** (session20): 競合到達ライン・最重要目的を14社に更新
 
 ### 2026-03-26 session19 実装済み
 

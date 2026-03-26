@@ -1241,6 +1241,7 @@ $input
       (key: 'chatwork', name: 'Chatwork', emoji: '🏢', color: Color(0xFFE53935)),
       (key: 'slack', name: 'Slack', emoji: '💬', color: Color(0xFF4A154B)),
       (key: 'jobcan', name: 'ジョブカン', emoji: '📋', color: Color(0xFF059669)),
+      (key: 'amazon', name: 'Amazon', emoji: '📦', color: Color(0xFFFF9900)),
     ];
 
     return Card(

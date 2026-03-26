@@ -324,6 +324,26 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
+  'amazon': const _CompetitorInfo(
+    name: 'Amazon',
+    emoji: '📦',
+    tagline: 'Alexa・Kindle・Amazon家計管理を1つに。完全無料で使う自分株式会社。',
+    searchKeyword: 'Amazon代替 Alexa代替 Kindle代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      'Amazonのサービスは機能ごとに分散しており一元管理できない（Alexa・Kindle・Photos・Business）',
+      'Amazon Prime は年額6,000円〜、Kindleアンリミテッドは月額980円〜とコストが積み重なる',
+      '購買記録・読書記録・タスク・メモを統合して管理する手段がない',
+    ],
+    features: [
+      _FeatureComparison(feature: 'AIアシスタント (Alexa/Gemini)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: '読書・ナレッジ管理 (Kindle相当)', competitorHas: true, weHave: true),
+      _FeatureComparison(feature: '購買・支出の記録と資産管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'ノート・メモ・タスク統合', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
