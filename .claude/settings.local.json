@@ -56,7 +56,9 @@
       "Bash(do)",
       "Bash(echo \"=== $f ===\")",
       "Read(//c/Users/kanta/GitHub/my_web_app/**)",
-      "Bash(done)"
+      "Bash(done)",
+      "Read(//dev/**)",
+      "mcp__scheduled-tasks__list_scheduled_tasks"
     ]
   }
 }

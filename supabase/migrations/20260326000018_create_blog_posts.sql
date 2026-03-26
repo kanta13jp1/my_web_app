@@ -34,9 +34,9 @@ CREATE POLICY "admin_all" ON blog_posts
   FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
+      SELECT 1 FROM user_profiles
+      WHERE user_profiles.user_id = auth.uid()
+      AND user_profiles.role = 'admin'
     )
   );
 
