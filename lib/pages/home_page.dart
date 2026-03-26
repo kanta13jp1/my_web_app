@@ -56,6 +56,7 @@ import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/profile_completion_banner.dart';
 import '../widgets/referral_share_card.dart';
+import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/daily_motivation_card.dart';
 import '../widgets/daily_challenge_card.dart';
 import '../widgets/welcome_new_user_card.dart';
@@ -3910,6 +3911,7 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             _buildCeoCard(context),
                             const SizedBox(height: 12),
+                            const TimeWasteGuardWidget(),
                             _buildMorningBriefingCard(
                               context,
                               isHighlighted: highlightMorning,
