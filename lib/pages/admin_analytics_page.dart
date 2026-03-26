@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import 'ai_secretary_page.dart';
@@ -4068,6 +4069,47 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Future<void> _updateBlogPostStatus(String id, String newStatus) async {
+    if (newStatus == 'posted') {
+      // Ask for the published URL
+      final urlController = TextEditingController();
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('投稿URLを入力'),
+          content: TextField(
+            controller: urlController,
+            decoration: const InputDecoration(
+              hintText: 'https://zenn.dev/...',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.url,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      try {
+        await _supabase.from('blog_posts').update({
+          'status': 'posted',
+          'posted_at': DateTime.now().toIso8601String(),
+          if (urlController.text.isNotEmpty) 'url': urlController.text.trim(),
+        }).eq('id', id);
+        await _loadBlogPosts();
+      } catch (_) {}
+      return;
+    }
     try {
       await _supabase
           .from('blog_posts')
@@ -4166,6 +4208,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ?.map((e) => e.toString())
                           .join(', ') ??
                       '';
+                  final postUrl = post['url']?.toString() ?? '';
                   final createdAt = post['created_at'] != null
                       ? DateTime.tryParse(post['created_at'].toString())
                       : null;
@@ -4199,6 +4242,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                     color: isDark
                                         ? Colors.grey[400]
                                         : Colors.grey[600],
+                                  ),
+                                ),
+                              if (postUrl.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () => launchUrl(
+                                    Uri.parse(postUrl),
+                                    mode: LaunchMode.externalApplication,
+                                  ),
+                                  child: Text(
+                                    postUrl,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF4338CA),
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                             ],
