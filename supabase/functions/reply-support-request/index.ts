@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeAutomationActor } from "../_shared/automation-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,18 +46,6 @@ serve(async (req) => {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    // Auth: Bearer SERVICE_ROLE_KEY
-    const authHeader = req.headers.get("authorization") ?? "";
-    const token = authHeader.toLowerCase().startsWith("bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
-    if (token === "" || token !== SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = (await req.json().catch(() => ({}))) as {
       id?: string;
       reply?: string;
@@ -71,6 +60,7 @@ serve(async (req) => {
     const admin: AdminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    await authorizeAutomationActor(admin, req);
 
     // Fetch the ticket
     const { data: ticket, error: fetchErr } = await admin
@@ -81,17 +71,16 @@ serve(async (req) => {
 
     if (fetchErr) throw fetchErr;
     if (!ticket) throw new Error("Feature request not found.");
+    const resolvedStatus = newStatus ??
+      (escalate ? "in_progress" : String(ticket.status ?? "open"));
 
     const updatePayload: Record<string, unknown> = {
       admin_replied_at: new Date().toISOString(),
       admin_reply: escalate
         ? "[エスカレーション済み: 担当者が対応します]"
         : reply,
+      status: resolvedStatus,
     };
-
-    if (newStatus) {
-      updatePayload["status"] = newStatus;
-    }
 
     const { error: updateErr } = await admin
       .from("feature_requests")
@@ -156,6 +145,7 @@ serve(async (req) => {
         id,
         escalated: escalate,
         emailSent,
+        status: resolvedStatus,
       }),
       {
         status: 200,

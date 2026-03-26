@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeAutomationActor } from "../_shared/automation-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,28 +61,17 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "GET") {
-      throw new Error("Method not allowed. Use GET.");
+    if (req.method !== "GET" && req.method !== "POST") {
+      throw new Error("Method not allowed. Use GET or POST.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    // Auth: Bearer SERVICE_ROLE_KEY
-    const authHeader = req.headers.get("authorization") ?? "";
-    const token = authHeader.toLowerCase().startsWith("bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
-    if (token === "" || token !== SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const admin: AdminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    await authorizeAutomationActor(admin, req);
 
     // Open tickets with no admin reply yet
     const { data: tickets, error } = await admin

@@ -7,6 +7,7 @@ Notion・Evernote・MoneyForward・Slack・X・Amazon など14競合の機能を
 本番URL: <https://my-web-app-b67f4.web.app/>
 
 ### 技術スタック
+
 - **フロントエンド**: Flutter Web (Dart)
 - **バックエンド**: Supabase (PostgreSQL + Edge Functions / Deno)
 - **ホスティング**: Firebase Hosting
@@ -37,10 +38,17 @@ claude-code, codex, netkeiba, openclaw, claude-cowork, jobcan, amazon
 > スケジュール実行時は、下記の SCHEDULE_TASK 環境変数で実行するタスクを判別してください。
 
 ### 環境変数 (スケジュール実行時に必要)
-```
+
+```text
 SUPABASE_DIGEST_URL=https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
 SUPABASE_SERVICE_KEY=<Supabase service_role key>
+GITHUB_PAT=<GitHub Personal Access Token (repo + pull_requests スコープ)>
 ```
+
+### X アカウント
+
+X への自動投稿先: **@kanta13jp1**
+投稿は `post-x-update` Edge Function 経由 (OAuth 1.0a で署名済み)
 
 ---
 
@@ -51,7 +59,8 @@ SUPABASE_SERVICE_KEY=<Supabase service_role key>
 #### Step 1: 日次メトリクスを取得
 
 WebFetch で以下を呼び出す:
-```
+
+```http
 GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
 Authorization: Bearer <SUPABASE_SERVICE_KEY>
 ```
@@ -95,6 +104,7 @@ AIとして、上記データを踏まえた優先対応事項を3点提案す�
 - カジュアルで前向きなトーン
 - ハッシュタグ: `#buildinpublic #FlutterWeb #Supabase` から2〜3個
 - ユーザー数の変化や新機能を含める
+- 投稿先アカウント: **@kanta13jp1**
 
 ```http
 POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update
@@ -105,7 +115,24 @@ Content-Type: application/json
 
 変更がない日や投稿不要と判断した場合はスキップ可。
 
-#### Step 4: コミット
+#### Step 4: 競合モニタリング
+
+以下の競合サイトを WebFetch でチェックし、前回レポートと差分があれば記録する:
+
+- [Notion](https://www.notion.so/)
+- [Evernote](https://evernote.com/)
+- [Slack](https://slack.com/intl/ja-jp/)
+
+確認観点:
+
+- 新機能アナウンス
+- 価格変更
+- UIの大きな変更
+
+変化を検知した場合は日次レポートの末尾に `## 競合動向` セクションを追加して記録する。
+変化がなければスキップ可。
+
+#### Step 5: コミット
 
 作成したファイルをコミットする:
 
@@ -199,6 +226,36 @@ git push origin main
 
 チケットが0件 or 全てスキップの場合はコミット不要。
 
+#### Step 4: GitHub PR レビュー (GITHUB_PAT が設定されている場合)
+
+```bash
+gh pr list --state open --json number,title,additions,deletions,files
+```
+
+各PRに対して以下の観点でコードレビューを実施:
+
+- セキュリティ (SQL injection, XSS, 認証漏れ)
+- パフォーマンス (N+1クエリ、不要な再レンダリング)
+- Lintエラー・型エラー
+- CLAUDE.md のルール違反 (ダミーデータ使用、flutter analyze エラーなど)
+
+指摘がある場合は `gh pr comment <number> --body "<レビューコメント>"` で投稿。
+既にコメント済みの内容は重複投稿しない。
+
+#### Step 5: インフラ・ヘルスチェック
+
+以下のエンドポイントを WebFetch で確認し、異常があれば cs-notes に記録する:
+
+```http
+GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-home-dashboard
+GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/development-achievements
+GET https://my-web-app-b67f4.web.app/
+```
+
+- HTTP 200 以外のレスポンス → `docs/cs-notes/YYYY-MM-DD-HH.md` の末尾に `## インフラ異常` として記録
+- タイムアウト (10秒以上) も異常として記録
+- 全て正常なら記録不要
+
 ---
 
 ### Task: weekly-sns-draft (毎週月曜 09:00 JST に実行)
@@ -228,7 +285,17 @@ https://my-web-app-b67f4.web.app/ #buildinpublic
 1. {今週の実装内容から技術記事ネタを3つ提案}
 ```
 
+#### Step 2: 依存パッケージの脆弱性チェック
+
+`pubspec.yaml` と `supabase/functions/` の deno import URLを読み込み、以下を確認:
+
+- 古いバージョンのパッケージ (メジャーバージョンが2以上古い)
+- 既知の脆弱性パターン (CVEなど)
+
+問題があれば週次ドラフトに `## 依存パッケージ注意` セクションを追加して記録する。
+
 コミット:
+
 ```bash
 git add docs/weekly-drafts/
 git commit -m "自動: 週次SNSドラフト YYYY-MM-DD"
@@ -238,7 +305,7 @@ git commit -m "自動: 週次SNSドラフト YYYY-MM-DD"
 
 ## ディレクトリ構成 (主要)
 
-```
+```text
 lib/
   main.dart              # ルーティング
   pages/
@@ -262,7 +329,7 @@ web/
 ## Supabase Edge Function 一覧
 
 | Function | 用途 |
-|---|---|
+| --- | --- |
 | `schedule-daily-digest` | Claude Schedule 用の日次メトリクス API |
 | `get-support-tickets` | Claude Schedule 用: 未返信チケット+FAQ一覧 |
 | `reply-support-request` | Claude Schedule 用: チケット返信・エスカレーション |

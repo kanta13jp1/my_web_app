@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session21 (追加: Claude Code Schedule 自動化・CLAUDE.md 作成)
+最終更新: 2026-03-26 session24 (追加: 自動化オペレーションUI・X手動投稿テスト・CS返信導線)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -247,6 +247,13 @@
 - **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
 - **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
 - **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
+
+### 2026-03-26 session24 実装済み
+
+- **自動化オペレーション UI 追加** (session24): `AdminAnalyticsPage` に `_buildAutomationOpsCard()` を追加。`schedule-daily-digest` / `get-support-tickets` の結果を管理画面から手動確認できるようにし、CSキュー件数・日次ダイジェスト要約・直近実績を可視化
+- **CS返信ダイアログ追加** (session24): 機能リクエスト一覧の各行から `reply-support-request` を直接呼べる返信/編集導線を追加。返信文入力・ステータス更新・エスカレーションを1つのダイアログに統合。エスカレーション時は `in_progress` へ自動遷移
+- **X投稿テスト導線追加** (session24): `post-x-update` に `dryRun` を追加し、管理画面から `@kanta13jp1` アカウント向け投稿のプレビュー/本番投稿を実行可能に。日次ダイジェストからデフォルト投稿文を生成
+- **自動化認可ヘルパー追加** (session24): `supabase/functions/_shared/automation-auth.ts` を新規作成。`SERVICE_ROLE_KEY` に加えて allowlist 済み管理者ユーザー（`ADMIN_EMAIL` または `AUTOMATION_ADMIN_EMAILS`）からも `schedule-daily-digest` / `get-support-tickets` / `reply-support-request` / `post-x-update` を安全に実行できるように整理
 
 ### 2026-03-26 session23 実装済み
 
