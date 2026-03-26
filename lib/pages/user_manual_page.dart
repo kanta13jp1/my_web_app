@@ -27,8 +27,11 @@ class UserManualPage extends StatelessWidget {
             '【画面上部（スクロール不要）】\n'
             '・プロフィール未設定の場合は「プロフィールを完成させましょう」バナーが表示されます。'
             '「設定する」をタップするとプロフィール設定画面へ移動します。\n'
-            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合14社（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon）への進捗バーをリアルタイム表示。\n'
-            '・「競合機能比較」カード: 競合14製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
+            '・「GROWTH ROADMAP」カード: 短期・中期・長期計画と競合18社'
+            '（Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba'
+            '/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン/Amazon/Google/Microsoft/Discord/LINE）'
+            'への進捗バーをリアルタイム表示。\n'
+            '・「競合機能比較」カード: 競合18製品との機能対比をタブで確認できます（実装済み✅ / 未実装❌）。\n'
             '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
             '・CEO OFFICE — 朝のブリーフィング・AI緊急役員会議\n'
@@ -64,28 +67,44 @@ class UserManualPage extends StatelessWidget {
             '自分株式会社は Notion / Evernote / Markdown ファイルからのインポートに対応しています。\n\n'
             '【インポート画面の開き方】\n'
             'ホーム画面を下にスクロール →「GROWTH / 成長導線」セクション →「インポート」ボタンをタップ。\n'
-            '（または、ランディングページ最下部の「登録なしでインポートを試す」ボタンから利用可能）\n\n'
+            '（または、アドレスバーに /import を入力してアクセス）\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             '【Notion からのエクスポート手順】\n'
             '━━━━━━━━━━━━━━━━━━━\n'
-            '1. Notion を開き、エクスポートしたいページをクリック\n'
-            '2. 右上の「…（その他）」メニューをクリック\n'
-            '3.「エクスポート」を選択\n'
-            '4. エクスポート形式:「Markdown & CSV」を選択\n'
-            '5.「サブページを含める」をオンにする（推奨）\n'
-            '6.「エクスポート」ボタンをクリック → ZIP ファイルがダウンロードされます\n'
-            '7. 自分株式会社のインポート画面で「ファイルを選択」→ダウンロードした ZIP を選択\n'
-            '8.「インポート開始」をタップ → AI が自動整理して変換します\n\n'
+            '1. Notion を開き（Web版: notion.so / デスクトップアプリ）、エクスポートしたいページを開く\n'
+            '2. ページ右上の「…（その他のオプション）」ボタンをクリック\n'
+            '3. 表示されたメニューから「エクスポート」を選択\n'
+            '4. エクスポート形式:「Markdown & CSV」を選択し、「サブページを含める」をオン\n'
+            '5.「エクスポート」ボタンをクリック → ZIP ファイルがダウンロードされます\n'
+            '6. 自分株式会社のインポート画面で「ファイルを選択」→ダウンロードした ZIP を選択\n'
+            '7.「インポート開始」をタップ → AI が自動整理して変換します\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             '【Evernote からのエクスポート手順】\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             '1. Evernote デスクトップアプリを開く（Web 版はエクスポート非対応）\n'
             '2. エクスポートしたいノートをすべて選択（Ctrl+A または Cmd+A で全選択）\n'
             '3.「ファイル」メニュー →「ノートをエクスポート」を選択\n'
-            '4. 保存形式:「ENEX 形式（.enex）」を選択\n'
-            '5.「保存」→ .enex ファイルがダウンロードされます\n'
-            '6. 自分株式会社のインポート画面で「ファイルを選択」→ .enex ファイルを選択\n'
-            '7.「インポート開始」をタップ → メモ・添付ファイルを自動インポートします\n\n'
+            '4. 保存形式:「ENEX 形式（.enex）」を選択し「保存」\n'
+            '5. 自分株式会社のインポート画面で「ファイルを選択」→ .enex ファイルを選択\n'
+            '6.「インポート開始」をタップ → メモ・添付ファイルを自動インポートします\n\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '【LINE Keep / LINEメモからのデータ移行】\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '1. LINEアプリ →「Keep」または「メモ」を開く\n'
+            '2. メモのテキストをコピー（長押し → コピー）\n'
+            '3. 自分株式会社のメモエディタに貼り付けて保存\n\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '【Google Keep / Docs からのデータ移行】\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '1. Google Keep: keep.google.com を開く →「その他のオプション（⋮）」→「コピー」または本文をコピー\n'
+            '2. Google Docs: ドキュメントを開き →「ファイル」→「ダウンロード」→「Markdown (.md)」を選択\n'
+            '3. 自分株式会社のインポート画面で .md ファイルを選択 →「インポート開始」\n\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '【Microsoft OneNote からのデータ移行】\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '1. OneNote デスクトップアプリを開く\n'
+            '2. エクスポートしたいページを右クリック →「ページのエクスポート」→「Word (.docx)」\n'
+            '3. 保存したファイルのテキストをコピーして自分株式会社のメモエディタに貼り付け\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             '【Markdown ファイルの直接インポート】\n'
             '━━━━━━━━━━━━━━━━━━━\n'
@@ -97,7 +116,7 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('4. 競合14製品を上回る独自機能', textColor),
+          _buildSectionTitle('4. 競合18製品を上回る独自機能', textColor),
           _buildContent(
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「AI組織OS」をタップ。\n'
@@ -109,12 +128,14 @@ class UserManualPage extends StatelessWidget {
             '【財務管理・資産管理 (CFO)】\n'
             'ホーム画面を下にスクロール →「CFO/CHO/CHRO OFFICE」セクション →「財務管理 (CFO)」をタップ。\n'
             '収入・支出・資産を記録すると資産グラフに自動反映されます。\n\n'
-            '【マインドマップ】\n'
-            'ホーム画面「CMO/CKO OFFICE」セクション →「マインドマップ (思考整理)」をタップ。\n\n'
             '【禁欲ガード】\n'
             'ホーム画面「CSO OFFICE」セクション →「禁欲ガード」をタップ。\n\n'
             '【断捨離ツール】\n'
-            'ホーム画面「CSO OFFICE」セクション →「断捨離」をタップ。',
+            'ホーム画面「CSO OFFICE」セクション →「断捨離」をタップ。\n\n'
+            '【行動レビュー】\n'
+            'ホーム画面「CEO OFFICE」セクション →「行動レビュー」をタップ。\n\n'
+            '【思考アンカー】\n'
+            'ホーム画面「CEO OFFICE」セクション →「思考アンカー」をタップ。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -122,11 +143,12 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('5. 公開メモと共有', textColor),
           _buildContent(
             '【公開メモの作成】\n'
-            '1. ノートエディタを開く（「CMO/CKO OFFICE」→「新規事業起案」）\n'
+            '1. ノートエディタを開く（ホーム画面「CMO/CKO OFFICE」→「新規事業起案」）\n'
             '2. メモを書いたら、エディタ内の「公開」スイッチをオンにする\n'
             '3. 保存すると公開リンク（/public-memo?id=XXX）が生成されます\n\n'
             '【公開メモの一覧】\n'
-            'ホーム画面「GROWTH / 成長導線」セクション →「公開メモ一覧」をタップ。\n\n'
+            'ホーム画面「GROWTH / 成長導線」セクション →「公開メモ一覧」をタップ。\n'
+            'またはアドレスバーに /public-memos を入力。\n\n'
             '【SNS シェア時の表示】\n'
             '公開リンクを X(Twitter) などで共有すると、メモのタイトルと要約がカードで表示されます（OGP対応）。',
             subColor,
@@ -136,7 +158,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('6. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
             '【GROWTH ROADMAP カード（ホーム画面上部）】\n'
-            '短期・中期・長期計画と競合14社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
+            '短期・中期・長期計画と競合18社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
             '【開発・成長実績カード】\n'
             'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近2週間など）。\n'
             '「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
@@ -145,7 +167,9 @@ class UserManualPage extends StatelessWidget {
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
-            '競合14社（Notion〜Amazon）の機能一覧と本サービスの実装状況を確認できます。',
+            '競合18社（Notion〜LINE）の機能一覧と本サービスの実装状況を確認できます。\n\n'
+            '【競合比較ページ（SEO対応）】\n'
+            'アドレスバーに /vs-notion, /vs-line, /vs-google など18社分の比較ページが用意されています。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -199,7 +223,12 @@ class UserManualPage extends StatelessWidget {
             '1. 今日投稿したプラットフォームを選択\n'
             '2.「記録する」ボタンをタップ\n'
             '3. 連続投稿ストリーク数と過去30日の投稿履歴が表示されます\n'
-            '4. 未投稿の日はリマインダーとして未投稿バッジが表示されます',
+            '4. 未投稿の日はリマインダーとして未投稿バッジが表示されます\n\n'
+            '【Claude Code Schedule による自動化】\n'
+            'blog-draft タスク（毎朝08:00 JST実行）が直近のコミット内容を元に\n'
+            'ブログ下書きを docs/blog-drafts/ に自動生成し、blog_posts テーブルに記録します。\n'
+            '管理者ダッシュボードの「ブログ投稿管理」カードから draft → posted への\n'
+            'ステータス更新が可能です。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -208,13 +237,26 @@ class UserManualPage extends StatelessWidget {
           _buildContent(
             '欲しい機能をリクエストできます。他のユーザーの投票数が多いものから優先的に実装されます。\n\n'
             '【機能リクエスト画面の開き方】\n'
-            '・ランディングページ最下部の「機能リクエスト」セクション\n'
-            '・または、アドレスバーに /feature-requests を入力\n\n'
+            '・アドレスバーに /feature-requests を入力\n\n'
             '【使い方】\n'
-            '1. 「新しいリクエストを追加」フォームにタイトルと詳細を入力\n'
-            '2. 「送信」をタップ\n'
+            '1.「新しいリクエストを追加」フォームにタイトルと詳細を入力\n'
+            '2.「送信」をタップ\n'
             '3. 既存のリクエストに👍投票して優先度を上げることができます\n'
             '4. ステータスが「対応中」「実装完了」に変わるとメールで通知が届きます（メールアドレス入力時）',
+            subColor,
+          ),
+          const SizedBox(height: 24),
+
+          _buildSectionTitle('11. 友達招待（リファラル）', textColor),
+          _buildContent(
+            '友達を招待して一緒に使いましょう。\n\n'
+            '【招待リンクのコピー方法】\n'
+            'ホーム画面上部の「友達を招待する」カード →「リンクコピー」ボタンをタップ。\n'
+            '紹介コード付きURLがクリップボードにコピーされます。\n'
+            'X(Twitter)・LINE・Slack などでシェアしてください。\n\n'
+            '【管理者向け: スケジュールタスク監視】\n'
+            'Claude Code Schedule の実行状況は管理者ダッシュボードの\n'
+            '「スケジュールタスク監視」カードで確認できます（要: 管理者権限）。',
             subColor,
           ),
           const SizedBox(height: 32),
@@ -225,7 +267,7 @@ class UserManualPage extends StatelessWidget {
                 Icon(Icons.info_outline, size: 18, color: subColor),
                 const SizedBox(height: 6),
                 Text(
-                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-26',
+                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: subColor),
                 ),
@@ -270,7 +312,7 @@ class UserManualPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'メモ・タスク・資産・習慣をすべて一元管理し、AIの力で自己実現をサポートする統合プラットフォームです。'
-            'Notion・Evernote・MoneyForward・Amazon など14の競合サービスを超える機能を完全無料で提供します。',
+            'Notion・Evernote・MoneyForward・LINE・Discord など18の競合サービスを超える機能を完全無料で提供します。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
         ],
