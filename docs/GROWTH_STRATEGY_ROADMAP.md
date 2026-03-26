@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-27 session26 (追加: マイグレーション修正・CI/CD復旧・blog_posts RLS修正)
+最終更新: 2026-03-27 session25 (追加: Schedule タスクモニター・SEO/OGP 動的更新・schedule_task_runs テーブル・health-check / check-competitor-updates Edge Function・competitor_monitoring テーブル)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -64,7 +64,7 @@
 
 ### 現状
 
-- 登録者数は 2 人で、まだ PMF 前
+- 登録者数は 4 人で、まだ PMF 前
 - Flutter Web + Supabase で高速改善できる
 - Import preview と import commit は Edge Function first 化済み
 - Public memo の share と copy の計測は backend 化済み
@@ -98,6 +98,11 @@
 - **get-growth-roadmap-progress** (2026-03-25 新規作成): user_profiles からユーザー数、growth_plans テーブルから計画データを取得して返す Edge Function。GrowthRoadmapProgressCard が呼び出す。growth_plans が空の場合は16項目のデフォルトデータを自動シードする。
 - growth-weekly-digest (2026-03-25 追加)
 - import 画面の backend-first execution result 表示
+- **ScheduleTaskMonitorCard** (2026-03-26): 管理者ダッシュボードに Schedule タスク実行状況モニター追加。9 タスクの名前・スケジュール・最終実行・ステータスを表示
+- **SeoMetaHelper + 公開メモ SEO/OGP 強化** (2026-03-26): 公開メモ詳細ページで og:title/og:description/og:url/Twitter Card を動的に設定。離脱時リセット
+- **health-check Edge Function** (2026-03-26): DB 接続性・レイテンシ・必須 6 テーブルの可用性チェック
+- **check-competitor-updates Edge Function** (2026-03-26): 競合 14 社の Web サイト可用性チェック + competitor_monitoring テーブルに記録
+- **schedule_task_runs テーブル** (2026-03-27): Schedule タスク実行ログ記録用テーブル。管理者ダッシュボードの ScheduleTaskMonitorCard が参照
 - public memo の共有導線と成長シグナル記録
 - route / import / public memo / referral の獲得シグナル記録
 - /referral 導線と referral invite セクション
@@ -247,26 +252,6 @@
 - **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
 - **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
 - **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
-
-### 2026-03-27 session26 実装済み
-
-- **CI/CD マイグレーション修正** (session26): development_achievements/growth_plans テーブルのカラム不足・NOT NULL制約・重複タイムスタンプ・blog_posts RLS テーブル名誤りを修正。全マイグレーションが通るよう対処
-
-### 2026-03-26 session25 実装済み
-
-- **Claude Code Schedule 全自動化拡張** (session25): CLAUDE.mdに4つの新規Scheduleタスクを追加
-  - `cs-check` に **PRレビュー自動化** (Step 4)・**インフラヘルスチェック** (Step 5)
-  - `daily-report` に **競合モニタリング** (Step 4)
-  - `weekly-sns-draft` に **脆弱性チェック** (Step 2)
-- **blog-draft Scheduleタスク追加** (session25): 毎日08:00 JSTに技術ブログ下書きを自動生成 → `blog_posts` テーブルで投稿管理
-- **blog_posts テーブル作成** (session25): status(draft/posted/skipped)・target_platforms・URL管理。RLS で管理者のみアクセス可
-
-### 2026-03-26 session24 実装済み
-
-- **自動化オペレーション UI 追加** (session24): `AdminAnalyticsPage` に自動化オペレーションカード追加
-- **CS返信ダイアログ追加** (session24): 返信/ステータス更新/エスカレーションを1ダイアログに統合
-- **X投稿テスト導線追加** (session24): `post-x-update` dryRun 対応。管理画面から `@kanta13jp1` へ投稿可能
-- **自動化認可ヘルパー追加** (session24): `supabase/functions/_shared/automation-auth.ts` 新規作成
 
 ### 2026-03-26 session23 実装済み
 
@@ -577,7 +562,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 7. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
 8. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
 9. wasm build blocker の原因を特定して解消する
-10. 公開メモの SEO / OGP タグを強化して organic 流入を増やす
+10. ~~公開メモの SEO / OGP タグを強化して organic 流入を増やす~~ ✓ 完了 (SeoMetaHelper + PublicMemoDetailPage 動的 OGP 更新)
 11. B2B 向け移行代行 LP の最初のドラフトを作る
 12. はてなブログで週次 progress bar 付き成長記録を開始する
 
@@ -743,6 +728,32 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 #### マーケティング
 - 登録者数4人に更新 (Supabase実データ確認済み)
 - 全15競合の進捗バーがホーム画面で実データ表示 (Amazon追加)
+
+### Session 25 — 2026-03-27
+
+#### 開発
+- ScheduleTaskMonitorCard ウィジェット新規作成: 管理者ダッシュボードで 9 つの Schedule タスク実行状況を確認可能に
+- SeoMetaHelper ユーティリティ新規作成: 公開メモ詳細ページで og:title/og:description/og:url/Twitter Card を動的に設定・離脱時リセット
+- schedule_task_runs テーブル作成: Schedule タスク実行ログ記録用テーブル (RLS: service_role 全操作 / authenticated 読み取り)
+- health-check Edge Function 作成済み: DB 接続・6 テーブル可用性・レスポンスタイム
+- check-competitor-updates Edge Function 作成済み: 競合 14 社の HTTP HEAD チェック + competitor_monitoring テーブル保存
+- flutter analyze 0 を維持
+
+#### 企画
+- Schedule タスク実行状況を管理者ダッシュボードで可視化し、運用監視の負荷を削減
+- 公開メモの SEO/OGP 強化で organic 検索流入経路を確立
+
+#### 宣伝
+- blog-draft Schedule タスク (毎日 08:00) で技術ブログ下書き自動生成
+- tech_blog_posts テーブルで 11 プラットフォーム (Zenn/Qiita/はてな/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article) の投稿管理
+
+#### マーケティング
+- 公開メモの OGP 対応により SNS シェア時のカード表示が改善、CTR 向上を見込む
+- 競合 14 社の可用性モニタリングデータを蓄積開始
+
+#### 事業計画
+- 3 インスタンス並行開発体制を確立 (VSCode: lib/ / Web: supabase/functions/ / Windows: docs/)
+- Claude Code Schedule で 9 タスクの完全自動化運用を開始
 
 ---
 
