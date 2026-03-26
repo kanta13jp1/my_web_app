@@ -28,6 +28,7 @@ const DEFAULT_PLANS = [
   { label: "vs NOTION", deadline: "2033年12月31日", target: 100000000, features_done: 14, features_total: 32 },
   { label: "vs Slack", deadline: "2034年12月31日", target: 65000000, features_done: 9, features_total: 28 },
   { label: "vs X", deadline: "2036年12月31日", target: 600000000, features_done: 13, features_total: 24 },
+  { label: "vs Amazon", deadline: "2038年12月31日", target: 310000000, features_done: 5, features_total: 30 },
 ];
 
 serve(async (req) => {

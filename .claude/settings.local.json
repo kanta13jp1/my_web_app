@@ -41,7 +41,12 @@
       "Bash(grep -B 1 \"^--$\\\\|^[0-9]*:.*}$\")",
       "Bash(git rm:*)",
       "Bash(ls \"c:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\supabase\\\\migrations\"\" | grep \"20260325 \")",
-      "Bash(supabase functions:*)"
+      "Bash(supabase functions:*)",
+      "WebFetch(domain:x.com)",
+      "Skill(schedule)",
+      "Skill(schedule:*)",
+      "Bash(grep -E \"\\\\.\\(dart|ts\\)$\")",
+      "Bash(npx deno:*)"
     ]
   }
 }

@@ -107,7 +107,7 @@ class UserManualPage extends StatelessWidget {
             '忘却曲線に基づいた最適タイミングで復習を促します。\n'
             'メモエディタの「記憶ドリルに追加」ボタンで教材を登録できます。\n\n'
             '【財務管理・資産管理 (CFO)】\n'
-            'ホーム画面「CFO/CHO/CHRO OFFICE」セクション →「財務管理 (CFO)」をタップ。\n'
+            'ホーム画面を下にスクロール →「CFO/CHO/CHRO OFFICE」セクション →「財務管理 (CFO)」をタップ。\n'
             '収入・支出・資産を記録すると資産グラフに自動反映されます。\n\n'
             '【マインドマップ】\n'
             'ホーム画面「CMO/CKO OFFICE」セクション →「マインドマップ (思考整理)」をタップ。\n\n'
@@ -191,7 +191,7 @@ class UserManualPage extends StatelessWidget {
           _buildContent(
             '毎日の技術ブログ投稿をこのアプリで管理できます。\n\n'
             '【投稿管理画面の開き方】\n'
-            '・ホーム画面のグリッドメニューから「技術ブログ投稿管理」をタップ\n'
+            '・ホーム画面を下にスクロール →「GROWTH / 成長導線」セクション →「ブログ投稿管理」をタップ\n'
             '・または、アドレスバーに /tech-blog-tracker を入力\n\n'
             '【対応プラットフォーム（11種類）】\n'
             'Zenn / Qiita / はてなブログ / note / Medium / dev.to / Hashnode / Substack / GitHub Pages / NOTION / X Article\n\n'
