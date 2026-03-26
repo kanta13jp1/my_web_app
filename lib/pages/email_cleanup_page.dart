@@ -362,10 +362,30 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     }
   }
 
+  static const _routineSteps = [
+    '1. 未読メールを全件チェックし、不要なものを削除',
+    '2. メルマガ・プロモーションを確認し、不要なものは配信停止(unsubscribe)',
+    '3. 通知メール(SNS/アプリ)で不要なものは通知設定をOFF',
+    '4. サブスク関連メールを確認し、使っていないサービスは解約',
+    '5. フィルタ・ラベルを整理し、自動振り分けルールを追加',
+    '6. ゴミ箱・迷惑メールフォルダを空にする',
+    '7. 重要なメールにスター/フラグを付ける',
+  ];
+
+  List<bool> _routineChecks = [];
+
+  void _initRoutineChecks() {
+    if (_routineChecks.isEmpty) {
+      _routineChecks = List.filled(_routineSteps.length, false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _initRoutineChecks();
     final needsCleanAccounts =
         _accounts.where((a) => a['is_active'] == true && _needsClean(a));
+    final routineDone = _routineChecks.where((c) => c).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -386,11 +406,96 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                   children: [
                     if (needsCleanAccounts.isNotEmpty) ...[
                       _buildReminderBanner(needsCleanAccounts.length),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                     ],
+                    _buildRoutineCard(routineDone),
+                    const SizedBox(height: 16),
                     ..._accounts.map(_buildAccountCard),
                   ],
                 ),
+    );
+  }
+
+  Widget _buildRoutineCard(int doneCount) {
+    final progress = _routineSteps.isEmpty
+        ? 0.0
+        : doneCount / _routineSteps.length;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: progress >= 1.0
+              ? Colors.green.shade200
+              : Colors.indigo.shade100,
+        ),
+      ),
+      child: ExpansionTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: progress >= 1.0
+                ? Colors.green.shade50
+                : const Color(0xFFEDE7F6),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            progress >= 1.0 ? Icons.check_circle : Icons.checklist,
+            color: progress >= 1.0
+                ? Colors.green
+                : const Color(0xFF4338CA),
+          ),
+        ),
+        title: Text(
+          progress >= 1.0
+              ? '✅ 整理ルーチン完了！'
+              : '📋 メール整理ルーチン ($doneCount/${_routineSteps.length})',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: progress < 1.0
+            ? LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: const AlwaysStoppedAnimation(Color(0xFF4338CA)),
+                minHeight: 4,
+                borderRadius: BorderRadius.circular(2),
+              )
+            : null,
+        initiallyExpanded: progress < 1.0,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              children: List.generate(_routineSteps.length, (i) {
+                return CheckboxListTile(
+                  value: _routineChecks[i],
+                  onChanged: (v) {
+                    setState(() => _routineChecks[i] = v ?? false);
+                  },
+                  title: Text(
+                    _routineSteps[i],
+                    style: TextStyle(
+                      fontSize: 13,
+                      decoration: _routineChecks[i]
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: _routineChecks[i] ? Colors.grey : null,
+                    ),
+                  ),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
