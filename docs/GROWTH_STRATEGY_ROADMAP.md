@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session16 (追加: 登録ユーザー管理・ユーザー数カウント修正)
+最終更新: 2026-03-26 session21 (追加: Claude Code Schedule 自動化・CLAUDE.md 作成)
 現時点の登録者数: 2人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -247,6 +247,14 @@
 - **LP: 競合比較リンクセクション追加** (session18): `_buildComparisonLinksSection()` を LandingPage に追加。全13競合へのリンクChipを表示し内部SEOリンクを構築。移行ガイドセクションの直後に配置
 - **SEO: index.html 全13競合キーワード対応** (session18): `<meta name="keywords">` に Animaworks代替/Claude Code代替/Codex代替/netkeiba代替/OpenClaw代替/Claude Cowork代替/ジョブカン代替/Chatwork代替/X代替 を追加。Twitter Card タイトルも「13の競合SaaSを超えるAI統合プラットフォーム」に更新
 - **Zenn記事第3弾作成** (session18): `docs/zenn_comparison_seo_20260326.md` 新規作成・`published: true`。Flutter Webで13競合比較SEOページを量産した実装解説
+
+### 2026-03-26 session22 実装済み
+
+- **CS完全自動化** (session22): `feature_requests` に `admin_reply`/`admin_replied_at` カラム追加。`get-support-tickets` Edge Function実装（未返信チケット+FAQ一覧返却）。`reply-support-request` Edge Function実装（チケット返信+Resendメール送信）。CLAUDE.md cs-checkを本格化（FAQ自動返信/バグ自動修正コミット/エスカレーション判断）。`schedule-daily-digest` の `status=pending` バグを `status=open` に修正
+
+### 2026-03-26 session21 実装済み
+
+- **Claude Code Schedule 自動化** (session21): `schedule-daily-digest` Edge Function 実装（総ユーザー数・新規FR・未対応FR上位10件・直近実績を返す GET API）。`CLAUDE.md` 作成（daily-report/cs-check/weekly-sns-draft の3スケジュールタスクを定義）。`docs/daily-reports/`, `docs/cs-notes/`, `docs/weekly-drafts/` ディレクトリ作成。`deploy-prod.yml` に `schedule-daily-digest` 追加。Claude Code Schedule でスケジュール登録（日次 09:00 JST・毎時・週次月曜）
 
 ### 2026-03-26 session20 実装済み
 

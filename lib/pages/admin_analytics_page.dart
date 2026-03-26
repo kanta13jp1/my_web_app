@@ -497,7 +497,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final data = await _supabase
           .from('feature_requests')
-          .select()
+          .select('id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at')
           .order('votes', ascending: false)
           .limit(50);
       if (mounted) {
@@ -2931,10 +2931,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final votes = _toInt(req['votes']);
                   final status = req['status']?.toString() ?? 'open';
                   final createdAt = req['created_at']?.toString() ?? '';
+                  final adminReply = req['admin_reply']?.toString();
+                  final adminRepliedAt = req['admin_replied_at']?.toString();
                   String dateStr = createdAt;
                   try {
                     dateStr = DateFormat('MM/dd').format(DateTime.parse(createdAt).toLocal());
                   } catch (_) {}
+                  String? repliedAtStr;
+                  if (adminRepliedAt != null) {
+                    try {
+                      repliedAtStr = DateFormat('MM/dd HH:mm').format(DateTime.parse(adminRepliedAt).toLocal());
+                    } catch (_) {}
+                  }
 
                   Color statusColor;
                   switch (status) {
@@ -2946,7 +2954,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       statusColor = Colors.orange;
                   }
 
-                  return ListTile(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    ListTile(
                     dense: true,
                     leading: CircleAvatar(
                       radius: 16,
@@ -2961,7 +2972,26 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                     ),
                     title: Text(title, style: const TextStyle(fontSize: 13)),
-                    subtitle: Text(dateStr, style: const TextStyle(fontSize: 11)),
+                    subtitle: Row(
+                      children: [
+                        Text(dateStr, style: const TextStyle(fontSize: 11)),
+                        if (adminReply != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withAlpha(20),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFF6366F1).withAlpha(60)),
+                            ),
+                            child: Text(
+                              'AI返信済 $repliedAtStr',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF6366F1)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     trailing: PopupMenuButton<String>(
                       initialValue: status,
                       onSelected: (newStatus) => _updateFeatureRequestStatus(id, newStatus, title, email),
@@ -2988,7 +3018,26 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                       ),
                     ),
-                  );
+                  ),
+                    if (adminReply != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366F1).withAlpha(10),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF6366F1).withAlpha(40)),
+                          ),
+                          child: Text(
+                            'AI: $adminReply',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF4338CA)),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
                 },
               ),
           ],

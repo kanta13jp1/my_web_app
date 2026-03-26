@@ -115,6 +115,9 @@ jobs:
           supabase functions deploy send-waitlist-notification --no-verify-jwt
           supabase functions deploy get-admin-users --no-verify-jwt
           supabase functions deploy notify-feature-request --no-verify-jwt
+          supabase functions deploy schedule-daily-digest --no-verify-jwt
+          supabase functions deploy get-support-tickets --no-verify-jwt
+          supabase functions deploy reply-support-request --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

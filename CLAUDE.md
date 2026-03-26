@@ -1,0 +1,271 @@
+# 自分株式会社 — Claude Code 設定
+
+## プロジェクト概要
+
+Flutter Web + Supabase のAI統合ライフマネジメントアプリ。
+Notion・Evernote・MoneyForward・Slack・X・Amazon など14競合の機能を1つに統合。
+本番URL: <https://my-web-app-b67f4.web.app/>
+
+### 技術スタック
+- **フロントエンド**: Flutter Web (Dart)
+- **バックエンド**: Supabase (PostgreSQL + Edge Functions / Deno)
+- **ホスティング**: Firebase Hosting
+- **CI/CD**: GitHub Actions (push to main → 自動デプロイ)
+- **メール**: Resend API
+
+### 競合14社
+
+notion, evernote, moneyforward, slack, chatwork, x, animaworks,
+claude-code, codex, netkeiba, openclaw, claude-cowork, jobcan, amazon
+
+---
+
+## 開発ルール (常に適用)
+
+1. **`flutter analyze` を常に0エラー維持** — コード変更後は必ずチェック
+2. **`deno lint` を常に0エラー維持** — Edge Function 変更後は必ずチェック
+3. **`docs/GROWTH_STRATEGY_ROADMAP.md` を毎回更新** — 変更内容をセッション記録に追記
+4. **ダミーデータ禁止** — 必ずSupabaseのリアルデータを使用
+5. **Edge Functionファースト** — 複雑なロジックはバックエンドに移動
+6. **シンプルさ優先** — 明示的に依頼されていない機能は追加しない
+
+---
+
+## Claude Code Schedule 自動化タスク
+
+> **注意**: 以下のタスクは Claude Code Schedule (定期実行) 用の指示です。
+> スケジュール実行時は、下記の SCHEDULE_TASK 環境変数で実行するタスクを判別してください。
+
+### 環境変数 (スケジュール実行時に必要)
+```
+SUPABASE_DIGEST_URL=https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
+SUPABASE_SERVICE_KEY=<Supabase service_role key>
+```
+
+---
+
+### Task: daily-report (毎朝 09:00 JST に実行)
+
+以下のステップを順番に実行してください:
+
+#### Step 1: 日次メトリクスを取得
+
+WebFetch で以下を呼び出す:
+```
+GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+```
+
+レスポンスの `digest` オブジェクトを取得する。
+
+#### Step 2: 日次レポートを生成・保存
+
+取得した `digest` を元に、以下のフォーマットで日次レポートを作成する。
+ファイルパス: `docs/daily-reports/YYYY-MM-DD.md`
+
+```markdown
+# 自分株式会社 日次レポート YYYY-MM-DD
+
+## 概要
+- **総ユーザー数**: {users.total}人
+- **本日の新規機能リクエスト**: {featureRequests.newToday}件
+- **未対応機能リクエスト**: {featureRequests.openCount}件
+
+## 本日の新規機能リクエスト
+{newTodayList が空でない場合: リスト表示。空の場合: "なし"}
+
+## 注目の未対応リクエスト (投票数上位)
+{topOpen を投票数順にリスト表示}
+
+## 直近の開発実績
+{recentAchievements をリスト表示}
+
+## 次のアクション提案
+AIとして、上記データを踏まえた優先対応事項を3点提案する。
+特に投票数の多い機能リクエストや、ユーザー成長に繋がるアクションを優先。
+```
+
+#### Step 3: コミット
+
+作成したファイルをコミットする:
+```bash
+git add docs/daily-reports/YYYY-MM-DD.md
+git commit -m "自動: 日次レポート YYYY-MM-DD"
+```
+
+---
+
+### Task: cs-check (毎時 実行)
+
+CS対応・バグ修正・エスカレーションを完全自動化する。
+
+#### Step 1: 未返信チケットを取得
+
+WebFetch で以下を呼び出す:
+
+```http
+GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-support-tickets
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+```
+
+レスポンスから `tickets` (未返信) と `faq` (FAQ一覧) を取得する。
+チケットが0件なら処理を終了（コミット不要）。
+
+#### Step 2: 各チケットを判断・対応
+
+チケットごとに以下を判断する:
+
+#### ケース A: FAQ で答えられる
+
+- `faq` 一覧と照合し、類似する質問が見つかれば FAQ の回答を参考に返信文を生成
+- POST で返信:
+
+```http
+POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/reply-support-request
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+Content-Type: application/json
+{ "id": "<ticket_id>", "reply": "<返信文(日本語)>", "newStatus": "open" }
+```
+
+#### ケース B: バグの可能性がある (タイトル・説明に「動かない」「エラー」「できない」「バグ」等)
+
+1. 関連する Dart/TypeScript ソースを `lib/` または `supabase/functions/` から読んで原因を特定
+2. 修正可能な軽微なバグ（typo、null チェック漏れ、ロジック誤りなど）であれば:
+   a. コードを修正
+   b. `flutter analyze` を実行し 0 エラーを確認（Dart の場合）
+   c. `git add -p && git commit -m "fix: <バグ内容>" && git push origin main` でコミット
+   d. 返信文に「修正しました。本番デプロイまで数分お待ちください」と記載して返信
+3. 複雑な修正が必要な場合はエスカレーション (ケース C)
+
+#### ケース C: 返金・課金・退会・緊急 or 判断困難
+
+- エスカレーションとしてマーク:
+
+```json
+{ "id": "<ticket_id>", "escalate": true }
+```
+
+- `docs/cs-notes/YYYY-MM-DD-HH.md` にエスカレーション内容を記録
+
+#### Step 3: CS ノートを記録してコミット
+
+対応内容の記録を `docs/cs-notes/YYYY-MM-DD-HH.md` に保存:
+
+```markdown
+# CS チェック YYYY-MM-DD HH:00
+
+## 対応済み (FAQ返信)
+- [タイトル] → 返信送信
+
+## 対応済み (バグ修正)
+- [タイトル] → 修正コミット: <commit hash>
+
+## エスカレーション (要人間対応)
+- [タイトル] → 理由: <判断できなかった理由>
+
+## スキップ (投票0・重複など)
+- なし
+```
+
+コミット:
+
+```bash
+git add docs/cs-notes/
+git commit -m "自動: CS チェック YYYY-MM-DD HH:00"
+git push origin main
+```
+
+チケットが0件 or 全てスキップの場合はコミット不要。
+
+---
+
+### Task: weekly-sns-draft (毎週月曜 09:00 JST に実行)
+
+#### Step 1: 先週の実績サマリーを生成
+
+`docs/daily-reports/` の直近7日分を読み込み、週次サマリーを作成:
+
+ファイルパス: `docs/weekly-drafts/YYYY-MM-DD-week.md`
+
+```markdown
+# 週次 SNS 投稿ドラフト (YYYY-MM-DD 週)
+
+## X (Twitter) 投稿ドラフト (140字以内)
+
+[ドラフト1: ユーザー数の進捗]
+自分株式会社、今週もビルド継続中🚀
+現在 {users.total}人が使用中。
+14の競合SaaSを超えるAI統合アプリを無料で体験:
+https://my-web-app-b67f4.web.app/ #buildinpublic
+
+[ドラフト2: 機能開発の進捗]
+今週実装した機能: {直近の実績タイトルを2-3個}
+コツコツ積み上げ中💪 #FlutterWeb #Supabase
+
+## Zenn 記事ネタ提案
+1. {今週の実装内容から技術記事ネタを3つ提案}
+```
+
+コミット:
+```bash
+git add docs/weekly-drafts/
+git commit -m "自動: 週次SNSドラフト YYYY-MM-DD"
+```
+
+---
+
+## ディレクトリ構成 (主要)
+
+```
+lib/
+  main.dart              # ルーティング
+  pages/
+    landing_page.dart    # LP (比較リンク、FAB CTA)
+    comparison_page.dart # 競合比較ページ (14社)
+    user_manual_page.dart
+    admin_analytics_page.dart
+supabase/
+  functions/             # Deno Edge Functions
+  migrations/            # SQL migration files
+docs/
+  GROWTH_STRATEGY_ROADMAP.md  # 開発記録 (毎回更新)
+  daily-reports/         # Claude Schedule が生成する日次レポート
+  cs-notes/              # Claude Schedule が生成する CS チェックメモ
+  weekly-drafts/         # Claude Schedule が生成する週次SNSドラフト
+web/
+  index.html             # SEO meta tags
+  sitemap.xml            # 22 URLs
+```
+
+## Supabase Edge Function 一覧
+
+| Function | 用途 |
+|---|---|
+| `schedule-daily-digest` | Claude Schedule 用の日次メトリクス API |
+| `get-support-tickets` | Claude Schedule 用: 未返信チケット+FAQ一覧 |
+| `reply-support-request` | Claude Schedule 用: チケット返信・エスカレーション |
+| `get-home-dashboard` | ホーム画面統合データ |
+| `notify-feature-request` | 機能リクエスト更新通知メール |
+| `growth-weekly-digest` | 週次グロース指標 |
+| `development-achievements` | 開発実績一覧 |
+| `get-admin-users` | 管理者用ユーザー一覧 |
+| `daily-judgment` | AI デイリー判定 |
+| `ai-assistant` | AI アシスタント |
+
+---
+
+## 開発実績の記録方法
+
+新しい機能を実装したら必ず `supabase/migrations/` に seed ファイルを作成:
+
+```sql
+-- Session XX: 実装内容の概要
+INSERT INTO development_achievements (title, description, completed_at)
+VALUES ('タイトル', '詳細説明', 'YYYY-MM-DD')
+ON CONFLICT DO NOTHING;
+```
+
+## マイグレーションファイルの命名規則
+
+`YYYYMMDDXXXXXX_descriptive_name.sql`
+例: `20260326000010_seed_achievements_session20.sql`
