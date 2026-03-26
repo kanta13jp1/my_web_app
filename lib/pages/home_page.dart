@@ -4059,6 +4059,17 @@ abstinence_slip_details: $slipDetailsText
                                 lockedReason: '先に必須導線を完了してください。',
                               ),
                               _MenuData(
+                                '買い物リスト',
+                                Icons.shopping_cart,
+                                Colors.brown,
+                                () => Navigator.pushNamed(
+                                  context,
+                                  '/shopping-list',
+                                ),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
                                 '断捨離 (リアル)',
                                 Icons.camera_alt,
                                 Colors.deepOrange,
