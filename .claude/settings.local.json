@@ -44,7 +44,9 @@
       "Bash(supabase functions:*)",
       "WebFetch(domain:x.com)",
       "Skill(schedule)",
-      "Skill(schedule:*)"
+      "Skill(schedule:*)",
+      "Bash(grep -E \"\\\\.\\(dart|ts\\)$\")",
+      "Bash(npx deno:*)"
     ]
   }
 }

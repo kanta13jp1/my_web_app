@@ -303,6 +303,49 @@ git commit -m "自動: 週次SNSドラフト YYYY-MM-DD"
 
 ---
 
+### Task: pr-auto-review (3時間ごとに実行)
+
+GitHub PRの自動コードレビュー。
+
+1. `gh pr list --state open` でオープンPRを確認
+2. 各PRの差分を取得し、セキュリティ・パフォーマンス・ロジックバグの観点でレビュー
+3. 指摘があれば `gh pr review` でコメント投稿
+4. 問題なければ approve
+
+---
+
+### Task: competitor-monitoring (毎日 07:00 JST に実行)
+
+競合14社のWebサイト・機能変更モニタリング。
+
+1. `check-competitor-updates` Edge Function で可用性チェック
+2. WebSearch で各競合の最新ニュースを検索
+3. `docs/competitor-reports/YYYY-MM-DD.md` にレポート作成
+4. 重要な変更があれば GROWTH_STRATEGY_ROADMAP.md にも反映
+
+---
+
+### Task: infra-health-check (毎時30分に実行)
+
+インフラヘルスチェック。
+
+1. `health-check` Edge Function で DB・テーブル・レスポンスタイムを確認
+2. Firebase Hosting (https://my-web-app-b67f4.web.app/) の可用性を確認
+3. 異常時のみ `docs/incident-reports/YYYY-MM-DD-HH.md` にレポート作成
+
+---
+
+### Task: dependency-audit (毎週月曜 08:00 JST に実行)
+
+依存パッケージの脆弱性チェック。
+
+1. `flutter pub outdated` で古いパッケージを確認
+2. Deno Edge Functions の import URL バージョンを確認
+3. 脆弱性があればパッチ更新 or レポート作成 (`docs/security-audit/YYYY-MM-DD.md`)
+4. `flutter analyze` と `deno lint` で0エラーを確認
+
+---
+
 ## ディレクトリ構成 (主要)
 
 ```text
@@ -321,6 +364,9 @@ docs/
   daily-reports/         # Claude Schedule が生成する日次レポート
   cs-notes/              # Claude Schedule が生成する CS チェックメモ
   weekly-drafts/         # Claude Schedule が生成する週次SNSドラフト
+  competitor-reports/    # Claude Schedule が生成する競合モニタリングレポート
+  incident-reports/      # Claude Schedule が生成するインシデントレポート
+  security-audit/        # Claude Schedule が生成する脆弱性チェックレポート
 web/
   index.html             # SEO meta tags
   sitemap.xml            # 22 URLs
@@ -340,6 +386,11 @@ web/
 | `get-admin-users` | 管理者用ユーザー一覧 |
 | `daily-judgment` | AI デイリー判定 |
 | `ai-assistant` | AI アシスタント |
+| `post-x-update` | X (Twitter) 自動投稿 (@kanta13jp1) |
+| `get-growth-roadmap-progress` | 進捗バーデータ (15競合+短中長期) |
+| `get-competitor-features` | 競合14社の機能比較データ |
+| `health-check` | インフラヘルスチェック |
+| `check-competitor-updates` | 競合14社のWebサイト可用性チェック |
 
 ---
 

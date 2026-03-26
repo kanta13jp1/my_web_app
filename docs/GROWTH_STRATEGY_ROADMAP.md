@@ -1,8 +1,8 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-26 session24 (追加: 自動化オペレーションUI・X手動投稿テスト・CS返信導線)
-現時点の登録者数: 2人
+最終更新: 2026-03-26 session24 (追加: vs Amazon 進捗バー追加・ユーザーマニュアル修正・Schedule 日次タスク登録)
+現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
@@ -700,6 +700,36 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 - import CTA 改善後の CVR 数値が出たら、import チャネルの CAC / LTV 試算に使う
 - 週次 digest を investor update の数値源として確立する
+
+---
+
+### Session 24 — 2026-03-26
+
+#### 開発
+- vs Amazon を第15競合として growth_plans テーブルおよび get-growth-roadmap-progress Edge Function に追加 (目標: 3.1億ユーザー, 期限: 2038年12月)
+- ユーザーマニュアルのナビゲーション手順修正 (セクション名不一致: CFO/CHO/CHRO OFFICE, ブログ投稿管理ボタンラベル)
+- 既存機能の確認: 進捗バー(16項目), 開発実績(期間別), プロフィール完了バナー, 管理者ユーザー管理, 技術ブログ投稿管理 — すべて実データで稼働中
+- health-check Edge Function 作成: DB接続・テーブル可用性・レスポンスタイム診断API
+- check-competitor-updates Edge Function 作成: 競合14社Webサイト応答速度・可用性一括チェックAPI
+
+#### 企画 (X投稿 https://x.com/satori_sz9/status/2037097847498412506 のアイデア実装)
+- Claude Code Schedule で合計6つの自動化タスクを運用:
+  1. **daily-report** (毎日9:00): 日次メトリクス + X投稿 + レポート生成
+  2. **cs-check** (毎時): CS対応・バグ修正・エスカレーション全自動化
+  3. **weekly-sns-draft** (毎週月曜9:00): 週次SNSドラフト
+  4. **daily-development** (毎日10:00): ロードマップ推進・技術ブログ投稿
+  5. **pr-auto-review** (3時間毎): GitHub PR自動コードレビュー
+  6. **competitor-monitoring** (毎日7:00): 競合14社Webサイト・ニュースモニタリング
+  7. **infra-health-check** (毎時30分): DB・Firebase Hosting可用性監視
+  8. **dependency-audit** (毎週月曜8:00): Flutter/Deno依存パッケージ脆弱性チェック
+
+#### 広告・宣伝
+- X投稿アカウント: @kanta13jp1 (post-x-update Edge Function で自動投稿)
+- 技術ブログ投稿管理機能 (11プラットフォーム対応) で毎日の投稿状況を管理
+
+#### マーケティング
+- 登録者数4人に更新 (Supabase実データ確認済み)
+- 全15競合の進捗バーがホーム画面で実データ表示 (Amazon追加)
 
 ---
 
