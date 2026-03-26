@@ -1,4 +1,14 @@
 -- Session 20: Amazon 第14競合追加・ユーザーマニュアル全面刷新
+--
+-- 注意: growth_plans テーブルに新カラムを追加してからシードを実行する。
+-- (初期定義の label/target/features_done 構成から拡張)
+
+alter table public.growth_plans
+  add column if not exists name          text,
+  add column if not exists target_label  text,
+  add column if not exists current_value bigint,
+  add column if not exists target_value  bigint,
+  add column if not exists plan_type     text;
 
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES
