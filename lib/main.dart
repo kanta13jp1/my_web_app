@@ -4,6 +4,7 @@ import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
+import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
@@ -214,6 +215,10 @@ class MyApp extends StatelessWidget {
           case '/email-cleanup':
             return MaterialPageRoute(
               builder: (_) => const EmailCleanupPage(),
+            );
+          case '/payment-reminders':
+            return MaterialPageRoute(
+              builder: (_) => const PaymentReminderPage(),
             );
           case '/feature-requests':
             return MaterialPageRoute(
