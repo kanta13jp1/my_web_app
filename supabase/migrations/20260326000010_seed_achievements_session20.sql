@@ -10,6 +10,11 @@ alter table public.growth_plans
   add column if not exists target_value  bigint,
   add column if not exists plan_type     text;
 
+-- label/target は旧カラム。新カラム(name/target_value)への移行に伴い NOT NULL を解除
+alter table public.growth_plans
+  alter column label  drop not null,
+  alter column target drop not null;
+
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES
   (
