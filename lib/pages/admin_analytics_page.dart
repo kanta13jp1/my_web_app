@@ -1486,6 +1486,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 16),
                     const ScheduleTaskMonitorCard(),
                     const SizedBox(height: 16),
+                    _buildBlogPostsCard(),
+                    const SizedBox(height: 16),
                     _buildWaitlistCard(),
                     const SizedBox(height: 24),
                     const Text(
@@ -4021,6 +4023,232 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     subtitle: Text(
                       '$source  $dateStr',
                       style: const TextStyle(fontSize: 11),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // ブログ投稿管理カード
+  // -----------------------------------------------------------------------
+
+  List<Map<String, dynamic>> _blogPosts = [];
+  bool _blogPostsLoading = false;
+
+  Future<void> _loadBlogPosts() async {
+    setState(() => _blogPostsLoading = true);
+    try {
+      final data = await _supabase
+          .from('blog_posts')
+          .select('id, title, status, target_platforms, draft_path, posted_at, url, created_at')
+          .order('created_at', ascending: false)
+          .limit(20);
+      if (mounted) {
+        setState(() {
+          _blogPosts = List<Map<String, dynamic>>.from(data as List);
+          _blogPostsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _blogPostsLoading = false);
+    }
+  }
+
+  Future<void> _updateBlogPostStatus(String id, String newStatus) async {
+    try {
+      await _supabase
+          .from('blog_posts')
+          .update({'status': newStatus}).eq('id', id);
+      await _loadBlogPosts();
+    } catch (_) {}
+  }
+
+  Widget _buildBlogPostsCard() {
+    if (_blogPosts.isEmpty && !_blogPostsLoading) {
+      _loadBlogPosts();
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Color statusColor(String status) {
+      switch (status) {
+        case 'posted':
+          return Colors.green;
+        case 'skipped':
+          return Colors.grey;
+        default:
+          return Colors.orange;
+      }
+    }
+
+    String statusLabel(String status) {
+      switch (status) {
+        case 'posted':
+          return '投稿済';
+        case 'skipped':
+          return 'スキップ';
+        default:
+          return '下書き';
+      }
+    }
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.article, color: Color(0xFF6366F1)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'ブログ投稿管理',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _loadBlogPosts,
+                  tooltip: '更新',
+                ),
+              ],
+            ),
+            Text(
+              'Claude Schedule が生成した下書き・投稿状況を管理',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_blogPostsLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_blogPosts.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'まだブログ下書きがありません。\nblog-draft Schedule タスクが実行されると自動追加されます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _blogPosts.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final post = _blogPosts[index];
+                  final status = post['status']?.toString() ?? 'draft';
+                  final title = post['title']?.toString() ?? '(無題)';
+                  final platforms = (post['target_platforms'] as List?)
+                          ?.map((e) => e.toString())
+                          .join(', ') ??
+                      '';
+                  final createdAt = post['created_at'] != null
+                      ? DateTime.tryParse(post['created_at'].toString())
+                      : null;
+                  final dateStr = createdAt != null
+                      ? '${createdAt.month}/${createdAt.day}'
+                      : '';
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (platforms.isNotEmpty)
+                                Text(
+                                  '$platforms  $dateStr',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          initialValue: status,
+                          onSelected: (val) =>
+                              _updateBlogPostStatus(post['id'].toString(), val),
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(
+                              value: 'draft',
+                              child: Text('下書き'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'posted',
+                              child: Text('投稿済にする'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'skipped',
+                              child: Text('スキップ'),
+                            ),
+                          ],
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor(status).withAlpha(20),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  statusLabel(status),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor(status),
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  size: 14,
+                                  color: statusColor(status),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
