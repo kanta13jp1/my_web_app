@@ -41,6 +41,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     ('歯を磨く (朝)', '🪥', '#26A69A', '07:00'),
     ('歯を磨く (夜)', '🪥', '#26A69A', '22:30'),
     ('スキンケアをする', '🧴', '#AB47BC', '22:00'),
+    ('着替える (上着・ズボン・パンツ)', '👔', '#5C6BC0', '07:00'),
   ];
 
   @override
