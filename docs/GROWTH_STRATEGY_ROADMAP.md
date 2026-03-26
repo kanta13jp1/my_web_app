@@ -1,9 +1,9 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-27 session25 (追加: Schedule タスクモニター・SEO/OGP 動的更新・schedule_task_runs テーブル・health-check / check-competitor-updates Edge Function・competitor_monitoring テーブル)
+最終更新: 2026-03-27 session26 (追加: Google・Microsoft を第15・16競合として追加、growth_plans テーブルに登録)
 現時点の登録者数: 4人
-最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
+最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
 
 ---
@@ -40,6 +40,8 @@
 - Slack: ~65,000,000 users 規模 (グローバルビジネスチャット)
 - ジョブカン: ~5,000,000 users 規模 (国内バックオフィス SaaS)
 - Amazon: ~310,000,000 active customer accounts 規模 (グローバル EC・AI・コンテンツ)
+- Google: ~4,300,000,000 users 規模 (Google Workspace・Search・Android・YouTube・Cloud)
+- Microsoft: ~1,500,000,000 users 規模 (Microsoft 365・Windows・Azure・LinkedIn・GitHub)
 
 2026-03-24 に再確認した公開ベンチマークの前提は次の通り。
 
@@ -56,7 +58,7 @@
 - Slack: 世界的シェアを誇るビジネスチャット・連携プラットフォーム (~6,500 万ユーザー)
 - ジョブカン: 導入実績 25 万社を超える国内シェアトップクラスのバックオフィスシステム (~500 万ユーザー推定)
 
-自分株式会社 はこれら 13 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
+自分株式会社 はこれら 16 のサービスを上回るために、移行、AI、共有、紹介、法人展開を同時に強化する。
 
 ---
 
@@ -755,12 +757,30 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - 3 インスタンス並行開発体制を確立 (VSCode: lib/ / Web: supabase/functions/ / Windows: docs/)
 - Claude Code Schedule で 9 タスクの完全自動化運用を開始
 
+### Session 26 — 2026-03-27
+
+#### 開発
+- Google・Microsoft を第15・16競合として growth_plans テーブルに追加 (マイグレーション)
+- Google: ~43億ユーザー (Workspace/Search/Android/YouTube/Cloud), 期限: 2040年12月
+- Microsoft: ~15億ユーザー (365/Windows/Azure/LinkedIn/GitHub), 期限: 2040年12月
+
+#### 企画
+- 競合を14社→16社に拡大。Google の検索・メール・ドキュメント統合、Microsoft の Office・クラウド・開発者エコシステムを包含する戦略に拡大
+- Google との差別化: AI ファーストの個人経営プラットフォーム (Google は広告モデル、自分株式会社はユーザー中心)
+- Microsoft との差別化: 軽量・モバイルファーストの統合体験 (Microsoft はエンタープライズ向け重厚長大)
+
+#### 事業計画
+- Google・Microsoft を最終目標に追加したことで、目標ユーザー数の上限を43億に設定
+- 段階的アプローチ: まず Animaworks(50万) → netkeiba(1700万) → Chatwork(600万) → Slack(6500万) → Notion(1億) → MoneyForward(1500万) → Amazon(3.1億) → Microsoft(15億) → Google(43億)
+
 ---
 
 ## 16. ベンチマーク参照元
 
 - 2026-03-24 verified: [Notion product page](https://www.notion.com/product)
 - 2026-03-24 verified: [Evernote official announcement](https://evernote.com/blog/bending-spoons-to-acquire-evernote)
+- 2026-03-27 added: Google — Google Workspace has over 3 billion users; Search/Android/YouTube ecosystem estimated at 4.3 billion MAU
+- 2026-03-27 added: Microsoft — Microsoft 365 has 400M+ paid seats; Windows ecosystem estimated at 1.5 billion users
 
 ---
 
