@@ -444,6 +444,28 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(feature: '広告なし・完全無料・プライバシー保護', competitorHas: false, weHave: true),
     ],
   ),
+  'github': const _CompetitorInfo(
+    name: 'GitHub',
+    emoji: '🐙',
+    tagline: 'GitHubのコード管理・コラボレーション機能を超えた、AI統合の個人生産性アプリ。完全無料。',
+    searchKeyword: 'GitHub代替 ギットハブ代替 コード管理代替 開発者ツール代替',
+    accentColor: Color(0xFF24292E),
+    painPoints: [
+      'GitHubはコード管理・開発者コラボレーションに特化し、日常の個人タスク・資産管理・習慣化には対応していない',
+      'GitHubのプロジェクト管理はエンジニア向けで、一般ユーザーの生活全般の管理には不向き',
+      'GitHubはコード以外のメモ・目標管理・AIアシスタント機能が欠けている',
+    ],
+    features: [
+      _FeatureComparison(feature: 'コードリポジトリ管理', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'Pull Request・コードレビュー', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'CI/CDパイプライン', competitorHas: true, weHave: false),
+      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
+      _FeatureComparison(feature: '完全無料・広告なし', competitorHas: false, weHave: true),
+    ],
+  ),
   'liven': const _CompetitorInfo(
     name: 'Liven',
     emoji: '🍽️',

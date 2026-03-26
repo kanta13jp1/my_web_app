@@ -2080,7 +2080,7 @@ const _googleFeatureRows = <_FeatureRow>[
   ),
   _FeatureRow(
     category: '自分株式会社 独自機能',
-    feature: '成長ロードマップ・競合20社超え進捗',
+    feature: '成長ロードマップ・競合21社超え進捗',
     competitorDetail: '— Google にはない統合生産性機能',
     status: _FeatureStatus.unique,
     appDetail: '短中長期の個人目標と競合比較を一画面で可視化',
@@ -2312,13 +2312,58 @@ const _livenFeatureRows = <_FeatureRow>[
   ),
 ];
 
+const _githubFeatureRows = <_FeatureRow>[
+  _FeatureRow(
+    category: 'コード管理',
+    feature: 'Gitリポジトリ・バージョン管理',
+    competitorDetail: 'クラウドGitホスティング・ブランチ管理',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — コード管理は対象外。開発メモ・ドキュメント管理で代替',
+  ),
+  _FeatureRow(
+    category: 'コラボレーション',
+    feature: 'Pull Request・コードレビュー',
+    competitorDetail: 'チームコードレビュー・マージ管理',
+    status: _FeatureStatus.notYet,
+    appDetail: '未実装 — 個人向けタスク管理・AI提案で代替',
+  ),
+  _FeatureRow(
+    category: 'CI/CD',
+    feature: 'GitHub Actions・自動化',
+    competitorDetail: 'CI/CDパイプライン・ワークフロー自動化',
+    status: _FeatureStatus.partial,
+    appDetail: 'Claude Code Scheduleで定期自動化を実装。Supabase Edge Functionsで処理自動化',
+  ),
+  _FeatureRow(
+    category: 'タスク・習慣管理',
+    feature: 'タスク・習慣管理',
+    competitorDetail: 'GitHub IssuesでのIssue管理のみ',
+    status: _FeatureStatus.unique,
+    appDetail: '毎日の最優先タスク1件提案・習慣トラッカー・AIコーチングを実装',
+  ),
+  _FeatureRow(
+    category: 'AIアシスタント',
+    feature: 'AI判断支援・アシスタント',
+    competitorDetail: 'GitHub Copilotはコード補完特化',
+    status: _FeatureStatus.unique,
+    appDetail: 'MAGIシステム・AI役員会議・Gemini大学として実装済み。生活全般のAI支援',
+  ),
+  _FeatureRow(
+    category: '自分株式会社 独自機能',
+    feature: '資産管理・習慣化・メモ統合',
+    competitorDetail: 'GitHubは開発者ツール特化',
+    status: _FeatureStatus.unique,
+    appDetail: '個人の生活全般（タスク・資産・習慣・メモ・AI）を統合管理',
+  ),
+];
+
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-/// 競合20社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
+/// 競合21社 (Notion / EverNote / MoneyForward / X / Animaworks / Claude Code / Codex /
 /// netkeiba / OpenClaw / Claude Cowork / Chatwork / Slack / ジョブカン /
-/// Amazon / Google / Microsoft / Discord / LINE / Facebook / Liven) の機能一覧と
+/// Amazon / Google / Microsoft / Discord / LINE / Facebook / Liven / GitHub) の機能一覧と
 /// 自分株式会社 の実装状況を比較表示するカード。
 class CompetitorFeatureComparisonCard extends StatefulWidget {
   const CompetitorFeatureComparisonCard({super.key});
@@ -2362,6 +2407,7 @@ class _CompetitorFeatureComparisonCardState
     'LINE',
     'Facebook',
     'Liven',
+    'GitHub',
   ];
   static const _featureLists = [
     _notionFeatureRows,
@@ -2384,6 +2430,7 @@ class _CompetitorFeatureComparisonCardState
     _lineFeatureRows,
     _facebookFeatureRows,
     _livenFeatureRows,
+    _githubFeatureRows,
   ];
 
   String _filterCategory = 'すべて';
