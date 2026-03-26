@@ -1,7 +1,17 @@
 -- ============================================================
 -- Session 7 開発実績シード (2026-03-25)
 -- SEO強化・競合比較キーワード対応
+--
+-- 注意: このマイグレーションで description/category/achieved_at/
+-- impact_level カラムを追加してからシードを実行する。
+-- (000000 の初期定義に存在しなかったため)
 -- ============================================================
+
+alter table public.development_achievements
+  add column if not exists description  text,
+  add column if not exists category     text,
+  add column if not exists achieved_at  timestamptz,
+  add column if not exists impact_level text;
 
 insert into public.development_achievements
   (title, description, category, achieved_at, impact_level)

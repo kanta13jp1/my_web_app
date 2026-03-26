@@ -50,7 +50,8 @@
       "Bash(git remote:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(grep -n \"post-x-update\\\\|deploy\" c:/Users/kanta/GitHub/my_web_app/.github/workflows/*.yml)"
     ]
   }
 }
