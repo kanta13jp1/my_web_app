@@ -559,15 +559,93 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Future<void> _updateFeatureRequestStatus(int id, String status) async {
+  Future<void> _updateFeatureRequestStatus(
+    String id,
+    String status,
+    String title,
+    String? email,
+  ) async {
     try {
       await _supabase
           .from('feature_requests')
           .update({'status': status})
           .eq('id', id);
       await _loadFeatureRequests();
+      if (!mounted) return;
+      // Offer to notify submitter when status changes to actionable state
+      if ((status == 'done' || status == 'in_progress') &&
+          email != null &&
+          email.isNotEmpty) {
+        _showFeatureRequestNotifyDialog(id, status, title, email);
+      }
     } catch (e) {
       debugPrint('feature request status update error: $e');
+    }
+  }
+
+  void _showFeatureRequestNotifyDialog(
+    String id,
+    String status,
+    String title,
+    String email,
+  ) {
+    final statusLabel = status == 'done' ? '実装完了' : '対応中';
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$statusLabel を通知しますか？'),
+        content: Text(
+          '「$title」のステータスが "$statusLabel" に変更されました。\n'
+          '投稿者（$email）にメールで通知しますか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('スキップ'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _notifyFeatureRequestSubmitter(id, status, title, email);
+            },
+            child: const Text('通知する'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _notifyFeatureRequestSubmitter(
+    String id,
+    String status,
+    String title,
+    String email,
+  ) async {
+    if (!mounted) return;
+    setState(() => _sendingNotification = true);
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) throw Exception('Not authenticated');
+      final resp = await _supabase.functions.invoke(
+        'notify-feature-request',
+        body: {'id': id, 'status': status},
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+      );
+      if (resp.status != 200) {
+        final errData = resp.data as Map<String, dynamic>?;
+        throw Exception(errData?['error']?.toString() ?? 'Unknown error');
+      }
+      if (!mounted) return;
+      setState(() => _sendingNotification = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$email に通知を送信しました')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _sendingNotification = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('通知送信に失敗しました: $e')),
+      );
     }
   }
 
@@ -2847,8 +2925,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final req = _featureRequests[index];
-                  final id = req['id'] as int;
+                  final id = req['id']?.toString() ?? '';
                   final title = req['title']?.toString() ?? '';
+                  final email = req['email']?.toString();
                   final votes = _toInt(req['votes']);
                   final status = req['status']?.toString() ?? 'open';
                   final createdAt = req['created_at']?.toString() ?? '';
@@ -2885,7 +2964,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     subtitle: Text(dateStr, style: const TextStyle(fontSize: 11)),
                     trailing: PopupMenuButton<String>(
                       initialValue: status,
-                      onSelected: (newStatus) => _updateFeatureRequestStatus(id, newStatus),
+                      onSelected: (newStatus) => _updateFeatureRequestStatus(id, newStatus, title, email),
                       itemBuilder: (_) => const [
                         PopupMenuItem(value: 'open', child: Text('open')),
                         PopupMenuItem(value: 'in_progress', child: Text('in_progress')),

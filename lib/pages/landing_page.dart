@@ -2667,6 +2667,22 @@ $input
           key: Key('landing_page_title'),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Scrollable.ensureVisible(
+            _authSectionKey.currentContext ?? context,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        },
+        backgroundColor: const Color(0xFF3949AB),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.rocket_launch, size: 18),
+        label: const Text(
+          '無料で始める',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
