@@ -53,6 +53,7 @@ import 'life_goals_page.dart';
 import 'thought_capture_page.dart';
 import 'decision_check_page.dart';
 import 'purchase_log_page.dart';
+import 'conveni_store_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
@@ -4041,6 +4042,34 @@ abstinence_slip_details: $slipDetailsText
                                 onTap: () => Navigator.pushNamed(
                                   context,
                                   '/prison-mode',
+                                ),
+                              ),
+                            ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Colors.grey.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '🏪',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  'コンビニ経営シミュレーション',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: const Text(
+                                  '経営感覚を実践的に鍛えるゲーム',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => _nav(
+                                  context,
+                                  const ConveniStorePage(),
                                 ),
                               ),
                             ),
