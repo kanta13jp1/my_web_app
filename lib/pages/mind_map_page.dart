@@ -618,37 +618,40 @@ class _MindMapPageState extends State<MindMapPage> {
 
         return ColoredBox(
           color: const Color(0xFFF8FAFC),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: RepaintBoundary(
-                key: _graphCaptureKey,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: minCanvasWidth),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: SizedBox(
-                      width: layout.size.width,
-                      height: layout.size.height,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _MindMapEdgePainter(layout.edges),
-                            ),
+          child: InteractiveViewer(
+            constrained: false,
+            boundaryMargin: const EdgeInsets.all(200),
+            minScale: 0.2,
+            maxScale: 3.0,
+            child: RepaintBoundary(
+              key: _graphCaptureKey,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: minCanvasWidth,
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: layout.size.width,
+                    height: layout.size.height,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _MindMapEdgePainter(layout.edges),
                           ),
-                          ...layout.nodes.map(
-                            (node) => Positioned(
-                              left: node.rect.left,
-                              top: node.rect.top,
-                              width: node.rect.width,
-                              height: node.rect.height,
-                              child: _buildNode(node.label),
-                            ),
+                        ),
+                        ...layout.nodes.map(
+                          (node) => Positioned(
+                            left: node.rect.left,
+                            top: node.rect.top,
+                            width: node.rect.width,
+                            height: node.rect.height,
+                            child: _buildNode(node.label),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
