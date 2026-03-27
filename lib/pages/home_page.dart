@@ -62,6 +62,7 @@ import '../widgets/daily_challenge_card.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/login_streak_card.dart';
 import '../widgets/daily_habits_summary_card.dart';
+import '../widgets/leaderboard_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3871,6 +3872,8 @@ abstinence_slip_details: $slipDetailsText
                             const SizedBox(height: 8),
                             const ProfileCompletionBanner(),
                             const ReferralShareCard(),
+                            const SizedBox(height: 8),
+                            const LeaderboardCard(),
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
