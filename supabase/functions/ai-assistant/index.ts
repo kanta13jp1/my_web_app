@@ -301,7 +301,28 @@ serve(async (req) => {
                 throw new Error("AI response did not contain valid JSON.");
             }
             const cleanJson = match[0];
-            const result = JSON.parse(cleanJson);
+            // Gemma等の小型モデルはJSON構文エラーを起こしやすいため修復を試みる
+            let result: Record<string, unknown>;
+            try {
+                result = JSON.parse(cleanJson);
+            } catch (_parseErr) {
+                // 修復: trailing commas, 不正なカンマ, シングルクォートをダブルに
+                const repaired = cleanJson
+                    .replace(/,\s*([}\]])/g, '$1')           // trailing commas
+                    .replace(/([}\]"0-9])\s*\n\s*"/g, '$1,"') // missing commas between elements
+                    .replace(/'/g, '"');                       // single -> double quotes
+                try {
+                    result = JSON.parse(repaired);
+                } catch (_repairErr) {
+                    // 最終フォールバック: 生テキストを返してフロント側でフォールバック処理させる
+                    const fallbackResult = {
+                        messages: [{ speaker_name: 'AI CEO', role: 'CEO', content: resultStr.substring(0, 500) }],
+                        conclusion: 'AI応答のJSON解析に失敗しました。生テキストを表示しています。',
+                        _raw_fallback: true,
+                    };
+                    return new Response(JSON.stringify({ success: true, result: fallbackResult }), { headers: corsHeaders });
+                }
+            }
             const rawMessages = Array.isArray(result.messages) ? result.messages : [];
             const normalizedMessages = rawMessages
                 .map((item: Record<string, unknown>) => {
