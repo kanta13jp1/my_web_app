@@ -130,8 +130,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d)
-          BRANCH="daily-report-${DATETIME}"
+          DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          RUN_ID="${{ github.run_id }}"
+          BRANCH="daily-report-${DATE}-${RUN_ID}"
 
           git add docs/daily-reports/
           if git diff --cached --quiet; then
@@ -142,14 +143,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "$BRANCH"
-          git commit -m "自動: 日次レポート ${DATETIME}"
+          # リモートの最新を取得してからブランチ作成
+          git fetch origin main
+          git checkout -b "$BRANCH" origin/main
+          git add docs/daily-reports/
+          git commit -m "自動: 日次レポート ${DATE}"
           git push origin "$BRANCH"
 
           set +e
           PR_URL=$(gh pr create \
-            --title "自動: 日次レポート ${DATETIME}" \
-            --body "日次レポート自動生成 (GitHub Actions)" \
+            --title "自動: 日次レポート ${DATE}" \
+            --body "日次レポート自動生成 (GitHub Actions run #${RUN_ID})" \
             --base main \
             --head "$BRANCH")
           PR_EXIT=$?
