@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:my_web_app/services/memory_drill_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MemoryDrillPage extends StatefulWidget {
   const MemoryDrillPage({
@@ -26,6 +27,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
   bool _isLoading = true;
   bool _showHints = true;
   bool _showAnswers = false;
+  List<MemoryDrillPack> _customPacks = [];
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
     _selectedPack = MemoryDrillService.builtinPacks.first;
     _displayItems = List<String>.from(_selectedPack.items);
     _loadStats();
+    _loadCustomPacks();
   }
 
   DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
@@ -47,6 +50,134 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
       _stats = stats;
       _isLoading = false;
     });
+  }
+
+  Future<void> _loadCustomPacks() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final data = await Supabase.instance.client
+          .from('custom_memory_packs')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at');
+      final rows = List<Map<String, dynamic>>.from(data as List);
+      final packs = rows.map((row) {
+        final rawItems = row['items'];
+        final items = rawItems is List
+            ? rawItems.map((e) => e.toString()).toList()
+            : <String>[];
+        return MemoryDrillPack(
+          id: 'custom_${row['id']?.toString() ?? ''}',
+          title: row['title']?.toString() ?? '',
+          description: row['description']?.toString() ?? '',
+          category: row['category']?.toString() ?? 'カスタム',
+          items: items,
+        );
+      }).toList();
+      if (mounted) setState(() => _customPacks = packs);
+    } catch (e) {
+      debugPrint('Custom packs load error: $e');
+    }
+  }
+
+  Future<void> _addCustomPack() async {
+    final titleCtrl = TextEditingController();
+    final categoryCtrl = TextEditingController(text: 'カスタム');
+    final itemCtrls = List.generate(10, (_) => TextEditingController());
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('オリジナル暗記セットを作成'),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'セット名 *',
+                    hintText: '例: 世界の首都 10個',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: categoryCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'カテゴリ',
+                    hintText: '例: 地理、音楽、歴史',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '10個の項目を入力:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                ...List.generate(
+                  10,
+                  (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: TextField(
+                      controller: itemCtrls[i],
+                      decoration: InputDecoration(
+                        labelText: '${i + 1}.',
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('作成'),
+          ),
+        ],
+      ),
+    );
+    if (result != true) return;
+
+    final title = titleCtrl.text.trim();
+    final items = itemCtrls
+        .map((c) => c.text.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (title.isEmpty || items.isEmpty) return;
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      await Supabase.instance.client.from('custom_memory_packs').insert({
+        'user_id': userId,
+        'title': title,
+        'category': categoryCtrl.text.trim(),
+        'description': '$title (${items.length}項目)',
+        'items': items,
+      });
+      await _loadCustomPacks();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('「$title」を作成しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   void _selectPack(MemoryDrillPack pack) {
@@ -153,6 +284,21 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                 ),
                 const SizedBox(height: 12),
                 ...MemoryDrillService.builtinPacks.map(_buildPackCard),
+                if (_customPacks.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'マイ暗記セット',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  ..._customPacks.map(_buildPackCard),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _addCustomPack,
+                  icon: const Icon(Icons.add),
+                  label: const Text('オリジナル暗記セットを作成'),
+                ),
                 const SizedBox(height: 20),
                 _buildSelectedPackCard(isCompletedToday),
               ],
