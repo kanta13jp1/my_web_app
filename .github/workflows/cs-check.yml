@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   cs-check:
@@ -135,12 +135,15 @@ jobs:
             echo "ERREOF" >> $GITHUB_OUTPUT
           fi
 
-      - name: Step 3/6 - CS ノート記録 & コミット
+      - name: Step 3/6 - CS ノート記録 & PR作成・マージ
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
           FILEPATH="docs/cs-notes/${DATETIME}.md"
+          BRANCH="auto/cs-check-${DATETIME}"
 
           mkdir -p docs/cs-notes
 
@@ -168,8 +171,32 @@ jobs:
             echo "*実行環境: GitHub Actions (cs-check.yml)*"
           } > "$FILEPATH"
 
+          # 変更がなければ終了
+          git add docs/cs-notes/
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
+          fi
+
+          # ブランチ作成 → コミット → プッシュ → PR作成 → マージ
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main || true
-          git add docs/cs-notes/
-          git diff --cached --quiet || (git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)" && git push origin main)
+
+          git checkout -b "$BRANCH"
+          git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "自動: CS チェック ${DATETIME}:00" \
+            --body "CS自動チェック結果 (GitHub Actions)" \
+            --base main \
+            --head "$BRANCH" 2>&1)
+          echo "📝 PR作成: $PR_URL"
+
+          # 自動マージ
+          PR_NUM=$(echo "$PR_URL" | grep -oP '\d+$')
+          if [ -n "$PR_NUM" ]; then
+            gh pr merge "$PR_NUM" --squash --admin --delete-branch 2>&1 || \
+            gh pr merge "$PR_NUM" --squash --delete-branch 2>&1 || \
+            echo "⚠️ 自動マージ失敗 — 手動マージが必要です: $PR_URL"
+          fi
