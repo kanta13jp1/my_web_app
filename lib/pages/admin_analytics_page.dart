@@ -3031,6 +3031,48 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  Widget _buildProfileCompletionSummary() {
+    final complete = _adminUsers
+        .where((u) => _toInt(u['completionPct']) >= 67)
+        .length;
+    final partial = _adminUsers
+        .where((u) {
+          final pct = _toInt(u['completionPct']);
+          return pct >= 34 && pct < 67;
+        })
+        .length;
+    final empty = _adminUsers
+        .where((u) => _toInt(u['completionPct']) < 34)
+        .length;
+    return Row(
+      children: [
+        _profileStatChip(Icons.check_circle, '$complete 完成', Colors.green),
+        const SizedBox(width: 8),
+        _profileStatChip(Icons.pending, '$partial 途中', Colors.orange),
+        const SizedBox(width: 8),
+        _profileStatChip(Icons.warning_amber, '$empty 未設定', Colors.red),
+      ],
+    );
+  }
+
+  Widget _profileStatChip(IconData icon, String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAdminUsersCard() {
     return Card(
       elevation: 1,
@@ -3060,6 +3102,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               ],
             ),
+            if (_adminUsers.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _buildProfileCompletionSummary(),
+            ],
             const SizedBox(height: 8),
             if (_adminUsersLoading)
               const Center(

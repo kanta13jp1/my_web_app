@@ -66,6 +66,7 @@ import '../widgets/leaderboard_card.dart';
 import '../widgets/social_proof_banner.dart';
 import '../widgets/activity_calendar_card.dart';
 import '../widgets/growth_trend_card.dart';
+import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -4509,6 +4510,20 @@ abstinence_slip_details: $slipDetailsText
                                   context,
                                   const TechBlogTrackerPage(),
                                 ),
+                              ),
+                              _MenuData(
+                                '公開プロフィール',
+                                Icons.person_pin_outlined,
+                                Colors.purple,
+                                () {
+                                  final uid = Supabase.instance.client
+                                      .auth.currentUser?.id;
+                                  if (uid == null) return;
+                                  _nav(
+                                    context,
+                                    PublicProfilePage(userId: uid),
+                                  );
+                                },
                               ),
                               _MenuData(
                                 '管理者ダッシュボード',
