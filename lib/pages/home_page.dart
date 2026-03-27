@@ -3883,6 +3883,8 @@ abstinence_slip_details: $slipDetailsText
                             const DailyMotivationCard(),
                             const SizedBox(height: 10),
                             const DailyChallengeCard(),
+                            const SizedBox(height: 6),
+                            _RewardsBanner(),
                             const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
@@ -6572,6 +6574,56 @@ class _ActivityFeedBanner extends StatelessWidget {
               ),
             ),
             const Icon(Icons.chevron_right, size: 18, color: Colors.teal),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RewardsBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => Navigator.of(context).pushNamed('/rewards'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.emoji_events_outlined,
+                size: 18,
+                color: Colors.amber,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                '報酬・実績バッジを確認する',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.amber,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: Colors.amber),
           ],
         ),
       ),
