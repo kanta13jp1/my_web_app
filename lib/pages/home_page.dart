@@ -61,6 +61,7 @@ import '../widgets/daily_motivation_card.dart';
 import '../widgets/daily_challenge_card.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/login_streak_card.dart';
+import '../widgets/daily_habits_summary_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3865,6 +3866,8 @@ abstinence_slip_details: $slipDetailsText
                               const WelcomeNewUserCard(),
                             ],
                             const LoginStreakCard(),
+                            const SizedBox(height: 8),
+                            const DailyHabitsSummaryCard(),
                             const SizedBox(height: 8),
                             const ProfileCompletionBanner(),
                             const ReferralShareCard(),
