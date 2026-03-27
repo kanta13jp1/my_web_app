@@ -17,6 +17,22 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
   List<Map<String, dynamic>> _habits = [];
   Set<String> _completedToday = {};
   final DateTime _selectedDate = DateTime.now();
+  int _allClearStreak = 0; // 全習慣達成の連続日数
+
+  /// 5分で終わりそうなタスク名キーワード
+  static const _quickTaskKeywords = [
+    '記録',
+    '入力',
+    '歯を磨',
+    '薬を飲',
+    '着替え',
+    'スキンケア',
+    '体重',
+    '水を',
+    '振り返り',
+    'リスト',
+    'メール',
+  ];
 
   static const _presets = [
     ('マネーフォワード更新・財布残高入力', '💰', '#4CAF50', '21:00'),
@@ -78,10 +94,14 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       final completed =
           logs.map((l) => l['habit_id']?.toString() ?? '').toSet();
 
+      // 全習慣達成ストリークを計算
+      final streak = await _calcAllClearStreak(userId, habits);
+
       if (mounted) {
         setState(() {
           _habits = habits;
           _completedToday = completed;
+          _allClearStreak = streak;
           _loading = false;
         });
       }
@@ -89,6 +109,40 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       debugPrint('DailyHabitsPage load error: $e');
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// 全習慣達成を連続何日達成しているかを計算
+  Future<int> _calcAllClearStreak(
+    String userId,
+    List<Map<String, dynamic>> habits,
+  ) async {
+    final activeHabits =
+        habits.where((h) => h['is_active'] == true).toList();
+    if (activeHabits.isEmpty) return 0;
+    final activeCount = activeHabits.length;
+
+    int streak = 0;
+    // 昨日から遡って確認 (最大365日)
+    for (int i = 1; i <= 365; i++) {
+      final date = DateTime.now().subtract(Duration(days: i));
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      try {
+        final logs = await _supabase
+            .from('daily_habit_logs')
+            .select('habit_id')
+            .eq('user_id', userId)
+            .eq('completed_date', dateStr);
+        final logList = List<Map<String, dynamic>>.from(logs as List);
+        if (logList.length >= activeCount) {
+          streak++;
+        } else {
+          break;
+        }
+      } catch (_) {
+        break;
+      }
+    }
+    return streak;
   }
 
   Future<void> _toggleComplete(Map<String, dynamic> habit) async {
@@ -293,6 +347,26 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     final completedCount =
         active.where((h) => _completedToday.contains(h['id']?.toString())).length;
     final progress = active.isEmpty ? 0.0 : completedCount / active.length;
+    final remaining = active.length - completedCount;
+
+    // 残り件数が少ない場合、5分で終わるタスクを上に寄せる
+    List<Map<String, dynamic>> sortedActive;
+    if (remaining > 0 && remaining <= 5) {
+      sortedActive = List.of(active)
+        ..sort((a, b) {
+          final aCompleted =
+              _completedToday.contains(a['id']?.toString()) ? 1 : 0;
+          final bCompleted =
+              _completedToday.contains(b['id']?.toString()) ? 1 : 0;
+          if (aCompleted != bCompleted) return aCompleted - bCompleted;
+          // 未完了の中でクイックタスクを上に
+          final aQuick = _isQuickTask(a['title']?.toString() ?? '') ? 0 : 1;
+          final bQuick = _isQuickTask(b['title']?.toString() ?? '') ? 0 : 1;
+          return aQuick - bQuick;
+        });
+    } else {
+      sortedActive = active;
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('毎日の習慣'), elevation: 0),
@@ -326,8 +400,20 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                       active.length,
                       progress,
                     ),
+                    if (remaining > 0 && remaining <= 5)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 4),
+                        child: Text(
+                          '⚡ 残り$remaining件 — 5分で終わるタスクを優先表示中',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
-                    ...active.map(_buildHabitCard),
+                    ...sortedActive.map(_buildHabitCard),
                   ],
                 ),
     );
@@ -464,8 +550,39 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
               minHeight: 8,
             ),
           ),
+          if (_allClearStreak > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(30),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🏆', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '前日全達成ストリーク: $_allClearStreak日連続！',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  bool _isQuickTask(String title) {
+    return _quickTaskKeywords.any(
+      (kw) => title.contains(kw),
     );
   }
 
