@@ -295,6 +295,13 @@ class MyApp extends StatelessWidget {
           case '/vs-microsoft':
           case '/vs-line':
           case '/vs-facebook':
+          case '/vs-liven':
+          case '/vs-github':
+            return MaterialPageRoute(
+              builder: (_) => ComparisonPage(
+                competitorKey: uri.path.replaceFirst('/vs-', ''),
+              ),
+            );
           case '/activity-feed':
             return MaterialPageRoute(
               builder: (_) => const ActivityFeedPage(),
@@ -306,13 +313,6 @@ class MyApp extends StatelessWidget {
           case '/admin':
             return MaterialPageRoute(
               builder: (_) => const AdminAnalyticsPage(),
-            );
-          case '/vs-liven':
-          case '/vs-github':
-            return MaterialPageRoute(
-              builder: (_) => ComparisonPage(
-                competitorKey: uri.path.replaceFirst('/vs-', ''),
-              ),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
