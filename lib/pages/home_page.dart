@@ -54,6 +54,7 @@ import 'thought_capture_page.dart';
 import 'decision_check_page.dart';
 import 'purchase_log_page.dart';
 import 'conveni_store_page.dart';
+import 'ai_search_page.dart';
 import 'edge_function_status_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
@@ -72,6 +73,7 @@ import '../widgets/leaderboard_card.dart';
 import '../widgets/social_proof_banner.dart';
 import '../widgets/activity_calendar_card.dart';
 import '../widgets/growth_trend_card.dart';
+import '../widgets/edge_function_summary_card.dart';
 import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -749,11 +751,26 @@ class _HomePageState extends State<HomePage> {
       if (data is! Map || data['success'] != true) {
         return const _HomeMarketingKpiSummary();
       }
+      final rawSeries = data['lpSeries'];
+      final lpSeries = <_LpSeriesEntry>[];
+      if (rawSeries is List) {
+        for (final entry in rawSeries) {
+          if (entry is Map) {
+            final date = entry['date']?.toString() ?? '';
+            final count = _toIntValue(entry['count']);
+            if (date.length >= 10) {
+              lpSeries.add(_LpSeriesEntry(date: date, count: count));
+            }
+          }
+        }
+      }
       return _HomeMarketingKpiSummary(
         todayViews: _toIntValue(data['todayViews']),
         todayRegistrations: _toIntValue(data['todaySignups']),
         todayShares: _toIntValue(data['todayShares']),
         topShareChannelKey: data['topShareChannelKey']?.toString(),
+        totalUsers: _toIntValue(data['totalUsers']),
+        lpSeries: lpSeries,
       );
     } catch (e) {
       debugPrint('Error loading home marketing summary: $e');
@@ -4610,7 +4627,18 @@ abstinence_slip_details: $slipDetailsText
                                   const EdgeFunctionStatusPage(),
                                 ),
                               ),
+                              _MenuData(
+                                'AI ノート検索',
+                                Icons.manage_search,
+                                Colors.deepPurple,
+                                () => _nav(
+                                  context,
+                                  const AiSearchPage(),
+                                ),
+                              ),
                             ]),
+                            const SizedBox(height: 16),
+                            const EdgeFunctionSummaryCard(),
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -6529,18 +6557,29 @@ class _HomeMarketingKpiSummary {
   final int todayRegistrations;
   final int todayShares;
   final String? topShareChannelKey;
+  final int totalUsers;
+  final List<_LpSeriesEntry> lpSeries;
 
   const _HomeMarketingKpiSummary({
     this.todayViews = 0,
     this.todayRegistrations = 0,
     this.todayShares = 0,
     this.topShareChannelKey,
+    this.totalUsers = 0,
+    this.lpSeries = const [],
   });
 
   double get todayCvr =>
       todayViews == 0 ? 0 : (todayRegistrations / todayViews) * 100;
 
   String get todayCvrLabel => '${todayCvr.toStringAsFixed(1)}%';
+}
+
+class _LpSeriesEntry {
+  final String date;
+  final int count;
+
+  const _LpSeriesEntry({required this.date, required this.count});
 }
 
 class _HomeMonthlyCashflowSummary {

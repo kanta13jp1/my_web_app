@@ -48,6 +48,18 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       Icons.security,
     ),
     _TaskDef('blog-draft', 'ブログ下書き生成', '毎日 08:00', Icons.article),
+    _TaskDef(
+      'edge-ui-coverage',
+      'Edge Function UI カバレッジ自動修正',
+      '毎時',
+      Icons.api,
+    ),
+    _TaskDef(
+      'self-heal-check',
+      'タスク失敗時の自己修復チェック',
+      '毎時 15分',
+      Icons.auto_fix_high,
+    ),
   ];
 
   @override
