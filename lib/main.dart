@@ -40,6 +40,7 @@ import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
+import 'package:my_web_app/pages/edge_function_status_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -334,6 +335,10 @@ class MyApp extends StatelessWidget {
           case '/conveni-store':
             return MaterialPageRoute(
               builder: (_) => const ConveniStorePage(),
+            );
+          case '/edge-functions':
+            return MaterialPageRoute(
+              builder: (_) => const EdgeFunctionStatusPage(),
             );
           case '/admin':
             return MaterialPageRoute(

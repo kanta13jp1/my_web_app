@@ -54,6 +54,7 @@ import 'thought_capture_page.dart';
 import 'decision_check_page.dart';
 import 'purchase_log_page.dart';
 import 'conveni_store_page.dart';
+import 'edge_function_status_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
@@ -4598,6 +4599,15 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(
                                   context,
                                   const AdminAnalyticsPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                'Edge Functions 状況',
+                                Icons.api,
+                                Colors.blueGrey,
+                                () => _nav(
+                                  context,
+                                  const EdgeFunctionStatusPage(),
                                 ),
                               ),
                             ]),

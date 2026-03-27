@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/reality_check_service.dart';
 
@@ -198,6 +199,35 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('現実直視ノートを保存しました')),
       );
+
+      // analyze-reality Edge Function で AI 分析
+      try {
+        final analysisText =
+            '主張: $claim\n観測事実: $facts\n解釈: ${interpretationController.text}';
+        final resp = await Supabase.instance.client.functions.invoke(
+          'analyze-reality',
+          body: {'text': analysisText},
+        );
+        final data = resp.data as Map<String, dynamic>?;
+        final analysis = data?['analysis'] as String?;
+        if (analysis != null && analysis.isNotEmpty && mounted) {
+          showDialog<void>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('AI 分析'),
+              content: SingleChildScrollView(child: Text(analysis)),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('閉じる'),
+                ),
+              ],
+            ),
+          );
+        }
+      } catch (_) {
+        // AI 分析失敗は無視
+      }
     } finally {
       claimController.dispose();
       factsController.dispose();
