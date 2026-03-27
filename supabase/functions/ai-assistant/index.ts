@@ -399,6 +399,42 @@ ${contextData}`;
             }), { headers: corsHeaders });
         }
 
+        // --- 行動・発言のAI考察 ---
+        if (action === 'behavior_analysis') {
+            const entryData = requestContent ?? '{}';
+            const prompt = `あなたは認知行動療法の専門家であり、自己改善コーチです。
+以下のユーザーの行動または発言を分析し、考察を提供してください。
+
+ルール:
+- 批判ではなく建設的なフィードバックを提供する
+- なぜその行動/発言をしたのか、背景にある心理を分析する
+- 次に同じ状況になった時、どうすればより良い選択ができるかを提案する
+- 200〜300字程度で簡潔に
+- 日本語で出力
+
+出力フォーマット (JSONのみ):
+{ "analysis": "考察テキスト" }
+
+[ユーザーの行動/発言データ]
+${entryData}`;
+
+            const resultStr = await runPromptWithStrategy(prompt);
+            const match = resultStr.match(/\{[\s\S]*\}/);
+            let analysis = resultStr.substring(0, 400);
+            if (match) {
+                try {
+                    const parsed = JSON.parse(match[0]);
+                    if (typeof parsed.analysis === 'string') {
+                        analysis = parsed.analysis;
+                    }
+                } catch { /* use raw */ }
+            }
+            return new Response(JSON.stringify({
+                success: true,
+                result: { analysis },
+            }), { headers: corsHeaders });
+        }
+
         if (action === 'test_model') {
             const benchmarkPrompt = [
                 'You are running a connectivity benchmark.',

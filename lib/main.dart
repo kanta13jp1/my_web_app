@@ -6,6 +6,7 @@ import 'package:my_web_app/pages/daily_habits_page.dart';
 import 'package:my_web_app/pages/my_struggle_page.dart';
 import 'package:my_web_app/pages/prison_mode_page.dart';
 import 'package:my_web_app/pages/bookmark_folders_page.dart';
+import 'package:my_web_app/pages/behavior_log_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
@@ -247,6 +248,10 @@ class MyApp extends StatelessWidget {
           case '/bookmark-folders':
             return MaterialPageRoute(
               builder: (_) => const BookmarkFoldersPage(),
+            );
+          case '/behavior-log':
+            return MaterialPageRoute(
+              builder: (_) => const BehaviorLogPage(),
             );
           case '/feature-requests':
             return MaterialPageRoute(
