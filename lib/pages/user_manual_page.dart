@@ -284,8 +284,9 @@ class UserManualPage extends StatelessWidget {
             'Claude Code Schedule の実行状況は管理者ダッシュボードの\n'
             '「スケジュールタスク監視」カードで確認できます（要: 管理者権限）。\n\n'
             '【管理者ダッシュボードへのアクセス】\n'
-            'アドレスバーに /admin または管理者権限を持つアカウントでログイン後、\n'
-            'ホーム画面下部のメニューから「管理者ダッシュボード」をタップ。',
+            '・アドレスバーに /admin を直接入力（最速）\n'
+            '・ホーム画面を下にスクロール →「GROWTH / 成長導線」→「管理者ダッシュボード」\n'
+            '・ホーム画面「OFFICE KPI SNAPSHOT」セクション →「分析を見る」をタップ',
             subColor,
           ),
           const SizedBox(height: 32),
@@ -296,7 +297,7 @@ class UserManualPage extends StatelessWidget {
                 Icon(Icons.info_outline, size: 18, color: subColor),
                 const SizedBox(height: 6),
                 Text(
-                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27 (session30)',
+                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27 (session31)',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: subColor),
                 ),

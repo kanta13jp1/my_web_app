@@ -63,6 +63,7 @@ import '../widgets/welcome_new_user_card.dart';
 import '../widgets/login_streak_card.dart';
 import '../widgets/daily_habits_summary_card.dart';
 import '../widgets/leaderboard_card.dart';
+import '../widgets/social_proof_banner.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -3871,6 +3872,8 @@ abstinence_slip_details: $slipDetailsText
                             const DailyHabitsSummaryCard(),
                             const SizedBox(height: 8),
                             const ProfileCompletionBanner(),
+                            const SocialProofBanner(),
+                            const SizedBox(height: 8),
                             const ReferralShareCard(),
                             const SizedBox(height: 8),
                             const LeaderboardCard(),
@@ -4438,6 +4441,15 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(
                                   context,
                                   const TechBlogTrackerPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                '管理者ダッシュボード',
+                                Icons.admin_panel_settings,
+                                Colors.deepOrange,
+                                () => _nav(
+                                  context,
+                                  const AdminAnalyticsPage(),
                                 ),
                               ),
                             ]),
