@@ -40,6 +40,7 @@ import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
+import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -228,6 +229,10 @@ class MyApp extends StatelessWidget {
           case '/tech-blog-tracker':
             return MaterialPageRoute(
               builder: (_) => const TechBlogTrackerPage(),
+            );
+          case '/ai-search':
+            return MaterialPageRoute(
+              builder: (_) => const AiSearchPage(),
             );
           case '/email-cleanup':
             return MaterialPageRoute(

@@ -3345,7 +3345,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final bio = user['bio']?.toString() ?? '';
     final location = user['location']?.toString() ?? '';
     final twitterHandle = user['twitterHandle']?.toString() ?? '';
+    final githubHandle = user['githubHandle']?.toString() ?? '';
     final websiteUrl = user['websiteUrl']?.toString() ?? '';
+    final avatarUrl = user['avatarUrl']?.toString() ?? '';
+    final isPublic = user['isPublic'] as bool? ?? true;
     final completionPct = _toInt(user['completionPct']);
     final hasProfile = user['hasProfile'] as bool? ?? false;
     final provider = user['provider']?.toString() ?? 'email';
@@ -3375,27 +3378,44 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       profileColor = Colors.green;
     }
 
+    // Build list of missing fields for the warning
+    final missingFields = <String>[];
+    if (displayName.isEmpty) missingFields.add('表示名');
+    if (bio.isEmpty) missingFields.add('自己紹介');
+    if (avatarUrl.isEmpty) missingFields.add('アバター');
+    if (location.isEmpty) missingFields.add('場所');
+    if (twitterHandle.isEmpty) missingFields.add('Twitter/X');
+    if (githubHandle.isEmpty) missingFields.add('GitHub');
+    if (websiteUrl.isEmpty) missingFields.add('ウェブサイト');
+
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: isGoogle
-                  ? const Color(0xFFE8F5E9)
-                  : const Color(0xFFE8EAF6),
-              child: Text(
-                email.isNotEmpty ? email[0].toUpperCase() : '?',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isGoogle
-                      ? const Color(0xFF388E3C)
-                      : const Color(0xFF3949AB),
+            if (avatarUrl.isNotEmpty)
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(avatarUrl),
+                onBackgroundImageError: (_, __) {},
+              )
+            else
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: isGoogle
+                    ? const Color(0xFFE8F5E9)
+                    : const Color(0xFFE8EAF6),
+                child: Text(
+                  email.isNotEmpty ? email[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isGoogle
+                        ? const Color(0xFF388E3C)
+                        : const Color(0xFF3949AB),
+                  ),
                 ),
               ),
-            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -3416,6 +3436,23 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         color: Colors.grey,
                       ),
                     ),
+                  Row(
+                    children: [
+                      Icon(
+                        isPublic ? Icons.public : Icons.lock_outlined,
+                        size: 12,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        isPublic ? '公開プロフィール' : '非公開プロフィール',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -3457,35 +3494,52 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(height: 12),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                if (bio.isNotEmpty) ...[
-                  _profileFieldRow(Icons.notes_outlined, '自己紹介', bio),
-                  const SizedBox(height: 8),
-                ],
-                if (location.isNotEmpty) ...[
-                  _profileFieldRow(
-                    Icons.location_on_outlined,
-                    '場所',
-                    location,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (twitterHandle.isNotEmpty) ...[
-                  _profileFieldRow(
-                    Icons.alternate_email,
-                    'Twitter/X',
-                    '@$twitterHandle',
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (websiteUrl.isNotEmpty) ...[
-                  _profileFieldRow(
-                    Icons.link_outlined,
-                    'ウェブサイト',
-                    websiteUrl,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (!hasProfile || bio.isEmpty || location.isEmpty)
+                // Show all profile fields (filled or missing)
+                _profileDetailRow(
+                  Icons.person_outlined,
+                  '表示名',
+                  displayName,
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(Icons.notes_outlined, '自己紹介', bio),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  Icons.image_outlined,
+                  'アバター画像',
+                  avatarUrl,
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  Icons.location_on_outlined,
+                  '場所',
+                  location,
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  Icons.alternate_email,
+                  'Twitter/X',
+                  twitterHandle.isNotEmpty ? '@$twitterHandle' : '',
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  Icons.code,
+                  'GitHub',
+                  githubHandle.isNotEmpty ? '@$githubHandle' : '',
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  Icons.link_outlined,
+                  'ウェブサイト',
+                  websiteUrl,
+                ),
+                const SizedBox(height: 8),
+                _profileDetailRow(
+                  isPublic ? Icons.public : Icons.lock_outlined,
+                  '公開設定',
+                  isPublic ? '公開' : '非公開',
+                ),
+                if (!hasProfile || missingFields.isNotEmpty) ...[
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -3494,6 +3548,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       border: Border.all(color: Colors.amber[200]!),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.warning_amber_outlined,
@@ -3503,7 +3558,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'プロフィールが未完成です。ユーザーに入力を促してください。',
+                            !hasProfile
+                                ? 'プロフィールが未作成です。'
+                                : '未設定の項目: ${missingFields.join('、')}',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.amber[800],
@@ -3513,6 +3570,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ],
                     ),
                   ),
+                ],
                 const SizedBox(height: 12),
                 const Divider(height: 1),
                 const SizedBox(height: 8),
@@ -3561,6 +3619,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Text(
             value,
             style: const TextStyle(fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Profile detail row that shows "未設定" with a muted style for empty values.
+  Widget _profileDetailRow(IconData icon, String label, String value) {
+    final isEmpty = value.isEmpty;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: isEmpty ? Colors.red[300] : Colors.grey),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        Expanded(
+          child: Text(
+            isEmpty ? '未設定' : value,
+            style: TextStyle(
+              fontSize: 12,
+              color: isEmpty ? Colors.red[300] : null,
+              fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
           ),

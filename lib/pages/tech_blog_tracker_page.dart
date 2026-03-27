@@ -32,6 +32,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
   DateTime _selectedDate = DateTime.now();
   List<Map<String, dynamic>> _todayPosts = [];
   List<Map<String, dynamic>> _recentPosts = [];
+  List<Map<String, dynamic>> _scheduleDrafts = [];
   bool _loading = true;
 
   @override
@@ -64,10 +65,26 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             .order('posted_at', ascending: false),
       ]);
 
+      // Schedule blog-draft タスクが生成した下書きを取得
+      List<Map<String, dynamic>> drafts = [];
+      try {
+        final draftData = await _supabase
+            .from('blog_posts')
+            .select(
+                'id, title, status, target_platforms, draft_path, posted_at, url, created_at',)
+            .inFilter('status', ['draft', 'posted'])
+            .order('created_at', ascending: false)
+            .limit(10);
+        drafts = List<Map<String, dynamic>>.from(draftData as List);
+      } catch (_) {
+        // blog_posts テーブルが未作成の場合は空リスト
+      }
+
       if (!mounted) return;
       setState(() {
         _todayPosts = List<Map<String, dynamic>>.from(results[0] as List);
         _recentPosts = List<Map<String, dynamic>>.from(results[1] as List);
+        _scheduleDrafts = drafts;
         _loading = false;
       });
     } catch (e) {
@@ -227,6 +244,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   _buildDateSelector(),
                   const SizedBox(height: 16),
                   _buildPlatformList(isDark),
+                  const SizedBox(height: 24),
+                  _buildScheduleDrafts(isDark),
                   const SizedBox(height: 24),
                   _buildRecentHistory(isDark),
                 ],
@@ -436,6 +455,112 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        })),
+      ],
+    );
+  }
+
+  Widget _buildScheduleDrafts(bool isDark) {
+    if (_scheduleDrafts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.auto_awesome, size: 18, color: Color(0xFF6366F1)),
+            const SizedBox(width: 6),
+            const Expanded(
+              child: Text(
+                'Schedule 自動生成ドラフト',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Text(
+              '${_scheduleDrafts.length}件',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'blog-draft タスクが自動生成した下書き（blog_posts テーブル）',
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? Colors.grey[500] : Colors.grey[500],
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...(_scheduleDrafts.map((draft) {
+          final status = draft['status']?.toString() ?? 'draft';
+          final title =
+              draft['title']?.toString() ?? '(タイトルなし)';
+          final platforms = draft['target_platforms'];
+          final platformLabels = (platforms is List)
+              ? platforms
+                  .map((p) {
+                    final match = _platforms.where((pl) => pl.id == p);
+                    return match.isNotEmpty ? match.first.label : p.toString();
+                  })
+                  .join(', ')
+              : '';
+          final createdAt = DateTime.tryParse(
+              draft['created_at']?.toString() ?? '',);
+          final dateLabel = createdAt != null
+              ? DateFormat('MM/dd HH:mm').format(createdAt)
+              : '';
+          final isPosted = status == 'posted';
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 6),
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                isPosted ? Icons.check_circle : Icons.edit_note,
+                color: isPosted ? Colors.green : const Color(0xFF6366F1),
+                size: 22,
+              ),
+              title: Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600,),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                '$dateLabel  |  $platformLabels',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+              trailing: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isPosted
+                      ? Colors.green.withAlpha(20)
+                      : const Color(0xFF6366F1).withAlpha(20),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isPosted ? '投稿済' : '下書き',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: isPosted
+                        ? Colors.green
+                        : const Color(0xFF6366F1),
                   ),
                 ),
               ),

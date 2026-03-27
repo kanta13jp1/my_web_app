@@ -14,7 +14,7 @@ class ProfileCompletionBanner extends StatefulWidget {
 class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
   bool _loading = true;
   bool _needsProfile = false;
-  String? _displayName;
+  List<String> _missingFields = [];
   bool _dismissed = false;
 
   @override
@@ -32,7 +32,9 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
       }
       final data = await Supabase.instance.client
           .from('user_profiles')
-          .select('display_name, bio')
+          .select(
+            'display_name, bio, avatar_url, location, twitter_handle, github_handle, website_url',
+          )
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -41,15 +43,43 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
         // No profile row at all
         setState(() {
           _needsProfile = true;
+          _missingFields = [
+            '表示名',
+            '自己紹介',
+            'プロフィール画像',
+            '場所',
+          ];
           _loading = false;
         });
         return;
       }
-      final displayName = data['display_name']?.toString() ?? '';
-      final bio = data['bio']?.toString() ?? '';
+
+      final fields = <String>[];
+      if ((data['display_name']?.toString() ?? '').isEmpty) {
+        fields.add('表示名');
+      }
+      if ((data['bio']?.toString() ?? '').isEmpty) {
+        fields.add('自己紹介');
+      }
+      if ((data['avatar_url']?.toString() ?? '').isEmpty) {
+        fields.add('プロフィール画像');
+      }
+      if ((data['location']?.toString() ?? '').isEmpty) {
+        fields.add('場所');
+      }
+      if ((data['twitter_handle']?.toString() ?? '').isEmpty) {
+        fields.add('Twitter/X');
+      }
+      if ((data['github_handle']?.toString() ?? '').isEmpty) {
+        fields.add('GitHub');
+      }
+      if ((data['website_url']?.toString() ?? '').isEmpty) {
+        fields.add('ウェブサイト');
+      }
+
       setState(() {
-        _displayName = displayName.isNotEmpty ? displayName : null;
-        _needsProfile = displayName.isEmpty || bio.isEmpty;
+        _missingFields = fields;
+        _needsProfile = fields.isNotEmpty;
         _loading = false;
       });
     } catch (_) {
@@ -63,11 +93,10 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
       return const SizedBox.shrink();
     }
 
-    final missingFields = <String>[];
-    if (_displayName == null || _displayName!.isEmpty) {
-      missingFields.add('表示名');
-    }
-    missingFields.add('自己紹介');
+    // Show up to 3 missing field names, then "他N件" if more
+    final displayFields = _missingFields.length <= 3
+        ? _missingFields.join('、')
+        : '${_missingFields.take(3).join('、')}　他${_missingFields.length - 3}件';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -109,10 +138,19 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${missingFields.join('・')}を設定すると、他のユーザーに見つけてもらいやすくなります。',
+                    '$displayFieldsが未設定です。',
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF4B5563),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    '設定すると他のユーザーに見つけてもらいやすくなります。',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF6B7280),
                       height: 1.4,
                     ),
                   ),

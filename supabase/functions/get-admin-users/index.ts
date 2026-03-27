@@ -58,7 +58,7 @@ serve(async (req) => {
       ? await admin
           .from("user_profiles")
           .select(
-            "user_id, display_name, bio, avatar_url, location, twitter_handle, website_url",
+            "user_id, display_name, bio, avatar_url, location, twitter_handle, github_handle, website_url, is_public",
           )
           .in("user_id", userIds)
       : { data: [] };
@@ -69,7 +69,9 @@ serve(async (req) => {
       avatar_url?: string;
       location?: string;
       twitter_handle?: string;
+      github_handle?: string;
       website_url?: string;
+      is_public?: boolean;
     };
     const profiles: Record<string, ProfileRow> = {};
     for (const p of profilesResult.data ?? []) {
@@ -94,10 +96,11 @@ serve(async (req) => {
               profile.avatar_url,
               profile.location,
               profile.twitter_handle,
+              profile.github_handle,
               profile.website_url,
             ].filter(Boolean).length
           : 0;
-        const totalFields = 6;
+        const totalFields = 7;
         const completionPct = Math.round((completedFields / totalFields) * 100);
 
         return {
@@ -108,7 +111,9 @@ serve(async (req) => {
           avatarUrl: profile?.avatar_url ?? null,
           location: profile?.location ?? null,
           twitterHandle: profile?.twitter_handle ?? null,
+          githubHandle: profile?.github_handle ?? null,
           websiteUrl: profile?.website_url ?? null,
+          isPublic: profile?.is_public ?? true,
           hasProfile,
           completionPct,
           createdAt: u.created_at ?? null,

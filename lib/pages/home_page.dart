@@ -61,7 +61,6 @@ import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
-import '../widgets/profile_completion_banner.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/daily_motivation_card.dart';
@@ -74,6 +73,7 @@ import '../widgets/social_proof_banner.dart';
 import '../widgets/activity_calendar_card.dart';
 import '../widgets/growth_trend_card.dart';
 import '../widgets/edge_function_summary_card.dart';
+import '../widgets/profile_progress_card.dart';
 import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -3903,7 +3903,7 @@ abstinence_slip_details: $slipDetailsText
                             const SizedBox(height: 8),
                             const DailyHabitsSummaryCard(),
                             const SizedBox(height: 8),
-                            const ProfileCompletionBanner(),
+                            const ProfileProgressCard(),
                             const SocialProofBanner(),
                             const SizedBox(height: 8),
                             const ReferralShareCard(),
@@ -5059,22 +5059,30 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_office_kpi_card_cmo'),
                   isDark: isDark,
                   officeLabel: 'CMO',
-                  title: '流入',
-                  headline: '${marketing.todayViews}',
-                  subtitle: '今日のLP View',
+                  title: 'マーケティング',
+                  headline: marketing.totalUsers > 0
+                      ? '${marketing.totalUsers}人'
+                      : '--',
+                  subtitle: '総ユーザー数',
                   icon: Icons.campaign,
                   accentColor: Colors.pink,
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
-                      '今日の登録',
-                      '${marketing.todayRegistrations}件',
+                      '今日のLP View',
+                      '${marketing.todayViews}',
                     ),
-                    _OfficeKpiMetricItem('今日のCVR', marketing.todayCvrLabel),
                     _OfficeKpiMetricItem(
-                      '主要チャネル',
-                      _shareChannelLabel(marketing.topShareChannelKey),
+                      '今日の登録/CVR',
+                      '${marketing.todayRegistrations}件 (${marketing.todayCvrLabel})',
+                    ),
+                    _OfficeKpiMetricItem(
+                      'シェア/チャネル',
+                      '${marketing.todayShares}件 ${_shareChannelLabel(marketing.topShareChannelKey)}',
                     ),
                   ],
+                  bottomWidget: marketing.lpSeries.length >= 2
+                      ? _buildLpSparkline(marketing.lpSeries, isDark)
+                      : null,
                   actionLabel: '分析を見る',
                   onTap: () => _nav(context, const AdminAnalyticsPage()),
                 ),
@@ -5162,6 +5170,7 @@ abstinence_slip_details: $slipDetailsText
     required List<_OfficeKpiMetricItem> metrics,
     required String actionLabel,
     required VoidCallback onTap,
+    Widget? bottomWidget,
   }) {
     final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
     final labelColor =
@@ -5262,6 +5271,10 @@ abstinence_slip_details: $slipDetailsText
                 ...metrics
                     .take(3)
                     .map((metric) => _buildOfficeKpiMetricRow(metric, isDark)),
+                if (bottomWidget != null) ...[
+                  const SizedBox(height: 8),
+                  bottomWidget,
+                ],
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
@@ -5322,6 +5335,62 @@ abstinence_slip_details: $slipDetailsText
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLpSparkline(List<_LpSeriesEntry> series, bool isDark) {
+    final spots = <FlSpot>[];
+    for (var i = 0; i < series.length; i++) {
+      spots.add(FlSpot(i.toDouble(), series[i].count.toDouble()));
+    }
+    final lineColor = isDark ? Colors.pinkAccent : Colors.pink;
+    final labelColor =
+        isDark ? Colors.white70 : Colors.black.withValues(alpha: 0.6);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '7日間 LP View 推移',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: labelColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 40,
+          child: LineChart(
+            LineChartData(
+              gridData: const FlGridData(show: false),
+              titlesData: const FlTitlesData(show: false),
+              borderData: FlBorderData(show: false),
+              lineTouchData: const LineTouchData(enabled: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: lineColor,
+                  barWidth: 2,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, _, __, ___) =>
+                        FlDotCirclePainter(
+                      radius: spot.x == spots.last.x ? 3 : 0,
+                      color: lineColor,
+                      strokeColor: Colors.transparent,
+                    ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: lineColor.withValues(alpha: 0.12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

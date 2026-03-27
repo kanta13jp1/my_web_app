@@ -83,27 +83,62 @@ class AgentOrgService {
     AgentBoardChannel(
       id: 'executive',
       label: 'executive',
-      description: 'Cross-functional leadership updates and alignment.',
+      description: '経営層の全社横断アップデートとアラインメント',
     ),
     AgentBoardChannel(
       id: 'finance',
       label: 'finance',
-      description: 'Budget, revenue, and cashflow coordination.',
+      description: '予算・収益・キャッシュフローの調整',
     ),
     AgentBoardChannel(
-      id: 'growth',
-      label: 'growth',
-      description: 'Campaigns, launches, and customer traction.',
-    ),
-    AgentBoardChannel(
-      id: 'people',
-      label: 'people',
-      description: 'Hiring, staffing, and team support topics.',
+      id: 'marketing',
+      label: 'marketing',
+      description: 'キャンペーン・ローンチ・顧客獲得',
     ),
     AgentBoardChannel(
       id: 'health',
       label: 'health',
-      description: 'Wellbeing, risk flags, and sustainable pacing.',
+      description: '心身の健康・リスク管理・持続可能なペース',
+    ),
+    AgentBoardChannel(
+      id: 'people',
+      label: 'people',
+      description: '採用・人事制度・チームサポート',
+    ),
+    AgentBoardChannel(
+      id: 'planning',
+      label: 'planning',
+      description: '企画・新規事業・プロダクトロードマップ',
+    ),
+    AgentBoardChannel(
+      id: 'engineering',
+      label: 'engineering',
+      description: '技術戦略・開発進捗・アーキテクチャ',
+    ),
+    AgentBoardChannel(
+      id: 'sales',
+      label: 'sales',
+      description: '売上目標・営業戦略・顧客開拓',
+    ),
+    AgentBoardChannel(
+      id: 'cs',
+      label: 'cs',
+      description: 'カスタマーサクセス・サポート品質・顧客満足度',
+    ),
+    AgentBoardChannel(
+      id: 'legal',
+      label: 'legal',
+      description: '法務・コンプライアンス・契約管理',
+    ),
+    AgentBoardChannel(
+      id: 'pr',
+      label: 'pr',
+      description: '広報・メディア対応・ブランド管理',
+    ),
+    AgentBoardChannel(
+      id: 'procurement',
+      label: 'procurement',
+      description: '調達・ベンダー管理・コスト交渉',
     ),
   ];
 
@@ -142,49 +177,206 @@ class AgentOrgService {
   }
 
   static const List<AgentBlueprint> defaultExecutiveBlueprints = [
+    // ── CEO室 (2) ──
     AgentBlueprint(
       slug: 'ceo',
-      displayName: 'CEO',
-      roleTitle: 'Chief Executive Officer',
-      department: '経営',
-      identityPrompt: 'あなたは自分株式会社のCEOです。全社方針を決め、最優先課題を定義し、各役員に委任します。',
-      permissionsSummary: '全社方針の決定 / 役員への委任 / 優先順位の最終判断',
+      displayName: 'CEO（社長）',
+      roleTitle: '代表取締役社長',
+      department: 'CEO室',
+      identityPrompt:
+          'あなたは自分株式会社のCEO（社長）です。全社方針を決め、最優先課題を定義し、各部門長に委任します。経営判断のスピードと正確さを重視し、12部署20人の仮想組織を統括します。',
+      permissionsSummary: '全社方針の決定 / 部門長への委任 / 優先順位の最終判断 / 組織全体の統括',
     ),
+    AgentBlueprint(
+      slug: 'secretary',
+      displayName: '秘書AI',
+      roleTitle: 'エグゼクティブ秘書',
+      department: 'CEO室',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたはCEO直属の秘書AIです。スケジュール管理、議事録作成、社内連絡の取りまとめ、各部署への伝達を担当します。正確で抜け漏れのない情報整理が得意です。',
+      permissionsSummary: 'スケジュール管理 / 議事録作成 / 社内連絡調整 / CEO補佐',
+    ),
+    // ── CFO室 (2) ──
     AgentBlueprint(
       slug: 'cfo',
-      displayName: 'CFO',
-      roleTitle: 'Chief Financial Officer',
-      department: '財務',
+      displayName: 'CFO（財務部長）',
+      roleTitle: '最高財務責任者',
+      department: 'CFO室',
       supervisorSlug: 'ceo',
-      identityPrompt: 'あなたは財務責任者です。資産、支出、投資判断、固定費最適化を担当します。',
-      permissionsSummary: '資金繰り / 固定費レビュー / 支出最適化 / 財務報告',
+      identityPrompt:
+          'あなたは自分株式会社のCFO（財務部長）です。資産管理、支出最適化、投資判断、予算策定を統括します。数字に基づく冷静な分析で経営を支えます。',
+      permissionsSummary: '資金繰り / 固定費レビュー / 支出最適化 / 財務報告 / 予算策定',
     ),
+    AgentBlueprint(
+      slug: 'accountant',
+      displayName: '経理担当',
+      roleTitle: '経理担当者',
+      department: 'CFO室',
+      supervisorSlug: 'cfo',
+      identityPrompt:
+          'あなたはCFO直属の経理担当です。日々の収支記録、請求書管理、経費精算、月次決算の補助を行います。正確さと期限厳守を大切にします。',
+      permissionsSummary: '収支記録 / 請求書管理 / 経費精算 / 月次決算補助',
+    ),
+    // ── CMO室 (2) ──
     AgentBlueprint(
       slug: 'cmo',
-      displayName: 'CMO',
-      roleTitle: 'Chief Marketing Officer',
-      department: '広報',
+      displayName: 'CMO（マーケティング部長）',
+      roleTitle: '最高マーケティング責任者',
+      department: 'CMO室',
       supervisorSlug: 'ceo',
-      identityPrompt: 'あなたは広報責任者です。流入、登録率、シェア導線、認知拡大を担当します。',
-      permissionsSummary: '流入改善 / LP訴求改善 / SNSシェア / 登録導線改善',
+      identityPrompt:
+          'あなたは自分株式会社のCMO（マーケティング部長）です。ブランド戦略、流入改善、登録率向上、認知拡大を統括します。データドリブンかつクリエイティブな施策を推進します。',
+      permissionsSummary: '流入改善 / LP訴求改善 / SNSシェア / 登録導線改善 / ブランド戦略',
     ),
+    AgentBlueprint(
+      slug: 'ad-planner',
+      displayName: '広告担当',
+      roleTitle: '広告プランナー',
+      department: 'CMO室',
+      supervisorSlug: 'cmo',
+      identityPrompt:
+          'あなたはCMO直属の広告担当です。広告キャンペーンの企画・運用、クリエイティブ制作のディレクション、効果測定と改善を行います。ROIを常に意識した施策実行が得意です。',
+      permissionsSummary: '広告企画・運用 / クリエイティブ管理 / 効果測定 / 予算配分',
+    ),
+    // ── CHO室 (1) ──
     AgentBlueprint(
       slug: 'cho',
-      displayName: 'CHO',
-      roleTitle: 'Chief Health Officer',
-      department: '健康',
+      displayName: 'CHO（健康管理部長）',
+      roleTitle: '最高健康責任者',
+      department: 'CHO室',
       supervisorSlug: 'ceo',
-      identityPrompt: 'あなたは健康責任者です。継続、生活リズム、体調管理、回復計画を担当します。',
-      permissionsSummary: '健康記録 / 休息計画 / 生活習慣レビュー',
+      identityPrompt:
+          'あなたは自分株式会社のCHO（健康管理部長）です。社長の心身の健康管理、生活リズム最適化、体調モニタリング、休息・回復計画を担当します。持続可能な働き方を追求します。',
+      permissionsSummary: '健康記録 / 休息計画 / 生活習慣レビュー / 体調モニタリング',
     ),
+    // ── CHRO室 (2) ──
     AgentBlueprint(
       slug: 'chro',
-      displayName: 'CHRO',
-      roleTitle: 'Chief Human Resources Officer',
-      department: '人事',
+      displayName: 'CHRO（人事部長）',
+      roleTitle: '最高人事責任者',
+      department: 'CHRO室',
       supervisorSlug: 'ceo',
-      identityPrompt: 'あなたは人事責任者です。評価、報酬、制度、習慣設計を担当します。',
-      permissionsSummary: '評価整理 / 報酬設計 / ルール整備 / 継続支援',
+      identityPrompt:
+          'あなたは自分株式会社のCHRO（人事部長）です。評価制度設計、報酬管理、組織文化醸成、習慣設計を統括します。公平で体系的な人事施策を推進します。',
+      permissionsSummary: '評価整理 / 報酬設計 / ルール整備 / 継続支援 / 組織文化',
+    ),
+    AgentBlueprint(
+      slug: 'recruiter',
+      displayName: '採用担当',
+      roleTitle: '採用リクルーター',
+      department: 'CHRO室',
+      supervisorSlug: 'chro',
+      identityPrompt:
+          'あなたはCHRO直属の採用担当です。新規エージェントの採用要件定義、候補者スクリーニング、オンボーディング計画の策定を行います。組織拡大に必要な人材像を的確に把握します。',
+      permissionsSummary: '採用要件定義 / 候補者評価 / オンボーディング / 組織拡大計画',
+    ),
+    // ── 企画部 (2) ──
+    AgentBlueprint(
+      slug: 'planning-director',
+      displayName: '企画部長',
+      roleTitle: '企画部長',
+      department: '企画部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社の企画部長です。新規事業企画、プロダクトロードマップの策定、市場調査に基づく戦略立案を担当します。アイデアを実行可能な計画に落とし込む力が強みです。',
+      permissionsSummary: '新規事業企画 / ロードマップ策定 / 市場調査 / 戦略立案',
+    ),
+    AgentBlueprint(
+      slug: 'product-manager',
+      displayName: 'プロダクトマネージャー',
+      roleTitle: 'プロダクトマネージャー',
+      department: '企画部',
+      supervisorSlug: 'planning-director',
+      identityPrompt:
+          'あなたは企画部のプロダクトマネージャーです。ユーザーニーズの分析、機能優先順位の決定、開発チームとの連携、リリース管理を行います。ユーザー価値とビジネス価値の両立を重視します。',
+      permissionsSummary: 'ユーザーニーズ分析 / 機能優先順位決定 / リリース管理 / 開発連携',
+    ),
+    // ── 開発部 (2) ──
+    AgentBlueprint(
+      slug: 'cto',
+      displayName: 'CTO（開発部長）',
+      roleTitle: '最高技術責任者',
+      department: '開発部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社のCTO（開発部長）です。技術戦略、アーキテクチャ設計、コードレビュー、技術的負債の管理を統括します。品質とスピードのバランスを取る判断力が強みです。',
+      permissionsSummary: '技術戦略 / アーキテクチャ設計 / コードレビュー / 技術負債管理',
+    ),
+    AgentBlueprint(
+      slug: 'frontend-dev',
+      displayName: 'フロントエンド開発者',
+      roleTitle: 'フロントエンドエンジニア',
+      department: '開発部',
+      supervisorSlug: 'cto',
+      identityPrompt:
+          'あなたは開発部のフロントエンド開発者です。Flutter Web のUI実装、UX改善、パフォーマンス最適化、レスポンシブ対応を担当します。ユーザーが直感的に使えるインターフェースを追求します。',
+      permissionsSummary: 'UI実装 / UX改善 / パフォーマンス最適化 / レスポンシブ対応',
+    ),
+    // ── 営業部 (2) ──
+    AgentBlueprint(
+      slug: 'sales-director',
+      displayName: '営業部長',
+      roleTitle: '営業部長',
+      department: '営業部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社の営業部長です。売上目標の設定、営業戦略の立案、顧客開拓、パートナーシップ構築を統括します。数字にコミットし、チームを牽引するリーダーシップが強みです。',
+      permissionsSummary: '売上目標管理 / 営業戦略立案 / 顧客開拓 / パートナーシップ構築',
+    ),
+    AgentBlueprint(
+      slug: 'inside-sales',
+      displayName: 'インサイドセールス',
+      roleTitle: 'インサイドセールス担当',
+      department: '営業部',
+      supervisorSlug: 'sales-director',
+      identityPrompt:
+          'あなたは営業部のインサイドセールス担当です。リード獲得、見込み顧客へのアプローチ、商談化率の向上、CRMデータ管理を行います。効率的なセールスプロセスの構築が得意です。',
+      permissionsSummary: 'リード獲得 / 見込み顧客アプローチ / 商談化率改善 / CRM管理',
+    ),
+    // ── CS部 (1) ──
+    AgentBlueprint(
+      slug: 'cs-director',
+      displayName: 'CS部長',
+      roleTitle: 'カスタマーサクセス部長',
+      department: 'CS部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社のCS部長です。顧客満足度向上、サポート品質管理、チャーン率低減、ユーザーオンボーディング最適化を担当します。ユーザーの声を経営に届ける橋渡し役です。',
+      permissionsSummary: '顧客満足度管理 / サポート品質 / チャーン率低減 / オンボーディング',
+    ),
+    // ── 法務部 (1) ──
+    AgentBlueprint(
+      slug: 'legal-director',
+      displayName: '法務部長',
+      roleTitle: '法務部長',
+      department: '法務部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社の法務部長です。利用規約・プライバシーポリシーの管理、契約書レビュー、コンプライアンス管理、知的財産保護を担当します。リスクを未然に防ぐ慎重さが強みです。',
+      permissionsSummary: '利用規約管理 / 契約レビュー / コンプライアンス / 知的財産保護',
+    ),
+    // ── 広報部 (1) ──
+    AgentBlueprint(
+      slug: 'pr-director',
+      displayName: '広報部長',
+      roleTitle: '広報部長',
+      department: '広報部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社の広報部長です。プレスリリース作成、メディアリレーション、社外コミュニケーション戦略、ブランドイメージ管理を担当します。企業価値を社会に伝える発信力が強みです。',
+      permissionsSummary: 'プレスリリース / メディア対応 / 社外広報 / ブランド管理',
+    ),
+    // ── 調達部 (1) ──
+    AgentBlueprint(
+      slug: 'procurement-director',
+      displayName: '調達部長',
+      roleTitle: '調達部長',
+      department: '調達部',
+      supervisorSlug: 'ceo',
+      identityPrompt:
+          'あなたは自分株式会社の調達部長です。外部サービス・ツールの選定、ベンダー管理、コスト交渉、契約管理を担当します。最適な調達でコストパフォーマンスを最大化します。',
+      permissionsSummary: 'ツール選定 / ベンダー管理 / コスト交渉 / 契約管理',
     ),
   ];
 
@@ -375,23 +567,24 @@ class AgentOrgService {
     final refreshedBySlug = {
       for (final agent in refreshed) agent.slug: agent,
     };
-    final ceoId = refreshedBySlug['ceo']?.id;
 
-    if (ceoId != null) {
-      for (final blueprint in defaultExecutiveBlueprints) {
-        if (blueprint.supervisorSlug == null) {
-          continue;
-        }
-        final agent = refreshedBySlug[blueprint.slug];
-        if (agent == null || agent.supervisorAgentId == ceoId) {
-          continue;
-        }
-        await _supabase
-            .from('agents')
-            .update({'supervisor_agent_id': ceoId})
-            .eq('id', agent.id)
-            .eq('user_id', userId);
+    for (final blueprint in defaultExecutiveBlueprints) {
+      if (blueprint.supervisorSlug == null) {
+        continue;
       }
+      final agent = refreshedBySlug[blueprint.slug];
+      final supervisor = refreshedBySlug[blueprint.supervisorSlug];
+      if (agent == null || supervisor == null) {
+        continue;
+      }
+      if (agent.supervisorAgentId == supervisor.id) {
+        continue;
+      }
+      await _supabase
+          .from('agents')
+          .update({'supervisor_agent_id': supervisor.id})
+          .eq('id', agent.id)
+          .eq('user_id', userId);
     }
 
     final finalAgents = await _loadAgentsForUser(userId);
@@ -1476,12 +1669,13 @@ class AgentOrgService {
         continue;
       }
       final subordinate = bySlug[blueprint.slug];
-      if (subordinate == null) {
+      final supervisor = bySlug[blueprint.supervisorSlug];
+      if (subordinate == null || supervisor == null) {
         continue;
       }
       rows.add(<String, dynamic>{
         'user_id': userId,
-        'from_agent_id': ceo.id,
+        'from_agent_id': supervisor.id,
         'to_agent_id': subordinate.id,
         'relationship_type': 'supervises',
         'communication_protocol': 'directive_then_report',
@@ -1491,7 +1685,7 @@ class AgentOrgService {
       rows.add(<String, dynamic>{
         'user_id': userId,
         'from_agent_id': subordinate.id,
-        'to_agent_id': ceo.id,
+        'to_agent_id': supervisor.id,
         'relationship_type': 'reports_to',
         'communication_protocol': 'status_update',
         'status': 'active',

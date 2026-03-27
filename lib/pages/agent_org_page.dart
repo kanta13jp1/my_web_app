@@ -128,8 +128,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
 
   List<AgentProfile> get _delegableAgents => _snapshot.agents
       .where(
-        (agent) =>
-            agent.slug == 'cfo' || agent.slug == 'cmo' || agent.slug == 'chro',
+        (agent) => agent.slug != 'ceo' && agent.isActive,
       )
       .toList();
 
@@ -172,10 +171,24 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     }
     const slugTraits = <String, List<String>>{
       'ceo': ['決断力', '大局観', 'リーダーシップ'],
+      'secretary': ['正確性', '段取り力', '気配り'],
       'cfo': ['慎重', '数字重視', '分析的'],
+      'accountant': ['正確性', '期限厳守', '几帳面'],
       'cmo': ['創造的', '前向き', '行動力'],
+      'ad-planner': ['ROI志向', 'クリエイティブ', 'データ分析'],
       'cho': ['共感的', '継続重視', '丁寧'],
       'chro': ['体系的', '公平', '規律重視'],
+      'recruiter': ['人材発掘', '選考力', 'コミュニケーション'],
+      'planning-director': ['構想力', '市場感覚', '実行計画'],
+      'product-manager': ['ユーザー視点', '優先順位付け', '調整力'],
+      'cto': ['技術力', '設計思考', '品質重視'],
+      'frontend-dev': ['UI感覚', '実装力', 'パフォーマンス'],
+      'sales-director': ['数字コミット', '交渉力', '開拓精神'],
+      'inside-sales': ['効率的', 'リード管理', '粘り強さ'],
+      'cs-director': ['傾聴力', '問題解決', '顧客志向'],
+      'legal-director': ['慎重', 'リスク管理', '論理的'],
+      'pr-director': ['発信力', 'メディア感覚', 'ブランド意識'],
+      'procurement-director': ['交渉力', 'コスト意識', '調達戦略'],
     };
     return slugTraits[agent.slug] ?? const <String>[];
   }
@@ -183,10 +196,17 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   AgentProfile? _findBestAgentForInput(String text) {
     final lower = text.toLowerCase();
     const departmentKeywords = <String, List<String>>{
-      'cfo': ['費用', 'コスト', '予算', '収入', '節約', '固定費', '支出', 'お金', '資金', '財務'],
-      'cmo': ['流入', '登録', 'sns', '宣伝', 'マーケ', 'lp', 'ツイート', '広報', '認知'],
+      'cfo': ['費用', 'コスト', '予算', '収入', '節約', '固定費', '支出', 'お金', '資金', '財務', '経理'],
+      'cmo': ['流入', '登録', 'sns', '宣伝', 'マーケ', 'lp', 'ツイート', '認知', '広告', 'キャンペーン'],
       'cho': ['体調', '睡眠', '運動', '食事', '健康', '休息', '生活', '疲れ'],
-      'chro': ['習慣', '評価', '報酬', 'ルール', '制度', '継続', '人事'],
+      'chro': ['習慣', '評価', '報酬', 'ルール', '制度', '継続', '人事', '採用'],
+      'planning-director': ['企画', '新規事業', 'ロードマップ', '市場調査', '戦略'],
+      'cto': ['開発', 'コード', 'バグ', '技術', 'アーキテクチャ', 'デプロイ', 'flutter'],
+      'sales-director': ['売上', '営業', '受注', '商談', '顧客開拓', 'リード'],
+      'cs-director': ['サポート', 'チケット', '問い合わせ', '顧客満足', 'cs', 'カスタマー'],
+      'legal-director': ['法務', '契約', '利用規約', 'プライバシー', 'コンプライアンス', '知的財産'],
+      'pr-director': ['広報', 'プレスリリース', 'メディア', 'ブランド', '取材'],
+      'procurement-director': ['調達', 'ベンダー', 'ツール選定', '外注', '契約管理'],
     };
     for (final entry in departmentKeywords.entries) {
       for (final keyword in entry.value) {
@@ -265,10 +285,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       }
       final delegable = snapshot.agents
           .where(
-            (agent) =>
-                agent.slug == 'cfo' ||
-                agent.slug == 'cmo' ||
-                agent.slug == 'chro',
+            (agent) => agent.slug != 'ceo' && agent.isActive,
           )
           .toList();
       setState(() {
@@ -536,10 +553,18 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         summary: '【プロジェクトゴール】$goal',
       );
       final assignments = <Map<String, String>>[
+        {'slug': 'secretary', 'title': 'ゴール進捗の全社共有スケジュール策定'},
         {'slug': 'cfo', 'title': '財務観点での実現可能性分析・予算確保'},
         {'slug': 'cmo', 'title': 'ゴール達成のための広報・流入施策立案'},
         {'slug': 'cho', 'title': '持続的に取り組むための健康維持計画'},
         {'slug': 'chro', 'title': 'ゴール達成に向けた習慣・評価制度設計'},
+        {'slug': 'planning-director', 'title': 'ゴールに基づく事業企画・ロードマップ策定'},
+        {'slug': 'cto', 'title': 'ゴール達成に必要な技術要件の洗い出し・開発計画'},
+        {'slug': 'sales-director', 'title': 'ゴール達成に向けた営業戦略・売上計画立案'},
+        {'slug': 'cs-director', 'title': 'ゴール達成に伴う顧客サポート体制の整備'},
+        {'slug': 'legal-director', 'title': 'ゴール達成に必要な法務リスク確認・規約整備'},
+        {'slug': 'pr-director', 'title': 'ゴール達成を社外に発信する広報戦略策定'},
+        {'slug': 'procurement-director', 'title': 'ゴール達成に必要なツール・リソースの調達計画'},
       ];
       for (final assignment in assignments) {
         final slug = assignment['slug']!;
@@ -841,7 +866,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'CEO -> CFO / CMO / CHRO 委任',
+              'CEO -> 12部署20人 タスク委任',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
@@ -1747,10 +1772,18 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               spacing: 6,
               runSpacing: 6,
               children: [
-                _buildDeptTag('財務', 'CFO', Colors.blue),
-                _buildDeptTag('広報', 'CMO', Colors.green),
-                _buildDeptTag('健康', 'CHO', Colors.red),
-                _buildDeptTag('人事', 'CHRO', Colors.purple),
+                _buildDeptTag('CEO室', 'CEO', Colors.amber),
+                _buildDeptTag('CFO室', 'CFO', Colors.blue),
+                _buildDeptTag('CMO室', 'CMO', Colors.green),
+                _buildDeptTag('CHO室', 'CHO', Colors.red),
+                _buildDeptTag('CHRO室', 'CHRO', Colors.purple),
+                _buildDeptTag('企画部', '企画', Colors.teal),
+                _buildDeptTag('開発部', 'CTO', Colors.indigo),
+                _buildDeptTag('営業部', '営業', Colors.orange),
+                _buildDeptTag('CS部', 'CS', Colors.cyan),
+                _buildDeptTag('法務部', '法務', Colors.brown),
+                _buildDeptTag('広報部', '広報', Colors.pink),
+                _buildDeptTag('調達部', '調達', Colors.grey),
               ],
             ),
             const SizedBox(height: 12),

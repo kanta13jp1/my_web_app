@@ -14,10 +14,11 @@ Notion・Evernote・MoneyForward・Slack・X・Amazon など14競合の機能を
 - **CI/CD**: GitHub Actions (push to main → 自動デプロイ)
 - **メール**: Resend API
 
-### 競合14社
+### 競合21社
 
 notion, evernote, moneyforward, slack, chatwork, x, animaworks,
-claude-code, codex, netkeiba, openclaw, claude-cowork, jobcan, amazon
+claude-code, codex, netkeiba, openclaw, claude-cowork, jobcan, amazon,
+google, microsoft, discord, line, facebook, liven, github
 
 ---
 

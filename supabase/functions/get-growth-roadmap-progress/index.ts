@@ -29,6 +29,13 @@ const DEFAULT_PLANS = [
   { label: "vs Slack", deadline: "2034年12月31日", target: 65000000, features_done: 9, features_total: 28 },
   { label: "vs X", deadline: "2036年12月31日", target: 600000000, features_done: 13, features_total: 24 },
   { label: "vs Amazon", deadline: "2038年12月31日", target: 310000000, features_done: 5, features_total: 30 },
+  { label: "vs Discord", deadline: "2035年12月31日", target: 200000000, features_done: 6, features_total: 26 },
+  { label: "vs LINE", deadline: "2035年12月31日", target: 196000000, features_done: 4, features_total: 28 },
+  { label: "vs Facebook", deadline: "2040年12月31日", target: 3070000000, features_done: 5, features_total: 30 },
+  { label: "vs Liven", deadline: "2028年06月30日", target: 1000000, features_done: 10, features_total: 16 },
+  { label: "vs GitHub", deadline: "2037年12月31日", target: 100000000, features_done: 8, features_total: 28 },
+  { label: "vs Google", deadline: "2045年12月31日", target: 4300000000, features_done: 4, features_total: 32 },
+  { label: "vs Microsoft", deadline: "2042年12月31日", target: 1500000000, features_done: 5, features_total: 30 },
 ];
 
 serve(async (req) => {

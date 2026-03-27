@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-27 daily-report (自動: 日次レポート生成 / 競合21社対応・習慣テンプレート大量追加・RewardsPage・ActivityFeedPage・ログインストリーク・思考妨害排除機能)
+最終更新: 2026-03-28 PowerShell全体管理セッション (Schedule統合強化・12部署20人仮想組織・AI検索ページ・get-home-dashboard統合・進捗バー21社完全対応・管理者ユーザー詳細・プロフィール促進UI・ブログ自動投稿準備)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -823,3 +823,46 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - 共有と referral 起点の獲得強化
 - test と analyze の品質固定
 - cross-functional な成長運営
+
+---
+
+## セッション記録
+
+### Session 2026-03-28 — PowerShell 全体管理セッション
+
+**実施内容:**
+
+1. **Claude Code Schedule 統合強化**
+   - `daily-report` に Schedule ヘルスモニター機能を追加（失敗検知→自動修正→schedule_task_runs テーブル記録）
+   - `blog-draft` に11プラットフォーム向けフォーマット変換+blog_posts テーブル記録を追加
+   - `cs-check` Edge Function UI 連携チェックは既存で稼働中
+   - プラン上限（hourly: 1枠、daily: 3枠）のため新規トリガーは既存に統合
+
+2. **12部署20人 仮想AI組織**
+   - 5エージェント（CEO/CFO/CMO/CHO/CHRO）→ 12部署19エージェントに拡張
+   - 新部署: 企画部、開発部、営業部、CS部、法務部、広報部、調達部
+   - 階層的な上下関係（supervisor_agent_id）を設定
+   - マイグレーション: `20260328000001_seed_12dept_20agents.sql`
+
+3. **Edge Function UI 導線追加**
+   - `ai-search` → AI ノート検索ページ新規作成（ルート・メニュー追加）
+   - `get-home-dashboard` → 既存呼び出しに totalUsers + 7日間スパークライン追加
+   - サーバー専用（UI不要）: agent-runtime-cycle, daily-judgment, generate-quote-image, get-public-memo-preview, share-quote
+
+4. **進捗バー 21社完全対応**
+   - `get-growth-roadmap-progress` Edge Function に7社追加: Discord, LINE, Facebook, Liven, GitHub, Google, Microsoft
+   - フロントエンド側は既に21社対応済み（フォールバックデータあり）
+
+5. **管理者ダッシュボード強化**
+   - ユーザー詳細ダイアログ: 全プロフィールフィールド表示、未設定項目の明示
+   - `get-admin-users` Edge Function: githubHandle, isPublic を追加
+   - ProfileCompletionBanner: 具体的な未設定フィールド名を表示
+
+6. **Schedule タスクモニター拡張**
+   - 14タスク対応（既存11 + blog-auto-post, schedule-health-monitor, edge-function-ui-sync）
+
+7. **ブログ投稿管理強化**
+   - TechBlogTrackerPage に Schedule 自動生成ドラフト表示セクション追加
+   - blog_posts テーブルとの連携
+
+**flutter analyze: 0 エラー維持**

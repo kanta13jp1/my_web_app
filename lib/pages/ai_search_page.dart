@@ -1,0 +1,303 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// AI 自然言語ノート検索ページ
+class AiSearchPage extends StatefulWidget {
+  const AiSearchPage({super.key});
+
+  @override
+  State<AiSearchPage> createState() => _AiSearchPageState();
+}
+
+class _AiSearchPageState extends State<AiSearchPage> {
+  final _supabase = Supabase.instance.client;
+  final _controller = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+  List<Map<String, dynamic>> _results = [];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _results = [];
+    });
+
+    try {
+      final response = await _supabase.functions.invoke(
+        'ai-search',
+        body: {'query': trimmed, 'limit': 20},
+      );
+
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['results'] is List) {
+        setState(() {
+          _results = List<Map<String, dynamic>>.from(
+            (data['results'] as List).map(
+              (e) => Map<String, dynamic>.from(e as Map),
+            ),
+          );
+        });
+      } else if (data is List) {
+        setState(() {
+          _results = List<Map<String, dynamic>>.from(
+            data.map((e) => Map<String, dynamic>.from(e as Map)),
+          );
+        });
+      } else {
+        setState(() {
+          _results = [];
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = '検索に失敗しました: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _noteTitle(Map<String, dynamic> note) {
+    final title = (note['title'] as String? ?? '').trim();
+    return title.isEmpty ? '無題のメモ' : title;
+  }
+
+  String _noteExcerpt(Map<String, dynamic> note) {
+    final content = (note['content'] as String? ?? '').trim();
+    if (content.length <= 120) return content;
+    return '${content.substring(0, 120)}...';
+  }
+
+  List<String> _noteTags(Map<String, dynamic> note) {
+    final tags = note['tags'];
+    if (tags is List) {
+      return tags.map((e) => e.toString()).toList();
+    }
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(
+        title: const Text('AI ノート検索'),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // 検索バー
+          Container(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: '自然言語で検索（例: 先月の振り返りメモ）',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() {
+                            _results = [];
+                            _errorMessage = null;
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: isDark
+                    ? const Color(0xFF0F172A)
+                    : const Color(0xFFF1F5F9),
+              ),
+              textInputAction: TextInputAction.search,
+              onSubmitted: _search,
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const Divider(height: 1),
+          // コンテンツ
+          Expanded(child: _buildBody(isDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(bool isDark) {
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('AI が検索中...'),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red[400]),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => _search(_controller.text),
+                icon: const Icon(Icons.refresh),
+                label: const Text('再試行'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_results.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.manage_search,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _controller.text.isEmpty
+                  ? 'キーワードを入力して検索'
+                  : '該当するノートが見つかりませんでした',
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _results.length,
+      itemBuilder: (context, index) {
+        final note = _results[index];
+        return _buildNoteCard(note, isDark);
+      },
+    );
+  }
+
+  Widget _buildNoteCard(Map<String, dynamic> note, bool isDark) {
+    final title = _noteTitle(note);
+    final excerpt = _noteExcerpt(note);
+    final tags = _noteTags(note);
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    return Card(
+      color: cardColor,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: isDark
+              ? const Color(0xFF334155)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // タイトル
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (excerpt.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                excerpt,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[500],
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: tags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withAlpha(20),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

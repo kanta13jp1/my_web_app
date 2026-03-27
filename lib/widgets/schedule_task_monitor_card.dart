@@ -17,7 +17,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
   bool _loading = true;
   List<_ScheduleTaskInfo> _tasks = [];
 
-  // 定義済みタスク一覧（CLAUDE.md に記載の全タスク）
+  // 定義済みタスク一覧（CLAUDE.md に記載の全タスク + 追加タスク）
   static const _definedTasks = [
     _TaskDef('daily-report', '日次レポート + X投稿', '毎日 09:00', Icons.summarize),
     _TaskDef('cs-check', 'CS対応・バグ修正', '毎時', Icons.support_agent),
@@ -48,6 +48,24 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       Icons.security,
     ),
     _TaskDef('blog-draft', 'ブログ下書き生成', '毎日 08:00', Icons.article),
+    _TaskDef(
+      'blog-auto-post',
+      'ブログ自動投稿',
+      '毎日 12:00',
+      Icons.publish,
+    ),
+    _TaskDef(
+      'schedule-health-monitor',
+      'Scheduleヘルスモニター',
+      '毎時',
+      Icons.monitor_heart,
+    ),
+    _TaskDef(
+      'edge-function-ui-sync',
+      'Edge Function UI同期',
+      '毎時',
+      Icons.sync,
+    ),
     _TaskDef(
       'edge-ui-coverage',
       'Edge Function UI カバレッジ自動修正',
