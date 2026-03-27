@@ -4063,6 +4063,36 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               ),
                             ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Colors.grey.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '🪞',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  '行動・発言の振り返り',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  '全行動を記録しAIが考察',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/behavior-log',
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
