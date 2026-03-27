@@ -104,6 +104,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   String _selectedBoardChannel = AgentOrgService.boardChannels.first.id;
   String? _errorText;
   final Set<String> _reactionRequestsInFlight = <String>{};
+  final TextEditingController _secretaryController = TextEditingController();
+  final TextEditingController _goalController = TextEditingController();
+  bool _isTalkingToSecretary = false;
+  bool _isSettingGoal = false;
+  String? _secretaryReply;
 
   @override
   void initState() {
@@ -116,6 +121,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     _taskTitleController.dispose();
     _taskDescriptionController.dispose();
     _boardMessageController.dispose();
+    _secretaryController.dispose();
+    _goalController.dispose();
     super.dispose();
   }
 
@@ -142,6 +149,50 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     for (final template in _taskTemplates) {
       if (template.id == _selectedTaskTemplateId) {
         return template;
+      }
+    }
+    return null;
+  }
+
+  AgentProfile? _findAgentBySlug(String slug) {
+    for (final agent in _snapshot.agents) {
+      if (agent.slug == slug) return agent;
+    }
+    return null;
+  }
+
+  List<String> _getPersonalityTraits(AgentProfile agent) {
+    final meta = agent.metadata;
+    final metaPersonality = meta['personality'];
+    if (metaPersonality is List) {
+      return metaPersonality.whereType<String>().toList();
+    }
+    if (metaPersonality is String && metaPersonality.isNotEmpty) {
+      return [metaPersonality];
+    }
+    const slugTraits = <String, List<String>>{
+      'ceo': ['決断力', '大局観', 'リーダーシップ'],
+      'cfo': ['慎重', '数字重視', '分析的'],
+      'cmo': ['創造的', '前向き', '行動力'],
+      'cho': ['共感的', '継続重視', '丁寧'],
+      'chro': ['体系的', '公平', '規律重視'],
+    };
+    return slugTraits[agent.slug] ?? const <String>[];
+  }
+
+  AgentProfile? _findBestAgentForInput(String text) {
+    final lower = text.toLowerCase();
+    const departmentKeywords = <String, List<String>>{
+      'cfo': ['費用', 'コスト', '予算', '収入', '節約', '固定費', '支出', 'お金', '資金', '財務'],
+      'cmo': ['流入', '登録', 'sns', '宣伝', 'マーケ', 'lp', 'ツイート', '広報', '認知'],
+      'cho': ['体調', '睡眠', '運動', '食事', '健康', '休息', '生活', '疲れ'],
+      'chro': ['習慣', '評価', '報酬', 'ルール', '制度', '継続', '人事'],
+    };
+    for (final entry in departmentKeywords.entries) {
+      for (final keyword in entry.value) {
+        if (lower.contains(keyword)) {
+          return _findAgentBySlug(entry.key);
+        }
       }
     }
     return null;
@@ -433,6 +484,91 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     }
   }
 
+  Future<void> _talkToSecretary() async {
+    final text = _secretaryController.text.trim();
+    if (text.isEmpty) return;
+    final ceoAgent = _ceoAgent;
+    if (ceoAgent == null) return;
+
+    setState(() => _isTalkingToSecretary = true);
+    try {
+      final bestAgent = _findBestAgentForInput(text) ?? ceoAgent;
+      await widget.service.delegateTask(
+        supervisorAgentId: ceoAgent.id,
+        assigneeAgentId: bestAgent.id,
+        title: text.length > 40 ? '${text.substring(0, 40)}…' : text,
+        description: text,
+      );
+      await widget.service.appendMemoryEntry(
+        agentId: ceoAgent.id,
+        content: 'ユーザーの発言: $text',
+        memoryLayer: 'episodes',
+      );
+      if (!mounted) return;
+      setState(() {
+        _secretaryReply = bestAgent.id == ceoAgent.id
+            ? 'CEOが受け付けました'
+            : '${bestAgent.displayName}（${bestAgent.department}）に委任しました';
+      });
+      _secretaryController.clear();
+      await _loadSnapshot();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('秘書エラー: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isTalkingToSecretary = false);
+    }
+  }
+
+  Future<void> _setProjectGoal() async {
+    final goal = _goalController.text.trim();
+    if (goal.isEmpty) return;
+    final ceoAgent = _ceoAgent;
+    if (ceoAgent == null) return;
+
+    setState(() => _isSettingGoal = true);
+    try {
+      await widget.service.postBoardMessage(
+        fromAgentId: ceoAgent.id,
+        channel: 'executive',
+        summary: '【プロジェクトゴール】$goal',
+      );
+      final assignments = <Map<String, String>>[
+        {'slug': 'cfo', 'title': '財務観点での実現可能性分析・予算確保'},
+        {'slug': 'cmo', 'title': 'ゴール達成のための広報・流入施策立案'},
+        {'slug': 'cho', 'title': '持続的に取り組むための健康維持計画'},
+        {'slug': 'chro', 'title': 'ゴール達成に向けた習慣・評価制度設計'},
+      ];
+      for (final assignment in assignments) {
+        final slug = assignment['slug']!;
+        final taskTitle = assignment['title']!;
+        final agent = _findAgentBySlug(slug);
+        if (agent == null) continue;
+        await widget.service.delegateTask(
+          supervisorAgentId: ceoAgent.id,
+          assigneeAgentId: agent.id,
+          title: taskTitle,
+          description: 'プロジェクトゴール「$goal」達成に向けた${agent.department}部門の取り組み',
+        );
+      }
+      if (!mounted) return;
+      _goalController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ゴールを設定し、全部署に展開しました')),
+      );
+      await _loadSnapshot();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ゴール設定エラー: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSettingGoal = false);
+    }
+  }
+
   void _applyTaskTemplate(AgentTaskTemplate template) {
     _taskTitleController.text = template.title;
     _taskDescriptionController.text = template.description;
@@ -611,6 +747,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      _buildSecretarySection(),
+                      const SizedBox(height: 16),
+                      _buildGoalSection(),
                       const SizedBox(height: 16),
                       _buildDelegationComposer(),
                       const SizedBox(height: 24),
@@ -1016,6 +1156,32 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 color: Colors.black87,
                 height: 1.5,
               ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: _getPersonalityTraits(agent)
+                  .map(
+                    (trait) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cardColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: cardColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        trait,
+                        style: TextStyle(fontSize: 11, color: cardColor),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 8),
             Text(
@@ -1450,6 +1616,182 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSecretarySection() {
+    return Card(
+      elevation: 2,
+      color: Colors.deepPurple.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.support_agent, color: Colors.deepPurple),
+                SizedBox(width: 8),
+                Text(
+                  '秘書に話しかける',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '自然な言葉で伝えると、秘書が最適な担当エージェントへタスクを振り分けます。会話は記憶ログに保存されます。',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _secretaryController,
+              enabled: !_isTalkingToSecretary,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: '例: 今月の固定費を10%減らしたい',
+                hintText: '財務・広報・健康・人事など、何でも話しかけてください',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_secretaryReply != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.deepPurple,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _secretaryReply!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isTalkingToSecretary ? null : _talkToSecretary,
+                icon: _isTalkingToSecretary
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                label: const Text('秘書に送る'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalSection() {
+    return Card(
+      elevation: 2,
+      color: Colors.orange.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.flag, color: Colors.orange),
+                SizedBox(width: 8),
+                Text(
+                  'プロジェクトゴール展開',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'ゴールを1つ入力するとCEOが全部署に役割分担して展開します。部署間で内容が被らないよう自動設計します。',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _goalController,
+              enabled: !_isSettingGoal,
+              minLines: 2,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'ゴール',
+                hintText: '例: 今月中に新規登録者100人達成',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _buildDeptTag('財務', 'CFO', Colors.blue),
+                _buildDeptTag('広報', 'CMO', Colors.green),
+                _buildDeptTag('健康', 'CHO', Colors.red),
+                _buildDeptTag('人事', 'CHRO', Colors.purple),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isSettingGoal ? null : _setProjectGoal,
+                icon: _isSettingGoal
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.rocket_launch),
+                label: const Text('全部署に展開'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeptTag(String dept, String role, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        '$role ($dept)',
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
