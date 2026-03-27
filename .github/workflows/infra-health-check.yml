@@ -1,0 +1,60 @@
+name: Infra Health Check (インフラ監視)
+
+# 30分毎 + 手動実行
+on:
+  schedule:
+    - cron: "37 * * * *"  # 毎時37分
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check Firebase Hosting
+        id: firebase
+        run: |
+          CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "https://my-web-app-b67f4.web.app/" \
+            --max-time 10 2>/dev/null || echo "000")
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          echo "🌐 Firebase: HTTP $CODE"
+
+      - name: Check Supabase Edge Functions
+        id: supabase
+        run: |
+          ENDPOINTS=(
+            "development-achievements:POST"
+            "get-competitor-features:POST"
+            "get-growth-roadmap-progress:POST"
+          )
+
+          ALL_OK=true
+          for EP in "${ENDPOINTS[@]}"; do
+            NAME="${EP%%:*}"
+            METHOD="${EP##*:}"
+
+            CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+              -X "$METHOD" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/$NAME" \
+              --max-time 10 2>/dev/null || echo "000")
+
+            echo "  $NAME: HTTP $CODE"
+            if [ "$CODE" = "000" ] || [ "$CODE" -ge 500 ]; then
+              ALL_OK=false
+            fi
+          done
+
+          echo "all_ok=$ALL_OK" >> $GITHUB_OUTPUT
+
+      - name: Report status
+        if: steps.firebase.outputs.code != '200' || steps.supabase.outputs.all_ok != 'true'
+        run: |
+          echo "⚠️ インフラ異常検知"
+          echo "Firebase: HTTP ${{ steps.firebase.outputs.code }}"
+          echo "Supabase: all_ok=${{ steps.supabase.outputs.all_ok }}"
+          # 将来: Slack/Discord通知を追加可能

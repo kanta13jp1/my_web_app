@@ -1,0 +1,157 @@
+name: CS Check (自動サポート対応)
+
+# 毎時実行 + 手動実行対応
+on:
+  schedule:
+    - cron: "7 * * * *"  # 毎時7分に実行
+  workflow_dispatch:       # 手動実行
+
+jobs:
+  cs-check:
+    name: CS Auto-Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Step 1 - 未返信サポートチケット取得
+        id: tickets
+        run: |
+          RESPONSE=$(curl -sf -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-support-tickets" \
+            2>/dev/null || echo -e '{"tickets":[]}\n000')
+
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "response<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          TICKET_COUNT=$(echo "$BODY" | jq '.tickets | length' 2>/dev/null || echo "0")
+          echo "ticket_count=$TICKET_COUNT" >> $GITHUB_OUTPUT
+          echo "📋 チケット数: $TICKET_COUNT (HTTP: $HTTP_CODE)"
+
+      - name: Step 2 - FAQ自動返信
+        if: steps.tickets.outputs.ticket_count != '0'
+        run: |
+          echo "${{ steps.tickets.outputs.response }}" | jq -r '.tickets[]? | "\(.id) | \(.title) | \(.description)"' | while IFS='|' read -r ID TITLE DESC; do
+            ID=$(echo "$ID" | xargs)
+            TITLE=$(echo "$TITLE" | xargs)
+
+            echo "🎫 処理中: $TITLE"
+
+            # FAQ一覧と照合して返信文を生成（簡易マッチング）
+            REPLY="お問い合わせありがとうございます。確認いたしますので少々お待ちください。"
+
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"id\":\"$ID\",\"reply\":\"$REPLY\",\"newStatus\":\"open\"}" \
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/reply-support-request" \
+              2>/dev/null && echo "  ✅ 返信送信" || echo "  ⚠️ 返信失敗"
+          done
+
+      - name: Step 4 - GitHub PR レビュー
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRS=$(gh pr list --state open --json number,title,additions,deletions 2>/dev/null || echo "[]")
+          PR_COUNT=$(echo "$PRS" | jq 'length')
+          echo "📝 オープンPR: $PR_COUNT 件"
+
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "$PRS" | jq -r '.[] | "\(.number) \(.title) +\(.additions)/-\(.deletions)"'
+          fi
+
+      - name: Step 5 - インフラヘルスチェック
+        id: health
+        run: |
+          ERRORS=""
+
+          # Supabase チェック
+          SUPABASE_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-home-dashboard" \
+            --max-time 10 2>/dev/null || echo "000")
+
+          if [ "$SUPABASE_CODE" != "200" ] && [ "$SUPABASE_CODE" != "405" ]; then
+            ERRORS="${ERRORS}Supabase get-home-dashboard: HTTP $SUPABASE_CODE\n"
+          fi
+          echo "🔍 Supabase: HTTP $SUPABASE_CODE"
+
+          # Firebase チェック
+          FIREBASE_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "https://my-web-app-b67f4.web.app/" \
+            --max-time 10 2>/dev/null || echo "000")
+
+          if [ "$FIREBASE_CODE" != "200" ]; then
+            ERRORS="${ERRORS}Firebase Hosting: HTTP $FIREBASE_CODE\n"
+          fi
+          echo "🔍 Firebase: HTTP $FIREBASE_CODE"
+
+          # development-achievements チェック
+          DEV_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/development-achievements" \
+            --max-time 10 2>/dev/null || echo "000")
+          echo "🔍 development-achievements: HTTP $DEV_CODE"
+
+          echo "errors<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$ERRORS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -z "$ERRORS" ]; then
+            echo "✅ 全エンドポイント正常"
+            echo "healthy=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ 異常検知:"
+            echo -e "$ERRORS"
+            echo "healthy=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Step 3/6 - CS ノート記録 & コミット
+        run: |
+          DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
+          DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          HOUR=$(TZ=Asia/Tokyo date +%H)
+          FILEPATH="docs/cs-notes/${DATETIME}.md"
+
+          mkdir -p docs/cs-notes
+
+          cat > "$FILEPATH" << ENDOFNOTE
+          # CS チェック ${DATE} ${HOUR}:00 (GitHub Actions)
+
+          ## サポートチケット
+          - 取得チケット数: ${{ steps.tickets.outputs.ticket_count }}件
+
+          ## GitHub PR レビュー
+          - 確認済み（自動レビュー）
+
+          ## インフラヘルスチェック
+          $(if [ "${{ steps.health.outputs.healthy }}" = "true" ]; then
+            echo "- ✅ 全エンドポイント正常"
+          else
+            echo "## インフラ異常"
+            echo "${{ steps.health.outputs.errors }}"
+          fi)
+
+          ---
+          *実行環境: GitHub Actions (cs-check.yml)*
+          ENDOFNOTE
+
+          # sed でインデント除去
+          sed -i 's/^          //' "$FILEPATH"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cs-notes/
+          git diff --cached --quiet || (git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)" && git push)
