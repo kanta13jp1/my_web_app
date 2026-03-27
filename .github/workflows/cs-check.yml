@@ -142,8 +142,9 @@ jobs:
           DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
+          RUN_ID="${{ github.run_id }}"
           FILEPATH="docs/cs-notes/${DATETIME}.md"
-          BRANCH="cs-check-${DATETIME}"
+          BRANCH="cs-check-${DATETIME}-${RUN_ID}"
 
           mkdir -p docs/cs-notes
 
@@ -182,7 +183,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "$BRANCH"
+          git fetch origin main
+          git checkout -b "$BRANCH" origin/main
+          git add docs/cs-notes/
           git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
           git push origin "$BRANCH"
 
