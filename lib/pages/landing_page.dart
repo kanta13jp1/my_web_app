@@ -852,7 +852,7 @@ $input
         const SizedBox(height: 16),
         // メインヘッドライン
         const Text(
-          'Notion・Evernote・MoneyForward\nSlack を1つに。完全無料。',
+          'Notion・Slack・LINE・GitHub\n21サービスを1つに。完全無料。',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
@@ -863,7 +863,7 @@ $input
         ),
         const SizedBox(height: 12),
         const Text(
-          '13のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
+          '21のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15,
