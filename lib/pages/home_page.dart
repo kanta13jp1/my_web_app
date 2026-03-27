@@ -3963,6 +3963,36 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               ),
                             ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Colors.grey.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '📜',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  '我が闘争',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  '日々の奮闘をAIがコラムに',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/my-struggle',
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
