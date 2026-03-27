@@ -1,0 +1,163 @@
+name: Daily Report (日次レポート + X投稿)
+
+on:
+  schedule:
+    - cron: "3 0 * * *"  # 毎日 09:03 JST (UTC 00:03)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  daily-report:
+    name: Generate Daily Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Step 1 - 日次メトリクス取得
+        id: digest
+        run: |
+          HTTP_CODE=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest" \
+            --max-time 15)
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            TOTAL_USERS=$(cat /tmp/digest.json | jq -r '.digest.users.total // 0')
+            NEW_TODAY=$(cat /tmp/digest.json | jq -r '.digest.featureRequests.newToday // 0')
+            OPEN_COUNT=$(cat /tmp/digest.json | jq -r '.digest.featureRequests.openCount // 0')
+          else
+            TOTAL_USERS="取得失敗"
+            NEW_TODAY="取得失敗"
+            OPEN_COUNT="取得失敗"
+          fi
+
+          echo "total_users=$TOTAL_USERS" >> $GITHUB_OUTPUT
+          echo "new_today=$NEW_TODAY" >> $GITHUB_OUTPUT
+          echo "open_count=$OPEN_COUNT" >> $GITHUB_OUTPUT
+          echo "📊 ユーザー: $TOTAL_USERS / 新規要望: $NEW_TODAY / 未対応: $OPEN_COUNT"
+
+      - name: Step 2 - git log で直近24時間の実績取得
+        id: gitlog
+        run: |
+          COMMITS=$(git log --oneline --since='24 hours ago' 2>/dev/null || echo "(取得失敗)")
+          COMMIT_COUNT=$(git log --oneline --since='24 hours ago' 2>/dev/null | wc -l || echo "0")
+          echo "count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+
+          # ファイルに保存 (改行含むため)
+          echo "$COMMITS" > /tmp/recent_commits.txt
+          echo "📝 直近24時間のコミット: $COMMIT_COUNT 件"
+
+      - name: Step 3 - 日次レポート生成
+        id: report
+        run: |
+          DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          FILEPATH="docs/daily-reports/${DATE}.md"
+          mkdir -p docs/daily-reports
+
+          {
+            echo "# 自分株式会社 日次レポート ${DATE}"
+            echo ""
+            echo "## 概要"
+            echo "- **総ユーザー数**: ${{ steps.digest.outputs.total_users }}人"
+            echo "- **本日の新規機能リクエスト**: ${{ steps.digest.outputs.new_today }}件"
+            echo "- **未対応機能リクエスト**: ${{ steps.digest.outputs.open_count }}件"
+            echo "- **API応答**: HTTP ${{ steps.digest.outputs.http_code }}"
+            echo ""
+            echo "## 直近24時間の開発実績 (${{ steps.gitlog.outputs.count }}件)"
+            echo '```'
+            cat /tmp/recent_commits.txt
+            echo '```'
+            echo ""
+            echo "## 次のアクション提案"
+            echo "1. 直近のコミットで追加された新機能をZenn/Qiita記事として公開し、ユーザー獲得に繋げる"
+            echo "2. 未対応の機能リクエストを優先度順に対応し、既存ユーザーの満足度を向上"
+            echo "3. 競合21社との差別化ポイントを強化し、LP・比較ページを更新"
+            echo ""
+            echo "---"
+            echo "*生成: GitHub Actions (daily-report.yml) / ${DATE}*"
+          } > "$FILEPATH"
+
+          echo "filepath=$FILEPATH" >> $GITHUB_OUTPUT
+          echo "📄 レポート生成: $FILEPATH"
+
+      - name: Step 4 - X投稿 (変更がある場合のみ)
+        if: steps.gitlog.outputs.count != '0'
+        id: xpost
+        run: |
+          # 直近のコミットから投稿文を生成
+          TOP_COMMIT=$(head -1 /tmp/recent_commits.txt | cut -d' ' -f2-)
+          COMMIT_COUNT=${{ steps.gitlog.outputs.count }}
+
+          TWEET="自分株式会社、今日も${COMMIT_COUNT}件の改善を実施🚀 ${TOP_COMMIT} https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb #Supabase"
+
+          # 140字制限
+          TWEET=$(echo "$TWEET" | cut -c1-140)
+
+          POST_CODE=$(curl -s -o /tmp/xpost.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"$TWEET\"}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update" \
+            --max-time 15)
+
+          echo "post_code=$POST_CODE" >> $GITHUB_OUTPUT
+
+          if [ "$POST_CODE" = "200" ]; then
+            echo "✅ X投稿成功"
+          else
+            echo "⚠️ X投稿失敗 (HTTP $POST_CODE)"
+          fi
+
+      - name: Step 5 - コミット & PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          BRANCH="daily-report-${DATETIME}"
+
+          git add docs/daily-reports/
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git commit -m "自動: 日次レポート ${DATETIME}"
+          git push origin "$BRANCH"
+
+          set +e
+          PR_URL=$(gh pr create \
+            --title "自動: 日次レポート ${DATETIME}" \
+            --body "日次レポート自動生成 (GitHub Actions)" \
+            --base main \
+            --head "$BRANCH")
+          PR_EXIT=$?
+          set -e
+
+          if [ $PR_EXIT -ne 0 ]; then
+            echo "⚠️ PR作成失敗"
+            exit 0
+          fi
+
+          echo "📝 PR: $PR_URL"
+          PR_NUM=$(echo "$PR_URL" | grep -o '[0-9]*$')
+          if [ -n "$PR_NUM" ]; then
+            sleep 3
+            gh pr merge "$PR_NUM" --squash --delete-branch 2>&1 && \
+              echo "✅ マージ完了" || \
+              echo "⚠️ 手動マージが必要: $PR_URL"
+          fi
