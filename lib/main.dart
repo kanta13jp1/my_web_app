@@ -37,6 +37,7 @@ import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
+import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -319,6 +320,10 @@ class MyApp extends StatelessWidget {
           case '/thought-capture':
             return MaterialPageRoute(
               builder: (_) => const ThoughtCapturePage(),
+            );
+          case '/decision-check':
+            return MaterialPageRoute(
+              builder: (_) => const DecisionCheckPage(),
             );
           case '/admin':
             return MaterialPageRoute(
