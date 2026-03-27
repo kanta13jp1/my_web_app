@@ -50,6 +50,7 @@ import 'wardrobe_page.dart'; // 先頭のimport群に追加
 import 'import_page.dart';
 import 'growth_mission_page.dart';
 import 'life_goals_page.dart';
+import 'thought_capture_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
@@ -4499,6 +4500,15 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.flag_circle,
                                 Colors.deepPurple,
                                 () => _nav(context, const LifeGoalsPage()),
+                              ),
+                              _MenuData(
+                                '思考キャプチャ',
+                                Icons.bubble_chart,
+                                Colors.cyan,
+                                () => _nav(
+                                  context,
+                                  const ThoughtCapturePage(),
+                                ),
                               ),
                               _MenuData(
                                 '公開メモ一覧',
