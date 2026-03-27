@@ -143,7 +143,7 @@ jobs:
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
           FILEPATH="docs/cs-notes/${DATETIME}.md"
-          BRANCH="auto/cs-check-${DATETIME}"
+          BRANCH="cs-check-${DATETIME}"
 
           mkdir -p docs/cs-notes
 
@@ -186,17 +186,29 @@ jobs:
           git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
           git push origin "$BRANCH"
 
+          # PR作成
+          set +e
           PR_URL=$(gh pr create \
             --title "自動: CS チェック ${DATETIME}:00" \
             --body "CS自動チェック結果 (GitHub Actions)" \
             --base main \
-            --head "$BRANCH" 2>&1)
+            --head "$BRANCH")
+          PR_EXIT=$?
+          set -e
+
+          if [ $PR_EXIT -ne 0 ]; then
+            echo "⚠️ PR作成失敗 (exit $PR_EXIT)"
+            echo "ブランチ $BRANCH にコミット済み。手動マージしてください。"
+            exit 0
+          fi
+
           echo "📝 PR作成: $PR_URL"
 
-          # 自動マージ
-          PR_NUM=$(echo "$PR_URL" | grep -oP '\d+$')
+          # PR番号を抽出してマージ
+          PR_NUM=$(echo "$PR_URL" | grep -o '[0-9]*$')
           if [ -n "$PR_NUM" ]; then
-            gh pr merge "$PR_NUM" --squash --admin --delete-branch 2>&1 || \
-            gh pr merge "$PR_NUM" --squash --delete-branch 2>&1 || \
-            echo "⚠️ 自動マージ失敗 — 手動マージが必要です: $PR_URL"
+            sleep 3
+            gh pr merge "$PR_NUM" --squash --delete-branch 2>&1 && \
+              echo "✅ マージ完了 (#$PR_NUM)" || \
+              echo "⚠️ 自動マージ失敗 — 手動マージが必要: $PR_URL"
           fi
