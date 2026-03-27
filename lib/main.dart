@@ -35,6 +35,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -309,6 +310,10 @@ class MyApp extends StatelessWidget {
           case '/rewards':
             return MaterialPageRoute(
               builder: (_) => const RewardsPage(),
+            );
+          case '/life-goals':
+            return MaterialPageRoute(
+              builder: (_) => const LifeGoalsPage(),
             );
           case '/admin':
             return MaterialPageRoute(
