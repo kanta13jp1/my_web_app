@@ -1,0 +1,121 @@
+name: Edge Function UI Audit (UI導線チェック)
+
+# 毎時47分 + 手動実行
+on:
+  schedule:
+    - cron: "47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  audit:
+    name: Check Edge Function UI Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit Edge Functions vs UI references
+        id: audit
+        run: |
+          echo "## Edge Function UI導線チェック" > /tmp/audit_report.txt
+          echo "" >> /tmp/audit_report.txt
+          echo "| Function | UIから呼び出し | 参照ファイル |" >> /tmp/audit_report.txt
+          echo "|----------|---------------|-------------|" >> /tmp/audit_report.txt
+
+          MISSING=""
+          TOTAL=0
+          COVERED=0
+
+          for DIR in supabase/functions/*/; do
+            FUNC=$(basename "$DIR")
+            # _shared, deno.json等を除外
+            if [ "$FUNC" = "_shared" ] || [ ! -f "$DIR/index.ts" ]; then
+              continue
+            fi
+
+            TOTAL=$((TOTAL + 1))
+
+            # lib/ 内で関数名が参照されているか
+            REF=$(grep -rl "$FUNC" lib/ 2>/dev/null | head -1 || true)
+
+            if [ -n "$REF" ]; then
+              COVERED=$((COVERED + 1))
+              echo "| $FUNC | ✅ | $REF |" >> /tmp/audit_report.txt
+            else
+              MISSING="${MISSING}${FUNC}\n"
+              echo "| $FUNC | ❌ 未接続 | - |" >> /tmp/audit_report.txt
+            fi
+          done
+
+          echo "" >> /tmp/audit_report.txt
+          echo "**カバレッジ: ${COVERED}/${TOTAL}**" >> /tmp/audit_report.txt
+
+          MISSING_COUNT=$((TOTAL - COVERED))
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "covered=$COVERED" >> $GITHUB_OUTPUT
+          echo "missing_count=$MISSING_COUNT" >> $GITHUB_OUTPUT
+
+          if [ $MISSING_COUNT -gt 0 ]; then
+            echo "has_missing=true" >> $GITHUB_OUTPUT
+            echo "missing<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$MISSING" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "has_missing=false" >> $GITHUB_OUTPUT
+          fi
+
+          cat /tmp/audit_report.txt
+
+      - name: Create/Update Issue if missing functions
+        if: steps.audit.outputs.has_missing == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          TITLE="[自動] Edge Function UI導線チェック: ${{ steps.audit.outputs.missing_count }}件未接続 ($DATE)"
+
+          BODY="## Edge Function UI導線チェック結果
+
+          **日時**: $DATE
+          **カバレッジ**: ${{ steps.audit.outputs.covered }}/${{ steps.audit.outputs.total }}
+          **未接続**: ${{ steps.audit.outputs.missing_count }}件
+
+          ### 未接続の Edge Functions
+          \`\`\`
+          ${{ steps.audit.outputs.missing }}
+          \`\`\`
+
+          ### 対応方法
+          各 Edge Function に対して \`lib/\` 内にUIからの呼び出しを追加してください。
+
+          ---
+          *自動生成: edge-function-audit.yml*"
+
+          # 既存のIssueを閉じる
+          EXISTING=$(gh issue list --label "edge-function-audit" --state open --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
+            gh issue close "$EXISTING" --comment "新しい監査結果で更新" 2>/dev/null || true
+          fi
+
+          # 新しいIssueを作成
+          gh issue create \
+            --title "$TITLE" \
+            --body "$BODY" \
+            --label "edge-function-audit,automated" 2>/dev/null || \
+          gh issue create \
+            --title "$TITLE" \
+            --body "$BODY" 2>/dev/null || \
+          echo "⚠️ Issue作成失敗"
+
+      - name: Summary
+        run: |
+          echo "✅ Edge Function UI導線チェック完了"
+          echo "  カバレッジ: ${{ steps.audit.outputs.covered }}/${{ steps.audit.outputs.total }}"
+          echo "  未接続: ${{ steps.audit.outputs.missing_count }}件"
