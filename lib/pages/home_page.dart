@@ -4096,6 +4096,36 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               ),
                             ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Colors.brown.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '🍽️',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  '消化してから次を食え',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'WIP制限: 1カテゴリ1つだけ',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/wip-limit',
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
