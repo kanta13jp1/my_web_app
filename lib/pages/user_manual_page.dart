@@ -162,7 +162,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('6. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
             '【GROWTH ROADMAP カード（ホーム画面上部）】\n'
-            '短期・中期・長期計画と競合20社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
+            '短期・中期・長期計画と競合21社に対する登録者数の進捗をリアルタイム確認できます。\n\n'
             '【開発・成長実績カード】\n'
             'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近3ヶ月など）。\n'
             '「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
@@ -237,7 +237,29 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('10. 機能リクエスト', textColor),
+          _buildSectionTitle('10. ゲーミフィケーション・チャレンジ・報酬', textColor),
+          _buildContent(
+            '【ログインストリーク】\n'
+            'ホーム画面上部に「連続ログイン日数」カードが表示されます。\n'
+            '毎日アクセスすると連続日数が増え、3日・7日・30日・100日・365日でバッジが変わります（✨→⚡→🔥→🏆→👑）。\n\n'
+            '【デイリーチャレンジ】\n'
+            'ホーム画面の「デイリーチャレンジ」カードで今日のタスクを確認できます。\n'
+            '1. チャレンジが未生成の場合は「チャレンジを生成する」ボタンをタップ\n'
+            '2. 各チャレンジのプログレスバーで進捗を確認\n'
+            '3. 完了したチャレンジの「受け取る」ボタンをタップしてポイントを獲得\n\n'
+            '【報酬・実績バッジ】\n'
+            'ホーム画面のデイリーチャレンジカード直下の「報酬・実績バッジを確認する」をタップ。\n'
+            'または、アドレスバーに /rewards を入力してアクセス。\n'
+            '獲得ポイント・レベル・実績バッジを確認できます。\n\n'
+            '【アクティビティフィード】\n'
+            'ホーム画面「開発・成長実績」カード直下の「アクティビティフィード」をタップ。\n'
+            'または、アドレスバーに /activity-feed を入力。\n'
+            '自分の行動履歴・他ユーザーの公開アクティビティを確認できます。',
+            subColor,
+          ),
+          const SizedBox(height: 24),
+
+          _buildSectionTitle('11. 機能リクエスト', textColor),
           _buildContent(
             '欲しい機能をリクエストできます。他のユーザーの投票数が多いものから優先的に実装されます。\n\n'
             '【機能リクエスト画面の開き方】\n'
@@ -251,7 +273,7 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('11. 友達招待（リファラル）', textColor),
+          _buildSectionTitle('12. 友達招待（リファラル）', textColor),
           _buildContent(
             '友達を招待して一緒に使いましょう。\n\n'
             '【招待リンクのコピー方法】\n'
@@ -274,7 +296,7 @@ class UserManualPage extends StatelessWidget {
                 Icon(Icons.info_outline, size: 18, color: subColor),
                 const SizedBox(height: 6),
                 Text(
-                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27',
+                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27 (session30)',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: subColor),
                 ),
@@ -319,7 +341,7 @@ class UserManualPage extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'メモ・タスク・資産・習慣をすべて一元管理し、AIの力で自己実現をサポートする統合プラットフォームです。'
-            'Notion・Evernote・MoneyForward・LINE・Facebook・Liven など20の競合サービスを超える機能を完全無料で提供します。',
+            'Notion・Evernote・MoneyForward・LINE・Facebook・Liven・GitHub など21の競合サービスを超える機能を完全無料で提供します。',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
         ],
