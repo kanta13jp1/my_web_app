@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// ログイン継続日数（ストリーク）カード。
 /// SharedPreferences でローカル管理し、毎日アクセスすることを促す。
@@ -79,6 +80,23 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
     if (_streak >= 30) return '🔥';
     if (_streak >= 7) return '⚡';
     return '✨';
+  }
+
+  bool _isMilestone(int streak) =>
+      streak == 3 ||
+      streak == 7 ||
+      streak == 14 ||
+      streak == 30 ||
+      streak == 100 ||
+      streak == 365;
+
+  Future<void> _shareOnX() async {
+    final text =
+        Uri.encodeComponent('自分株式会社に$_streak日連続アクセス中！$_streakEmoji $_streakLabel\n'
+            '#buildinpublic #自分株式会社\n'
+            'https://my-web-app-b67f4.web.app/');
+    final url = Uri.parse('https://x.com/intent/tweet?text=$text');
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   String get _streakLabel {
@@ -172,6 +190,16 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                   ),
                 ],
               ),
+            if (_isMilestone(_streak)) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Text('𝕏', style: TextStyle(fontSize: 16)),
+                tooltip: 'Xでシェア',
+                onPressed: _shareOnX,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
           ],
         ),
       ),
