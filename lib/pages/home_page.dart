@@ -52,6 +52,7 @@ import 'growth_mission_page.dart';
 import 'life_goals_page.dart';
 import 'thought_capture_page.dart';
 import 'decision_check_page.dart';
+import 'purchase_log_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
@@ -4388,6 +4389,15 @@ abstinence_slip_details: $slipDetailsText
                                 () => Navigator.pushNamed(
                                   context,
                                   '/payment-reminders',
+                                ),
+                              ),
+                              _MenuData(
+                                '買い物ログ',
+                                Icons.receipt_long,
+                                Colors.orange,
+                                () => _nav(
+                                  context,
+                                  const PurchaseLogPage(),
                                 ),
                               ),
                               _MenuData(
