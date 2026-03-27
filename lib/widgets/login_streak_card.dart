@@ -108,6 +108,32 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
     return '継続は力なり！';
   }
 
+  /// 次のマイルストーンを返す
+  int get _nextMilestone {
+    const milestones = [3, 7, 14, 30, 100, 365];
+    for (final m in milestones) {
+      if (_streak < m) return m;
+    }
+    return 365;
+  }
+
+  /// 前のマイルストーン（0 or 直前）
+  int get _prevMilestone {
+    const milestones = [0, 3, 7, 14, 30, 100];
+    int prev = 0;
+    for (final m in milestones) {
+      if (_streak >= m) prev = m;
+    }
+    return prev;
+  }
+
+  double get _milestoneProgress {
+    final next = _nextMilestone;
+    final prev = _prevMilestone;
+    if (next == prev) return 1.0;
+    return (_streak - prev) / (next - prev);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_streak == 0) return const SizedBox.shrink();
@@ -168,6 +194,33 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                       fontSize: 11,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: _milestoneProgress,
+                            minHeight: 4,
+                            backgroundColor:
+                                const Color(0xFF7C3AED).withAlpha(30),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF7C3AED),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '次: $_nextMilestone日',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

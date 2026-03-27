@@ -3864,6 +3864,8 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const GrowthRoadmapProgressCard(),
+                            const SizedBox(height: 10),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                             ],
@@ -3877,7 +3879,6 @@ abstinence_slip_details: $slipDetailsText
                             const ReferralShareCard(),
                             const SizedBox(height: 8),
                             const LeaderboardCard(),
-                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
                             const SizedBox(height: 10),
