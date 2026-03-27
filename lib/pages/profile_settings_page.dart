@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:typed_data'; // Uint8Listのために必要
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart'; // ファイル選択のために必要
 import 'package:mime/mime.dart';
 import '../main.dart';
@@ -271,6 +271,79 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         );
       }
     }
+  }
+
+  Widget _buildShareProfileCard() {
+    final userId = supabase.auth.currentUser?.id ?? '';
+    final url = 'https://my-web-app-b67f4.web.app/u?id=$userId';
+    return Card(
+      color: const Color(0xFF6366F1).withAlpha(15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: const Color(0xFF6366F1).withAlpha(60)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.share, size: 16, color: Color(0xFF6366F1)),
+                SizedBox(width: 8),
+                Text(
+                  '公開プロフィールURL',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withAlpha(10),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                url,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: const Text('コピー', style: TextStyle(fontSize: 12)),
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: url));
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('URLをコピーしました'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF6366F1),
+                    side: const BorderSide(color: Color(0xFF6366F1)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -562,6 +635,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // 公開プロフィールURLシェアカード
+                    if (_isPublic) _buildShareProfileCard(),
 
                     const SizedBox(height: 16),
 

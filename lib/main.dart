@@ -28,6 +28,7 @@ import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
@@ -255,6 +256,15 @@ class MyApp extends StatelessWidget {
           case '/profile-settings':
             return MaterialPageRoute(
               builder: (_) => const ProfileSettingsPage(),
+            );
+          case '/u':
+            final userId = uri.queryParameters['id'] ?? '';
+            if (userId.isEmpty) {
+              return MaterialPageRoute(builder: (_) => const LandingPage());
+            }
+            return MaterialPageRoute(
+              builder: (_) => PublicProfilePage(userId: userId),
+              settings: RouteSettings(name: settings.name),
             );
           case '/vs-notion':
           case '/vs-evernote':
