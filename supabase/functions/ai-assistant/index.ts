@@ -350,6 +350,55 @@ serve(async (req) => {
             return new Response(JSON.stringify({ success: true, result: formattedResult }), { headers: corsHeaders });
         }
 
+        // --- 「我が闘争」コラム生成 ---
+        if (action === 'my_struggle_column') {
+            const contextData = requestContent ?? '{}';
+            const prompt = `あなたは文学的才能を持つコラムニストです。
+以下のユーザーの日常データを元に「我が闘争」というタイトルのコラムを書いてください。
+
+ルール:
+- 日常の些細な出来事（習慣の達成、タスクの消化、誘惑との戦い）を壮大に、文学的に描写する
+- ユーモアと自虐を交え、読んでいて楽しいコラムにする
+- 太宰治や村上春樹のような文体を意識する
+- 800〜1200字程度
+- 具体的なデータ（習慣の達成数、ストリーク日数など）があれば引用する
+- 最後に明日への決意で締める
+
+出力フォーマット (JSONのみ):
+{
+  "title": "我が闘争 — サブタイトル（その日のテーマ）",
+  "column": "コラム本文"
+}
+
+[ユーザーの今日のデータ]
+${contextData}`;
+
+            const resultStr = await runPromptWithStrategy(prompt);
+            const match = resultStr.match(/\{[\s\S]*\}/);
+            if (!match) {
+                return new Response(JSON.stringify({
+                    success: true,
+                    result: {
+                        title: '我が闘争 — 言葉にならぬ日',
+                        column: resultStr.substring(0, 1200),
+                    },
+                }), { headers: corsHeaders });
+            }
+            let parsed: Record<string, unknown>;
+            try {
+                parsed = JSON.parse(match[0]);
+            } catch {
+                parsed = { title: '我が闘争', column: resultStr.substring(0, 1200) };
+            }
+            return new Response(JSON.stringify({
+                success: true,
+                result: {
+                    title: typeof parsed.title === 'string' ? parsed.title : '我が闘争',
+                    column: typeof parsed.column === 'string' ? parsed.column : resultStr.substring(0, 1200),
+                },
+            }), { headers: corsHeaders });
+        }
+
         if (action === 'test_model') {
             const benchmarkPrompt = [
                 'You are running a connectivity benchmark.',
