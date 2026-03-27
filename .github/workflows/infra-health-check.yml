@@ -6,6 +6,9 @@ on:
     - cron: "37 * * * *"  # 毎時37分
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   health-check:
     name: Health Check
