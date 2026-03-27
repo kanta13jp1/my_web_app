@@ -289,6 +289,66 @@ class UserManualPage extends StatelessWidget {
             '・ホーム画面「OFFICE KPI SNAPSHOT」セクション →「分析を見る」をタップ',
             subColor,
           ),
+          _buildSectionTitle('13. Edge Functions 実装状況', textColor),
+          _buildContent(
+            'ホーム画面最下部の「Edge Functions 実装状況」カードで、バックエンド API の UI 連携状況を確認できます。\n\n'
+            '【見方】\n'
+            '・ヘッダー右の進捗バー: 全 Edge Functions のうち UI 実装済みの割合（%）\n'
+            '・カードをタップすると展開:\n'
+            '  - 🟠 UI 未実装/未連携: 今後 cs-check Schedule が自動実装します\n'
+            '  - ✅ UI 実装済み + 操作手順: どのページから呼び出せるかを表示\n'
+            '・「Edge Functions 詳細・テストページ」ボタン → 各 Function を手動テスト可能\n\n'
+            '【自動化】\n'
+            'cs-check Schedule タスク（毎時実行）が UI 未連携の Function を検出し、\n'
+            '自動でページ・ルート・ホームメニューを追加してコミット・プッシュします。',
+            subColor,
+          ),
+          const SizedBox(height: 24),
+
+          _buildSectionTitle('14. プロフィール完成度', textColor),
+          _buildContent(
+            'ホーム画面の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n\n'
+            '【完成度の計算対象（7項目）】\n'
+            '表示名 / アイコン画像 / 自己紹介 / 場所 / Twitter / GitHub / Web サイト URL\n\n'
+            '【色の意味】\n'
+            '・青（0〜49%）: 基本情報を入力しましょう\n'
+            '・黄（50〜74%）: もう少し！\n'
+            '・緑（75〜100%）: プロフィールが充実しています\n\n'
+            '【100% 達成後】\n'
+            '「プロフィール完成 🎉」バッジに切り替わります。\n\n'
+            '【注意】一部の機能（暗記ドリル・断捨離・AI 組織 OS など）は「ロック」されており、\n'
+            'ホーム画面の必須導線（プロフィール設定・メモ作成など）を完了すると開放されます。\n'
+            'ロックされた機能は「先に必須導線を完了してください」と表示されます。',
+            subColor,
+          ),
+          const SizedBox(height: 24),
+
+          _buildSectionTitle('15. Claude Code Schedule 自動タスク一覧', textColor),
+          _buildContent(
+            '以下のタスクが定期的に自動実行されています（管理者ダッシュボードで実行状況を確認可能）。\n\n'
+            '【毎時実行: cs-check】\n'
+            '・CS チケット対応（FAQ 返信 / バグ修正 / エスカレーション）\n'
+            '・Edge Function UI 自動連携（UI 未実装の Function に自動でページ追加）\n'
+            '・GitHub PR コードレビュー\n'
+            '・コード品質問題を GitHub Issue として自動登録\n'
+            '・self-heal: flutter analyze エラーを自動修正\n\n'
+            '【毎日 08:00 JST 実行: blog-draft】\n'
+            '・直近のコミット内容から技術ブログ下書きを自動生成\n'
+            '・Zenn / Qiita / note / はてなブログ / Medium / dev.to / Hashnode / Substack / GitHub Pages / NOTION / X Article の 11 プラットフォーム向けにフォーマット変換\n'
+            '・投稿管理テーブル（blog_posts）に記録\n\n'
+            '【毎日 09:00 JST 実行: daily-report】\n'
+            '・日次メトリクス取得・レポート生成\n'
+            '・X (@kanta13jp1) への自動投稿\n'
+            '・GitHub Issue の自動修復（claude-code-review / bug ラベル付き）\n'
+            '・Schedule タスクの実行状況を schedule_task_runs テーブルに記録\n\n'
+            '【毎週月曜 09:00 JST 実行: weekly-sns-draft】\n'
+            '・週次 SNS 投稿ドラフト生成\n'
+            '・依存パッケージの脆弱性チェック\n\n'
+            '【管理者ダッシュボードでの確認方法】\n'
+            'ホーム → GROWTH / 成長導線 →「管理者ダッシュボード」をタップ\n'
+            '→「Schedule タスク実行状況」カードで最終実行日時・ステータスを確認できます。',
+            subColor,
+          ),
           const SizedBox(height: 32),
 
           Center(
@@ -297,7 +357,7 @@ class UserManualPage extends StatelessWidget {
                 Icon(Icons.info_outline, size: 18, color: subColor),
                 const SizedBox(height: 6),
                 Text(
-                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-27 (session31)',
+                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-28 (session32)',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: subColor),
                 ),
