@@ -1493,6 +1493,7 @@ $input
 
   Widget _buildUniqueValueSection() {
     const features = [
+      (Icons.account_tree, '0xFF4F46E5', 'AI組織OS (12部署20人)', '自然言語でタスクを入力するだけで最適な部署が自動受付。ゴールを12部署に自動分解・配布。SlackもJiraも不要。'),
       (Icons.smart_toy, '0xFF6366F1', 'AI役員会議 (MAGI)', 'CEO/CFO/CMO/CHROのAIペルソナが多角的にアドバイス。Notionにもない独自機能。'),
       (Icons.memory, '0xFF10B981', '記憶ドリル', '忘却曲線に基づく反復学習。Evernoteにはない学習機能。'),
       (Icons.account_balance_wallet, '0xFFF59E0B', '経営コックピット', '収支・資産・KPIを一画面で管理。MoneyForwardの代替として使える。'),
@@ -1516,7 +1517,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない6つのこと',
+            '自分株式会社でしかできない7つのこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
