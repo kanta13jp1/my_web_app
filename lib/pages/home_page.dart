@@ -38,6 +38,7 @@ import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
 import '../widgets/edge_function_summary_card.dart';
+import '../widgets/referral_share_card.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
 
@@ -3962,6 +3963,7 @@ abstinence_slip_details: $slipDetailsText
                               const SizedBox(height: 10),
                             ],
                             const ProfileCompletionBanner(),
+                            const ReferralShareCard(),
                             const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
                             _buildMonthlyCashflowPriorityCard(
