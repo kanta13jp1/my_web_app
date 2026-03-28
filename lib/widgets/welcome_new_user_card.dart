@@ -63,7 +63,7 @@ class WelcomeNewUserCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'まず最初の3アクションから始めましょう',
+            'まず最初の4アクションから始めましょう',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 10),
@@ -80,6 +80,11 @@ class WelcomeNewUserCard extends StatelessWidget {
                 icon: Icons.edit_note,
                 label: '最初のメモを書く',
                 onTap: () => Navigator.of(context).pushNamed('/note-editor'),
+              ),
+              _QuickActionChip(
+                icon: Icons.account_tree,
+                label: 'AI組織OS を初期化',
+                onTap: () => Navigator.of(context).pushNamed('/agents'),
               ),
               _QuickActionChip(
                 icon: Icons.upload_file,
