@@ -24,6 +24,7 @@ import '../pages/election_victory_page.dart';
 import '../pages/email_cleanup_page.dart';
 import '../pages/gemini_university_v2_page.dart';
 import '../pages/growth_mission_page.dart';
+import '../pages/home_insights_page.dart';
 import '../pages/import_page.dart';
 import '../pages/kanban_board_page.dart';
 import '../pages/life_goals_page.dart';
@@ -566,6 +567,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.green,
       keywords: const <String>['データベース', 'テーブル', 'database'],
       onOpen: (context) => _pushPage(context, const TableDataPage()),
+    ),
+    HomeToolEntry(
+      id: 'home-insights',
+      sectionId: 'growth',
+      title: '成長・支援ダッシュボード',
+      subtitle: 'ホームから退避した補助カードをまとめて確認する',
+      icon: Icons.space_dashboard_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['成長', '支援', 'ダッシュボード', 'ホーム'],
+      onOpen: (context) => _pushPage(context, const HomeInsightsPage()),
     ),
     HomeToolEntry(
       id: 'import',
