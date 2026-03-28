@@ -1,4 +1,4 @@
-# Supabase Edge Functions 一覧 (2026-03-27 時点)
+# Supabase Edge Functions 一覧 (2026-03-28 時点)
 
 ## UI から呼び出し済み ✅
 
@@ -27,6 +27,7 @@
 | `reply-support-request` | `admin_analytics_page.dart` | CSチケット返信 |
 | `schedule-daily-digest` | `admin_analytics_page.dart` | 日次ダイジェスト |
 | `trigger-analysis` | `election_strategy_page.dart` | 分析トリガー |
+| `local-election-intelligence` | `election_victory_page.dart` | 選挙知能分析 |
 | `get-public-memo-preview` | `public_memo_service.dart` | 公開メモプレビュー |
 | `get-ogp` | `landing_page_adapter.dart` | OGP取得 |
 | `growth-achievement-summary` | `cmo_page.dart` | 実績サマリー |
@@ -54,8 +55,8 @@
 
 ## まとめ
 
-- **合計**: 33 Edge Functions
-- **UI から呼び出し済み**: 26 (79%)
+- **合計**: 34 Edge Functions
+- **UI から呼び出し済み**: 27 (79%)
 - **Schedule から呼び出し**: 6 (一部UIと重複)
 - **UI 導線なし・要対応**: 3 (`generate-quote-image`, `share-quote`, `agent-runtime-cycle`)
 - **バックエンドのみ・UI不要**: 2 (`send-waitlist-notification`, `generate-daily-challenges`)
