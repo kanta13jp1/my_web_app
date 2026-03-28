@@ -5945,7 +5945,7 @@ abstinence_slip_details: $slipDetailsText
                         return const SizedBox.shrink();
                       }
                       return SideTitleWidget(
-                        axisSide: meta.axisSide,
+                        meta: meta,
                         child: Text(
                           DateFormat('M/d').format(points[index].date),
                           style: TextStyle(

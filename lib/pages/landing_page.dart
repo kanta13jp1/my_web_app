@@ -1409,7 +1409,7 @@ $input
                                             ? _pvLabels[index]
                                             : '';
                                     return SideTitleWidget(
-                                      axisSide: meta.axisSide,
+                                      meta: meta,
                                       child: Text(
                                         label,
                                         style: const TextStyle(fontSize: 10),

@@ -6466,7 +6466,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
-      axisSide: meta.axisSide,
+      meta: meta,
       child: Text(text, style: style),
     );
   }
@@ -6474,7 +6474,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
     final format = NumberFormat.compact(locale: 'ja_JP');
     return SideTitleWidget(
-      axisSide: meta.axisSide,
+      meta: meta,
       space: 8,
       child: Text(format.format(value), style: const TextStyle(fontSize: 10)),
     );

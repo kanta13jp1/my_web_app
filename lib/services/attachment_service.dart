@@ -28,7 +28,7 @@ class AttachmentService {
         allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
         withData: true, // Web用（必須）
         allowMultiple: false, // Web版で重要
-        allowCompression: false, // 圧縮を無効化
+        compressionQuality: 100, // 圧縮を無効化
       );
       debugPrint('pickFile 1 result: $result');
       if (result != null && result.files.isNotEmpty) {

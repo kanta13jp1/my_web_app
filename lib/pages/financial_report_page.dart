@@ -219,7 +219,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                         showTitles: true,
                         reservedSize: 60,
                         getTitlesWidget: (value, meta) => SideTitleWidget(
-                          axisSide: meta.axisSide,
+                          meta: meta,
                           child: Text(
                             NumberFormat.compact(locale: 'ja_JP').format(value),
                           ),
@@ -282,7 +282,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         break;
     }
     return SideTitleWidget(
-      axisSide: meta.axisSide,
+      meta: meta,
       child: Text(text, style: const TextStyle(fontSize: 10)),
     );
   }

@@ -2297,7 +2297,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         if (value.toInt() == 0) text = '見積もり';
                         if (value.toInt() == 1) text = '実績';
                         return SideTitleWidget(
-                          axisSide: meta.axisSide,
+                          meta: meta,
                           space: 4,
                           child: Text(text, style: style),
                         );
