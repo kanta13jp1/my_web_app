@@ -2109,10 +2109,10 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           final c = _comments[i];
                           return Container(
                             decoration: BoxDecoration(
-                              color: Colors.indigo.withOpacity(0.05),
+                              color: Colors.indigo.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.indigo.withOpacity(0.15),
+                                color: Colors.indigo.withValues(alpha: 0.15),
                               ),
                             ),
                             child: ListTile(
