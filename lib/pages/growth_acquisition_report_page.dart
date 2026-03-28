@@ -52,10 +52,10 @@ class _GrowthAcquisitionReportPageState
   }
 
   Widget _buildTouchpointRow(Map<String, dynamic> tp) {
-    final touches = tp['touches'] ?? 0;
-    final signups = tp['signupSubmits'] ?? 0;
+    final touches = (tp['touches'] as num? ?? 0).toDouble();
+    final signups = (tp['signupSubmits'] as num? ?? 0).toDouble();
     final rate = touches > 0
-        ? ((signups / (touches as num)) * 100).toStringAsFixed(1)
+        ? ((signups / touches) * 100).toStringAsFixed(1)
         : '0.0';
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
