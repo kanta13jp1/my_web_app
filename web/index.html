@@ -113,6 +113,63 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Notionと何が違うの?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "自分株式会社はAIが「今日やるべき1件」を決めてくれる点が最大の違いです。Notionは情報整理ツールですが、本アプリはAIが優先順位を付けて行動提案まで行います。メモ・資産管理・習慣化も1つのアプリで完結します。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "完全無料で使い続けられますか?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。将来的にプレミアムプランを検討していますが、基本機能は無料のままです。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "データは安全ですか?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "データはSupabase (PostgreSQL) に保存され、行レベルのセキュリティで各ユーザーが自分のデータのみアクセスできます。AIに送信されるのはあなたが入力したテキストのみで、第三者に販売・共有することはありません。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "NotionやEvernoteからデータを移行できますか?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "インポート機能を実装中です。現在はMarkdown形式のテキストをメモとして貼り付けて取り込めます。Notionエクスポートのサポートを近日公開予定です。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "AIは具体的に何をしてくれますか?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "タスク・習慣・資産・状況をもとに「今日の最優先アクション1件」を提案します。なぜそれをすべきかの理由と、48時間以内の次の一手まで整理してくれます。MAGIシステムで3つの視点から意思決定をサポートします。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "スマホやタブレットでも使えますか?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Flutter Web製のためブラウザがあればどのデバイスでも動作します。スマホのホーム画面に追加(PWA)すると、アプリのように快適に使えます。"
+        }
+      }
+    ]
+  }
+  </script>
+
   <style>
     :root {
       color-scheme: light;

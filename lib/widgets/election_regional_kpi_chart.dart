@@ -3,24 +3,31 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../models/local_election_plan.dart';
 
-class ElectionRegionalKpiChart extends StatelessWidget {
+class ElectionRegionalKpiChart extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
+  final GlobalKey? pieChartKey;
 
   const ElectionRegionalKpiChart({
     super.key,
     required this.prefectures,
+    this.pieChartKey,
   });
 
   @override
+  State<ElectionRegionalKpiChart> createState() => _ElectionRegionalKpiChartState();
+}
+
+class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
+  @override
   Widget build(BuildContext context) {
-    if (prefectures.isEmpty) {
+    if (widget.prefectures.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final totalRetain =
-        prefectures.fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
+        widget.prefectures.fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
     final totalNew =
-        prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
+        widget.prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
     final totalTarget = totalRetain + totalNew;
 
     return Card(
@@ -94,9 +101,9 @@ class ElectionRegionalKpiChart extends StatelessWidget {
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
                           if (value.toInt() >= 0 &&
-                              value.toInt() < prefectures.length) {
+                              value.toInt() < widget.prefectures.length) {
                             final region =
-                                prefectures[value.toInt()].prefecture;
+                                widget.prefectures[value.toInt()].prefecture;
                             final displayRegion = region.length > 3
                                 ? region.substring(0, 2)
                                 : region;
@@ -143,7 +150,7 @@ class ElectionRegionalKpiChart extends StatelessWidget {
                     drawVerticalLine: false,
                   ),
                   borderData: FlBorderData(show: false),
-                  barGroups: prefectures.asMap().entries.map((entry) {
+                  barGroups: widget.prefectures.asMap().entries.map((entry) {
                     final index = entry.key;
                     final data = entry.value;
                     final retainTarget =
@@ -193,7 +200,7 @@ class ElectionRegionalKpiChart extends StatelessWidget {
 
   double _getMaxY() {
     double max = 0;
-    for (final data in prefectures) {
+    for (final data in widget.prefectures) {
       final retain = data.incumbentRetentionTarget.toDouble();
       final newTarget = data.newCandidateTarget.toDouble();
       final total = retain + newTarget;

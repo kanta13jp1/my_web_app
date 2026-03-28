@@ -2186,6 +2186,24 @@ $input
                               '今いちばん先送りしていることを片付けたい',
                             ),
                   ),
+                  ActionChip(
+                    avatar: const Icon(Icons.psychology_alt, size: 18),
+                    label: const Text('性格診断でメモ術を最適化'),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : () => _runQuickTrialSample(
+                              '自分の性格タイプに合った情報整理・メモ術を提案してほしい',
+                            ),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.corporate_fare, size: 18),
+                    label: const Text('AI組織OS'),
+                    onPressed: _isTrialLoading
+                        ? null
+                        : () => _runQuickTrialSample(
+                              'チームの意思決定を効率化するAI組織OSを試してみたい',
+                            ),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -2275,6 +2293,61 @@ $input
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFaqSection() {
+    const faqs = [
+      (
+        q: 'Notionと何が違うの?',
+        a: '自分株式会社はAIが「今日やるべき1件」を決めてくれる点が最大の違いです。Notionは情報整理ツールですが、本アプリはAIが優先順位を付けて行動提案まで行います。メモ・資産管理・習慣化も1つのアプリで完結します。',
+      ),
+      (
+        q: '完全無料で使い続けられますか?',
+        a: 'はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。将来的にプレミアムプランを検討していますが、基本機能は無料のままです。',
+      ),
+      (
+        q: 'データは安全ですか?',
+        a: 'データはSupabase (PostgreSQL) に保存され、行レベルのセキュリティで各ユーザーが自分のデータのみアクセスできます。AIに送信されるのはあなたが入力したテキストのみで、第三者に販売・共有することはありません。',
+      ),
+      (
+        q: 'NotionやEvernoteからデータを移行できますか?',
+        a: 'インポート機能を実装中です。現在はMarkdown形式のテキストをメモとして貼り付けて取り込めます。Notionエクスポートのサポートを近日公開予定です。',
+      ),
+      (
+        q: 'AIは具体的に何をしてくれますか?',
+        a: 'タスク・習慣・資産・状況をもとに「今日の最優先アクション1件」を提案します。なぜそれをすべきかの理由と、48時間以内の次の一手まで整理してくれます。MAGIシステムで3つの視点から意思決定をサポートします。',
+      ),
+      (
+        q: 'スマホやタブレットでも使えますか?',
+        a: 'Flutter Web製のためブラウザがあればどのデバイスでも動作します。スマホのホーム画面に追加(PWA)すると、アプリのように快適に使えます。',
+      ),
+    ];
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'よくある質問',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '気になることがあればお気軽にどうぞ。',
+              style: TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            for (final faq in faqs) ...[
+              _FaqItem(question: faq.q, answer: faq.a),
+            ],
+          ],
         ),
       ),
     );
@@ -2727,6 +2800,8 @@ $input
                   const SizedBox(height: 20),
                   _buildTrialSection(),
                   const SizedBox(height: 20),
+                  _buildFaqSection(),
+                  const SizedBox(height: 20),
                   _buildAuthSection(),
                   const SizedBox(height: 20),
                   _buildPublicMemoSection(),
@@ -2789,4 +2864,64 @@ class _CompetitorRow {
   final bool isOurs;
 
   const _CompetitorRow(this.name, this.price, this.featureCount, this.isOurs);
+}
+
+class _FaqItem extends StatefulWidget {
+  final String question;
+  final String answer;
+
+  const _FaqItem({required this.question, required this.answer});
+
+  @override
+  State<_FaqItem> createState() => _FaqItemState();
+}
+
+class _FaqItemState extends State<_FaqItem> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.question,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: Colors.black54,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              widget.answer,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                height: 1.6,
+              ),
+            ),
+          ),
+        const Divider(height: 1),
+      ],
+    );
+  }
 }
