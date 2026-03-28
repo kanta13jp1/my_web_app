@@ -150,4 +150,4 @@ Web インスタンスは `supabase/functions/` のみを担当し、`lib/` に�
 ---
 
 サービスURL: [自分株式会社](https://my-web-app-b67f4.web.app/)
-#FlutterWeb #Supabase #buildinpublic #ClaudeCode #EdgeFunctions
+タグ: \#FlutterWeb \#Supabase \#buildinpublic \#ClaudeCode \#EdgeFunctions
