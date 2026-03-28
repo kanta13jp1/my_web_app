@@ -159,11 +159,15 @@ class ElectionRegionalKpiChart extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           rodStackItems: [
                             BarChartRodStackItem(
-                                0, retainTarget, Colors.blue.shade300),
+                              0,
+                              retainTarget,
+                              Colors.blue.shade300,
+                            ),
                             BarChartRodStackItem(
-                                retainTarget,
-                                retainTarget + newTarget,
-                                Colors.orange.shade400),
+                              retainTarget,
+                              retainTarget + newTarget,
+                              Colors.orange.shade400,
+                            ),
                           ],
                         ),
                       ],
