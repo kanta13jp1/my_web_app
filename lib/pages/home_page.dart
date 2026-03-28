@@ -37,6 +37,7 @@ import 'cmo_office_page.dart';
 import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
+import 'election_victory_page.dart';
 import 'mind_map_page.dart';
 import 'memory_drill_page.dart';
 import 'behavior_review_page.dart';
@@ -62,6 +63,7 @@ import '../widgets/blog_post_summary_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/referral_share_card.dart';
+import 'referral_page.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/daily_motivation_card.dart';
 import '../widgets/daily_challenge_card.dart';
@@ -4241,6 +4243,75 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            Card(
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              color: Colors.transparent,
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFF0F766E),
+                                      Color(0xFF16A34A),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.green.withValues(alpha: 0.25),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    radius: 28,
+                                    child: Icon(
+                                      Icons.how_to_vote,
+                                      color: Colors.green,
+                                      size: 30,
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    '2027 統一地方選 700必達管理室',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    '県連別の純増配分と月次KPIをまとめて管理し、'
+                                    '未配分ギャップや公認内定の遅れを可視化します。',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                  trailing: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ElectionVictoryPage(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
@@ -4694,6 +4765,15 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(
                                   context,
                                   const AiSearchPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                '友達招待',
+                                Icons.people_alt,
+                                Colors.pink,
+                                () => _nav(
+                                  context,
+                                  const ReferralPage(),
                                 ),
                               ),
                             ]),
