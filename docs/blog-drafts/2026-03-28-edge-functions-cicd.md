@@ -34,7 +34,7 @@ target_platforms: [zenn, qiita, note, dev.to]
 
 ### 4インスタンス並列開発の役割分担
 
-```
+```text
 VSCode版（Claude Code IDE）  → lib/ フロントエンド実装
 Web版（claude.ai/code）       → supabase/functions/ Edge Functions
 Windows版（デスクトップアプリ）  → docs/ ドキュメント・マイグレーション
@@ -126,7 +126,7 @@ serve(async (req) => {
 
 `lib/widgets/edge_function_summary_card.dart` には全36 Edge Functions の UI 接続状況が一覧で表示されます。
 
-```
+```text
 Edge Functions 実装状況
 全 35 件 | UI 実装済: 31 件 | UI未実装: 4 件 (89%)
 ```
