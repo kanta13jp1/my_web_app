@@ -32,6 +32,8 @@ jobs:
           MISSING=""
           TOTAL=0
           COVERED=0
+          # Supabase upsert 用JSON配列
+          UPSERT_PAYLOAD="["
 
           for DIR in supabase/functions/*/; do
             FUNC=$(basename "$DIR")
@@ -48,11 +50,16 @@ jobs:
             if [ -n "$REF" ]; then
               COVERED=$((COVERED + 1))
               echo "| $FUNC | ✅ | $REF |" >> /tmp/audit_report.txt
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":true,\"caller_file\":\"${REF}\",\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
             else
               MISSING="${MISSING}${FUNC}\n"
               echo "| $FUNC | ❌ 未接続 | - |" >> /tmp/audit_report.txt
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":false,\"caller_file\":null,\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
             fi
           done
+
+          # 末尾のカンマを除去して配列を閉じる
+          UPSERT_PAYLOAD="${UPSERT_PAYLOAD%,}]"
 
           echo "" >> /tmp/audit_report.txt
           echo "**カバレッジ: ${COVERED}/${TOTAL}**" >> /tmp/audit_report.txt
@@ -71,7 +78,38 @@ jobs:
             echo "has_missing=false" >> $GITHUB_OUTPUT
           fi
 
+          # upsert payload をファイルに保存
+          echo "$UPSERT_PAYLOAD" > /tmp/upsert_payload.json
+
           cat /tmp/audit_report.txt
+
+      - name: Upsert results to Supabase (admin dashboardで表示用)
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "⚠️ SUPABASE_SERVICE_ROLE_KEY が未設定 - Supabase upsert をスキップ"
+            exit 0
+          fi
+
+          HTTP_CODE=$(curl -s -o /tmp/upsert_result.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates" \
+            "$SUPABASE_URL/rest/v1/edge_function_ui_status" \
+            -d @/tmp/upsert_payload.json \
+            --max-time 15)
+
+          echo "Supabase upsert HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Supabase upsert 成功"
+          else
+            echo "⚠️ Supabase upsert 失敗 (HTTP $HTTP_CODE)"
+            cat /tmp/upsert_result.json 2>/dev/null || true
+          fi
 
       - name: Create/Update Issue if missing functions
         if: steps.audit.outputs.has_missing == 'true'
