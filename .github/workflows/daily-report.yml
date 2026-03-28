@@ -1,8 +1,8 @@
-name: Daily Report (日次レポート + X投稿)
+name: Daily Report (日次レポート + X投稿 + 競合モニタリング)
 
 on:
   schedule:
-    - cron: "3 0 * * *"  # 毎日 09:03 JST (UTC 00:03)
+    - cron: "58 23 * * *"  # 毎日 08:58 JST (UTC 23:58) — Claude Schedule (09:00 JST) より2分前に実行
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,7 @@ jobs:
   daily-report:
     name: Generate Daily Report
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -21,89 +21,154 @@ jobs:
         with:
           fetch-depth: 50
 
-      - name: Step 1 - 日次メトリクス取得
+      # ── Step 1: 日次メトリクス取得 ──────────────────────────────────────────
+      - name: Step 1 - Supabase daily-digest 取得
         id: digest
         run: |
           HTTP_CODE=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest" \
-            --max-time 15)
+            --max-time 20)
 
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
 
           if [ "$HTTP_CODE" = "200" ]; then
-            TOTAL_USERS=$(cat /tmp/digest.json | jq -r '.digest.users.total // 0')
-            NEW_TODAY=$(cat /tmp/digest.json | jq -r '.digest.featureRequests.newToday // 0')
-            OPEN_COUNT=$(cat /tmp/digest.json | jq -r '.digest.featureRequests.openCount // 0')
+            TOTAL_USERS=$(jq -r '.digest.users.total // 0'                      /tmp/digest.json)
+            NEW_TODAY=$(  jq -r '.digest.featureRequests.newToday // 0'         /tmp/digest.json)
+            OPEN_COUNT=$( jq -r '.digest.featureRequests.openCount // 0'        /tmp/digest.json)
+            # リスト系はファイル経由で渡す（改行対応）
+            jq -r '.digest.featureRequests.newTodayList // [] | .[] | "- " + .title' \
+              /tmp/digest.json > /tmp/new_today_list.txt 2>/dev/null || echo "(なし)" > /tmp/new_today_list.txt
+            jq -r '.digest.featureRequests.topOpen // [] | .[] | "- \(.votes)票 \(.title)"' \
+              /tmp/digest.json > /tmp/top_open.txt 2>/dev/null || echo "(なし)" > /tmp/top_open.txt
+            jq -r '.digest.recentAchievements // [] | .[] | "- " + .title' \
+              /tmp/digest.json > /tmp/achievements.txt 2>/dev/null || echo "(なし)" > /tmp/achievements.txt
+            echo "api_ok=true" >> $GITHUB_OUTPUT
           else
-            TOTAL_USERS="取得失敗"
-            NEW_TODAY="取得失敗"
-            OPEN_COUNT="取得失敗"
+            TOTAL_USERS="取得失敗(HTTP $HTTP_CODE)"
+            NEW_TODAY="0"
+            OPEN_COUNT="0"
+            echo "(API接続失敗)" > /tmp/new_today_list.txt
+            echo "(API接続失敗)" > /tmp/top_open.txt
+            echo "(API接続失敗)" > /tmp/achievements.txt
+            echo "api_ok=false" >> $GITHUB_OUTPUT
           fi
 
           echo "total_users=$TOTAL_USERS" >> $GITHUB_OUTPUT
-          echo "new_today=$NEW_TODAY" >> $GITHUB_OUTPUT
-          echo "open_count=$OPEN_COUNT" >> $GITHUB_OUTPUT
+          echo "new_today=$NEW_TODAY"     >> $GITHUB_OUTPUT
+          echo "open_count=$OPEN_COUNT"   >> $GITHUB_OUTPUT
           echo "📊 ユーザー: $TOTAL_USERS / 新規要望: $NEW_TODAY / 未対応: $OPEN_COUNT"
 
-      - name: Step 2 - git log で直近24時間の実績取得
+      # ── Step 2: git log 直近24時間 ──────────────────────────────────────────
+      - name: Step 2 - 直近24時間の開発実績
         id: gitlog
         run: |
-          COMMITS=$(git log --oneline --since='24 hours ago' 2>/dev/null || echo "(取得失敗)")
-          COMMIT_COUNT=$(git log --oneline --since='24 hours ago' 2>/dev/null | wc -l || echo "0")
+          git log --oneline --since='24 hours ago' > /tmp/recent_commits.txt 2>/dev/null || true
+          COMMIT_COUNT=$(wc -l < /tmp/recent_commits.txt | tr -d ' ')
           echo "count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
-
-          # ファイルに保存 (改行含むため)
-          echo "$COMMITS" > /tmp/recent_commits.txt
           echo "📝 直近24時間のコミット: $COMMIT_COUNT 件"
+          cat /tmp/recent_commits.txt
 
-      - name: Step 3 - 日次レポート生成
+      # ── Step 3: 競合モニタリング ────────────────────────────────────────────
+      - name: Step 3 - 競合モニタリング (Notion / Evernote / Slack)
+        id: competitor
+        run: |
+          > /tmp/competitor_notes.txt
+
+          check_site() {
+            local NAME="$1" URL="$2" MARKER_FILE="$3"
+            local HTTP TITLE
+            HTTP=$(curl -s -o /tmp/comp_body.html -w "%{http_code}" \
+              -L --max-time 15 -A "Mozilla/5.0" "$URL" 2>/dev/null || echo "000")
+            TITLE=$(grep -oP '(?<=<title>)[^<]+' /tmp/comp_body.html 2>/dev/null | head -1 || echo "")
+            echo "🔍 $NAME: HTTP $HTTP / title: $TITLE"
+            if [ "$HTTP" = "200" ]; then
+              echo "- **$NAME** ($URL): HTTP $HTTP ✅" >> /tmp/competitor_notes.txt
+            else
+              echo "- **$NAME** ($URL): HTTP $HTTP ⚠️" >> /tmp/competitor_notes.txt
+            fi
+          }
+
+          check_site "Notion"   "https://www.notion.so/"       ""
+          check_site "Evernote" "https://evernote.com/"         ""
+          check_site "Slack"    "https://slack.com/intl/ja-jp/" ""
+
+          echo "has_notes=true" >> $GITHUB_OUTPUT
+
+      # ── Step 4: 日次レポート生成 ────────────────────────────────────────────
+      - name: Step 4 - 日次レポート生成
         id: report
         run: |
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d %H:%M JST)
           FILEPATH="docs/daily-reports/${DATE}.md"
           mkdir -p docs/daily-reports
 
           {
             echo "# 自分株式会社 日次レポート ${DATE}"
             echo ""
+            echo "<!-- generated-by: github-actions -->"
+            echo ""
             echo "## 概要"
             echo "- **総ユーザー数**: ${{ steps.digest.outputs.total_users }}人"
             echo "- **本日の新規機能リクエスト**: ${{ steps.digest.outputs.new_today }}件"
             echo "- **未対応機能リクエスト**: ${{ steps.digest.outputs.open_count }}件"
-            echo "- **API応答**: HTTP ${{ steps.digest.outputs.http_code }}"
+            echo "- **Supabase API応答**: HTTP ${{ steps.digest.outputs.http_code }}"
             echo ""
-            echo "## 直近24時間の開発実績 (${{ steps.gitlog.outputs.count }}件)"
+            echo "## 本日の新規機能リクエスト"
+            if [ -s /tmp/new_today_list.txt ]; then
+              cat /tmp/new_today_list.txt
+            else
+              echo "なし"
+            fi
+            echo ""
+            echo "## 注目の未対応リクエスト (投票数上位)"
+            if [ -s /tmp/top_open.txt ]; then
+              cat /tmp/top_open.txt
+            else
+              echo "なし"
+            fi
+            echo ""
+            echo "## 直近の開発実績 (Supabase)"
+            if [ -s /tmp/achievements.txt ]; then
+              cat /tmp/achievements.txt
+            else
+              echo "なし"
+            fi
+            echo ""
+            echo "## 直近24時間の開発コミット (${{ steps.gitlog.outputs.count }}件)"
             echo '```'
             cat /tmp/recent_commits.txt
             echo '```'
             echo ""
+            echo "## 競合動向"
+            cat /tmp/competitor_notes.txt
+            echo ""
             echo "## 次のアクション提案"
-            echo "1. 直近のコミットで追加された新機能をZenn/Qiita記事として公開し、ユーザー獲得に繋げる"
-            echo "2. 未対応の機能リクエストを優先度順に対応し、既存ユーザーの満足度を向上"
-            echo "3. 競合21社との差別化ポイントを強化し、LP・比較ページを更新"
+            echo "1. 投票数の多い機能リクエストを優先実装し、既存ユーザーの満足度を向上させる"
+            echo "2. 直近コミットの新機能をZenn/Qiita記事として公開し、新規ユーザー獲得に繋げる"
+            echo "3. 競合21社との差別化ポイント (見栄ガード・浪費トラッキング等) をLPに追記する"
             echo ""
             echo "---"
-            echo "*生成: GitHub Actions (daily-report.yml) / ${DATE}*"
+            echo "*生成: GitHub Actions (daily-report.yml) / ${DATETIME}*"
           } > "$FILEPATH"
 
           echo "filepath=$FILEPATH" >> $GITHUB_OUTPUT
+          echo "date=$DATE"         >> $GITHUB_OUTPUT
           echo "📄 レポート生成: $FILEPATH"
 
-      - name: Step 4 - X投稿 (変更がある場合のみ)
+      # ── Step 5: X投稿 ───────────────────────────────────────────────────────
+      - name: Step 5 - X投稿 (@kanta13jp1)
         if: steps.gitlog.outputs.count != '0'
         id: xpost
         run: |
-          # 直近のコミットから投稿文を生成 (特殊文字を除去)
-          TOP_COMMIT=$(head -1 /tmp/recent_commits.txt | cut -d' ' -f2- | tr -d '"\\' | cut -c1-60)
           COMMIT_COUNT=${{ steps.gitlog.outputs.count }}
+          TOTAL_USERS="${{ steps.digest.outputs.total_users }}"
+          TOP_COMMIT=$(head -1 /tmp/recent_commits.txt | cut -d' ' -f2- | tr -d '"\\/' | cut -c1-50)
 
-          TWEET="自分株式会社、今日も${COMMIT_COUNT}件の改善を実施 ${TOP_COMMIT} https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb"
-
-          # 280字制限 (X API v2は280字)
+          TWEET="自分株式会社 今日も${COMMIT_COUNT}件の改善を実施💪 直近: ${TOP_COMMIT} ユーザー${TOTAL_USERS}人 https://my-web-app-b67f4.web.app/ #buildinpublic #FlutterWeb"
           TWEET=$(echo "$TWEET" | cut -c1-270)
 
-          # jq でJSON安全にエスケープ
           JSON_PAYLOAD=$(jq -n --arg text "$TWEET" '{"text": $text}')
           echo "📝 投稿文: $TWEET"
 
@@ -120,17 +185,54 @@ jobs:
           echo "post_code=$POST_CODE" >> $GITHUB_OUTPUT
 
           if [ "$POST_CODE" = "200" ]; then
+            echo "x_posted=true" >> $GITHUB_OUTPUT
             echo "✅ X投稿成功"
+            # レポートに追記
+            echo "" >> "${{ steps.report.outputs.filepath }}"
+            echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
+            echo "- ステータス: ✅ 投稿成功 (HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
+            echo "- 投稿内容: $TWEET" >> "${{ steps.report.outputs.filepath }}"
           else
+            echo "x_posted=false" >> $GITHUB_OUTPUT
             echo "⚠️ X投稿失敗 (HTTP $POST_CODE)"
             cat /tmp/xpost.json 2>/dev/null || true
+            echo "" >> "${{ steps.report.outputs.filepath }}"
+            echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
+            echo "- ステータス: ⚠️ 投稿失敗 (HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
           fi
 
-      - name: Step 5 - コミット & PR
+      # ── Step 6: schedule_task_runs 記録 ────────────────────────────────────
+      - name: Step 6 - schedule_task_runs 記録
+        run: |
+          STARTED=$(TZ=Asia/Tokyo date -Iseconds)
+          FINISHED=$(TZ=Asia/Tokyo date -Iseconds)
+          API_STATUS="${{ steps.digest.outputs.api_ok }}"
+          X_STATUS="${{ steps.xpost.outputs.x_posted }}"
+          COMMITS="${{ steps.gitlog.outputs.count }}"
+
+          SUMMARY="GitHub Actions: API=$API_STATUS, X投稿=$X_STATUS, コミット=${COMMITS}件"
+
+          TASK_STATUS="success"
+          if [ "$API_STATUS" = "false" ]; then
+            TASK_STATUS="partial"
+          fi
+
+          curl -s -o /dev/null -w "schedule_task_runs POST: %{http_code}\n" \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"daily-report\",\"status\":\"$TASK_STATUS\",\"started_at\":\"$STARTED\",\"finished_at\":\"$FINISHED\",\"summary\":\"$SUMMARY\"}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      # ── Step 7: コミット & PR → マージ ──────────────────────────────────────
+      - name: Step 7 - コミット & PR作成・マージ
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          DATE=${{ steps.report.outputs.date }}
           RUN_ID="${{ github.run_id }}"
           BRANCH="daily-report-${DATE}-${RUN_ID}"
 
@@ -143,17 +245,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # リモートの最新を取得してからブランチ作成
           git fetch origin main
           git checkout -b "$BRANCH" origin/main
           git add docs/daily-reports/
-          git commit -m "自動: 日次レポート ${DATE}"
+          git commit -m "自動: 日次レポート ${DATE} (GitHub Actions)"
           git push origin "$BRANCH"
 
           set +e
           PR_URL=$(gh pr create \
             --title "自動: 日次レポート ${DATE}" \
-            --body "日次レポート自動生成 (GitHub Actions run #${RUN_ID})" \
+            --body "日次レポート自動生成 (GitHub Actions run #${RUN_ID})
+- Supabase API: HTTP ${{ steps.digest.outputs.http_code }}
+- X投稿: ${{ steps.xpost.outputs.x_posted }}
+- コミット数: ${{ steps.gitlog.outputs.count }}件" \
             --base main \
             --head "$BRANCH")
           PR_EXIT=$?

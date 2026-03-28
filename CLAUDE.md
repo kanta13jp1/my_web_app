@@ -55,23 +55,44 @@ X への自動投稿先: **@kanta13jp1**
 
 ### Task: daily-report (毎朝 09:00 JST に実行)
 
+> **アーキテクチャ**: GitHub Actions `daily-report.yml` が 08:58 JST に先行実行し、
+> Supabase API 取得・X投稿・競合モニタリングを行う（プロキシ制限なし）。
+> Claude Schedule (09:00 JST) はその結果を読み込み、AI分析・GitHub Issue修復・
+> Schedule健全性チェックを担当する。
+
 以下のステップを順番に実行してください:
 
-#### Step 1: 日次メトリクスを取得
+#### Step 1: GitHub Actions 生成済みレポートを確認・データ取得
 
-WebFetch で以下を呼び出す:
+まず今日付のレポートが GitHub Actions によって既に生成されているか確認する:
+
+```bash
+# 今日のレポートファイルが存在するか確認
+ls docs/daily-reports/YYYY-MM-DD.md 2>/dev/null
+```
+
+**ケース A: ファイルが存在し `<!-- generated-by: github-actions -->` を含む場合**
+
+Read ツールでファイルを読み込み、概要セクション（ユーザー数・リクエスト数等）を
+そのまま利用する。Step 3・Step 4 は Actions 実施済みとしてスキップ可。
+
+**ケース B: ファイルが存在しない場合（Actions 未実行 or 失敗）**
+
+以下の Supabase API を試みる（Claude Code Web 環境ではプロキシにより失敗する場合がある）:
 
 ```http
 GET https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
 Authorization: Bearer <SUPABASE_SERVICE_KEY>
 ```
 
-レスポンスの `digest` オブジェクトを取得する。
+失敗した場合は git log ベースのフォールバックレポートを生成する。
 
-#### Step 2: 日次レポートを生成・保存
+#### Step 2: 日次レポートを生成・保存 (AI分析を付加)
 
-取得した `digest` を元に、以下のフォーマットで日次レポートを作成する。
 ファイルパス: `docs/daily-reports/YYYY-MM-DD.md`
+
+- ケース A: Actions 生成ファイルの末尾に `## AI分析 (Claude Schedule)` セクションを追記
+- ケース B: 以下フォーマットで新規作成
 
 ```markdown
 # 自分株式会社 日次レポート YYYY-MM-DD
@@ -90,52 +111,35 @@ Authorization: Bearer <SUPABASE_SERVICE_KEY>
 ## 直近の開発実績
 {recentAchievements をリスト表示}
 
-## 次のアクション提案
+## 競合動向
+{Actions が実施済みの場合はスキップ。未実施の場合はフォールバック記録}
+
+## AI分析 (Claude Schedule)
 AIとして、上記データを踏まえた優先対応事項を3点提案する。
 特に投票数の多い機能リクエストや、ユーザー成長に繋がるアクションを優先。
 ```
 
 #### Step 3: X (Twitter) に投稿
 
-直近24時間の `git log --oneline` を確認し、ユーザーに価値のある変更があれば X に投稿する。
+> **注意**: Actions 生成レポートに `## X投稿` セクションがあり `✅ 投稿成功` と記載されている場合はスキップ。
 
-投稿文のルール:
-
-- 140字以内
-- カジュアルで前向きなトーン
-- ハッシュタグ: `#buildinpublic #FlutterWeb #Supabase` から2〜3個
-- ユーザー数の変化や新機能を含める
-- 投稿先アカウント: **@kanta13jp1**
+Actions が失敗 or 未実行の場合のみ実行:
 
 ```http
 POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update
 Authorization: Bearer <SUPABASE_SERVICE_KEY>
 Content-Type: application/json
-{ "text": "<生成した投稿文>" }
+{ "text": "<140字以内. カジュアルトーン. #buildinpublic #FlutterWeb>" }
 ```
-
-変更がない日や投稿不要と判断した場合はスキップ可。
 
 #### Step 4: 競合モニタリング
 
-以下の競合サイトを WebFetch でチェックし、前回レポートと差分があれば記録する:
+> **注意**: Actions 生成レポートに `## 競合動向` セクションがある場合はスキップ。
 
-- [Notion](https://www.notion.so/)
-- [Evernote](https://evernote.com/)
-- [Slack](https://slack.com/intl/ja-jp/)
-
-確認観点:
-
-- 新機能アナウンス
-- 価格変更
-- UIの大きな変更
-
-変化を検知した場合は日次レポートの末尾に `## 競合動向` セクションを追加して記録する。
-変化がなければスキップ可。
+Actions が失敗 or 未実行の場合のみ WebFetch で Notion / Evernote / Slack を確認し、
+`## 競合動向` セクションとして記録する。
 
 #### Step 5: コミット
-
-作成したファイルをコミットする:
 
 ```bash
 git add docs/daily-reports/YYYY-MM-DD.md
