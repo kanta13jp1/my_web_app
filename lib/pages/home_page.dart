@@ -39,6 +39,7 @@ import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
+import '../widgets/edge_function_summary_card.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -4247,6 +4248,8 @@ abstinence_slip_details: $slipDetailsText
                               Colors.deepPurple,
                             ),
                             _buildRecentToolsMenu(context, isCompact),
+                            const SizedBox(height: 16),
+                            const EdgeFunctionSummaryCard(),
                             const SizedBox(height: 40),
                           ],
                         ),
