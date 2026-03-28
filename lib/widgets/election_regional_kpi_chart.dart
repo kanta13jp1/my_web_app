@@ -17,6 +17,12 @@ class ElectionRegionalKpiChart extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final totalRetain =
+        prefectures.fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
+    final totalNew =
+        prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
+    final totalTarget = totalRetain + totalNew;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -28,6 +34,49 @@ class ElectionRegionalKpiChart extends StatelessWidget {
             const Text(
               '都道府県連別 目標配分 (現職維持 + 新人擁立)',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade100),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildSummaryItem('現職維持 合計', totalRetain.toString(), Colors.blue.shade700),
+                      _buildSummaryItem('新人擁立 合計', totalNew.toString(), Colors.orange.shade700),
+                      _buildSummaryItem('総合計', totalTarget.toString(), Colors.indigo.shade700),
+                    ],
+                  ),
+                  if (totalTarget < 700) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
+                            style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -61,7 +110,9 @@ class ElectionRegionalKpiChart extends StatelessWidget {
                             );
                           }
                           return SideTitleWidget(
-                              meta: meta, child: const SizedBox.shrink());
+                            meta: meta,
+                            child: const SizedBox.shrink(),
+                          );
                         },
                       ),
                     ),
@@ -81,9 +132,11 @@ class ElectionRegionalKpiChart extends StatelessWidget {
                       ),
                     ),
                     topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                   gridData: const FlGridData(
                     show: true,
@@ -153,6 +206,16 @@ class ElectionRegionalKpiChart extends StatelessWidget {
         Container(width: 12, height: 12, color: color),
         const SizedBox(width: 4),
         Text(text, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildSummaryItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }

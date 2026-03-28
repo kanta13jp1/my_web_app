@@ -9,6 +9,8 @@ import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../services/local_election_plan_service.dart';
 import '../services/local_election_reality_service.dart';
+import '../widgets/election_progress_chart.dart';
+import '../widgets/election_regional_kpi_chart.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   const ElectionVictoryPage({super.key});
@@ -454,6 +456,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   _buildHeroCard(plan),
                   const SizedBox(height: 16),
                   _buildRealitySection(plan),
+                  const SizedBox(height: 16),
+                  _buildChartSection(plan),
                   const SizedBox(height: 16),
                   _buildAlertStrip(plan),
                   const SizedBox(height: 24),
@@ -1004,6 +1008,53 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChartSection(LocalElectionPlanDashboard plan) {
+    final snapshot = _realitySnapshot;
+    final currentTotal = snapshot?.hasData == true
+        ? snapshot!.officialCurrentLocalMembers
+        : plan.currentLocalMembers;
+    final shortfall = snapshot?.hasData == true
+        ? snapshot!.actualNetIncreaseRequired
+        : plan.requiredNetIncrease;
+    final topPrefectures = plan.topPriorityPrefectures(limit: 10);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 1000;
+        final progressChart = ElectionProgressChart(
+          currentTotal: currentTotal,
+          shortfall: shortfall,
+          target: plan.targetLocalMembers,
+          caption: snapshot?.hasData == true
+              ? '公式議員ページの最新集計を反映'
+              : '最新実データ未取得時は計画値を表示',
+        );
+        final regionalChart = ElectionRegionalKpiChart(
+          prefectures: topPrefectures,
+        );
+
+        if (stacked) {
+          return Column(
+            children: [
+              progressChart,
+              const SizedBox(height: 16),
+              regionalChart,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: progressChart),
+            const SizedBox(width: 16),
+            Expanded(child: regionalChart),
+          ],
+        );
+      },
     );
   }
 
