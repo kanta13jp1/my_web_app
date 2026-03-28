@@ -77,36 +77,55 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
       final dept = _deptKeywords[slug];
       final deptName = dept?.name ?? 'CEO室';
 
-      // 部署長の agent_id を検索
-      final agents = await supabase
-          .from('agent_profiles')
+      // 部署長の agent_id を検索 (agents テーブル)
+      final agentRows = await supabase
+          .from('agents')
           .select('id, display_name')
           .eq('slug', slug)
-          .eq('owner_id', uid)
+          .eq('user_id', uid)
+          .limit(1);
+
+      // CEO を supervisor として取得
+      final ceoRows = await supabase
+          .from('agents')
+          .select('id')
+          .eq('slug', 'ceo')
+          .eq('user_id', uid)
           .limit(1);
 
       String? agentId;
       String agentName = deptName;
-      if ((agents as List).isNotEmpty) {
-        agentId = agents.first['id']?.toString();
-        agentName = agents.first['display_name']?.toString() ?? deptName;
+      if ((agentRows as List).isNotEmpty) {
+        agentId = agentRows.first['id']?.toString();
+        agentName = agentRows.first['display_name']?.toString() ?? deptName;
+      }
+      final ceoId = ((ceoRows as List).isNotEmpty)
+          ? ceoRows.first['id']?.toString()
+          : null;
+
+      // supervisor と assignee の両方が必要
+      if (agentId == null || ceoId == null) {
+        if (mounted) {
+          setState(() {
+            _success = false;
+            _resultMessage = 'AI 組織 OS を先に初期化してください（AI組織OSページを開くと自動設定されます）。';
+            _loading = false;
+          });
+        }
+        return;
       }
 
       // タスクを登録
-      final insertData = <String, dynamic>{
-        'owner_id': uid,
+      await supabase.from('agent_tasks').insert(<String, dynamic>{
+        'user_id': uid,
+        'supervisor_agent_id': ceoId,
+        'assignee_agent_id': agentId,
         'title': text.length > 100 ? text.substring(0, 100) : text,
         'description': text,
-        'status': 'todo',
+        'status': 'queued',
         'task_type': 'quick_input',
         'source': 'home_quick_input',
-        'created_at': DateTime.now().toIso8601String(),
-      };
-      if (agentId != null) {
-        insertData['assignee_agent_id'] = agentId;
-      }
-
-      await supabase.from('agent_tasks').insert(insertData);
+      });
 
       if (mounted) {
         setState(() {

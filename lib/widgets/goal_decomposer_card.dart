@@ -100,29 +100,44 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
       final uid = supabase.auth.currentUser?.id;
       if (uid == null) return;
 
+      // CEO を supervisor として取得 (agents テーブル)
+      final ceoRows = await supabase
+          .from('agents')
+          .select('id')
+          .eq('slug', 'ceo')
+          .eq('user_id', uid)
+          .limit(1);
+      final ceoId = ((ceoRows as List).isNotEmpty)
+          ? ceoRows.first['id']?.toString()
+          : null;
+      if (ceoId == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+
       // agent_tasks テーブルに各部署長へのタスクを登録
       for (final item in _preview) {
         // 部署長の agent_id をスラッグで検索
-        final agents = await supabase
-            .from('agent_profiles')
+        final agentRows = await supabase
+            .from('agents')
             .select('id')
             .eq('slug', item.dept.managerSlug)
-            .eq('owner_id', uid)
+            .eq('user_id', uid)
             .limit(1);
 
-        if ((agents as List).isEmpty) continue;
-        final agentId = agents.first['id']?.toString();
+        if ((agentRows as List).isEmpty) continue;
+        final agentId = agentRows.first['id']?.toString();
         if (agentId == null) continue;
 
-        await supabase.from('agent_tasks').insert({
-          'owner_id': uid,
+        await supabase.from('agent_tasks').insert(<String, dynamic>{
+          'user_id': uid,
+          'supervisor_agent_id': ceoId,
           'assignee_agent_id': agentId,
           'title': '[ゴール] ${item.task.length > 60 ? item.task.substring(0, 60) : item.task}',
           'description': '## ゴール\n$goal\n\n## 担当タスク\n${item.task}',
-          'status': 'todo',
+          'status': 'queued',
           'task_type': 'goal_subtask',
           'source': 'goal_decomposer',
-          'created_at': DateTime.now().toIso8601String(),
         });
       }
 
