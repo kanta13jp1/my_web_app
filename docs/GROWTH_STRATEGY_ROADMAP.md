@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session6+daily-development (比較ページCVRトラッキング・touch_comparison_{key}シグナル・signup_submit_comparison追加)
+最終更新: 2026-03-28 Session7 (LP FAQセクション・FAQPage JSON-LD・試用チップ拡充・ホーム性格診断バナー・analyze修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -77,13 +77,14 @@
 - flutter analyze は 0 を維持
 - flutter test --coverage は一部 widget test の安定化が残っている
 
-### ホーム画面改善計画 (2026-03-28 完了)
+### ホーム画面改善計画 (2026-03-28 継続更新)
 
 ホーム画面は「全部を並べる場所」ではなく、「今日やることへ入る場所」に戻す。
 
 - 方針1: 日次必須導線、KPI、特別案件だけをホームに残す
 - 方針2: 探索系の機能は `業務メニュー` に分離し、部署別セクションで再配置する
 - 方針3: `最近使った機能` と `機能検索` を追加し、再訪時の移動コストを下げる
+- 方針4: 補助カード群は `成長・支援ダッシュボード` に退避し、ホーム本体には置かない
 - 完了条件1: 統一地方選ダッシュボードや朝会などの重要導線へホームから 2 タップ以内で到達できる
 - 完了条件2: 旧ホームの主要機能が `業務メニュー` 上で一覧・検索の両方から到達できる
 
@@ -167,6 +168,10 @@
   - `CSO OFFICE` 以降の探索系メニューを `業務メニュー` へ分離し、ホームには日次導線・KPI・特別案件・クイックアクセスを残す構成へ整理
   - `業務メニュー` ページに機能検索・最近使った機能・部署別セクションを実装し、ホームから `業務メニュー` / `機能を探す` の 2 導線で遷移可能に改修
   - `SharedPreferences` による最近使った機能トラッキングを追加し、ホーム上で直近導線を即再開できるよう改善
+- **ホーム画面簡素化 第2段** (2026-03-28 daily-development): 補助カード群をホームから退避
+  - `home_insights_page.dart` を新設し、検索・成長シグナル・継続支援カードを `成長・支援ダッシュボード` に集約
+  - ホームから `NoteSearchCard`、`QuickTaskInputCard`、ランキング・紹介・比較・モチベーション系カードを外し、上部を `GrowthRoadmapProgressCard` と日次優先導線中心へ再整理
+  - `QUICK ACCESS` に `成長・支援` 導線を追加し、補助カードへ 1 タップで遷移できるよう改善
 - **比較ページ CVR トラッキング実装** (2026-03-28 daily-development): `/vs-notion` など14比較ページの訪問時に `touch_comparison_{key}` シグナルを `GrowthAcquisitionService` に記録。登録時に `signup_submit_comparison` を帰属させることで比較ページ経由のCVRを計測可能に。`_ComparisonShell` を `StatelessWidget`→`StatefulWidget` へ移行し `initState` で fire-and-forget 記録。ロードマップ「route 単位の流入 KPI」を解消
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
@@ -302,6 +307,16 @@
 - **機能リクエスト ステータス変更通知** (session19): `notify-feature-request` Edge Function 新規作成。管理者がステータスを `done`/`in_progress` に変更した際、投稿者メールへ Resend API で通知メール送信。CI/CD に自動デプロイ追加
 - **Admin: 機能リクエスト UUID バグ修正** (session19): `req['id'] as int` → `req['id']?.toString()` に修正（DB の id 型は uuid）。ステータス変更後に通知確認ダイアログを表示する UX を追加
 - **LP: 固定フローティング CTA ボタン追加** (session19): LP に `FloatingActionButton.extended` を追加。「無料で始める」ボタンが常時表示され、タップすると登録フォームへスクロール
+
+### 2026-03-28 Session7 実装済み
+
+- **LP FAQセクション追加** (Session7): `_buildFaqSection()` を `_buildTrialSection` 直後に追加。6 Q&Aアコーディオン（Notionとの違い/無料か/データ安全性/移行方法/AIの役割/スマホ対応）をインタラクティブに表示。FAQ問答が検索クエリと一致することによるSEOロングテール強化
+- **FAQPage JSON-LD構造化データ** (Session7): `web/index.html` に `FAQPage` スキーマを追加。Googleリッチリザルト（FAQ表示）対応で検索結果のクリック率向上を狙う
+- **LP 試用チップ拡充** (Session7): `_buildTrialSection` の ActionChip に「性格診断でメモ術を最適化」と「AI組織OS」の2件を追加。独自機能の発見導線を強化
+- **ホーム 性格診断バナー** (Session7): `_PersonalityTypeBanner` ウィジェットを新設し `WelcomeNewUserCard` 直後に挿入。診断済みユーザーにはタイプコード・名前・メモアドバイスを表示、未診断ユーザーにはCTAを表示
+- **`/personality-test-result` ルート追加** (Session7): `main.dart` に `PersonalityTestResultPage` ルートを追加
+- **analyze修正** (Session7): `election_regional_kpi_chart.dart` の未依存 `pdf`/`printing` パッケージ削除・重複 `key` バグ修正。`home_insights_page.dart` の `prefer_const_constructors` 3件修正。flutter analyze 0件維持
+- **成長・支援ダッシュボードを業務メニューカタログに追加** (Session7): `home_tool_catalog.dart` に `HomeInsightsPage` エントリを growth セクションに追加
 
 ### 2026-03-28 Session6 実装済み
 
