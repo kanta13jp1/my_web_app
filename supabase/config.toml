@@ -127,6 +127,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/get-public-memo-preview/index.ts"
 
+[functions.get-public-memo-ogp]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/get-public-memo-ogp/index.ts"
+
 [functions.get-ogp-public]
 enabled = true
 verify_jwt = false

@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const { data, error } = await admin
       .from("public_memos")
-      .select("id, title, content, category")
+      .select("id, title, content, category, metadata")
       .eq("id", memoId)
       .eq("is_public", true)
       .maybeSingle();
@@ -78,6 +78,7 @@ serve(async (req) => {
       pageTitle: `${title} - 自分株式会社`,
       ogDescription: excerpt ||
         `自分株式会社の公開メモ: ${title}`,
+      ogImageUrl: `${SUPABASE_URL}/functions/v1/get-public-memo-ogp?id=${memoId}`,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

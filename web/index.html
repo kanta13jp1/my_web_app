@@ -389,6 +389,11 @@
             setMeta('twitter:title', data.pageTitle || document.title);
             setMeta('twitter:description', data.ogDescription || '');
             setMeta('description', data.ogDescription || '');
+            if (data.ogImageUrl) {
+              setMeta('og:image', data.ogImageUrl);
+              setMeta('twitter:image', data.ogImageUrl);
+              setMeta('twitter:card', 'summary_large_image');
+            }
             var h1 = document.getElementById('seo-title');
             if (h1) h1.textContent = data.title || h1.textContent;
             var desc = document.querySelector('.seo-card p[lang="ja"]');
