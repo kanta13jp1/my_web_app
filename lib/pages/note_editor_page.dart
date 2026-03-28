@@ -11,6 +11,7 @@ import '../services/note_prompt_library_service.dart';
 import '../services/undo_redo_service.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../services/public_memo_service.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -1031,6 +1032,60 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  Future<void> _publishNote() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タイトルを入力してから公開してください')),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('メモを公開する'),
+        content: Text('「$title」を公開メモとして公開します。\n誰でも閲覧できるようになります。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('公開する'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    final service = PublicMemoService(_supabase);
+    final ok = await service.publishMemo(
+      noteId: int.tryParse(noteId.toString()) ?? 0,
+      userId: user.id,
+      title: title,
+      content: _contentController.text.trim(),
+    );
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('公開しました！ /public-memos で確認できます'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開に失敗しました')),
+      );
+    }
+  }
+
   Future<void> _showVersionHistory() async {
     final noteId = _currentNoteId;
     if (noteId == null) return;
@@ -1704,6 +1759,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             onPressed: _saveManually,
             tooltip: 'Save',
           ),
+          if (_currentNoteId != null)
+            IconButton(
+              icon: const Icon(Icons.public),
+              onPressed: _publishNote,
+              tooltip: '公開する',
+            ),
           if (_currentNoteId != null)
             IconButton(
               icon: const Icon(Icons.history),
