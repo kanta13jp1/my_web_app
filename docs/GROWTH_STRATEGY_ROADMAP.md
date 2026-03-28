@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session9 (LP最適化・trial チップ改善・unique value CTA追加・analyze 0件維持)
+最終更新: 2026-03-28 Session10 (ホーム画面 EdgeFunctionSummaryCard 復活・lint 修正・analyze 0件維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1028,6 +1028,28 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - 「LINE・Discord・SNSの代わりになりますか?」を追加（競合ポジション明確化）
    - インポート回答を「実装中」→「NotionのCSVとEvernoteのENEXがインポートできます」に修正（実態と一致）
    - AI機能の回答にAI組織OS委任の説明を追加
+
+**flutter analyze: 0 エラー維持**
+
+---
+
+### Session 2026-03-28 — Session 10 (ホーム画面 EdgeFunctionSummaryCard 復活)
+
+**実施内容:**
+
+1. **ホーム画面に EdgeFunctionSummaryCard を追加**
+   - RECENT TOOLS セクション下に `EdgeFunctionSummaryCard` ウィジェットを配置
+   - 34+ Edge Functions の一覧・UI呼び出し状況・操作手順を確認可能
+   - `home_page.dart` に import 追加 + widget 挿入
+
+2. **local_election_share_service.dart lint 修正 (他インスタンスが追加)**
+   - `unnecessary_brace_in_string_interps` エラー × 3 件を修正
+   - `${missingCount}` → `$missingCount`、`${lowPresenceThreshold}` → `$lowPresenceThreshold` 等
+
+3. **Schedule トリガー管理**
+   - 既存 `cs-check`（毎時）に Edge Function UI チェック・GitHub Issue 作成が含まれることを確認
+   - 既存 `daily-report`（毎日）に Issue 自動修正・Schedule 健全性チェックが含まれることを確認
+   - プラン上限（毎時 1 セッション）のため新規毎時トリガーは作成不可
 
 **flutter analyze: 0 エラー維持**
 
