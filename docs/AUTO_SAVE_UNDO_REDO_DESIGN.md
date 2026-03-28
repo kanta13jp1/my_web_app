@@ -557,7 +557,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
 ## 🔄 Notionとの比較
 
-|機能|Notion|マイメモ（目標）|
+|機能|Notion|自分株式会社（目標）|
 |:-----|:-------|:----------------|
 |自動保存|⭐⭐⭐⭐⭐|⭐⭐⭐⭐|
 |UNDO/REDO|⭐⭐⭐⭐⭐|⭐⭐⭐⭐|

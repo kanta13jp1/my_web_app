@@ -1,4 +1,4 @@
-# 14の競合SaaSを1つに統合するアプリを個人で作っている話
+# 21の競合SaaSを1つに統合するアプリを個人で作っている話
 
 ## 投稿先
 - [x] note (エッセイ・ストーリー)
@@ -18,7 +18,7 @@ Notion でメモを取り、Evernote に昔のノートが残り、MoneyForward 
 
 名前は「自分株式会社」。自分の人生を経営するプラットフォームだ。
 
-競合は14社。Notion、Evernote、MoneyForward、X、Animaworks、Claude Code、Codex、netkeiba、OpenClaw、Claude Cowork、Chatwork、Slack、ジョブカン、Amazon。
+競合は21社。Notion、Evernote、MoneyForward、X、Animaworks、Claude Code、Codex、netkeiba、OpenClaw、Claude Cowork、Chatwork、Slack、ジョブカン、Amazon、Google、Microsoft、Discord、LINE、Facebook、Liven、GitHub。
 
 無謀に聞こえるかもしれない。でも1人でも作れる理由がある。
 
@@ -28,7 +28,7 @@ Notion でメモを取り、Evernote に昔のノートが残り、MoneyForward 
 
 毎朝9時にAIが日次レポートを作り、Xに投稿する。
 毎時、サポートチケットを確認し、返信し、バグがあればコードを読んで修正する。
-毎日、競合14社のWebサイトを監視し、変化があれば記録する。
+毎日、競合21社のWebサイトを監視し、変化があれば記録する。
 
 全部で9つの自動化タスクが24時間動いている。サーバーも追加費用もなし。Claude Code の Schedule 機能だけで実現している。
 

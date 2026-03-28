@@ -10,7 +10,7 @@
 | `daily-judgment` | `ai_secretary_page.dart` | デイリー判定 |
 | `development-achievements` | `development_achievements_card.dart` | 開発実績 GET/ADD |
 | `get-admin-users` | `admin_analytics_page.dart` | 管理者ユーザー一覧 |
-| `get-competitor-features` | `growth_roadmap_progress_card.dart` | 競合19社機能比較 |
+| `get-competitor-features` | `growth_roadmap_progress_card.dart` | 競合21社機能比較 |
 | `get-growth-roadmap-progress` | `growth_roadmap_progress_card.dart` | 進捗バーデータ |
 | `get-home-dashboard` | `admin_analytics_page.dart` | ホーム統合データ |
 | `get-support-tickets` | `admin_analytics_page.dart` | CSチケット一覧 |

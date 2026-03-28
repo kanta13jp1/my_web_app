@@ -45,7 +45,7 @@ CS対応、バグ修正、競合モニタリング、日次レポート、X投�
 // get-support-tickets: 未返信チケット + FAQ を返す
 // reply-support-request: 返信 or エスカレーション
 // health-check: DB接続性・テーブル可用性チェック
-// check-competitor-updates: 競合14社 HEAD リクエスト
+// check-competitor-updates: 競合21社 HEAD リクエスト
 ```
 
 #### 3. 実行ログを schedule_task_runs テーブルに記録
@@ -72,7 +72,7 @@ CREATE TABLE schedule_task_runs (
 | weekly-sns-draft | 毎週月曜 | 週次実績サマリー → SNS投稿ドラフト |
 | daily-development | 毎日 10:00 | ロードマップに沿って開発を推進 |
 | pr-auto-review | 3時間毎 | open PR のコードレビュー |
-| competitor-monitoring | 毎日 07:00 | 競合14社のWebサイト・ニュースチェック |
+| competitor-monitoring | 毎日 07:00 | 競合21社のWebサイト・ニュースチェック |
 | infra-health-check | 毎時 30分 | DB・Firebase Hosting の可用性確認 |
 | dependency-audit | 毎週月曜 | Flutter/Deno 依存パッケージの脆弱性チェック |
 | blog-draft | 毎日 08:00 | 技術ブログ下書き自動生成 |

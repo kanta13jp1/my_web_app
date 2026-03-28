@@ -24,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "POST") {
+    if (req.method !== "POST" && req.method !== "GET") {
       throw new Error("Method not allowed.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
@@ -38,7 +38,9 @@ serve(async (req) => {
     // Require authenticated user (admin check)
     await requireAuthUser(admin, req);
 
-    const body = (await req.json().catch(() => ({}))) as AdminUsersRequest;
+    const body = req.method === "POST"
+      ? (await req.json().catch(() => ({}))) as AdminUsersRequest
+      : {} as AdminUsersRequest;
     const page = Math.max(1, body.page ?? 1);
     const perPage = Math.min(100, Math.max(1, body.perPage ?? 50));
 

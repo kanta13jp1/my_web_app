@@ -29,7 +29,7 @@
 1. **Schedule タスク実行状況モニター** — 管理者ダッシュボードで9つの自動化タスクの稼働状況をリアルタイム確認
 2. **公開メモ SEO/OGP 動的更新** — og:title, og:description, Twitter Card を公開メモごとに自動設定
 3. **health-check Edge Function** — DB接続性・6テーブル可用性・レスポンスタイムの自動監視
-4. **check-competitor-updates Edge Function** — 競合14社のWebサイト可用性を並列チェック
+4. **check-competitor-updates Edge Function** — 競合21社のWebサイト可用性を並列チェック
 5. **schedule_task_runs テーブル** — Schedule実行ログの永続化
 6. **competitor_monitoring テーブル** — 競合モニタリング結果の蓄積
 

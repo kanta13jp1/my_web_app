@@ -27,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "POST") {
+    if (req.method !== "POST" && req.method !== "GET") {
       throw new Error("Method not allowed.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
