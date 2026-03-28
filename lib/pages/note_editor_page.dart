@@ -1,4 +1,5 @@
-﻿import 'dart:convert';
+﻿import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -136,6 +137,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isLoading = false;
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
+  int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
   List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
@@ -199,6 +201,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
+      unawaited(_loadCommentCount());
     }
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
@@ -1086,6 +1089,47 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  static const String _kCommentsUrl =
+      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/note-comments';
+
+  Future<void> _loadCommentCount() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    try {
+      final res = await _supabase
+          .from('note_comments')
+          .select('id')
+          .eq('note_id', int.parse(noteId))
+          .eq('user_id', _supabase.auth.currentUser?.id ?? '');
+      final count = (res as List).length;
+      if (mounted) setState(() => _commentCount = count);
+    } catch (_) {
+      // silently ignore
+    }
+  }
+
+  Future<void> _showComments() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => _NoteCommentsSheet(
+        noteId: int.parse(noteId),
+        supabase: _supabase,
+        commentsUrl: _kCommentsUrl,
+        onCountChanged: (count) {
+          if (mounted) setState(() => _commentCount = count);
+        },
+      ),
+    );
+  }
+
   Future<void> _showVersionHistory() async {
     final noteId = _currentNoteId;
     if (noteId == null) return;
@@ -1771,6 +1815,40 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               onPressed: _showVersionHistory,
               tooltip: 'バージョン履歴',
             ),
+          if (_currentNoteId != null)
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.comment_outlined),
+                  onPressed: _showComments,
+                  tooltip: 'コメント',
+                ),
+                if (_commentCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.indigo,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints:
+                          const BoxConstraints(minWidth: 14, minHeight: 14),
+                      child: Text(
+                        '$_commentCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
       body: _isLoading
@@ -1841,4 +1919,311 @@ class _RedoIntent extends Intent {
 
 class _SaveIntent extends Intent {
   const _SaveIntent();
+}
+
+// ── Note Comments Bottom Sheet ────────────────────────────────────────────────
+
+class _NoteCommentsSheet extends StatefulWidget {
+  final int noteId;
+  final SupabaseClient supabase;
+  final String commentsUrl;
+  final void Function(int count) onCountChanged;
+
+  const _NoteCommentsSheet({
+    required this.noteId,
+    required this.supabase,
+    required this.commentsUrl,
+    required this.onCountChanged,
+  });
+
+  @override
+  State<_NoteCommentsSheet> createState() => _NoteCommentsSheetState();
+}
+
+class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
+  final _inputController = TextEditingController();
+  List<Map<String, dynamic>> _comments = [];
+  bool _loading = true;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
+  Future<String?> _getToken() async {
+    return widget.supabase.auth.currentSession?.accessToken;
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final res = await widget.supabase
+          .from('note_comments')
+          .select('id, content, created_at')
+          .eq('note_id', widget.noteId)
+          .order('created_at', ascending: true);
+      final list = List<Map<String, dynamic>>.from(
+        (res as List).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
+      if (mounted) {
+        setState(() {
+          _comments = list;
+          _loading = false;
+        });
+        widget.onCountChanged(list.length);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    final content = _inputController.text.trim();
+    if (content.isEmpty || _submitting) return;
+
+    final token = await _getToken();
+    if (token == null) return;
+
+    setState(() => _submitting = true);
+    try {
+      final response = await widget.supabase
+          .from('note_comments')
+          .insert({
+            'note_id': widget.noteId,
+            'user_id': widget.supabase.auth.currentUser?.id ?? '',
+            'content': content,
+          })
+          .select('id, content, created_at')
+          .single();
+      final newComment = Map<String, dynamic>.from(response as Map);
+      if (mounted) {
+        setState(() {
+          _comments.add(newComment);
+          _inputController.clear();
+        });
+        widget.onCountChanged(_comments.length);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('送信に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _delete(String commentId) async {
+    try {
+      await widget.supabase
+          .from('note_comments')
+          .delete()
+          .eq('id', commentId)
+          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '');
+      if (mounted) {
+        setState(() => _comments.removeWhere((c) => c['id'] == commentId));
+        widget.onCountChanged(_comments.length);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
+  String _formatDate(String? isoString) {
+    final dt = DateTime.tryParse(isoString ?? '')?.toLocal();
+    if (dt == null) return '';
+    return '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.55,
+      maxChildSize: 0.9,
+      minChildSize: 0.3,
+      builder: (_, scrollCtrl) => Column(
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.comment_outlined, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'コメント',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '${_comments.length}件',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _comments.isEmpty
+                    ? Center(
+                        child: Text(
+                          'コメントはまだありません\n最初のメモを追加しましょう',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                      )
+                    : ListView.separated(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: _comments.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final c = _comments[i];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.indigo.withOpacity(0.15),
+                              ),
+                            ),
+                            child: ListTile(
+                              dense: true,
+                              leading: const CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.indigo,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              title: Text(
+                                c['content'] as String? ?? '',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              subtitle: Text(
+                                _formatDate(c['created_at']?.toString()),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: Colors.red,
+                                ),
+                                tooltip: '削除',
+                                onPressed: () async {
+                                  final id =
+                                      c['id']?.toString() ?? '';
+                                  if (id.isEmpty) return;
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text('コメントを削除しますか？'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('キャンセル'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text(
+                                            '削除',
+                                            style:
+                                                TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (ok == true) await _delete(id);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 12,
+              right: 12,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _inputController,
+                    maxLength: 2000,
+                    maxLines: null,
+                    textInputAction: TextInputAction.newline,
+                    decoration: InputDecoration(
+                      hintText: 'コメントを追加…',
+                      counterText: '',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _submitting
+                    ? const SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.send, color: Colors.indigo),
+                        tooltip: '送信',
+                        onPressed: _submit,
+                      ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

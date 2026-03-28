@@ -2042,24 +2042,6 @@ $input
                               '今いちばん先送りしていることを片付けたい',
                             ),
                   ),
-                  ActionChip(
-                    avatar: const Icon(Icons.psychology_alt, size: 18),
-                    label: const Text('性格診断でメモ術を最適化'),
-                    onPressed: _isTrialLoading
-                        ? null
-                        : () => _runQuickTrialSample(
-                              '自分の性格タイプに合った情報整理・メモ術を提案してほしい',
-                            ),
-                  ),
-                  ActionChip(
-                    avatar: const Icon(Icons.corporate_fare, size: 18),
-                    label: const Text('AI組織OS'),
-                    onPressed: _isTrialLoading
-                        ? null
-                        : () => _runQuickTrialSample(
-                              'チームの意思決定を効率化するAI組織OSを試してみたい',
-                            ),
-                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -2672,24 +2654,9 @@ $input
                   const SizedBox(height: 20),
                   // 11. 21社との機能比較
                   _buildComparisonLinksSection(),
-                  const SizedBox(height: 20),
-                  // 12. Build in Public（信頼・透明性）
-                  _buildBuildInPublicSection(),
-                  const SizedBox(height: 20),
-                  // 13. 公開メモのショーケース
-                  _buildPublicMemoSection(),
-                  const SizedBox(height: 20),
-                  // 14. 紹介（紹介コードがある場合のみ表示）
+                  // 12. 紹介（紹介コードがある場合のみ表示）
                   _buildReferralInviteSection(),
                   if (_pendingReferralCode != null) const SizedBox(height: 20),
-                  // 15. ウェイトリスト・機能リクエスト
-                  _buildWaitlistAndFeatureRequestSection(),
-                  const SizedBox(height: 20),
-                  // 16. ライブ登録者数バナー
-                  _buildGrowthSection(),
-                  const SizedBox(height: 20),
-                  // 17. シェア
-                  _buildShareSection(),
                 ],
               ),
             ),
