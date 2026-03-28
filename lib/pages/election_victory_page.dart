@@ -143,17 +143,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   List<LocalElectionLegislatorProfile> _filteredRosterMembers(
     LocalElectionRealitySnapshot snapshot,
   ) {
-    final filtered = snapshot.members.where((member) {
-      if (_selectedMemberPrefecture != _allLabel &&
-          member.prefecture != _selectedMemberPrefecture) {
-        return false;
-      }
-      if (_selectedMemberAssemblyCategory != _allAssemblyCategories &&
-          member.assemblyCategory != _selectedMemberAssemblyCategory) {
-        return false;
-      }
-      return _resolveRosterMember(member).matchesQuery(_memberSearchQuery);
-    }).map(_resolveRosterMember).toList();
+    final filtered = snapshot.members
+        .where((member) {
+          if (_selectedMemberPrefecture != _allLabel &&
+              member.prefecture != _selectedMemberPrefecture) {
+            return false;
+          }
+          if (_selectedMemberAssemblyCategory != _allAssemblyCategories &&
+              member.assemblyCategory != _selectedMemberAssemblyCategory) {
+            return false;
+          }
+          return _resolveRosterMember(member).matchesQuery(_memberSearchQuery);
+        })
+        .map(_resolveRosterMember)
+        .toList();
 
     int categoryRank(String value) {
       switch (value) {
@@ -171,8 +174,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (prefectureCompare != 0) {
         return prefectureCompare;
       }
-      final categoryCompare =
-          categoryRank(left.assemblyCategory) -
+      final categoryCompare = categoryRank(left.assemblyCategory) -
           categoryRank(right.assemblyCategory);
       if (categoryCompare != 0) {
         return categoryCompare;
@@ -1102,10 +1104,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final prefectureOptions = _memberPrefectureOptions(snapshot);
     final filteredMembers = _filteredRosterMembers(snapshot);
     final visibleMembers = filteredMembers.take(_visibleMemberCount).toList();
-    final ageVisibleCount = filteredMembers.where((item) => item.age != null).length;
-    final profileVisibleCount = filteredMembers
-        .where((item) => item.profile.trim().isNotEmpty)
-        .length;
+    final ageVisibleCount =
+        filteredMembers.where((item) => item.age != null).length;
+    final profileVisibleCount =
+        filteredMembers.where((item) => item.profile.trim().isNotEmpty).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1267,7 +1269,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final detailUrl = member.detailUrl.trim();
     final isLoading =
         detailUrl.isNotEmpty && _memberProfileLoadingUrls.contains(detailUrl);
-    final detailError = detailUrl.isEmpty ? null : _memberProfileErrors[detailUrl];
+    final detailError =
+        detailUrl.isEmpty ? null : _memberProfileErrors[detailUrl];
     final hasDetailedProfile = member.hasDetailedProfile;
     final detailSummary = member.profile.trim().isNotEmpty
         ? member.profile

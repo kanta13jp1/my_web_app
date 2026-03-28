@@ -30,6 +30,186 @@ class LocalElectionRealitySource {
   }
 }
 
+class LocalElectionLegislatorProfile {
+  final String prefecture;
+  final String sourceUrl;
+  final String detailUrl;
+  final String name;
+  final String kana;
+  final String constituency;
+  final String municipality;
+  final String assemblyLabel;
+  final String assemblyCategory;
+  final String electionCountLabel;
+  final String birthDate;
+  final int? age;
+  final String gender;
+  final String profile;
+
+  const LocalElectionLegislatorProfile({
+    required this.prefecture,
+    required this.sourceUrl,
+    required this.detailUrl,
+    required this.name,
+    required this.kana,
+    required this.constituency,
+    required this.municipality,
+    required this.assemblyLabel,
+    required this.assemblyCategory,
+    required this.electionCountLabel,
+    this.birthDate = '',
+    this.age,
+    this.gender = '',
+    this.profile = '',
+  });
+
+  factory LocalElectionLegislatorProfile.fromJson(Map<String, dynamic> json) {
+    return LocalElectionLegislatorProfile(
+      prefecture: (json['prefecture'] as String? ?? '').trim(),
+      sourceUrl: (json['sourceUrl'] as String? ?? '').trim(),
+      detailUrl: (json['detailUrl'] as String? ?? '').trim(),
+      name: (json['name'] as String? ?? '').trim(),
+      kana: (json['kana'] as String? ?? '').trim(),
+      constituency: (json['constituency'] as String? ?? '').trim(),
+      municipality: (json['municipality'] as String? ?? '').trim(),
+      assemblyLabel: (json['assemblyLabel'] as String? ?? '').trim(),
+      assemblyCategory: (json['assemblyCategory'] as String? ?? '').trim(),
+      electionCountLabel: (json['electionCountLabel'] as String? ?? '').trim(),
+      birthDate: (json['birthDate'] as String? ?? '').trim(),
+      age: _readNullableInt(json['age']),
+      gender: (json['gender'] as String? ?? '').trim(),
+      profile: (json['profile'] as String? ?? '').trim(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'prefecture': prefecture,
+      'sourceUrl': sourceUrl,
+      'detailUrl': detailUrl,
+      'name': name,
+      'kana': kana,
+      'constituency': constituency,
+      'municipality': municipality,
+      'assemblyLabel': assemblyLabel,
+      'assemblyCategory': assemblyCategory,
+      'electionCountLabel': electionCountLabel,
+      'birthDate': birthDate,
+      'age': age,
+      'gender': gender,
+      'profile': profile,
+    };
+  }
+
+  bool get hasDetailedProfile =>
+      birthDate.isNotEmpty ||
+      age != null ||
+      gender.isNotEmpty ||
+      profile.isNotEmpty;
+
+  LocalElectionLegislatorProfile copyWith({
+    String? prefecture,
+    String? sourceUrl,
+    String? detailUrl,
+    String? name,
+    String? kana,
+    String? constituency,
+    String? municipality,
+    String? assemblyLabel,
+    String? assemblyCategory,
+    String? electionCountLabel,
+    String? birthDate,
+    int? age,
+    bool clearAge = false,
+    String? gender,
+    String? profile,
+  }) {
+    return LocalElectionLegislatorProfile(
+      prefecture: prefecture ?? this.prefecture,
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      detailUrl: detailUrl ?? this.detailUrl,
+      name: name ?? this.name,
+      kana: kana ?? this.kana,
+      constituency: constituency ?? this.constituency,
+      municipality: municipality ?? this.municipality,
+      assemblyLabel: assemblyLabel ?? this.assemblyLabel,
+      assemblyCategory: assemblyCategory ?? this.assemblyCategory,
+      electionCountLabel: electionCountLabel ?? this.electionCountLabel,
+      birthDate: birthDate ?? this.birthDate,
+      age: clearAge ? null : (age ?? this.age),
+      gender: gender ?? this.gender,
+      profile: profile ?? this.profile,
+    );
+  }
+
+  LocalElectionLegislatorProfile mergeWith(
+    LocalElectionLegislatorProfile? override,
+  ) {
+    if (override == null) {
+      return this;
+    }
+    return LocalElectionLegislatorProfile(
+      prefecture:
+          override.prefecture.isNotEmpty ? override.prefecture : prefecture,
+      sourceUrl: override.sourceUrl.isNotEmpty ? override.sourceUrl : sourceUrl,
+      detailUrl: override.detailUrl.isNotEmpty ? override.detailUrl : detailUrl,
+      name: override.name.isNotEmpty ? override.name : name,
+      kana: override.kana.isNotEmpty ? override.kana : kana,
+      constituency: override.constituency.isNotEmpty
+          ? override.constituency
+          : constituency,
+      municipality: override.municipality.isNotEmpty
+          ? override.municipality
+          : municipality,
+      assemblyLabel: override.assemblyLabel.isNotEmpty
+          ? override.assemblyLabel
+          : assemblyLabel,
+      assemblyCategory: override.assemblyCategory.isNotEmpty
+          ? override.assemblyCategory
+          : assemblyCategory,
+      electionCountLabel: override.electionCountLabel.isNotEmpty
+          ? override.electionCountLabel
+          : electionCountLabel,
+      birthDate: override.birthDate.isNotEmpty ? override.birthDate : birthDate,
+      age: override.age ?? age,
+      gender: override.gender.isNotEmpty ? override.gender : gender,
+      profile: override.profile.isNotEmpty ? override.profile : profile,
+    );
+  }
+
+  bool matchesQuery(String rawQuery) {
+    final query = rawQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return true;
+    }
+    final haystack = <String>[
+      prefecture,
+      name,
+      kana,
+      constituency,
+      municipality,
+      assemblyLabel,
+      electionCountLabel,
+      gender,
+      profile,
+    ].join(' ').toLowerCase();
+    return haystack.contains(query);
+  }
+
+  static int? _readNullableInt(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse('$value');
+  }
+}
+
 class LocalElectionPrefectureReality {
   final String prefecture;
   final String sourceUrl;
@@ -91,6 +271,7 @@ class LocalElectionRealitySnapshot {
   final List<String> aiStrategicNotes;
   final List<LocalElectionRealitySource> sources;
   final List<LocalElectionPrefectureReality> prefectures;
+  final List<LocalElectionLegislatorProfile> members;
 
   const LocalElectionRealitySnapshot({
     required this.fetchedAt,
@@ -107,6 +288,7 @@ class LocalElectionRealitySnapshot {
     required this.aiStrategicNotes,
     required this.sources,
     required this.prefectures,
+    required this.members,
   });
 
   LocalElectionRealitySnapshot.empty()
@@ -123,7 +305,8 @@ class LocalElectionRealitySnapshot {
         aiAlerts = const <String>[],
         aiStrategicNotes = const <String>[],
         sources = const <LocalElectionRealitySource>[],
-        prefectures = const <LocalElectionPrefectureReality>[];
+        prefectures = const <LocalElectionPrefectureReality>[],
+        members = const <LocalElectionLegislatorProfile>[];
 
   factory LocalElectionRealitySnapshot.fromJson(Map<String, dynamic> json) {
     return LocalElectionRealitySnapshot(
@@ -133,9 +316,8 @@ class LocalElectionRealitySnapshot {
         json['baselineCurrentLocalMembers'],
         fallback: 340,
       ),
-      officialCurrentLocalMembers: _readInt(
-        json['officialCurrentLocalMembers'],
-      ),
+      officialCurrentLocalMembers:
+          _readInt(json['officialCurrentLocalMembers']),
       targetLocalMembers: _readInt(json['targetLocalMembers'], fallback: 700),
       baselineNetIncreaseRequired: _readInt(
         json['baselineNetIncreaseRequired'],
@@ -162,6 +344,7 @@ class LocalElectionRealitySnapshot {
       aiStrategicNotes: _readStringList(json['aiStrategicNotes']),
       sources: _readSources(json['sources']),
       prefectures: _readPrefectures(json['prefectures']),
+      members: _readMembers(json['members']),
     );
   }
 
@@ -181,6 +364,7 @@ class LocalElectionRealitySnapshot {
       'aiStrategicNotes': aiStrategicNotes,
       'sources': sources.map((item) => item.toJson()).toList(),
       'prefectures': prefectures.map((item) => item.toJson()).toList(),
+      'members': members.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -188,6 +372,13 @@ class LocalElectionRealitySnapshot {
 
   int get deltaFromBaseline =>
       officialCurrentLocalMembers - baselineCurrentLocalMembers;
+
+  int get rosterCount => members.length;
+
+  int get detailedProfileCount =>
+      members.where((item) => item.hasDetailedProfile).length;
+
+  int get ageAvailableCount => members.where((item) => item.age != null).length;
 
   bool get isStale {
     if (!hasData) {
@@ -206,6 +397,16 @@ class LocalElectionRealitySnapshot {
         return a.prefecture.compareTo(b.prefecture);
       });
     return sorted.take(limit).toList();
+  }
+
+  List<LocalElectionLegislatorProfile> membersForPrefecture(String prefecture) {
+    final normalized = prefecture.trim();
+    if (normalized.isEmpty || normalized == 'すべて') {
+      return List<LocalElectionLegislatorProfile>.from(members);
+    }
+    return members
+        .where((item) => item.prefecture.trim() == normalized)
+        .toList();
   }
 
   static int _readInt(Object? value, {int fallback = 0}) {
@@ -245,6 +446,17 @@ class LocalElectionRealitySnapshot {
     }
     return value.whereType<Map>().map((item) {
       return LocalElectionPrefectureReality.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+    }).toList();
+  }
+
+  static List<LocalElectionLegislatorProfile> _readMembers(Object? value) {
+    if (value is! List) {
+      return const <LocalElectionLegislatorProfile>[];
+    }
+    return value.whereType<Map>().map((item) {
+      return LocalElectionLegislatorProfile.fromJson(
         Map<String, dynamic>.from(item),
       );
     }).toList();
