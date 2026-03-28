@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -22,8 +22,7 @@ class ElectionRegionalKpiChart extends StatefulWidget {
   });
 
   @override
-  State<ElectionRegionalKpiChart> createState() =>
-      _ElectionRegionalKpiChartState();
+  State<ElectionRegionalKpiChart> createState() => _ElectionRegionalKpiChartState();
 }
 
 class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
@@ -32,41 +31,37 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Future<void> _printChart() async {
     try {
       // 棒グラフをキャプチャ
-      final barChartBoundary = _barChartKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary?;
+      final barChartBoundary = _barChartKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (barChartBoundary == null) return;
 
       final barChartImage = await barChartBoundary.toImage(pixelRatio: 3.0);
-      final barChartByteData =
-          await barChartImage.toByteData(format: ui.ImageByteFormat.png);
+      final barChartByteData = await barChartImage.toByteData(format: ui.ImageByteFormat.png);
       if (barChartByteData == null) return;
-      final barChartPdfImage =
-          pw.MemoryImage(barChartByteData.buffer.asUint8List());
+      final barChartPdfImage = pw.MemoryImage(barChartByteData.buffer.asUint8List());
 
       // 円グラフをキャプチャ
       pw.MemoryImage? pieChartPdfImage;
       if (widget.pieChartKey != null) {
-        final pieChartBoundary = widget.pieChartKey!.currentContext
-            ?.findRenderObject() as RenderRepaintBoundary?;
+        final pieChartBoundary = widget.pieChartKey!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
         if (pieChartBoundary != null) {
-          final pieChartImage =
-              await pieChartBoundary.toImage(pixelRatio: 3.0);
-          final pieChartByteData = await pieChartImage.toByteData(
-            format: ui.ImageByteFormat.png,
-          );
+          final pieChartImage = await pieChartBoundary.toImage(pixelRatio: 3.0);
+          final pieChartByteData = await pieChartImage.toByteData(format: ui.ImageByteFormat.png);
           if (pieChartByteData != null) {
-            pieChartPdfImage =
-                pw.MemoryImage(pieChartByteData.buffer.asUint8List());
+            pieChartPdfImage = pw.MemoryImage(pieChartByteData.buffer.asUint8List());
           }
         }
       }
+      
+      // 日本語フォントの読み込み（文字化け防止）
+      final ttfRegular = await PdfGoogleFonts.notoSansJPRegular();
+      final ttfBold = await PdfGoogleFonts.notoSansJPBold();
 
-      // ロゴ画像をアセットから読み込む
+      // ロゴ画像をアセットから読み込む (パスはプロジェクトに合わせて調整してください)
       final logoData = await rootBundle.load('assets/icon/icon.png');
       final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
 
       // ユーザー名の取得
-      var authorName = 'システム管理者';
+      String authorName = 'システム管理者';
       try {
         final user = Supabase.instance.client.auth.currentUser;
         if (user != null) {
@@ -75,8 +70,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
               .select('display_name')
               .eq('user_id', user.id)
               .maybeSingle();
-          if (profile != null &&
-              profile['display_name']?.toString().isNotEmpty == true) {
+          if (profile != null && profile['display_name']?.toString().isNotEmpty == true) {
             authorName = profile['display_name'].toString();
           } else if (user.email != null) {
             authorName = user.email!;
@@ -85,11 +79,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       } catch (_) {}
 
       final now = DateTime.now();
-      final dateStr =
-          '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')} '
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      final dateFilenameStr =
-          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      final dateStr = '${now.year}年${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      // ファイル名用に日付文字列を生成 (例: 20260328)
+      final dateFilenameStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
       final filename = 'election_report_$dateFilenameStr.pdf';
 
       final doc = pw.Document();
@@ -103,21 +95,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text(
-                      'Election Regional KPI Report',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    pw.Text(
-                      'Output: $dateStr\nBy: $authorName',
-                      style: const pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                      textAlign: pw.TextAlign.right,
-                    ),
+                    pw.Text('統一地方選700 必達管理レポート', style: pw.TextStyle(font: ttfBold, fontSize: 18)),
+                    pw.Text('出力日時: $dateStr\n作成者: $authorName', style: pw.TextStyle(font: ttfRegular, fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
+                    pw.Text('出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}', style: pw.TextStyle(font: ttfRegular, fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
                   ],
                 ),
                 pw.Divider(color: PdfColors.grey300),
@@ -132,8 +112,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         ),
                       if (pieChartPdfImage != null)
                         pw.Padding(
-                          padding:
-                              const pw.EdgeInsets.symmetric(vertical: 8),
+                          padding: const pw.EdgeInsets.symmetric(vertical: 8),
                           child: pw.Divider(color: PdfColors.grey400),
                         ),
                       pw.Expanded(
@@ -151,8 +130,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   children: [
                     pw.Image(logoImage, width: 24, height: 24),
                     pw.Text(
-                      'Jibun Inc. - Management Cockpit',
-                      style: const pw.TextStyle(
+                      '自分株式会社 - 経営コックピット',
+                      style: pw.TextStyle(
+                        font: ttfRegular,
                         fontSize: 8,
                         color: PdfColors.grey500,
                       ),
@@ -180,10 +160,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       return const SizedBox.shrink();
     }
 
-    final totalRetain = widget.prefectures
-        .fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
-    final totalNew = widget.prefectures
-        .fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
+    final totalRetain =
+        widget.prefectures.fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
+    final totalNew =
+        widget.prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
     final totalTarget = totalRetain + totalNew;
 
     return Card(
@@ -216,10 +196,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 8,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -230,52 +207,28 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildSummaryItem(
-                                '現職維持 合計',
-                                totalRetain.toString(),
-                                Colors.blue.shade700,
-                              ),
-                              _buildSummaryItem(
-                                '新人擁立 合計',
-                                totalNew.toString(),
-                                Colors.orange.shade700,
-                              ),
-                              _buildSummaryItem(
-                                '総合計',
-                                totalTarget.toString(),
-                                Colors.indigo.shade700,
-                              ),
+                              _buildSummaryItem('現職維持 合計', totalRetain.toString(), Colors.blue.shade700),
+                              _buildSummaryItem('新人擁立 合計', totalNew.toString(), Colors.orange.shade700),
+                              _buildSummaryItem('総合計', totalTarget.toString(), Colors.indigo.shade700),
                             ],
                           ),
                           if (totalTarget < 700) ...[
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 12,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Colors.red.shade200),
+                                border: Border.all(color: Colors.red.shade200),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: Colors.red.shade700,
-                                    size: 16,
-                                  ),
+                                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
                                   const SizedBox(width: 8),
                                   Text(
                                     '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
-                                    style: TextStyle(
-                                      color: Colors.red.shade700,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
+                                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
                                   ),
                                 ],
                               ),
@@ -294,12 +247,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           barTouchData: BarTouchData(
                             enabled: true,
                             touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (group) =>
-                                  Colors.blueGrey.shade900,
-                              getTooltipItem:
-                                  (group, groupIndex, rod, rodIndex) {
-                                final data =
-                                    widget.prefectures[group.x];
+                              getTooltipColor: (group) => Colors.blueGrey.shade900,
+                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                final data = widget.prefectures[group.x];
                                 return BarTooltipItem(
                                   '${data.prefecture}\n',
                                   const TextStyle(
@@ -308,8 +258,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                   ),
                                   children: [
                                     TextSpan(
-                                      text:
-                                          '現職維持: ${data.incumbentRetentionTarget}\n',
+                                      text: '現職維持: ${data.incumbentRetentionTarget}\n',
                                       style: TextStyle(
                                         color: Colors.blue.shade300,
                                         fontSize: 12,
@@ -317,8 +266,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text:
-                                          '新人擁立: ${data.newCandidateTarget}\n',
+                                      text: '新人擁立: ${data.newCandidateTarget}\n',
                                       style: TextStyle(
                                         color: Colors.orange.shade400,
                                         fontSize: 12,
@@ -326,8 +274,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text:
-                                          '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
+                                      text: '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 12,
@@ -347,11 +294,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                 reservedSize: 40,
                                 getTitlesWidget: (value, meta) {
                                   if (value.toInt() >= 0 &&
-                                      value.toInt() <
-                                          widget.prefectures.length) {
-                                    final region = widget
-                                        .prefectures[value.toInt()]
-                                        .prefecture;
+                                      value.toInt() < widget.prefectures.length) {
+                                    final region =
+                                        widget.prefectures[value.toInt()].prefecture;
                                     final displayRegion = region.length > 3
                                         ? region.substring(0, 2)
                                         : region;
@@ -398,16 +343,12 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                             drawVerticalLine: false,
                           ),
                           borderData: FlBorderData(show: false),
-                          barGroups: widget.prefectures
-                              .asMap()
-                              .entries
-                              .map((entry) {
+                          barGroups: widget.prefectures.asMap().entries.map((entry) {
                             final index = entry.key;
                             final data = entry.value;
                             final retainTarget =
                                 data.incumbentRetentionTarget.toDouble();
-                            final newTarget =
-                                data.newCandidateTarget.toDouble();
+                            final newTarget = data.newCandidateTarget.toDouble();
 
                             return BarChartGroupData(
                               x: index,
@@ -455,12 +396,14 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   }
 
   double _getMaxY() {
-    var max = 0.0;
+    double max = 0;
     for (final data in widget.prefectures) {
       final retain = data.incumbentRetentionTarget.toDouble();
       final newTarget = data.newCandidateTarget.toDouble();
       final total = retain + newTarget;
-      if (total > max) max = total;
+      if (total > max) {
+        max = total;
+      }
     }
     return max == 0 ? 10 : max * 1.2;
   }
@@ -478,23 +421,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Widget _buildSummaryItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.black54,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54)),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
+        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }

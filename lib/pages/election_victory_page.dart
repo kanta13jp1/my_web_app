@@ -20,6 +20,10 @@ class ElectionVictoryPage extends StatefulWidget {
 }
 
 class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
+  static const String _allLabel = 'すべて';
+  static const String _allAssemblyCategories = 'all';
+  static const int _memberPageSize = 24;
+
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
@@ -28,10 +32,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   LocalElectionPlanDashboard? _plan;
   LocalElectionRealitySnapshot? _realitySnapshot;
+  final Map<String, LocalElectionLegislatorProfile> _memberProfileOverrides =
+      <String, LocalElectionLegislatorProfile>{};
+  final Set<String> _memberProfileLoadingUrls = <String>{};
+  final Map<String, String> _memberProfileErrors = <String, String>{};
   bool _isLoading = true;
   bool _isRealityLoading = false;
   String? _realityError;
-  String _selectedRegion = 'すべて';
+  String _selectedRegion = _allLabel;
+  String _selectedMemberPrefecture = _allLabel;
+  String _selectedMemberAssemblyCategory = _allAssemblyCategories;
+  String _memberSearchQuery = '';
+  int _visibleMemberCount = _memberPageSize;
 
   @override
   void initState() {
@@ -55,8 +67,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
       if (!plan.regionLabels.contains(_selectedRegion)) {
-        _selectedRegion = 'すべて';
+        _selectedRegion = _allLabel;
       }
+      _syncMemberSelection(cachedSnapshot);
       _isLoading = false;
     });
 
@@ -71,7 +84,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     setState(() {
       _plan = plan;
       if (!plan.regionLabels.contains(_selectedRegion)) {
-        _selectedRegion = 'すべて';
+        _selectedRegion = _allLabel;
       }
       _isLoading = false;
     });
@@ -94,6 +107,151 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
   }
 
+  void _syncMemberSelection(LocalElectionRealitySnapshot? snapshot) {
+    if (snapshot == null) {
+      _selectedMemberPrefecture = _allLabel;
+      _visibleMemberCount = _memberPageSize;
+      return;
+    }
+    final prefectureLabels = <String>{
+      _allLabel,
+      ...snapshot.members.map((item) => item.prefecture).where(
+            (item) => item.trim().isNotEmpty,
+          ),
+    };
+    if (!prefectureLabels.contains(_selectedMemberPrefecture)) {
+      _selectedMemberPrefecture = _allLabel;
+    }
+  }
+
+  List<String> _memberPrefectureOptions(LocalElectionRealitySnapshot snapshot) {
+    final labels = snapshot.members
+        .map((item) => item.prefecture)
+        .where((item) => item.trim().isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    return <String>[_allLabel, ...labels];
+  }
+
+  LocalElectionLegislatorProfile _resolveRosterMember(
+    LocalElectionLegislatorProfile member,
+  ) {
+    return member.mergeWith(_memberProfileOverrides[member.detailUrl]);
+  }
+
+  List<LocalElectionLegislatorProfile> _filteredRosterMembers(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final filtered = snapshot.members.where((member) {
+      if (_selectedMemberPrefecture != _allLabel &&
+          member.prefecture != _selectedMemberPrefecture) {
+        return false;
+      }
+      if (_selectedMemberAssemblyCategory != _allAssemblyCategories &&
+          member.assemblyCategory != _selectedMemberAssemblyCategory) {
+        return false;
+      }
+      return _resolveRosterMember(member).matchesQuery(_memberSearchQuery);
+    }).map(_resolveRosterMember).toList();
+
+    int categoryRank(String value) {
+      switch (value) {
+        case 'prefectural':
+          return 0;
+        case 'municipal':
+          return 1;
+        default:
+          return 2;
+      }
+    }
+
+    filtered.sort((left, right) {
+      final prefectureCompare = left.prefecture.compareTo(right.prefecture);
+      if (prefectureCompare != 0) {
+        return prefectureCompare;
+      }
+      final categoryCompare =
+          categoryRank(left.assemblyCategory) -
+          categoryRank(right.assemblyCategory);
+      if (categoryCompare != 0) {
+        return categoryCompare;
+      }
+      return left.name.compareTo(right.name);
+    });
+    return filtered;
+  }
+
+  Future<void> _loadMemberProfile(
+    LocalElectionLegislatorProfile member, {
+    bool forceRefresh = false,
+  }) async {
+    final detailUrl = member.detailUrl.trim();
+    if (detailUrl.isEmpty || _memberProfileLoadingUrls.contains(detailUrl)) {
+      return;
+    }
+
+    if (!forceRefresh) {
+      final cached = await _realityService.loadCachedMemberProfile(detailUrl);
+      if (!mounted) {
+        return;
+      }
+      if (cached != null) {
+        setState(() {
+          _memberProfileOverrides[detailUrl] = member.mergeWith(cached);
+          _memberProfileErrors.remove(detailUrl);
+        });
+        if (cached.hasDetailedProfile) {
+          return;
+        }
+      }
+    }
+
+    setState(() {
+      _memberProfileLoadingUrls.add(detailUrl);
+      _memberProfileErrors.remove(detailUrl);
+    });
+
+    try {
+      final profile = await _realityService.fetchMemberProfile(
+        detailUrl,
+        prefectureHint: member.prefecture,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _memberProfileOverrides[detailUrl] = member.mergeWith(profile);
+        _memberProfileErrors.remove(detailUrl);
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _memberProfileErrors[detailUrl] =
+            '議員プロフィールの取得に失敗しました。しばらくしてから再試行してください。';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('議員プロフィールの取得に失敗しました'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _memberProfileLoadingUrls.remove(detailUrl);
+        });
+      }
+    }
+  }
+
+  void _showMoreMembers() {
+    setState(() {
+      _visibleMemberCount += _memberPageSize;
+    });
+  }
+
   Future<void> _refreshRealityData({required bool showSnackBar}) async {
     if (_isRealityLoading) {
       return;
@@ -111,6 +269,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       setState(() {
         _realitySnapshot = snapshot;
         _realityError = null;
+        _syncMemberSelection(snapshot);
       });
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -215,7 +374,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     setState(() {
       _plan = plan;
-      _selectedRegion = 'すべて';
+      _selectedRegion = _allLabel;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -777,6 +936,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               const SizedBox(height: 20),
               _buildRealityPrefectureSection(realitySnapshot),
               const SizedBox(height: 20),
+              _buildMemberRosterSection(realitySnapshot),
+              const SizedBox(height: 20),
               _buildSourceSection(realitySnapshot),
             ],
           ],
@@ -934,6 +1095,328 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildMemberRosterSection(LocalElectionRealitySnapshot snapshot) {
+    final prefectureOptions = _memberPrefectureOptions(snapshot);
+    final filteredMembers = _filteredRosterMembers(snapshot);
+    final visibleMembers = filteredMembers.take(_visibleMemberCount).toList();
+    final ageVisibleCount = filteredMembers.where((item) => item.age != null).length;
+    final profileVisibleCount = filteredMembers
+        .where((item) => item.profile.trim().isNotEmpty)
+        .length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '現職地方議員の個票一覧',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '氏名・自治体・議会種別・当選回数は都道府県ページから取得しています。'
+          '年齢と簡易プロフィールは公式詳細ページに記載がある議員だけ追加表示し、'
+          '性別は明示がある場合のみ表示します。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: 240,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey<String>(
+                  'member-prefecture-$_selectedMemberPrefecture',
+                ),
+                initialValue: _selectedMemberPrefecture,
+                decoration: const InputDecoration(
+                  labelText: '都道府県',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final label in prefectureOptions)
+                    DropdownMenuItem<String>(
+                      value: label,
+                      child: Text(label),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedMemberPrefecture = value;
+                    _visibleMemberCount = _memberPageSize;
+                  });
+                },
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey<String>(
+                  'member-assembly-$_selectedMemberAssemblyCategory',
+                ),
+                initialValue: _selectedMemberAssemblyCategory,
+                decoration: const InputDecoration(
+                  labelText: '議会種別',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem<String>(
+                    value: _allAssemblyCategories,
+                    child: Text('すべて'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'prefectural',
+                    child: Text('都道府県議会'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'municipal',
+                    child: Text('市区町村議会'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedMemberAssemblyCategory = value;
+                    _visibleMemberCount = _memberPageSize;
+                  });
+                },
+              ),
+            ),
+            SizedBox(
+              width: 280,
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _memberSearchQuery = value.trim();
+                    _visibleMemberCount = _memberPageSize;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: '名前・自治体・プロフィールで検索',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusChip(
+              '表示 ${_formatInt(visibleMembers.length)}/${_formatInt(filteredMembers.length)} 人',
+              color: Colors.blueGrey,
+            ),
+            _buildStatusChip(
+              '個票 ${_formatInt(snapshot.rosterCount)} 人',
+              color: const Color(0xFF0891B2),
+            ),
+            _buildStatusChip(
+              '年齢表示 ${_formatInt(ageVisibleCount)} 人',
+              color: const Color(0xFF0F766E),
+            ),
+            _buildStatusChip(
+              'プロフィール表示 ${_formatInt(profileVisibleCount)} 人',
+              color: const Color(0xFF7C3AED),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (filteredMembers.isEmpty)
+          _buildInlineNotice(
+            '条件に合う議員が見つかりません。都道府県または検索条件を変更してください。',
+            color: Colors.blueGrey,
+            icon: Icons.info_outline,
+          )
+        else
+          Column(
+            children: [
+              for (final member in visibleMembers) _buildMemberCard(member),
+              if (filteredMembers.length > visibleMembers.length)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: OutlinedButton.icon(
+                    onPressed: _showMoreMembers,
+                    icon: const Icon(Icons.expand_more),
+                    label: Text(
+                      'さらに ${_formatInt((filteredMembers.length - visibleMembers.length).clamp(0, _memberPageSize))} 人表示',
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMemberCard(LocalElectionLegislatorProfile member) {
+    final detailUrl = member.detailUrl.trim();
+    final isLoading =
+        detailUrl.isNotEmpty && _memberProfileLoadingUrls.contains(detailUrl);
+    final detailError = detailUrl.isEmpty ? null : _memberProfileErrors[detailUrl];
+    final hasDetailedProfile = member.hasDetailedProfile;
+    final detailSummary = member.profile.trim().isNotEmpty
+        ? member.profile
+        : hasDetailedProfile
+            ? '生年月日など、公式詳細ページで確認できた項目を反映済みです。'
+            : '詳細プロフィールは未取得です。必要な議員だけ個別取得できます。';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
+                      ),
+                      if (member.kana.trim().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          member.kana,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      Text(
+                        member.constituency,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                if (detailUrl.isNotEmpty)
+                  IconButton(
+                    onPressed: () => _openUrl(detailUrl),
+                    tooltip: '公式プロフィールを開く',
+                    icon: const Icon(Icons.open_in_new),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMetricChip(
+                  '議会',
+                  member.assemblyLabel,
+                  color: const Color(0xFF1D4ED8),
+                ),
+                if (member.electionCountLabel.trim().isNotEmpty)
+                  _buildMetricChip(
+                    '当選回数',
+                    member.electionCountLabel,
+                    color: const Color(0xFFB45309),
+                  ),
+                _buildMetricChip(
+                  '県連',
+                  member.prefecture,
+                  color: const Color(0xFF475569),
+                ),
+                if (member.age != null)
+                  _buildMetricChip(
+                    '年齢',
+                    '${member.age}歳',
+                    color: const Color(0xFF0F766E),
+                  ),
+                if (member.gender.trim().isNotEmpty)
+                  _buildMetricChip(
+                    '性別',
+                    member.gender,
+                    color: const Color(0xFFBE185D),
+                  ),
+              ],
+            ),
+            if (member.birthDate.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                '生年月日 ${member.birthDate}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              detailSummary,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            if (detailError != null) ...[
+              const SizedBox(height: 10),
+              _buildInlineNotice(
+                detailError,
+                color: Colors.orange,
+                icon: Icons.info_outline,
+              ),
+            ],
+            if (detailUrl.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: isLoading
+                        ? null
+                        : () => _loadMemberProfile(
+                              member,
+                              forceRefresh: hasDetailedProfile,
+                            ),
+                    icon: isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            hasDetailedProfile
+                                ? Icons.refresh
+                                : Icons.manage_search,
+                          ),
+                    label: Text(
+                      isLoading
+                          ? '取得中'
+                          : hasDetailedProfile
+                              ? '詳細を更新'
+                              : '詳細を取得',
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _openUrl(detailUrl),
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('公式ページ'),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
