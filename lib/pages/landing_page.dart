@@ -53,17 +53,10 @@ class _LandingPageState extends State<LandingPage> {
   bool _isLoading = false;
   bool _isTrialLoading = false;
   bool _isSignUp = true;
-  bool _isLoadingStats = true;
   bool _isLoadingShareStats = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
   int _magicLinkCooldownSeconds = 0;
-
-  int _todayViews = 0;
-  int _monthViews = 0;
-  int _totalViews = 0;
-  List<FlSpot> _pvSpots = const <FlSpot>[];
-  List<String> _pvLabels = const <String>[];
   String? _activeShareChannel;
   int _achievementCount = 0;
   int _totalUsers = 0;
@@ -98,7 +91,6 @@ class _LandingPageState extends State<LandingPage> {
       }
     });
     unawaited(_bootstrapReferralInvite());
-    _initLpViewStats();
     _loadShareSnapshot();
     _loadPublicMemos();
     unawaited(_loadAchievementCount());
@@ -254,33 +246,6 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  Future<void> _initLpViewStats() async {
-    setState(() => _isLoadingStats = true);
-    try {
-      final stats = await widget.adapter.loadLpViewStats();
-      final spots = <FlSpot>[];
-      final labels = <String>[];
-      for (var i = 0; i < stats.series.length; i++) {
-        final row = stats.series[i];
-        spots.add(FlSpot(i.toDouble(), row.count));
-        labels.add(row.date == null ? '' : DateFormat('M/d').format(row.date!));
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _todayViews = stats.todayViews;
-        _monthViews = stats.monthViews;
-        _totalViews = stats.totalViews;
-        _pvSpots = spots;
-        _pvLabels = labels;
-        _isLoadingStats = false;
-      });
-    } catch (e) {
-      debugPrint('LP view stats failed: $e');
-      if (!mounted) return;
-      setState(() => _isLoadingStats = false);
-    }
-  }
 
   Future<void> _auth() async {
     final email = _emailController.text.trim();
@@ -1339,108 +1304,6 @@ $input
     );
   }
 
-  Widget _buildPvSection() {
-    final fmt = NumberFormat('#,###');
-    final labelInterval =
-        _pvLabels.length <= 6 ? 1 : (_pvLabels.length / 6).ceil();
-
-    return Card(
-      key: const Key('landing_pv_section'),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'LP View 数',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'まずは流入を増やし、その後に登録導線を詰めます。今日のLP Viewを毎日確認します。',
-              style: TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              children: [
-                _pvKpi('今日', fmt.format(_todayViews)),
-                _pvKpi('今月', fmt.format(_monthViews)),
-                _pvKpi('累計', fmt.format(_totalViews)),
-              ],
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              height: 180,
-              child: _isLoadingStats
-                  ? const Center(child: CircularProgressIndicator())
-                  : (_pvSpots.isEmpty
-                      ? const Center(child: Text('表示できるデータがまだありません。'))
-                      : LineChart(
-                          LineChartData(
-                            minY: 0,
-                            gridData: const FlGridData(show: true),
-                            borderData: FlBorderData(show: true),
-                            titlesData: FlTitlesData(
-                              topTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false),
-                              ),
-                              leftTitles: const AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 34,
-                                ),
-                              ),
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 28,
-                                  interval: labelInterval.toDouble(),
-                                  getTitlesWidget: (value, meta) {
-                                    final index = value.toInt();
-                                    final label =
-                                        index >= 0 && index < _pvLabels.length
-                                            ? _pvLabels[index]
-                                            : '';
-                                    return SideTitleWidget(
-                                      meta: meta,
-                                      child: Text(
-                                        label,
-                                        style: const TextStyle(fontSize: 10),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            lineBarsData: [
-                              LineChartBarData(
-                                spots: _pvSpots,
-                                isCurved: false,
-                                barWidth: 2.4,
-                                color: Colors.blue,
-                                dotData: const FlDotData(show: false),
-                              ),
-                            ],
-                          ),
-                        )),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'グラフは今月の日次 LP View です。',
-              style: TextStyle(fontSize: 11, color: Colors.black45),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildPublicMemoSection() {
     return Card(
@@ -2108,30 +1971,6 @@ $input
     );
   }
 
-  Widget _pvKpi(String label, String value) {
-    return Container(
-      width: 112,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTrialSection() {
     return KeyedSubtree(
@@ -2784,41 +2623,56 @@ $input
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // 1. ヒーロー
                   _buildHeroSection(),
                   const SizedBox(height: 20),
-                  _buildBuildInPublicSection(),
-                  const SizedBox(height: 20),
+                  // 2. 実績数字で信頼感を作る
                   _buildSocialProofStatsSection(),
                   const SizedBox(height: 20),
-                  _buildMigrationGuideSection(),
-                  const SizedBox(height: 20),
-                  _buildComparisonLinksSection(),
-                  const SizedBox(height: 20),
-                  _buildPricingComparisonSection(),
-                  const SizedBox(height: 20),
-                  _buildUniqueValueSection(),
-                  const SizedBox(height: 20),
-                  _buildGetStartedStepsSection(),
-                  const SizedBox(height: 20),
-                  _buildImportCtaSection(),
-                  const SizedBox(height: 20),
-                  _buildReferralInviteSection(),
-                  if (_pendingReferralCode != null) const SizedBox(height: 20),
-                  _buildGrowthSection(),
-                  const SizedBox(height: 20),
-                  _buildTrialSection(),
-                  const SizedBox(height: 20),
-                  _buildFaqSection(),
-                  const SizedBox(height: 20),
+                  // 3. すぐ登録できるよう認証フォームを最上位に
                   _buildAuthSection(),
                   const SizedBox(height: 20),
+                  // 4. 独自価値の訴求
+                  _buildUniqueValueSection(),
+                  const SizedBox(height: 20),
+                  // 5. 始め方のシンプルさを見せる
+                  _buildGetStartedStepsSection(),
+                  const SizedBox(height: 20),
+                  // 6. 移行しやすさ（Notion/Evernote ユーザー向け）
+                  _buildMigrationGuideSection(),
+                  const SizedBox(height: 20),
+                  // 7. 価格比較（無料を強調）
+                  _buildPricingComparisonSection(),
+                  const SizedBox(height: 20),
+                  // 8. 登録なしでまず試す
+                  _buildTrialSection(),
+                  const SizedBox(height: 20),
+                  // 9. FAQ で不安を解消
+                  _buildFaqSection(),
+                  const SizedBox(height: 20),
+                  // 10. インポート CTA
+                  _buildImportCtaSection(),
+                  const SizedBox(height: 20),
+                  // 11. 21社との機能比較
+                  _buildComparisonLinksSection(),
+                  const SizedBox(height: 20),
+                  // 12. Build in Public（信頼・透明性）
+                  _buildBuildInPublicSection(),
+                  const SizedBox(height: 20),
+                  // 13. 公開メモのショーケース
                   _buildPublicMemoSection(),
                   const SizedBox(height: 20),
-                  _buildShareSection(),
-                  const SizedBox(height: 20),
+                  // 14. 紹介（紹介コードがある場合のみ表示）
+                  _buildReferralInviteSection(),
+                  if (_pendingReferralCode != null) const SizedBox(height: 20),
+                  // 15. ウェイトリスト・機能リクエスト
                   _buildWaitlistAndFeatureRequestSection(),
                   const SizedBox(height: 20),
-                  _buildPvSection(),
+                  // 16. ライブ登録者数バナー
+                  _buildGrowthSection(),
+                  const SizedBox(height: 20),
+                  // 17. シェア
+                  _buildShareSection(),
                 ],
               ),
             ),

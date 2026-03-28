@@ -27,6 +27,19 @@ class ElectionRegionalKpiChart extends StatefulWidget {
 
 class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   final GlobalKey _barChartKey = GlobalKey();
+  int _sortColumnIndex = 0;
+  bool _sortAscending = true;
+
+  void _onSort(int columnIndex, bool ascending) {
+    setState(() {
+      if (_sortColumnIndex == columnIndex) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortColumnIndex = columnIndex;
+        _sortAscending = ascending;
+      }
+    });
+  }
 
   Future<void> _printChart() async {
     try {
@@ -53,8 +66,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       }
       
       // 日本語フォントの読み込み（文字化け防止）
-      final ttfRegular = await PdfGoogleFonts.notoSansJPRegular();
-      final ttfBold = await PdfGoogleFonts.notoSansJPBold();
+      final ttfRegular = await PdfGoogleFonts.notoSansJpRegular();
+      final ttfBold = await PdfGoogleFonts.notoSansJpBold();
 
       // ロゴ画像をアセットから読み込む (パスはプロジェクトに合わせて調整してください)
       final logoData = await rootBundle.load('assets/icon/icon.png');
@@ -128,14 +141,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
                     pw.Image(logoImage, width: 24, height: 24),
-                    pw.Text(
-                      '自分株式会社 - 経営コックピット',
-                      style: pw.TextStyle(
-                        font: ttfRegular,
-                        fontSize: 8,
-                        color: PdfColors.grey500,
-                      ),
-                    ),
+                    pw.Text('自分株式会社 - 経営コックピット',
+                        style: pw.TextStyle(
+                            font: ttfRegular, fontSize: 8, color: PdfColors.grey500)),
                   ],
                 ),
               ],
@@ -164,6 +172,48 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
     final totalNew =
         widget.prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
     final totalTarget = totalRetain + totalNew;
+
+    // 月次進捗データの集計
+    final monthlyStats = <String, Map<String, int>>{};
+    for (final p in widget.prefectures) {
+      final month = p.endorsementDeadlineMonth;
+      if (month.isEmpty) continue;
+      monthlyStats.putIfAbsent(month, () => {'total': 0, 'confirmed': 0});
+      monthlyStats[month]!['total'] = monthlyStats[month]!['total']! + 1;
+      if (p.endorsementConfirmed) {
+        monthlyStats[month]!['confirmed'] = monthlyStats[month]!['confirmed']! + 1;
+      }
+    }
+    
+    final sortedMonths = monthlyStats.keys.toList();
+    sortedMonths.sort((a, b) {
+      final statA = monthlyStats[a]!;
+      final statB = monthlyStats[b]!;
+      
+      int cmp = 0;
+      switch (_sortColumnIndex) {
+        case 0:
+          cmp = a.compareTo(b);
+          break;
+        case 1:
+          cmp = statA['total']!.compareTo(statB['total']!);
+          break;
+        case 2:
+          cmp = statA['confirmed']!.compareTo(statB['confirmed']!);
+          break;
+        case 3:
+          final unconfA = statA['total']! - statA['confirmed']!;
+          final unconfB = statB['total']! - statB['confirmed']!;
+          cmp = unconfA.compareTo(unconfB);
+          break;
+        case 4:
+          final progA = statA['total']! > 0 ? statA['confirmed']! / statA['total']! : 0.0;
+          final progB = statB['total']! > 0 ? statB['confirmed']! / statB['total']! : 0.0;
+          cmp = progA.compareTo(progB);
+          break;
+      }
+      return _sortAscending ? cmp : -cmp;
+    });
 
     return Card(
       elevation: 2,
@@ -265,34 +315,22 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     TextSpan(
                                       text: '現職維持: ${data.incumbentRetentionTarget}\n',
                                       style: TextStyle(
-                                        color: Colors.blue.shade300,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.normal,
-                                      ),
+                                          color: Colors.blue.shade300, fontSize: 12, fontWeight: FontWeight.normal),
                                     ),
                                     TextSpan(
                                       text: '新人擁立: ${data.newCandidateTarget}\n',
                                       style: TextStyle(
-                                        color: newTargetColor,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.normal,
-                                      ),
+                                          color: newTargetColor, fontSize: 12, fontWeight: FontWeight.normal),
                                     ),
                                     TextSpan(
                                       text: '純増割当: ${data.additionalSeatTarget}\n',
                                       style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.normal,
-                                      ),
+                                          color: Colors.white70, fontSize: 12, fontWeight: FontWeight.normal),
                                     ),
                                     TextSpan(
                                       text: '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
                                       style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 );
@@ -405,6 +443,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         _buildLegend(Colors.green.shade400, '新人擁立目標 (達成)'),
                       ],
                     ),
+                    const SizedBox(height: 32),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '月次公認内定 進捗状況',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMonthlyTable(sortedMonths, monthlyStats),
                   ],
                 ),
               ),
@@ -445,6 +493,101 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
       ],
+    );
+  }
+
+  void _showMonthlyDetailsDialog(BuildContext context, String month) {
+    final prefecturesInMonth = widget.prefectures.where((p) => p.endorsementDeadlineMonth == month).toList();
+    // 未確定の県連が上に来るようにソート
+    prefecturesInMonth.sort((a, b) {
+      if (a.endorsementConfirmed == b.endorsementConfirmed) {
+        return a.prefecture.compareTo(b.prefecture);
+      }
+      return a.endorsementConfirmed ? 1 : -1;
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('$month 公認内定期限の県連一覧'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: prefecturesInMonth.length,
+              itemBuilder: (context, index) {
+                final p = prefecturesInMonth[index];
+                return ListTile(
+                  leading: Icon(
+                    p.endorsementConfirmed ? Icons.check_circle : Icons.warning_amber_rounded,
+                    color: p.endorsementConfirmed ? Colors.green : Colors.orange,
+                  ),
+                  title: Text(p.prefecture, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名'),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMonthlyTable(List<String> sortedMonths, Map<String, Map<String, int>> stats) {
+    if (sortedMonths.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: DataTable(
+          showCheckboxColumn: false,
+          sortColumnIndex: _sortColumnIndex,
+          sortAscending: _sortAscending,
+          headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
+          columns: [
+            DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
+            DataColumn(label: const Text('対象県連数'), numeric: true, onSort: _onSort),
+            DataColumn(label: const Text('確定済み'), numeric: true, onSort: _onSort),
+            DataColumn(label: const Text('未確定'), numeric: true, onSort: _onSort),
+            DataColumn(label: const Text('進捗率'), numeric: true, onSort: _onSort),
+          ],
+          rows: sortedMonths.map((month) {
+            final s = stats[month]!;
+            final total = s['total']!;
+            final confirmed = s['confirmed']!;
+            final unconfirmed = total - confirmed;
+            final progress = total > 0 ? (confirmed / total * 100).toStringAsFixed(1) : '0.0';
+
+            return DataRow(
+              onSelectChanged: (_) => _showMonthlyDetailsDialog(context, month),
+              color: unconfirmed > 0
+                  ? WidgetStateProperty.all(Colors.yellow.shade50)
+                  : (total > 0 && unconfirmed == 0)
+                      ? WidgetStateProperty.all(Colors.green.shade50)
+                      : null,
+              cells: [
+                DataCell(Text(month, style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(Text(total.toString())),
+                DataCell(Text(confirmed.toString(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green))),
+                DataCell(Text(unconfirmed.toString(), style: TextStyle(color: unconfirmed > 0 ? Colors.red : null))),
+                DataCell(Text('$progress%')),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
