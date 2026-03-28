@@ -40,7 +40,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('growth-import-commit', 'インポート実行', true, '/import', 'インポートページ > 実行'),
     _FnDef('notify-feature-request', '機能リクエスト通知', true, '/feature-requests', '機能リクエスト'),
     _FnDef('send-waitlist-notification', 'ウェイトリスト通知', true, '/admin', '管理者ダッシュボード'),
-    _FnDef('analyze-reality', 'リアリティチェック AI', false, '/reality-check', '現実直視ノート (UI未連携)'),
+    _FnDef('analyze-reality', 'リアリティチェック AI', true, '/reality-check', 'ホーム > 現実直視ノート'),
     _FnDef('generate-daily-challenges', 'デイリーチャレンジ生成', true, '/home', 'ホーム > デイリーチャレンジカード'),
     _FnDef('generate-quote-image', '名言画像生成', true, '/home', 'ホーム > モチベーションカード'),
     _FnDef('share-quote', '名言シェア URL', true, '/home', 'ホーム > モチベーションカード > シェア'),
