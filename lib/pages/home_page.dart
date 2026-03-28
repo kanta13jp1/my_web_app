@@ -36,6 +36,7 @@ import 'mindless_task_page.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
+import '../widgets/profile_completion_banner.dart';
 import '../widgets/edge_function_summary_card.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
@@ -3962,6 +3963,7 @@ abstinence_slip_details: $slipDetailsText
                               const WelcomeNewUserCard(),
                               const SizedBox(height: 10),
                             ],
+                            const ProfileCompletionBanner(),
                             const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
                             _buildMonthlyCashflowPriorityCard(
@@ -6616,12 +6618,11 @@ class _PersonalityTypeBanner extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () =>
-                Navigator.of(context).pushNamed('/personality-test', arguments: 1),
+            onTap: () => Navigator.of(context)
+                .pushNamed('/personality-test', arguments: 1),
           ),
         );
       },
     );
   }
 }
-
