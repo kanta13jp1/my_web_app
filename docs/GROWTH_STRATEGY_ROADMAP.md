@@ -904,6 +904,23 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 6. **docs 整合性修正**
    - CLAUDE.md: "14競合" → "21競合"
    - GROWTH_STRATEGY_ROADMAP.md: "19のサービス" → "21のサービス"
+   - Notion機能カバー率: 54% → 69% に更新（短期ギャップ補填完了）
+
+7. **Edge Function UI監査 Supabase連携**
+   - `edge-function-audit.yml` を更新: 毎時audit結果を `edge_function_ui_status` テーブルにupsert
+   - migration: `20260328000008_create_edge_function_ui_status.sql`
+   - admin dashboardからリアルタイムでEdge Function UIカバレッジを確認可能に
+
+8. **選挙知能機能 (VSCode+Web連携)**
+   - `local-election-intelligence` Edge Function 追加 (Web)
+   - `election_victory_page.dart` UIを実装 (VSCode)
+   - `cho_office_page.dart`: CHO組織オフィスページ (VSCode)
+   - `election_regional_kpi_chart.dart`: 地域別KPIチャート (VSCode)
+
+9. **仮想秘書強化 (VSCode)**
+   - `quick_task_input_card.dart` 追加: 会話でタスクを自動作成
+   - AIゴール分解カード追加
+   - ユーザーマニュアル更新（仮想秘書・AIゴール分解）
 
 **flutter analyze: 0 エラー維持**
 
