@@ -16,6 +16,7 @@ import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
 import '../services/home_tool_usage_service.dart';
+import '../services/personality_test_service.dart';
 import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
 
@@ -32,26 +33,10 @@ import 'election_victory_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
-import '../widgets/blog_post_summary_card.dart';
-import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
-import '../widgets/referral_share_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
-import '../widgets/daily_motivation_card.dart';
-import '../widgets/daily_challenge_card.dart';
 import '../widgets/welcome_new_user_card.dart';
-import '../widgets/login_streak_card.dart';
-import '../widgets/daily_habits_summary_card.dart';
-import '../widgets/leaderboard_card.dart';
-import '../widgets/social_proof_banner.dart';
-import '../widgets/activity_calendar_card.dart';
-import '../widgets/growth_trend_card.dart';
 import '../widgets/edge_function_summary_card.dart';
-import '../widgets/profile_progress_card.dart';
-import '../widgets/build_in_public_share_card.dart';
-import '../widgets/goal_decomposer_card.dart';
-import '../widgets/quick_task_input_card.dart';
-import '../widgets/note_search_card.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
 
@@ -3975,44 +3960,10 @@ abstinence_slip_details: $slipDetailsText
                             const SizedBox(height: 10),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
+                              const SizedBox(height: 10),
                             ],
-                            const NoteSearchCard(),
-                            const SizedBox(height: 8),
-                            const QuickTaskInputCard(),
-                            const LoginStreakCard(),
-                            const SizedBox(height: 8),
-                            const ActivityCalendarCard(),
-                            const SizedBox(height: 8),
-                            const GrowthTrendCard(),
-                            const SizedBox(height: 8),
-                            const DailyHabitsSummaryCard(),
-                            const SizedBox(height: 8),
-                            const ProfileProgressCard(),
-                            const SocialProofBanner(),
-                            const SizedBox(height: 8),
-                            const ReferralShareCard(),
-                            const SizedBox(height: 8),
-                            const BuildInPublicShareCard(),
-                            const LeaderboardCard(),
+                            const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
-                            const NotionFeatureComparisonCard(),
-                            const SizedBox(height: 10),
-                            _UserManualBanner(),
-                            const SizedBox(height: 10),
-                            const DevelopmentAchievementsCard(),
-                            const SizedBox(height: 10),
-                            const GoalDecomposerCard(),
-                            const SizedBox(height: 6),
-                            _ActivityFeedBanner(),
-                            const SizedBox(height: 10),
-                            const BlogPostSummaryCard(),
-                            const SizedBox(height: 10),
-                            const DailyMotivationCard(),
-                            const SizedBox(height: 10),
-                            const DailyChallengeCard(),
-                            const SizedBox(height: 6),
-                            _RewardsBanner(),
-                            const SizedBox(height: 14),
                             _buildMonthlyCashflowPriorityCard(
                               context,
                               opsSnapshot,
@@ -4387,6 +4338,15 @@ abstinence_slip_details: $slipDetailsText
           highlightedToolIds: highlightedToolIds,
           badgeLabels: badgeLabels,
           autofocusSearch: true,
+        ),
+      ),
+      _MenuData(
+        '成長・支援',
+        Icons.space_dashboard_outlined,
+        Colors.teal,
+        () => _runTrackedAction(
+          'home-insights',
+          () => Navigator.of(context).pushNamed('/home-insights'),
         ),
       ),
     ]);
@@ -6571,175 +6531,97 @@ class _CalendarDayStatus {
   });
 }
 
-// ---------------------------------------------------------------------------
-// User manual banner
-// ---------------------------------------------------------------------------
+class _PersonalityTypeBanner extends StatelessWidget {
+  const _PersonalityTypeBanner();
 
-class _ActivityFeedBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pushNamed('/activity-feed'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.teal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.dynamic_feed_outlined,
-                size: 18,
-                color: Colors.teal,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'アクティビティフィード',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.teal,
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return const SizedBox.shrink();
+
+    return FutureBuilder(
+      future: PersonalityTestService().getLatestTestResult(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        final test = snapshot.data;
+        if (test != null && test.personalityType != null) {
+          final typeCode = test.personalityType!;
+          final details =
+              PersonalityTestService().getPersonalityTypeDetails(typeCode);
+          return Card(
+            elevation: 0,
+            color: const Color(0xFFF3E8FF),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDD6FE),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.psychology_alt,
+                  color: Color(0xFF7C3AED),
                 ),
               ),
-            ),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.teal),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RewardsBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pushNamed('/rewards'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.emoji_events_outlined,
-                size: 18,
-                color: Colors.amber,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                '報酬・実績バッジを確認する',
-                style: TextStyle(
+              title: Text(
+                '性格タイプ: $typeCode — ${details.nameJa}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber,
                 ),
               ),
+              subtitle: Text(
+                details.noteAdvice.first,
+                style: const TextStyle(fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/personality-test-result', arguments: test.id),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.amber),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-
-class _UserManualBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor =
-        isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF);
-    final borderColor =
-        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).pushNamed('/user-manual'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
+          );
+        }
+        return Card(
+          elevation: 0,
+          color: const Color(0xFFF3E8FF),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          child: ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                color: const Color(0xFFDDD6FE),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                Icons.menu_book_outlined,
-                size: 20,
-                color: Color(0xFF6366F1),
+                Icons.psychology_alt_outlined,
+                color: Color(0xFF7C3AED),
               ),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ユーザーマニュアル',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6366F1),
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    '実装済み全機能の操作手順を確認できます',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
+            title: const Text(
+              '性格診断 (16タイプ)',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: Color(0xFF6366F1),
+            subtitle: const Text(
+              'あなたの性格タイプに合ったメモ術・学習スタイルを診断',
+              style: TextStyle(fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+            onTap: () =>
+                Navigator.of(context).pushNamed('/personality-test', arguments: 1),
+          ),
+        );
+      },
     );
   }
 }
+

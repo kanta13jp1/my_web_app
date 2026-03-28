@@ -35,6 +35,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
@@ -48,6 +49,7 @@ import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
+import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
 import 'package:my_web_app/pages/work_menu_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
@@ -247,6 +249,11 @@ class MyApp extends StatelessWidget {
               builder: (_) => const ElectionVictoryPage(),
               settings: const RouteSettings(name: '/local-election-700'),
             );
+          case '/home-insights':
+            return MaterialPageRoute(
+              builder: (_) => const HomeInsightsPage(),
+              settings: const RouteSettings(name: '/home-insights'),
+            );
           case '/work-menu':
             return MaterialPageRoute(
               builder: (_) => const WorkMenuPage(),
@@ -388,6 +395,12 @@ class MyApp extends StatelessWidget {
             final testId = settings.arguments as int? ?? 1;
             return MaterialPageRoute(
               builder: (_) => PersonalityTestQuestionsPage(testId: testId),
+            );
+          case '/personality-test-result':
+            final resultTestId = settings.arguments as int? ?? 1;
+            return MaterialPageRoute(
+              builder: (_) =>
+                  PersonalityTestResultPage(testId: resultTestId),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
