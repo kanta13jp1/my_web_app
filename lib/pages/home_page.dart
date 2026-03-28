@@ -77,6 +77,7 @@ import '../widgets/growth_trend_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/profile_progress_card.dart';
 import '../widgets/build_in_public_share_card.dart';
+import '../widgets/goal_decomposer_card.dart';
 import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -3919,6 +3920,8 @@ abstinence_slip_details: $slipDetailsText
                             _UserManualBanner(),
                             const SizedBox(height: 10),
                             const DevelopmentAchievementsCard(),
+                            const SizedBox(height: 10),
+                            const GoalDecomposerCard(),
                             const SizedBox(height: 6),
                             _ActivityFeedBanner(),
                             const SizedBox(height: 10),
