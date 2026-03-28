@@ -43,6 +43,7 @@ import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
+import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -191,7 +192,7 @@ class MyApp extends StatelessWidget {
             );
           case '/referral':
             return MaterialPageRoute(
-              builder: (_) => const LandingPage(),
+              builder: (_) => const ReferralPage(),
               settings: RouteSettings(name: settings.name),
             );
           case '/import':

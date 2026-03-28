@@ -13,8 +13,9 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
   final _supabase = Supabase.instance.client;
   bool _loading = false;
   final Map<String, Map<String, dynamic>> _testResults = {};
+  final Set<String> _expandedNavigation = {};
 
-  // 全 Edge Functions の定義 (name, description, hasUi, uiPath, uiLabel)
+  // 全 Edge Functions の定義 (name, description, hasUi, uiPath, uiLabel, uiNavigation)
   static const List<Map<String, dynamic>> _functions = [
     {
       'name': 'get-home-dashboard',
@@ -22,6 +23,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム画面',
+      'uiNavigation': 'ホーム → KPIサマリー (CMOオフィス)',
       'category': 'core',
     },
     {
@@ -30,6 +32,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/',
       'uiLabel': 'ランディングページ',
+      'uiNavigation': 'ホーム → 開発実績カード',
       'category': 'core',
     },
     {
@@ -38,6 +41,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: GrowthRoadmapProgressCard',
+      'uiNavigation': 'ホーム → 進捗バー (GrowthRoadmapProgressCard)',
       'category': 'growth',
     },
     {
@@ -46,6 +50,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: CompetitorFeatureComparisonCard',
+      'uiNavigation': 'ホーム → 競合機能比較カード',
       'category': 'growth',
     },
     {
@@ -54,6 +59,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/agents',
       'uiLabel': 'AI 組織 OS / 各 AI ページ',
+      'uiNavigation': 'ホーム → AI秘書 / ノート編集 → AIアシスタントメニュー',
       'category': 'ai',
     },
     {
@@ -62,6 +68,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ノート検索',
+      'uiNavigation': 'ホーム → AI ノート検索 (AI ノート検索メニュー)',
       'category': 'ai',
     },
     {
@@ -70,6 +77,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/note-editor',
       'uiLabel': 'ノートエディタ',
+      'uiNavigation': 'ノート編集 → タグ提案ボタン',
       'category': 'ai',
     },
     {
@@ -78,6 +86,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード (手動実行)',
+      'uiNavigation': null,
       'category': 'schedule',
     },
     {
@@ -86,6 +95,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': null,
       'category': 'schedule',
     },
     {
@@ -94,6 +104,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': '管理者ダッシュボード → サポートチケット',
       'category': 'schedule',
     },
     {
@@ -102,6 +113,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': null,
       'category': 'schedule',
     },
     {
@@ -110,6 +122,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード > X投稿',
+      'uiNavigation': null,
       'category': 'social',
     },
     {
@@ -118,6 +131,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/public-memos',
       'uiLabel': '公開メモ シェアボタン',
+      'uiNavigation': 'ノート共有時に自動呼び出し',
       'category': 'growth',
     },
     {
@@ -126,6 +140,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/referral',
       'uiLabel': '紹介プログラム',
+      'uiNavigation': '紹介プログラムページ',
       'category': 'growth',
     },
     {
@@ -134,6 +149,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/',
       'uiLabel': 'ランディングページ',
+      'uiNavigation': '自動: 紹介・シェア時に呼び出し',
       'category': 'growth',
     },
     {
@@ -142,6 +158,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/growth-mission',
       'uiLabel': '成長ミッション',
+      'uiNavigation': '管理者ダッシュボード → 成長レポート',
       'category': 'growth',
     },
     {
@@ -150,6 +167,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/growth-mission',
       'uiLabel': '成長ミッション',
+      'uiNavigation': '管理者ダッシュボード → グロースコマンドセンター',
       'category': 'growth',
     },
     {
@@ -158,6 +176,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/growth-mission',
       'uiLabel': '成長ミッション',
+      'uiNavigation': '管理者ダッシュボード → 週次ダイジェスト',
       'category': 'growth',
     },
     {
@@ -166,6 +185,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/import',
       'uiLabel': 'インポートページ',
+      'uiNavigation': 'インポートページ → データインポートプレビュー',
       'category': 'data',
     },
     {
@@ -174,6 +194,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/import',
       'uiLabel': 'インポートページ',
+      'uiNavigation': 'インポートページ → データインポート確定',
       'category': 'data',
     },
     {
@@ -182,6 +203,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/feature-requests',
       'uiLabel': '機能リクエスト',
+      'uiNavigation': null,
       'category': 'notification',
     },
     {
@@ -190,6 +212,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': null,
       'category': 'notification',
     },
     {
@@ -198,6 +221,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': '/reality-check',
       'uiLabel': 'リアリティチェック (未連携)',
+      'uiNavigation': '現実チェックページ (現実分析ボタン)',
       'category': 'ai',
     },
     {
@@ -206,6 +230,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: DailyChallengeCard',
+      'uiNavigation': 'ホーム → デイリーチャレンジカード',
       'category': 'ai',
     },
     {
@@ -214,6 +239,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: DailyMotivationCard',
+      'uiNavigation': null,
       'category': 'ai',
     },
     {
@@ -222,6 +248,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: DailyMotivationCard',
+      'uiNavigation': null,
       'category': 'social',
     },
     {
@@ -230,6 +257,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': '管理者ダッシュボード → ユーザー管理',
       'category': 'admin',
     },
     {
@@ -238,6 +266,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード: ScheduleTaskMonitorCard',
+      'uiNavigation': null,
       'category': 'admin',
     },
     {
@@ -246,6 +275,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード (未実装)',
+      'uiNavigation': null,
       'category': 'growth',
     },
     {
@@ -254,6 +284,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': '/agents',
       'uiLabel': 'AI 組織 OS (未連携)',
+      'uiNavigation': null,
       'category': 'ai',
     },
     {
@@ -262,6 +293,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': '選挙戦略ページ',
+      'uiNavigation': '選挙戦略ページ',
       'category': 'ai',
     },
     {
@@ -270,6 +302,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': null,
       'uiLabel': 'サーバーサイド専用',
+      'uiNavigation': null,
       'category': 'core',
     },
     {
@@ -278,6 +311,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': false,
       'uiPath': '/public-memos',
       'uiLabel': '公開メモ一覧 (未連携)',
+      'uiNavigation': null,
       'category': 'data',
     },
     {
@@ -286,6 +320,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'hasUi': true,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード',
+      'uiNavigation': null,
       'category': 'growth',
     },
   ];
@@ -490,8 +525,10 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
     final hasUi = fn['hasUi'] as bool;
     final uiLabel = fn['uiLabel'] as String?;
     final uiPath = fn['uiPath'] as String?;
+    final uiNavigation = fn['uiNavigation'] as String?;
     final testResult = _testResults[name];
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final navExpanded = _expandedNavigation.contains(name);
 
     return Card(
       color: cardColor,
@@ -505,125 +542,231 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
               : const Color(0xFFEF4444).withAlpha(40),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              hasUi ? Icons.check_circle : Icons.cancel,
-              size: 18,
-              color: hasUi
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFFEF4444),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isDark ? Colors.white : const Color(0xFF1E293B),
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    description,
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey[500]),
-                  ),
-                  if (uiLabel != null) ...[
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          hasUi ? Icons.link : Icons.link_off,
-                          size: 12,
-                          color: hasUi
-                              ? const Color(0xFF6366F1)
-                              : Colors.grey[400],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  hasUi ? Icons.check_circle : Icons.cancel,
+                  size: 18,
+                  color: hasUi
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFEF4444),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1E293B),
+                          fontFamily: 'monospace',
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            uiLabel,
-                            style: TextStyle(
-                              fontSize: 11,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style:
+                            TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                      if (uiLabel != null) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              hasUi ? Icons.link : Icons.link_off,
+                              size: 12,
                               color: hasUi
                                   ? const Color(0xFF6366F1)
                                   : Colors.grey[400],
                             ),
-                            overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                uiLabel,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: hasUi
+                                      ? const Color(0xFF6366F1)
+                                      : Colors.grey[400],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (testResult != null) ...[
+                        const SizedBox(height: 4),
+                        Builder(
+                          builder: (_) {
+                            final ok = testResult['ok'] ?? false;
+                            final status = testResult['status'] ?? 0;
+                            final color = ok
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withAlpha(20),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                ok ? 'HTTP $status OK' : 'HTTP $status NG',
+                                style: TextStyle(fontSize: 10, color: color),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (uiNavigation != null)
+                      Tooltip(
+                        message: 'UIでの操作方法を表示',
+                        child: IconButton(
+                          onPressed: () => setState(() {
+                            if (navExpanded) {
+                              _expandedNavigation.remove(name);
+                            } else {
+                              _expandedNavigation.add(name);
+                            }
+                          }),
+                          icon: Icon(
+                            navExpanded
+                                ? Icons.touch_app
+                                : Icons.touch_app_outlined,
+                            size: 18,
+                            color: navExpanded
+                                ? const Color(0xFFF59E0B)
+                                : Colors.grey[400],
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                        ),
+                      ),
+                    if (uiPath != null && !hasUi)
+                      TextButton(
+                        onPressed: () {
+                          if (uiPath.startsWith('/')) {
+                            Navigator.pushNamed(context, uiPath);
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(0, 28),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: const Text(
+                          '実装へ',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    IconButton(
+                      onPressed: _loading ? null : () => _testFunction(name),
+                      icon: const Icon(Icons.play_circle_outline, size: 18),
+                      tooltip: 'テスト呼び出し',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (navExpanded && uiNavigation != null) ...[
+            const Divider(height: 1, indent: 10, endIndent: 10),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.touch_app,
+                    size: 14,
+                    color: Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'UIでの操作方法',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFFB45309),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withAlpha(15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xFFF59E0B).withAlpha(40),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.navigation,
+                                size: 12,
+                                color: Color(0xFFF59E0B),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  uiNavigation,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ],
-                  if (testResult != null) ...[
-                    const SizedBox(height: 4),
-                    Builder(
-                      builder: (_) {
-                        final ok = testResult['ok'] ?? false;
-                        final status = testResult['status'] ?? 0;
-                        final color = ok
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFFEF4444);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withAlpha(20),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            ok ? 'HTTP $status OK' : 'HTTP $status NG',
-                            style: TextStyle(fontSize: 10, color: color),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (uiPath != null && !hasUi)
-                  TextButton(
-                    onPressed: () {
-                      if (uiPath.startsWith('/')) {
-                        Navigator.pushNamed(context, uiPath);
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, 28),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    child: const Text('実装へ', style: TextStyle(fontSize: 11)),
-                  ),
-                IconButton(
-                  onPressed: _loading ? null : () => _testFunction(name),
-                  icon: const Icon(Icons.play_circle_outline, size: 18),
-                  tooltip: 'テスト呼び出し',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 28,
-                  ),
-                ),
-              ],
-            ),
           ],
-        ),
+        ],
       ),
     );
   }
