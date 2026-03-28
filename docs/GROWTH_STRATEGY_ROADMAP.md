@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session5 (全文検索安定化・LP AI組織OS・互換性テスト・growth_plans21社完全対応・CHO室Coming soon解消)
+最終更新: 2026-03-28 Session6+daily-development (比較ページCVRトラッキング・touch_comparison_{key}シグナル・signup_submit_comparison追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -167,6 +167,7 @@
   - `CSO OFFICE` 以降の探索系メニューを `業務メニュー` へ分離し、ホームには日次導線・KPI・特別案件・クイックアクセスを残す構成へ整理
   - `業務メニュー` ページに機能検索・最近使った機能・部署別セクションを実装し、ホームから `業務メニュー` / `機能を探す` の 2 導線で遷移可能に改修
   - `SharedPreferences` による最近使った機能トラッキングを追加し、ホーム上で直近導線を即再開できるよう改善
+- **比較ページ CVR トラッキング実装** (2026-03-28 daily-development): `/vs-notion` など14比較ページの訪問時に `touch_comparison_{key}` シグナルを `GrowthAcquisitionService` に記録。登録時に `signup_submit_comparison` を帰属させることで比較ページ経由のCVRを計測可能に。`_ComparisonShell` を `StatelessWidget`→`StatefulWidget` へ移行し `initState` で fire-and-forget 記録。ロードマップ「route 単位の流入 KPI」を解消
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
@@ -301,6 +302,14 @@
 - **機能リクエスト ステータス変更通知** (session19): `notify-feature-request` Edge Function 新規作成。管理者がステータスを `done`/`in_progress` に変更した際、投稿者メールへ Resend API で通知メール送信。CI/CD に自動デプロイ追加
 - **Admin: 機能リクエスト UUID バグ修正** (session19): `req['id'] as int` → `req['id']?.toString()` に修正（DB の id 型は uuid）。ステータス変更後に通知確認ダイアログを表示する UX を追加
 - **LP: 固定フローティング CTA ボタン追加** (session19): LP に `FloatingActionButton.extended` を追加。「無料で始める」ボタンが常時表示され、タップすると登録フォームへスクロール
+
+### 2026-03-28 Session6 実装済み
+
+- **home_page.dart 大規模クリーンアップ** (Session6): 31個の未使用importを削除。`_MenuData`から未使用パラメータ(isHighlighted/badgeLabel/isLocked/lockedReason)を除去。`_buildGridMenu`のデッドコード除去。`_buildHighlightedToolIds`・`_buildToolBadgeLabels`・`_showLockedMenuSnackBar`の未使用メソッド削除。flutter analyze 0件維持
+- **home_tool_catalog.dartに性格診断追加** (Session6): `personality-test` エントリを `knowledge` セクションに追加。WorkMenuPage経由で業務メニューからアクセス可能に
+- **Notionカバレッジ機能ステータス修正** (Session6): `growth_roadmap_progress_card.dart`の5項目を正確なステータスに更新(バージョン履歴/全文検索/テンプレート/テーブルビュー/カンバン を `notYet`/`partial` → `done`)。カバレッジ69% → 88% に修正
+- **LP 独自機能訴求を8つのこと** (Session6): `_buildUniqueValueSection`に性格診断(16タイプMBTI)を追加。「7つのこと」→「8つのこと」に更新
+- **SEO meta tag修正** (Session6): index.htmlのog:description/twitter:title/twitter:descriptionの「20競合」→「21競合」に修正（実態に合わせた一貫性確保）
 
 ### 残課題
 
@@ -458,7 +467,7 @@
 
 ---
 
-## 7B. Notion 機能ギャップ分析 (2026-03-25 時点)
+## 7B. Notion 機能ギャップ分析 (2026-03-28 更新)
 
 ホーム画面に `NotionFeatureComparisonCard` を実装し、32 機能を網羅的に整理した。
 
@@ -466,13 +475,13 @@
 
 | ステータス | 件数 | 主な機能 |
 | --- | --- | --- |
-| 実装済み | 14 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索 |
+| 実装済み | 19 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断 |
 | 部分実装 | 2 | コードブロック、API連携 |
 | 開発中 | 2 | モバイルアプリ、デスクトップアプリ |
-| 未実装 | 8 | 全文検索強化、コラボ、コメント、リアルタイム共同編集など |
-| 独自機能 | 8 | マインドマップ、記憶ドリル、AIエージェント組織(20人)、経営コックピット、Growth進捗可視化、Referral制度、選挙知能、Build in Public |
+| 未実装 | 3 | コラボ、コメント、リアルタイム共同編集など |
+| 独自機能 | 9 | マインドマップ、記憶ドリル、AIエージェント組織(20人)、経営コックピット、Growth進捗可視化、Referral制度、選挙知能、Build in Public、性格診断(16タイプ) |
 
-Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 69%** (2026-03-28更新)
+Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 88%** (2026-03-28 Session6更新)
 
 ### 優先ギャップ補填ロードマップ
 
@@ -482,11 +491,10 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - ~~**バージョン履歴 (最低限)**~~: ✅ 2026-03-28実装完了 (30件閲覧・復元)
 - ~~**テーブルビュー (Database)**~~: ✅ 2026-03-28実装完了 (動的カラム定義)
 - ~~**全文検索の強化**~~: ✅ 2026-03-28実装完了 (ILIKE フォールバック・searchMode 返却・NoteSearchCard ホーム追加)
+- ~~**カンバン/ボードビュー**~~: ✅ 実装済み (KanbanBoardPage)
 
 #### 中期 (3-12ヶ月) で補填すべきギャップ
 
-- **テーブルビュー (Database)**: Notion の最大差別化機能。シンプルな実装から始める
-- **カンバン/ボードビュー**: タスク管理としての利用を取り込む
 - **Team workspace**: リアルタイム共同編集の基盤
 - **コメント機能**: ページへのインラインコメント
 - **モバイルアプリ**: Flutter iOS/Android ビルドのリリース

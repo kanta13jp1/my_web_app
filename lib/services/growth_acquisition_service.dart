@@ -7,6 +7,7 @@ class GrowthAcquisitionService {
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
+  static const String touchComparison = 'touch_comparison';
 
   static const String importPreviewNotion = 'import_preview_notion';
   static const String importPreviewEvernote = 'import_preview_evernote';
@@ -19,6 +20,7 @@ class GrowthAcquisitionService {
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
+  static const String signupSubmitComparison = 'signup_submit_comparison';
 
   static const String _latestTouchpointKey = 'growth_latest_touchpoint';
   static const String _latestTouchpointUpdatedAtKey =
@@ -44,6 +46,9 @@ class GrowthAcquisitionService {
   }
 
   static String? signalForPagePath(String pagePath) {
+    if (pagePath.startsWith('/vs-')) {
+      return touchComparison;
+    }
     switch (pagePath) {
       case '/':
       case '/landing':
@@ -81,6 +86,8 @@ class GrowthAcquisitionService {
         return signupSubmitPublicMemo;
       case touchReferral:
         return signupSubmitReferral;
+      case touchComparison:
+        return signupSubmitComparison;
       default:
         return signupSubmitLanding;
     }
@@ -112,6 +119,14 @@ class GrowthAcquisitionService {
   Future<void> recordReferralTouch() async {
     await _persistLatestTouchpoint(touchReferral);
     await _recordSignal(touchReferral);
+  }
+
+  /// 比較ページ (/vs-*) 訪問時に呼び出す。
+  /// [competitorKey] は 'notion' / 'slack' 等のキー。
+  /// `touch_comparison_{key}` を記録し、latest touchpoint を `touch_comparison` に設定する。
+  Future<void> recordComparisonTouch(String competitorKey) async {
+    await _persistLatestTouchpoint(touchComparison);
+    await _recordSignal('touch_comparison_$competitorKey');
   }
 
   Future<void> recordImportPreview(String sourceType) async {

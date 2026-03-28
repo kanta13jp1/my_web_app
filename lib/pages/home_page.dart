@@ -4569,8 +4569,8 @@ abstinence_slip_details: $slipDetailsText
         final item = items[index];
         final cardColor = Theme.of(context).cardColor;
         final borderColor = Theme.of(context).dividerColor.withValues(
-          alpha: 0.25,
-        );
+              alpha: 0.25,
+            );
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),

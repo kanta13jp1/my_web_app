@@ -34,14 +34,14 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
   String _query = '';
 
   List<HomeToolEntry> get _entries => buildHomeToolCatalog(
-    openMorningBriefing: widget.openMorningBriefing,
-    openCfoOffice: widget.openCfoOffice,
-    openAbstinenceGuard: widget.openAbstinenceGuard,
-  );
+        openMorningBriefing: widget.openMorningBriefing,
+        openCfoOffice: widget.openCfoOffice,
+        openAbstinenceGuard: widget.openAbstinenceGuard,
+      );
 
   Map<String, HomeToolEntry> get _entryMap => <String, HomeToolEntry>{
-    for (final entry in _entries) entry.id: entry,
-  };
+        for (final entry in _entries) entry.id: entry,
+      };
 
   List<HomeToolEntry> get _filteredEntries {
     if (_query.trim().isEmpty) {
@@ -272,18 +272,18 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
               const SizedBox(height: 2),
               Text(
                 description,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  height: 1.4,
-                  color: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
-                ),
+                      height: 1.4,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+                    ),
               ),
             ],
           ),
@@ -294,7 +294,11 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
 
   Widget _buildEntryGrid(List<HomeToolEntry> entries) {
     final width = MediaQuery.of(context).size.width;
-    final crossAxisCount = width >= 1200 ? 3 : width >= 760 ? 2 : 1;
+    final crossAxisCount = width >= 1200
+        ? 3
+        : width >= 760
+            ? 2
+            : 1;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -349,7 +353,8 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: (isLocked ? Colors.blueGrey : entry.color).withValues(
+                    color:
+                        (isLocked ? Colors.blueGrey : entry.color).withValues(
                       alpha: 0.12,
                     ),
                     borderRadius: BorderRadius.circular(14),
@@ -405,9 +410,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        isLocked
-                            ? '先に必須導線を終えてから開くメニューです。'
-                            : entry.subtitle,
+                        isLocked ? '先に必須導線を終えてから開くメニューです。' : entry.subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(height: 1.4),

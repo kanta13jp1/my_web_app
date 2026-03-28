@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../services/growth_acquisition_service.dart';
 
 /// Competitor-specific comparison landing page.
 /// Each competitor gets a dedicated route (/vs-notion, /vs-evernote, …)
@@ -12,7 +16,7 @@ class ComparisonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = _competitorInfo[competitorKey.toLowerCase()] ?? _defaultInfo;
-    return _ComparisonShell(info: info);
+    return _ComparisonShell(info: info, competitorKey: competitorKey.toLowerCase());
   }
 }
 
@@ -493,9 +497,25 @@ final _competitorInfo = <String, _CompetitorInfo>{
 // Shell widget
 // ---------------------------------------------------------------------------
 
-class _ComparisonShell extends StatelessWidget {
+class _ComparisonShell extends StatefulWidget {
   final _CompetitorInfo info;
-  const _ComparisonShell({required this.info});
+  final String competitorKey;
+  const _ComparisonShell({required this.info, required this.competitorKey});
+
+  @override
+  State<_ComparisonShell> createState() => _ComparisonShellState();
+}
+
+class _ComparisonShellState extends State<_ComparisonShell> {
+  static const _acquisitionService = GrowthAcquisitionService();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_acquisitionService.recordComparisonTouch(widget.competitorKey));
+  }
+
+  _CompetitorInfo get _info => widget.info;
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +542,7 @@ class _ComparisonShell extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            info.accentColor.withAlpha(26),
+            _info.accentColor.withAlpha(26),
             const Color(0xFFEEF2FF),
           ],
         ),
@@ -533,10 +553,10 @@ class _ComparisonShell extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
             children: [
-              Text(info.emoji, style: const TextStyle(fontSize: 48)),
+              Text(_info.emoji, style: const TextStyle(fontSize: 48)),
               const SizedBox(height: 16),
               Text(
-                '${info.name} の代わりに\n自分株式会社を使う',
+                '${_info.name} の代わりに\n自分株式会社を使う',
                 style: const TextStyle(
                   fontFamily: 'Noto Serif JP',
                   fontSize: 32,
@@ -547,7 +567,7 @@ class _ComparisonShell extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                info.tagline,
+                _info.tagline,
                 style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF374151),
@@ -578,7 +598,7 @@ class _ComparisonShell extends StatelessWidget {
                     onPressed: () =>
                         Navigator.of(context).pushNamed('/import'),
                     icon: const Icon(Icons.upload_file, size: 18),
-                    label: Text('${info.name} からインポート'),
+                    label: Text('${_info.name} からインポート'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -605,14 +625,14 @@ class _ComparisonShell extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${info.name} の不満はありませんか？',
+                '${_info.name} の不満はありませんか？',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 16),
-              ...info.painPoints.map(
+              ..._info.painPoints.map(
                 (p) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
@@ -678,7 +698,7 @@ class _ComparisonShell extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
-                          info.name,
+                          _info.name,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                           textAlign: TextAlign.center,
                         ),
@@ -696,7 +716,7 @@ class _ComparisonShell extends StatelessWidget {
                       ),
                     ],
                   ),
-                  ...info.features.map(
+                  ..._info.features.map(
                     (f) => TableRow(
                       decoration: BoxDecoration(
                         border: Border(

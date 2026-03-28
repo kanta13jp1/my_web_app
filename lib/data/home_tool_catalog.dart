@@ -162,8 +162,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.wb_sunny_outlined,
       color: Colors.redAccent,
       keywords: const <String>['朝会', 'ブリーフィング', '優先順位'],
-      onOpen:
-          openMorningBriefing ??
+      onOpen: openMorningBriefing ??
           (context) => _pushPage(context, const MorningBriefingPage()),
     ),
     HomeToolEntry(
@@ -184,8 +183,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.shield_moon,
       color: Colors.redAccent,
       keywords: const <String>['禁欲', 'ガード', '規律'],
-      onOpen:
-          openAbstinenceGuard ??
+      onOpen: openAbstinenceGuard ??
           (context) => _pushPage(context, const AbstinenceGuardPage()),
     ),
     HomeToolEntry(
@@ -196,8 +194,8 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.account_balance_wallet,
       color: Colors.green,
       keywords: const <String>['財務', '資産', '収支', 'cfo'],
-      onOpen:
-          openCfoOffice ?? (context) => _pushPage(context, const CfoOfficePage()),
+      onOpen: openCfoOffice ??
+          (context) => _pushPage(context, const CfoOfficePage()),
     ),
     HomeToolEntry(
       id: 'mindless-task',

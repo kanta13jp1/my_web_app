@@ -1500,6 +1500,7 @@ $input
       (Icons.upload_file, '0xFF3B82F6', 'Notion/Evernoteから移行', 'CSVやENEXをそのままインポート。移行コストゼロ。'),
       (Icons.hub, '0xFFA855F7', 'マインドマップ', '思考の整理をビジュアルで。ノートと連携。'),
       (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
+      (Icons.psychology_alt, '0xFF8B5CF6', '性格診断 (16タイプ MBTI)', 'MBTIベースの自己分析でメモ術・学習スタイルを最適化。恋愛相性診断も。他にはない自己理解機能。'),
     ];
 
     return Container(
@@ -1517,7 +1518,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない7つのこと',
+            '自分株式会社でしかできない8つのこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
