@@ -23,6 +23,56 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   static const String _allLabel = 'すべて';
   static const String _allAssemblyCategories = 'all';
   static const int _memberPageSize = 24;
+  static const int _lowPresenceThreshold = 4;
+  static const List<String> _allPrefectures = <String>[
+    '北海道',
+    '青森県',
+    '岩手県',
+    '宮城県',
+    '秋田県',
+    '山形県',
+    '福島県',
+    '茨城県',
+    '栃木県',
+    '群馬県',
+    '埼玉県',
+    '千葉県',
+    '東京都',
+    '神奈川県',
+    '新潟県',
+    '富山県',
+    '石川県',
+    '福井県',
+    '山梨県',
+    '長野県',
+    '岐阜県',
+    '静岡県',
+    '愛知県',
+    '三重県',
+    '滋賀県',
+    '京都府',
+    '大阪府',
+    '兵庫県',
+    '奈良県',
+    '和歌山県',
+    '鳥取県',
+    '島根県',
+    '岡山県',
+    '広島県',
+    '山口県',
+    '徳島県',
+    '香川県',
+    '愛媛県',
+    '高知県',
+    '福岡県',
+    '佐賀県',
+    '長崎県',
+    '熊本県',
+    '大分県',
+    '宮崎県',
+    '鹿児島県',
+    '沖縄県',
+  ];
 
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
@@ -1063,40 +1113,112 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildRealityPrefectureSection(LocalElectionRealitySnapshot snapshot) {
-    final topPrefectures = snapshot.topPrefectures(limit: 10);
+    final prefectures = _prefecturesForDisplay(snapshot);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '公式集計の上位県',
+          '公式集計の全都道府県',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '地方議員 0 人の県は赤、$_lowPresenceThreshold 人以下の県は黄で表示しています。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _PrefectureLegendChip(
+              label: '通常',
+              backgroundColor: Colors.white,
+              borderColor: Color(0xFFD0D5DD),
+            ),
+            _PrefectureLegendChip(
+              label: '要強化',
+              backgroundColor: Color(0xFFFFF4CC),
+              borderColor: Color(0xFFE0A800),
+            ),
+            _PrefectureLegendChip(
+              label: '議員不在',
+              backgroundColor: Color(0xFFFDE2E1),
+              borderColor: Color(0xFFD92D20),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
-            for (final item in topPrefectures)
+            for (final item in prefectures)
               SizedBox(
                 width: 250,
                 child: Card(
+                  color: _prefectureCardBackgroundColor(context, item),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: _prefectureCardBorderColor(context, item),
+                    ),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: Text(
-                                item.prefecture,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.prefecture,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  if (_prefectureStatusLabel(item)
+                                      case final label?)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              _prefectureBadgeBackgroundColor(
+                                            context,
+                                            item,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          label,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color:
+                                                _prefectureBadgeForegroundColor(
+                                              context,
+                                              item,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                             if (item.sourceUrl.isNotEmpty)
@@ -1105,10 +1227,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 tooltip: '県別ソースを開く',
                                 icon: const Icon(Icons.open_in_new, size: 18),
                               ),
+                            if (item.sourceUrl.isEmpty)
+                              const SizedBox(width: 40),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('地方議員 ${_formatInt(item.currentMembers)}人'),
+                        Text(
+                          '地方議員 ${_formatInt(item.currentMembers)}人',
+                          style: TextStyle(
+                            fontWeight: item.currentMembers == 0
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: item.currentMembers == 0
+                                ? Theme.of(context).colorScheme.error
+                                : null,
+                          ),
+                        ),
                         Text(
                           '都道府県議 ${_formatInt(item.prefecturalAssemblyMembers)}'
                           ' / 市区町村議 ${_formatInt(item.municipalAssemblyMembers)}',
@@ -1122,6 +1256,99 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ),
       ],
     );
+  }
+
+  List<LocalElectionPrefectureReality> _prefecturesForDisplay(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final prefectureMap = <String, LocalElectionPrefectureReality>{};
+    for (final item in snapshot.prefectures) {
+      prefectureMap[_normalizePrefectureKey(item.prefecture)] = item;
+    }
+
+    final completed = _allPrefectures.map((prefecture) {
+      return prefectureMap[_normalizePrefectureKey(prefecture)] ??
+          LocalElectionPrefectureReality(
+            prefecture: prefecture,
+            sourceUrl: '',
+            currentMembers: 0,
+            prefecturalAssemblyMembers: 0,
+            municipalAssemblyMembers: 0,
+          );
+    }).toList();
+
+    completed.sort((a, b) {
+      final countCompare = b.currentMembers.compareTo(a.currentMembers);
+      if (countCompare != 0) {
+        return countCompare;
+      }
+      return a.prefecture.compareTo(b.prefecture);
+    });
+
+    return completed;
+  }
+
+  Color _prefectureCardBackgroundColor(
+    BuildContext context,
+    LocalElectionPrefectureReality item,
+  ) {
+    final surface = Theme.of(context).colorScheme.surface;
+    if (item.currentMembers == 0) {
+      return Color.alphaBlend(
+        Theme.of(context).colorScheme.error.withValues(alpha: 0.12),
+        surface,
+      );
+    }
+    if (item.currentMembers <= _lowPresenceThreshold) {
+      return Color.alphaBlend(
+        Colors.amber.withValues(alpha: 0.22),
+        surface,
+      );
+    }
+    return surface;
+  }
+
+  Color _prefectureCardBorderColor(
+    BuildContext context,
+    LocalElectionPrefectureReality item,
+  ) {
+    if (item.currentMembers == 0) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
+    }
+    if (item.currentMembers <= _lowPresenceThreshold) {
+      return Colors.amber.shade700.withValues(alpha: 0.7);
+    }
+    return Theme.of(context).colorScheme.outlineVariant;
+  }
+
+  String? _prefectureStatusLabel(LocalElectionPrefectureReality item) {
+    if (item.currentMembers == 0) {
+      return '議員不在';
+    }
+    if (item.currentMembers <= _lowPresenceThreshold) {
+      return '要強化';
+    }
+    return null;
+  }
+
+  Color _prefectureBadgeBackgroundColor(
+    BuildContext context,
+    LocalElectionPrefectureReality item,
+  ) {
+    if (item.currentMembers == 0) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.14);
+    }
+    return Colors.amber.withValues(alpha: 0.25);
+  }
+
+  Color _prefectureBadgeForegroundColor(
+    BuildContext context,
+    LocalElectionPrefectureReality item,
+  ) {
+    if (item.currentMembers == 0) {
+      return Theme.of(context).colorScheme.error;
+    }
+    return Colors.amber.shade900;
   }
 
   Widget _buildMemberRosterSection(LocalElectionRealitySnapshot snapshot) {
@@ -2087,26 +2314,114 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   String _buildRealityXPost(LocalElectionRealitySnapshot snapshot) {
+    final prefectures = _prefecturesForDisplay(snapshot);
+    final missingPrefectures =
+        prefectures.where((item) => item.currentMembers == 0).toList();
+    final lowPresencePrefectures = prefectures
+        .where(
+          (item) =>
+              item.currentMembers > 0 &&
+              item.currentMembers <= _lowPresenceThreshold,
+        )
+        .toList();
     final lines = <String>[
       '国民民主党の地方議員数 ${_dateOnlyFormat.format(snapshot.fetchedAt.toLocal())}',
       '${_formatInt(snapshot.officialCurrentLocalMembers)}人',
-      '',
     ];
 
+    final missingLine = _buildRealityXAlertLine(
+      prefix: '🔴議員不在',
+      prefectures: missingPrefectures,
+    );
+    final lowPresenceLine = _buildRealityXAlertLine(
+      prefix: '🟡要強化($_lowPresenceThreshold人以下)',
+      prefectures: lowPresencePrefectures,
+    );
+    if (missingLine.isNotEmpty || lowPresenceLine.isNotEmpty) {
+      lines.add('');
+      _appendLineIfFits(lines, missingLine);
+      _appendLineIfFits(lines, lowPresenceLine);
+    }
+
     final topPrefectures = snapshot.topPrefectures(limit: 10);
+    var addedPrefectureLine = false;
     for (final item in topPrefectures) {
       final candidate =
-          '${item.prefecture} 地方議員 ${_formatInt(item.currentMembers)}人 '
+          '${_prefectureXMarker(item)}${item.prefecture} 地方議員 ${_formatInt(item.currentMembers)}人 '
           '都道府県議 ${_formatInt(item.prefecturalAssemblyMembers)} / '
           '市区町村議 ${_formatInt(item.municipalAssemblyMembers)}';
-      final draft = <String>[...lines, candidate].join('\n');
-      if (draft.length > 270) {
+      if (!addedPrefectureLine) {
+        lines.add('');
+      }
+      if (!_appendLineIfFits(lines, candidate)) {
+        if (!addedPrefectureLine) {
+          lines.removeLast();
+        }
         break;
       }
-      lines.add(candidate);
+      addedPrefectureLine = true;
     }
 
     return lines.join('\n').trimRight();
+  }
+
+  String _buildRealityXAlertLine({
+    required String prefix,
+    required List<LocalElectionPrefectureReality> prefectures,
+  }) {
+    if (prefectures.isEmpty) {
+      return '';
+    }
+
+    final names = prefectures.map((item) => item.prefecture).toList();
+    final header = '$prefix ${prefectures.length}県: ';
+    final buffer = StringBuffer(header);
+    var included = 0;
+
+    for (final name in names) {
+      final separator = included == 0 ? '' : '、';
+      final remaining = names.length - included - 1;
+      final suffix = remaining > 0 ? ' ほか$remaining県' : '';
+      final nextValue = '${buffer.toString()}$separator$name$suffix';
+      if (nextValue.length > 84) {
+        if (included == 0) {
+          return '$prefix ${prefectures.length}県';
+        }
+        buffer.write(' ほか${prefectures.length - included}県');
+        return buffer.toString();
+      }
+      buffer.write(separator);
+      buffer.write(name);
+      included += 1;
+    }
+
+    return buffer.toString();
+  }
+
+  String _prefectureXMarker(LocalElectionPrefectureReality item) {
+    if (item.currentMembers == 0) {
+      return '🔴 ';
+    }
+    if (item.currentMembers <= _lowPresenceThreshold) {
+      return '🟡 ';
+    }
+    return '';
+  }
+
+  bool _appendLineIfFits(
+    List<String> lines,
+    String line, {
+    int maxLength = 270,
+  }) {
+    if (line.trim().isEmpty) {
+      return false;
+    }
+    final draft = <String>[...lines, line].join('\n');
+    if (draft.length > maxLength) {
+      return false;
+    }
+    lines.add(line);
+    return true;
   }
 
   String _describeRealityError(Object error) {
@@ -2148,5 +2463,35 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   int _parsePositiveInt(String raw) {
     final value = int.tryParse(raw.trim()) ?? 0;
     return clampPositiveInt(value);
+  }
+}
+
+class _PrefectureLegendChip extends StatelessWidget {
+  final String label;
+  final Color backgroundColor;
+  final Color borderColor;
+
+  const _PrefectureLegendChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+      ),
+    );
   }
 }
