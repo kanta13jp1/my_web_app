@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/daily_habits_page.dart';
@@ -82,6 +83,7 @@ SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
   await notificationService.init();
@@ -256,6 +258,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const ElectionVictoryPage(),
               settings: const RouteSettings(name: '/local-election-700'),
+            );
+          case '/public/local-election-700':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionVictoryPage(publicView: true),
+              settings: const RouteSettings(name: '/public/local-election-700'),
             );
           case '/home-insights':
             return MaterialPageRoute(

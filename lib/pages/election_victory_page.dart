@@ -17,7 +17,12 @@ import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
-  const ElectionVictoryPage({super.key});
+  final bool publicView;
+
+  const ElectionVictoryPage({
+    super.key,
+    this.publicView = false,
+  });
 
   @override
   State<ElectionVictoryPage> createState() => _ElectionVictoryPageState();
@@ -103,6 +108,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
   String _memberSearchQuery = '';
   int _visibleMemberCount = _memberPageSize;
+
+  bool get _isPublicView => widget.publicView;
 
   @override
   void initState() {
@@ -816,13 +823,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('統一地方選700 必達管理室'),
+        title: Text(_isPublicView ? '統一地方選700 公開ダッシュボード' : '統一地方選700 必達管理室'),
         actions: [
-          IconButton(
-            onPressed: plan == null ? null : _copySummary,
-            tooltip: '管理サマリーをコピー',
-            icon: const Icon(Icons.content_copy),
-          ),
+          if (!_isPublicView)
+            IconButton(
+              onPressed: plan == null ? null : _copySummary,
+              tooltip: '管理サマリーをコピー',
+              icon: const Icon(Icons.content_copy),
+            ),
           IconButton(
             onPressed: _isRealityLoading
                 ? null
@@ -836,25 +844,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   )
                 : const Icon(Icons.cloud_sync_outlined),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'focused') {
-                _resetPlan(LocalElectionPlanTemplate.focused);
-              } else if (value == 'balanced') {
-                _resetPlan(LocalElectionPlanTemplate.balanced);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: 'focused',
-                child: Text('重点配分テンプレートへ戻す'),
-              ),
-              PopupMenuItem<String>(
-                value: 'balanced',
-                child: Text('均等配分テンプレートへ戻す'),
-              ),
-            ],
-          ),
+          if (!_isPublicView)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'focused') {
+                  _resetPlan(LocalElectionPlanTemplate.focused);
+                } else if (value == 'balanced') {
+                  _resetPlan(LocalElectionPlanTemplate.balanced);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<String>(
+                  value: 'focused',
+                  child: Text('重点配分テンプレートへ戻す'),
+                ),
+                PopupMenuItem<String>(
+                  value: 'balanced',
+                  child: Text('均等配分テンプレートへ戻す'),
+                ),
+              ],
+            ),
         ],
       ),
       body: _isLoading || plan == null
@@ -865,6 +874,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
+                  if (_isPublicView) ...[
+                    _buildPublicViewNotice(),
+                    const SizedBox(height: 16),
+                  ],
                   _buildHeroCard(plan),
                   const SizedBox(height: 16),
                   _buildRealitySection(plan),
@@ -933,11 +946,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ? '計画基準 ${_formatInt(plan.currentLocalMembers)}人に対し、'
                       '公式議員ページの最新集計は ${_formatInt(officialCount)}人です。'
                       '700人まで残り ${_formatInt(gapToTarget)}人を、'
-                      '県連別配分と月次KPIで管理します。'
+                      '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}'
                   : '現在 ${_formatInt(plan.currentLocalMembers)}人から '
                       '${_formatInt(plan.targetLocalMembers)}人へ。'
                       '必要純増 ${_formatInt(plan.requiredNetIncrease)}人を、'
-                      '県連別配分と月次KPIで管理します。',
+                      '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}',
               style: theme.textTheme.bodyMedium,
             ),
             if (hasSnapshot) ...[
@@ -1017,6 +1030,46 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               fontSize: 28,
               fontWeight: FontWeight.w800,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublicViewNotice() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1D4ED8).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF1D4ED8).withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '公開URLで閲覧できる固定ページです',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'この公開ビューは未ログインでも閲覧できます。'
+            '県連別配分・月次KPI・現職名簿・最新の公式実データを確認できますが、'
+            '計画の編集やテンプレート再適用は管理用ルートからのみ行えます。',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            'https://my-web-app-b67f4.web.app/public/local-election-700',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF1D4ED8),
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ],
       ),
@@ -1136,7 +1189,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                           : const Icon(Icons.refresh),
                       label: Text(_isRealityLoading ? '取得中' : '最新取得'),
                     ),
-                    if (needsSync)
+                    if (needsSync && !_isPublicView)
                       FilledButton.tonalIcon(
                         onPressed: _syncRealityIntoPlan,
                         icon: const Icon(Icons.sync_alt),
@@ -2311,11 +2364,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     ],
                   ),
                 ),
-                FilledButton.tonalIcon(
-                  onPressed: () => _editPrefecture(plan),
-                  icon: const Icon(Icons.edit),
-                  label: const Text('編集'),
-                ),
+                if (!_isPublicView)
+                  FilledButton.tonalIcon(
+                    onPressed: () => _editPrefecture(plan),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('編集'),
+                  ),
               ],
             ),
             const SizedBox(height: 12),

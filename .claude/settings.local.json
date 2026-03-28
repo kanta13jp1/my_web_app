@@ -60,7 +60,8 @@
       "Read(//dev/**)",
       "mcp__scheduled-tasks__list_scheduled_tasks",
       "Bash(grep -rl \"EdgeFunction\\\\|schedule_task\\\\|ScheduleTask\" c:/Users/kanta/GitHub/my_web_app/lib/ --include=*.dart)",
-      "Bash(git -C \"c:/Users/kanta/GitHub/my_web_app\" log --oneline -5)"
+      "Bash(git -C \"c:/Users/kanta/GitHub/my_web_app\" log --oneline -5)",
+      "Bash(node -e \":*)"
     ]
   }
 }

@@ -378,6 +378,26 @@
       var path = window.location.pathname;
       var memoId = params.get('id');
 
+      if (path === '/public/local-election-700' || path.endsWith('/public/local-election-700')) {
+        document.title = '統一地方選700 公開ダッシュボード | 自分株式会社';
+        setMeta('og:title', '統一地方選700 公開ダッシュボード');
+        setMeta(
+          'og:description',
+          '国民民主党の地方議員数、全47都道府県の内訳、月次KPI、現職名簿を未ログインで確認できる公開ページです。'
+        );
+        setMeta('twitter:title', '統一地方選700 公開ダッシュボード');
+        setMeta(
+          'twitter:description',
+          '国民民主党の地方議員数、全47都道府県の内訳、月次KPI、現職名簿を未ログインで確認できる公開ページです。'
+        );
+        setMeta(
+          'description',
+          '国民民主党の地方議員数、全47都道府県の内訳、月次KPI、現職名簿を未ログインで確認できる公開ページです。'
+        );
+        setMeta('og:url', window.location.href);
+        setMeta('twitter:url', window.location.href);
+      }
+
       if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
         fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
           .then(function (res) { return res.json(); })
