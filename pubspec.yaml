@@ -52,6 +52,8 @@ dependencies:
   http: any
   graphview: ^1.2.0
   flutter_secure_storage: ^10.0.0
+  pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
+  printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,11 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/local_election_plan.dart';
 
@@ -18,6 +24,95 @@ class ElectionRegionalKpiChart extends StatefulWidget {
 }
 
 class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
+  final GlobalKey _barChartKey = GlobalKey();
+
+  Future<void> _printChart() async {
+    try {
+      // 棒グラフをキャプチャ
+      final barChartBoundary = _barChartKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (barChartBoundary == null) return;
+
+      final barChartImage = await barChartBoundary.toImage(pixelRatio: 3.0);
+      final barChartByteData = await barChartImage.toByteData(format: ui.ImageByteFormat.png);
+      if (barChartByteData == null) return;
+      final barChartPdfImage = pw.MemoryImage(barChartByteData.buffer.asUint8List());
+
+      // 円グラフをキャプチャ
+      pw.MemoryImage? pieChartPdfImage;
+      if (widget.pieChartKey != null) {
+        final pieChartBoundary = widget.pieChartKey!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        if (pieChartBoundary != null) {
+          final pieChartImage = await pieChartBoundary.toImage(pixelRatio: 3.0);
+          final pieChartByteData = await pieChartImage.toByteData(format: ui.ImageByteFormat.png);
+          if (pieChartByteData != null) {
+            pieChartPdfImage = pw.MemoryImage(pieChartByteData.buffer.asUint8List());
+          }
+        }
+      }
+      
+      final now = DateTime.now();
+      final dateStr = '${now.year}年${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final dateFilenameStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      final filename = 'election_report_$dateFilenameStr.pdf';
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4.landscape,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Election Regional KPI Report', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 18)),
+                    pw.Text('Output: $dateStr\nBy: System', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
+                  ],
+                ),
+                pw.Divider(color: PdfColors.grey300),
+                pw.SizedBox(height: 10),
+                pw.Expanded(
+                  child: pw.Column(
+                    children: [
+                      if (pieChartPdfImage != null)
+                        pw.Expanded(
+                          flex: 2,
+                          child: pw.Center(child: pw.Image(pieChartPdfImage)),
+                        ),
+                      if (pieChartPdfImage != null)
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.symmetric(vertical: 8),
+                          child: pw.Divider(color: PdfColors.grey400),
+                        ),
+                      pw.Expanded(
+                        flex: 3,
+                        child: pw.Center(child: pw.Image(barChartPdfImage)),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Divider(color: PdfColors.grey300),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Text('自分株式会社 - 経営コックピット', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save(),
+        name: filename,
+      );
+    } catch (e) {
+      debugPrint('PDF出力エラー: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.prefectures.isEmpty) {
@@ -38,159 +133,179 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '都道府県連別 目標配分 (現職維持 + 新人擁立)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '都道府県連別 目標配分 (現職維持 + 新人擁立)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.print),
+                  tooltip: 'PDFレポートを出力・印刷',
+                  onPressed: _printChart,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade100),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildSummaryItem('現職維持 合計', totalRetain.toString(), Colors.blue.shade700),
-                      _buildSummaryItem('新人擁立 合計', totalNew.toString(), Colors.orange.shade700),
-                      _buildSummaryItem('総合計', totalTarget.toString(), Colors.indigo.shade700),
-                    ],
-                  ),
-                  if (totalTarget < 700) ...[
-                    const SizedBox(height: 12),
+            RepaintBoundary(
+              key: _barChartKey,
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: Colors.blue.shade100),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Column(
                         children: [
-                          Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
-                            style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildSummaryItem('現職維持 合計', totalRetain.toString(), Colors.blue.shade700),
+                              _buildSummaryItem('新人擁立 合計', totalNew.toString(), Colors.orange.shade700),
+                              _buildSummaryItem('総合計', totalTarget.toString(), Colors.indigo.shade700),
+                            ],
                           ),
+                          if (totalTarget < 700) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
+                                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              height: 300,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: _getMaxY(),
-                  barTouchData: const BarTouchData(enabled: true),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= 0 &&
-                              value.toInt() < widget.prefectures.length) {
-                            final region =
-                                widget.prefectures[value.toInt()].prefecture;
-                            final displayRegion = region.length > 3
-                                ? region.substring(0, 2)
-                                : region;
-                            return SideTitleWidget(
-                              meta: meta,
-                              child: Text(
-                                displayRegion,
-                                style: const TextStyle(fontSize: 10),
-                                textAlign: TextAlign.center,
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      height: 300,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: _getMaxY(),
+                          barTouchData: const BarTouchData(enabled: true),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 40,
+                                getTitlesWidget: (value, meta) {
+                                  if (value.toInt() >= 0 &&
+                                      value.toInt() < widget.prefectures.length) {
+                                    final region =
+                                        widget.prefectures[value.toInt()].prefecture;
+                                    final displayRegion = region.length > 3
+                                        ? region.substring(0, 2)
+                                        : region;
+                                    return SideTitleWidget(
+                                      meta: meta,
+                                      child: Text(
+                                        displayRegion,
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }
+                                  return SideTitleWidget(
+                                    meta: meta,
+                                    child: const SizedBox.shrink(),
+                                  );
+                                },
                               ),
-                            );
-                          }
-                          return SideTitleWidget(
-                            meta: meta,
-                            child: const SizedBox.shrink(),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (value, meta) {
-                          return SideTitleWidget(
-                            meta: meta,
-                            child: Text(
-                              value.toInt().toString(),
-                              style: const TextStyle(fontSize: 12),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  gridData: const FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: widget.prefectures.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final data = entry.value;
-                    final retainTarget =
-                        data.incumbentRetentionTarget.toDouble();
-                    final newTarget = data.newCandidateTarget.toDouble();
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 40,
+                                getTitlesWidget: (value, meta) {
+                                  return SideTitleWidget(
+                                    meta: meta,
+                                    child: Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                          ),
+                          gridData: const FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                          ),
+                          borderData: FlBorderData(show: false),
+                          barGroups: widget.prefectures.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final data = entry.value;
+                            final retainTarget =
+                                data.incumbentRetentionTarget.toDouble();
+                            final newTarget = data.newCandidateTarget.toDouble();
 
-                    return BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          toY: retainTarget + newTarget,
-                          width: 16,
-                          borderRadius: BorderRadius.circular(4),
-                          rodStackItems: [
-                            BarChartRodStackItem(
-                              0,
-                              retainTarget,
-                              Colors.blue.shade300,
-                            ),
-                            BarChartRodStackItem(
-                              retainTarget,
-                              retainTarget + newTarget,
-                              Colors.orange.shade400,
-                            ),
-                          ],
+                            return BarChartGroupData(
+                              x: index,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: retainTarget + newTarget,
+                                  width: 16,
+                                  borderRadius: BorderRadius.circular(4),
+                                  rodStackItems: [
+                                    BarChartRodStackItem(
+                                      0,
+                                      retainTarget,
+                                      Colors.blue.shade300,
+                                    ),
+                                    BarChartRodStackItem(
+                                      retainTarget,
+                                      retainTarget + newTarget,
+                                      Colors.orange.shade400,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }).toList(),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLegend(Colors.blue.shade300, '現職維持目標'),
+                        const SizedBox(width: 16),
+                        _buildLegend(Colors.orange.shade400, '新人擁立目標'),
                       ],
-                    );
-                  }).toList(),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegend(Colors.blue.shade300, '現職維持目標'),
-                const SizedBox(width: 16),
-                _buildLegend(Colors.orange.shade400, '新人擁立目標'),
-              ],
             ),
           ],
         ),
