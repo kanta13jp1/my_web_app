@@ -998,6 +998,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     try {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
+      await _saveVersionSnapshot();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('手動保存しました')),
@@ -1010,6 +1011,141 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         );
       }
     }
+  }
+
+  Future<void> _saveVersionSnapshot() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      await _supabase.from('note_versions').insert({
+        'note_id': noteId,
+        'user_id': user.id,
+        'title': _titleController.text.trim(),
+        'content': _contentController.text.trim(),
+        'saved_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (_) {
+      // バージョン保存失敗は無視（メイン保存は成功している）
+    }
+  }
+
+  Future<void> _showVersionHistory() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+
+    List<Map<String, dynamic>> versions = [];
+    try {
+      final res = await _supabase
+          .from('note_versions')
+          .select('id, title, saved_at, content')
+          .eq('note_id', noteId)
+          .order('saved_at', ascending: false)
+          .limit(30);
+      versions = List<Map<String, dynamic>>.from(
+        (res as List).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('履歴の取得に失敗しました: $e')),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'バージョン履歴',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            Expanded(
+              child: versions.isEmpty
+                  ? const Center(child: Text('保存済みバージョンがありません'))
+                  : ListView.builder(
+                      controller: scrollCtrl,
+                      itemCount: versions.length,
+                      itemBuilder: (_, i) {
+                        final v = versions[i];
+                        final savedAt = DateTime.tryParse(
+                          v['saved_at']?.toString() ?? '',
+                        )?.toLocal();
+                        final dateStr = savedAt != null
+                            ? '${savedAt.year}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.day.toString().padLeft(2, '0')} ${savedAt.hour.toString().padLeft(2, '0')}:${savedAt.minute.toString().padLeft(2, '0')}'
+                            : '不明';
+                        final title = (v['title'] as String?)?.isNotEmpty == true
+                            ? v['title'] as String
+                            : '無題';
+                        return ListTile(
+                          leading: const Icon(Icons.restore, size: 20),
+                          title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(dateStr, style: const TextStyle(fontSize: 12)),
+                          trailing: TextButton(
+                            child: const Text('復元'),
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('バージョンを復元しますか？'),
+                                  content: Text('$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('キャンセル'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: const Text('復元'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true && mounted) {
+                                await _saveVersionSnapshot();
+                                setState(() {
+                                  _titleController.text = v['title'] as String? ?? '';
+                                  _contentController.text = v['content'] as String? ?? '';
+                                });
+                                _autoSaveService.markAsModified();
+                                _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _applySnapshot(NoteSnapshot snapshot) {
@@ -1568,6 +1704,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             onPressed: _saveManually,
             tooltip: 'Save',
           ),
+          if (_currentNoteId != null)
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: _showVersionHistory,
+              tooltip: 'バージョン履歴',
+            ),
         ],
       ),
       body: _isLoading
