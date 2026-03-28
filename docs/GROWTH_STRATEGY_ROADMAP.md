@@ -1063,6 +1063,24 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ---
 
+### Session 2026-03-28 — Session 10 (ホーム・LP CVR改善 PowerShell)
+
+**実施内容:**
+
+1. **ホーム画面 新規ユーザー優先表示**
+   - `GrowthRoadmapProgressCard`（競合比較バー）を最上部から `PersonalityTypeBanner` 下へ移動
+   - 新規ユーザーが最初に見るのは `WelcomeNewUserCard` → `ProfileCompletionBanner` → `PersonalityTypeBanner` の順に変更
+   - 今日やることへの導線が最初に来るシンプルな構成
+
+2. **EdgeFunctionSummaryCard をホームから削除**
+   - 34 Edge Function の一覧・UI状況は `/edge-functions` 管理ページに既存
+   - ホームは一般ユーザー向けのため開発者向けカードを削除
+   - 未使用 import `edge_function_summary_card.dart` も削除
+
+**flutter analyze: 0 エラー維持**
+
+---
+
 ## 17. 総合ビジネス計画
 
 > 作成: 2026-03-28 / 対象期間: 2026〜2029年
