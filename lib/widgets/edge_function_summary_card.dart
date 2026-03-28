@@ -55,6 +55,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('get-public-memo-ogp', '公開メモ OGP 画像', true, '/public-memos', '公開メモ詳細 > OGP 画像自動生成'),
     _FnDef('get-competitor-monitoring', '競合モニタリング', true, '/admin', '管理者ダッシュボード > 競合モニタリング'),
     _FnDef('local-election-intelligence', '選挙インテリジェンス', true, '/election', '選挙戦略ページ > AI分析'),
+    _FnDef('note-comments', 'ノートコメント CRUD', true, '/note-editor', 'ノートエディタ > 💬 コメントアイコン'),
     _FnDef('growth-achievement-summary', '開発実績サマリー', true, '/admin', '管理者ダッシュボード'),
   ];
 
