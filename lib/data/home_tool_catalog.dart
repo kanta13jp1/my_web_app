@@ -53,6 +53,14 @@ import '../pages/thought_capture_page.dart';
 import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
 import '../pages/wip_limit_page.dart';
+import '../pages/ai_suggest_tags_page.dart';
+import '../pages/analyze_reality_page.dart';
+import '../pages/support_tickets_page.dart';
+import '../pages/growth_achievement_summary_page.dart';
+import '../pages/growth_acquisition_report_page.dart';
+import '../pages/growth_command_center_page.dart';
+import '../pages/growth_share_signal_page.dart';
+import '../pages/growth_weekly_digest_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -706,6 +714,91 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.pink,
       keywords: const <String>['招待', '紹介', 'referral'],
       onOpen: (context) => _pushPage(context, const ReferralPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-suggest-tags',
+      sectionId: 'knowledge',
+      title: 'AI タグ提案',
+      subtitle: 'テキストから関連タグを自動生成する',
+      icon: Icons.auto_awesome,
+      color: Colors.deepPurple,
+      keywords: const <String>['タグ', 'AI', '提案', 'tag'],
+      onOpen: (context) => _pushPage(context, const AiSuggestTagsPage()),
+    ),
+    HomeToolEntry(
+      id: 'analyze-reality',
+      sectionId: 'knowledge',
+      title: '現実分析',
+      subtitle: '状況を入力して AI に現実を分析させる',
+      icon: Icons.analytics_outlined,
+      color: Colors.deepOrange,
+      keywords: const <String>['現実', '分析', 'reality', 'AI'],
+      onOpen: (context) => _pushPage(context, const AnalyzeRealityPage()),
+    ),
+    HomeToolEntry(
+      id: 'support-tickets',
+      sectionId: 'growth',
+      title: 'サポートチケット',
+      subtitle: '未返信チケットを一覧確認する (管理者)',
+      icon: Icons.support_agent,
+      color: Colors.teal,
+      keywords: const <String>['サポート', 'CS', 'チケット', 'support'],
+      onOpen: (context) => _pushPage(context, const SupportTicketsPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-achievement-summary',
+      sectionId: 'growth',
+      title: '成長実績サマリー',
+      subtitle: '期間別の新規ユーザー・獲得シグナルを確認',
+      icon: Icons.emoji_events_outlined,
+      color: Colors.green,
+      keywords: const <String>['成長', '実績', 'ユーザー', 'growth'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthAchievementSummaryPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-acquisition-report',
+      sectionId: 'growth',
+      title: '獲得レポート',
+      subtitle: 'タッチポイント別の流入・CVR を確認する',
+      icon: Icons.bar_chart,
+      color: Colors.blue,
+      keywords: const <String>['獲得', 'CVR', '流入', 'acquisition'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthAcquisitionReportPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-command-center',
+      sectionId: 'growth',
+      title: 'グロース司令部',
+      subtitle: 'KPI を元に AI が戦略ブリーフを生成する',
+      icon: Icons.rocket_launch_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['司令部', 'KPI', '戦略', 'command'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthCommandCenterPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-share-signal',
+      sectionId: 'growth',
+      title: '共有シグナル',
+      subtitle: '公開メモのシェア・コピー数を確認する',
+      icon: Icons.share_outlined,
+      color: Colors.pink,
+      keywords: const <String>['共有', 'シェア', 'share', 'signal'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthShareSignalPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-weekly-digest',
+      sectionId: 'growth',
+      title: '週次ダイジェスト',
+      subtitle: 'チャネル別の週次グロース指標を確認する',
+      icon: Icons.calendar_view_week,
+      color: Colors.teal,
+      keywords: const <String>['週次', 'ダイジェスト', 'weekly', 'digest'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthWeeklyDigestPage()),
     ),
   ];
 }

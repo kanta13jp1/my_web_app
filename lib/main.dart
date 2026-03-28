@@ -52,6 +52,14 @@ import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/personality_test_result_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
 import 'package:my_web_app/pages/work_menu_page.dart';
+import 'package:my_web_app/pages/ai_suggest_tags_page.dart';
+import 'package:my_web_app/pages/analyze_reality_page.dart';
+import 'package:my_web_app/pages/support_tickets_page.dart';
+import 'package:my_web_app/pages/growth_achievement_summary_page.dart';
+import 'package:my_web_app/pages/growth_acquisition_report_page.dart';
+import 'package:my_web_app/pages/growth_command_center_page.dart';
+import 'package:my_web_app/pages/growth_share_signal_page.dart';
+import 'package:my_web_app/pages/growth_weekly_digest_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -385,6 +393,38 @@ class MyApp extends StatelessWidget {
           case '/table-data':
             return MaterialPageRoute(
               builder: (_) => const TableDataPage(),
+            );
+          case '/ai-suggest-tags':
+            return MaterialPageRoute(
+              builder: (_) => const AiSuggestTagsPage(),
+            );
+          case '/analyze-reality':
+            return MaterialPageRoute(
+              builder: (_) => const AnalyzeRealityPage(),
+            );
+          case '/support-tickets':
+            return MaterialPageRoute(
+              builder: (_) => const SupportTicketsPage(),
+            );
+          case '/growth-achievement-summary':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAchievementSummaryPage(),
+            );
+          case '/growth-acquisition-report':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAcquisitionReportPage(),
+            );
+          case '/growth-command-center':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthCommandCenterPage(),
+            );
+          case '/growth-share-signal':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthShareSignalPage(),
+            );
+          case '/growth-weekly-digest':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthWeeklyDigestPage(),
             );
           case '/compatibility':
             final myType = settings.arguments as String? ?? '';
