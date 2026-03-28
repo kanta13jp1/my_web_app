@@ -28,6 +28,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
+  final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
   final NumberFormat _numberFormat = NumberFormat('#,##0', 'ja_JP');
 
   LocalElectionPlanDashboard? _plan;
@@ -316,6 +317,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('管理サマリーをクリップボードにコピーしました')),
+    );
+  }
+
+  Future<void> _copyRealityForX() async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      return;
+    }
+    await Clipboard.setData(
+      ClipboardData(text: _buildRealityXPost(snapshot)),
+    );
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('X投稿向けの現職サマリーをコピーしました')),
     );
   }
 
@@ -828,6 +845,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   runSpacing: 8,
                   alignment: WrapAlignment.end,
                   children: [
+                    if (realitySnapshot != null)
+                      FilledButton.tonalIcon(
+                        onPressed:
+                            realitySnapshot.hasData ? _copyRealityForX : null,
+                        icon: const Icon(Icons.alternate_email),
+                        label: const Text('X用コピー'),
+                      ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading
                           ? null
@@ -2060,6 +2084,29 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
     }
     return base.toString();
+  }
+
+  String _buildRealityXPost(LocalElectionRealitySnapshot snapshot) {
+    final lines = <String>[
+      '国民民主党の地方議員数 ${_dateOnlyFormat.format(snapshot.fetchedAt.toLocal())}',
+      '${_formatInt(snapshot.officialCurrentLocalMembers)}人',
+      '',
+    ];
+
+    final topPrefectures = snapshot.topPrefectures(limit: 10);
+    for (final item in topPrefectures) {
+      final candidate =
+          '${item.prefecture} 地方議員 ${_formatInt(item.currentMembers)}人 '
+          '都道府県議 ${_formatInt(item.prefecturalAssemblyMembers)} / '
+          '市区町村議 ${_formatInt(item.municipalAssemblyMembers)}';
+      final draft = <String>[...lines, candidate].join('\n');
+      if (draft.length > 270) {
+        break;
+      }
+      lines.add(candidate);
+    }
+
+    return lines.join('\n').trimRight();
   }
 
   String _describeRealityError(Object error) {
