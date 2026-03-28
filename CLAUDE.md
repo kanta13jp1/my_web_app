@@ -3,7 +3,7 @@
 ## プロジェクト概要
 
 Flutter Web + Supabase のAI統合ライフマネジメントアプリ。
-Notion・Evernote・MoneyForward・Slack・X・Amazon など14競合の機能を1つに統合。
+Notion・Evernote・MoneyForward・Slack・X・Amazon など21競合の機能を1つに統合。
 本番URL: <https://my-web-app-b67f4.web.app/>
 
 ### 技術スタック
