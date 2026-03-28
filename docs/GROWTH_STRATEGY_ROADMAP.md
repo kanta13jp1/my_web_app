@@ -766,6 +766,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ### Session 24 — 2026-03-26
 
 #### 開発
+
 - vs Amazon を第15競合として growth_plans テーブルおよび get-growth-roadmap-progress Edge Function に追加 (目標: 3.1億ユーザー, 期限: 2038年12月)
 - ユーザーマニュアルのナビゲーション手順修正 (セクション名不一致: CFO/CHO/CHRO OFFICE, ブログ投稿管理ボタンラベル)
 - 既存機能の確認: 進捗バー(16項目), 開発実績(期間別), プロフィール完了バナー, 管理者ユーザー管理, 技術ブログ投稿管理 — すべて実データで稼働中
@@ -773,6 +774,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - check-competitor-updates Edge Function 作成: 競合14社Webサイト応答速度・可用性一括チェックAPI
 
 #### 企画 (X投稿 https://x.com/satori_sz9/status/2037097847498412506 のアイデア実装)
+
 - Claude Code Schedule で合計6つの自動化タスクを運用:
   1. **daily-report** (毎日9:00): 日次メトリクス + X投稿 + レポート生成
   2. **cs-check** (毎時): CS対応・バグ修正・エスカレーション全自動化
@@ -784,16 +786,19 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
   8. **dependency-audit** (毎週月曜8:00): Flutter/Deno依存パッケージ脆弱性チェック
 
 #### 広告・宣伝
+
 - X投稿アカウント: @kanta13jp1 (post-x-update Edge Function で自動投稿)
 - 技術ブログ投稿管理機能 (11プラットフォーム対応) で毎日の投稿状況を管理
 
 #### マーケティング
+
 - 登録者数4人に更新 (Supabase実データ確認済み)
 - 全15競合の進捗バーがホーム画面で実データ表示 (Amazon追加)
 
 ### Session 25 — 2026-03-27
 
 #### 開発
+
 - ScheduleTaskMonitorCard ウィジェット新規作成: 管理者ダッシュボードで 9 つの Schedule タスク実行状況を確認可能に
 - SeoMetaHelper ユーティリティ新規作成: 公開メモ詳細ページで og:title/og:description/og:url/Twitter Card を動的に設定・離脱時リセット
 - schedule_task_runs テーブル作成: Schedule タスク実行ログ記録用テーブル (RLS: service_role 全操作 / authenticated 読み取り)
@@ -802,34 +807,41 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - flutter analyze 0 を維持
 
 #### 企画
+
 - Schedule タスク実行状況を管理者ダッシュボードで可視化し、運用監視の負荷を削減
 - 公開メモの SEO/OGP 強化で organic 検索流入経路を確立
 
 #### 宣伝
+
 - blog-draft Schedule タスク (毎日 08:00) で技術ブログ下書き自動生成
 - tech_blog_posts テーブルで 11 プラットフォーム (Zenn/Qiita/はてな/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article) の投稿管理
 
 #### マーケティング
+
 - 公開メモの OGP 対応により SNS シェア時のカード表示が改善、CTR 向上を見込む
 - 競合 14 社の可用性モニタリングデータを蓄積開始
 
 #### 事業計画
+
 - 3 インスタンス並行開発体制を確立 (VSCode: lib/ / Web: supabase/functions/ / Windows: docs/)
 - Claude Code Schedule で 9 タスクの完全自動化運用を開始
 
 ### Session 26 — 2026-03-27
 
 #### 開発
+
 - Google・Microsoft を第15・16競合として growth_plans テーブルに追加 (マイグレーション)
 - Google: ~43億ユーザー (Workspace/Search/Android/YouTube/Cloud), 期限: 2040年12月
 - Microsoft: ~15億ユーザー (365/Windows/Azure/LinkedIn/GitHub), 期限: 2040年12月
 
 #### 企画
+
 - 競合を14社→16社に拡大。Google の検索・メール・ドキュメント統合、Microsoft の Office・クラウド・開発者エコシステムを包含する戦略に拡大
 - Google との差別化: AI ファーストの個人経営プラットフォーム (Google は広告モデル、自分株式会社はユーザー中心)
 - Microsoft との差別化: 軽量・モバイルファーストの統合体験 (Microsoft はエンタープライズ向け重厚長大)
 
 #### 事業計画
+
 - Google・Microsoft を最終目標に追加したことで、目標ユーザー数の上限を43億に設定
 - 段階的アプローチ: まず Animaworks(50万) → netkeiba(1700万) → Chatwork(600万) → Slack(6500万) → Notion(1億) → MoneyForward(1500万) → Amazon(3.1億) → Microsoft(15億) → Google(43億)
 
