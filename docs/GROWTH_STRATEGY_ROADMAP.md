@@ -101,15 +101,18 @@
   - 全13競合 (Notion/EverNote/MoneyForward/X/Animaworks/Claude Code/Codex/netkeiba/OpenClaw/Claude Cowork/Chatwork/Slack/ジョブカン) の機能比較データを Edge Function (1697行) で提供
   - `CompetitorFeatureComparisonCard` を `initState` 時に Edge Function 呼び出しへ改修（フォールバック付き）
   - フロントエンドのハードコードデータ約1600行を段階的に排除する backend-first 実装完了
+
 - **batch_analysis.py バグ修正** (2026-03-25): `NoneType + int` TypeError 修正・`run-batch` に `continue-on-error: true` 追加
 - **Weekly Digest UI** (2026-03-25 実装完了): Growth Mission ページに週次ダイジェストカードを追加
   - `WeeklyDigestChannelMetrics` / `WeeklyDigestSnapshot` モデルクラスを `growth_mission_service.dart` に追加
   - `loadWeeklyDigest()` メソッドで `growth-weekly-digest` Edge Function を呼び出す実装
   - GrowthMissionPage に週次チャネル別メトリクス（touches/sign-ups/CVR/delta）カードを表示
   - 週次 sign-up submits・referrals・import CTA・public memo CTA の集計タイルを表示
+
 - **ランディングページ改善** (2026-03-25 追加): ユーザー獲得強化のため2セクション追加
   - `_buildUniqueValueSection()`: AI役員会議・記憶ドリル・経営コックピット・インポート・マインドマップ・公開メモ の6機能をアイコン付きグリッドで訴求
   - `_buildImportCtaSection()`: 「登録なしでインポートを試す」ダークカード CTA を追加、/import への直接導線を設置
+
 - **development-achievements** (2026-03-25 新規作成): 開発実績の GET (期間フィルタ) / ADD (新規追加) を提供する Edge Function。DevelopmentAchievementsCard が呼び出す。
 - **get-growth-roadmap-progress** (2026-03-25 新規作成): user_profiles からユーザー数、growth_plans テーブルから計画データを取得して返す Edge Function。GrowthRoadmapProgressCard が呼び出す。growth_plans が空の場合は16項目のデフォルトデータを自動シードする。
 - growth-weekly-digest (2026-03-25 追加)
@@ -134,6 +137,7 @@
   - 短期/中期/長期計画の目標期日・達成率・■□バーをリアルタイム表示
   - vs NOTION (1億ユーザー) / vs EverNote (2.5億ユーザー) 比較バー
   - user_profiles テーブルから登録者数をリアルタイム取得
+
 - 技術ブログ発信戦略を GROWTH_STRATEGY_ROADMAP.md に追加 (Zenn / Qiita / はてなブログ / note / dev.to / Hashnode / Medium / Substack / GitHub Pages)
 - ホーム画面に vs X 進捗バーを追加 (2026-03-24 追加)
 - 競合機能比較カードに X タブを追加 (X: SNS・コンテンツ配信機能との比較) (2026-03-24 追加)
@@ -156,6 +160,7 @@
 - DevelopmentAchievementsCard の本実装を完了 (2026-03-27 更新)
   - ダミーデータを完全に排除し、`development_achievements` テーブルから直接実績と完了日を取得する実データ駆動に改修
   - 取得失敗時や0件時のフォールバック(ダミーデータ)を廃止し、純粋な実データのみを表示するよう本実装
+
 - GrowthRoadmapProgressCard のプログレスバーをテキストベース (■□□) に変更し、全13競合の目標期日を実設定 (2026-03-27)
 - ユーザー向け操作マニュアル (`user_manual_page.dart`) を本実装完了 (2026-03-28)
 - **テンプレート広場 18種類実装** (2026-03-28): `template_marketplace_page.dart` を全面刷新。6カテゴリ18テンプレート（日次記録・ビジネス・思考アイデア・学習成長・個人生活・技術開発）を実装。`/templates` ルートを main.dart に追加。Notionパリティの「テンプレートマーケット」短期ギャップを解消
@@ -168,10 +173,12 @@
   - `CSO OFFICE` 以降の探索系メニューを `業務メニュー` へ分離し、ホームには日次導線・KPI・特別案件・クイックアクセスを残す構成へ整理
   - `業務メニュー` ページに機能検索・最近使った機能・部署別セクションを実装し、ホームから `業務メニュー` / `機能を探す` の 2 導線で遷移可能に改修
   - `SharedPreferences` による最近使った機能トラッキングを追加し、ホーム上で直近導線を即再開できるよう改善
+
 - **ホーム画面簡素化 第2段** (2026-03-28 daily-development): 補助カード群をホームから退避
   - `home_insights_page.dart` を新設し、検索・成長シグナル・継続支援カードを `成長・支援ダッシュボード` に集約
   - ホームから `NoteSearchCard`、`QuickTaskInputCard`、ランキング・紹介・比較・モチベーション系カードを外し、上部を `GrowthRoadmapProgressCard` と日次優先導線中心へ再整理
   - `QUICK ACCESS` に `成長・支援` 導線を追加し、補助カードへ 1 タップで遷移できるよう改善
+
 - **比較ページ CVR トラッキング実装** (2026-03-28 daily-development): `/vs-notion` など14比較ページの訪問時に `touch_comparison_{key}` シグナルを `GrowthAcquisitionService` に記録。登録時に `signup_submit_comparison` を帰属させることで比較ページ経由のCVRを計測可能に。`_ComparisonShell` を `StatelessWidget`→`StatefulWidget` へ移行し `initState` で fire-and-forget 記録。ロードマップ「route 単位の流入 KPI」を解消
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
@@ -1142,18 +1149,21 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 #### プロダクトロードマップ (四半期別)
 
 **2026 Q2 (短期)**
+
 - Notion インポート精度向上 (ブロック構造完全再現)
 - オフライン対応 (IndexedDB キャッシュ)
 - モバイルアプリ (Flutter iOS/Android) β版リリース
 - 多言語対応: 英語 UI
 
 **2026 Q3〜Q4 (中期)**
+
 - AI ノートサマリー自動生成
 - チームワークスペース (招待・権限管理)
 - MoneyForward インポート (家計簿データ移行)
 - API v1 公開 (OAuth 2.0)
 
 **2027 (長期)**
+
 - 法人向けプラン (SSO / SAML・監査ログ)
 - プラグインマーケットプレイス
 - リアルタイム共同編集 (CRDT)
