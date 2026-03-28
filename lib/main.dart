@@ -46,6 +46,7 @@ import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
+import 'package:my_web_app/pages/table_data_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -365,6 +366,10 @@ class MyApp extends StatelessWidget {
           case '/kanban':
             return MaterialPageRoute(
               builder: (_) => const KanbanBoardPage(),
+            );
+          case '/table-data':
+            return MaterialPageRoute(
+              builder: (_) => const TableDataPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
