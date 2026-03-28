@@ -76,6 +76,7 @@ import '../widgets/activity_calendar_card.dart';
 import '../widgets/growth_trend_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/profile_progress_card.dart';
+import '../widgets/build_in_public_share_card.dart';
 import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -3910,6 +3911,7 @@ abstinence_slip_details: $slipDetailsText
                             const SizedBox(height: 8),
                             const ReferralShareCard(),
                             const SizedBox(height: 8),
+                            const BuildInPublicShareCard(),
                             const LeaderboardCard(),
                             const SizedBox(height: 10),
                             const NotionFeatureComparisonCard(),
@@ -4233,13 +4235,43 @@ abstinence_slip_details: $slipDetailsText
                                   ),
                                 ),
                                 subtitle: const Text(
-                                  '日報・会議メモ・OKRなど17種テンプレート',
+                                  '日報・会議メモ・OKRなど18種テンプレート',
                                   style: TextStyle(fontSize: 12),
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () => Navigator.pushNamed(
                                   context,
                                   '/templates',
+                                ),
+                              ),
+                            ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Colors.green.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '📊',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  'データベース',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  '表形式でデータを管理 (Notion Database相当)',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/table-data',
                                 ),
                               ),
                             ),
