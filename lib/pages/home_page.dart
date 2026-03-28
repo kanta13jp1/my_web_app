@@ -37,7 +37,6 @@ import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
-import '../widgets/edge_function_summary_card.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
 
@@ -3957,14 +3956,13 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const GrowthRoadmapProgressCard(),
-                            const SizedBox(height: 10),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                               const SizedBox(height: 10),
                             ],
                             const ProfileCompletionBanner(),
                             const _PersonalityTypeBanner(),
+                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             _buildMonthlyCashflowPriorityCard(
                               context,
@@ -4249,8 +4247,6 @@ abstinence_slip_details: $slipDetailsText
                               Colors.deepPurple,
                             ),
                             _buildRecentToolsMenu(context, isCompact),
-                            const SizedBox(height: 16),
-                            const EdgeFunctionSummaryCard(),
                             const SizedBox(height: 40),
                           ],
                         ),
