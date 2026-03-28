@@ -46,6 +46,8 @@ import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
+import 'package:my_web_app/pages/compatibility_check_page.dart';
+import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -370,6 +372,16 @@ class MyApp extends StatelessWidget {
           case '/table-data':
             return MaterialPageRoute(
               builder: (_) => const TableDataPage(),
+            );
+          case '/compatibility':
+            final myType = settings.arguments as String? ?? '';
+            return MaterialPageRoute(
+              builder: (_) => CompatibilityCheckPage(myType: myType),
+            );
+          case '/personality-test':
+            final testId = settings.arguments as int? ?? 1;
+            return MaterialPageRoute(
+              builder: (_) => PersonalityTestQuestionsPage(testId: testId),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

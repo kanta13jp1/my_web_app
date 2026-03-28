@@ -345,7 +345,11 @@ ${_personalityType!.description}
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/compatibility');
+                        Navigator.pushNamed(
+                          context,
+                          '/compatibility',
+                          arguments: _personalityType?.code ?? '',
+                        );
                       },
                       icon: const Icon(Icons.favorite),
                       label: const Text('恋愛相性診断を試す'),
