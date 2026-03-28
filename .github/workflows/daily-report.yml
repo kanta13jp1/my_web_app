@@ -251,13 +251,20 @@ jobs:
           git commit -m "自動: 日次レポート ${DATE} (GitHub Actions)"
           git push origin "$BRANCH"
 
+          HTTP_CODE="${{ steps.digest.outputs.http_code }}"
+          X_POSTED="${{ steps.xpost.outputs.x_posted }}"
+          COMMIT_COUNT="${{ steps.gitlog.outputs.count }}"
+          cat > /tmp/pr_body.txt <<EOF
+          日次レポート自動生成 (GitHub Actions run #${RUN_ID})
+          - Supabase API: HTTP ${HTTP_CODE}
+          - X投稿: ${X_POSTED}
+          - コミット数: ${COMMIT_COUNT}件
+          EOF
+
           set +e
           PR_URL=$(gh pr create \
             --title "自動: 日次レポート ${DATE}" \
-            --body "日次レポート自動生成 (GitHub Actions run #${RUN_ID})
-- Supabase API: HTTP ${{ steps.digest.outputs.http_code }}
-- X投稿: ${{ steps.xpost.outputs.x_posted }}
-- コミット数: ${{ steps.gitlog.outputs.count }}件" \
+            --body-file /tmp/pr_body.txt \
             --base main \
             --head "$BRANCH")
           PR_EXIT=$?
