@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session7 (LP FAQセクション・FAQPage JSON-LD・試用チップ拡充・ホーム性格診断バナー・analyze修正)
+最終更新: 2026-03-28 Session8 (ユーザーマニュアル更新・analyze 0件維持・election_victory_page修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -307,6 +307,12 @@
 - **機能リクエスト ステータス変更通知** (session19): `notify-feature-request` Edge Function 新規作成。管理者がステータスを `done`/`in_progress` に変更した際、投稿者メールへ Resend API で通知メール送信。CI/CD に自動デプロイ追加
 - **Admin: 機能リクエスト UUID バグ修正** (session19): `req['id'] as int` → `req['id']?.toString()` に修正（DB の id 型は uuid）。ステータス変更後に通知確認ダイアログを表示する UX を追加
 - **LP: 固定フローティング CTA ボタン追加** (session19): LP に `FloatingActionButton.extended` を追加。「無料で始める」ボタンが常時表示され、タップすると登録フォームへスクロール
+
+### 2026-03-28 Session8 実装済み
+
+- **ユーザーマニュアル更新** (Session8): 性格診断バナーの説明をセクション1に追加。プロフィール完成度カードの場所を「成長・支援ダッシュボード」に更新。新セクション15「成長・支援ダッシュボード」(AIアシスト/成長シグナル/継続モチベーション) を追加。旧セクション15→16にリナンバー
+- **election_victory_page.dart 修正** (Session8): `unnecessary_cast` (line 1257) を削除。`control_flow_in_finally` を `if (mounted)` パターンに修正。flutter analyze 0件維持
+- **election_regional_kpi_chart.dart 再修正** (Session8): IDE ツールによる `notoSansJpRegular/Bold` への自動リバートを `notoSansJPRegular/Bold` (uppercase JP) に再修正。trailing comma エラーも修正
 
 ### 2026-03-28 Session7 実装済み
 
@@ -999,6 +1005,29 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 8. **Schedule cs-check 自動実行確認**
    - 06:00 JST に自動実行され `docs/cs-notes/2026-03-28-06.md` を生成
    - Edge Function UI導線チェック: 全34件カバレッジ確認済み
+
+**flutter analyze: 0 エラー維持**
+
+---
+
+### Session 2026-03-28 — Session 6 (ホーム画面・LP改善 PowerShell)
+
+**実施内容:**
+
+1. **ProfileCompletionBanner ホーム画面復活**
+   - `lib/pages/home_page.dart` に `ProfileCompletionBanner` を再追加
+   - `WelcomeNewUserCard` 直後に配置（プロフィール未設定ユーザーへの導線復活）
+   - user_profiles の7フィールド（display_name/bio/avatar_url/location/twitter_handle/github_handle/website_url）の充足状況をチェック
+
+2. **LP 競合比較セクション改善**
+   - 比較セクションタイトルを「他サービスからの移行比較」→「**21社との機能比較**」に更新
+   - サブタイトルを「気になる競合と機能を比較してみましょう」→「気になるサービスをタップして機能・価格を比較しよう」に更新
+
+3. **LP FAQ 6項目→8項目に拡充**
+   - 「12部署20人のAI組織OSって何?」を追加（AI機能の具体的説明）
+   - 「LINE・Discord・SNSの代わりになりますか?」を追加（競合ポジション明確化）
+   - インポート回答を「実装中」→「NotionのCSVとEvernoteのENEXがインポートできます」に修正（実態と一致）
+   - AI機能の回答にAI組織OS委任の説明を追加
 
 **flutter analyze: 0 エラー維持**
 
