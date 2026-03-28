@@ -1,7 +1,7 @@
 -- note_versions: ノートのバージョン履歴テーブル
 CREATE TABLE IF NOT EXISTS note_versions (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  note_id      uuid NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  note_id      bigint NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
   user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title        text NOT NULL DEFAULT '',
   content      text NOT NULL DEFAULT '',
