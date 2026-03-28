@@ -119,6 +119,13 @@ jobs:
           supabase functions deploy get-support-tickets --no-verify-jwt
           supabase functions deploy reply-support-request --no-verify-jwt
           supabase functions deploy post-x-update --no-verify-jwt
+          supabase functions deploy check-competitor-updates --no-verify-jwt
+          supabase functions deploy get-competitor-monitoring --no-verify-jwt
+          supabase functions deploy health-check --no-verify-jwt
+          supabase functions deploy analyze-reality --no-verify-jwt
+          supabase functions deploy trigger-analysis --no-verify-jwt
+          supabase functions deploy local-election-intelligence --no-verify-jwt
+          supabase functions deploy agent-runtime-cycle --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

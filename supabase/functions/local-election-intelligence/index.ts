@@ -843,6 +843,7 @@ function looksLikeKanaLine(value: string): boolean {
   return /^[ぁ-ゖァ-ヺー・\s]+$/u.test(value.trim());
 }
 
+// deno-lint-ignore no-unused-vars
 function extractMemberIdentity(
   lines: string[],
   fromIndex: number,

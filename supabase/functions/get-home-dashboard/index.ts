@@ -74,8 +74,7 @@ serve(async (req) => {
       // Fetch all users page by page to find today's signups.
       // This is acceptable at current scale (21 users).
       let page = 1;
-      // deno-lint-ignore no-constant-condition
-      while (true) {
+      while (true) { // infinite loop with explicit break
         const { data: pageData } = await admin.auth.admin.listUsers({
           page,
           perPage: 100,

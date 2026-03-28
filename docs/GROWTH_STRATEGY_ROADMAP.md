@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session10 (ホーム画面 EdgeFunctionSummaryCard 復活・lint 修正・analyze 0件維持)
+最終更新: 2026-03-28 Session10 (get-competitor-monitoring Edge Function新規・CI/CD全Edge Functions完備・4インスタンス並列開発体制整備)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -307,6 +307,13 @@
 - **機能リクエスト ステータス変更通知** (session19): `notify-feature-request` Edge Function 新規作成。管理者がステータスを `done`/`in_progress` に変更した際、投稿者メールへ Resend API で通知メール送信。CI/CD に自動デプロイ追加
 - **Admin: 機能リクエスト UUID バグ修正** (session19): `req['id'] as int` → `req['id']?.toString()` に修正（DB の id 型は uuid）。ステータス変更後に通知確認ダイアログを表示する UX を追加
 - **LP: 固定フローティング CTA ボタン追加** (session19): LP に `FloatingActionButton.extended` を追加。「無料で始める」ボタンが常時表示され、タップすると登録フォームへスクロール
+
+### 2026-03-28 Session10 実装済み (Web インスタンス)
+
+- **get-competitor-monitoring Edge Function 新規作成** (Session10): 競合14社の Web 可用性チェック結果を GET で返す新規 Edge Function。`competitor_monitoring` テーブルから最新データを集計。`?days=N&limit=N&competitor=key` パラメータ対応。anon キーでアクセス可能。管理者 UI との連携基盤を整備
+- **CI/CD Edge Functions 全量デプロイ対応** (Session10): `deploy-prod.yml` に未追加だった 7 関数（check-competitor-updates / get-competitor-monitoring / health-check / analyze-reality / trigger-analysis / local-election-intelligence / agent-runtime-cycle）を追加。全 Edge Functions の本番自動デプロイが完備
+- **4インスタンス並列開発体制整備** (Session10): Web=supabase/functions/ / VSCode=lib/ / Windows=docs/ / PowerShell=全体管理 の役割分担を GROWTH_STRATEGY_ROADMAP.md に明記。各インスタンスが `git pull --rebase` 先行実行で競合防止
+- **技術ブログ下書き作成** (Session10): `docs/blog-drafts/2026-03-28-edge-functions-cicd.md` に Edge Functions CI/CD 整備の詳細解説記事を作成
 
 ### 2026-03-28 Session8 実装済み
 
