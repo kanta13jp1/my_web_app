@@ -50,8 +50,7 @@ class LocalElectionPrefectureReality {
       prefecture: (json['prefecture'] as String? ?? '').trim(),
       sourceUrl: (json['sourceUrl'] as String? ?? '').trim(),
       currentMembers: _readInt(json['currentMembers']),
-      prefecturalAssemblyMembers:
-          _readInt(json['prefecturalAssemblyMembers']),
+      prefecturalAssemblyMembers: _readInt(json['prefecturalAssemblyMembers']),
       municipalAssemblyMembers: _readInt(json['municipalAssemblyMembers']),
     );
   }
@@ -128,8 +127,7 @@ class LocalElectionRealitySnapshot {
 
   factory LocalElectionRealitySnapshot.fromJson(Map<String, dynamic> json) {
     return LocalElectionRealitySnapshot(
-      fetchedAt:
-          DateTime.tryParse(json['fetchedAt'] as String? ?? '') ??
+      fetchedAt: DateTime.tryParse(json['fetchedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       baselineCurrentLocalMembers: _readInt(
         json['baselineCurrentLocalMembers'],
@@ -235,7 +233,9 @@ class LocalElectionRealitySnapshot {
       return const <LocalElectionRealitySource>[];
     }
     return value.whereType<Map>().map((item) {
-      return LocalElectionRealitySource.fromJson(Map<String, dynamic>.from(item));
+      return LocalElectionRealitySource.fromJson(
+        Map<String, dynamic>.from(item),
+      );
     }).toList();
   }
 
