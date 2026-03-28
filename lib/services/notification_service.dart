@@ -30,7 +30,8 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,);
   }
 
   Future<void> scheduleSaturdayReminder() async {
@@ -48,20 +49,18 @@ class NotificationService {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      saturdayReminderId,
-      '今週もお疲れ様でした！',
-      '「いつかやる」タスクを見直して、来週の計画を立てませんか？',
-      _nextInstanceOfSaturdayTenAM(),
-      platformChannelSpecifics,
+      id: saturdayReminderId,
+      title: '今週もお疲れ様でした！',
+      body: '「いつかやる」タスクを見直して、来週の計画を立てませんか？',
+      scheduledDate: _nextInstanceOfSaturdayTenAM(),
+      notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
     );
   }
 
   Future<void> cancelSaturdayReminder() async {
-    await flutterLocalNotificationsPlugin.cancel(saturdayReminderId);
+    await flutterLocalNotificationsPlugin.cancel(id: saturdayReminderId);
   }
 
   Future<void> scheduleDailyAbstinenceReminder({
@@ -83,20 +82,18 @@ class NotificationService {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      '禁欲ガード チェック',
-      '今日の禁欲ルール実行と継続アクションの進捗を確認しましょう。',
-      _nextInstanceOfTime(hour, minute),
-      platformChannelSpecifics,
+      id: id,
+      title: '禁欲ガード チェック',
+      body: '今日の禁欲ルール実行と継続アクションの進捗を確認しましょう。',
+      scheduledDate: _nextInstanceOfTime(hour, minute),
+      notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
   Future<void> cancelAbstinenceReminder({int id = abstinenceReminderId}) async {
-    await flutterLocalNotificationsPlugin.cancel(id);
+    await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
   tz.TZDateTime _nextInstanceOfSaturdayTenAM() {
