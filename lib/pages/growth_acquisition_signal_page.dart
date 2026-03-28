@@ -1,0 +1,172 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// 集客シグナル記録ページ
+/// 取得チャネルごとのシグナルを記録・確認する
+class GrowthAcquisitionSignalPage extends StatefulWidget {
+  const GrowthAcquisitionSignalPage({super.key});
+
+  @override
+  State<GrowthAcquisitionSignalPage> createState() =>
+      _GrowthAcquisitionSignalPageState();
+}
+
+class _GrowthAcquisitionSignalPageState
+    extends State<GrowthAcquisitionSignalPage> {
+  final _supabase = Supabase.instance.client;
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _successMessage;
+  String? _selectedSignal;
+
+  static const List<String> _signals = [
+    'touch_landing',
+    'touch_import',
+    'touch_public_memo',
+    'touch_referral',
+    'import_preview_notion',
+    'import_preview_evernote',
+    'import_preview_markdown',
+    'import_signup_cta',
+    'public_memo_signup_cta',
+    'signup_submit_landing',
+    'signup_submit_import',
+    'signup_submit_public_memo',
+    'signup_submit_referral',
+  ];
+
+  static const Map<String, String> _signalLabels = {
+    'touch_landing': 'ランディング到達',
+    'touch_import': 'インポート到達',
+    'touch_public_memo': '公開メモ到達',
+    'touch_referral': '紹介経由到達',
+    'import_preview_notion': 'Notionプレビュー',
+    'import_preview_evernote': 'Evernoteプレビュー',
+    'import_preview_markdown': 'Markdownプレビュー',
+    'import_signup_cta': 'インポートCTA',
+    'public_memo_signup_cta': '公開メモCTA',
+    'signup_submit_landing': 'LP登録送信',
+    'signup_submit_import': 'インポート登録送信',
+    'signup_submit_public_memo': '公開メモ登録送信',
+    'signup_submit_referral': '紹介登録送信',
+  };
+
+  Future<void> _record() async {
+    final signal = _selectedSignal;
+    if (signal == null) {
+      setState(() => _errorMessage = 'シグナルを選択してください');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      final today = DateTime.now();
+      final dateKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      await _supabase.functions.invoke(
+        'growth-acquisition-signal',
+        body: {'signalKey': signal, 'dateKey': dateKey},
+      );
+
+      if (mounted) {
+        setState(() {
+          _successMessage =
+              '「${_signalLabels[signal] ?? signal}」のシグナルを記録しました';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'シグナル記録に失敗しました: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('集客シグナル記録'),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '記録するシグナル',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _signals.length,
+                itemBuilder: (context, index) {
+                  final signal = _signals[index];
+                  final label = _signalLabels[signal] ?? signal;
+                  return RadioListTile<String>(
+                    title: Text(label),
+                    subtitle: Text(
+                      signal,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    value: signal,
+                    groupValue: _selectedSignal,
+                    onChanged: (v) => setState(() => _selectedSignal = v),
+                    activeColor: Colors.green,
+                  );
+                },
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+            if (_successMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _successMessage!,
+                style: const TextStyle(color: Colors.green),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _record,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('シグナルを記録'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

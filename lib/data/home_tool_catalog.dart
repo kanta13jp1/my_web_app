@@ -61,6 +61,9 @@ import '../pages/growth_acquisition_report_page.dart';
 import '../pages/growth_command_center_page.dart';
 import '../pages/growth_share_signal_page.dart';
 import '../pages/growth_weekly_digest_page.dart';
+import '../pages/memo_reactions_page.dart';
+import '../pages/note_comments_page.dart';
+import '../pages/growth_acquisition_signal_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -799,6 +802,37 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['週次', 'ダイジェスト', 'weekly', 'digest'],
       onOpen: (context) =>
           _pushPage(context, const GrowthWeeklyDigestPage()),
+    ),
+    HomeToolEntry(
+      id: 'memo-reactions',
+      sectionId: 'growth',
+      title: 'メモリアクション',
+      subtitle: '公開メモへの絵文字リアクションを確認・投票する',
+      icon: Icons.emoji_emotions_outlined,
+      color: Colors.amber,
+      keywords: const <String>['リアクション', '絵文字', 'メモ', 'reaction'],
+      onOpen: (context) => _pushPage(context, const MemoReactionsPage()),
+    ),
+    HomeToolEntry(
+      id: 'note-comments',
+      sectionId: 'knowledge',
+      title: 'ノートコメント',
+      subtitle: 'ノートへのコメントを閲覧・追加・削除する',
+      icon: Icons.comment_outlined,
+      color: Colors.teal,
+      keywords: const <String>['コメント', 'ノート', 'comment', 'note'],
+      onOpen: (context) => _pushPage(context, const NoteCommentsPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-acquisition-signal',
+      sectionId: 'growth',
+      title: '集客シグナル記録',
+      subtitle: 'チャネルごとの集客シグナルを手動記録する',
+      icon: Icons.track_changes,
+      color: Colors.green,
+      keywords: const <String>['集客', 'シグナル', 'acquisition', 'signal'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthAcquisitionSignalPage()),
     ),
   ];
 }

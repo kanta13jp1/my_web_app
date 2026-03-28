@@ -61,6 +61,9 @@ import 'package:my_web_app/pages/growth_acquisition_report_page.dart';
 import 'package:my_web_app/pages/growth_command_center_page.dart';
 import 'package:my_web_app/pages/growth_share_signal_page.dart';
 import 'package:my_web_app/pages/growth_weekly_digest_page.dart';
+import 'package:my_web_app/pages/memo_reactions_page.dart';
+import 'package:my_web_app/pages/note_comments_page.dart';
+import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -431,6 +434,18 @@ class MyApp extends StatelessWidget {
           case '/growth-weekly-digest':
             return MaterialPageRoute(
               builder: (_) => const GrowthWeeklyDigestPage(),
+            );
+          case '/memo-reactions':
+            return MaterialPageRoute(
+              builder: (_) => const MemoReactionsPage(),
+            );
+          case '/note-comments':
+            return MaterialPageRoute(
+              builder: (_) => const NoteCommentsPage(),
+            );
+          case '/growth-acquisition-signal':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAcquisitionSignalPage(),
             );
           case '/compatibility':
             final myType = settings.arguments as String? ?? '';
