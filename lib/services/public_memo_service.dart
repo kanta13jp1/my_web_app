@@ -7,6 +7,8 @@ import 'app_share_service.dart';
 class PublicMemoService {
   static const String publicMemoShareSignal = 'public_memo_share';
   static const String publicMemoCopySignal = 'public_memo_copy';
+  static const String _functionBaseUrl =
+      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
 
   final SupabaseClient _supabase;
 
@@ -23,6 +25,10 @@ class PublicMemoService {
         'utm_campaign': 'growth_mission',
       },
     ).toString();
+  }
+
+  static String buildPublicMemoOgpUrl(int memoId) {
+    return '$_functionBaseUrl/get-public-memo-ogp?id=$memoId';
   }
 
   static String buildShareMessage(PublicMemo memo) {
@@ -104,29 +110,50 @@ class PublicMemoService {
     required String title,
     String? content,
     String? category,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
+  }) async {
+    final memo = await upsertMemo(
+      noteId: noteId,
+      userId: userId,
+      title: title,
+      content: content,
+      category: category,
+      metadata: metadata,
+    );
+    return memo != null;
+  }
+
+  Future<PublicMemo?> upsertMemo({
+    required int noteId,
+    required String userId,
+    required String title,
+    String? content,
+    String? category,
+    Map<String, dynamic> metadata = const <String, dynamic>{},
   }) async {
     try {
       AppLogger.info('Publishing memo: $noteId');
 
-      await _supabase.from('public_memos').upsert({
+      final response = await _supabase.from('public_memos').upsert({
         'note_id': noteId,
         'user_id': userId,
         'title': title,
         'content': content,
         'category': category,
+        'metadata': metadata,
         'is_public': true,
         'published_at': DateTime.now().toIso8601String(),
-      });
+      }).select().single();
 
       AppLogger.info('Memo published successfully');
-      return true;
+      return PublicMemo.fromJson(response);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to publish memo',
         error: e,
         stackTrace: stackTrace,
       );
-      return false;
+      return null;
     }
   }
 
@@ -208,6 +235,33 @@ class PublicMemoService {
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to get public memo by id',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  Future<PublicMemo?> getUserPublicMemoByNoteId({
+    required int noteId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('public_memos')
+          .select()
+          .eq('note_id', noteId)
+          .eq('user_id', userId)
+          .eq('is_public', true)
+          .maybeSingle();
+
+      if (response == null) {
+        return null;
+      }
+      return PublicMemo.fromJson(response);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to get user public memo by note id',
         error: e,
         stackTrace: stackTrace,
       );

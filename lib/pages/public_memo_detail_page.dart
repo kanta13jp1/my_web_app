@@ -74,8 +74,8 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       SeoMetaHelper.setPublicMemoSeo(
         title: memo.title,
         description: snippet,
-        url:
-            'https://my-web-app-b67f4.web.app/public-memo/${widget.memoId}',
+        url: PublicMemoService.buildPublicMemoUrl(widget.memoId),
+        imageUrl: PublicMemoService.buildPublicMemoOgpUrl(widget.memoId),
       );
     }
 

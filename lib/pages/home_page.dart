@@ -3963,7 +3963,6 @@ abstinence_slip_details: $slipDetailsText
                             ],
                             const ProfileCompletionBanner(),
                             const _PersonalityTypeBanner(),
-                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 10),
                             _buildMonthlyCashflowPriorityCard(
                               context,
@@ -4241,6 +4240,8 @@ abstinence_slip_details: $slipDetailsText
                               highlightedToolIds: highlightedToolIds,
                               badgeLabels: toolBadgeLabels,
                             ),
+                            const SizedBox(height: 16),
+                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'RECENT TOOLS',

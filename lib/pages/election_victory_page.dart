@@ -3,12 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
+import '../models/public_memo.dart';
 import '../services/local_election_plan_service.dart';
 import '../services/local_election_reality_service.dart';
+import '../services/local_election_share_service.dart';
+import '../services/public_memo_service.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 
@@ -77,6 +81,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  late final LocalElectionShareService _shareService =
+      LocalElectionShareService(Supabase.instance.client);
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
   final NumberFormat _numberFormat = NumberFormat('#,##0', 'ja_JP');
@@ -87,8 +93,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       <String, LocalElectionLegislatorProfile>{};
   final Set<String> _memberProfileLoadingUrls = <String>{};
   final Map<String, String> _memberProfileErrors = <String, String>{};
+  PublicMemo? _publishedRealityMemo;
   bool _isLoading = true;
   bool _isRealityLoading = false;
+  bool _isPublishingRealityMemo = false;
   String? _realityError;
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
@@ -117,6 +125,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
+      _publishedRealityMemo = null;
       if (!plan.regionLabels.contains(_selectedRegion)) {
         _selectedRegion = _allLabel;
       }
@@ -124,6 +133,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _isLoading = false;
     });
 
+    if (cachedSnapshot != null && cachedSnapshot.hasData) {
+      unawaited(_loadPublishedRealityMemo(cachedSnapshot));
+    }
     unawaited(_refreshRealityData(showSnackBar: false));
   }
 
@@ -209,6 +221,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         .map(_resolveRosterMember)
         .toList();
 
+    return _sortRosterMembers(filtered);
+  }
+
+  List<LocalElectionLegislatorProfile> _sortRosterMembers(
+    List<LocalElectionLegislatorProfile> members,
+  ) {
     int categoryRank(String value) {
       switch (value) {
         case 'prefectural':
@@ -220,7 +238,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
     }
 
-    filtered.sort((left, right) {
+    final sorted = List<LocalElectionLegislatorProfile>.from(members);
+    sorted.sort((left, right) {
       final prefectureCompare = left.prefecture.compareTo(right.prefecture);
       if (prefectureCompare != 0) {
         return prefectureCompare;
@@ -232,7 +251,32 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
       return left.name.compareTo(right.name);
     });
-    return filtered;
+    return sorted;
+  }
+
+  List<LocalElectionLegislatorProfile> _resolvedRosterMembers(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    return _sortRosterMembers(
+      snapshot.members.map(_resolveRosterMember).toList(),
+    );
+  }
+
+  Future<List<LocalElectionLegislatorProfile>> _shareReadyRosterMembers(
+    LocalElectionRealitySnapshot snapshot,
+  ) async {
+    final merged = await Future.wait(
+      _resolvedRosterMembers(snapshot).map((member) async {
+        final detailUrl = member.detailUrl.trim();
+        if (detailUrl.isEmpty) {
+          return member;
+        }
+        final cached = _memberProfileOverrides[detailUrl] ??
+            await _realityService.loadCachedMemberProfile(detailUrl);
+        return member.mergeWith(cached);
+      }),
+    );
+    return _sortRosterMembers(merged);
   }
 
   Future<void> _loadMemberProfile(
@@ -305,6 +349,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
   }
 
+  Future<void> _loadPublishedRealityMemo(
+    LocalElectionRealitySnapshot snapshot,
+  ) async {
+    final memo = await _shareService.loadPublishedSnapshot(snapshot);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _publishedRealityMemo = memo;
+    });
+  }
+
   Future<void> _refreshRealityData({required bool showSnackBar}) async {
     if (_isRealityLoading) {
       return;
@@ -322,8 +378,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       setState(() {
         _realitySnapshot = snapshot;
         _realityError = null;
+        _publishedRealityMemo = null;
         _syncMemberSelection(snapshot);
       });
+      unawaited(_loadPublishedRealityMemo(snapshot));
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -375,14 +433,140 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (snapshot == null || !snapshot.hasData) {
       return;
     }
+    final memo = _publishedRealityMemo;
+    final text = memo == null
+        ? _buildRealityXPost(snapshot)
+        : _shareService.buildXShareText(
+            snapshot: snapshot,
+            publicUrl: PublicMemoService.buildPublicMemoUrl(memo.id),
+          );
     await Clipboard.setData(
-      ClipboardData(text: _buildRealityXPost(snapshot)),
+      ClipboardData(text: text),
     );
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('X投稿向けの現職サマリーをコピーしました')),
+      SnackBar(
+        content: Text(
+          memo == null
+              ? 'X投稿向けの現職サマリーをコピーしました'
+              : '公開ノートリンク付きのX投稿文をコピーしました',
+        ),
+      ),
+    );
+  }
+
+  Future<PublicMemo?> _publishRealityMemo({
+    bool openAfterPublish = false,
+  }) async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      return null;
+    }
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('公開ノート化にはログインが必要です')),
+        );
+      }
+      return null;
+    }
+    if (_isPublishingRealityMemo) {
+      return _publishedRealityMemo;
+    }
+
+    setState(() {
+      _isPublishingRealityMemo = true;
+    });
+
+    try {
+      final shareMembers = await _shareReadyRosterMembers(snapshot);
+      final memo = await _shareService.publishSnapshot(
+        snapshot: snapshot,
+        members: shareMembers,
+      );
+      if (!mounted) {
+        return memo;
+      }
+      if (memo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('公開ノートの作成に失敗しました')),
+        );
+        return null;
+      }
+      setState(() {
+        _publishedRealityMemo = memo;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開ノートを更新しました')),
+      );
+      if (openAfterPublish) {
+        await Navigator.of(context).pushNamed('/public-memo?id=${memo.id}');
+      }
+      return memo;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishingRealityMemo = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _copyRealityPublicLink() async {
+    final memo = _publishedRealityMemo ?? await _publishRealityMemo();
+    if (memo == null) {
+      return;
+    }
+    final url = PublicMemoService.buildPublicMemoUrl(memo.id);
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('公開ノートのリンクをコピーしました')),
+    );
+  }
+
+  Future<void> _shareRealityOnX() async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      return;
+    }
+    final memo = _publishedRealityMemo ?? await _publishRealityMemo();
+    if (memo == null) {
+      return;
+    }
+    final text = _shareService.buildXShareText(
+      snapshot: snapshot,
+      publicUrl: PublicMemoService.buildPublicMemoUrl(memo.id),
+    );
+    final uri = Uri.parse(
+      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}',
+    );
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('X投稿画面を開けなかったため、投稿文をコピーしました'),
+        ),
+      );
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Xの投稿画面を開きました')),
     );
   }
 
@@ -902,6 +1086,43 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                         icon: const Icon(Icons.alternate_email),
                         label: const Text('X用コピー'),
                       ),
+                    if (realitySnapshot != null)
+                      FilledButton.tonalIcon(
+                        onPressed: realitySnapshot.hasData &&
+                                !_isPublishingRealityMemo
+                            ? () => _publishRealityMemo(openAfterPublish: true)
+                            : null,
+                        icon: _isPublishingRealityMemo
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.public),
+                        label: Text(
+                          _isPublishingRealityMemo
+                              ? '公開中'
+                              : '公開ノート化',
+                        ),
+                      ),
+                    if (realitySnapshot != null)
+                      FilledButton.tonalIcon(
+                        onPressed: realitySnapshot.hasData &&
+                                !_isPublishingRealityMemo
+                            ? _copyRealityPublicLink
+                            : null,
+                        icon: const Icon(Icons.link),
+                        label: const Text('公開リンクコピー'),
+                      ),
+                    if (realitySnapshot != null)
+                      FilledButton(
+                        onPressed: realitySnapshot.hasData &&
+                                !_isPublishingRealityMemo
+                            ? _shareRealityOnX
+                            : null,
+                        child: const Text('X共有'),
+                      ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading
                           ? null
@@ -940,6 +1161,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
                     color: Colors.blueGrey,
                   ),
+                  if (_publishedRealityMemo != null)
+                    _buildStatusChip(
+                      '公開ノート準備済み',
+                      color: Colors.indigo,
+                    ),
                 ],
               ),
             ],

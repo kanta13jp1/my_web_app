@@ -5,6 +5,7 @@ class PublicMemo {
   final String title;
   final String? content;
   final String? category;
+  final Map<String, dynamic> metadata;
   final int likeCount;
   final int viewCount;
   final bool isPublic;
@@ -19,6 +20,7 @@ class PublicMemo {
     required this.title,
     this.content,
     this.category,
+    this.metadata = const <String, dynamic>{},
     required this.likeCount,
     required this.viewCount,
     required this.isPublic,
@@ -35,6 +37,7 @@ class PublicMemo {
       title: json['title'] as String,
       content: json['content'] as String?,
       category: json['category'] as String?,
+      metadata: _readMetadata(json['metadata']),
       likeCount: json['like_count'] as int? ?? 0,
       viewCount: json['view_count'] as int? ?? 0,
       isPublic: json['is_public'] as bool? ?? true,
@@ -52,6 +55,7 @@ class PublicMemo {
       'title': title,
       'content': content,
       'category': category,
+      'metadata': metadata,
       'like_count': likeCount,
       'view_count': viewCount,
       'is_public': isPublic,
@@ -59,5 +63,15 @@ class PublicMemo {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+  }
+
+  static Map<String, dynamic> _readMetadata(Object? raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw;
+    }
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return const <String, dynamic>{};
   }
 }

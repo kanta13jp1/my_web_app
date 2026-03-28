@@ -977,7 +977,7 @@ $input
       (
         icon: Icons.people_alt_outlined,
         color: const Color(0xFF3949AB),
-        value: _totalUsers > 0 ? '$_totalUsers' : '–',
+        value: _totalUsers > 10 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
@@ -2246,13 +2246,13 @@ $input
                 const SizedBox(height: 14),
               ],
               const Text(
-                '保存して、明日も続きから再開',
+                '今すぐ無料ではじめる',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
                 _isSignUp
-                    ? '登録すると、AI提案・実行履歴・明日の続きが残ります。最短は Magic Link です。'
+                    ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
                     : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
                 style: const TextStyle(color: Colors.black54),
               ),
@@ -2261,9 +2261,9 @@ $input
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _BenefitChip(icon: Icons.save, label: 'AI提案を保存'),
-                  _BenefitChip(icon: Icons.replay, label: '明日も続きから再開'),
-                  _BenefitChip(icon: Icons.history, label: '履歴を残す'),
+                  _BenefitChip(icon: Icons.card_membership, label: '完全無料'),
+                  _BenefitChip(icon: Icons.auto_awesome, label: 'AI自動整理'),
+                  _BenefitChip(icon: Icons.import_export, label: 'Notionから移行可'),
                 ],
               ),
               const SizedBox(height: 16),
@@ -2303,7 +2303,7 @@ $input
                             ? (_isMagicLinkCoolingDown
                                 ? '送信済み'
                                 : 'Magic Linkを再送')
-                            : 'Magic Linkで保存を始める',
+                            : 'Magic Linkで今すぐ始める',
                       ),
                       if (_showInboxShortcut && _isMagicLinkCoolingDown) ...[
                         const SizedBox(width: 8),
