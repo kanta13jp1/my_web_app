@@ -91,6 +91,8 @@ jobs:
           # rejected by Supabase's platform-level JWT check.
           # Auth is enforced inside each function via the Authorization header.
           supabase functions deploy get-public-memo-preview --no-verify-jwt
+          supabase functions deploy public-memo-share --no-verify-jwt
+          supabase functions deploy memo-reactions --no-verify-jwt
           supabase functions deploy get-ogp --no-verify-jwt
           supabase functions deploy development-achievements --no-verify-jwt
           supabase functions deploy get-growth-roadmap-progress --no-verify-jwt

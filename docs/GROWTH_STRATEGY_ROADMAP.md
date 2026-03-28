@@ -322,6 +322,12 @@
 - **4インスタンス並列開発体制整備** (Session10): Web=supabase/functions/ / VSCode=lib/ / Windows=docs/ / PowerShell=全体管理 の役割分担を GROWTH_STRATEGY_ROADMAP.md に明記。各インスタンスが `git pull --rebase` 先行実行で競合防止
 - **技術ブログ下書き作成** (Session10): `docs/blog-drafts/2026-03-28-edge-functions-cicd.md` に Edge Functions CI/CD 整備の詳細解説記事を作成
 
+### 2026-03-28 Session11 daily-development 実装済み
+
+- **公開メモ SNS シェア OGP 強化** (Session11): `public-memo-share` Edge Function を新規作成。SNSでメモURLをシェアした際にOGPメタタグ付きHTMLを返してからアプリにリダイレクト。`buildPublicMemoUrl()` をEdge Function URLに変更し、アプリURLは `buildPublicMemoAppUrl()` に分離。CI/CD と config.toml に追加
+- **公開メモ 絵文字リアクション機能** (Session11): `memo-reactions` Edge Function と `memo_reactions` テーブルを新規作成。👍❤️🔥💡🎉の5種リアクションをログイン不要で実装。IP SHA-256ハッシュ(先頭16桁)で重複防止・プライバシー保護。UNIQUE INDEXのinsert違反をtoggleオフとして活用。Flutter `_MemoReactionsBar` ウィジェット（AnimatedContainer + Wrap）を公開メモ詳細ページに追加。CI/CD と config.toml に追加
+- **技術ブログ下書き** (Session11): `docs/blog-drafts/2026-03-28-public-memo-reactions.md` 作成
+
 ### 2026-03-28 Session8 実装済み
 
 - **ユーザーマニュアル更新** (Session8): 性格診断バナーの説明をセクション1に追加。プロフィール完成度カードの場所を「成長・支援ダッシュボード」に更新。新セクション15「成長・支援ダッシュボード」(AIアシスト/成長シグナル/継続モチベーション) を追加。旧セクション15→16にリナンバー

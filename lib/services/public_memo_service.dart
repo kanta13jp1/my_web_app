@@ -138,16 +138,20 @@ class PublicMemoService {
     try {
       AppLogger.info('Publishing memo: $noteId');
 
-      final response = await _supabase.from('public_memos').upsert({
-        'note_id': noteId,
-        'user_id': userId,
-        'title': title,
-        'content': content,
-        'category': category,
-        'metadata': metadata,
-        'is_public': true,
-        'published_at': DateTime.now().toIso8601String(),
-      }).select().single();
+      final response = await _supabase
+          .from('public_memos')
+          .upsert({
+            'note_id': noteId,
+            'user_id': userId,
+            'title': title,
+            'content': content,
+            'category': category,
+            'metadata': metadata,
+            'is_public': true,
+            'published_at': DateTime.now().toIso8601String(),
+          })
+          .select()
+          .single();
 
       AppLogger.info('Memo published successfully');
       return PublicMemo.fromJson(response);

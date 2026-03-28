@@ -445,8 +445,7 @@ class MyApp extends StatelessWidget {
           case '/personality-test-result':
             final resultTestId = settings.arguments as int? ?? 1;
             return MaterialPageRoute(
-              builder: (_) =>
-                  PersonalityTestResultPage(testId: resultTestId),
+              builder: (_) => PersonalityTestResultPage(testId: resultTestId),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

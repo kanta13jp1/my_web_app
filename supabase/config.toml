@@ -132,6 +132,16 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/get-public-memo-ogp/index.ts"
 
+[functions.public-memo-share]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/public-memo-share/index.ts"
+
+[functions.memo-reactions]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/memo-reactions/index.ts"
+
 [functions.get-ogp-public]
 enabled = true
 verify_jwt = false

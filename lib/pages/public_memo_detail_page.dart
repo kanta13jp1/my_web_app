@@ -289,7 +289,8 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                     if (currentUser == null) ...[
                       const SizedBox(height: 16),
                       Card(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -310,7 +311,8 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                               FilledButton.icon(
                                 onPressed: _openLandingPageForSignUp,
                                 icon: const Icon(Icons.login),
-                                label: const Text('Create account to save ideas'),
+                                label:
+                                    const Text('Create account to save ideas'),
                               ),
                             ],
                           ),
