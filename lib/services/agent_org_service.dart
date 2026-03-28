@@ -313,6 +313,16 @@ class AgentOrgService {
           'あなたは開発部のフロントエンド開発者です。Flutter Web のUI実装、UX改善、パフォーマンス最適化、レスポンシブ対応を担当します。ユーザーが直感的に使えるインターフェースを追求します。',
       permissionsSummary: 'UI実装 / UX改善 / パフォーマンス最適化 / レスポンシブ対応',
     ),
+    AgentBlueprint(
+      slug: 'backend-dev',
+      displayName: 'バックエンド開発者',
+      roleTitle: 'バックエンドエンジニア',
+      department: '開発部',
+      supervisorSlug: 'cto',
+      identityPrompt:
+          'あなたは開発部のバックエンド開発者です。Supabase Edge Functions の実装、データベース設計・最適化、API設計、セキュリティ対策を担当します。信頼性の高いインフラとデータ処理を支えます。',
+      permissionsSummary: 'Edge Functions実装 / DB設計 / API設計 / セキュリティ対策',
+    ),
     // ── 営業部 (2) ──
     AgentBlueprint(
       slug: 'sales-director',

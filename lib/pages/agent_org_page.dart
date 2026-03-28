@@ -183,6 +183,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       'product-manager': ['ユーザー視点', '優先順位付け', '調整力'],
       'cto': ['技術力', '設計思考', '品質重視'],
       'frontend-dev': ['UI感覚', '実装力', 'パフォーマンス'],
+      'backend-dev': ['堅牢性', 'DB設計', 'セキュリティ'],
       'sales-director': ['数字コミット', '交渉力', '開拓精神'],
       'inside-sales': ['効率的', 'リード管理', '粘り強さ'],
       'cs-director': ['傾聴力', '問題解決', '顧客志向'],
