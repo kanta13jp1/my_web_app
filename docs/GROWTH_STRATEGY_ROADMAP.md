@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 PowerShell Session4 (fl_chart移行完了・競合21社統一・GitHub Actions先行実行アーキテクチャ・AI組織20人・Notion Database実装・選挙知能機能追加)
+最終更新: 2026-03-28 daily-development (全文検索安定化・ILIKE フォールバック・NoteSearchCard ホーム画面追加・flutter analyze 0件維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -151,6 +151,8 @@
 - **テーブルデータビュー (Notion Database相当) 実装** (2026-03-28): `table_data_page.dart` を新規作成。`user_tables` / `user_table_rows` テーブルを jsonb で動的スキーマ管理。カラム型5種（text/number/date/checkbox/select）、テーブル作成・削除・リネーム、カラム追加・削除、行のインライン編集・削除に対応。Flutter `DataTable` ウィジェットで横スクロール対応スプレッドシート UI を実現。`/table-data` ルート追加、ホーム画面にナビゲーションカード追加。Notion の最大差別化機能「Database」の中期ギャップを先行着手
 - **ノートバージョン履歴** (2026-03-28): `note_versions` テーブル（RLS付き）を新設。手動保存のたびにスナップショット自動記録。AppBarの履歴ボタンからBottomSheetで最新30件を閲覧・復元可能。Notionパリティ短期優先ギャップを解消
 - **pubspec.yaml 警告修正** (2026-03-28): `docs/session-summaries/` 未作成による flutter analyze 警告を解消。flutter analyze 0件を維持
+- **全文検索安定化** (2026-03-28 daily-development): `ai-search` Edge Function を ILIKE フォールバック付きハイブリッド構成に改修。OpenAI 未設定時・API 障害時も `textSearch()` で常時動作。`mode: auto/ai/text` パラメータ追加。レスポンスに `searchMode` フィールド追加で UI にモード表示
+- **NoteSearchCard** (2026-03-28 daily-development): ホーム画面にノート検索カードを追加。ワンタップで AI 検索ページへ遷移。短期ギャップ「全文検索の強化」完了
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
@@ -465,7 +467,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - ~~**テンプレートマーケット**~~: ✅ 2026-03-28実装完了 (18種類、6カテゴリ)
 - ~~**バージョン履歴 (最低限)**~~: ✅ 2026-03-28実装完了 (30件閲覧・復元)
 - ~~**テーブルビュー (Database)**~~: ✅ 2026-03-28実装完了 (動的カラム定義)
-- **全文検索の強化**: 埋め込み検索 (embedding) を Edge Function で安定化 ← 次の優先事項
+- ~~**全文検索の強化**~~: ✅ 2026-03-28実装完了 (ILIKE フォールバック・searchMode 返却・NoteSearchCard ホーム追加)
 
 #### 中期 (3-12ヶ月) で補填すべきギャップ
 

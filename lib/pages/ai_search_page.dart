@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// AI 自然言語ノート検索ページ
+/// OpenAI 設定時: AI ランキング検索
+/// OpenAI 未設定時: ILIKE ベースの全文検索にフォールバック
 class AiSearchPage extends StatefulWidget {
   const AiSearchPage({super.key});
 
@@ -15,6 +17,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
   bool _isLoading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _results = [];
+  String _searchMode = ''; // 'ai', 'text', 'text_fallback'
 
   @override
   void dispose() {
@@ -30,22 +33,25 @@ class _AiSearchPageState extends State<AiSearchPage> {
       _isLoading = true;
       _errorMessage = null;
       _results = [];
+      _searchMode = '';
     });
 
     try {
       final response = await _supabase.functions.invoke(
         'ai-search',
-        body: {'query': trimmed, 'limit': 20},
+        body: {'query': trimmed, 'limit': 20, 'mode': 'auto'},
       );
 
       final data = response.data;
-      if (data is Map<String, dynamic> && data['results'] is List) {
+      if (data is Map<String, dynamic>) {
+        final results = data['results'];
         setState(() {
-          _results = List<Map<String, dynamic>>.from(
-            (data['results'] as List).map(
-              (e) => Map<String, dynamic>.from(e as Map),
-            ),
-          );
+          _results = results is List
+              ? List<Map<String, dynamic>>.from(
+                  results.map((e) => Map<String, dynamic>.from(e as Map)),
+                )
+              : [];
+          _searchMode = (data['searchMode'] as String? ?? '');
         });
       } else if (data is List) {
         setState(() {
@@ -54,9 +60,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
           );
         });
       } else {
-        setState(() {
-          _results = [];
-        });
+        setState(() => _results = []);
       }
     } catch (e) {
       if (mounted) {
@@ -98,7 +102,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        title: const Text('AI ノート検索'),
+        title: const Text('ノート検索'),
         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         elevation: 0,
@@ -108,35 +112,81 @@ class _AiSearchPageState extends State<AiSearchPage> {
           // 検索バー
           Container(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: '自然言語で検索（例: 先月の振り返りメモ）',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _controller.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _controller.clear();
-                          setState(() {
-                            _results = [];
-                            _errorMessage = null;
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: '自然言語で検索（例: 先月の振り返りメモ）',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _controller.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _controller.clear();
+                              setState(() {
+                                _results = [];
+                                _errorMessage = null;
+                                _searchMode = '';
+                              });
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: isDark
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFFF1F5F9),
+                  ),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: _search,
+                  onChanged: (_) => setState(() {}),
                 ),
-                filled: true,
-                fillColor: isDark
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFFF1F5F9),
-              ),
-              textInputAction: TextInputAction.search,
-              onSubmitted: _search,
-              onChanged: (_) => setState(() {}),
+                if (_searchMode.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        _searchMode == 'ai'
+                            ? Icons.auto_awesome
+                            : Icons.text_fields,
+                        size: 13,
+                        color: _searchMode == 'ai'
+                            ? const Color(0xFF6366F1)
+                            : Colors.grey[500],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _searchMode == 'ai'
+                            ? 'AI 検索'
+                            : _searchMode == 'text_fallback'
+                                ? 'テキスト検索（AIフォールバック）'
+                                : 'テキスト検索',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _searchMode == 'ai'
+                              ? const Color(0xFF6366F1)
+                              : Colors.grey[500],
+                        ),
+                      ),
+                      if (_results.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_results.length}件',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ],
             ),
           ),
           const Divider(height: 1),
@@ -155,7 +205,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('AI が検索中...'),
+            Text('検索中...'),
           ],
         ),
       );

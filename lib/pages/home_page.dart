@@ -79,6 +79,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/build_in_public_share_card.dart';
 import '../widgets/goal_decomposer_card.dart';
 import '../widgets/quick_task_input_card.dart';
+import '../widgets/note_search_card.dart';
 import 'public_profile_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -3900,6 +3901,8 @@ abstinence_slip_details: $slipDetailsText
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                             ],
+                            const NoteSearchCard(),
+                            const SizedBox(height: 8),
                             const QuickTaskInputCard(),
                             const LoginStreakCard(),
                             const SizedBox(height: 8),
