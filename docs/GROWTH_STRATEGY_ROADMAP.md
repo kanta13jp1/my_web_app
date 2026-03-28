@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 daily-development (全文検索安定化・ILIKE フォールバック・NoteSearchCard ホーム画面追加・flutter analyze 0件維持)
+最終更新: 2026-03-28 Session5 (全文検索安定化・LP AI組織OS・互換性テスト・growth_plans21社完全対応・CHO室Coming soon解消)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -76,6 +76,16 @@
 - Growth command center を実装済み
 - flutter analyze は 0 を維持
 - flutter test --coverage は一部 widget test の安定化が残っている
+
+### ホーム画面改善計画 (2026-03-28 完了)
+
+ホーム画面は「全部を並べる場所」ではなく、「今日やることへ入る場所」に戻す。
+
+- 方針1: 日次必須導線、KPI、特別案件だけをホームに残す
+- 方針2: 探索系の機能は `業務メニュー` に分離し、部署別セクションで再配置する
+- 方針3: `最近使った機能` と `機能検索` を追加し、再訪時の移動コストを下げる
+- 完了条件1: 統一地方選ダッシュボードや朝会などの重要導線へホームから 2 タップ以内で到達できる
+- 完了条件2: 旧ホームの主要機能が `業務メニュー` 上で一覧・検索の両方から到達できる
 
 ### 直近の実装済み項目
 
@@ -153,6 +163,10 @@
 - **pubspec.yaml 警告修正** (2026-03-28): `docs/session-summaries/` 未作成による flutter analyze 警告を解消。flutter analyze 0件を維持
 - **全文検索安定化** (2026-03-28 daily-development): `ai-search` Edge Function を ILIKE フォールバック付きハイブリッド構成に改修。OpenAI 未設定時・API 障害時も `textSearch()` で常時動作。`mode: auto/ai/text` パラメータ追加。レスポンスに `searchMode` フィールド追加で UI にモード表示
 - **NoteSearchCard** (2026-03-28 daily-development): ホーム画面にノート検索カードを追加。ワンタップで AI 検索ページへ遷移。短期ギャップ「全文検索の強化」完了
+- **ホーム画面再編 & 業務メニュー化** (2026-03-28 daily-development): ホームを「今日の入口」に再設計
+  - `CSO OFFICE` 以降の探索系メニューを `業務メニュー` へ分離し、ホームには日次導線・KPI・特別案件・クイックアクセスを残す構成へ整理
+  - `業務メニュー` ページに機能検索・最近使った機能・部署別セクションを実装し、ホームから `業務メニュー` / `機能を探す` の 2 導線で遷移可能に改修
+  - `SharedPreferences` による最近使った機能トラッキングを追加し、ホーム上で直近導線を即再開できるよう改善
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
@@ -923,6 +937,45 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - `quick_task_input_card.dart` 追加: 会話でタスクを自動作成
    - AIゴール分解カード追加
    - ユーザーマニュアル更新（仮想秘書・AIゴール分解）
+
+**flutter analyze: 0 エラー維持**
+
+---
+
+### Session 2026-03-28 — Session 5 (継続)
+
+**実施内容:**
+
+1. **全文検索安定化 + NoteSearchCard (Web + VSCode)**
+   - `ai-search` Edge Function を安定化
+   - ホーム画面に `NoteSearchCard` を追加
+
+2. **ランディングページ AI組織OS追加 (VSCode)**
+   - LP に「12部署20人 AI組織OS」セクションを追加
+   - ウェルカムカードに AI組織OS 初期化ボタンを追加
+
+3. **互換性テスト・性格テストルート追加 (VSCode)**
+   - `/compatibility` / `/personality-test` ルートを main.dart に追加
+   - 性格テスト結果ページのルート引数修正
+
+4. **CHO室 Coming soon解消 (VSCode)**
+   - メンタルチェックページ・医療メモページを実装
+
+5. **選挙KPI編集ダイアログ (VSCode)**
+   - `ElectionKpiEditDialog` ウィジェット追加
+
+6. **note_versions migration修正 (Windows)**
+   - note_id の型を uuid → bigint に修正
+   - 重複マイグレーション名をリネーム
+
+7. **growth_plans 21競合完全対応 (PowerShell)**
+   - UNIQUE (label) 制約追加
+   - 全24プランのupsertマイグレーション (migration 000010)
+   - Discord/LINE/Facebook/Liven/GitHub/Google/Microsoft が旧DBにも確実に反映
+
+8. **Schedule cs-check 自動実行確認**
+   - 06:00 JST に自動実行され `docs/cs-notes/2026-03-28-06.md` を生成
+   - Edge Function UI導線チェック: 全34件カバレッジ確認済み
 
 **flutter analyze: 0 エラー維持**
 
