@@ -59,7 +59,8 @@ void main() {
       prefs: prefs,
     );
     final loaded = await service.loadPlan(prefs: prefs);
-    final tokyo = loaded.prefectures.firstWhere((item) => item.prefecture == '東京');
+    final tokyo =
+        loaded.prefectures.firstWhere((item) => item.prefecture == '東京');
 
     expect(saved.updatedAt, DateTime(2026, 4, 1, 9));
     expect(tokyo.additionalSeatTarget, 22);
@@ -77,7 +78,8 @@ void main() {
       template: LocalElectionPlanTemplate.balanced,
       prefs: prefs,
     );
-    final seatTargets = plan.prefectures.map((item) => item.additionalSeatTarget);
+    final seatTargets =
+        plan.prefectures.map((item) => item.additionalSeatTarget);
 
     expect(plan.allocatedNetIncrease, 360);
     expect(

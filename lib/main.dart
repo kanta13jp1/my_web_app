@@ -42,6 +42,7 @@ import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
+import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
 import 'package:my_web_app/pages/kanban_board_page.dart';
@@ -236,6 +237,11 @@ class MyApp extends StatelessWidget {
           case '/ai-search':
             return MaterialPageRoute(
               builder: (_) => const AiSearchPage(),
+            );
+          case '/local-election-700':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionVictoryPage(),
+              settings: const RouteSettings(name: '/local-election-700'),
             );
           case '/email-cleanup':
             return MaterialPageRoute(

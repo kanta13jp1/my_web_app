@@ -79,18 +79,37 @@ class LocalElectionPlanService {
       final additionalTarget = additionalTargets[index];
       final focusMunicipalityCount = math.max(
         2,
-        additionalTarget + (seed.tier == 1 ? 5 : seed.tier == 2 ? 3 : 2),
+        additionalTarget +
+            (seed.tier == 1
+                ? 5
+                : seed.tier == 2
+                    ? 3
+                    : 2),
       );
-      final newCandidateTarget =
-          additionalTarget + (seed.tier == 1 ? 3 : seed.tier == 2 ? 2 : 1);
+      final newCandidateTarget = additionalTarget +
+          (seed.tier == 1
+              ? 3
+              : seed.tier == 2
+                  ? 2
+                  : 1);
       final retentionTarget = math.max(
         1,
-        (additionalTarget * (seed.tier == 1 ? 0.70 : seed.tier == 2 ? 0.60 : 0.50))
+        (additionalTarget *
+                (seed.tier == 1
+                    ? 0.70
+                    : seed.tier == 2
+                        ? 0.60
+                        : 0.50))
             .round(),
       );
       final supportRounds = math.max(
         2,
-        (additionalTarget * (seed.tier == 1 ? 1.4 : seed.tier == 2 ? 1.2 : 1.0))
+        (additionalTarget *
+                (seed.tier == 1
+                    ? 1.4
+                    : seed.tier == 2
+                        ? 1.2
+                        : 1.0))
             .round(),
       );
 
@@ -151,8 +170,8 @@ class LocalElectionPlanService {
           closeRaceSupportRounds: clampPositiveInt(item.closeRaceSupportRounds),
           endorsementDeadlineMonth:
               planningMonthKeys.contains(item.endorsementDeadlineMonth)
-              ? item.endorsementDeadlineMonth
-              : '2026-10',
+                  ? item.endorsementDeadlineMonth
+                  : '2026-10',
           notes: item.notes.trim(),
         ),
       );
@@ -181,10 +200,10 @@ class LocalElectionPlanService {
       for (final seed in _prefectureSeeds)
         switch (template) {
           LocalElectionPlanTemplate.focused => switch (seed.tier) {
-            1 => 1.8,
-            2 => 1.25,
-            _ => 0.85,
-          },
+              1 => 1.8,
+              2 => 1.25,
+              _ => 0.85,
+            },
           LocalElectionPlanTemplate.balanced => 1.0,
         },
     ];
@@ -204,7 +223,9 @@ class LocalElectionPlanService {
         MapEntry(index, rawShares[index] - floors[index]),
     ]..sort((a, b) => b.value.compareTo(a.value));
 
-    for (var index = 0; index < indexedFractions.length && remainder > 0; index++) {
+    for (var index = 0;
+        index < indexedFractions.length && remainder > 0;
+        index++) {
       floors[indexedFractions[index].key] += 1;
       remainder--;
     }

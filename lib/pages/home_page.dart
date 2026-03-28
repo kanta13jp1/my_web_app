@@ -4243,75 +4243,6 @@ abstinence_slip_details: $slipDetailsText
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            Card(
-                              elevation: 6,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              color: Colors.transparent,
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF0F766E),
-                                      Color(0xFF16A34A),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.green.withValues(alpha: 0.25),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 16,
-                                  ),
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 28,
-                                    child: Icon(
-                                      Icons.how_to_vote,
-                                      color: Colors.green,
-                                      size: 30,
-                                    ),
-                                  ),
-                                  title: const Text(
-                                    '2027 統一地方選 700必達管理室',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  subtitle: const Text(
-                                    '県連別の純増配分と月次KPIをまとめて管理し、'
-                                    '未配分ギャップや公認内定の遅れを可視化します。',
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
-                                  trailing: const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ElectionVictoryPage(),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
@@ -4414,6 +4345,75 @@ abstinence_slip_details: $slipDetailsText
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const ElectionStrategyPage(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Card(
+                              elevation: 6,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              color: Colors.transparent,
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFF0F766E),
+                                      Color(0xFF16A34A),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.green.withValues(alpha: 0.25),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    radius: 28,
+                                    child: Icon(
+                                      Icons.how_to_vote,
+                                      color: Colors.green,
+                                      size: 30,
+                                    ),
+                                  ),
+                                  title: const Text(
+                                    '2027 統一地方選 700必達管理室',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    '県連別の純増配分と月次KPIをまとめて管理し、'
+                                    '未配分ギャップや公認内定の遅れを可視化します。',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                  trailing: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ElectionVictoryPage(),
                                     ),
                                   ),
                                 ),
@@ -4731,8 +4731,8 @@ abstinence_slip_details: $slipDetailsText
                                 Icons.person_pin_outlined,
                                 Colors.purple,
                                 () {
-                                  final uid = Supabase.instance.client
-                                      .auth.currentUser?.id;
+                                  final uid = Supabase
+                                      .instance.client.auth.currentUser?.id;
                                   if (uid == null) return;
                                   _nav(
                                     context,
@@ -5514,8 +5514,7 @@ abstinence_slip_details: $slipDetailsText
                   barWidth: 2,
                   dotData: FlDotData(
                     show: true,
-                    getDotPainter: (spot, _, __, ___) =>
-                        FlDotCirclePainter(
+                    getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
                       radius: spot.x == spots.last.x ? 3 : 0,
                       color: lineColor,
                       strokeColor: Colors.transparent,

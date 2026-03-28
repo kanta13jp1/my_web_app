@@ -81,8 +81,7 @@ class LocalElectionPrefecturePlan {
           endorsementDeadlineMonth ?? this.endorsementDeadlineMonth,
       closeRaceSupportRounds:
           closeRaceSupportRounds ?? this.closeRaceSupportRounds,
-      endorsementConfirmed:
-          endorsementConfirmed ?? this.endorsementConfirmed,
+      endorsementConfirmed: endorsementConfirmed ?? this.endorsementConfirmed,
       notes: notes ?? this.notes,
     );
   }
@@ -197,8 +196,7 @@ class LocalElectionPlanDashboard {
         json['previousUnifiedElectionSecondHalfWins'],
         fallback: 121,
       ),
-      updatedAt:
-          DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       prefectures: prefectures,
     );
@@ -209,7 +207,8 @@ class LocalElectionPlanDashboard {
       'currentLocalMembers': currentLocalMembers,
       'targetLocalMembers': targetLocalMembers,
       'previousUnifiedElectionWins': previousUnifiedElectionWins,
-      'previousUnifiedElectionFirstHalfWins': previousUnifiedElectionFirstHalfWins,
+      'previousUnifiedElectionFirstHalfWins':
+          previousUnifiedElectionFirstHalfWins,
       'previousUnifiedElectionSecondHalfWins':
           previousUnifiedElectionSecondHalfWins,
       'updatedAt': updatedAt.toIso8601String(),
@@ -233,10 +232,10 @@ class LocalElectionPlanDashboard {
           previousUnifiedElectionWins ?? this.previousUnifiedElectionWins,
       previousUnifiedElectionFirstHalfWins:
           previousUnifiedElectionFirstHalfWins ??
-          this.previousUnifiedElectionFirstHalfWins,
+              this.previousUnifiedElectionFirstHalfWins,
       previousUnifiedElectionSecondHalfWins:
           previousUnifiedElectionSecondHalfWins ??
-          this.previousUnifiedElectionSecondHalfWins,
+              this.previousUnifiedElectionSecondHalfWins,
       updatedAt: updatedAt ?? this.updatedAt,
       prefectures: prefectures ?? this.prefectures,
     );
@@ -245,43 +244,43 @@ class LocalElectionPlanDashboard {
   int get requiredNetIncrease => targetLocalMembers - currentLocalMembers;
 
   int get allocatedNetIncrease => prefectures.fold<int>(
-    0,
-    (sum, item) => sum + item.additionalSeatTarget,
-  );
+        0,
+        (sum, item) => sum + item.additionalSeatTarget,
+      );
 
   int get allocationGap => requiredNetIncrease - allocatedNetIncrease;
 
   int get totalIncumbentRetentionTarget => prefectures.fold<int>(
-    0,
-    (sum, item) => sum + item.incumbentRetentionTarget,
-  );
+        0,
+        (sum, item) => sum + item.incumbentRetentionTarget,
+      );
 
   int get totalFocusMunicipalityCount => prefectures.fold<int>(
-    0,
-    (sum, item) => sum + item.focusMunicipalityCount,
-  );
+        0,
+        (sum, item) => sum + item.focusMunicipalityCount,
+      );
 
   int get totalNewCandidateTarget => prefectures.fold<int>(
-    0,
-    (sum, item) => sum + item.newCandidateTarget,
-  );
+        0,
+        (sum, item) => sum + item.newCandidateTarget,
+      );
 
   int get totalCloseRaceSupportRounds => prefectures.fold<int>(
-    0,
-    (sum, item) => sum + item.closeRaceSupportRounds,
-  );
+        0,
+        (sum, item) => sum + item.closeRaceSupportRounds,
+      );
 
   int get confirmedEndorsementCount => prefectures.where((item) {
-    return item.endorsementConfirmed;
-  }).length;
+        return item.endorsementConfirmed;
+      }).length;
 
   int overdueEndorsementCount([DateTime? now]) => prefectures.where((item) {
-    return item.isEndorsementOverdue(now ?? DateTime.now());
-  }).length;
+        return item.isEndorsementOverdue(now ?? DateTime.now());
+      }).length;
 
   int dueSoonEndorsementCount([DateTime? now]) => prefectures.where((item) {
-    return item.isEndorsementDueSoon(now ?? DateTime.now());
-  }).length;
+        return item.isEndorsementDueSoon(now ?? DateTime.now());
+      }).length;
 
   List<String> get regionLabels {
     final labels = prefectures.map((item) => item.region).toSet().toList()
