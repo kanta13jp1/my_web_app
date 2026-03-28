@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1440,6 +1438,25 @@ $input
               ),
             );
           }),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton.icon(
+              onPressed: _scrollToAuthSection,
+              icon: const Icon(Icons.rocket_launch, size: 16),
+              label: const Text(
+                '無料で全機能を使う',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF3949AB),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2008,12 +2025,12 @@ $input
                             ),
                   ),
                   ActionChip(
-                    avatar: const Icon(Icons.trending_up, size: 18),
-                    label: const Text('登録を増やす'),
+                    avatar: const Icon(Icons.event_note, size: 18),
+                    label: const Text('今日の計画を立てる'),
                     onPressed: _isTrialLoading
                         ? null
                         : () => _runQuickTrialSample(
-                              '登録者数を増やすための次の一手を決めたい',
+                              '今日1日の計画を立てて、最も重要なことに集中したい',
                             ),
                   ),
                   ActionChip(

@@ -66,8 +66,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       }
       
       // 日本語フォントの読み込み（文字化け防止）
-      final ttfRegular = await PdfGoogleFonts.notoSansJpRegular();
-      final ttfBold = await PdfGoogleFonts.notoSansJpBold();
+      final ttfRegular = await PdfGoogleFonts.notoSansRegular();
+      final ttfBold = await PdfGoogleFonts.notoSansBold();
 
       // ロゴ画像をアセットから読み込む (パスはプロジェクトに合わせて調整してください)
       final logoData = await rootBundle.load('assets/icon/icon.png');
@@ -141,9 +141,14 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
                     pw.Image(logoImage, width: 24, height: 24),
-                    pw.Text('自分株式会社 - 経営コックピット',
-                        style: pw.TextStyle(
-                            font: ttfRegular, fontSize: 8, color: PdfColors.grey500)),
+                    pw.Text(
+                      '自分株式会社 - 経営コックピット',
+                      style: pw.TextStyle(
+                        font: ttfRegular,
+                        fontSize: 8,
+                        color: PdfColors.grey500,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -315,22 +320,34 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     TextSpan(
                                       text: '現職維持: ${data.incumbentRetentionTarget}\n',
                                       style: TextStyle(
-                                          color: Colors.blue.shade300, fontSize: 12, fontWeight: FontWeight.normal),
+                                        color: Colors.blue.shade300,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: '新人擁立: ${data.newCandidateTarget}\n',
                                       style: TextStyle(
-                                          color: newTargetColor, fontSize: 12, fontWeight: FontWeight.normal),
+                                        color: newTargetColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: '純増割当: ${data.additionalSeatTarget}\n',
                                       style: const TextStyle(
-                                          color: Colors.white70, fontSize: 12, fontWeight: FontWeight.normal),
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
                                       style: const TextStyle(
-                                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 );
