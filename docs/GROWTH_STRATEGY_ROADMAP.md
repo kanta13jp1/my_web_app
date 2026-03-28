@@ -773,7 +773,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - health-check Edge Function 作成: DB接続・テーブル可用性・レスポンスタイム診断API
 - check-competitor-updates Edge Function 作成: 競合14社Webサイト応答速度・可用性一括チェックAPI
 
-#### 企画 (X投稿 https://x.com/satori_sz9/status/2037097847498412506 のアイデア実装)
+#### 企画 (X投稿 [@satori_sz9](https://x.com/satori_sz9/status/2037097847498412506) のアイデア実装)
 
 - Claude Code Schedule で合計6つの自動化タスクを運用:
   1. **daily-report** (毎日9:00): 日次メトリクス + X投稿 + レポート生成
