@@ -4186,6 +4186,36 @@ abstinence_slip_details: $slipDetailsText
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
+                                  color: Colors.teal.shade200,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: const Text(
+                                  '🗂️',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                title: const Text(
+                                  'カンバンボード',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'To Do / 進行中 / 完了 で可視化',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/kanban',
+                                ),
+                              ),
+                            ),
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
                                   color: Colors.indigo.shade200,
                                 ),
                               ),
