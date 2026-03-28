@@ -119,6 +119,7 @@ serve(async (req) => {
 ```
 
 役割分担の明確化:
+
 - `check-competitor-updates` (POST): 実際にサイトを叩いてDBに記録
 - `get-competitor-monitoring` (GET): DBから最新結果を取得してUIに提供
 
