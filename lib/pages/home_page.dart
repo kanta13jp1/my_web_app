@@ -15,55 +15,27 @@ import 'package:intl/intl.dart';
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
+import '../services/home_tool_usage_service.dart';
 import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
 
 // Pages
 import 'abstinence_guard_page.dart';
-import 'note_editor_page.dart';
-import 'note_list_page.dart';
-import 'ai_status_page.dart';
-import 'danshari_page.dart';
-import 'gemini_university_v2_page.dart';
 import 'emergency_meeting_page.dart';
-import 'real_world_danshari_page.dart';
 import 'landing_page.dart';
-import 'agent_org_page.dart';
 import 'admin_analytics_page.dart';
 import 'cfo_office_page.dart';
 import 'asset_management_page.dart';
-import 'cho_office_page.dart';
-import 'cmo_office_page.dart';
-import 'chro_office_page.dart';
 import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'election_victory_page.dart';
-import 'mind_map_page.dart';
-import 'memory_drill_page.dart';
-import 'behavior_review_page.dart';
-import 'digest_queue_page.dart';
-import 'reality_check_page.dart';
-import 'thought_anchor_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
-import 'wardrobe_page.dart'; // 先頭のimport群に追加
-import 'import_page.dart';
-import 'growth_mission_page.dart';
-import 'life_goals_page.dart';
-import 'thought_capture_page.dart';
-import 'decision_check_page.dart';
-import 'purchase_log_page.dart';
-import 'conveni_store_page.dart';
-import 'ai_search_page.dart';
-import 'edge_function_status_page.dart';
-import 'public_memo_directory_page.dart';
-import 'tech_blog_tracker_page.dart';
 import '../widgets/blog_post_summary_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/referral_share_card.dart';
-import 'referral_page.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/daily_motivation_card.dart';
 import '../widgets/daily_challenge_card.dart';
@@ -80,7 +52,8 @@ import '../widgets/build_in_public_share_card.dart';
 import '../widgets/goal_decomposer_card.dart';
 import '../widgets/quick_task_input_card.dart';
 import '../widgets/note_search_card.dart';
-import 'public_profile_page.dart';
+import 'work_menu_page.dart';
+import '../data/home_tool_catalog.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -99,6 +72,7 @@ class _HomePageState extends State<HomePage> {
   late Future<_HomeKpiOverview> _kpiOverviewFuture;
   late Future<_HomeMarketingKpiSummary> _marketingKpiFuture;
   late Future<String?> _aiNudgeFuture;
+  late Future<List<String>> _recentToolIdsFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   _CalendarHighlightFilter _calendarHighlightFilter =
       _CalendarHighlightFilter.all;
@@ -128,6 +102,7 @@ class _HomePageState extends State<HomePage> {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
     });
+    _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -1443,6 +1418,96 @@ abstinence_slip_details: $slipDetailsText
     }
   }
 
+  Future<void> _runTrackedAction(
+    String toolId,
+    Future<dynamic> Function() action,
+  ) async {
+    await HomeToolUsageService.recordToolUse(toolId);
+    await action();
+    if (!mounted) return;
+    setState(() {
+      _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
+    });
+  }
+
+  List<HomeToolEntry> _buildHomeToolCatalog() {
+    return buildHomeToolCatalog(
+      openMorningBriefing: _openMorningBriefing,
+      openCfoOffice: _openCfoOffice,
+      openAbstinenceGuard: _openAbstinenceGuard,
+    );
+  }
+
+  Set<String> _buildHighlightedToolIds({
+    required bool highlightMorning,
+    required bool highlightMonthlyFlow,
+    required bool highlightBalance,
+    required bool highlightCritical,
+    required bool highlightStock,
+    required bool highlightAbstinence,
+  }) {
+    final ids = <String>{};
+    if (highlightMorning) ids.add('morning-briefing');
+    if (highlightMonthlyFlow || highlightBalance) ids.add('cfo-office');
+    if (highlightCritical) ids.add('mindless-task');
+    if (highlightStock) ids.add('stock-tasks');
+    if (highlightAbstinence) ids.add('abstinence-guard');
+    return ids;
+  }
+
+  Map<String, String> _buildToolBadgeLabels({
+    required bool highlightMorning,
+    required bool highlightMonthlyFlow,
+    required bool highlightBalance,
+    required bool highlightCritical,
+    required bool highlightStock,
+    required bool highlightAbstinence,
+    required _HomeOpsSnapshot opsSnapshot,
+  }) {
+    final badges = <String, String>{};
+    if (highlightMorning) badges['morning-briefing'] = 'NOW';
+    if (highlightMonthlyFlow) {
+      badges['cfo-office'] = 'NOW';
+    } else if (highlightBalance) {
+      badges['cfo-office'] = 'NEXT';
+    }
+    if (highlightCritical) badges['mindless-task'] = 'NEXT';
+    if (highlightStock) badges['stock-tasks'] = 'SAT';
+    if (highlightAbstinence) {
+      badges['abstinence-guard'] = 'NEXT';
+    } else if (opsSnapshot.abstinenceSlipCount > 0) {
+      badges['abstinence-guard'] = 'WARN';
+    }
+    return badges;
+  }
+
+  Future<void> _openWorkMenu(
+    BuildContext context, {
+    required bool shouldLockExploratoryMenus,
+    required Set<String> highlightedToolIds,
+    required Map<String, String> badgeLabels,
+    bool autofocusSearch = false,
+  }) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkMenuPage(
+          lockExploratoryTools: shouldLockExploratoryMenus,
+          highlightedToolIds: highlightedToolIds,
+          badgeLabels: badgeLabels,
+          autofocusSearch: autofocusSearch,
+          openMorningBriefing: _openMorningBriefing,
+          openCfoOffice: _openCfoOffice,
+          openAbstinenceGuard: _openAbstinenceGuard,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
+    });
+  }
+
   Widget _buildNextActionBubble(
     BuildContext context,
     _HomeActionCommand command,
@@ -1859,12 +1924,6 @@ abstinence_slip_details: $slipDetailsText
           ),
         ],
       ),
-    );
-  }
-
-  void _showLockedMenuSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 
@@ -3874,13 +3933,29 @@ abstinence_slip_details: $slipDetailsText
                   opsSnapshot.pendingCriticalTaskCount > 0 ||
                       !opsSnapshot.morningBriefingDone ||
                       opsSnapshot.abstinenceSlipCount > 0;
-
               return FutureBuilder<String?>(
                 future: _aiNudgeFuture,
                 builder: (context, aiNudgeSnapshot) {
                   final aiNudge = aiNudgeSnapshot.data;
                   final isAiLoading = aiNudgeSnapshot.connectionState ==
                       ConnectionState.waiting;
+                  final highlightedToolIds = _buildHighlightedToolIds(
+                    highlightMorning: highlightMorning,
+                    highlightMonthlyFlow: highlightMonthlyFlow,
+                    highlightBalance: highlightBalance,
+                    highlightCritical: highlightCritical,
+                    highlightStock: highlightStock,
+                    highlightAbstinence: highlightAbstinence,
+                  );
+                  final toolBadgeLabels = _buildToolBadgeLabels(
+                    highlightMorning: highlightMorning,
+                    highlightMonthlyFlow: highlightMonthlyFlow,
+                    highlightBalance: highlightBalance,
+                    highlightCritical: highlightCritical,
+                    highlightStock: highlightStock,
+                    highlightAbstinence: highlightAbstinence,
+                    opsSnapshot: opsSnapshot,
+                  );
 
                   return SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -4009,277 +4084,12 @@ abstinence_slip_details: $slipDetailsText
                                   style: TextStyle(fontSize: 12),
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/daily-habits',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.grey.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '📜',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  '我が闘争',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                onTap: () => _runTrackedAction(
+                                  'daily-habits',
+                                  () => Navigator.pushNamed(
+                                    context,
+                                    '/daily-habits',
                                   ),
-                                ),
-                                subtitle: const Text(
-                                  '日々の奮闘をAIがコラムに',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/my-struggle',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🔒',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  '刑務所モード',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  '借金完済まで生活を律する',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/prison-mode',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.grey.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🏪',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  'コンビニ経営シミュレーション',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                subtitle: const Text(
-                                  '経営感覚を実践的に鍛えるゲーム',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => _nav(
-                                  context,
-                                  const ConveniStorePage(),
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.grey.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🔖',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  'ブックマーク整理',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  'X・ブラウザのブックマーク管理',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/bookmark-folders',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.grey.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🪞',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  '行動・発言の振り返り',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  '全行動を記録しAIが考察',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/behavior-log',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.brown.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🍽️',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  '消化してから次を食え',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  'WIP制限: 1カテゴリ1つだけ',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/wip-limit',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.teal.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '🗂️',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  'カンバンボード',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  'To Do / 進行中 / 完了 で可視化',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/kanban',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.indigo.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '📋',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  'テンプレートマーケット',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  '日報・会議メモ・OKRなど18種テンプレート',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/templates',
-                                ),
-                              ),
-                            ),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.green.shade200,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: const Text(
-                                  '📊',
-                                  style: TextStyle(fontSize: 24),
-                                ),
-                                title: const Text(
-                                  'データベース',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: const Text(
-                                  '表形式でデータを管理 (Notion Database相当)',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/table-data',
                                 ),
                               ),
                             ),
@@ -4380,11 +4190,14 @@ abstinence_slip_details: $slipDetailsText
                                     size: 16,
                                     color: Colors.white,
                                   ),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ElectionStrategyPage(),
+                                  onTap: () => _runTrackedAction(
+                                    'election-strategy',
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ElectionStrategyPage(),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -4449,11 +4262,14 @@ abstinence_slip_details: $slipDetailsText
                                     size: 16,
                                     color: Colors.white,
                                   ),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ElectionVictoryPage(),
+                                  onTap: () => _runTrackedAction(
+                                    'local-election-700',
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ElectionVictoryPage(),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -4461,362 +4277,25 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
-                              'CSO OFFICE',
-                              Icons.flag,
-                              Colors.orange,
-                              key: const Key('home_section_cso_office'),
+                              'QUICK ACCESS',
+                              Icons.dashboard_customize,
+                              Colors.indigo,
                             ),
-                            _buildGridMenu(context, isCompact, [
-                              _MenuData(
-                                '禁欲ガード',
-                                Icons.shield_moon,
-                                Colors.redAccent,
-                                () => _openAbstinenceGuard(context),
-                                isHighlighted: highlightAbstinence ||
-                                    opsSnapshot.abstinenceSlipCount > 0,
-                                badgeLabel: highlightAbstinence
-                                    ? 'NEXT'
-                                    : opsSnapshot.abstinenceSlipCount > 0
-                                        ? 'WARN'
-                                        : null,
-                              ),
-                              _MenuData(
-                                '断捨離 (デジタル)',
-                                Icons.cleaning_services,
-                                Colors.orange,
-                                () => _nav(context, const DanshariPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'メール整理',
-                                Icons.mark_email_read,
-                                Colors.blue,
-                                () => Navigator.pushNamed(
-                                  context,
-                                  '/email-cleanup',
-                                ),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '買い物リスト',
-                                Icons.shopping_cart,
-                                Colors.brown,
-                                () => Navigator.pushNamed(
-                                  context,
-                                  '/shopping-list',
-                                ),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '断捨離 (リアル)',
-                                Icons.camera_alt,
-                                Colors.deepOrange,
-                                () => _nav(
-                                  context,
-                                  RealWorldDanshariPage(
-                                    supabaseClient: Supabase.instance.client,
-                                  ),
-                                ),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'AI稼働モニター',
-                                Icons.monitor_heart,
-                                Colors.orange,
-                                () => _nav(context, const AiStatusPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '週末ストック / 思考ネタ',
-                                Icons.check_circle_outline,
-                                Colors.teal,
-                                () => _nav(context, const StockTasksPage()),
-                                isHighlighted: highlightStock,
-                                badgeLabel: highlightStock ? 'SAT' : null,
-                              ),
-                              _MenuData(
-                                '思考停止ログ（読書ループ）',
-                                Icons.access_time_filled,
-                                Colors.indigo,
-                                () => _nav(context, const MindlessTaskPage()),
-                                isHighlighted: highlightCritical,
-                                badgeLabel: highlightCritical ? 'NEXT' : null,
-                              ),
-                              _MenuData(
-                                'ワードローブ整理',
-                                Icons.checkroom,
-                                Colors.brown,
-                                () => _nav(context, const WardrobePage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '暗記ドリル (日課)',
-                                Icons.memory_rounded,
-                                Colors.indigo,
-                                () => _nav(context, const MemoryDrillPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '消化してから次へ',
-                                Icons.restaurant_menu,
-                                Colors.cyan,
-                                () => _nav(context, const DigestQueuePage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '思考アンカー',
-                                Icons.center_focus_strong,
-                                Colors.indigo,
-                                () => _nav(context, const ThoughtAnchorPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                            ]),
+                            _buildQuickAccessMenu(
+                              context,
+                              isCompact,
+                              shouldLockExploratoryMenus:
+                                  shouldLockExploratoryMenus,
+                              highlightedToolIds: highlightedToolIds,
+                              badgeLabels: toolBadgeLabels,
+                            ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
-                              'CFO/CHO/CHRO OFFICE',
-                              Icons.balance,
-                              Colors.teal,
+                              'RECENT TOOLS',
+                              Icons.history,
+                              Colors.deepPurple,
                             ),
-                            _buildGridMenu(context, isCompact, [
-                              _MenuData(
-                                '財務管理 (CFO)',
-                                Icons.account_balance_wallet,
-                                Colors.green,
-                                () => _openCfoOffice(context),
-                                isHighlighted:
-                                    highlightMonthlyFlow || highlightBalance,
-                                badgeLabel: highlightMonthlyFlow
-                                    ? 'NOW'
-                                    : highlightBalance
-                                        ? 'NEXT'
-                                        : null,
-                              ),
-                              _MenuData(
-                                '支払いリマインダー',
-                                Icons.payments,
-                                Colors.deepPurple,
-                                () => Navigator.pushNamed(
-                                  context,
-                                  '/payment-reminders',
-                                ),
-                              ),
-                              _MenuData(
-                                '買い物ログ',
-                                Icons.receipt_long,
-                                Colors.orange,
-                                () => _nav(
-                                  context,
-                                  const PurchaseLogPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                '健康管理 (CHO)',
-                                Icons.medical_services,
-                                Colors.teal,
-                                () => _nav(context, const ChoOfficePage()),
-                              ),
-                              _MenuData(
-                                '人事厚生 (CHRO)',
-                                Icons.diversity_3,
-                                Colors.indigo,
-                                () => _nav(context, const ChroOfficePage()),
-                              ),
-                            ]),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'CMO/CKO OFFICE',
-                              Icons.analytics,
-                              Colors.blue,
-                            ),
-                            _buildGridMenu(context, isCompact, [
-                              _MenuData(
-                                '市場分析 (CMO)',
-                                Icons.trending_up,
-                                Colors.pink,
-                                () => _nav(context, const CmoOfficePage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'AI組織OS',
-                                Icons.account_tree,
-                                Colors.deepPurple,
-                                () => _nav(context, AgentOrgPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'メモ一覧 (CKO)',
-                                Icons.list_alt,
-                                Colors.blue,
-                                () => _nav(context, const NoteListPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '新規事業起案',
-                                Icons.edit_note,
-                                Colors.blue,
-                                () => _nav(context, const NoteEditorPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'Gemini大学',
-                                Icons.menu_book,
-                                Colors.blue,
-                                () => _nav(
-                                  context,
-                                  const GeminiUniversityV2Page(),
-                                ),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                'マインドマップ (思考整理)',
-                                Icons.hub,
-                                Colors.blue,
-                                () => _nav(context, const MindMapPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                              _MenuData(
-                                '行動・発言レビュー',
-                                Icons.history_edu,
-                                Colors.blueGrey,
-                                () => _nav(context, BehaviorReviewPage()),
-                              ),
-                              _MenuData(
-                                '現実直視ノート',
-                                Icons.fact_check,
-                                Colors.redAccent,
-                                () => _nav(context, const RealityCheckPage()),
-                                isLocked: shouldLockExploratoryMenus,
-                                lockedReason: '先に必須導線を完了してください。',
-                              ),
-                            ]),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'GROWTH / 成長導線',
-                              Icons.rocket_launch,
-                              Colors.green,
-                              key: const Key('home_section_growth'),
-                            ),
-                            _buildGridMenu(context, isCompact, [
-                              _MenuData(
-                                'インポート',
-                                Icons.upload_file,
-                                Colors.teal,
-                                () => _nav(context, const ImportPage()),
-                              ),
-                              _MenuData(
-                                '成長ミッション',
-                                Icons.flag,
-                                Colors.green,
-                                () => _nav(context, const GrowthMissionPage()),
-                              ),
-                              _MenuData(
-                                '人生目標管理',
-                                Icons.flag_circle,
-                                Colors.deepPurple,
-                                () => _nav(context, const LifeGoalsPage()),
-                              ),
-                              _MenuData(
-                                '思考キャプチャ',
-                                Icons.bubble_chart,
-                                Colors.cyan,
-                                () => _nav(
-                                  context,
-                                  const ThoughtCapturePage(),
-                                ),
-                              ),
-                              _MenuData(
-                                '意思決定ガード',
-                                Icons.psychology,
-                                Colors.deepOrange,
-                                () => _nav(
-                                  context,
-                                  const DecisionCheckPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                '公開メモ一覧',
-                                Icons.public,
-                                Colors.blue,
-                                () => _nav(
-                                  context,
-                                  const PublicMemoDirectoryPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                'ブログ投稿管理',
-                                Icons.edit_note,
-                                Colors.indigo,
-                                () => _nav(
-                                  context,
-                                  const TechBlogTrackerPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                '公開プロフィール',
-                                Icons.person_pin_outlined,
-                                Colors.purple,
-                                () {
-                                  final uid = Supabase
-                                      .instance.client.auth.currentUser?.id;
-                                  if (uid == null) return;
-                                  _nav(
-                                    context,
-                                    PublicProfilePage(userId: uid),
-                                  );
-                                },
-                              ),
-                              _MenuData(
-                                '管理者ダッシュボード',
-                                Icons.admin_panel_settings,
-                                Colors.deepOrange,
-                                () => _nav(
-                                  context,
-                                  const AdminAnalyticsPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                'Edge Functions 状況',
-                                Icons.api,
-                                Colors.blueGrey,
-                                () => _nav(
-                                  context,
-                                  const EdgeFunctionStatusPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                'AI ノート検索',
-                                Icons.manage_search,
-                                Colors.deepPurple,
-                                () => _nav(
-                                  context,
-                                  const AiSearchPage(),
-                                ),
-                              ),
-                              _MenuData(
-                                '友達招待',
-                                Icons.people_alt,
-                                Colors.pink,
-                                () => _nav(
-                                  context,
-                                  const ReferralPage(),
-                                ),
-                              ),
-                            ]),
+                            _buildRecentToolsMenu(context, isCompact),
                             const SizedBox(height: 16),
                             const EdgeFunctionSummaryCard(),
                             const SizedBox(height: 40),
@@ -4876,6 +4355,90 @@ abstinence_slip_details: $slipDetailsText
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickAccessMenu(
+    BuildContext context,
+    bool isCompact, {
+    required bool shouldLockExploratoryMenus,
+    required Set<String> highlightedToolIds,
+    required Map<String, String> badgeLabels,
+  }) {
+    return _buildGridMenu(context, isCompact, [
+      _MenuData(
+        '業務メニュー',
+        Icons.dashboard_customize,
+        Colors.indigo,
+        () => _openWorkMenu(
+          context,
+          shouldLockExploratoryMenus: shouldLockExploratoryMenus,
+          highlightedToolIds: highlightedToolIds,
+          badgeLabels: badgeLabels,
+        ),
+      ),
+      _MenuData(
+        '機能を探す',
+        Icons.search,
+        Colors.deepPurple,
+        () => _openWorkMenu(
+          context,
+          shouldLockExploratoryMenus: shouldLockExploratoryMenus,
+          highlightedToolIds: highlightedToolIds,
+          badgeLabels: badgeLabels,
+          autofocusSearch: true,
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildRecentToolsMenu(BuildContext context, bool isCompact) {
+    return FutureBuilder<List<String>>(
+      future: _recentToolIdsFuture,
+      builder: (context, snapshot) {
+        final toolMap = <String, HomeToolEntry>{
+          for (final entry in _buildHomeToolCatalog()) entry.id: entry,
+        };
+        final recentEntries = (snapshot.data ?? const <String>[])
+            .map((id) => toolMap[id])
+            .whereType<HomeToolEntry>()
+            .take(4)
+            .toList();
+        if (recentEntries.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+              ),
+            ),
+            child: const Text(
+              'まだ履歴がありません。業務メニューや特別案件を開くと、ここに最近使った機能が並びます。',
+              style: TextStyle(height: 1.5),
+            ),
+          );
+        }
+        return _buildGridMenu(
+          context,
+          isCompact,
+          recentEntries
+              .map(
+                (entry) => _MenuData(
+                  entry.title,
+                  entry.icon,
+                  entry.color,
+                  () => _runTrackedAction(
+                    entry.id,
+                    () => entry.onOpen(context),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 
@@ -4977,7 +4540,10 @@ abstinence_slip_details: $slipDetailsText
           isHighlighted ? 'まず朝の優先順位を固定してください。' : '今日のタスクと優先順位を確認します。',
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => _openMorningBriefing(context),
+        onTap: () => _runTrackedAction(
+          'morning-briefing',
+          () => _openMorningBriefing(context),
+        ),
       ),
     );
   }
@@ -5001,23 +4567,10 @@ abstinence_slip_details: $slipDetailsText
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        final baseCardColor = item.isHighlighted
-            ? Color.alphaBlend(
-                item.color.withValues(alpha: isDark ? 0.24 : 0.14),
-                Theme.of(context).cardColor,
-              )
-            : Theme.of(context).cardColor;
-        final cardColor = item.isLocked
-            ? Color.alphaBlend(
-                Colors.blueGrey.withValues(alpha: isDark ? 0.18 : 0.12),
-                baseCardColor,
-              )
-            : baseCardColor;
-        final borderColor = item.isLocked
-            ? Colors.blueGrey.withValues(alpha: 0.22)
-            : item.isHighlighted
-                ? item.color.withValues(alpha: 0.65)
-                : Theme.of(context).dividerColor.withValues(alpha: 0.25);
+        final cardColor = Theme.of(context).cardColor;
+        final borderColor = Theme.of(context).dividerColor.withValues(
+          alpha: 0.25,
+        );
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -5038,14 +4591,7 @@ abstinence_slip_details: $slipDetailsText
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: item.isLocked
-                  ? () {
-                      _showLockedMenuSnackBar(
-                        context,
-                        item.lockedReason ?? '先に必須導線を完了してください。',
-                      );
-                    }
-                  : item.onTap,
+              onTap: item.onTap,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
@@ -5054,73 +4600,26 @@ abstinence_slip_details: $slipDetailsText
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: (item.isLocked ? Colors.blueGrey : item.color)
-                            .withValues(alpha: 0.14),
+                        color: item.color.withValues(alpha: 0.14),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: (item.isLocked ? Colors.blueGrey : item.color)
-                              .withValues(alpha: 0.35),
+                          color: item.color.withValues(alpha: 0.35),
                         ),
                       ),
-                      child: Icon(
-                        item.icon,
-                        color: item.isLocked ? Colors.blueGrey : item.color,
-                        size: 18,
-                      ),
+                      child: Icon(item.icon, color: item.color, size: 18),
                     ),
                     SizedBox(width: isCompact ? 10 : 12),
                     Expanded(
                       child: Text(
                         item.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: item.isLocked
-                              ? (isDark ? Colors.white60 : Colors.black45)
-                              : item.isHighlighted
-                                  ? item.color
-                                  : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (item.isLocked)
-                      Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: const Icon(
-                          Icons.lock_outline,
-                          size: 14,
-                          color: Colors.blueGrey,
-                        ),
-                      ),
-                    if (item.badgeLabel != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: item.color.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          item.badgeLabel!,
-                          style: TextStyle(
-                            color: item.color,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -6662,21 +6161,13 @@ class _MenuData {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final bool isHighlighted;
-  final String? badgeLabel;
-  final bool isLocked;
-  final String? lockedReason;
 
   _MenuData(
     this.title,
     this.icon,
     this.color,
-    this.onTap, {
-    this.isHighlighted = false,
-    this.badgeLabel,
-    this.isLocked = false,
-    this.lockedReason,
-  });
+    this.onTap,
+  );
 }
 
 enum _HomeActionType {

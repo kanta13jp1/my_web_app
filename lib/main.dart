@@ -49,6 +49,7 @@ import 'package:my_web_app/pages/kanban_board_page.dart';
 import 'package:my_web_app/pages/compatibility_check_page.dart';
 import 'package:my_web_app/pages/personality_test_questions_page.dart';
 import 'package:my_web_app/pages/table_data_page.dart';
+import 'package:my_web_app/pages/work_menu_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -245,6 +246,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const ElectionVictoryPage(),
               settings: const RouteSettings(name: '/local-election-700'),
+            );
+          case '/work-menu':
+            return MaterialPageRoute(
+              builder: (_) => const WorkMenuPage(),
+              settings: const RouteSettings(name: '/work-menu'),
             );
           case '/email-cleanup':
             return MaterialPageRoute(
