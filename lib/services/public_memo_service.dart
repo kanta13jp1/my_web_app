@@ -14,7 +14,7 @@ class PublicMemoService {
 
   PublicMemoService(this._supabase);
 
-  static String buildPublicMemoUrl(int memoId) {
+  static String buildPublicMemoAppUrl(int memoId) {
     final baseUri = Uri.parse(AppShareService.appUrl);
     return baseUri.replace(
       path: '/public-memo',
@@ -25,6 +25,10 @@ class PublicMemoService {
         'utm_campaign': 'growth_mission',
       },
     ).toString();
+  }
+
+  static String buildPublicMemoUrl(int memoId) {
+    return '$_functionBaseUrl/public-memo-share?id=$memoId';
   }
 
   static String buildPublicMemoOgpUrl(int memoId) {

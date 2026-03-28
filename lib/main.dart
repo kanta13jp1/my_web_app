@@ -178,7 +178,6 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [Locale('ja'), Locale('en')],
       locale: const Locale('ja'),
       navigatorObservers: <NavigatorObserver>[_growthPresenceObserver],
-      initialRoute: '/',
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
 

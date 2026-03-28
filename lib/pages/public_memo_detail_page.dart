@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -26,6 +28,10 @@ class PublicMemoDetailPage extends StatefulWidget {
   State<PublicMemoDetailPage> createState() => _PublicMemoDetailPageState();
 }
 
+const _kReactionsUrl =
+    'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/memo-reactions';
+const _kAllReactions = ['👍', '❤️', '🔥', '💡', '🎉'];
+
 class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   final GrowthAcquisitionService _acquisitionService =
       const GrowthAcquisitionService();
@@ -34,12 +40,18 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
   bool _isLoading = true;
   bool _isLiked = false;
 
+  // Emoji reactions (anonymous, IP-based)
+  Map<String, int> _reactionCounts = {};
+  Set<String> _userReactions = {};
+  bool _reactionsLoading = false;
+
   @override
   void initState() {
     super.initState();
     _publicMemoService =
         widget.publicMemoService ?? PublicMemoService(Supabase.instance.client);
     _load();
+    _loadReactions();
   }
 
   @override
@@ -74,7 +86,7 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       SeoMetaHelper.setPublicMemoSeo(
         title: memo.title,
         description: snippet,
-        url: PublicMemoService.buildPublicMemoUrl(widget.memoId),
+        url: PublicMemoService.buildPublicMemoAppUrl(widget.memoId),
         imageUrl: PublicMemoService.buildPublicMemoOgpUrl(widget.memoId),
       );
     }
@@ -131,6 +143,66 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
       return;
     }
     _showMessage('Public memo link copied.');
+  }
+
+  Future<void> _loadReactions() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_kReactionsUrl?memo_id=${widget.memoId}'),
+      );
+      if (!mounted || res.statusCode != 200) {
+        return;
+      }
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final rawCounts = (body['reactions'] as Map<String, dynamic>?) ?? {};
+      final rawUser = (body['userReactions'] as List<dynamic>?) ?? [];
+      setState(() {
+        _reactionCounts = {
+          for (final k in _kAllReactions)
+            k: (rawCounts[k] as num?)?.toInt() ?? 0,
+        };
+        _userReactions = rawUser.map((e) => e.toString()).toSet();
+      });
+    } catch (_) {
+      // Non-critical — reactions are a progressive enhancement
+    }
+  }
+
+  Future<void> _toggleReaction(String reaction) async {
+    if (_reactionsLoading) {
+      return;
+    }
+    setState(() => _reactionsLoading = true);
+    try {
+      final res = await http.post(
+        Uri.parse(_kReactionsUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'memo_id': widget.memoId, 'reaction': reaction}),
+      );
+      if (!mounted || res.statusCode != 200) {
+        return;
+      }
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final added = body['added'] as bool? ?? false;
+      final rawCounts = (body['counts'] as Map<String, dynamic>?) ?? {};
+      setState(() {
+        _reactionCounts = {
+          for (final k in _kAllReactions)
+            k: (rawCounts[k] as num?)?.toInt() ?? 0,
+        };
+        if (added) {
+          _userReactions = {..._userReactions, reaction};
+        } else {
+          _userReactions = {..._userReactions}..remove(reaction);
+        }
+      });
+    } catch (_) {
+      // Ignore network errors — reactions are non-critical
+    } finally {
+      if (mounted) {
+        setState(() => _reactionsLoading = false);
+      }
+    }
   }
 
   Future<void> _openLandingPageForSignUp() async {
@@ -252,8 +324,121 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
                           : 'This memo does not have body text yet.',
                       style: const TextStyle(fontSize: 16, height: 1.6),
                     ),
+                    const SizedBox(height: 24),
+                    _MemoReactionsBar(
+                      counts: _reactionCounts,
+                      userReactions: _userReactions,
+                      loading: _reactionsLoading,
+                      onToggle: _toggleReaction,
+                    ),
                   ],
                 ),
+    );
+  }
+}
+
+class _MemoReactionsBar extends StatelessWidget {
+  final Map<String, int> counts;
+  final Set<String> userReactions;
+  final bool loading;
+  final void Function(String) onToggle;
+
+  const _MemoReactionsBar({
+    required this.counts,
+    required this.userReactions,
+    required this.loading,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reactions',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _kAllReactions.map((emoji) {
+            final count = counts[emoji] ?? 0;
+            final active = userReactions.contains(emoji);
+            return _ReactionChip(
+              emoji: emoji,
+              count: count,
+              active: active,
+              loading: loading,
+              onTap: () => onToggle(emoji),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReactionChip extends StatelessWidget {
+  final String emoji;
+  final int count;
+  final bool active;
+  final bool loading;
+  final VoidCallback onTap;
+
+  const _ReactionChip({
+    required this.emoji,
+    required this.count,
+    required this.active,
+    required this.loading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: loading ? null : onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active
+              ? colorScheme.primaryContainer
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? colorScheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 18)),
+            if (count > 0) ...[
+              const SizedBox(width: 4),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: active
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
