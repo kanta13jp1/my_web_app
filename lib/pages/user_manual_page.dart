@@ -41,6 +41,10 @@ class UserManualPage extends StatelessWidget {
             '・CSO OFFICE — 禁欲ガード・断捨離・暗記ドリル・思考アンカー\n'
             '・GROWTH / 成長導線 — インポート・成長ミッション・公開メモ一覧・ブログ投稿管理\n\n'
             '※ 各セクション内のグリッドボタン（例: 「財務管理 (CFO)」「新規事業起案」）をタップして各機能を開きます。\n\n'
+            '【性格診断バナー】\n'
+            '画面上部にあなたの性格タイプが表示されます（MBTI 16タイプ診断済みの場合）。\n'
+            'タイプ名・キャッチコピー・メモ術アドバイスをワンタップで確認できます。\n'
+            '未診断の場合は「性格診断を受ける」ボタンが表示されます。\n\n'
             '【ロックアイコン（🔒）が表示される場合】\n'
             '以下の条件をすべて満たすと、一部の探索的機能のロックが解除されます:\n'
             '1. 「CEO OFFICE」→「モーニング・ブリーフィング」を当日中に開く\n'
@@ -391,7 +395,8 @@ class UserManualPage extends StatelessWidget {
 
           _buildSectionTitle('14. プロフィール完成度', textColor),
           _buildContent(
-            'ホーム画面の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n\n'
+            '「成長・支援ダッシュボード」の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n'
+            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」からアクセス）\n\n'
             '【完成度の計算対象（7項目）】\n'
             '表示名 / アイコン画像 / 自己紹介 / 場所 / Twitter / GitHub / Web サイト URL\n\n'
             '【色の意味】\n'
@@ -399,7 +404,7 @@ class UserManualPage extends StatelessWidget {
             '・黄（50〜74%）: もう少し！\n'
             '・緑（75〜100%）: プロフィールが充実しています\n\n'
             '【100% 達成後】\n'
-            '「プロフィール完成 🎉」バッジに切り替わります。\n\n'
+            '「プロフィール完成」バッジに切り替わります。\n\n'
             '【注意】一部の機能（暗記ドリル・断捨離・AI 組織 OS など）は「ロック」されており、\n'
             'ホーム画面の必須導線（プロフィール設定・メモ作成など）を完了すると開放されます。\n'
             'ロックされた機能は「先に必須導線を完了してください」と表示されます。',
@@ -407,7 +412,23 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _buildSectionTitle('15. Claude Code Schedule 自動タスク一覧', textColor),
+          _buildSectionTitle('15. 成長・支援ダッシュボード', textColor),
+          _buildContent(
+            'ホーム画面から退避した補助カードをまとめて確認できるダッシュボードです。\n'
+            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」、または業務メニューからアクセス）\n\n'
+            '【AI アシスト】\n'
+            '・ノート検索 / クイックタスク入力 / AI ゴール分解 / プロフィール完成度\n\n'
+            '【成長シグナル】\n'
+            '・成長トレンドグラフ / 競合機能比較 / 紹介シェア / Build in Public シェア\n'
+            '・開発実績一覧 / ブログ投稿サマリー / Edge Functions 実装状況\n\n'
+            '【継続とモチベーション】\n'
+            '・活動カレンダー / 習慣サマリー / リーダーボード / 今日のモチベーション / デイリーチャレンジ\n\n'
+            '各カードをタップして詳細機能へ移動できます。',
+            subColor,
+          ),
+          const SizedBox(height: 24),
+
+          _buildSectionTitle('16. Claude Code Schedule 自動タスク一覧', textColor),
           _buildContent(
             '以下のタスクが定期的に自動実行されています（管理者ダッシュボードで実行状況を確認可能）。\n\n'
             '【毎時実行: cs-check】\n'
@@ -441,7 +462,7 @@ class UserManualPage extends StatelessWidget {
                 Icon(Icons.info_outline, size: 18, color: subColor),
                 const SizedBox(height: 6),
                 Text(
-                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-28 (session33)',
+                  'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-28 (session34)',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: subColor),
                 ),

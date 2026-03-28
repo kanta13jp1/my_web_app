@@ -96,7 +96,6 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text('統一地方選700 必達管理レポート', style: pw.TextStyle(font: ttfBold, fontSize: 18)),
-                    pw.Text('出力日時: $dateStr\n作成者: $authorName', style: pw.TextStyle(font: ttfRegular, fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
                     pw.Text('出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}', style: pw.TextStyle(font: ttfRegular, fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
                   ],
                 ),
@@ -250,6 +249,12 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               getTooltipColor: (group) => Colors.blueGrey.shade900,
                               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                                 final data = widget.prefectures[group.x];
+                                final isAchieved = data.additionalSeatTarget > 0 &&
+                                    data.newCandidateTarget >= data.additionalSeatTarget;
+                                final newTargetColor = isAchieved
+                                    ? Colors.green.shade400
+                                    : Colors.orange.shade400;
+
                                 return BarTooltipItem(
                                   '${data.prefecture}\n',
                                   const TextStyle(
@@ -268,7 +273,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     TextSpan(
                                       text: '新人擁立: ${data.newCandidateTarget}\n',
                                       style: TextStyle(
-                                        color: Colors.orange.shade400,
+                                        color: newTargetColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: '純増割当: ${data.additionalSeatTarget}\n',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
                                         fontSize: 12,
                                         fontWeight: FontWeight.normal,
                                       ),
@@ -276,9 +289,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     TextSpan(
                                       text: '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
                                       style: const TextStyle(
-                                        color: Colors.white70,
+                                        color: Colors.white,
                                         fontSize: 12,
-                                        fontWeight: FontWeight.normal,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
@@ -349,6 +362,11 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                             final retainTarget =
                                 data.incumbentRetentionTarget.toDouble();
                             final newTarget = data.newCandidateTarget.toDouble();
+                            final additionalTarget = data.additionalSeatTarget.toDouble();
+                            final isAchieved = additionalTarget > 0 && newTarget >= additionalTarget;
+                            final newTargetColor = isAchieved
+                                ? Colors.green.shade400
+                                : Colors.orange.shade400;
 
                             return BarChartGroupData(
                               x: index,
@@ -366,7 +384,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     BarChartRodStackItem(
                                       retainTarget,
                                       retainTarget + newTarget,
-                                      Colors.orange.shade400,
+                                      newTargetColor,
                                     ),
                                   ],
                                 ),
@@ -382,7 +400,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       children: [
                         _buildLegend(Colors.blue.shade300, '現職維持目標'),
                         const SizedBox(width: 16),
-                        _buildLegend(Colors.orange.shade400, '新人擁立目標'),
+                        _buildLegend(Colors.orange.shade400, '新人擁立目標 (未達)'),
+                        const SizedBox(width: 16),
+                        _buildLegend(Colors.green.shade400, '新人擁立目標 (達成)'),
                       ],
                     ),
                   ],
