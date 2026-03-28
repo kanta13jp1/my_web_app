@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 PowerShell全体管理セッション (Schedule統合強化・12部署20人仮想組織・AI検索ページ・get-home-dashboard統合・進捗バー21社完全対応・管理者ユーザー詳細・プロフィール促進UI・ブログ自動投稿準備)
+最終更新: 2026-03-28 daily-development (テンプレート広場18種実装・ノートバージョン履歴・/templates ルート追加・Notionギャップ短期対応)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -147,6 +147,9 @@
   - 取得失敗時や0件時のフォールバック(ダミーデータ)を廃止し、純粋な実データのみを表示するよう本実装
 - GrowthRoadmapProgressCard のプログレスバーをテキストベース (■□□) に変更し、全13競合の目標期日を実設定 (2026-03-27)
 - ユーザー向け操作マニュアル (`user_manual_page.dart`) を本実装完了 (2026-03-28)
+- **テンプレート広場 18種類実装** (2026-03-28): `template_marketplace_page.dart` を全面刷新。6カテゴリ18テンプレート（日次記録・ビジネス・思考アイデア・学習成長・個人生活・技術開発）を実装。`/templates` ルートを main.dart に追加。Notionパリティの「テンプレートマーケット」短期ギャップを解消
+- **ノートバージョン履歴** (2026-03-28): `note_versions` テーブル（RLS付き）を新設。手動保存のたびにスナップショット自動記録。AppBarの履歴ボタンからBottomSheetで最新30件を閲覧・復元可能。Notionパリティ短期優先ギャップを解消
+- **pubspec.yaml 警告修正** (2026-03-28): `docs/session-summaries/` 未作成による flutter analyze 警告を解消。flutter analyze 0件を維持
 - 開発実績の取得・追加機能をフロントエンドから `development-achievements` Edge Function へ完全移行し、クライアントアプリからの直接のDBアクセスを排除 (2026-03-25)
 - GrowthRoadmapProgressCard のハードコードを完全に排除し、`get-growth-roadmap-progress` Edge Function からユーザー数と全13競合の進捗データを安全に取得する本実装へ改修 (2026-03-25)
 - `get-growth-roadmap-progress` Edge Function 内に残っていた目標データのハードコードを完全に廃止し、`growth_plans` DB テーブルから動的に取得・シードする本実装を完了 (2026-03-25)
