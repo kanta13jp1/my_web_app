@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
+import '../widgets/competitor_monitoring_card.dart';
 import 'ai_secretary_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
@@ -1492,6 +1493,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildAutomationOpsCard(),
                     const SizedBox(height: 16),
                     const ScheduleTaskMonitorCard(),
+                    const SizedBox(height: 16),
+                    const CompetitorMonitoringCard(),
                     const SizedBox(height: 16),
                     _buildBlogPostsCard(),
                     const SizedBox(height: 16),

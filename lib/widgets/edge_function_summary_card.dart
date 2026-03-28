@@ -46,7 +46,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('share-quote', '名言シェア URL', true, '/home', 'ホーム > モチベーションカード > シェア'),
     _FnDef('get-admin-users', '管理者ユーザー一覧', true, '/admin', '管理者ダッシュボード > ユーザー管理'),
     _FnDef('health-check', 'DB ヘルスチェック', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
-    _FnDef('check-competitor-updates', '競合 Web 可用性', false, '/admin', '管理者ダッシュボード (UI 未実装)'),
+    _FnDef('check-competitor-updates', '競合 Web 可用性チェック', true, '/admin', '管理者ダッシュボード > 競合モニタリングカード'),
     _FnDef('agent-runtime-cycle', 'エージェント定期サイクル', false, '/agents', 'AI 組織 OS (未連携)'),
     _FnDef('trigger-analysis', 'トリガー分析', true, '/home', '選挙戦略ページ経由'),
     _FnDef('get-ogp', 'OGP メタデータ', false, null, 'サーバーサイド専用'),
