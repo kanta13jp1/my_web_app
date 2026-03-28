@@ -4,6 +4,8 @@ import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
 import 'health_page.dart';
+import 'medical_notes_page.dart';
+import 'mental_check_page.dart';
 
 class ChoOfficePage extends StatefulWidget {
   const ChoOfficePage({super.key});
@@ -94,14 +96,14 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
               'Mental Check',
               'Review stress and focus signals and keep a simple health check.',
               Icons.psychology,
-              null,
+              const MentalCheckPage(),
             ),
             _buildMenuCard(
               context,
               'Medical Notes',
               'Keep treatment notes and review health-related actions.',
               Icons.medical_services,
-              null,
+              const MedicalNotesPage(),
             ),
           ],
         ),
