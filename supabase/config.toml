@@ -130,3 +130,9 @@ entrypoint = "./functions/get-public-memo-preview/index.ts"
 [functions.get-ogp-public]
 enabled = true
 verify_jwt = false
+
+[functions.local-election-intelligence]
+enabled = true
+verify_jwt = false
+import_map = "./functions/local-election-intelligence/deno.json"
+entrypoint = "./functions/local-election-intelligence/index.ts"
