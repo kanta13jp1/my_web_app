@@ -79,7 +79,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
     }
   }
 
-  Future<void> _deleteComment(int id) async {
+  Future<void> _deleteComment(String id) async {
     try {
       await _supabase.functions.invoke(
         'note-comments',
@@ -167,7 +167,9 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                               ),
                               onPressed: () {
                                 final id = c['id'];
-                                if (id is int) _deleteComment(id);
+                                if (id is String && id.isNotEmpty) {
+                                  _deleteComment(id);
+                                }
                               },
                             ),
                           );
