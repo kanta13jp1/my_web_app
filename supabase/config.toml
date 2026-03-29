@@ -142,6 +142,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/memo-reactions/index.ts"
 
+[functions.note-comments]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/note-comments/index.ts"
+
 [functions.get-ogp-public]
 enabled = true
 verify_jwt = false

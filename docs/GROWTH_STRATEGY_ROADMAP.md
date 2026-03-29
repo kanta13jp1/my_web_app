@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session10 (get-competitor-monitoring Edge Function新規・CI/CD全Edge Functions完備・4インスタンス並列開発体制整備)
+最終更新: 2026-03-30 daily-development (ノートコメント機能実装・landing_page.dartデッドコード除去・CI/CD note-comments追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -328,6 +328,11 @@
 - **公開メモ 絵文字リアクション機能** (Session11): `memo-reactions` Edge Function と `memo_reactions` テーブルを新規作成。👍❤️🔥💡🎉の5種リアクションをログイン不要で実装。IP SHA-256ハッシュ(先頭16桁)で重複防止・プライバシー保護。UNIQUE INDEXのinsert違反をtoggleオフとして活用。Flutter `_MemoReactionsBar` ウィジェット（AnimatedContainer + Wrap）を公開メモ詳細ページに追加。CI/CD と config.toml に追加
 - **技術ブログ下書き** (Session11): `docs/blog-drafts/2026-03-28-public-memo-reactions.md` 作成
 
+### 2026-03-30 daily-development 実装済み
+
+- **ノートコメント機能** (daily-development 2026-03-30): Notion風のノートコメント機能を完全実装。`note_comments` テーブル（RLS付き）を新設 (`20260328000019_create_note_comments.sql`)。`note-comments` Edge Function (GET/POST/DELETE) でノート所有権チェックを二重実装（RLS + JWT user_id検証）。`NoteEditorPage` の AppBar にコメントアイコン・バッジカウント表示を追加。`DraggableScrollableSheet` でコメント一覧+入力フォームのボトムシートUI。`supabase/config.toml` と `deploy-prod.yml` CI/CD に追加。flutter analyze 0件維持
+- **landing_page.dart デッドコード除去** (daily-development 2026-03-30): 削除済みセクション（`_buildBuildInPublicSection`/`_buildPublicMemoSection`/`_buildShareSection`）の残骸（未使用フィールド11件・未使用メソッド4件・未使用インポート4件）を一括削除。flutter analyze 0件維持
+
 ### 2026-03-28 Session8 実装済み
 
 - **ユーザーマニュアル更新** (Session8): 性格診断バナーの説明をセクション1に追加。プロフィール完成度カードの場所を「成長・支援ダッシュボード」に更新。新セクション15「成長・支援ダッシュボード」(AIアシスト/成長シグナル/継続モチベーション) を追加。旧セクション15→16にリナンバー
@@ -516,13 +521,13 @@
 
 | ステータス | 件数 | 主な機能 |
 | --- | --- | --- |
-| 実装済み | 19 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断 |
+| 実装済み | 20 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断、コメント機能 |
 | 部分実装 | 2 | コードブロック、API連携 |
 | 開発中 | 2 | モバイルアプリ、デスクトップアプリ |
-| 未実装 | 3 | コラボ、コメント、リアルタイム共同編集など |
+| 未実装 | 2 | コラボ、リアルタイム共同編集など |
 | 独自機能 | 9 | マインドマップ、記憶ドリル、AIエージェント組織(20人)、経営コックピット、Growth進捗可視化、Referral制度、選挙知能、Build in Public、性格診断(16タイプ) |
 
-Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 88%** (2026-03-28 Session6更新)
+Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 91%** (2026-03-30 daily-development更新)
 
 ### 優先ギャップ補填ロードマップ
 
@@ -537,7 +542,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 #### 中期 (3-12ヶ月) で補填すべきギャップ
 
 - **Team workspace**: リアルタイム共同編集の基盤
-- **コメント機能**: ページへのインラインコメント
+- ~~**コメント機能**~~: ✅ 2026-03-30実装完了 (note_comments テーブル RLS付き・Edge Function・AppBar バッジ・DraggableBottomSheet)
 - **モバイルアプリ**: Flutter iOS/Android ビルドのリリース
 
 #### 長期 (1-3年) で補填すべきギャップ

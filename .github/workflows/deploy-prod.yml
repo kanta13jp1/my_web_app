@@ -128,6 +128,7 @@ jobs:
           supabase functions deploy trigger-analysis --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
           supabase functions deploy agent-runtime-cycle --no-verify-jwt
+          supabase functions deploy note-comments
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

@@ -5,13 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../models/public_memo.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
-import '../services/landing_share_service.dart';
-import '../services/public_memo_service.dart';
-import '../widgets/live_growth_banner.dart';
 
 class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
@@ -37,8 +33,6 @@ class _LandingPageState extends State<LandingPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _trialPromptController = TextEditingController();
-  final _waitlistEmailController = TextEditingController();
-  final _featureRequestTitleController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final GlobalKey _trialSectionKey = GlobalKey();
   final GlobalKey _authSectionKey = GlobalKey();
@@ -51,11 +45,9 @@ class _LandingPageState extends State<LandingPage> {
   bool _isLoading = false;
   bool _isTrialLoading = false;
   bool _isSignUp = true;
-  bool _isLoadingShareStats = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
   int _magicLinkCooldownSeconds = 0;
-  String? _activeShareChannel;
   int _achievementCount = 0;
   int _totalUsers = 0;
   int _publicMemoCount = 0;
@@ -64,9 +56,6 @@ class _LandingPageState extends State<LandingPage> {
   String? _trialReason;
   String? _lastMagicLinkEmail;
   String? _pendingReferralCode;
-  LandingShareSnapshot _shareSnapshot = LandingShareSnapshot.empty();
-  List<PublicMemo> _publicMemos = const <PublicMemo>[];
-  bool _isLoadingPublicMemos = true;
 
   SupabaseClient? get _supabaseClientOrNull {
     try {
@@ -89,14 +78,9 @@ class _LandingPageState extends State<LandingPage> {
       }
     });
     unawaited(_bootstrapReferralInvite());
-    _loadShareSnapshot();
-    _loadPublicMemos();
     unawaited(_loadAchievementCount());
     unawaited(_loadSocialProofStats());
   }
-
-  bool _waitlistSubmitted = false;
-  bool _featureRequestSubmitted = false;
 
   @override
   void dispose() {
@@ -105,8 +89,6 @@ class _LandingPageState extends State<LandingPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _trialPromptController.dispose();
-    _waitlistEmailController.dispose();
-    _featureRequestTitleController.dispose();
     _emailFocusNode.dispose();
     super.dispose();
   }
@@ -135,21 +117,6 @@ class _LandingPageState extends State<LandingPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> _loadShareSnapshot() async {
-    try {
-      final snapshot = await widget.adapter.loadShareSnapshot();
-      if (!mounted) return;
-      setState(() {
-        _shareSnapshot = snapshot;
-        _isLoadingShareStats = false;
-      });
-    } catch (error) {
-      debugPrint('Landing share snapshot failed: $error');
-      if (!mounted) return;
-      setState(() => _isLoadingShareStats = false);
-    }
   }
 
   Future<void> _loadAchievementCount() async {
@@ -194,56 +161,6 @@ class _LandingPageState extends State<LandingPage> {
       // Silently ignore
     }
   }
-
-  Future<void> _loadPublicMemos() async {
-    final client = _supabaseClientOrNull;
-    if (client == null) {
-      if (!mounted) return;
-      setState(() => _isLoadingPublicMemos = false);
-      return;
-    }
-
-    try {
-      final service = PublicMemoService(client);
-      final memos = await service.getPublicMemos(limit: 4);
-      if (!mounted) return;
-      setState(() {
-        _publicMemos = memos;
-        _isLoadingPublicMemos = false;
-      });
-    } catch (error) {
-      debugPrint('Landing public memo load failed: $error');
-      if (!mounted) return;
-      setState(() => _isLoadingPublicMemos = false);
-    }
-  }
-
-  Future<void> _shareLandingPage(String channel) async {
-    if (_activeShareChannel != null) {
-      return;
-    }
-
-    setState(() => _activeShareChannel = channel);
-    try {
-      final snapshot = await widget.adapter.shareLandingPage(channel: channel);
-      if (!mounted) return;
-      setState(() => _shareSnapshot = snapshot);
-      final label = LandingShareService.channelLabel(channel);
-      _showMessage(
-        channel == LandingShareService.channelCopy
-            ? '計測付きの共有リンクをコピーしました。'
-            : '$label の共有画面を開きました。',
-      );
-    } catch (error) {
-      debugPrint('Landing share failed: $error');
-      _showMessage('共有の起動に失敗しました。');
-    } finally {
-      if (mounted) {
-        setState(() => _activeShareChannel = null);
-      }
-    }
-  }
-
 
   Future<void> _auth() async {
     final email = _emailController.text.trim();
@@ -725,66 +642,6 @@ $input
     return 'Magic Link の送信に失敗しました。通信状況を確認してから再試行してください。';
   }
 
-  Widget _buildBuildInPublicSection() {
-    final launchDate = DateTime(2026, 3, 1);
-    final daysBuilding = DateTime.now().difference(launchDate).inDays + 1;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.construction, color: Colors.amber, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Build in Public 🚀',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '21製品に挑戦中 · $daysBuilding日目'
-                  '${_achievementCount > 0 ? ' · 実装済み$_achievementCount件' : ''}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white60,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Text(
-              'LIVE',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Colors.amber,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeroSection() {
     return Column(
@@ -1303,54 +1160,6 @@ $input
   }
 
 
-  Widget _buildPublicMemoSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '公開メモ',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '登録前でも読めるメモを増やして、検索流入と共有流入の入口を作ります。',
-            ),
-            const SizedBox(height: 16),
-            if (_isLoadingPublicMemos)
-              const Center(child: CircularProgressIndicator())
-            else if (_publicMemos.isEmpty)
-              const Text('公開メモはまだありません。')
-            else
-              ..._publicMemos.map(
-                (memo) => Card(
-                  child: ListTile(
-                    title: Text(memo.title),
-                    subtitle: Text(
-                      memo.content ?? '',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Text('${memo.viewCount} views'),
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushNamed('/public-memo?id=${memo.id}'),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 12),
-            FilledButton.tonalIcon(
-              onPressed: () => Navigator.of(context).pushNamed('/public-memos'),
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('公開メモ一覧を見る'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildUniqueValueSection() {
     const features = [
@@ -1728,266 +1537,6 @@ $input
       ),
     );
   }
-
-  Future<void> _submitWaitlist() async {
-    final email = _waitlistEmailController.text.trim();
-    if (email.isEmpty) return;
-    final client = _supabaseClientOrNull;
-    if (client == null) return;
-    try {
-      await client.from('newsletter_waitlist').insert({
-        'email': email,
-        'source': 'landing',
-      });
-      if (!mounted) return;
-      setState(() => _waitlistSubmitted = true);
-      _waitlistEmailController.clear();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _waitlistSubmitted = true); // show success even on duplicate
-    }
-  }
-
-  Future<void> _submitFeatureRequest() async {
-    final title = _featureRequestTitleController.text.trim();
-    if (title.isEmpty) return;
-    final client = _supabaseClientOrNull;
-    if (client == null) return;
-    try {
-      await client.from('feature_requests').insert({'title': title});
-      if (!mounted) return;
-      setState(() => _featureRequestSubmitted = true);
-      _featureRequestTitleController.clear();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _featureRequestSubmitted = true);
-    }
-  }
-
-  /// ウェイトリスト登録・機能リクエストセクション
-  Widget _buildWaitlistAndFeatureRequestSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // ウェイトリスト
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F5FF),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFDDD6FE)),
-          ),
-          child: _waitlistSubmitted
-              ? const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Color(0xFF7C3AED), size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        '登録ありがとうございます！\nリリース情報をお届けします。',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF4C1D95),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Text('📬', style: TextStyle(fontSize: 20)),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '新機能リリースをメールで受け取る',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '登録不要で最新アップデートをお知らせします。',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _waitlistEmailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              hintText: 'your@email.com',
-                              hintStyle: const TextStyle(fontSize: 13),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFDDD6FE)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFDDD6FE)),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _submitWaitlist,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF7C3AED),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                          ),
-                          child: const Text(
-                            '登録',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 14),
-        // 機能リクエスト
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFBEB),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFFDE68A)),
-          ),
-          child: _featureRequestSubmitted
-              ? const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Color(0xFFD97706), size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'リクエストを受け付けました！\n開発計画に反映します。',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF92400E),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Text('💡', style: TextStyle(fontSize: 20)),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'こんな機能が欲しい！をリクエスト',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '登録不要。要望を直接開発チームに届けられます。',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _featureRequestTitleController,
-                            decoration: InputDecoration(
-                              hintText: '例: Notionのデータベース機能が欲しい',
-                              hintStyle: const TextStyle(fontSize: 12),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFFDE68A)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFFDE68A)),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _submitFeatureRequest,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFD97706),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                          ),
-                          child: const Text(
-                            '送信',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGrowthSection() {
-    return LiveGrowthBanner(
-      growthService: widget.growthService,
-      compact: true,
-      title: '登録者数と閲覧者数をライブ表示',
-      subtitle: '今どれだけ人が見ていて、どれだけ登録されているかをその場で追えます。',
-    );
-  }
-
 
   Widget _buildTrialSection() {
     return KeyedSubtree(
@@ -2445,147 +1994,6 @@ $input
     );
   }
 
-  Widget _buildShareSection() {
-    final lastChannel = _shareSnapshot.lastChannel;
-    final lastChannelLabel = lastChannel == null
-        ? 'まだ未実施'
-        : LandingShareService.channelLabel(lastChannel);
-
-    return Card(
-      key: const Key('landing_share_section'),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'SNSでシェアして流入を増やす',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              '各SNSごとに計測付きリンクを発行します。今日のシェア回数と累計をその場で確認できます。',
-              style: TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 14),
-            if (_isLoadingShareStats)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _shareMetricCard('今日のシェア', '${_shareSnapshot.todayCount}回'),
-                  _shareMetricCard('累計シェア', '${_shareSnapshot.totalCount}回'),
-                  _shareMetricCard('直近チャネル', lastChannelLabel),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: LandingShareService.supportedChannels.map((channel) {
-                  final label = LandingShareService.channelLabel(channel);
-                  return Chip(
-                    avatar: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        '${_shareSnapshot.countFor(channel)}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    label: Text(label),
-                  );
-                }).toList(),
-              ),
-            ],
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _shareActionButton(
-                  channel: LandingShareService.channelX,
-                  icon: Icons.alternate_email,
-                ),
-                _shareActionButton(
-                  channel: LandingShareService.channelLine,
-                  icon: Icons.chat_bubble_outline,
-                ),
-                _shareActionButton(
-                  channel: LandingShareService.channelFacebook,
-                  icon: Icons.thumb_up_alt_outlined,
-                ),
-                _shareActionButton(
-                  channel: LandingShareService.channelCopy,
-                  icon: Icons.link,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'シェアリンクには流入元の識別子を付与しています。管理画面でもシェア回数とチャネル別内訳を確認できます。',
-              style: TextStyle(fontSize: 12, color: Colors.black45),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _shareMetricCard(String label, String value) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _shareActionButton({
-    required String channel,
-    required IconData icon,
-  }) {
-    final label = LandingShareService.channelLabel(channel);
-    final isActive = _activeShareChannel == channel;
-    return FilledButton.icon(
-      key: Key('landing_share_button_$channel'),
-      onPressed:
-          _activeShareChannel == null ? () => _shareLandingPage(channel) : null,
-      icon: isActive
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(icon),
-      label: Text(label),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
