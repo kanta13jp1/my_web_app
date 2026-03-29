@@ -51,6 +51,10 @@ import 'import_page.dart';
 import 'growth_mission_page.dart';
 import 'public_memo_directory_page.dart';
 import 'tech_blog_tracker_page.dart';
+import 'ai_search_page.dart';
+import 'ai_suggest_tags_page.dart';
+import 'generate_daily_challenges_page.dart';
+import 'growth_achievement_summary_page.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/profile_completion_banner.dart';
@@ -4214,6 +4218,23 @@ abstinence_slip_details: $slipDetailsText
                                 isLocked: shouldLockExploratoryMenus,
                                 lockedReason: '先に必須導線を完了してください。',
                               ),
+                              _MenuData(
+                                'AI セマンティック検索',
+                                Icons.manage_search,
+                                Colors.deepPurple,
+                                () => _nav(context, const AiSearchPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
+                              _MenuData(
+                                'AI タグ提案 / 名言',
+                                Icons.label_important,
+                                Colors.teal,
+                                () =>
+                                    _nav(context, const AiSuggestTagsPage()),
+                                isLocked: shouldLockExploratoryMenus,
+                                lockedReason: '先に必須導線を完了してください。',
+                              ),
                             ]),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
@@ -4251,6 +4272,24 @@ abstinence_slip_details: $slipDetailsText
                                 () => _nav(
                                   context,
                                   const TechBlogTrackerPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                'デイリーチャレンジ',
+                                Icons.emoji_events,
+                                Colors.orange,
+                                () => _nav(
+                                  context,
+                                  const GenerateDailyChallengesPage(),
+                                ),
+                              ),
+                              _MenuData(
+                                'グロース達成サマリー',
+                                Icons.bar_chart,
+                                Colors.green,
+                                () => _nav(
+                                  context,
+                                  const GrowthAchievementSummaryPage(),
                                 ),
                               ),
                             ]),

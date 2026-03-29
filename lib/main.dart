@@ -22,6 +22,10 @@ import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
+import 'package:my_web_app/pages/ai_search_page.dart';
+import 'package:my_web_app/pages/ai_suggest_tags_page.dart';
+import 'package:my_web_app/pages/generate_daily_challenges_page.dart';
+import 'package:my_web_app/pages/growth_achievement_summary_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -218,6 +222,17 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const ProfileSettingsPage(),
             );
+          case '/ai-search':
+            return MaterialPageRoute(builder: (_) => const AiSearchPage());
+          case '/ai-suggest-tags':
+            return MaterialPageRoute(
+                builder: (_) => const AiSuggestTagsPage());
+          case '/generate-daily-challenges':
+            return MaterialPageRoute(
+                builder: (_) => const GenerateDailyChallengesPage());
+          case '/growth-achievement-summary':
+            return MaterialPageRoute(
+                builder: (_) => const GrowthAchievementSummaryPage());
           case '/vs-notion':
           case '/vs-evernote':
           case '/vs-moneyforward':
