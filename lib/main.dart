@@ -67,7 +67,11 @@ import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/embedding_lab_page.dart';
+import 'package:my_web_app/pages/feedback_page.dart';
+import 'package:my_web_app/pages/health_page.dart';
+import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -491,6 +495,22 @@ class MyApp extends StatelessWidget {
           case '/settings':
             return MaterialPageRoute(
               builder: (_) => const SettingsPage(),
+            );
+          case '/stats':
+            return MaterialPageRoute(
+              builder: (_) => const StatsPage(),
+            );
+          case '/health':
+            return MaterialPageRoute(
+              builder: (_) => const HealthPage(),
+            );
+          case '/mental-check':
+            return MaterialPageRoute(
+              builder: (_) => const MentalCheckPage(),
+            );
+          case '/feedback':
+            return MaterialPageRoute(
+              builder: (_) => const FeedbackPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
