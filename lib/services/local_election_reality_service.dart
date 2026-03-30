@@ -8,7 +8,7 @@ import '../models/local_election_reality.dart';
 
 class LocalElectionRealityService {
   static const String _snapshotStorageKey =
-      'local_election_reality_snapshot_v2';
+      'local_election_reality_snapshot_v3';
   static const String _memberProfileStoragePrefix =
       'local_election_member_profile_v1_';
 

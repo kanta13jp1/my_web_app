@@ -1,12 +1,20 @@
+// ignore_for_file: require_trailing_commas
+
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  final service = LocalElectionShareService(
-    SupabaseClient('https://example.supabase.co', 'test-anon-key'),
-  );
+  late LocalElectionShareService service;
+
+  setUpAll(() async {
+    await initializeDateFormatting('ja_JP');
+    service = LocalElectionShareService(
+      SupabaseClient('https://example.supabase.co', 'test-anon-key'),
+    );
+  });
 
   LocalElectionRealitySnapshot buildSnapshot() {
     return LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
@@ -112,5 +120,25 @@ void main() {
     expect(shareText, contains('🔴議員不在'));
     expect(shareText, contains('🟡要強化'));
     expect(shareText, contains('https://example.com/public-memo?id=10'));
+  });
+
+  test('buildXShareIntentUri separates the body text and shared URL', () {
+    final snapshot = buildSnapshot();
+    final uri = service.buildXShareIntentUri(
+      snapshot: snapshot,
+      publicUrl: 'https://example.com/public-memo?id=10',
+    );
+
+    expect(
+        '${uri.scheme}://${uri.host}${uri.path}', 'https://x.com/intent/tweet');
+    expect(uri.queryParameters['url'], 'https://example.com/public-memo?id=10');
+    expect(
+      uri.queryParameters['text'],
+      isNot(contains('https://example.com/public-memo?id=10')),
+    );
+    expect(
+      uri.queryParameters['text'],
+      contains('国民民主党の地方議員数'),
+    );
   });
 }

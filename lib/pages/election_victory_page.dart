@@ -456,9 +456,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          memo == null
-              ? 'X投稿向けの現職サマリーをコピーしました'
-              : '公開ノートリンク付きのX投稿文をコピーしました',
+          memo == null ? 'X投稿向けの現職サマリーをコピーしました' : '公開ノートリンク付きのX投稿文をコピーしました',
         ),
       ),
     );
@@ -1154,26 +1152,24 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               )
                             : const Icon(Icons.public),
                         label: Text(
-                          _isPublishingRealityMemo
-                              ? '公開中'
-                              : '公開ノート化',
+                          _isPublishingRealityMemo ? '公開中' : '公開ノート化',
                         ),
                       ),
                     if (realitySnapshot != null)
                       FilledButton.tonalIcon(
-                        onPressed: realitySnapshot.hasData &&
-                                !_isPublishingRealityMemo
-                            ? _copyRealityPublicLink
-                            : null,
+                        onPressed:
+                            realitySnapshot.hasData && !_isPublishingRealityMemo
+                                ? _copyRealityPublicLink
+                                : null,
                         icon: const Icon(Icons.link),
                         label: const Text('公開リンクコピー'),
                       ),
                     if (realitySnapshot != null)
                       FilledButton(
-                        onPressed: realitySnapshot.hasData &&
-                                !_isPublishingRealityMemo
-                            ? _shareRealityOnX
-                            : null,
+                        onPressed:
+                            realitySnapshot.hasData && !_isPublishingRealityMemo
+                                ? _shareRealityOnX
+                                : null,
                         child: const Text('X共有'),
                       ),
                     FilledButton.tonalIcon(
@@ -1290,6 +1286,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               _buildAiInsightSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildRealityPrefectureSection(realitySnapshot),
+              const SizedBox(height: 20),
+              _buildScheduleSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildMemberRosterSection(realitySnapshot),
               const SizedBox(height: 20),
@@ -1628,6 +1626,401 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return Theme.of(context).colorScheme.error;
     }
     return Colors.amber.shade900;
+  }
+
+  Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
+    final schedules = _sortedScheduleEntries(snapshot);
+    final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '地方選挙スケジュール',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '党公式の候補予定者ページとネット上の最新選挙日程を突合しています。'
+          ' 国民民主党の候補予定者が 0 人の選挙は赤、1 人の選挙は黄色で表示します。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusChip(
+              '監視 ${_formatInt(schedules.length)} 件',
+              color: Colors.blueGrey,
+            ),
+            _buildStatusChip(
+              '14日以内 ${_formatInt(upcomingSoonCount)} 件',
+              color: const Color(0xFF2563EB),
+            ),
+            _buildStatusChip(
+              '未擁立 ${_formatInt(snapshot.redAlertScheduleCount)} 件',
+              color: Theme.of(context).colorScheme.error,
+            ),
+            _buildStatusChip(
+              '単騎 ${_formatInt(snapshot.yellowAlertScheduleCount)} 件',
+              color: Colors.amber.shade800,
+            ),
+          ],
+        ),
+        if (snapshot.scheduleAiSummary.trim().isNotEmpty ||
+            snapshot.scheduleAiAlerts.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1D4ED8).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF1D4ED8).withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (snapshot.scheduleAiSummary.trim().isNotEmpty)
+                  Text(
+                    snapshot.scheduleAiSummary,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                if (snapshot.scheduleAiAlerts.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  for (final item in snapshot.scheduleAiAlerts)
+                    _buildBulletLine(item),
+                ],
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _PrefectureLegendChip(
+              label: '通常',
+              backgroundColor: Colors.white,
+              borderColor: Color(0xFFD0D5DD),
+            ),
+            _PrefectureLegendChip(
+              label: '単騎',
+              backgroundColor: Color(0xFFFFF4CC),
+              borderColor: Color(0xFFE0A800),
+            ),
+            _PrefectureLegendChip(
+              label: '未擁立',
+              backgroundColor: Color(0xFFFDE2E1),
+              borderColor: Color(0xFFD92D20),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (schedules.isEmpty)
+          _buildInlineNotice(
+            '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。',
+            color: Colors.blueGrey,
+            icon: Icons.event_busy,
+          )
+        else
+          ..._buildScheduleGroups(schedules),
+      ],
+    );
+  }
+
+  List<Widget> _buildScheduleGroups(
+      List<LocalElectionScheduleEntry> schedules,) {
+    final widgets = <Widget>[];
+    String? previousDate;
+
+    for (final item in schedules) {
+      if (item.voteDate != previousDate) {
+        if (widgets.isNotEmpty) {
+          widgets.add(const SizedBox(height: 8));
+        }
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              _formatScheduleDate(item.voteDate),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        );
+        previousDate = item.voteDate;
+      }
+      widgets.add(_buildScheduleCard(item));
+    }
+
+    return widgets;
+  }
+
+  List<LocalElectionScheduleEntry> _sortedScheduleEntries(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final schedules = List<LocalElectionScheduleEntry>.from(
+      snapshot.upcomingSchedules,
+    );
+    schedules.sort((left, right) {
+      final leftDate = left.parsedVoteDate;
+      final rightDate = right.parsedVoteDate;
+      if (leftDate != null && rightDate != null) {
+        final dateCompare = leftDate.compareTo(rightDate);
+        if (dateCompare != 0) {
+          return dateCompare;
+        }
+      }
+      final severityCompare = _scheduleSeverity(left).compareTo(
+        _scheduleSeverity(right),
+      );
+      if (severityCompare != 0) {
+        return severityCompare;
+      }
+      final prefectureCompare = left.prefecture.compareTo(right.prefecture);
+      if (prefectureCompare != 0) {
+        return prefectureCompare;
+      }
+      return left.electionName.compareTo(right.electionName);
+    });
+    return schedules;
+  }
+
+  Widget _buildScheduleCard(LocalElectionScheduleEntry item) {
+    final candidateSummary = item.kokuminCandidateNames.isEmpty
+        ? '党公式候補予定者ページで該当候補を確認できていません。'
+        : item.kokuminCandidateNames.asMap().entries.map((entry) {
+            final status = entry.key < item.kokuminCandidateStatuses.length
+                ? item.kokuminCandidateStatuses[entry.key]
+                : '';
+            if (status.trim().isEmpty) {
+              return entry.value;
+            }
+            return '${entry.value}（$status）';
+          }).join(' / ');
+
+    return Card(
+      color: _scheduleCardBackgroundColor(context, item),
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: _scheduleCardBorderColor(context, item),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.electionName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item.prefecture} / ${item.electionCategory}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      if (_scheduleStatusLabel(item) case final label?) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _scheduleBadgeBackgroundColor(context, item),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: _scheduleBadgeForegroundColor(
+                                context,
+                                item,
+                              ),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    if (item.detailUrl.trim().isNotEmpty)
+                      IconButton(
+                        onPressed: () => _openUrl(item.detailUrl),
+                        tooltip: '選挙日程ソースを開く',
+                        icon: const Icon(Icons.event_note_outlined, size: 18),
+                      ),
+                    if (item.officialCandidateSourceUrl.trim().isNotEmpty)
+                      IconButton(
+                        onPressed: () =>
+                            _openUrl(item.officialCandidateSourceUrl),
+                        tooltip: '党公式候補ページを開く',
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMetricChip(
+                  '国民候補',
+                  '${_formatInt(item.kokuminCandidateCount)}人',
+                  color: _scheduleMetricColor(item),
+                ),
+                _buildMetricChip(
+                  '自治体',
+                  item.municipality,
+                  color: const Color(0xFF475569),
+                ),
+                if (item.announcementDate.trim().isNotEmpty)
+                  _buildMetricChip(
+                    '告示日',
+                    _formatScheduleDate(item.announcementDate),
+                    color: const Color(0xFF2563EB),
+                  ),
+                if (item.seatCount > 0 || item.totalCandidateCount > 0)
+                  _buildMetricChip(
+                    '定数/候補者',
+                    '${_formatInt(item.seatCount)} / ${_formatInt(item.totalCandidateCount)}',
+                    color: const Color(0xFF7C3AED),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              candidateSummary,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _scheduleSeverity(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return 0;
+    }
+    if (item.isAlertYellow) {
+      return 1;
+    }
+    return 2;
+  }
+
+  Color _scheduleCardBackgroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    final surface = Theme.of(context).colorScheme.surface;
+    if (item.isAlertRed) {
+      return Color.alphaBlend(
+        Theme.of(context).colorScheme.error.withValues(alpha: 0.12),
+        surface,
+      );
+    }
+    if (item.isAlertYellow) {
+      return Color.alphaBlend(
+        Colors.amber.withValues(alpha: 0.22),
+        surface,
+      );
+    }
+    return surface;
+  }
+
+  Color _scheduleCardBorderColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
+    }
+    if (item.isAlertYellow) {
+      return Colors.amber.shade700.withValues(alpha: 0.7);
+    }
+    return Theme.of(context).colorScheme.outlineVariant;
+  }
+
+  String? _scheduleStatusLabel(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return '未擁立';
+    }
+    if (item.isAlertYellow) {
+      return '単騎';
+    }
+    return null;
+  }
+
+  Color _scheduleBadgeBackgroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.14);
+    }
+    return Colors.amber.withValues(alpha: 0.25);
+  }
+
+  Color _scheduleBadgeForegroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error;
+    }
+    return Colors.amber.shade900;
+  }
+
+  Color _scheduleMetricColor(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return const Color(0xFFB91C1C);
+    }
+    if (item.isAlertYellow) {
+      return Colors.amber.shade800;
+    }
+    return const Color(0xFF0F766E);
+  }
+
+  String _formatScheduleDate(String raw) {
+    final normalized = raw.trim();
+    if (normalized.isEmpty) {
+      return '-';
+    }
+    final parsed = DateTime.tryParse(normalized) ??
+        DateTime.tryParse(normalized.replaceAll('/', '-'));
+    if (parsed == null) {
+      return normalized;
+    }
+    return _dateOnlyFormat.format(parsed.toLocal());
   }
 
   Widget _buildMemberRosterSection(LocalElectionRealitySnapshot snapshot) {

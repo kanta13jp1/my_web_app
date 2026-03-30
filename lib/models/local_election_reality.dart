@@ -256,6 +256,123 @@ class LocalElectionPrefectureReality {
   }
 }
 
+class LocalElectionScheduleEntry {
+  final String electionName;
+  final String prefecture;
+  final String municipality;
+  final String electionCategory;
+  final String voteDate;
+  final String announcementDate;
+  final String detailUrl;
+  final String officialCandidateSourceUrl;
+  final int seatCount;
+  final int totalCandidateCount;
+  final int kokuminCandidateCount;
+  final List<String> kokuminCandidateNames;
+  final List<String> kokuminCandidateStatuses;
+
+  const LocalElectionScheduleEntry({
+    required this.electionName,
+    required this.prefecture,
+    required this.municipality,
+    required this.electionCategory,
+    required this.voteDate,
+    required this.announcementDate,
+    required this.detailUrl,
+    required this.officialCandidateSourceUrl,
+    required this.seatCount,
+    required this.totalCandidateCount,
+    required this.kokuminCandidateCount,
+    required this.kokuminCandidateNames,
+    required this.kokuminCandidateStatuses,
+  });
+
+  factory LocalElectionScheduleEntry.fromJson(Map<String, dynamic> json) {
+    return LocalElectionScheduleEntry(
+      electionName: (json['electionName'] as String? ?? '').trim(),
+      prefecture: (json['prefecture'] as String? ?? '').trim(),
+      municipality: (json['municipality'] as String? ?? '').trim(),
+      electionCategory: (json['electionCategory'] as String? ?? '').trim(),
+      voteDate: (json['voteDate'] as String? ?? '').trim(),
+      announcementDate: (json['announcementDate'] as String? ?? '').trim(),
+      detailUrl: (json['detailUrl'] as String? ?? '').trim(),
+      officialCandidateSourceUrl:
+          (json['officialCandidateSourceUrl'] as String? ?? '').trim(),
+      seatCount: _readInt(json['seatCount']),
+      totalCandidateCount: _readInt(json['totalCandidateCount']),
+      kokuminCandidateCount: _readInt(json['kokuminCandidateCount']),
+      kokuminCandidateNames: _readStringList(json['kokuminCandidateNames']),
+      kokuminCandidateStatuses:
+          _readStringList(json['kokuminCandidateStatuses']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'electionName': electionName,
+      'prefecture': prefecture,
+      'municipality': municipality,
+      'electionCategory': electionCategory,
+      'voteDate': voteDate,
+      'announcementDate': announcementDate,
+      'detailUrl': detailUrl,
+      'officialCandidateSourceUrl': officialCandidateSourceUrl,
+      'seatCount': seatCount,
+      'totalCandidateCount': totalCandidateCount,
+      'kokuminCandidateCount': kokuminCandidateCount,
+      'kokuminCandidateNames': kokuminCandidateNames,
+      'kokuminCandidateStatuses': kokuminCandidateStatuses,
+    };
+  }
+
+  bool get isAlertRed => kokuminCandidateCount == 0;
+
+  bool get isAlertYellow => kokuminCandidateCount == 1;
+
+  DateTime? get parsedVoteDate => _parseDate(voteDate);
+
+  bool isWithinDays(int days) {
+    final date = parsedVoteDate;
+    if (date == null) {
+      return false;
+    }
+    final today = DateTime.now();
+    final localDate = DateTime(date.year, date.month, date.day);
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return !localDate.isBefore(todayDate) &&
+        localDate.difference(todayDate).inDays <= days;
+  }
+
+  static int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse('$value') ?? 0;
+  }
+
+  static List<String> _readStringList(Object? value) {
+    if (value is! List) {
+      return const <String>[];
+    }
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  static DateTime? _parseDate(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value) ??
+        DateTime.tryParse(value.replaceAll('/', '-'));
+  }
+}
+
 class LocalElectionRealitySnapshot {
   final DateTime fetchedAt;
   final int baselineCurrentLocalMembers;
@@ -269,9 +386,12 @@ class LocalElectionRealitySnapshot {
   final String aiSummary;
   final List<String> aiAlerts;
   final List<String> aiStrategicNotes;
+  final String scheduleAiSummary;
+  final List<String> scheduleAiAlerts;
   final List<LocalElectionRealitySource> sources;
   final List<LocalElectionPrefectureReality> prefectures;
   final List<LocalElectionLegislatorProfile> members;
+  final List<LocalElectionScheduleEntry> upcomingSchedules;
 
   const LocalElectionRealitySnapshot({
     required this.fetchedAt,
@@ -286,9 +406,12 @@ class LocalElectionRealitySnapshot {
     required this.aiSummary,
     required this.aiAlerts,
     required this.aiStrategicNotes,
+    required this.scheduleAiSummary,
+    required this.scheduleAiAlerts,
     required this.sources,
     required this.prefectures,
     required this.members,
+    required this.upcomingSchedules,
   });
 
   LocalElectionRealitySnapshot.empty()
@@ -304,9 +427,12 @@ class LocalElectionRealitySnapshot {
         aiSummary = '',
         aiAlerts = const <String>[],
         aiStrategicNotes = const <String>[],
+        scheduleAiSummary = '',
+        scheduleAiAlerts = const <String>[],
         sources = const <LocalElectionRealitySource>[],
         prefectures = const <LocalElectionPrefectureReality>[],
-        members = const <LocalElectionLegislatorProfile>[];
+        members = const <LocalElectionLegislatorProfile>[],
+        upcomingSchedules = const <LocalElectionScheduleEntry>[];
 
   factory LocalElectionRealitySnapshot.fromJson(Map<String, dynamic> json) {
     return LocalElectionRealitySnapshot(
@@ -342,9 +468,12 @@ class LocalElectionRealitySnapshot {
       aiSummary: (json['aiSummary'] as String? ?? '').trim(),
       aiAlerts: _readStringList(json['aiAlerts']),
       aiStrategicNotes: _readStringList(json['aiStrategicNotes']),
+      scheduleAiSummary: (json['scheduleAiSummary'] as String? ?? '').trim(),
+      scheduleAiAlerts: _readStringList(json['scheduleAiAlerts']),
       sources: _readSources(json['sources']),
       prefectures: _readPrefectures(json['prefectures']),
       members: _readMembers(json['members']),
+      upcomingSchedules: _readSchedules(json['upcomingSchedules']),
     );
   }
 
@@ -362,9 +491,13 @@ class LocalElectionRealitySnapshot {
       'aiSummary': aiSummary,
       'aiAlerts': aiAlerts,
       'aiStrategicNotes': aiStrategicNotes,
+      'scheduleAiSummary': scheduleAiSummary,
+      'scheduleAiAlerts': scheduleAiAlerts,
       'sources': sources.map((item) => item.toJson()).toList(),
       'prefectures': prefectures.map((item) => item.toJson()).toList(),
       'members': members.map((item) => item.toJson()).toList(),
+      'upcomingSchedules':
+          upcomingSchedules.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -379,6 +512,14 @@ class LocalElectionRealitySnapshot {
       members.where((item) => item.hasDetailedProfile).length;
 
   int get ageAvailableCount => members.where((item) => item.age != null).length;
+
+  bool get hasScheduleData => upcomingSchedules.isNotEmpty;
+
+  int get redAlertScheduleCount =>
+      upcomingSchedules.where((item) => item.isAlertRed).length;
+
+  int get yellowAlertScheduleCount =>
+      upcomingSchedules.where((item) => item.isAlertYellow).length;
 
   bool get isStale {
     if (!hasData) {
@@ -407,6 +548,32 @@ class LocalElectionRealitySnapshot {
     return members
         .where((item) => item.prefecture.trim() == normalized)
         .toList();
+  }
+
+  List<LocalElectionScheduleEntry> schedulesWithinDays(int days) {
+    return upcomingSchedules.where((item) => item.isWithinDays(days)).toList();
+  }
+
+  List<LocalElectionScheduleEntry> topScheduleAlerts({int limit = 8}) {
+    final sorted = List<LocalElectionScheduleEntry>.from(upcomingSchedules)
+      ..sort((left, right) {
+        final severityCompare = _scheduleSeverity(left).compareTo(
+          _scheduleSeverity(right),
+        );
+        if (severityCompare != 0) {
+          return severityCompare;
+        }
+        final leftDate = left.parsedVoteDate;
+        final rightDate = right.parsedVoteDate;
+        if (leftDate != null && rightDate != null) {
+          final dateCompare = leftDate.compareTo(rightDate);
+          if (dateCompare != 0) {
+            return dateCompare;
+          }
+        }
+        return left.electionName.compareTo(right.electionName);
+      });
+    return sorted.take(limit).toList();
   }
 
   static int _readInt(Object? value, {int fallback = 0}) {
@@ -460,5 +627,26 @@ class LocalElectionRealitySnapshot {
         Map<String, dynamic>.from(item),
       );
     }).toList();
+  }
+
+  static List<LocalElectionScheduleEntry> _readSchedules(Object? value) {
+    if (value is! List) {
+      return const <LocalElectionScheduleEntry>[];
+    }
+    return value.whereType<Map>().map((item) {
+      return LocalElectionScheduleEntry.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+    }).toList();
+  }
+
+  static int _scheduleSeverity(LocalElectionScheduleEntry entry) {
+    if (entry.isAlertRed) {
+      return 0;
+    }
+    if (entry.isAlertYellow) {
+      return 1;
+    }
+    return 2;
   }
 }
