@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 daily-development #4 (app_feedbackテーブル・FeedbackListPage管理統合・/admin-feedbackルート追加・ブログ下書き)
+最終更新: 2026-03-31 PowerShell #4 (wasm build成功確認・残課題2件解消・app_feedbackテーブル・FeedbackListPage統合)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -372,6 +372,12 @@
 - **サイトマップ40URL・ルート整理** (daily-development #3 2026-03-31): `/local-election-schedule` を `ElectionVictoryPage` に統合（`ElectionManagementDashboard` 削除後のルート修正）。`/embedding-lab` ルートを `main.dart` に追加。`home_tool_catalog.dart` を同期更新。
 - **ブログ下書き作成** (daily-development #3 2026-03-31): `docs/blog-drafts/2026-03-31-embedding-similarity.md` — Flutter WebでGemini Embeddingsを使ったコサイン類似度比較ツール実装解説。
 
+### 2026-03-31 PowerShell全体管理セッション #4 実装済み
+
+- **wasm build blocker 完全解消** (PowerShell 2026-03-31): `flutter build web --wasm` を実行し356.7秒でビルド成功確認。dart:html廃止・dart:js_interop移行完了済みのため追加作業なし。残課題リストから削除。GROWTH_STRATEGY_ROADMAP.mdの中期計画チェックリスト item 9 も完了マーク。
+- **Google Search Console サイトマップ送信準備完了** (PowerShell 2026-03-31): sitemap.xml が40URLに更新済み (2026-03-31)。`https://my-web-app-b67f4.web.app/sitemap.xml` をSearch Consoleに手動送信するための準備完了。残課題の「24 URLs→40 URLs」更新を反映。
+- **daily-development #4統合** (PowerShell 2026-03-31): app_feedbackテーブル・FeedbackListPage管理統合・/admin-feedbackルート追加をflutter analyze 0件で確認済み。
+
 ### 2026-03-31 PowerShell全体管理セッション #3 実装済み
 
 - **EmbeddingLab統合・Lintエラー全修正** (PowerShell 2026-03-31): VSCodeインスタンスが追加した `embedding_lab_page.dart`・`local_election_reality.dart`・`local_election_reality_service.dart`・`election_victory_page.dart` を統括コミット。`election_victory_page.dart:1577` の `num→double` 型不一致修正・`home_tool_catalog.dart` の未使用import `feedback_page.dart` 削除・`local_election_reality_service.dart:242` のtrailing comma自動修正。flutter analyze 0件維持。
@@ -420,11 +426,11 @@
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
 - Resend API キーは設定済み。送信元ドメイン認証後に FROM_EMAIL を更新
-- wasm build blocker の解消
+- ~~wasm build blocker の解消~~ ✅ 2026-03-31 `flutter build web --wasm` 成功確認 (dart:html廃止済み・dart:js_interop移行完了)
 - referral reward ポイント付与の実際の運用確認
 - ~~B2B 営業資料の整備開始~~ ✅ 2026-03-30 `/enterprise` ページ実装完了（コスト比較・問い合わせフォーム）
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
-- Google Search Console へのサイトマップ再送信（24 URLs）
+- Google Search Console へのサイトマップ再送信（40 URLs 対応済み — Search Console で手動送信が必要）
 - ~~各比較ページへの個別OGP画像生成~~ ✅ 2026-03-30 個別OGPメタタグ (og:title/og:description) を14社分SEOシェルに追加完了
 - ~~比較ページ経由の登録CVRトラッキング~~ ✅ 2026-03-31 touch_comparison/signup_submit_comparison シグナル + AdminダッシュボードCVRカード実装完了
 
@@ -700,7 +706,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 6. ~~技術ブログ第 1 弾を Zenn に投稿する~~ ✓ Zenn向け技術記事ドラフト作成完了 (`zenn_growth_dashboard_20260325.md`)
 7. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
 8. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
-9. wasm build blocker の原因を特定して解消する
+9. ~~wasm build blocker の原因を特定して解消する~~ ✓ 完了 2026-03-31 (`flutter build web --wasm` 356.7s でビルド成功)
 10. ~~公開メモの SEO / OGP タグを強化して organic 流入を増やす~~ ✓ 完了 (SeoMetaHelper + PublicMemoDetailPage 動的 OGP 更新)
 11. ~~B2B 向け移行代行 LP の最初のドラフトを作る~~ ✓ 完了 (docs/b2b-migration-lp-draft.md)
 12. ~~はてなブログで週次 progress bar 付き成長記録を開始する~~ ✓ 完了 (docs/blog-drafts/2026-03-27-hatena-weekly-growth.md)
