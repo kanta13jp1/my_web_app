@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-30 daily-development (ノートコメント機能実装・landing_page.dartデッドコード除去・CI/CD note-comments追加)
+最終更新: 2026-03-30 daily-development #2 (B2Bエンタープライズページ・コードブロックコピーボタン・RadioListTile deprecated修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -334,6 +334,12 @@
 - **landing_page.dart デッドコード除去** (daily-development 2026-03-30): 削除済みセクション（`_buildBuildInPublicSection`/`_buildPublicMemoSection`/`_buildShareSection`）の残骸（未使用フィールド11件・未使用メソッド4件・未使用インポート4件）を一括削除。flutter analyze 0件維持
 - **アクセシビリティ修正** (daily-report 2026-03-30): `note_comments_page.dart` の refreshボタン・deleteボタンに tooltip を追加 (`tooltip: '更新'` / `tooltip: 'コメントを削除'`)。`memo_reactions_page.dart` に `_reactionLabels` マップを追加し、リアクションボタンを `Semantics(label: ..., button: true)` でラップ。GitHub Issues #243〜#248 (auto-review アクセシビリティ) を全てクローズ。
 
+### 2026-03-30 daily-development #2 実装済み
+
+- **B2B エンタープライズ LP 実装** (daily-development #2 2026-03-30): `/enterprise` ルートにB2B向けランディングページを新設。ヒーローセクション（グラデーション）・コスト削減シミュレーション（Slack/Chatwork/ジョブカン/MoneyForward/Notion 合計¥4,100/月→¥0比較）・活用シーン6種カード（モバイル/デスクトップレスポンシブ）・機能比較テーブル・お問い合わせフォーム（Supabase `enterprise_inquiries` テーブル）を実装。`main.dart` に `/enterprise` ルート追加。`sitemap.xml` に追加（合計23URL）。LP に「チームで使う」CTA カードを追加。B2B 営業資料整備の第一歩として「残課題」を解消。
+- **コードブロック コピーボタン追加** (daily-development #2 2026-03-30): `markdown_preview.dart` の `CodeElementBuilder` に `_CopyCodeButton` StatefulWidget を追加。言語ラベルバーの右端にCopy/Copiedトグルボタン。クリック後2秒でリセット。`services.dart` の `Clipboard.setData` で実装。コードブロック（言語指定あり・なし両方）に対応。Notionパリティ「コードブロック: 部分実装 → 実装済み」に格上げ。
+- **RadioListTile deprecated API 修正** (daily-development #2 2026-03-30): Flutter 3.32.0+ で `groupValue`/`onChanged` が非推奨になった `RadioListTile` を `growth_acquisition_signal_page.dart` で修正。flutter analyze 0件を維持。
+
 ### 競合動向ログ (2026-03-30)
 
 - **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務
@@ -371,9 +377,9 @@
 - Resend API キーは設定済み。送信元ドメイン認証後に FROM_EMAIL を更新
 - wasm build blocker の解消
 - referral reward ポイント付与の実際の運用確認
-- B2B 営業資料の整備開始
+- ~~B2B 営業資料の整備開始~~ ✅ 2026-03-30 `/enterprise` ページ実装完了（コスト比較・問い合わせフォーム）
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
-- Google Search Console へのサイトマップ再送信（21 URLs）
+- Google Search Console へのサイトマップ再送信（23 URLs）
 - 各比較ページへの個別OGP画像生成
 - 比較ページ経由の登録CVRトラッキング
 
@@ -529,13 +535,13 @@
 
 | ステータス | 件数 | 主な機能 |
 | --- | --- | --- |
-| 実装済み | 20 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断、コメント機能 |
-| 部分実装 | 2 | コードブロック、API連携 |
+| 実装済み | 21 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断、コメント機能、コードブロック(コピーボタン付きシンタックスハイライト) |
+| 部分実装 | 1 | API連携 |
 | 開発中 | 2 | モバイルアプリ、デスクトップアプリ |
 | 未実装 | 2 | コラボ、リアルタイム共同編集など |
 | 独自機能 | 9 | マインドマップ、記憶ドリル、AIエージェント組織(20人)、経営コックピット、Growth進捗可視化、Referral制度、選挙知能、Build in Public、性格診断(16タイプ) |
 
-Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 91%** (2026-03-30 daily-development更新)
+Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 94%** (2026-03-30 daily-development #2更新: コードブロック実装済みに格上げ)
 
 ### 優先ギャップ補填ロードマップ
 
@@ -1006,6 +1012,8 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - `election_victory_page.dart` UIを実装 (VSCode)
    - `cho_office_page.dart`: CHO組織オフィスページ (VSCode)
    - `election_regional_kpi_chart.dart`: 地域別KPIチャート (VSCode)
+   - 統一地方選700人倍増に向けた月次KPI管理（現職維持・新人擁立・接戦区支援・公認内定時期）ダッシュボードを追加
+   - `fetch-local-politicians` Edge Function を新設し、ネットからの最新の地方議員実データ（年齢・性別・プロフ等）AI取得を実装
 
 9. **仮想秘書強化 (VSCode)**
    - `quick_task_input_card.dart` 追加: 会話でタスクを自動作成
