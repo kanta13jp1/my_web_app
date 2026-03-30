@@ -36,6 +36,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
@@ -511,6 +512,10 @@ class MyApp extends StatelessWidget {
           case '/feedback':
             return MaterialPageRoute(
               builder: (_) => const FeedbackPage(),
+            );
+          case '/admin-feedback':
+            return MaterialPageRoute(
+              builder: (_) => const FeedbackListPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

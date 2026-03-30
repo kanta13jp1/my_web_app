@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 PowerShell #3 (EmbeddingLab統合Lintfix・LocalElectionRealityモデル・SettingsPage・flutter analyze 0件維持)
+最終更新: 2026-03-31 daily-development #4 (app_feedbackテーブル・FeedbackListPage管理統合・/admin-feedbackルート追加・ブログ下書き)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -377,6 +377,13 @@
 - **EmbeddingLab統合・Lintエラー全修正** (PowerShell 2026-03-31): VSCodeインスタンスが追加した `embedding_lab_page.dart`・`local_election_reality.dart`・`local_election_reality_service.dart`・`election_victory_page.dart` を統括コミット。`election_victory_page.dart:1577` の `num→double` 型不一致修正・`home_tool_catalog.dart` の未使用import `feedback_page.dart` 削除・`local_election_reality_service.dart:242` のtrailing comma自動修正。flutter analyze 0件維持。
 - **LocalElectionRealityモデル追加** (PowerShell 2026-03-31): 選挙現実データのスナップショット履歴管理モデル (`local_election_reality.dart`) とサービス (`local_election_reality_service.dart`) を追加。180日分の日次履歴をshared_preferencesで保持、LinearChartで可視化する基盤を整備。
 - **SettingsPageルート追加** (PowerShell 2026-03-31): `/settings` ルートを `main.dart` と `home_tool_catalog.dart` に追加済み (438f414)。ユーザー設定ページへの導線を確立。
+
+### 2026-03-31 daily-development #4 実装済み (自動)
+
+- **app_feedbackテーブル実装** (daily-development #4 2026-03-31): `app_feedback` テーブル (bigserial PK, category/content/status/RLS付き) を新設。`SECURITY DEFINER` 関数 `is_user_admin()` 経由でRLS無限再帰を回避しつつ管理者の全件閲覧・更新を許可。`FeedbackPage` から投稿、管理者のステータス管理 (new/reviewed/implemented) まで一貫した実装。migration `20260331000070_create_app_feedback.sql`
+- **FeedbackListPage 管理統合** (daily-development #4 2026-03-31): `AdminAnalyticsPage` に `_buildUserFeedbackCard()` を追加。FeedbackListPageへのナビゲーションボタンを提供し、管理者ダッシュボードからフィードバック一覧に直接アクセス可能に。`admin_analytics_page.dart` に `FeedbackListPage` をインポート追加。
+- **/admin-feedbackルート追加** (daily-development #4 2026-03-31): `main.dart` に `/admin-feedback` ルートを追加。`FeedbackListPage` をインポート。ディープリンクからの管理者フィードバック画面アクセスを有効化。
+- **ブログ下書き作成** (daily-development #4 2026-03-31): `docs/blog-drafts/2026-03-31-app-feedback.md` — RLS無限再帰回避パターンとフィードバック収集実装解説記事を作成。flutter analyze 0件維持。
 
 ### 競合動向ログ (2026-03-30)
 

@@ -6,6 +6,7 @@ import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import 'ai_secretary_page.dart';
+import 'admin/feedback_list_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
 
@@ -1509,6 +1510,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildGrowthAchievementSummaryCard(),
                     const SizedBox(height: 16),
                     _buildWaitlistCard(),
+                    const SizedBox(height: 16),
+                    _buildUserFeedbackCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -4774,6 +4777,57 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
           Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUserFeedbackCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.feedback_outlined, color: Color(0xFF6366F1), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'ユーザーフィードバック管理',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ユーザーから寄せられた機能要望・バグ報告・ご意見を管理します。',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('フィードバック一覧を開く'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
