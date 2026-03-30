@@ -51,6 +51,7 @@ class _LandingPageState extends State<LandingPage> {
   int _achievementCount = 0;
   int _totalUsers = 0;
   int _publicMemoCount = 0;
+  List<Map<String, String>> _recentAchievements = [];
 
   String? _trialAction;
   String? _trialReason;
@@ -125,12 +126,37 @@ class _LandingPageState extends State<LandingPage> {
     try {
       final response = await client.functions.invoke(
         'development-achievements',
-        body: {'action': 'get', 'period': 'すべての実績'},
+        body: {'action': 'get', 'period': '今週の実績'},
       );
       final data = response.data as Map<String, dynamic>? ?? {};
-      final count = (data['achievements'] as List<dynamic>?)?.length ?? 0;
+      final list = (data['achievements'] as List<dynamic>?) ?? [];
+      final recent = list.take(5).map((e) {
+        final m = e as Map<String, dynamic>;
+        final completedAt = m['completed_at']?.toString() ?? '';
+        String dateStr = '';
+        final dt = DateTime.tryParse(completedAt)?.toLocal();
+        if (dt != null) {
+          dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        }
+        return <String, String>{
+          'title': m['title']?.toString() ?? '',
+          'date': dateStr,
+        };
+      }).where((m) => m['title']!.isNotEmpty).toList();
+
+      // 全件カウントは別で取得
+      final allResponse = await client.functions.invoke(
+        'development-achievements',
+        body: {'action': 'get', 'period': 'すべての実績'},
+      );
+      final allData = allResponse.data as Map<String, dynamic>? ?? {};
+      final count = (allData['achievements'] as List<dynamic>?)?.length ?? 0;
+
       if (!mounted) return;
-      setState(() => _achievementCount = count);
+      setState(() {
+        _achievementCount = count;
+        _recentAchievements = recent;
+      });
     } catch (_) {
       // Silently ignore; count stays 0
     }
@@ -834,7 +860,7 @@ $input
       (
         icon: Icons.people_alt_outlined,
         color: const Color(0xFF3949AB),
-        value: _totalUsers > 10 ? '$_totalUsers' : '–',
+        value: _totalUsers > 0 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
@@ -1215,6 +1241,69 @@ $input
             child: const Text('詳しく見る'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecentAchievementsSection() {
+    if (_recentAchievements.isEmpty) return const SizedBox.shrink();
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFD1FAE5)),
+      ),
+      color: const Color(0xFFF0FDF4),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.rocket_launch, size: 16, color: Color(0xFF059669)),
+                const SizedBox(width: 6),
+                const Text(
+                  '今週の開発実績',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF065F46),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '全 $_achievementCount 件実装済み',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF6EE7B7)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ..._recentAchievements.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle, size: 14, color: Color(0xFF10B981)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        a['title'] ?? '',
+                        style: const TextStyle(fontSize: 12, height: 1.4),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      a['date'] ?? '',
+                      style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2097,7 +2186,10 @@ $input
                   // 3. すぐ登録できるよう認証フォームを最上位に
                   _buildAuthSection(),
                   const SizedBox(height: 20),
-                  // 4. 独自価値の訴求
+                  // 4. 最近の開発実績 (活発な開発をアピール)
+                  _buildRecentAchievementsSection(),
+                  const SizedBox(height: 20),
+                  // 5. 独自価値の訴求
                   _buildUniqueValueSection(),
                   const SizedBox(height: 20),
                   // 5. 始め方のシンプルさを見せる
