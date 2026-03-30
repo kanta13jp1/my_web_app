@@ -13,17 +13,7 @@ CREATE TABLE IF NOT EXISTS teams (
 
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 
--- owner and members can read
-CREATE POLICY "teams_select" ON teams FOR SELECT
-  USING (
-    owner_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM team_memberships tm
-      WHERE tm.team_id = teams.id AND tm.user_id = auth.uid()
-    )
-  );
-
--- only owner can update/delete
+-- insert/update/delete policies (no cross-table reference)
 CREATE POLICY "teams_insert" ON teams FOR INSERT WITH CHECK (owner_id = auth.uid());
 CREATE POLICY "teams_update" ON teams FOR UPDATE USING (owner_id = auth.uid());
 CREATE POLICY "teams_delete" ON teams FOR DELETE USING (owner_id = auth.uid());
@@ -61,6 +51,16 @@ CREATE POLICY "team_memberships_delete" ON team_memberships FOR DELETE
     user_id = auth.uid() OR
     EXISTS (
       SELECT 1 FROM teams t WHERE t.id = team_memberships.team_id AND t.owner_id = auth.uid()
+    )
+  );
+
+-- NOW create teams_select policy (after team_memberships exists)
+CREATE POLICY "teams_select" ON teams FOR SELECT
+  USING (
+    owner_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM team_memberships tm
+      WHERE tm.team_id = teams.id AND tm.user_id = auth.uid()
     )
   );
 
