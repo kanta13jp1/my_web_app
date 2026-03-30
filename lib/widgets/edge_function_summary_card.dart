@@ -58,6 +58,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('note-comments', 'ノートコメント CRUD', true, '/note-editor', 'ノートエディタ > 💬 コメントアイコン'),
     _FnDef('memo-reactions', '公開メモ絵文字リアクション', true, '/public-memos', '公開メモ詳細 > 絵文字リアクションバー'),
     _FnDef('growth-achievement-summary', '開発実績サマリー', true, '/admin', '管理者ダッシュボード'),
+    _FnDef('gemini-election-analysis', 'Gemini 選挙AI分析', true, '/local-election-700', '選挙戦略ページ > AI分析ボタン'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

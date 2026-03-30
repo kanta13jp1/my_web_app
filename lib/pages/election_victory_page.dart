@@ -102,7 +102,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingRealityMemo = false;
+  bool _isGeminiLoading = false;
   String? _realityError;
+  String? _geminiAnalysisResult;
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
@@ -418,6 +420,40 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _isRealityLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _runGeminiAnalysis() async {
+    if (_isGeminiLoading) return;
+    setState(() {
+      _isGeminiLoading = true;
+      _geminiAnalysisResult = null;
+    });
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'gemini-election-analysis',
+      );
+      final data = resp.data;
+      String result;
+      if (data is Map) {
+        final politicians =
+            (data['politicians'] as List<dynamic>?)?.length ?? 0;
+        final total = (data['total_local_members'] as num?)?.toInt();
+        result = 'Gemini AI 分析完了\n'
+            '取得議員数: $politicians 人${total != null ? ' / 目標700 残り${700 - total}人' : ''}';
+      } else {
+        result = data?.toString() ?? '分析結果なし';
+      }
+      if (!mounted) return;
+      setState(() => _geminiAnalysisResult = result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gemini AI 分析が完了しました')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _geminiAnalysisResult = 'エラー: $e');
+    } finally {
+      if (mounted) setState(() => _isGeminiLoading = false);
     }
   }
 
@@ -823,6 +859,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       appBar: AppBar(
         title: Text(_isPublicView ? '統一地方選700 公開ダッシュボード' : '統一地方選700 必達管理室'),
         actions: [
+          IconButton(
+            onPressed: _isGeminiLoading ? null : _runGeminiAnalysis,
+            tooltip: 'Gemini AI 分析',
+            icon: _isGeminiLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+          ),
           if (!_isPublicView)
             IconButton(
               onPressed: plan == null ? null : _copySummary,
@@ -1333,6 +1380,39 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_geminiAnalysisResult != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF1565C0).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: Color(0xFF1565C0),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _geminiAnalysisResult!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF1565C0),
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         Text(
           'AI整理メモ',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
