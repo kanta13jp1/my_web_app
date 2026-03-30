@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
+import '../widgets/live_growth_banner.dart';
 
 class LandingPage extends StatefulWidget {
   final LandingPageAdapter adapter;
@@ -2183,7 +2184,15 @@ $input
                   // 2. 実績数字で信頼感を作る
                   _buildSocialProofStatsSection(),
                   const SizedBox(height: 20),
-                  // 3. すぐ登録できるよう認証フォームを最上位に
+                  // 3. ライブ成長メーター (登録者数・競合差分をリアルタイム表示)
+                  LiveGrowthBanner(
+                    growthService: widget.growthService,
+                    compact: true,
+                    title: '今まさに成長中',
+                    subtitle: '登録者数・競合との差をリアルタイムで確認',
+                  ),
+                  const SizedBox(height: 20),
+                  // 4. すぐ登録できるよう認証フォームを最上位に
                   _buildAuthSection(),
                   const SizedBox(height: 20),
                   // 4. 最近の開発実績 (活発な開発をアピール)

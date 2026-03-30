@@ -37,6 +37,7 @@ import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
+import '../widgets/profile_progress_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/referral_share_card.dart';
@@ -3967,6 +3968,7 @@ abstinence_slip_details: $slipDetailsText
                               const SizedBox(height: 10),
                             ],
                             const ProfileCompletionBanner(),
+                            const ProfileProgressCard(),
                             const ReferralShareCard(),
                             const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
