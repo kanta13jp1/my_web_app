@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session422-web (Edge Function 6本追加: schedule-task-monitor, blog-post-manager, edge-function-coverage, user-profile-manager, ai-secretary, team-task-manager → 47 Functions 体制)
+最終更新: 2026-03-31 session423-web (Edge Function 3本追加 + 改善: schedule-health-check, code-review-issues, development-stats, edge-function-coverage改善 → 50 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -991,6 +991,42 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 2026-03-31 #423 — Web版 Edge Function (3本追加+改善・50 Functions体制)
+
+**実施内容:**
+
+1. **schedule-health-check Edge Function 新規作成**
+   - Schedule タスク実行状況の監視・失敗検知・改善提案
+   - 11種の定義済み Schedule タスクのヘルススコア算出
+   - 失敗タスクの自動改善タスク登録 (agent_tasks 連携)
+   - GET: タスク別サマリー + 改善提案 / POST: 修正タスク登録
+
+2. **code-review-issues Edge Function 新規作成**
+   - コードレビュー結果の記録・Issue (agent_task) 自動作成
+   - 8カテゴリのレビュー観点 (セキュリティ/パフォーマンス/Lint/ロジック/UX/規約/テスト/ドキュメント)
+   - GET: レビュー一覧 / Issue 一覧 / サマリー
+   - POST: レビュー記録 / Issue 作成 / Issue 解決
+
+3. **development-stats Edge Function 新規作成**
+   - 開発進捗グラフデータ API (ホーム画面表示用)
+   - 短期/中期/長期計画の進捗率
+   - 競合21社 vs 進捗率 (目標期日・必要機能数・実装済み数)
+   - 期間別実績集計 (今日/今週/2週間/今月/全期間)
+
+4. **edge-function-coverage 改善**
+   - POST エンドポイント追加: UI からの呼び出しを自動記録
+   - call_count インクリメント RPC 関数追加
+   - レジストリに 3 新関数を追加 (50 Functions)
+
+5. **ai-secretary 改善**
+   - 部署別タスク負荷の分析追加
+   - Schedule 失敗タスクの検知・提案追加
+   - コンテキスト情報に部署タスク数・失敗タスク数を追加
+
+6. **マイグレーション・デプロイ設定**
+   - `20260331000092_add_increment_rpc_and_session423_seeds.sql`: RPC関数 + 実績シード
+   - deploy-prod.yml: 3関数追加 (schedule-health-check, code-review-issues, development-stats)
 
 ### Session 2026-03-31 #422 — Web版 Edge Function (6本追加・47 Functions体制)
 

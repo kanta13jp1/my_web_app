@@ -141,6 +141,9 @@ jobs:
           supabase functions deploy user-profile-manager --no-verify-jwt
           supabase functions deploy ai-secretary --no-verify-jwt
           supabase functions deploy team-task-manager --no-verify-jwt
+          supabase functions deploy schedule-health-check --no-verify-jwt
+          supabase functions deploy code-review-issues --no-verify-jwt
+          supabase functions deploy development-stats --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
