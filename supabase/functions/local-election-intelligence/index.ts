@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,9 +184,10 @@ serve(async (req) => {
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
     const prefectureLinkMap = parsePrefectureLinks(memberPageHtml);
-    const officialElectionPrefectureLinks = parseOfficialElectionPrefectureLinks(
-      officialElectionHtml,
-    );
+    const officialElectionPrefectureLinks =
+      parseOfficialElectionPrefectureLinks(
+        officialElectionHtml,
+      );
     const prefectureResults = await mapWithConcurrency(
       [...PREFECTURES],
       6,
@@ -235,7 +236,8 @@ serve(async (req) => {
       ),
       official2023FirstHalfWins: historical.firstHalfWins,
       official2023SecondHalfWins: historical.secondHalfWins,
-      official2023TotalWins: historical.totalWins,      sources: [
+      official2023TotalWins: historical.totalWins,
+      sources: [
         {
           label: "地方議員一覧",
           url: OFFICIAL_MEMBER_PAGE_URL,
@@ -272,7 +274,8 @@ serve(async (req) => {
           category: "schedule_source",
           note: "投票日と告示日を確認するための日程ソースです。",
         },
-      ],      prefectures,
+      ],
+      prefectures,
       members,
       upcomingSchedules,
     };
@@ -647,12 +650,12 @@ async function fetchHistoricalResult(): Promise<HistoricalResult> {
   };
 }
 
-function parseOfficialElectionPrefectureLinks(html: string): Map<string, string> {
+function parseOfficialElectionPrefectureLinks(
+  html: string,
+): Map<string, string> {
   const links = new Map<string, string>();
   const marker = "地方自治体選挙 候補予定者";
-  const section = html.includes(marker)
-    ? html.split(marker)[1]
-    : html;
+  const section = html.includes(marker) ? html.split(marker)[1] : html;
   const linkRegex =
     /<a[^>]+href="([^"]*post_type=election[^"]*prefectures=[^"]+)"[^>]*>(.*?)<\/a>/gsi;
 
@@ -678,13 +681,16 @@ function parseOfficialScheduledCandidates(
     .split("\n")
     .map((line) => normalizeWhitespace(line).trim())
     .filter((line) => line !== "");
-  const startIndex = lines.findIndex((line) => line.includes(`${prefecture}縺ｮ蛟呵｣應ｺ亥ｮ夊・));
+  const startIndex = lines.findIndex((line) =>
+    line.includes(`${prefecture}の候補予定者`)
+  );
   if (startIndex < 0) {
     return [];
   }
   const endIndex = lines.findIndex((line, index) =>
     index > startIndex &&
-    (line.includes("逵碁｣縺ｮ諠・ｱ") || line.includes("驛ｽ驕灘ｺ懃恁繧､繝ｳ繝・ャ繧ｯ繧ｹ"))
+    (line.includes("逵碁｣縺ｮ諠・ｱ") ||
+      line.includes("驛ｽ驕灘ｺ懃恁繧､繝ｳ繝・ャ繧ｯ繧ｹ"))
   );
   const sectionLines = lines.slice(
     startIndex + 1,
@@ -733,7 +739,7 @@ function parseOfficialCandidateDetailLinks(
   for (const match of html.matchAll(linkRegex)) {
     const rawHref = match[1]?.trim() ?? "";
     const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (label === "" || label.includes("鬘泌・逵・)) {
+    if (label === "" || label.includes("顔写真")) {
       continue;
     }
     links.set(label, new URL(rawHref, sourceUrl).toString());
@@ -760,13 +766,13 @@ function looksLikeOfficialCandidateBlock(
   if (!looksLikeKanaLine(kana)) {
     return false;
   }
-  if (!electionName.includes("驕ｸ謖・)) {
+  if (!electionName.includes("選挙")) {
     return false;
   }
   if (!voteDate.startsWith("20")) {
     return false;
   }
-  return statusLabel.includes("蜈ｬ隱・) || statusLabel.includes("謗ｨ阮ｦ");
+  return statusLabel.includes("公認") || statusLabel.includes("推薦");
 }
 
 async function fetchUpcomingLocalElectionSchedules(
@@ -816,10 +822,11 @@ function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
     .map((line) => normalizeWhitespace(line).trim())
     .filter((line) => line !== "");
   const detailUrlsByName = new Map<string, string[]>();
-  const detailRegex = /<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
+  const detailRegex =
+    /<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
   for (const match of html.matchAll(detailRegex)) {
     const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (!label.includes("驕ｸ謖・)) {
+    if (!label.includes("選挙")) {
       continue;
     }
     const resolvedUrl = new URL(
@@ -842,13 +849,13 @@ function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
 
   for (let index = startIndex + 1; index < lines.length; index += 1) {
     const line = lines[index];
-    if (line === "閾ｪ豐ｻ菴薙°繧画爾縺・ || line === "My 驕ｸ謖・) {
+    if (line === "自治体から探す" || line === "My 選挙") {
       break;
     }
-    if (line === "謚慕･ｨ譌･ 驕ｸ謖吝錐 驛ｽ驕灘ｺ懃恁" || /^\d+譛医・驕ｸ謖・\d+莉ｶ$/.test(line)) {
+    if (line === "投票日 選挙名 都道府県" || /^\d+月の選挙 \d+件$/.test(line)) {
       continue;
     }
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(line) || line === "譛ｪ螳・) {
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(line) || line === "未定") {
       currentVoteDate = normalizeSlashedDate(line);
       currentElectionName = "";
       continue;
@@ -902,14 +909,20 @@ async function enrichScheduleEntry(
       seatCount = detail.seatCount;
       totalCandidateCount = detail.totalCandidateCount;
     } catch (error) {
-      console.error(`Failed to fetch schedule detail ${entry.detailUrl}:`, error);
+      console.error(
+        `Failed to fetch schedule detail ${entry.detailUrl}:`,
+        error,
+      );
     }
   }
 
   return {
     electionName: entry.electionName,
     prefecture: entry.prefecture,
-    municipality: extractScheduleMunicipality(entry.electionName, entry.prefecture),
+    municipality: extractScheduleMunicipality(
+      entry.electionName,
+      entry.prefecture,
+    ),
     electionCategory: inferElectionCategory(entry.electionName),
     voteDate: entry.voteDate,
     announcementDate,
@@ -926,13 +939,17 @@ async function enrichScheduleEntry(
 
 function parseScheduleDetail(
   html: string,
-): { announcementDate: string; seatCount: number; totalCandidateCount: number } {
+): {
+  announcementDate: string;
+  seatCount: number;
+  totalCandidateCount: number;
+} {
   const text = normalizeWhitespace(stripHtmlToText(html));
   const announcementMatch = text.match(
-    /蜻顔､ｺ譌･\s+([0-9・・・兢{4}蟷ｴ[0-9・・・兢{2}譛・0-9・・・兢{2}譌･|[0-9・・・兢{4}\/[0-9・・・兢{2}\/[0-9・・・兢{2}|譛ｪ螳・/u,
+    /告示日\s+([0-9０-９]{4}年[0-9０-９]{2}月[0-9０-９]{2}日|[0-9０-９]{4}\/[0-9０-９]{2}\/[0-9０-９]{2}|未定)/u,
   );
   const countsMatch = text.match(
-    /螳壽焚\/蛟呵｣懆・焚\s+([0-9・・・兢+)\s*\/\s*([0-9・・・兢+)/u,
+    /定数\/候補者数\s+([0-9０-９]+)\s*\/\s*([0-9０-９]+)/u,
   );
   return {
     announcementDate: normalizeJapaneseDate(announcementMatch?.[1] ?? ""),
@@ -955,7 +972,8 @@ function matchOfficialCandidatesForSchedule(
     item.prefecture === normalizedPrefecture
   );
   const exact = byPrefecture.filter((item) =>
-    normalizeElectionNameForMatch(item.electionName) === normalizedElectionName &&
+    normalizeElectionNameForMatch(item.electionName) ===
+      normalizedElectionName &&
     normalizeSlashedDate(item.voteDate) === normalizedVoteDate
   );
   if (exact.length > 0) {
@@ -979,7 +997,7 @@ function matchOfficialCandidatesForSchedule(
 function normalizeOfficialVoteDate(value: string): string {
   const normalized = value.trim();
   const match = normalized.match(
-    /^([0-9・・・兢{4})[.\/]([0-9・・・兢{1,2})[.\/]([0-9・・・兢{1,2})/,
+    /^([0-9０-９]{4})[.\/]([0-9０-９]{1,2})[.\/]([0-9０-９]{1,2})/,
   );
   if (!match) {
     return "";
@@ -992,11 +1010,11 @@ function normalizeOfficialVoteDate(value: string): string {
 
 function normalizeJapaneseDate(value: string): string {
   const normalized = value.trim();
-  if (normalized === "" || normalized === "譛ｪ螳・) {
+  if (normalized === "" || normalized === "未定") {
     return "";
   }
   const match = normalized.match(
-    /^([0-9・・・兢{4})蟷ｴ([0-9・・・兢{1,2})譛・[0-9・・・兢{1,2})譌･/u,
+    /^([0-9０-９]{4})年([0-9０-９]{1,2})月([0-9０-９]{1,2})日/u,
   );
   if (!match) {
     return normalizeSlashedDate(normalized);
@@ -1009,11 +1027,11 @@ function normalizeJapaneseDate(value: string): string {
 
 function normalizeSlashedDate(value: string): string {
   const normalized = value.trim();
-  if (normalized === "" || normalized === "譛ｪ螳・) {
+  if (normalized === "" || normalized === "未定") {
     return "";
   }
   const match = normalized.match(
-    /^([0-9・・・兢{4})[\/\-]([0-9・・・兢{1,2})[\/\-]([0-9・・・兢{1,2})$/,
+    /^([0-9０-９]{4})[\/\-]([0-9０-９]{1,2})[\/\-]([0-9０-９]{1,2})$/,
   );
   if (!match) {
     return normalized.replace(/\./g, "-");
@@ -1052,19 +1070,19 @@ function extractScheduleMunicipality(
   prefecture: string,
 ): string {
   const suffixes = [
-    "遏･莠矩∈謖・,
-    "逵瑚ｭｰ莨夊ｭｰ蜩｡陬懈ｬ驕ｸ謖・,
-    "蠎懆ｭｰ莨夊ｭｰ蜩｡陬懈ｬ驕ｸ謖・,
-    "驛ｽ隴ｰ莨夊ｭｰ蜩｡陬懈ｬ驕ｸ謖・,
-    "驕楢ｭｰ莨夊ｭｰ蜩｡陬懈ｬ驕ｸ謖・,
-    "隴ｰ莨夊ｭｰ蜩｡陬懈ｬ驕ｸ謖・,
-    "隴ｰ莨夊ｭｰ蜩｡蜀埼∈謖・,
-    "隴ｰ莨夊ｭｰ蜩｡蠅怜藤驕ｸ謖・,
-    "隴ｰ莨夊ｭｰ蜩｡驕ｸ謖・,
-    "蟶る聞驕ｸ謖・,
-    "逕ｺ髟ｷ驕ｸ謖・,
-    "譚鷹聞驕ｸ謖・,
-    "蛹ｺ髟ｷ驕ｸ謖・,
+    "知事選挙",
+    "県議会議員補欠選挙",
+    "府議会議員補欠選挙",
+    "都議会議員補欠選挙",
+    "道議会議員補欠選挙",
+    "議会議員補欠選挙",
+    "議会議員再選挙",
+    "議会議員増員選挙",
+    "議会議員選挙",
+    "市長選挙",
+    "町長選挙",
+    "村長選挙",
+    "区長選挙",
   ];
   for (const suffix of suffixes) {
     if (electionName.endsWith(suffix)) {
@@ -1076,20 +1094,20 @@ function extractScheduleMunicipality(
 }
 
 function inferElectionCategory(electionName: string): string {
-  if (/(遏･莠弓蟶る聞|逕ｺ髟ｷ|譚鷹聞|蛹ｺ髟ｷ)驕ｸ謖・u.test(electionName)) {
-    return "鬥夜聞驕ｸ謖・;
+  if (/(知事|市長|町長|村長|区長)選挙/u.test(electionName)) {
+    return "首長選挙";
   }
-  if (/隴ｰ莨夊ｭｰ蜩｡/u.test(electionName)) {
-    return "蝨ｰ譁ｹ隴ｰ莨夐∈謖・;
+  if (/議会議員/u.test(electionName)) {
+    return "地方議会選挙";
   }
-  return "蝨ｰ譁ｹ驕ｸ謖・;
+  return "地方選挙";
 }
 
 function normalizeElectionNameForMatch(value: string): string {
   return value
-    .replace(/[ 縲]/g, "")
-    .replace(/[・茨ｼ・)]/g, "")
-    .replace(/莠域Φ縺輔ｌ繧矩｡斐・繧・g, "")
+    .replace(/[ 　]/g, "")
+    .replace(/[（）()]/g, "")
+    .replace(/予想される顔ぶれ/g, "")
     .trim();
 }
 
@@ -1145,7 +1163,7 @@ async function buildAiAnalysis(
         {
           role: "system",
           content:
-            "縺ゅ↑縺溘・譌･譛ｬ縺ｮ驕ｸ謖吶ョ繝ｼ繧ｿ繧｢繝翫Μ繧ｹ繝医〒縺吶ゆｸ弱∴繧峨ｌ縺溷・蠑上ョ繝ｼ繧ｿ縺縺代ｒ菴ｿ縺｣縺ｦ縲∽ｺ句ｮ溘・繝ｼ繧ｹ縺ｮ遏ｭ縺・ｦ∫ｴ・ｒ菴懈・縺励※縺上□縺輔＞縲・SON縺ｧ summary, alerts, strategicNotes 繧定ｿ斐＠縺ｦ縺上□縺輔＞縲・,
+            "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
         },
         {
           role: "user",
@@ -1185,8 +1203,8 @@ async function buildAiAnalysis(
       summary: sanitizeLine(parsed.summary) || fallback.summary,
       alerts: sanitizeLines(parsed.alerts, 3),
       strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
-      scheduleSummary:
-        sanitizeLine(parsed.scheduleSummary) || fallback.scheduleSummary,
+      scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
+        fallback.scheduleSummary,
       scheduleAlerts: parsedScheduleAlerts.length > 0
         ? parsedScheduleAlerts
         : fallback.scheduleAlerts,
@@ -1214,20 +1232,20 @@ function buildFallbackAnalysis(snapshot: {
   }>;
   members: LocalLegislatorProfile[];
 }): AiAnalysis {
-  const delta = snapshot.officialCurrentLocalMembers -
-    snapshot.baselineCurrentLocalMembers;
-  const deltaLabel = delta === 0
-    ? "蝓ｺ貅悶・340莠ｺ縺ｨ蜷梧ｰｴ貅・
-    : delta > 0
-    ? `蝓ｺ貅匁ｯ斐〒+${delta}莠ｺ`
-    : `蝓ｺ貅匁ｯ斐〒${delta}莠ｺ`;
-  const topPrefectures = [...snapshot.prefectures]
-    .sort((a, b) => b.currentMembers - a.currentMembers)
-    .slice(0, 3)
-    .map((item) => `${item.prefecture}${item.currentMembers}莠ｺ`);
   const scheduleEntries = (
     snapshot as { upcomingSchedules?: LocalElectionScheduleEntry[] }
   ).upcomingSchedules ?? [];
+  const delta = snapshot.officialCurrentLocalMembers -
+    snapshot.baselineCurrentLocalMembers;
+  const deltaLabel = delta === 0
+    ? "基準340人と同水準です。"
+    : delta > 0
+    ? `基準340人比で +${delta} 人です。`
+    : `基準340人比で ${delta} 人です。`;
+  const topPrefectures = [...snapshot.prefectures]
+    .sort((a, b) => b.currentMembers - a.currentMembers)
+    .slice(0, 3)
+    .map((item) => `${item.prefecture}${item.currentMembers}人`);
   const redSchedules = scheduleEntries.filter((item) =>
     item.kokuminCandidateCount === 0
   );
@@ -1235,58 +1253,53 @@ function buildFallbackAnalysis(snapshot: {
     item.kokuminCandidateCount === 1
   );
   const nearSchedules = scheduleEntries.slice(0, 3).map((item) =>
-    `${item.voteDate} ${item.prefecture} ${item.electionName}(${item.kokuminCandidateCount}莠ｺ)`
+    `${item.voteDate} ${item.prefecture} ${item.electionName}(${item.kokuminCandidateCount}人)`
   );
 
   return {
-    summary:
-      `蜈ｬ蠑丞慍譁ｹ隴ｰ蜩｡繝壹・繧ｸ縺ｮ髮・ｨ医〒縺ｯ蝨ｰ譁ｹ隴ｰ蜩｡縺ｯ ${snapshot.officialCurrentLocalMembers} 莠ｺ縺ｧ縲～ +
-      `700莠ｺ縺ｾ縺ｧ谿九ｊ ${snapshot.actualNetIncreaseRequired} 莠ｺ縺ｧ縺吶・{deltaLabel}縺ｧ縺吶Ａ,
+    summary: `公式地方議員数は ${snapshot.officialCurrentLocalMembers} 人、` +
+      `700人まで残り ${snapshot.actualNetIncreaseRequired} 人です。` +
+      deltaLabel,
     alerts: [
-      `2023蟷ｴ螳溽ｸｾ縺ｯ蜑榊濠 ${snapshot.official2023FirstHalfWins}縲∝ｾ悟濠 ${snapshot.official2023SecondHalfWins}縲∝粋險・${snapshot.official2023TotalWins} 縺ｧ縲∽ｻ雁屓縺ｮ蠢・ｦ∫ｴ泌｢苓ｦ乗ｨ｡繧剃ｸ句屓繧翫∪縺吶Ａ,
-      `迴ｾ閨ｷ蝨ｰ譁ｹ隴ｰ蜩｡縺ｮ蛟狗･ｨ荳隕ｧ縺ｯ ${snapshot.members.length} 莠ｺ蛻・ｒ蜿門ｾ励〒縺阪※縺・∪縺吶ら樟閨ｷ邯ｭ謖∫岼讓吶→譛域ｬ｡KPI繧堤恁騾｣蜊倅ｽ阪〒謖√▽蜑肴署縺ｯ螟峨ｏ繧翫∪縺帙ｓ縲Ａ,
+      `2023年統一地方選の実績は前半 ${snapshot.official2023FirstHalfWins}、後半 ${snapshot.official2023SecondHalfWins}、合計 ${snapshot.official2023TotalWins} です。`,
+      `現職名簿は ${snapshot.members.length} 人分を確認済みで、県連配分と月次KPIの固定管理が前提です。`,
       topPrefectures.length === 0
-        ? "驛ｽ驕灘ｺ懃恁蛻･縺ｮ荳贋ｽ咲恁騾｣縺ｯ縺ｾ縺蜿門ｾ励〒縺阪※縺・∪縺帙ｓ縲ょ・蠑上・繝ｼ繧ｸ縺ｮ讒矩螟画峩繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞縲・
-        : `迴ｾ閨ｷ謨ｰ縺ｮ荳贋ｽ阪・ ${
-          topPrefectures.join("縲・)
-        } 縺ｧ縺吶る㍾轤ｹ逵碁｣縺ｮ譁ｰ莠ｺ謫∫ｫ九→謗･謌ｦ蛹ｺ謾ｯ謠ｴ縺ｮ驟榊・縺ｫ菴ｿ縺医∪縺吶Ａ,
+        ? "上位県データはまだ取得できていません。"
+        : `現職数の上位県は ${topPrefectures.join(" / ")} です。`,
     ],
     strategicNotes: [
-      "譛譁ｰ螳滓焚縺ｯ dashboard.currentLocalMembers 縺ｫ蜷梧悄縺ｧ縺阪ｋ縺ｮ縺ｧ縲∝ｷ･遞玖｡ｨ縺ｮ繝吶・繧ｹ繝ｩ繧､繝ｳ譖ｴ譁ｰ繧呈怦谺｡驕狗畑縺ｫ邨・∩霎ｼ繧薙〒縺上□縺輔＞縲・,
-      "隴ｰ蜩｡荳隕ｧ縺ｯ驛ｽ驕灘ｺ懃恁蛻･縺ｫ蜿門ｾ励〒縺阪ｋ縺溘ａ縲・㍾轤ｹ閾ｪ豐ｻ菴捺焚縺ｨ譁ｰ莠ｺ謫∫ｫ区焚縺ｮ蜑ｲ繧頑険繧翫ｒ逵碁｣縺斐→縺ｫ謖√◆縺帙ｋ邂｡逅・梛驕ｸ謖吶↓蜷代＞縺ｦ縺・∪縺吶・,
-      "蟷ｴ鮨｢繧・ｵ梧ｭｴ縺ｯ隧ｳ邏ｰ繝壹・繧ｸ縺ｫ譏手ｨ倥′縺ゅｋ蝣ｴ蜷医・縺ｿ霑ｽ蜉蜿門ｾ励〒縺阪∪縺吶よｧ蛻･縺ｯ蜈ｬ蠑剰ｨ倩ｼ峨′縺ｪ縺・剞繧願｡ｨ遉ｺ縺励↑縺・°逕ｨ縺ｫ縺励※縺上□縺輔＞縲・,
+      "公式実数は計画値と定期同期し、純増ギャップを毎月更新してください。",
+      "現職維持・新人擁立・重点自治体・接戦支援を県連ごとに同時管理してください。",
+      "年齢やプロフィールの取得済み名簿を使い、候補者リクルートと応援投入の優先順位を決めてください。",
     ],
     scheduleSummary: scheduleEntries.length === 0
-      ? "莉雁ｾ後・蝨ｰ譁ｹ驕ｸ謖呎律遞九・蜿門ｾ励〒縺阪∪縺帙ｓ縺ｧ縺励◆縲・
-      : `莉雁ｾ・${scheduleEntries.length} 莉ｶ縺ｮ蝨ｰ譁ｹ驕ｸ謖吶ｒ逶｣隕紋ｸｭ縺ｧ縺吶よ悴謫∫ｫ・${redSchedules.length} 莉ｶ縲∝腰鬨・${yellowSchedules.length} 莉ｶ縺ｧ縺吶Ａ,
+      ? "今後の地方選挙日程は取得できませんでした。"
+      : `今後 ${scheduleEntries.length} 件の地方選挙を監視中です。未擁立 ${redSchedules.length} 件、単騎 ${yellowSchedules.length} 件です。`,
     scheduleAlerts: [
-      ...(
-        redSchedules.length > 0
-          ? [
-            `譛ｪ謫∫ｫ・${redSchedules.length} 莉ｶ: ${
-              redSchedules.slice(0, 3).map((item) =>
-                `${item.prefecture} ${item.electionName}`
-              ).join(" / ")
-            }`,
-          ]
-          : []
-      ),
-      ...(
-        yellowSchedules.length > 0
-          ? [
-            `蜊倬ｨ・${yellowSchedules.length} 莉ｶ: ${
-              yellowSchedules.slice(0, 3).map((item) =>
-                `${item.prefecture} ${item.electionName}`
-              ).join(" / ")
-            }`,
-          ]
-          : []
-      ),
-      ...(nearSchedules.length > 0 ? [`逶ｴ霑第律遞・ ${nearSchedules.join(" / ")}`] : []),
+      ...(redSchedules.length > 0
+        ? [
+          `未擁立 ${redSchedules.length} 件: ${
+            redSchedules.slice(0, 3).map((item) =>
+              `${item.prefecture} ${item.electionName}`
+            ).join(" / ")
+          }`,
+        ]
+        : []),
+      ...(yellowSchedules.length > 0
+        ? [
+          `単騎 ${yellowSchedules.length} 件: ${
+            yellowSchedules.slice(0, 3).map((item) =>
+              `${item.prefecture} ${item.electionName}`
+            ).join(" / ")
+          }`,
+        ]
+        : []),
+      ...(nearSchedules.length > 0
+        ? [`直近日程: ${nearSchedules.join(" / ")}`]
+        : []),
     ],
   };
 }
-
 function compareMembers(
   left: LocalLegislatorProfile,
   right: LocalLegislatorProfile,
@@ -1347,29 +1360,28 @@ function looksLikeMemberBlock(
   if (!assemblyLabel.includes("隴ｰ蜩｡")) {
     return false;
   }
-  return /[0-9・・・兢+譛・.test(electionCountLabel);
+  return /[0-9０-９]+/.test(electionCountLabel);
 }
 
 function inferAssemblyCategory(assemblyLabel: string): AssemblyCategory {
   if (
-    assemblyLabel.includes("逵瑚ｭｰ莨・) ||
-    assemblyLabel.includes("蠎懆ｭｰ莨・) ||
-    assemblyLabel.includes("驛ｽ隴ｰ莨・) ||
-    assemblyLabel.includes("驕楢ｭｰ莨・)
+    assemblyLabel.includes("都議") ||
+    assemblyLabel.includes("道議") ||
+    assemblyLabel.includes("府議") ||
+    assemblyLabel.includes("県議")
   ) {
     return "prefectural";
   }
   if (
-    assemblyLabel.includes("蟶りｭｰ莨・) ||
-    assemblyLabel.includes("蛹ｺ隴ｰ莨・) ||
-    assemblyLabel.includes("逕ｺ隴ｰ莨・) ||
-    assemblyLabel.includes("譚題ｭｰ莨・)
+    assemblyLabel.includes("市議") ||
+    assemblyLabel.includes("区議") ||
+    assemblyLabel.includes("町議") ||
+    assemblyLabel.includes("村議")
   ) {
     return "municipal";
   }
   return "other";
 }
-
 function extractMunicipality(prefecture: string, constituency: string): string {
   const normalizedPrefecture = prefecture.trim();
   const normalizedConstituency = constituency.trim();
@@ -1398,7 +1410,9 @@ function parseNameAndKana(line: string): { name: string; kana: string } {
     return { name: "", kana: "" };
   }
 
-  const match = normalized.match(/^(.*?)[\s縲]+([縺・繧悶ぃ-繝ｺ繝ｼ繝ｻ\s縲]+)$/u);
+  const match = normalized.match(
+    /^(.*?)[\s縲]+([縺・繧悶ぃ-繝ｺ繝ｼ繝ｻ\s縲]+)$/u,
+  );
   if (!match) {
     return { name: normalized, kana: "" };
   }
@@ -1500,7 +1514,7 @@ function normalizeBirthDate(value: string): string {
     return "";
   }
   const match = normalized.match(
-    /^([0-9・・・兢{4})[\/\-蟷ｴ]([0-9・・・兢{1,2})[\/\-譛・([0-9・・・兢{1,2})/u,
+    /^([0-9０-９]{4})[\/\-年]([0-9０-９]{1,2})[\/\-月]([0-9０-９]{1,2})/u,
   );
   if (!match) {
     return normalized;
@@ -1588,7 +1602,7 @@ function toInt(value: string): number {
 
 function toAsciiDigits(value: string): string {
   return value.replace(
-    /[・・・兢/g,
+    /[０-９]/g,
     (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0),
   );
 }
@@ -1663,4 +1677,3 @@ async function mapWithConcurrency<T, U>(
   );
   return results;
 }
-

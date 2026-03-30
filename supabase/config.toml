@@ -156,3 +156,7 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/local-election-intelligence/deno.json"
 entrypoint = "./functions/local-election-intelligence/index.ts"
+
+[functions.gemini-election-analysis]
+enabled = true
+verify_jwt = false

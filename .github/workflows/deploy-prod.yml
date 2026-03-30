@@ -127,6 +127,7 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
+          supabase functions deploy gemini-election-analysis --no-verify-jwt
           supabase functions deploy agent-runtime-cycle --no-verify-jwt
           supabase functions deploy note-comments
         env:

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-30 daily-development #3 (チームワークスペース実装・比較ページ個別OGP対応・flutter analyze修正)
+最終更新: 2026-03-31 daily-development (21社OGP全社対応・Gemini選挙分析Edge Function・ユーザーマニュアル更新)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -348,6 +348,13 @@
 - **チームワークスペース基盤実装** (daily-development #3 2026-03-30): `teams` / `team_memberships` / `team_shared_notes` の3テーブルをRLS付きで新設（migration `20260330000005_create_team_workspace.sql`）。招待コード（8文字ランダム英数字）方式でメンバー招待が可能なB2B対応の共有基盤を構築。`TeamWorkspacePage` を新規作成（`TabController` で「自分のチーム」「参加中」タブ・チーム作成ダイアログ・招待コード表示+コピー・参加ダイアログ・退出・削除）。`/team-workspace` ルートを `main.dart` に追加。業務メニューカタログの `growth` セクションにエントリ追加。`sitemap.xml` に追加（合計24URL）。中期ロードマップ「Team workspace」基盤を先行着手。
 - **比較ページ個別OGPメタタグ対応** (daily-development #3 2026-03-30): 14社の競合比較ページ（`/vs-notion` 〜 `/vs-amazon`）に対してそれぞれ固有の `og:title` / `og:description` / `twitter:title` / `twitter:description` を `index.html` SEOシェルスクリプトで動的設定。URLパスの `/vs-{competitor}` パターンをJSで検出し競合固有のコピーに切り替え。SNSシェア時のカードの訴求力向上と比較キーワードからの有機流入改善を狙う。「残課題」から「各比較ページへの個別OGP」を解消。
 - **local_election_share_service.dart flutter analyze 修正** (daily-development #3 2026-03-30): `require_trailing_commas` エラー2件を修正。flutter analyze 0件を維持。
+
+### 2026-03-31 daily-development 実装済み
+
+- **21社比較ページ全社OGP対応完了** (daily-development 2026-03-31): Google・Microsoft・Discord・LINE・Facebook・Liven・GitHubの7社分のSEO OGPメタタグを `index.html` SEOシェルに追加。`competitorMeta` オブジェクトに7社分の `title`・`desc` を追記し、全21競合の比較ページでSNSシェア時に個別のog:title/og:description/twitter:title/twitter:descriptionが表示されるよう対応完了。
+- **gemini-election-analysis Edge Function新規作成** (daily-development 2026-03-31): Gemini 2.5 Flash APIを使用した選挙データAI分析Edge Function (`supabase/functions/gemini-election-analysis/index.ts`)。国民民主党700人必達目標の月次KPI管理・都道府県別配分シミュレーション・現職議員リストをJSON構造化出力 (`responseMimeType: "application/json"`)。`supabase/config.toml` と `deploy-prod.yml` CI/CDに追加。deno lint 0件。
+- **ユーザーマニュアルホーム画面説明更新** (daily-development 2026-03-31): `user_manual_page.dart` のホーム画面ナビゲーション説明をQUICK ACCESSベースの実際のUIに更新。OFFICE KPI SNAPSHOT・KPI SUMMARY・OPERATIONS CALENDAR・SPECIAL PROJECT・QUICK ACCESS・RECENT TOOLSの各セクション説明を正確化。
+- **local-election-intelligence BOM修正** (daily-development 2026-03-31): `index.ts` 先頭のBOM文字 (`\uFEFF`) を削除。Dart formatter の trailing comma 修正も適用。deno lint 0件維持。
 
 ### 競合動向ログ (2026-03-30)
 
