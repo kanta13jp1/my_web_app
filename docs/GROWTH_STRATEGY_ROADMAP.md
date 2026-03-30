@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session423-web (Edge Function 3本追加 + 改善: schedule-health-check, code-review-issues, development-stats, edge-function-coverage改善 → 50 Functions 体制)
+最終更新: 2026-03-31 session424-web (team-task-manager修正 + agent-personality + agent-department-manager → 52 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -991,6 +991,36 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 2026-03-31 #424 — Web版 仮想AI組織強化 (team-task-manager修正 + 2本追加・52 Functions体制)
+
+**実施内容:**
+
+1. **team-task-manager スキーマ修正 (重大バグ修正)**
+   - `ai_agents` → `agents` テーブル参照を修正 (実テーブル名に合わせた)
+   - `assigned_agent_id` → `assignee_agent_id` / `supervisor_agent_id` 対応
+   - `name` → `display_name`, `role` → `role_title` フィールド名修正
+   - 新アクション追加: `move_department`, `send_message`, `seed_agents`
+   - 新ビュー追加: `messages`, `relationships`
+
+2. **agent-personality Edge Function 新規作成**
+   - エージェントの性格管理・記憶・学習 API
+   - identity_prompt からのキーワード性格特性抽出
+   - `update_personality`: 性格特性更新
+   - `record_memory`: agent_memories への記憶記録
+   - `learn_from_conversation`: 会話からの性格学習 (metadata に learned_traits 蓄積)
+
+3. **agent-department-manager Edge Function 新規作成**
+   - 企画責任者エージェントによる部署管理
+   - 12部署のデフォルト定義 (CEO/CFO/CMO/CHO/CHRO/企画/開発/営業/CS/法務/広報/調達)
+   - `create_department`: 新部署作成 + エージェント移動
+   - `assign_agent`: エージェントの部署アサイン
+   - `set_supervisor`: 部長設定
+   - 部署別ゴール進捗率算出
+
+4. **edge-function-coverage レジストリ更新 (52 Functions)**
+5. **development-stats Edge Function 数更新 (52)**
+6. **deploy-prod.yml: 2関数追加**
 
 ### Session 2026-03-31 #423 — Web版 Edge Function (3本追加+改善・50 Functions体制)
 

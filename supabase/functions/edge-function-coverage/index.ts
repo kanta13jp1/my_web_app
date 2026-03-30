@@ -73,6 +73,9 @@ const FUNCTION_REGISTRY = [
   { name: "schedule-health-check", description: "Schedule ヘルスチェック・改善提案", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > Schedule ヘルス" },
   { name: "code-review-issues", description: "コードレビュー・Issue管理", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > コードレビュー" },
   { name: "development-stats", description: "開発進捗グラフデータ", has_ui: true, ui_path: "/home", ui_navigation: "ホーム > 開発進捗グラフ" },
+  // Session 424 追加
+  { name: "agent-personality", description: "エージェント性格管理・記憶・学習", has_ui: true, ui_path: "/agents", ui_navigation: "ホーム > QUICK ACCESS > AI 組織 OS > エージェント詳細" },
+  { name: "agent-department-manager", description: "部署管理・自動作成・ルール設計", has_ui: true, ui_path: "/agents", ui_navigation: "ホーム > QUICK ACCESS > AI 組織 OS > 部署管理" },
 ] as const;
 
 serve(async (req) => {
