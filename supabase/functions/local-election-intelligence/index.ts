@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
-
 const OFFICIAL_MEMBER_PAGE_URL = "https://new-kokumin.jp/member";
 const OFFICIAL_ELECTION_PAGE_URL = "https://new-kokumin.jp/election";
 const OFFICIAL_2023_FIRST_HALF_URL =
@@ -15,60 +14,31 @@ const OFFICIAL_2023_FIRST_HALF_URL =
 const OFFICIAL_2023_SECOND_HALF_URL =
   "https://new-kokumin.jp/news/election/20230423_1";
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
-
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_WINDOW_DAYS = 120;
 const SCHEDULE_MAX_ENTRIES = 60;
 
+const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
+const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
+const JP_FIELD_CONSTITUENCY = "\u9078\u6319\u533a";
+const JP_FIELD_ELECTION_COUNT = "\u5f53\u9078\u56de\u6570";
+const JP_FIELD_BIRTH_DATE = "\u751f\u5e74\u6708\u65e5";
+const JP_FIELD_GENDER = "\u6027\u5225";
+const JP_FIELD_PROFILE = "\u7d4c\u6b74";
+const JP_FIELD_ANNOUNCEMENT_DATE = "\u544a\u793a\u65e5";
+const JP_FIELD_SEATS_AND_CANDIDATES = "\u5b9a\u6570/\u5019\u88dc\u8005\u6570";
+const JP_FIELD_SEATS_AND_CANDIDATES_ALT = "\u5b9a\u6570/\u7acb\u5019\u88dc\u8005\u6570";
+const JP_UNDECIDED = "\u672a\u5b9a";
+
 const PREFECTURES = [
-  "北海道",
-  "青森県",
-  "岩手県",
-  "宮城県",
-  "秋田県",
-  "山形県",
-  "福島県",
-  "茨城県",
-  "栃木県",
-  "群馬県",
-  "埼玉県",
-  "千葉県",
-  "東京都",
-  "神奈川県",
-  "新潟県",
-  "富山県",
-  "石川県",
-  "福井県",
-  "山梨県",
-  "長野県",
-  "岐阜県",
-  "静岡県",
-  "愛知県",
-  "三重県",
-  "滋賀県",
-  "京都府",
-  "大阪府",
-  "兵庫県",
-  "奈良県",
-  "和歌山県",
-  "鳥取県",
-  "島根県",
-  "岡山県",
-  "広島県",
-  "山口県",
-  "徳島県",
-  "香川県",
-  "愛媛県",
-  "高知県",
-  "福岡県",
-  "佐賀県",
-  "長崎県",
-  "熊本県",
-  "大分県",
-  "宮崎県",
-  "鹿児島県",
-  "沖縄県",
+  "\u5317\u6d77\u9053", "\u9752\u68ee\u770c", "\u5ca9\u624b\u770c", "\u5bae\u57ce\u770c", "\u79cb\u7530\u770c", "\u5c71\u5f62\u770c", "\u798f\u5cf6\u770c",
+  "\u8328\u57ce\u770c", "\u6803\u6728\u770c", "\u7fa4\u99ac\u770c", "\u57fc\u7389\u770c", "\u5343\u8449\u770c", "\u6771\u4eac\u90fd", "\u795e\u5948\u5ddd\u770c",
+  "\u65b0\u6f5f\u770c", "\u5bcc\u5c71\u770c", "\u77f3\u5ddd\u770c", "\u798f\u4e95\u770c", "\u5c71\u68a8\u770c", "\u9577\u91ce\u770c", "\u5c90\u961c\u770c",
+  "\u9759\u5ca1\u770c", "\u611b\u77e5\u770c", "\u4e09\u91cd\u770c", "\u6ecb\u8cc0\u770c", "\u4eac\u90fd\u5e9c", "\u5927\u962a\u5e9c", "\u5175\u5eab\u770c",
+  "\u5948\u826f\u770c", "\u548c\u6b4c\u5c71\u770c", "\u9ce5\u53d6\u770c", "\u5cf6\u6839\u770c", "\u5ca1\u5c71\u770c", "\u5e83\u5cf6\u770c", "\u5c71\u53e3\u770c",
+  "\u5fb3\u5cf6\u770c", "\u9999\u5ddd\u770c", "\u611b\u5a9b\u770c", "\u9ad8\u77e5\u770c", "\u798f\u5ca1\u770c", "\u4f50\u8cc0\u770c", "\u9577\u5d0e\u770c",
+  "\u718a\u672c\u770c", "\u5927\u5206\u770c", "\u5bae\u5d0e\u770c", "\u9e7f\u5150\u5cf6\u770c", "\u6c96\u7e04\u770c",
 ] as const;
 
 type AssemblyCategory = "prefectural" | "municipal" | "other";
@@ -176,33 +146,23 @@ serve(async (req) => {
 
     const parsedRequest = await parseRequest(req);
     if (parsedRequest.action === "memberDetail") {
-      const profile = await fetchMemberDetail(
-        parsedRequest.detailUrl,
-        parsedRequest.prefectureHint,
-      );
-      return jsonResponse({
-        success: true,
-        profile,
-      });
+      const profile = await fetchMemberDetail(parsedRequest.detailUrl, parsedRequest.prefectureHint);
+      return jsonResponse({ success: true, profile });
     }
 
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
-    const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
-      memberPageHtml,
-    );
-    const officialElectionPrefectureLinks =
-      parseOfficialElectionPrefectureLinks(
-        officialElectionHtml,
-      );
+    const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(memberPageHtml);
+    const officialElectionPrefectureLinks = parseOfficialElectionPrefectureLinks(officialElectionHtml);
+
     const prefectureResults = await mapWithConcurrency(
       prefectureDirectoryEntries,
       6,
-      async (entry) => {
-        return await fetchPrefectureReality(entry.prefecture, entry.sourceUrl);
-      },
+      async (entry) => await fetchPrefectureReality(entry.prefecture, entry.sourceUrl),
     );
 
+    const members = prefectureResults.flatMap((item) => item.members).sort(compareMembers);
+    const officialCurrentLocalMembers = members.length;
     const prefectures = prefectureResults.map((item) => ({
       prefecture: item.prefecture,
       sourceUrl: item.sourceUrl,
@@ -210,10 +170,7 @@ serve(async (req) => {
       prefecturalAssemblyMembers: item.prefecturalAssemblyMembers,
       municipalAssemblyMembers: item.municipalAssemblyMembers,
     }));
-    const members = prefectureResults
-      .flatMap((item) => item.members)
-      .sort(compareMembers);
-    const officialCurrentLocalMembers = members.length;
+
     const historical = await fetchHistoricalResult();
     const officialScheduledCandidates = (
       await mapWithConcurrency(
@@ -225,61 +182,25 @@ serve(async (req) => {
         },
       )
     ).flat();
-    const upcomingSchedules = await fetchUpcomingLocalElectionSchedules(
-      officialScheduledCandidates,
-    );
+    const upcomingSchedules = await fetchUpcomingLocalElectionSchedules(officialScheduledCandidates);
 
     const snapshotBase = {
       fetchedAt: new Date().toISOString(),
       baselineCurrentLocalMembers: BASELINE_CURRENT_LOCAL_MEMBERS,
       officialCurrentLocalMembers,
       targetLocalMembers: TARGET_LOCAL_MEMBERS,
-      baselineNetIncreaseRequired: TARGET_LOCAL_MEMBERS -
-        BASELINE_CURRENT_LOCAL_MEMBERS,
-      actualNetIncreaseRequired: Math.max(
-        0,
-        TARGET_LOCAL_MEMBERS - officialCurrentLocalMembers,
-      ),
+      baselineNetIncreaseRequired: TARGET_LOCAL_MEMBERS - BASELINE_CURRENT_LOCAL_MEMBERS,
+      actualNetIncreaseRequired: Math.max(0, TARGET_LOCAL_MEMBERS - officialCurrentLocalMembers),
       official2023FirstHalfWins: historical.firstHalfWins,
       official2023SecondHalfWins: historical.secondHalfWins,
       official2023TotalWins: historical.totalWins,
       sources: [
-        {
-          label: "地方議員一覧",
-          url: OFFICIAL_MEMBER_PAGE_URL,
-          category: "official_members",
-          note: "党公式の地方議員一覧ページです。",
-        },
-        {
-          label: "地方議員プロフィール",
-          url: OFFICIAL_MEMBER_PAGE_URL,
-          category: "official_member_profiles",
-          note: "年齢やプロフィールは党公式の議員詳細ページから補完します。",
-        },
-        {
-          label: "2023 統一地方選 前半",
-          url: OFFICIAL_2023_FIRST_HALF_URL,
-          category: "official_2023_first_half",
-          note: "2023年統一地方選の前半戦実績です。",
-        },
-        {
-          label: "2023 統一地方選 後半",
-          url: OFFICIAL_2023_SECOND_HALF_URL,
-          category: "official_2023_second_half",
-          note: "2023年統一地方選の後半戦実績です。",
-        },
-        {
-          label: "党公式 地方選挙候補予定者",
-          url: OFFICIAL_ELECTION_PAGE_URL,
-          category: "official_local_elections",
-          note: "国民民主党の候補予定者ページです。",
-        },
-        {
-          label: "地方選挙スケジュール",
-          url: ELECTION_SCHEDULE_URL,
-          category: "schedule_source",
-          note: "投票日と告示日を確認するための日程ソースです。",
-        },
+        { label: "Official members", url: OFFICIAL_MEMBER_PAGE_URL, category: "official_members", note: "Official local legislator directory." },
+        { label: "Official profiles", url: OFFICIAL_MEMBER_PAGE_URL, category: "official_member_profiles", note: "Age and profile are enriched from official detail pages." },
+        { label: "2023 first half", url: OFFICIAL_2023_FIRST_HALF_URL, category: "official_2023_first_half", note: "2023 unified local elections first-half result." },
+        { label: "2023 second half", url: OFFICIAL_2023_SECOND_HALF_URL, category: "official_2023_second_half", note: "2023 unified local elections second-half result." },
+        { label: "Official planned candidates", url: OFFICIAL_ELECTION_PAGE_URL, category: "official_local_elections", note: "Official planned-candidate source." },
+        { label: "Election schedule", url: ELECTION_SCHEDULE_URL, category: "schedule_source", note: "Voting date and announcement date source." },
       ],
       prefectures,
       members,
@@ -304,16 +225,12 @@ serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("local-election-intelligence failed:", message);
-    return jsonResponse(
-      { success: false, error: message },
-      { status: 400 },
-    );
+    return jsonResponse({ success: false, error: message }, { status: 400 });
   }
 });
 
 async function parseRequest(req: Request): Promise<ParsedRequest> {
   let body: Record<string, unknown> = {};
-
   if (req.method === "POST") {
     try {
       const parsed = await req.json();
@@ -325,33 +242,21 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     }
   }
 
-  const requestedAction = typeof body.action === "string"
-    ? body.action.trim()
-    : "snapshot";
+  const requestedAction = typeof body.action === "string" ? body.action.trim() : "snapshot";
   if (requestedAction === "memberDetail") {
     return {
       action: "memberDetail",
-      detailUrl: typeof body.detailUrl === "string"
-        ? body.detailUrl.trim()
-        : "",
-      prefectureHint: typeof body.prefectureHint === "string"
-        ? body.prefectureHint.trim()
-        : "",
+      detailUrl: typeof body.detailUrl === "string" ? body.detailUrl.trim() : "",
+      prefectureHint: typeof body.prefectureHint === "string" ? body.prefectureHint.trim() : "",
     };
   }
 
   if (req.method === "GET") {
     const url = new URL(req.url);
-    return {
-      action: "snapshot",
-      includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
-    };
+    return { action: "snapshot", includeAiSummary: url.searchParams.get("includeAiSummary") !== "false" };
   }
 
-  return {
-    action: "snapshot",
-    includeAiSummary: body.includeAiSummary !== false,
-  };
+  return { action: "snapshot", includeAiSummary: body.includeAiSummary !== false };
 }
 
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
@@ -372,11 +277,10 @@ async function fetchText(url: string): Promise<string> {
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        "User-Agent":
-          "my_web_app local-election-intelligence/1.1 (+https://my-web-app-b67f4.web.app/)",
+        "User-Agent": "my_web_app local-election-intelligence/2.1 (+https://my-web-app-b67f4.web.app/)",
       },
-      signal: controller.signal,
       redirect: "follow",
+      signal: controller.signal,
     });
     if (!response.ok) {
       throw new Error(`Fetch failed: ${response.status} ${url}`);
@@ -387,122 +291,72 @@ async function fetchText(url: string): Promise<string> {
   }
 }
 
-function parsePrefectureLinks(html: string): Map<string, string> {
-  const section = html.includes("蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡ LOCAL ASSEMBLY MEMBERS")
-    ? html.split("蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡ LOCAL ASSEMBLY MEMBERS")[1]
-    : html;
-  const links = new Map<string, string>();
-  const linkRegex =
-    /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-
-  for (const match of section.matchAll(linkRegex)) {
-    const rawHref = match[1]?.trim() ?? "";
-    const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (!PREFECTURES.includes(label as (typeof PREFECTURES)[number])) {
-      continue;
-    }
-    links.set(label, new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString());
-  }
-
-  return links;
-}
-
-async function fetchPrefectureReality(
-  prefecture: string,
-  sourceUrl: string,
-): Promise<PrefectureReality> {
+async function fetchPrefectureReality(prefecture: string, sourceUrl: string): Promise<PrefectureReality> {
   if (sourceUrl === "") {
-    return {
-      prefecture,
-      sourceUrl: "",
-      currentMembers: 0,
-      prefecturalAssemblyMembers: 0,
-      municipalAssemblyMembers: 0,
-      members: [],
-    };
+    return { prefecture, sourceUrl, currentMembers: 0, prefecturalAssemblyMembers: 0, municipalAssemblyMembers: 0, members: [] };
   }
 
   try {
     const html = await fetchText(sourceUrl);
     const members = parsePrefectureMembers(prefecture, sourceUrl, html);
-    const prefecturalAssemblyMembers = members.filter((member) =>
-      member.assemblyCategory === "prefectural"
-    ).length;
-    const municipalAssemblyMembers = members.filter((member) =>
-      member.assemblyCategory === "municipal"
-    ).length;
-
     return {
       prefecture,
       sourceUrl,
       currentMembers: members.length,
-      prefecturalAssemblyMembers,
-      municipalAssemblyMembers,
+      prefecturalAssemblyMembers: members.filter((item) => item.assemblyCategory === "prefectural").length,
+      municipalAssemblyMembers: members.filter((item) => item.assemblyCategory === "municipal").length,
       members,
     };
   } catch (error) {
     console.error(`Failed to fetch ${prefecture}:`, error);
-    return {
-      prefecture,
-      sourceUrl,
-      currentMembers: 0,
-      prefecturalAssemblyMembers: 0,
-      municipalAssemblyMembers: 0,
-      members: [],
-    };
+    return { prefecture, sourceUrl, currentMembers: 0, prefecturalAssemblyMembers: 0, municipalAssemblyMembers: 0, members: [] };
   }
 }
 
-function parsePrefectureMembers(
-  prefecture: string,
-  sourceUrl: string,
-  html: string,
-): LocalLegislatorProfile[] {
-  const detailUrlByName = parseMemberDetailLinks(html);
-  const lines = extractPrefectureMemberLines(prefecture, html);
+function parsePrefectureDirectoryEntries(html: string): PrefectureDirectoryEntry[] {
+  const links = new Map<string, string>();
+  const linkRegex = /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gsi;
+  for (const match of html.matchAll(linkRegex)) {
+    const label = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? ""))).trim();
+    const rawHref = match[1]?.trim() ?? "";
+    if (!isPrefectureName(label) || rawHref === "") {
+      continue;
+    }
+    links.set(label, new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString());
+  }
+  return PREFECTURES.map((prefecture) => ({ prefecture, sourceUrl: links.get(prefecture) ?? "" }));
+}
+
+function parsePrefectureMembers(prefecture: string, sourceUrl: string, html: string): LocalLegislatorProfile[] {
+  const sections = matchMemberListSections(html).filter((section) =>
+    section.heading.includes(prefecture) && section.heading.includes(JP_LOCAL_ASSEMBLY_MEMBERS)
+  );
   const members: LocalLegislatorProfile[] = [];
 
-  for (let index = 0; index <= lines.length - 5; index += 1) {
-    const name = normalizeMemberName(lines[index]);
-    const kana = lines[index + 1]?.trim() ?? "";
-    const constituency = lines[index + 2]?.trim() ?? "";
-    const assemblyLabel = lines[index + 3]?.trim() ?? "";
-    const electionCountLabel = lines[index + 4]?.trim() ?? "";
-
-    if (
-      !looksLikeMemberBlock(
-        name,
-        kana,
-        constituency,
-        assemblyLabel,
-        electionCountLabel,
-      )
-    ) {
-      continue;
+  for (const section of sections) {
+    for (const cardHtml of extractListItems(section.listHtml)) {
+      const card = parseMemberCard(cardHtml, sourceUrl);
+      const assemblyCategory = inferAssemblyCategory(card.assemblyLabel);
+      if (card.name === "" || assemblyCategory === "other") {
+        continue;
+      }
+      members.push({
+        prefecture,
+        sourceUrl,
+        detailUrl: card.detailUrl,
+        name: card.name,
+        kana: card.kana,
+        constituency: card.constituency,
+        municipality: extractMunicipality(prefecture, card.constituency),
+        assemblyLabel: card.assemblyLabel,
+        assemblyCategory,
+        electionCountLabel: card.electionCountLabel,
+        birthDate: "",
+        age: null,
+        gender: "",
+        profile: "",
+      });
     }
-
-    const assemblyCategory = inferAssemblyCategory(assemblyLabel);
-    if (assemblyCategory === "other") {
-      continue;
-    }
-
-    members.push({
-      prefecture,
-      sourceUrl,
-      detailUrl: detailUrlByName.get(name) ?? "",
-      name,
-      kana,
-      constituency,
-      municipality: extractMunicipality(prefecture, constituency),
-      assemblyLabel,
-      assemblyCategory,
-      electionCountLabel,
-      birthDate: "",
-      age: null,
-      gender: "",
-      profile: "",
-    });
-    index += 4;
   }
 
   const unique = new Map<string, LocalLegislatorProfile>();
@@ -512,86 +366,31 @@ function parsePrefectureMembers(
       unique.set(key, member);
     }
   }
-
   return [...unique.values()];
 }
 
-function parseMemberDetailLinks(html: string): Map<string, string> {
-  const links = new Map<string, string>();
-  const linkRegex = /<a[^>]+href="([^"]*\/member\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-
-  for (const match of html.matchAll(linkRegex)) {
-    const rawHref = match[1]?.trim() ?? "";
-    const label = normalizeMemberName(decodeHtml(stripTags(match[2] ?? "")));
-    if (rawHref === "" || label === "") {
-      continue;
-    }
-    if (!links.has(label)) {
-      links.set(label, new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString());
-    }
-  }
-
-  return links;
-}
-
-function extractPrefectureMemberLines(
-  prefecture: string,
-  html: string,
-): string[] {
-  const text = normalizeWhitespace(stripHtmlToText(html));
-  const section = sliceBetweenMarkers(
-    text,
-    [`${prefecture}縺ｮ蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡`, "蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡"],
-    [
-      `${prefecture}騾｣縺ｮ諠・ｱ`,
-      "蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡ LOCAL ASSEMBLY MEMBERS",
-      "繧ｷ繧ｧ繧｢縺吶ｋ",
-      "蝗ｽ豌第ｰ台ｸｻ蜈壼・蠑輯NS",
-    ],
-  );
-
-  return section
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .filter((line) => !line.includes("顔写真"))
-    .filter((line) => !line.includes("検索する"));
-}
-
-async function fetchMemberDetail(
-  detailUrl: string,
-  prefectureHint = "",
-): Promise<LocalLegislatorProfile> {
-  const normalizedUrl = detailUrl.trim();
-  validateMemberDetailUrl(normalizedUrl);
-
-  const html = await fetchText(normalizedUrl);
-  const lines = normalizeWhitespace(stripHtmlToText(html))
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  const constituency = extractField(lines, "驕ｸ謖吝玄");
-  const electionCountLabel = extractField(lines, "蠖馴∈蝗樊焚");
-  const birthDate = normalizeBirthDate(extractField(lines, "逕溷ｹｴ譛域律"));
-  const gender = extractField(lines, "諤ｧ蛻･");
-  const profile = extractMultilineField(lines, "邨梧ｭｴ", [
-    "繧ｷ繧ｧ繧｢縺吶ｋ",
-    "蝗ｽ豌第ｰ台ｸｻ蜈壼・蠑輯NS",
-    "Copyright",
-  ]);
-  const constituencyIndex = lines.findIndex((line) =>
-    line.startsWith("驕ｸ謖吝玄")
-  );
-  const assemblyLabel = findAssemblyLabel(lines, constituencyIndex);
-  const name = "";
-  const kana = "";
-  const inferredPrefecture = inferPrefectureFromConstituency(constituency);
-  const prefecture = inferredPrefecture || prefectureHint.trim();
-
+async function fetchMemberDetail(detailUrl: string, prefectureHint = ""): Promise<LocalLegislatorProfile> {
+  validateMemberDetailUrl(detailUrl);
+  const html = await fetchText(detailUrl);
+  const titleParts = decodeHtml(stripTags(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? ""))
+    .split("|")
+    .map((part) => normalizeWhitespace(part).trim())
+    .filter((part) => part !== "");
+  const fields = parseSimpleTable(html);
+  const constituency = fields.get(JP_FIELD_CONSTITUENCY) ?? "";
+  const electionCountLabel = fields.get(JP_FIELD_ELECTION_COUNT) ?? "";
+  const birthDate = normalizeBirthDate(fields.get(JP_FIELD_BIRTH_DATE) ?? "");
+  const gender = fields.get(JP_FIELD_GENDER) ?? "";
+  const profile = fields.get(JP_FIELD_PROFILE) ?? "";
+  const assemblyLabel = extractClassText(html, "category");
+  const name = titleParts[0] ?? "";
+  const kana = extractClassText(html, "kana");
+  const titlePrefecture = titleParts.find((part) => isPrefectureName(part)) ?? "";
+  const prefecture = inferPrefectureFromConstituency(constituency) || titlePrefecture || prefectureHint.trim();
   return {
     prefecture,
-    sourceUrl: normalizedUrl,
-    detailUrl: normalizedUrl,
+    sourceUrl: detailUrl,
+    detailUrl,
     name,
     kana,
     constituency,
@@ -607,73 +406,43 @@ async function fetchMemberDetail(
 }
 
 function validateMemberDetailUrl(detailUrl: string) {
-  if (detailUrl === "") {
+  const normalizedUrl = detailUrl.trim();
+  if (normalizedUrl === "") {
     throw new Error("Member detail URL is empty.");
   }
-
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(detailUrl);
-  } catch {
-    throw new Error("Member detail URL is invalid.");
-  }
-
-  if (parsedUrl.hostname !== "new-kokumin.jp") {
-    throw new Error("Only official new-kokumin.jp member pages are allowed.");
-  }
-  if (!parsedUrl.pathname.startsWith("/member/")) {
+  const parsedUrl = new URL(normalizedUrl);
+  if (parsedUrl.hostname !== "new-kokumin.jp" || !parsedUrl.pathname.startsWith("/member/")) {
     throw new Error("Only official member detail paths are allowed.");
   }
 }
 
 async function fetchHistoricalResult(): Promise<HistoricalResult> {
-  const [firstHalfText, secondHalfText] = await Promise.all([
-    fetchText(OFFICIAL_2023_FIRST_HALF_URL).then((html) =>
-      normalizeWhitespace(stripHtmlToText(html))
-    ),
-    fetchText(OFFICIAL_2023_SECOND_HALF_URL).then((html) =>
-      normalizeWhitespace(stripHtmlToText(html))
-    ),
-  ]);
-
-  const firstHalfWins = extractCount(
-    firstHalfText,
-    /([0-9０-９]+)\s*人[^\n]{0,40}当選/u,
-  ) ?? 62;
-  const secondHalfWins = extractCount(
-    secondHalfText,
-    /([0-9０-９]+)\s*人[^\n]{0,40}当選/u,
-  ) ?? 121;
-  const totalWins = extractCount(
-    secondHalfText,
-    /合計[^\d０-９]*([0-9０-９]+)\s*人/u,
-  ) ?? firstHalfWins + secondHalfWins;
-
-  return {
-    firstHalfWins,
-    secondHalfWins,
-    totalWins,
-  };
+  const fallback = { firstHalfWins: 62, secondHalfWins: 121, totalWins: 183 };
+  try {
+    const [firstHalfText, secondHalfText] = await Promise.all([
+      fetchText(OFFICIAL_2023_FIRST_HALF_URL).then((html) => normalizeWhitespace(stripHtmlToText(html))),
+      fetchText(OFFICIAL_2023_SECOND_HALF_URL).then((html) => normalizeWhitespace(stripHtmlToText(html))),
+    ]);
+    const firstHalfWins = extractCount(firstHalfText, /(\d+)\s*\u4eba[^\n]{0,40}\u5f53\u9078/u) ?? fallback.firstHalfWins;
+    const secondHalfWins = extractCount(secondHalfText, /(\d+)\s*\u4eba[^\n]{0,40}\u5f53\u9078/u) ?? fallback.secondHalfWins;
+    const totalWins = extractCount(secondHalfText, /\u5408\u8a08[^\d]*(\d+)\s*\u4eba/u) ?? firstHalfWins + secondHalfWins;
+    return { firstHalfWins, secondHalfWins, totalWins };
+  } catch {
+    return fallback;
+  }
 }
 
-function parseOfficialElectionPrefectureLinks(
-  html: string,
-): Map<string, string> {
+function parseOfficialElectionPrefectureLinks(html: string): Map<string, string> {
   const links = new Map<string, string>();
-  const marker = "地方自治体選挙 候補予定者";
-  const section = html.includes(marker) ? html.split(marker)[1] : html;
-  const linkRegex =
-    /<a[^>]+href="([^"]*post_type=election[^"]*prefectures=[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-
-  for (const match of section.matchAll(linkRegex)) {
+  const linkRegex = /<a[^>]+href="([^"]*post_type=election[^"]*prefectures=[^"]+)"[^>]*>(.*?)<\/a>/gsi;
+  for (const match of html.matchAll(linkRegex)) {
+    const label = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? ""))).trim();
     const rawHref = match[1]?.trim() ?? "";
-    const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (!PREFECTURES.includes(label as (typeof PREFECTURES)[number])) {
+    if (!isPrefectureName(label) || rawHref === "") {
       continue;
     }
     links.set(label, new URL(rawHref, OFFICIAL_ELECTION_PAGE_URL).toString());
   }
-
   return links;
 }
 
@@ -682,108 +451,27 @@ function parseOfficialScheduledCandidates(
   sourceUrl: string,
   html: string,
 ): OfficialScheduledCandidate[] {
-  const detailUrls = parseOfficialCandidateDetailLinks(sourceUrl, html);
-  const lines = stripHtmlToText(html)
-    .split("\n")
-    .map((line) => normalizeWhitespace(line).trim())
-    .filter((line) => line !== "");
-  const startIndex = lines.findIndex((line) =>
-    line.includes(`${prefecture}の候補予定者`)
-  );
-  if (startIndex < 0) {
-    return [];
-  }
-  const endIndex = lines.findIndex((line, index) =>
-    index > startIndex &&
-    (line.includes("逵碁｣縺ｮ諠・ｱ") ||
-      line.includes("驛ｽ驕灘ｺ懃恁繧､繝ｳ繝・ャ繧ｯ繧ｹ"))
-  );
-  const sectionLines = lines.slice(
-    startIndex + 1,
-    endIndex > startIndex ? endIndex : lines.length,
-  );
   const candidates: OfficialScheduledCandidate[] = [];
+  const sections = matchMemberListSections(html).filter((section) =>
+    section.heading.includes(prefecture) && section.heading.includes(JP_PLANNED_CANDIDATES)
+  );
 
-  for (let index = 0; index <= sectionLines.length - 5; index += 1) {
-    const name = sectionLines[index];
-    const kana = sectionLines[index + 1];
-    const electionName = sectionLines[index + 2];
-    const voteDate = normalizeOfficialVoteDate(sectionLines[index + 3]);
-    const statusLabel = sectionLines[index + 4];
-    if (
-      !looksLikeOfficialCandidateBlock(
-        name,
-        kana,
-        electionName,
-        voteDate,
-        statusLabel,
-      )
-    ) {
-      continue;
+  for (const section of sections) {
+    for (const cardHtml of extractListItems(section.listHtml)) {
+      const card = parseMemberCard(cardHtml, sourceUrl);
+      const electionName = card.electionCountLabel;
+      const voteDate = normalizeOfficialVoteDate(extractClassText(cardHtml, "m_category"));
+      const statusLabel = extractClassText(cardHtml, "wins");
+      if (card.name === "" || electionName === "" || statusLabel === "" || !isLocalElectionName(electionName)) {
+        continue;
+      }
+      candidates.push({ prefecture, electionName, voteDate, name: card.name, statusLabel, detailUrl: card.detailUrl, sourceUrl });
     }
-
-    candidates.push({
-      prefecture,
-      electionName,
-      voteDate,
-      name,
-      statusLabel,
-      detailUrl: detailUrls.get(name) ?? "",
-      sourceUrl,
-    });
   }
-
   return candidates;
 }
 
-function parseOfficialCandidateDetailLinks(
-  sourceUrl: string,
-  html: string,
-): Map<string, string> {
-  const links = new Map<string, string>();
-  const linkRegex = /<a[^>]+href="([^"]*\/election\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-  for (const match of html.matchAll(linkRegex)) {
-    const rawHref = match[1]?.trim() ?? "";
-    const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (label === "" || label.includes("顔写真")) {
-      continue;
-    }
-    links.set(label, new URL(rawHref, sourceUrl).toString());
-  }
-  return links;
-}
-
-function looksLikeOfficialCandidateBlock(
-  name: string,
-  kana: string,
-  electionName: string,
-  voteDate: string,
-  statusLabel: string,
-): boolean {
-  if (
-    name === "" ||
-    kana === "" ||
-    electionName === "" ||
-    voteDate === "" ||
-    statusLabel === ""
-  ) {
-    return false;
-  }
-  if (!looksLikeKanaLine(kana)) {
-    return false;
-  }
-  if (!electionName.includes("選挙")) {
-    return false;
-  }
-  if (!voteDate.startsWith("20")) {
-    return false;
-  }
-  return statusLabel.includes("公認") || statusLabel.includes("推薦");
-}
-
-async function fetchUpcomingLocalElectionSchedules(
-  officialCandidates: OfficialScheduledCandidate[],
-): Promise<LocalElectionScheduleEntry[]> {
+async function fetchUpcomingLocalElectionSchedules(officialCandidates: OfficialScheduledCandidate[]): Promise<LocalElectionScheduleEntry[]> {
   const scheduleHtml = await fetchText(ELECTION_SCHEDULE_URL);
   const overviewEntries = parseScheduleOverviewEntries(scheduleHtml);
   const today = startOfDay(new Date());
@@ -791,20 +479,10 @@ async function fetchUpcomingLocalElectionSchedules(
   const upcomingEntries = overviewEntries
     .filter((entry) => {
       const voteDate = parseIsoDate(entry.voteDate);
-      if (voteDate == null) {
-        return false;
-      }
-      return voteDate.getTime() >= today.getTime() &&
-        voteDate.getTime() <= latestDate.getTime();
+      return voteDate != null && voteDate.getTime() >= today.getTime() && voteDate.getTime() <= latestDate.getTime();
     })
     .slice(0, SCHEDULE_MAX_ENTRIES);
-
-  const detailed = await mapWithConcurrency(
-    upcomingEntries,
-    8,
-    async (entry) => await enrichScheduleEntry(entry, officialCandidates),
-  );
-
+  const detailed = await mapWithConcurrency(upcomingEntries, 8, async (entry) => await enrichScheduleEntry(entry, officialCandidates));
   return detailed.sort((left, right) => {
     const leftDate = parseIsoDate(left.voteDate);
     const rightDate = parseIsoDate(right.voteDate);
@@ -823,87 +501,43 @@ async function fetchUpcomingLocalElectionSchedules(
 }
 
 function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
-  const lines = stripHtmlToText(html)
-    .split("\n")
-    .map((line) => normalizeWhitespace(line).trim())
-    .filter((line) => line !== "");
-  const detailUrlsByName = new Map<string, string[]>();
-  const detailRegex =
-    /<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>(.*?)<\/a>/gsi;
-  for (const match of html.matchAll(detailRegex)) {
-    const label = decodeHtml(stripTags(match[2] ?? "")).trim();
-    if (!label.includes("選挙")) {
-      continue;
-    }
-    const resolvedUrl = new URL(
-      match[1]?.trim() ?? "",
-      ELECTION_SCHEDULE_URL,
-    ).toString();
-    const queue = detailUrlsByName.get(label) ?? [];
-    queue.push(resolvedUrl);
-    detailUrlsByName.set(label, queue);
-  }
-
-  const startIndex = lines.findIndex((line) => line === "螳滓命驕ｸ謖吩ｸ隕ｧ");
-  if (startIndex < 0) {
-    return [];
-  }
-
   const entries: ScheduleOverviewEntry[] = [];
+  const seen = new Set<string>();
   let currentVoteDate = "";
-  let currentElectionName = "";
-
-  for (let index = startIndex + 1; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (line === "自治体から探す" || line === "My 選挙") {
-      break;
-    }
-    if (line === "投票日 選挙名 都道府県" || /^\d+月の選挙 \d+件$/.test(line)) {
+  for (const match of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gsi)) {
+    const rowHtml = match[1] ?? "";
+    const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gsi)].map((cellMatch) => cellMatch[1] ?? "");
+    if (cells.length < 2) {
       continue;
     }
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(line) || line === "未定") {
-      currentVoteDate = normalizeSlashedDate(line);
-      currentElectionName = "";
+    const detectedVoteDate = normalizeSlashedDate(normalizeWhitespace(decodeHtml(stripTags(cells[0]))));
+    if (detectedVoteDate !== "") {
+      currentVoteDate = detectedVoteDate;
+    }
+    const electionCell = cells.length >= 3 ? cells[1] : cells[0];
+    const prefectureCell = cells.length >= 3 ? cells[2] : cells[1];
+    const detailMatch = electionCell.match(/<a[^>]+href="([^"]*\/local\/senkyo\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+    if (!detailMatch || currentVoteDate === "") {
       continue;
     }
-    if (currentVoteDate === "") {
+    const electionName = normalizeWhitespace(decodeHtml(stripTags(detailMatch[2] ?? ""))).trim();
+    const prefecture = extractPrefectureLabel(normalizeWhitespace(decodeHtml(stripTags(prefectureCell))));
+    if (electionName === "" || !isPrefectureName(prefecture)) {
       continue;
     }
-    if (currentElectionName === "") {
-      currentElectionName = line;
+    const detailUrl = new URL(detailMatch[1], ELECTION_SCHEDULE_URL).toString();
+    const key = `${currentVoteDate}:${prefecture}:${electionName}:${detailUrl}`;
+    if (seen.has(key)) {
       continue;
     }
-    if (!isPrefectureName(line)) {
-      currentElectionName = "";
-      continue;
-    }
-
-    const queue = detailUrlsByName.get(currentElectionName) ?? [];
-    const detailUrl = queue.shift() ?? "";
-    detailUrlsByName.set(currentElectionName, queue);
-    entries.push({
-      electionName: currentElectionName,
-      prefecture: line,
-      voteDate: currentVoteDate,
-      detailUrl,
-    });
-    currentElectionName = "";
+    seen.add(key);
+    entries.push({ electionName, prefecture, voteDate: currentVoteDate, detailUrl });
   }
-
   return entries;
 }
 
-async function enrichScheduleEntry(
-  entry: ScheduleOverviewEntry,
-  officialCandidates: OfficialScheduledCandidate[],
-): Promise<LocalElectionScheduleEntry> {
-  const matchedCandidates = matchOfficialCandidatesForSchedule(
-    entry.prefecture,
-    entry.electionName,
-    entry.voteDate,
-    officialCandidates,
-  );
-
+async function enrichScheduleEntry(entry: ScheduleOverviewEntry, officialCandidates: OfficialScheduledCandidate[]): Promise<LocalElectionScheduleEntry> {
+  const matchedCandidates = matchOfficialCandidatesForSchedule(entry.prefecture, entry.electionName, entry.voteDate, officialCandidates);
   let announcementDate = "";
   let seatCount = 0;
   let totalCandidateCount = 0;
@@ -915,26 +549,18 @@ async function enrichScheduleEntry(
       seatCount = detail.seatCount;
       totalCandidateCount = detail.totalCandidateCount;
     } catch (error) {
-      console.error(
-        `Failed to fetch schedule detail ${entry.detailUrl}:`,
-        error,
-      );
+      console.error(`Failed to fetch schedule detail ${entry.detailUrl}:`, error);
     }
   }
-
   return {
     electionName: entry.electionName,
     prefecture: entry.prefecture,
-    municipality: extractScheduleMunicipality(
-      entry.electionName,
-      entry.prefecture,
-    ),
+    municipality: extractScheduleMunicipality(entry.electionName, entry.prefecture),
     electionCategory: inferElectionCategory(entry.electionName),
     voteDate: entry.voteDate,
     announcementDate,
     detailUrl: entry.detailUrl,
-    officialCandidateSourceUrl: matchedCandidates[0]?.sourceUrl ??
-      OFFICIAL_ELECTION_PAGE_URL,
+    officialCandidateSourceUrl: matchedCandidates[0]?.sourceUrl ?? OFFICIAL_ELECTION_PAGE_URL,
     seatCount,
     totalCandidateCount,
     kokuminCandidateCount: matchedCandidates.length,
@@ -943,265 +569,74 @@ async function enrichScheduleEntry(
   };
 }
 
-function parseScheduleDetail(
-  html: string,
-): {
-  announcementDate: string;
-  seatCount: number;
-  totalCandidateCount: number;
-} {
-  const text = normalizeWhitespace(stripHtmlToText(html));
-  const announcementMatch = text.match(
-    /告示日\s+([0-9０-９]{4}年[0-9０-９]{2}月[0-9０-９]{2}日|[0-9０-９]{4}\/[0-9０-９]{2}\/[0-9０-９]{2}|未定)/u,
-  );
-  const countsMatch = text.match(
-    /定数\/候補者数\s+([0-9０-９]+)\s*\/\s*([0-9０-９]+)/u,
-  );
+function parseScheduleDetail(html: string): { announcementDate: string; seatCount: number; totalCandidateCount: number } {
+  const fields = parseSimpleTable(html);
+  const countsValue = fields.get(JP_FIELD_SEATS_AND_CANDIDATES) ?? fields.get(JP_FIELD_SEATS_AND_CANDIDATES_ALT) ?? "";
+  const countsMatch = toAsciiDigits(countsValue).match(/(\d+)\s*\/\s*(\d+)/);
   return {
-    announcementDate: normalizeJapaneseDate(announcementMatch?.[1] ?? ""),
-    seatCount: countsMatch ? toInt(countsMatch[1]) : 0,
-    totalCandidateCount: countsMatch ? toInt(countsMatch[2]) : 0,
+    announcementDate: normalizeJapaneseDate(fields.get(JP_FIELD_ANNOUNCEMENT_DATE) ?? ""),
+    seatCount: countsMatch ? Number.parseInt(countsMatch[1], 10) : 0,
+    totalCandidateCount: countsMatch ? Number.parseInt(countsMatch[2], 10) : 0,
   };
 }
 
-function matchOfficialCandidatesForSchedule(
-  prefecture: string,
-  electionName: string,
-  voteDate: string,
-  officialCandidates: OfficialScheduledCandidate[],
-): OfficialScheduledCandidate[] {
+function matchOfficialCandidatesForSchedule(prefecture: string, electionName: string, voteDate: string, officialCandidates: OfficialScheduledCandidate[]): OfficialScheduledCandidate[] {
   const normalizedPrefecture = prefecture.trim();
   const normalizedElectionName = normalizeElectionNameForMatch(electionName);
   const normalizedVoteDate = normalizeSlashedDate(voteDate);
-
-  const byPrefecture = officialCandidates.filter((item) =>
-    item.prefecture === normalizedPrefecture
-  );
-  const exact = byPrefecture.filter((item) =>
-    normalizeElectionNameForMatch(item.electionName) ===
-      normalizedElectionName &&
-    normalizeSlashedDate(item.voteDate) === normalizedVoteDate
-  );
+  const byPrefecture = officialCandidates.filter((item) => item.prefecture === normalizedPrefecture);
+  const exact = byPrefecture.filter((item) => normalizeElectionNameForMatch(item.electionName) === normalizedElectionName && normalizeSlashedDate(item.voteDate) === normalizedVoteDate);
   if (exact.length > 0) {
     return exact;
   }
-
-  const sameName = byPrefecture.filter((item) =>
-    normalizeElectionNameForMatch(item.electionName) === normalizedElectionName
-  );
+  const sameName = byPrefecture.filter((item) => normalizeElectionNameForMatch(item.electionName) === normalizedElectionName);
   if (sameName.length > 0) {
     return sameName;
   }
-
   return byPrefecture.filter((item) => {
     const candidateName = normalizeElectionNameForMatch(item.electionName);
-    return candidateName.includes(normalizedElectionName) ||
-      normalizedElectionName.includes(candidateName);
+    return candidateName.includes(normalizedElectionName) || normalizedElectionName.includes(candidateName);
   });
 }
 
-function normalizeOfficialVoteDate(value: string): string {
-  const normalized = value.trim();
-  const match = normalized.match(
-    /^([0-9０-９]{4})[.\/]([0-9０-９]{1,2})[.\/]([0-9０-９]{1,2})/,
-  );
-  if (!match) {
-    return "";
-  }
-  const year = `${toInt(match[1])}`.padStart(4, "0");
-  const month = `${toInt(match[2])}`.padStart(2, "0");
-  const day = `${toInt(match[3])}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function normalizeJapaneseDate(value: string): string {
-  const normalized = value.trim();
-  if (normalized === "" || normalized === "未定") {
-    return "";
-  }
-  const match = normalized.match(
-    /^([0-9０-９]{4})年([0-9０-９]{1,2})月([0-9０-９]{1,2})日/u,
-  );
-  if (!match) {
-    return normalizeSlashedDate(normalized);
-  }
-  const year = `${toInt(match[1])}`.padStart(4, "0");
-  const month = `${toInt(match[2])}`.padStart(2, "0");
-  const day = `${toInt(match[3])}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function normalizeSlashedDate(value: string): string {
-  const normalized = value.trim();
-  if (normalized === "" || normalized === "未定") {
-    return "";
-  }
-  const match = normalized.match(
-    /^([0-9０-９]{4})[\/\-]([0-9０-９]{1,2})[\/\-]([0-9０-９]{1,2})$/,
-  );
-  if (!match) {
-    return normalized.replace(/\./g, "-");
-  }
-  const year = `${toInt(match[1])}`.padStart(4, "0");
-  const month = `${toInt(match[2])}`.padStart(2, "0");
-  const day = `${toInt(match[3])}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function parseIsoDate(value: string): Date | null {
-  const normalized = normalizeSlashedDate(value);
-  if (normalized === "") {
-    return null;
-  }
-  const parsed = new Date(`${normalized}T00:00:00+09:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function startOfDay(value: Date): Date {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
-}
-
-function addDays(value: Date, days: number): Date {
-  const next = new Date(value.getTime());
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function isPrefectureName(value: string): boolean {
-  return PREFECTURES.includes(value as (typeof PREFECTURES)[number]);
-}
-
-function extractScheduleMunicipality(
-  electionName: string,
-  prefecture: string,
-): string {
-  const suffixes = [
-    "知事選挙",
-    "県議会議員補欠選挙",
-    "府議会議員補欠選挙",
-    "都議会議員補欠選挙",
-    "道議会議員補欠選挙",
-    "議会議員補欠選挙",
-    "議会議員再選挙",
-    "議会議員増員選挙",
-    "議会議員選挙",
-    "市長選挙",
-    "町長選挙",
-    "村長選挙",
-    "区長選挙",
-  ];
-  for (const suffix of suffixes) {
-    if (electionName.endsWith(suffix)) {
-      const municipality = electionName.slice(0, -suffix.length).trim();
-      return municipality === "" ? prefecture : municipality;
-    }
-  }
-  return prefecture;
-}
-
-function inferElectionCategory(electionName: string): string {
-  if (/(知事|市長|町長|村長|区長)選挙/u.test(electionName)) {
-    return "首長選挙";
-  }
-  if (/議会議員/u.test(electionName)) {
-    return "地方議会選挙";
-  }
-  return "地方選挙";
-}
-
-function normalizeElectionNameForMatch(value: string): string {
-  return value
-    .replace(/[ 　]/g, "")
-    .replace(/[（）()]/g, "")
-    .replace(/予想される顔ぶれ/g, "")
-    .trim();
-}
-
-function scheduleSeverity(entry: LocalElectionScheduleEntry): number {
-  if (entry.kokuminCandidateCount === 0) {
-    return 0;
-  }
-  if (entry.kokuminCandidateCount === 1) {
-    return 1;
-  }
-  return 2;
-}
-
-async function buildAiAnalysis(
-  snapshot: {
-    baselineCurrentLocalMembers: number;
-    officialCurrentLocalMembers: number;
-    targetLocalMembers: number;
-    baselineNetIncreaseRequired: number;
-    actualNetIncreaseRequired: number;
-    official2023FirstHalfWins: number;
-    official2023SecondHalfWins: number;
-    official2023TotalWins: number;
-    prefectures: Array<{
-      prefecture: string;
-      sourceUrl: string;
-      currentMembers: number;
-      prefecturalAssemblyMembers: number;
-      municipalAssemblyMembers: number;
-    }>;
-    members: LocalLegislatorProfile[];
-  },
-): Promise<AiAnalysis> {
+async function buildAiAnalysis(snapshot: {
+  baselineCurrentLocalMembers: number;
+  officialCurrentLocalMembers: number;
+  targetLocalMembers: number;
+  baselineNetIncreaseRequired: number;
+  actualNetIncreaseRequired: number;
+  official2023FirstHalfWins: number;
+  official2023SecondHalfWins: number;
+  official2023TotalWins: number;
+  prefectures: Array<{ prefecture: string; sourceUrl: string; currentMembers: number; prefecturalAssemblyMembers: number; municipalAssemblyMembers: number }>;
+  members: LocalLegislatorProfile[];
+  upcomingSchedules?: LocalElectionScheduleEntry[];
+}): Promise<AiAnalysis> {
   if (OPENAI_API_KEY === "") {
     return buildFallbackAnalysis(snapshot);
   }
-
-  const topPrefectures = [...snapshot.prefectures]
-    .sort((a, b) => b.currentMembers - a.currentMembers)
-    .slice(0, 10);
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            baselineCurrentLocalMembers: snapshot.baselineCurrentLocalMembers,
-            officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
-            targetLocalMembers: snapshot.targetLocalMembers,
-            baselineNetIncreaseRequired: snapshot.baselineNetIncreaseRequired,
-            actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
-            official2023FirstHalfWins: snapshot.official2023FirstHalfWins,
-            official2023SecondHalfWins: snapshot.official2023SecondHalfWins,
-            official2023TotalWins: snapshot.official2023TotalWins,
-            rosterCount: snapshot.members.length,
-            topPrefectures,
-          }),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    console.error("AI analysis failed:", await response.text());
-    return buildFallbackAnalysis(snapshot);
-  }
-
-  const json = await response.json();
-  const content = json.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || content.trim() === "") {
-    return buildFallbackAnalysis(snapshot);
-  }
-
   try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: "You analyze a Japanese local election dashboard. Reply in concise Japanese. Return JSON with keys summary, alerts, strategicNotes, scheduleSummary, scheduleAlerts." },
+          { role: "user", content: JSON.stringify({ officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers, actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired, official2023TotalWins: snapshot.official2023TotalWins, topPrefectures: [...snapshot.prefectures].sort((a, b) => b.currentMembers - a.currentMembers).slice(0, 10), rosterCount: snapshot.members.length, upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [] }) },
+        ],
+      }),
+    });
+    if (!response.ok) {
+      return buildFallbackAnalysis(snapshot);
+    }
+    const json = await response.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || content.trim() === "") {
+      return buildFallbackAnalysis(snapshot);
+    }
     const parsed = JSON.parse(content);
     const fallback = buildFallbackAnalysis(snapshot);
     const parsedScheduleAlerts = sanitizeLines(parsed.scheduleAlerts, 4);
@@ -1209,11 +644,8 @@ async function buildAiAnalysis(
       summary: sanitizeLine(parsed.summary) || fallback.summary,
       alerts: sanitizeLines(parsed.alerts, 3),
       strategicNotes: sanitizeLines(parsed.strategicNotes, 3),
-      scheduleSummary: sanitizeLine(parsed.scheduleSummary) ||
-        fallback.scheduleSummary,
-      scheduleAlerts: parsedScheduleAlerts.length > 0
-        ? parsedScheduleAlerts
-        : fallback.scheduleAlerts,
+      scheduleSummary: sanitizeLine(parsed.scheduleSummary) || fallback.scheduleSummary,
+      scheduleAlerts: parsedScheduleAlerts.length > 0 ? parsedScheduleAlerts : fallback.scheduleAlerts,
     };
   } catch {
     return buildFallbackAnalysis(snapshot);
@@ -1229,173 +661,105 @@ function buildFallbackAnalysis(snapshot: {
   official2023FirstHalfWins: number;
   official2023SecondHalfWins: number;
   official2023TotalWins: number;
-  prefectures: Array<{
-    prefecture: string;
-    sourceUrl: string;
-    currentMembers: number;
-    prefecturalAssemblyMembers: number;
-    municipalAssemblyMembers: number;
-  }>;
+  prefectures: Array<{ prefecture: string; sourceUrl: string; currentMembers: number; prefecturalAssemblyMembers: number; municipalAssemblyMembers: number }>;
   members: LocalLegislatorProfile[];
+  upcomingSchedules?: LocalElectionScheduleEntry[];
 }): AiAnalysis {
-  const scheduleEntries = (
-    snapshot as { upcomingSchedules?: LocalElectionScheduleEntry[] }
-  ).upcomingSchedules ?? [];
-  const delta = snapshot.officialCurrentLocalMembers -
-    snapshot.baselineCurrentLocalMembers;
-  const deltaLabel = delta === 0
-    ? "基準340人と同水準です。"
-    : delta > 0
-    ? `基準340人比で +${delta} 人です。`
-    : `基準340人比で ${delta} 人です。`;
-  const topPrefectures = [...snapshot.prefectures]
-    .sort((a, b) => b.currentMembers - a.currentMembers)
-    .slice(0, 3)
-    .map((item) => `${item.prefecture}${item.currentMembers}人`);
-  const redSchedules = scheduleEntries.filter((item) =>
-    item.kokuminCandidateCount === 0
-  );
-  const yellowSchedules = scheduleEntries.filter((item) =>
-    item.kokuminCandidateCount === 1
-  );
-  const nearSchedules = scheduleEntries.slice(0, 3).map((item) =>
-    `${item.voteDate} ${item.prefecture} ${item.electionName}(${item.kokuminCandidateCount}人)`
-  );
-
+  const scheduleEntries = snapshot.upcomingSchedules ?? [];
+  const delta = snapshot.officialCurrentLocalMembers - snapshot.baselineCurrentLocalMembers;
+  const deltaLabel = delta === 0 ? "At baseline 340." : delta > 0 ? `+${delta} vs 340.` : `${delta} vs 340.`;
+  const topPrefectures = [...snapshot.prefectures].sort((a, b) => b.currentMembers - a.currentMembers).slice(0, 3).map((item) => `${item.prefecture}${item.currentMembers}`);
+  const redSchedules = scheduleEntries.filter((item) => item.kokuminCandidateCount === 0);
+  const yellowSchedules = scheduleEntries.filter((item) => item.kokuminCandidateCount === 1);
+  const nearSchedules = scheduleEntries.slice(0, 3).map((item) => `${item.voteDate} ${item.prefecture} ${item.electionName}(${item.kokuminCandidateCount})`);
   return {
-    summary: `公式地方議員数は ${snapshot.officialCurrentLocalMembers} 人、` +
-      `700人まで残り ${snapshot.actualNetIncreaseRequired} 人です。` +
-      deltaLabel,
+    summary: `Official local members: ${snapshot.officialCurrentLocalMembers}. Remaining to 700: ${snapshot.actualNetIncreaseRequired}. ${deltaLabel}`,
     alerts: [
-      `2023年統一地方選の実績は前半 ${snapshot.official2023FirstHalfWins}、後半 ${snapshot.official2023SecondHalfWins}、合計 ${snapshot.official2023TotalWins} です。`,
-      `現職名簿は ${snapshot.members.length} 人分を確認済みで、県連配分と月次KPIの固定管理が前提です。`,
-      topPrefectures.length === 0
-        ? "上位県データはまだ取得できていません。"
-        : `現職数の上位県は ${topPrefectures.join(" / ")} です。`,
+      `2023 result: first half ${snapshot.official2023FirstHalfWins}, second half ${snapshot.official2023SecondHalfWins}, total ${snapshot.official2023TotalWins}.`,
+      `Roster size confirmed: ${snapshot.members.length}.`,
+      topPrefectures.length === 0 ? "Top prefectures unavailable." : `Top prefectures: ${topPrefectures.join(" / ")}.`,
     ],
     strategicNotes: [
-      "公式実数は計画値と定期同期し、純増ギャップを毎月更新してください。",
-      "現職維持・新人擁立・重点自治体・接戦支援を県連ごとに同時管理してください。",
-      "年齢やプロフィールの取得済み名簿を使い、候補者リクルートと応援投入の優先順位を決めてください。",
+      "Protect incumbents, recruit challengers, and manage key municipalities in one monthly plan.",
+      "Treat zero-candidate elections as red and single-candidate elections as yellow for immediate action.",
+      "Keep the public roster, prefecture totals, and schedule under one shared operating view.",
     ],
-    scheduleSummary: scheduleEntries.length === 0
-      ? "今後の地方選挙日程は取得できませんでした。"
-      : `今後 ${scheduleEntries.length} 件の地方選挙を監視中です。未擁立 ${redSchedules.length} 件、単騎 ${yellowSchedules.length} 件です。`,
+    scheduleSummary: scheduleEntries.length === 0 ? "No near-term local election schedule found." : `Upcoming elections: ${scheduleEntries.length}. Red ${redSchedules.length}, Yellow ${yellowSchedules.length}.`,
     scheduleAlerts: [
-      ...(redSchedules.length > 0
-        ? [
-          `未擁立 ${redSchedules.length} 件: ${
-            redSchedules.slice(0, 3).map((item) =>
-              `${item.prefecture} ${item.electionName}`
-            ).join(" / ")
-          }`,
-        ]
-        : []),
-      ...(yellowSchedules.length > 0
-        ? [
-          `単騎 ${yellowSchedules.length} 件: ${
-            yellowSchedules.slice(0, 3).map((item) =>
-              `${item.prefecture} ${item.electionName}`
-            ).join(" / ")
-          }`,
-        ]
-        : []),
-      ...(nearSchedules.length > 0
-        ? [`直近日程: ${nearSchedules.join(" / ")}`]
-        : []),
+      ...(redSchedules.length > 0 ? [`Red ${redSchedules.length}: ${redSchedules.slice(0, 3).map((item) => `${item.prefecture} ${item.electionName}`).join(" / ")}`] : []),
+      ...(yellowSchedules.length > 0 ? [`Yellow ${yellowSchedules.length}: ${yellowSchedules.slice(0, 3).map((item) => `${item.prefecture} ${item.electionName}`).join(" / ")}`] : []),
+      ...(nearSchedules.length > 0 ? [`Upcoming: ${nearSchedules.join(" / ")}`] : []),
     ],
   };
 }
-function compareMembers(
-  left: LocalLegislatorProfile,
-  right: LocalLegislatorProfile,
-): number {
-  const prefectureCompare = left.prefecture.localeCompare(
-    right.prefecture,
-    "ja",
-  );
+
+function compareMembers(left: LocalLegislatorProfile, right: LocalLegislatorProfile): number {
+  const prefectureCompare = left.prefecture.localeCompare(right.prefecture, "ja");
   if (prefectureCompare !== 0) {
     return prefectureCompare;
   }
-
-  const categoryRank = (value: AssemblyCategory): number => {
-    switch (value) {
-      case "prefectural":
-        return 0;
-      case "municipal":
-        return 1;
-      default:
-        return 2;
-    }
-  };
-  const categoryCompare = categoryRank(left.assemblyCategory) -
-    categoryRank(right.assemblyCategory);
-  if (categoryCompare !== 0) {
-    return categoryCompare;
+  const rank = (value: AssemblyCategory) => value === "prefectural" ? 0 : value === "municipal" ? 1 : 2;
+  const assemblyCompare = rank(left.assemblyCategory) - rank(right.assemblyCategory);
+  if (assemblyCompare !== 0) {
+    return assemblyCompare;
   }
-
   return left.name.localeCompare(right.name, "ja");
 }
 
-function looksLikeMemberBlock(
-  name: string,
-  kana: string,
-  constituency: string,
-  assemblyLabel: string,
-  electionCountLabel: string,
-): boolean {
-  if (
-    name === "" ||
-    kana === "" ||
-    constituency === "" ||
-    assemblyLabel === "" ||
-    electionCountLabel === ""
-  ) {
-    return false;
+function matchMemberListSections(html: string): Array<{ heading: string; listHtml: string }> {
+  const sections: Array<{ heading: string; listHtml: string }> = [];
+  const sectionRegex = /<h2[^>]*class="[^"]*\bmember_sec_ttl\b[^"]*"[^>]*>([\s\S]*?)<\/h2>\s*<ul[^>]*class="[^"]*\bmember_list\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/gsi;
+  for (const match of html.matchAll(sectionRegex)) {
+    sections.push({ heading: normalizeWhitespace(decodeHtml(stripTags(match[1] ?? ""))).trim(), listHtml: match[2] ?? "" });
   }
-  if (
-    name.includes("蝨ｰ譁ｹ閾ｪ豐ｻ菴楢ｭｰ蜩｡") ||
-    name.includes("逵碁｣縺ｮ諠・ｱ") ||
-    name.includes("繧ｷ繧ｧ繧｢縺吶ｋ")
-  ) {
-    return false;
+  return sections;
+}
+
+function extractListItems(listHtml: string): string[] {
+  const items: string[] = [];
+  const itemRegex = /<li\b[^>]*>([\s\S]*?)<\/li>/gsi;
+  for (const match of listHtml.matchAll(itemRegex)) {
+    items.push(match[1] ?? "");
   }
-  if (!/^[縺・繧悶ぃ-繝ｺ繝ｼ繝ｻ\s]+$/u.test(kana)) {
-    return false;
-  }
-  if (!assemblyLabel.includes("隴ｰ蜩｡")) {
-    return false;
-  }
-  return /[0-9０-９]+/.test(electionCountLabel);
+  return items;
+}
+
+function parseMemberCard(cardHtml: string, baseUrl: string): { name: string; kana: string; constituency: string; assemblyLabel: string; electionCountLabel: string; detailUrl: string } {
+  const nameLinkMatch = cardHtml.match(/<dt[^>]*class="[^"]*\bname\b[^"]*"[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+  return {
+    name: normalizeMemberName(decodeHtml(stripTags(nameLinkMatch?.[2] ?? ""))),
+    kana: extractClassText(cardHtml, "kana"),
+    constituency: extractClassText(cardHtml, "kind"),
+    assemblyLabel: extractClassText(cardHtml, "area") || extractClassText(cardHtml, "category"),
+    electionCountLabel: extractClassText(cardHtml, "times"),
+    detailUrl: nameLinkMatch?.[1] ? new URL(nameLinkMatch[1], baseUrl).toString() : "",
+  };
+}
+
+function extractClassText(html: string, className: string): string {
+  const pattern = new RegExp(`<[^>]+class="[^"]*\\b${escapeRegExp(className)}\\b[^"]*"[^>]*>([\\s\\S]*?)<\\/[^>]+>`, "i");
+  return normalizeWhitespace(decodeHtml(stripTags(html.match(pattern)?.[1] ?? ""))).trim();
 }
 
 function inferAssemblyCategory(assemblyLabel: string): AssemblyCategory {
-  if (
-    assemblyLabel.includes("都議") ||
-    assemblyLabel.includes("道議") ||
-    assemblyLabel.includes("府議") ||
-    assemblyLabel.includes("県議")
-  ) {
+  if (/(\u90fd|\u9053|\u5e9c|\u770c)\u8b70\u4f1a\u8b70\u54e1/u.test(assemblyLabel)) {
     return "prefectural";
   }
-  if (
-    assemblyLabel.includes("市議") ||
-    assemblyLabel.includes("区議") ||
-    assemblyLabel.includes("町議") ||
-    assemblyLabel.includes("村議")
-  ) {
+  if (/(\u5e02|\u533a|\u753a|\u6751)\u8b70\u4f1a\u8b70\u54e1/u.test(assemblyLabel)) {
     return "municipal";
   }
   return "other";
 }
+
 function extractMunicipality(prefecture: string, constituency: string): string {
   const normalizedPrefecture = prefecture.trim();
   const normalizedConstituency = constituency.trim();
-  if (
-    normalizedPrefecture !== "" &&
-    normalizedConstituency.startsWith(normalizedPrefecture)
-  ) {
-    return normalizedConstituency.slice(normalizedPrefecture.length).trim();
+  if (normalizedConstituency === "") {
+    return normalizedPrefecture;
+  }
+  if (normalizedPrefecture !== "" && normalizedConstituency.startsWith(normalizedPrefecture)) {
+    const sliced = normalizedConstituency.slice(normalizedPrefecture.length).trim();
+    return sliced === "" ? normalizedPrefecture : sliced;
   }
   return normalizedConstituency;
 }
@@ -1403,273 +767,132 @@ function extractMunicipality(prefecture: string, constituency: string): string {
 function inferPrefectureFromConstituency(constituency: string): string {
   const normalized = constituency.trim();
   for (const prefecture of PREFECTURES) {
-    if (normalized.startsWith(prefecture)) {
+    if (normalized.startsWith(prefecture) || normalized.includes(prefecture)) {
       return prefecture;
     }
   }
   return "";
 }
 
-function parseNameAndKana(line: string): { name: string; kana: string } {
-  const normalized = normalizeWhitespace(line).trim();
-  if (normalized === "") {
-    return { name: "", kana: "" };
-  }
-
-  const match = normalized.match(
-    /^(.*?)[\s縲]+([縺・繧悶ぃ-繝ｺ繝ｼ繝ｻ\s縲]+)$/u,
-  );
-  if (!match) {
-    return { name: normalized, kana: "" };
-  }
-
-  return {
-    name: match[1].trim(),
-    kana: match[2].trim(),
-  };
-}
-
-function looksLikeKanaLine(value: string): boolean {
-  return /^[縺・繧悶ぃ-繝ｺ繝ｼ繝ｻ\s]+$/u.test(value.trim());
-}
-
-// deno-lint-ignore no-unused-vars
-function extractMemberIdentity(
-  lines: string[],
-  fromIndex: number,
-): { name: string; kana: string } {
-  if (fromIndex > 1) {
-    for (
-      let index = Math.max(0, fromIndex - 4);
-      index < fromIndex - 1;
-      index += 1
-    ) {
-      const candidateName = lines[index].trim();
-      const candidateKana = lines[index + 1].trim();
-      if (
-        candidateName !== "" &&
-        candidateKana !== "" &&
-        !looksLikeKanaLine(candidateName) &&
-        looksLikeKanaLine(candidateKana)
-      ) {
-        return {
-          name: candidateName,
-          kana: candidateKana,
-        };
-      }
+function parseSimpleTable(html: string): Map<string, string> {
+  const fields = new Map<string, string>();
+  const rowRegex = /<tr[^>]*>\s*<th[^>]*>([\s\S]*?)<\/th>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gsi;
+  for (const match of html.matchAll(rowRegex)) {
+    const key = normalizeWhitespace(decodeHtml(stripTags(match[1] ?? ""))).trim();
+    const value = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? ""))).trim();
+    if (key !== "" && value !== "" && !fields.has(key)) {
+      fields.set(key, value);
     }
   }
-
-  return parseNameAndKana(
-    fromIndex > 0 ? lines[fromIndex - 1] : "",
-  );
+  return fields;
 }
 
-function findAssemblyLabel(lines: string[], fromIndex: number): string {
-  const end = fromIndex < 0 ? Math.min(lines.length, 10) : fromIndex;
-  for (let index = Math.max(0, end - 5); index < end; index += 1) {
-    if (lines[index].includes("隴ｰ蜩｡")) {
-      return lines[index];
-    }
-  }
-  return "";
-}
-
-function extractField(lines: string[], label: string): string {
-  const directPrefix = `${label} `;
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (line.startsWith(directPrefix)) {
-      return line.slice(directPrefix.length).trim();
-    }
-    if (line === label && index + 1 < lines.length) {
-      return lines[index + 1].trim();
-    }
-  }
-  return "";
-}
-
-function extractMultilineField(
-  lines: string[],
-  label: string,
-  stopMarkers: string[],
-): string {
-  const startIndex = lines.findIndex((line) => line === label);
-  if (startIndex < 0) {
-    return "";
-  }
-
-  const collected: string[] = [];
-  for (let index = startIndex + 1; index < lines.length; index += 1) {
-    const line = lines[index];
-    if (line === "") {
-      continue;
-    }
-    if (stopMarkers.some((marker) => line.includes(marker))) {
-      break;
-    }
-    collected.push(line);
-  }
-
-  return collected.join(" ").trim();
-}
-
+function normalizeOfficialVoteDate(value: string): string { return extractIsoDate(value); }
+function normalizeJapaneseDate(value: string): string { return extractIsoDate(value); }
+function normalizeSlashedDate(value: string): string { return extractIsoDate(value); }
 function normalizeBirthDate(value: string): string {
-  const normalized = value.trim();
-  if (normalized === "") {
-    return "";
-  }
-  const match = normalized.match(
-    /^([0-9０-９]{4})[\/\-年]([0-9０-９]{1,2})[\/\-月]([0-9０-９]{1,2})/u,
-  );
-  if (!match) {
-    return normalized;
-  }
-  const year = toInt(match[1]);
-  const month = `${toInt(match[2])}`.padStart(2, "0");
-  const day = `${toInt(match[3])}`.padStart(2, "0");
-  return `${year}/${month}/${day}`;
+  const iso = extractIsoDate(value);
+  return iso === "" ? normalizeWhitespace(value).trim() : iso.replace(/-/g, "/");
 }
 
 function calculateAge(birthDate: string): number | null {
-  if (birthDate === "") {
-    return null;
-  }
-
-  const match = birthDate.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
-  if (!match) {
-    return null;
-  }
-
-  const year = Number.parseInt(match[1], 10);
-  const month = Number.parseInt(match[2], 10);
-  const day = Number.parseInt(match[3], 10);
+  if (!/^\d{4}\/\d{2}\/\d{2}$/.test(birthDate)) { return null; }
+  const [year, month, day] = birthDate.split("/").map((item) => Number.parseInt(item, 10));
   const today = new Date();
   let age = today.getFullYear() - year;
-  const hasBirthdayPassed = today.getMonth() + 1 > month ||
-    (today.getMonth() + 1 === month && today.getDate() >= day);
-  if (!hasBirthdayPassed) {
-    age -= 1;
-  }
+  const passed = today.getMonth() + 1 > month || (today.getMonth() + 1 === month && today.getDate() >= day);
+  if (!passed) { age -= 1; }
   return age >= 0 ? age : null;
 }
 
-function sliceBetweenMarkers(
-  value: string,
-  startMarkers: string[],
-  endMarkers: string[],
-): string {
-  let sliced = value;
-  const startIndex = findFirstIndex(sliced, startMarkers);
-  if (startIndex >= 0) {
-    const startMarker = startMarkers.find((marker) =>
-      sliced.indexOf(marker) === startIndex
-    );
-    if (startMarker) {
-      sliced = sliced.slice(startIndex + startMarker.length);
+function extractIsoDate(value: string): string {
+  const normalized = toAsciiDigits(value).replace(/\./g, "/").replace(/\u5e74/g, "/").replace(/\u6708/g, "/").replace(/\u65e5/g, "").replace(/\s+/g, "").trim();
+  if (normalized === "" || normalized === JP_UNDECIDED) { return ""; }
+  const match = normalized.match(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})/);
+  if (!match) { return normalized.replace(/\//g, "-"); }
+  return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
+}
+
+function parseIsoDate(value: string): Date | null {
+  const normalized = normalizeSlashedDate(value);
+  if (normalized === "") { return null; }
+  const parsed = new Date(`${normalized}T00:00:00+09:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function startOfDay(value: Date): Date { return new Date(value.getFullYear(), value.getMonth(), value.getDate()); }
+function addDays(value: Date, days: number): Date { const next = new Date(value.getTime()); next.setDate(next.getDate() + days); return next; }
+function isPrefectureName(value: string): boolean { return PREFECTURES.includes(value as (typeof PREFECTURES)[number]); }
+function extractPrefectureLabel(value: string): string {
+  const normalized = normalizeWhitespace(value).trim();
+  for (const prefecture of PREFECTURES) {
+    if (normalized.includes(prefecture)) { return prefecture; }
+  }
+  return normalized;
+}
+
+function extractScheduleMunicipality(electionName: string, prefecture: string): string {
+  const patterns = [
+    /^(.*?)(?:\u90fd|\u9053|\u5e9c|\u770c)\u77e5\u4e8b\u9078\u6319$/,
+    /^(.*?)(?:\u90fd|\u9053|\u5e9c|\u770c)\u8b70\u4f1a\u8b70\u54e1\u9078\u6319$/,
+    /^(.*?)\u5e02\u9577\u9078\u6319$/,
+    /^(.*?)\u5e02\u8b70\u4f1a\u8b70\u54e1\u9078\u6319$/,
+    /^(.*?)\u533a\u9577\u9078\u6319$/,
+    /^(.*?)\u533a\u8b70\u4f1a\u8b70\u54e1\u9078\u6319$/,
+    /^(.*?)\u753a\u9577\u9078\u6319$/,
+    /^(.*?)\u753a\u8b70\u4f1a\u8b70\u54e1\u9078\u6319$/,
+    /^(.*?)\u6751\u9577\u9078\u6319$/,
+    /^(.*?)\u6751\u8b70\u4f1a\u8b70\u54e1\u9078\u6319$/,
+  ];
+  for (const pattern of patterns) {
+    const match = electionName.match(pattern);
+    if (match) {
+      const municipality = match[1]?.trim() ?? "";
+      return municipality === "" ? prefecture : municipality;
     }
   }
-
-  const endIndex = findFirstIndex(sliced, endMarkers);
-  if (endIndex >= 0) {
-    sliced = sliced.slice(0, endIndex);
-  }
-
-  return sliced;
+  return prefecture;
 }
 
-function findFirstIndex(value: string, markers: string[]): number {
-  let best = -1;
-  for (const marker of markers) {
-    const index = value.indexOf(marker);
-    if (index >= 0 && (best < 0 || index < best)) {
-      best = index;
-    }
-  }
-  return best;
+function inferElectionCategory(electionName: string): string {
+  if (/(\u77e5\u4e8b|\u5e02\u9577|\u533a\u9577|\u753a\u9577|\u6751\u9577)\u9078\u6319/u.test(electionName)) { return "chief"; }
+  if (/\u8b70\u4f1a\u8b70\u54e1\u9078\u6319/u.test(electionName)) { return "assembly"; }
+  return "local-election";
 }
 
-function normalizeMemberName(value: string): string {
-  return normalizeWhitespace(value).trim();
+function normalizeElectionNameForMatch(value: string): string {
+  return normalizeWhitespace(value).replace(/[ \u3000]/g, "").replace(/[\u30fb\uff65]/g, "").replace(/[()\uff08\uff09\u300c\u300d\u300e\u300f]/g, "").replace(/\u6295\u958b\u7968/g, "").trim();
 }
 
-function extractCount(text: string, pattern: RegExp): number | null {
-  const match = text.match(pattern);
-  if (!match || match.length < 2) {
-    return null;
-  }
-  return toInt(match[1]);
+function scheduleSeverity(entry: LocalElectionScheduleEntry): number {
+  if (entry.kokuminCandidateCount === 0) { return 0; }
+  if (entry.kokuminCandidateCount === 1) { return 1; }
+  return 2;
 }
 
-function toInt(value: string): number {
-  const normalized = toAsciiDigits(value).replace(/[^0-9]/g, "");
-  return normalized === "" ? 0 : Number.parseInt(normalized, 10);
-}
-
-function toAsciiDigits(value: string): string {
-  return value.replace(
-    /[０-９]/g,
-    (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0),
-  );
-}
-
-function stripTags(value: string): string {
-  return value.replace(/<[^>]+>/g, " ");
-}
+function normalizeMemberName(value: string): string { return normalizeWhitespace(value).trim(); }
+function extractCount(text: string, pattern: RegExp): number | null { const match = text.match(pattern); return !match || match.length < 2 ? null : toInt(match[1]); }
+function toInt(value: string): number { const normalized = toAsciiDigits(value).replace(/[^0-9]/g, ""); return normalized === "" ? 0 : Number.parseInt(normalized, 10); }
+function toAsciiDigits(value: string): string { return value.replace(/[\uff10-\uff19]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0)); }
+function stripTags(value: string): string { return value.replace(/<[^>]+>/g, " "); }
 
 function stripHtmlToText(html: string): string {
-  return decodeHtml(
-    html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-      .replace(/<[^>]+>/g, "\n"),
-  );
+  return decodeHtml(html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<noscript[\s\S]*?<\/noscript>/gi, " ").replace(/<[^>]+>/g, "\n"));
 }
 
 function decodeHtml(value: string): string {
-  return value
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&ensp;/g, " ")
-    .replace(/&emsp;/g, " ")
-    .replace(/&#x2f;/gi, "/");
+  return value.replace(/&nbsp;/g, " ").replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&ensp;/g, " ").replace(/&emsp;/g, " ").replace(/&#x2f;/gi, "/");
 }
 
-function normalizeWhitespace(value: string): string {
-  return value
-    .replace(/\r/g, "\n")
-    .replace(/[ \t\u3000]+/g, " ")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
-}
+function normalizeWhitespace(value: string): string { return value.replace(/\r/g, "\n").replace(/[ \t\u3000]+/g, " ").replace(/\n{2,}/g, "\n").trim(); }
+function escapeRegExp(value: string): string { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function isLocalElectionName(value: string): boolean { return /\u9078\u6319/u.test(value) && !/(\u8846\u8b70\u9662|\u53c2\u8b70\u9662|\u6bd4\u4f8b|\u653f\u515a|\u4ee3\u8868\u9078|\u515a\u5927\u4f1a)/u.test(value); }
+function sanitizeLine(value: unknown): string { return typeof value === "string" ? value.trim() : ""; }
+function sanitizeLines(value: unknown, limit: number): string[] { return !Array.isArray(value) ? [] : value.map((item) => sanitizeLine(item)).filter((item) => item.length > 0).slice(0, limit); }
 
-function sanitizeLine(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function sanitizeLines(value: unknown, limit: number): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value
-    .map((item) => sanitizeLine(item))
-    .filter((item) => item.length > 0)
-    .slice(0, limit);
-}
-
-async function mapWithConcurrency<T, U>(
-  items: T[],
-  limit: number,
-  mapper: (item: T) => Promise<U>,
-): Promise<U[]> {
+async function mapWithConcurrency<T, U>(items: T[], limit: number, mapper: (item: T) => Promise<U>): Promise<U[]> {
   const results = new Array<U>(items.length);
   let nextIndex = 0;
-
   async function worker() {
     while (nextIndex < items.length) {
       const current = nextIndex;
@@ -1677,9 +900,6 @@ async function mapWithConcurrency<T, U>(
       results[current] = await mapper(items[current]);
     }
   }
-
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
-  );
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
   return results;
 }
