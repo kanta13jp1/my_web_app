@@ -88,6 +88,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _historySectionKey = GlobalKey(debugLabel: 'realityHistory');
+  final GlobalKey _scheduleSectionKey =
+      GlobalKey(debugLabel: 'scheduleCalendar');
+  final GlobalKey _rosterSectionKey = GlobalKey(debugLabel: 'memberRoster');
   late final LocalElectionShareService _shareService =
       LocalElectionShareService(Supabase.instance.client);
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
@@ -124,6 +129,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   void initState() {
     super.initState();
     _loadInitialState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialState() async {
@@ -248,6 +259,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
+  }
+
+  Future<void> _scrollToSection(GlobalKey key) async {
+    final targetContext = key.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+    await Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      alignment: 0.04,
+    );
   }
 
   List<String> _memberPrefectureOptions(LocalElectionRealitySnapshot snapshot) {
@@ -973,6 +997,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -1336,6 +1361,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             else if (realitySnapshot == null)
               _buildEmptyRealityState()
             else ...[
+              if (_isPublicView) ...[
+                _buildPublicRealityNavigator(realitySnapshot),
+                const SizedBox(height: 16),
+              ],
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -1435,6 +1464,77 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildPublicRealityNavigator(LocalElectionRealitySnapshot snapshot) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '公開ビューの見どころ',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '地方議員数推移グラフ、地方選挙カレンダー、現職地方議員一覧を公開ビューから直接確認できます。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusChip(
+                '推移 ${_formatInt(_historyPointsForDisplay(snapshot).length)} 点',
+                color: const Color(0xFF0891B2),
+              ),
+              _buildStatusChip(
+                '日程 ${_formatInt(snapshot.upcomingSchedules.length)} 件',
+                color: const Color(0xFF2563EB),
+              ),
+              _buildStatusChip(
+                '名簿 ${_formatInt(snapshot.rosterCount)} 人',
+                color: const Color(0xFF7C3AED),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_historySectionKey),
+                icon: const Icon(Icons.show_chart),
+                label: const Text('議員数推移'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_scheduleSectionKey),
+                icon: const Icon(Icons.calendar_month),
+                label: const Text('選挙カレンダー'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_rosterSectionKey),
+                icon: const Icon(Icons.groups_2_outlined),
+                label: const Text('地方議員一覧'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   List<LocalElectionRealityHistoryPoint> _historyPointsForDisplay(
     LocalElectionRealitySnapshot snapshot,
   ) {
@@ -1482,6 +1582,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             .reduce((left, right) => left < right ? left : right);
 
     return Column(
+      key: _historySectionKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -2029,6 +2130,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
 
     return Column(
+      key: _scheduleSectionKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -2630,6 +2732,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         filteredMembers.where((item) => item.profile.trim().isNotEmpty).length;
 
     return Column(
+      key: _rosterSectionKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
