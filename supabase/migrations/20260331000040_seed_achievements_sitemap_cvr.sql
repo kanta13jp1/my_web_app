@@ -12,4 +12,4 @@ VALUES
     '比較ページCVRトラッキングをAdminダッシュボードに統合完了。admin_analytics_pageに_buildComparisonCvrCard()を追加し、app_analyticsのsource_details JSONBから全競合別到達数・CVR%をリアルタイム表示。4インスタンス並列開発で競合なく統合。',
     '2026-03-31'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;
