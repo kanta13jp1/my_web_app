@@ -3959,6 +3959,9 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // 最上部: 競合21社 vs 開発進捗バー
+                            const GrowthRoadmapProgressCard(),
+                            const SizedBox(height: 12),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                               const SizedBox(height: 10),
@@ -4243,8 +4246,6 @@ abstinence_slip_details: $slipDetailsText
                               highlightedToolIds: highlightedToolIds,
                               badgeLabels: toolBadgeLabels,
                             ),
-                            const SizedBox(height: 16),
-                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'RECENT TOOLS',

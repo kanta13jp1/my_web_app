@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/ai_secretary_page.dart';
 import '../pages/ai_search_page.dart';
 import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
@@ -472,6 +473,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
       requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'ai-secretary',
+      sectionId: 'knowledge',
+      title: 'AI秘書',
+      subtitle: '戦略提案・事業計画・全部署に横断指示',
+      icon: Icons.support_agent,
+      color: Colors.indigo,
+      keywords: const <String>['AI秘書', '戦略', '提案', 'secretary'],
+      onOpen: (context) => _pushPage(context, const AISecretaryPage()),
+      requiresClearDeck: false,
     ),
     HomeToolEntry(
       id: 'note-list',
