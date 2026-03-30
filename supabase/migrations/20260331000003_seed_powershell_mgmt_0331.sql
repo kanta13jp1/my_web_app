@@ -31,4 +31,4 @@ VALUES
     'cs-check スケジュールタスクのプロンプトを更新。自己修復ステップ (auto-review Issue の自動修正) と schedule_task_runs テーブルへの実行ログ記録を追加。毎時の cs-check が正常動作中 (昨日4回実行確認)。',
     '2026-03-31'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;

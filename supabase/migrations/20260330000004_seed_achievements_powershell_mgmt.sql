@@ -22,4 +22,4 @@ VALUES
     'VSCode(lib/フロントエンド) / Web(supabase/functions/) / Windows(docs/マイグレーション) / PowerShell(全体管理) の4インスタンス並列開発体制を確立。git pull --rebase による競合防止ルールを整備。',
     '2026-03-30'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;

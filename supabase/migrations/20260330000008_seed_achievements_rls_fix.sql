@@ -12,4 +12,4 @@ VALUES
     'VSCode/Web/Windows/PowerShell 4インスタンスの役割分担と競合防止手順をdocs/MULTI_INSTANCE_COORDINATION.mdとしてドキュメント化。git pull --rebaseルールとRLS設計原則を明記。',
     '2026-03-30'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;

@@ -12,4 +12,4 @@ VALUES
     '比較ページCVRトラッキング完成でROADMAP残課題を1件解消。election_management_dashboard.dartをelection_victory_pageに統合済みのため削除。git rebase競合防止ルールを実践し全インスタンスのコミットをmainブランチに統合。',
     '2026-03-31'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;
