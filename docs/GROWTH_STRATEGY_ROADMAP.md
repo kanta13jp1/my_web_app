@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-30 PowerShell全体管理セッション (管理者ユーザー管理強化・Schedule自己修復タスク登録・4インスタンス並列開発体制確立)
+最終更新: 2026-03-30 daily-development #3 (チームワークスペース実装・比較ページ個別OGP対応・flutter analyze修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -343,6 +343,12 @@
 - **コードブロック コピーボタン追加** (daily-development #2 2026-03-30): `markdown_preview.dart` の `CodeElementBuilder` に `_CopyCodeButton` StatefulWidget を追加。言語ラベルバーの右端にCopy/Copiedトグルボタン。クリック後2秒でリセット。`services.dart` の `Clipboard.setData` で実装。コードブロック（言語指定あり・なし両方）に対応。Notionパリティ「コードブロック: 部分実装 → 実装済み」に格上げ。
 - **RadioListTile deprecated API 修正** (daily-development #2 2026-03-30): Flutter 3.32.0+ で `groupValue`/`onChanged` が非推奨になった `RadioListTile` を `growth_acquisition_signal_page.dart` で修正。flutter analyze 0件を維持。
 
+### 2026-03-30 daily-development #3 実装済み
+
+- **チームワークスペース基盤実装** (daily-development #3 2026-03-30): `teams` / `team_memberships` / `team_shared_notes` の3テーブルをRLS付きで新設（migration `20260330000005_create_team_workspace.sql`）。招待コード（8文字ランダム英数字）方式でメンバー招待が可能なB2B対応の共有基盤を構築。`TeamWorkspacePage` を新規作成（`TabController` で「自分のチーム」「参加中」タブ・チーム作成ダイアログ・招待コード表示+コピー・参加ダイアログ・退出・削除）。`/team-workspace` ルートを `main.dart` に追加。業務メニューカタログの `growth` セクションにエントリ追加。`sitemap.xml` に追加（合計24URL）。中期ロードマップ「Team workspace」基盤を先行着手。
+- **比較ページ個別OGPメタタグ対応** (daily-development #3 2026-03-30): 14社の競合比較ページ（`/vs-notion` 〜 `/vs-amazon`）に対してそれぞれ固有の `og:title` / `og:description` / `twitter:title` / `twitter:description` を `index.html` SEOシェルスクリプトで動的設定。URLパスの `/vs-{competitor}` パターンをJSで検出し競合固有のコピーに切り替え。SNSシェア時のカードの訴求力向上と比較キーワードからの有機流入改善を狙う。「残課題」から「各比較ページへの個別OGP」を解消。
+- **local_election_share_service.dart flutter analyze 修正** (daily-development #3 2026-03-30): `require_trailing_commas` エラー2件を修正。flutter analyze 0件を維持。
+
 ### 競合動向ログ (2026-03-30)
 
 - **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務
@@ -382,8 +388,8 @@
 - referral reward ポイント付与の実際の運用確認
 - ~~B2B 営業資料の整備開始~~ ✅ 2026-03-30 `/enterprise` ページ実装完了（コスト比較・問い合わせフォーム）
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
-- Google Search Console へのサイトマップ再送信（23 URLs）
-- 各比較ページへの個別OGP画像生成
+- Google Search Console へのサイトマップ再送信（24 URLs）
+- ~~各比較ページへの個別OGP画像生成~~ ✅ 2026-03-30 個別OGPメタタグ (og:title/og:description) を14社分SEOシェルに追加完了
 - 比較ページ経由の登録CVRトラッキング
 
 ---
@@ -558,7 +564,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 #### 中期 (3-12ヶ月) で補填すべきギャップ
 
-- **Team workspace**: リアルタイム共同編集の基盤
+- **Team workspace**: リアルタイム共同編集の基盤 ✅ 2026-03-30 基盤実装済み (teams/team_memberships/team_shared_notes テーブル・招待コード方式・TeamWorkspacePage)
 - ~~**コメント機能**~~: ✅ 2026-03-30実装完了 (note_comments テーブル RLS付き・Edge Function・AppBar バッジ・DraggableBottomSheet)
 - **モバイルアプリ**: Flutter iOS/Android ビルドのリリース
 

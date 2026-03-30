@@ -1,3 +1,5 @@
+// ignore_for_file: require_trailing_commas
+
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -100,6 +102,10 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,
   }) {
+    if (publicUrl.isNotEmpty) {
+      final body = buildXShareBody(snapshot: snapshot);
+      return '$body\n\n$publicUrl';
+    }
     final prefectures = _prefecturesForDisplay(snapshot);
     final missingCount =
         prefectures.where((item) => item.currentMembers == 0).length;
@@ -130,6 +136,29 @@ class LocalElectionShareService {
     return lines.join('\n').trim();
   }
 
+  String buildXShareBody({
+    required LocalElectionRealitySnapshot snapshot,
+  }) {
+    return buildXShareText(
+      snapshot: snapshot,
+      publicUrl: '',
+    );
+  }
+
+  Uri buildXShareIntentUri({
+    required LocalElectionRealitySnapshot snapshot,
+    required String publicUrl,
+  }) {
+    return Uri.https(
+      'x.com',
+      '/intent/tweet',
+      <String, String>{
+        'text': buildXShareBody(snapshot: snapshot),
+        'url': publicUrl,
+      },
+    );
+  }
+
   int buildSyntheticNoteId(LocalElectionRealitySnapshot snapshot) {
     final dateKey = int.parse(
       _dateOnlyFormat.format(snapshot.fetchedAt.toLocal()).replaceAll('/', ''),
@@ -143,7 +172,8 @@ class LocalElectionShareService {
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
   }) {
-    final missing = prefectures.where((item) => item.currentMembers == 0).toList();
+    final missing =
+        prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
         .where(
           (item) =>
@@ -163,7 +193,8 @@ class LocalElectionShareService {
         '2023年統一地方選実績: ${snapshot.official2023FirstHalfWins} + '
         '${snapshot.official2023SecondHalfWins} = ${snapshot.official2023TotalWins}',
       )
-      ..writeln('議員在籍県数: ${prefectures.where((item) => item.currentMembers > 0).length}県')
+      ..writeln(
+          '議員在籍県数: ${prefectures.where((item) => item.currentMembers > 0).length}県')
       ..writeln('現職名簿件数: ${members.length}人');
 
     if (snapshot.aiSummary.trim().isNotEmpty) {
@@ -197,7 +228,8 @@ class LocalElectionShareService {
     if (missing.isEmpty) {
       buffer.writeln('- 🔴議員不在県なし');
     } else {
-      buffer.writeln('- 🔴議員不在 ${missing.length}県: ${missing.map((item) => item.prefecture).join('、')}');
+      buffer.writeln(
+          '- 🔴議員不在 ${missing.length}県: ${missing.map((item) => item.prefecture).join('、')}');
     }
     if (low.isEmpty) {
       buffer.writeln('- 🟡要強化県なし');
@@ -243,7 +275,8 @@ class LocalElectionShareService {
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
   }) {
-    final missing = prefectures.where((item) => item.currentMembers == 0).toList();
+    final missing =
+        prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
         .where(
           (item) =>
@@ -329,8 +362,8 @@ class LocalElectionShareService {
       if (prefectureCompare != 0) {
         return prefectureCompare;
       }
-      final categoryCompare =
-          categoryRank(left.assemblyCategory) - categoryRank(right.assemblyCategory);
+      final categoryCompare = categoryRank(left.assemblyCategory) -
+          categoryRank(right.assemblyCategory);
       if (categoryCompare != 0) {
         return categoryCompare;
       }

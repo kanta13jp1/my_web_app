@@ -65,6 +65,7 @@ import '../pages/growth_weekly_digest_page.dart';
 import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
+import '../pages/team_workspace_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -845,6 +846,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['集客', 'シグナル', 'acquisition', 'signal'],
       onOpen: (context) =>
           _pushPage(context, const GrowthAcquisitionSignalPage()),
+    ),
+    HomeToolEntry(
+      id: 'team-workspace',
+      sectionId: 'growth',
+      title: 'チームワークスペース',
+      subtitle: 'チームを作成して招待コードでメンバーを招く',
+      icon: Icons.group_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['チーム', 'team', 'ワークスペース', '招待', '共有', 'コラボ'],
+      onOpen: (context) => _pushPage(context, const TeamWorkspacePage()),
     ),
   ];
 }

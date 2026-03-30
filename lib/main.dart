@@ -66,6 +66,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
+import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -471,6 +472,10 @@ class MyApp extends StatelessWidget {
           case '/ai-secretary':
             return MaterialPageRoute(
               builder: (_) => const AISecretaryPage(),
+            );
+          case '/team-workspace':
+            return MaterialPageRoute(
+              builder: (_) => const TeamWorkspacePage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
