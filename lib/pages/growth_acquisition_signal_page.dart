@@ -111,19 +111,67 @@ class _GrowthAcquisitionSignalPageState
                 itemBuilder: (context, index) {
                   final signal = _signals[index];
                   final label = _signalLabels[signal] ?? signal;
-                  return RadioListTile<String>(
-                    title: Text(label),
-                    subtitle: Text(
-                      signal,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
+                  final selected = _selectedSignal == signal;
+                  return InkWell(
+                    onTap: () => setState(() => _selectedSignal = signal),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selected
+                                    ? Colors.green
+                                    : Colors.grey,
+                                width: 2,
+                              ),
+                            ),
+                            child: selected
+                                ? Center(
+                                    child: Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                Text(
+                                  signal,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    value: signal,
-                    groupValue: _selectedSignal,
-                    onChanged: (v) => setState(() => _selectedSignal = v),
-                    activeColor: Colors.green,
                   );
                 },
               ),
