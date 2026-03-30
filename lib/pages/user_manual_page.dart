@@ -35,14 +35,11 @@ class UserManualPage extends StatelessWidget {
             '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n'
             '・「今日の名言」カード: 哲学者の名言が毎日更新されます。X へのシェアや画像URLのコピーが可能です。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
-            '・CEO OFFICE — 朝のブリーフィング・毎日の習慣\n'
-            '・OFFICE KPI SNAPSHOT — CFO(財務)・CMO(成長)・CHO(健康)・CHRO(人事) の指標一覧\n'
-            '・KPI SUMMARY — 月次収支・タスク達成率などの総合グラフ\n'
-            '・OPERATIONS CALENDAR — 支払い・締切の月次カレンダー\n'
-            '・SPECIAL PROJECT — 期限付き重要プロジェクト（選挙戦略室など）\n'
             '・QUICK ACCESS — 全ツールをセクション別に表示（今日の運用/特別案件/生活・整理/財務・健康・人事/知識・意思決定/成長・発信）\n'
-            '・RECENT TOOLS — 最近使ったツールへのクイックリンク\n'
-            '・開発・成長実績 — 実装済み機能の履歴（期間フィルタあり）\n\n'
+            '・OFFICE KPI SNAPSHOT — CFO(財務)・CMO(成長)・CHO(健康)・CHRO(人事) の指標一覧\n'
+            '・開発・成長実績 — 実装済み機能の履歴（期間フィルタあり）\n'
+            '・競合機能比較カード — 21競合との機能比較をタブで表示\n'
+            '・Edge Functions 実装状況 — バックエンド API の UI 連携状況\n\n'
             '※ QUICK ACCESS セクションのグリッドボタンをタップして各機能を開きます。\n\n'
             '【性格診断バナー】\n'
             '画面上部にあなたの性格タイプが表示されます（MBTI 16タイプ診断済みの場合）。\n'
@@ -50,10 +47,10 @@ class UserManualPage extends StatelessWidget {
             '未診断の場合は「性格診断を受ける」ボタンが表示されます。\n\n'
             '【ロックアイコン（🔒）が表示される場合】\n'
             '以下の条件をすべて満たすと、一部の探索的機能のロックが解除されます:\n'
-            '1. 「CEO OFFICE」→「モーニング・ブリーフィング」を当日中に開く\n'
+            '1. 「QUICK ACCESS」→「今日の運用」→「モーニングブリーフィング」を当日中に開く\n'
             '2. 未完了の緊急タスク（赤いアラート）がない\n'
             '3. 禁欲ガード逸脱カウントが0\n'
-            '新規ユーザーの方は まず「CEO OFFICE」→「モーニング・ブリーフィング」から始めてください。',
+            '新規ユーザーの方は まず「QUICK ACCESS」→「今日の運用」→「モーニングブリーフィング」から始めてください。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -77,8 +74,8 @@ class UserManualPage extends StatelessWidget {
             '「公開する」をタップすると公開リンク（/public-memo?id=XXX）が生成されます。\n'
             'X(Twitter)などで共有するとタイトルと要約がカードで表示されます（OGP対応）。\n'
             '※ タイトルを入力した状態でないと公開できません。\n\n'
-            '【カンバンボード (CSO OFFICE)】\n'
-            '「CSO OFFICE」セクション →「カンバンボード」をタップ。\n'
+            '【カンバンボード】\n'
+            'ホーム画面「QUICK ACCESS」→「知識・意思決定」→「カンバンボード」をタップ。\n'
             'いつかやるタスクを To Do / 進行中 / 完了 の3列で管理できます。\n'
             'カード右上の「⋮」→「進行中に移動」「完了にする」でステータスを変更します。',
             subColor,
@@ -89,7 +86,7 @@ class UserManualPage extends StatelessWidget {
           _buildContent(
             '自分株式会社は Notion / Evernote / MoneyForward / X (Twitter) / GitHub / Markdown ファイルからのインポートに対応しています。\n\n'
             '【インポート画面の開き方】\n'
-            'ホーム画面を下にスクロール →「GROWTH / 成長導線」セクション →「インポート」ボタンをタップ。\n'
+            'ホーム画面「QUICK ACCESS」→「成長・発信」→「インポート」ボタンをタップ。\n'
             '（または、アドレスバーに /import を入力してアクセス）\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             '【Notion からのエクスポート手順】\n'
@@ -161,7 +158,7 @@ class UserManualPage extends StatelessWidget {
             '1. .md ファイルまたは .txt ファイルを用意\n'
             '2. インポート画面で「ファイルを選択」→ファイルを選択\n'
             '3.「インポート開始」をタップ\n\n'
-            '※ インポート後は「CMO/CKO OFFICE」→「メモ一覧 (CKO)」でデータを確認できます。',
+            '※ インポート後は「QUICK ACCESS」→「知識・意思決定」→「メモ一覧」でデータを確認できます。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -264,7 +261,7 @@ class UserManualPage extends StatelessWidget {
             '3. エディタ右上の「🌐（公開）」アイコンをタップ → 確認ダイアログで「公開する」をタップ\n'
             '4. 「/public-memos で確認できます」というメッセージが表示されれば公開完了です\n\n'
             '【公開メモの一覧】\n'
-            'ホーム画面「GROWTH / 成長導線」セクション →「公開メモ一覧」をタップ。\n'
+            'ホーム画面「QUICK ACCESS」→「成長・発信」→「公開メモ一覧」をタップ。\n'
             'またはアドレスバーに /public-memos を入力。\n\n'
             '【SNS シェア時の表示】\n'
             '公開リンクを X(Twitter) などで共有すると、メモのタイトルと要約がカードで表示されます（OGP対応）。',
@@ -280,7 +277,7 @@ class UserManualPage extends StatelessWidget {
             'ホーム画面上部の「開発・成長実績」カード右上のドロップダウンで期間を選択（今日・今週・今月・直近3ヶ月など）。\n'
             '「＋」ボタンから新しい実績を手動追加することもできます。\n\n'
             '【成長ミッション（KPI ダッシュボード）】\n'
-            'ホーム画面「GROWTH / 成長導線」セクション →「成長ミッション」をタップ。\n'
+            'ホーム画面「QUICK ACCESS」→「成長・発信」→「成長ミッション」をタップ。\n'
             'KPI・獲得チャネル・週次ダイジェストを確認できます。\n\n'
             '【競合機能比較カード】\n'
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
@@ -294,14 +291,50 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('7. AI・モーニングブリーフィング', textColor),
           _buildContent(
             '【モーニングブリーフィング】\n'
-            'ホーム画面「CEO OFFICE」セクション →「モーニング・ブリーフィング」カードをタップ。\n'
+            'ホーム画面「QUICK ACCESS」→「今日の運用」→「モーニングブリーフィング」をタップ。\n'
             '今日の優先事項・天気・スケジュールを AI がまとめて提示します。\n\n'
-            '【緊急役員会議】\n'
-            '「CEO OFFICE」セクション →「緊急役員会議」カードをタップ。\n'
-            'AI が今日取り組むべき最重要課題を提示します。\n\n'
+            '【緊急取締役会】\n'
+            'ホーム画面「QUICK ACCESS」→「特別案件」→「緊急取締役会」をタップ。\n'
+            'AI 役員（CEO/CFO/CMO/CHRO/CHO）が即席の経営判断・PDCA提案を行います。\n\n'
             '【Gemini 大学】\n'
-            'ホーム画面「CMO/CKO OFFICE」セクション →「Gemini大学」をタップ。\n'
-            'AI による学習支援・質問回答を受けられます。',
+            'ホーム画面「QUICK ACCESS」→「知識・意思決定」→「Gemini 大学」をタップ。\n'
+            'AI による学習支援・質問回答を受けられます。\n\n'
+            '【思考停止ログ (今日の運用)】\n'
+            'ホーム画面「QUICK ACCESS」→「今日の運用」→「思考停止ログ」をタップ。\n'
+            '必須タスクと読書ループを処理して思考リソースを節約します。\n\n'
+            '【週末ストック / 思考ネタ (今日の運用)】\n'
+            'ホーム画面「QUICK ACCESS」→「今日の運用」→「週末ストック / 思考ネタ」をタップ。\n'
+            '土曜の積み残しとアイデアを整頓します。\n\n'
+            '【市場分析 (CMO)】\n'
+            'ホーム画面「QUICK ACCESS」→「知識・意思決定」→「市場分析 (CMO)」をタップ。\n'
+            '市場・競合・集客指標を俯瞰して成長戦略を立案します。\n\n'
+            '【マインドマップ】\n'
+            'ホーム画面「QUICK ACCESS」→「知識・意思決定」→「マインドマップ」をタップ。\n'
+            '思考構造を視覚的に整理します。ノードを追加・削除して自由に構造化できます。\n\n'
+            '【健康管理 (CHO)】\n'
+            'ホーム画面「QUICK ACCESS」→「財務・健康・人事」→「健康管理 (CHO)」をタップ。\n'
+            '健康指標と習慣を一元管理します。\n\n'
+            '【人事厚生 (CHRO)】\n'
+            'ホーム画面「QUICK ACCESS」→「財務・健康・人事」→「人事厚生 (CHRO)」をタップ。\n'
+            '福利厚生や生活支援を管理します。\n\n'
+            '【資産管理】\n'
+            'ホーム画面「QUICK ACCESS」→「財務・健康・人事」→「資産管理」をタップ。\n'
+            '投資・貯蓄・資産ポートフォリオを一元管理します。\n\n'
+            '【ワードローブ整理】\n'
+            'ホーム画面「QUICK ACCESS」→「生活・整理」→「ワードローブ整理」をタップ。\n'
+            '服の棚卸しと状態確認を行います。\n\n'
+            '【断捨離 (リアル)】\n'
+            'ホーム画面「QUICK ACCESS」→「生活・整理」→「断捨離 (リアル)」をタップ。\n'
+            '現実の持ち物を写真付きで整理します。\n\n'
+            '【AI稼働モニター】\n'
+            'ホーム画面「QUICK ACCESS」→「生活・整理」→「AI稼働モニター」をタップ。\n'
+            'AI モデルの状態や疎通を確認します。\n\n'
+            '【プレスリリース生成 (CMO)】\n'
+            'ホーム画面「QUICK ACCESS」→「成長・発信」→「プレスリリース生成 (CMO)」をタップ。\n'
+            'SNS・Zenn・note 向けの広報文を AI が生成します。\n\n'
+            '【2026衆院選 勝利戦略室】\n'
+            'ホーム画面「QUICK ACCESS」→「特別案件」→「2026 衆院選 勝利戦略室」をタップ。\n'
+            'AI参謀と地域特性を踏まえた選挙戦略を立案します。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -332,7 +365,7 @@ class UserManualPage extends StatelessWidget {
           _buildContent(
             '毎日の技術ブログ投稿をこのアプリで管理できます。\n\n'
             '【投稿管理画面の開き方】\n'
-            '・ホーム画面「GROWTH / 成長導線」セクション →「ブログ投稿管理」をタップ\n'
+            '・ホーム画面「QUICK ACCESS」→「成長・発信」→「ブログ投稿管理」をタップ\n'
             '・または、アドレスバーに /tech-blog-tracker を入力\n\n'
             '【対応プラットフォーム（11種類）】\n'
             'Zenn / Qiita / はてなブログ / note / Medium / dev.to / Hashnode / Substack / GitHub Pages / NOTION / X Article\n\n'
@@ -398,8 +431,8 @@ class UserManualPage extends StatelessWidget {
             '「スケジュールタスク監視」カードで確認できます（要: 管理者権限）。\n\n'
             '【管理者ダッシュボードへのアクセス】\n'
             '・アドレスバーに /admin を直接入力（最速）\n'
-            '・ホーム画面を下にスクロール →「GROWTH / 成長導線」→「管理者ダッシュボード」\n'
-            '・ホーム画面「OFFICE KPI SNAPSHOT」セクション →「分析を見る」をタップ',
+            '・ホーム画面「QUICK ACCESS」→「成長・発信」→「管理者ダッシュボード」\n'
+            '・ホーム画面「OFFICE KPI SNAPSHOT」→「分析を見る」をタップ',
             subColor,
           ),
           _buildSectionTitle('13. Edge Functions 実装状況', textColor),
@@ -421,7 +454,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('14. プロフィール完成度', textColor),
           _buildContent(
             '「成長・支援ダッシュボード」の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n'
-            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」からアクセス）\n\n'
+            '（ホーム画面「QUICK ACCESS」→「成長・発信」→「成長・支援ダッシュボード」からアクセス）\n\n'
             '【完成度の計算対象（7項目）】\n'
             '表示名 / アイコン画像 / 自己紹介 / 場所 / Twitter / GitHub / Web サイト URL\n\n'
             '【色の意味】\n'
@@ -440,7 +473,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('15. 成長・支援ダッシュボード', textColor),
           _buildContent(
             'ホーム画面から退避した補助カードをまとめて確認できるダッシュボードです。\n'
-            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」、または業務メニューからアクセス）\n\n'
+            '（ホーム画面「QUICK ACCESS」→「成長・発信」→「成長・支援ダッシュボード」、または業務メニューからアクセス）\n\n'
             '【AI アシスト】\n'
             '・ノート検索 / クイックタスク入力 / AI ゴール分解 / プロフィール完成度\n\n'
             '【成長シグナル】\n'
@@ -475,7 +508,7 @@ class UserManualPage extends StatelessWidget {
             '・週次 SNS 投稿ドラフト生成\n'
             '・依存パッケージの脆弱性チェック\n\n'
             '【管理者ダッシュボードでの確認方法】\n'
-            'ホーム → GROWTH / 成長導線 →「管理者ダッシュボード」をタップ\n'
+            'ホーム → QUICK ACCESS」→「成長・発信 →「管理者ダッシュボード」をタップ\n'
             '→「Schedule タスク実行状況」カードで最終実行日時・ステータスを確認できます。',
             subColor,
           ),
