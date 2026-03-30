@@ -18,7 +18,7 @@ CREATE POLICY "teams_insert" ON teams FOR INSERT WITH CHECK (owner_id = auth.uid
 CREATE POLICY "teams_update" ON teams FOR UPDATE USING (owner_id = auth.uid());
 CREATE POLICY "teams_delete" ON teams FOR DELETE USING (owner_id = auth.uid());
 
--- team_memberships table
+-- team_memberships table (must be created BEFORE teams_select policy)
 CREATE TABLE IF NOT EXISTS team_memberships (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id uuid NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
