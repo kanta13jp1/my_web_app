@@ -134,6 +134,13 @@ jobs:
           supabase functions deploy gemini-election-analysis --no-verify-jwt
           supabase functions deploy agent-runtime-cycle --no-verify-jwt
           supabase functions deploy note-comments
+          supabase functions deploy get-public-memo-ogp --no-verify-jwt
+          supabase functions deploy schedule-task-monitor --no-verify-jwt
+          supabase functions deploy blog-post-manager --no-verify-jwt
+          supabase functions deploy edge-function-coverage --no-verify-jwt
+          supabase functions deploy user-profile-manager --no-verify-jwt
+          supabase functions deploy ai-secretary --no-verify-jwt
+          supabase functions deploy team-task-manager --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

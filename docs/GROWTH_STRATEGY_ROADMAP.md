@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 PowerShell #5 (sitemap 43URL・ApiPlayground/FinancialReport/PaymentChannel/Categories/MedicalNotes統合)
+最終更新: 2026-03-31 session422-web (Edge Function 6本追加: schedule-task-monitor, blog-post-manager, edge-function-coverage, user-profile-manager, ai-secretary, team-task-manager → 47 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -991,6 +991,46 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 2026-03-31 #422 — Web版 Edge Function (6本追加・47 Functions体制)
+
+**実施内容:**
+
+1. **schedule-task-monitor Edge Function**
+   - Claude Code Schedule 実行ログの記録・取得・失敗検知
+   - GET: 実行ログ一覧 (タスク名・ステータスでフィルタ可) + 統計サマリー
+   - POST: 実行ログ記録 (Schedule から呼び出し)
+
+2. **blog-post-manager Edge Function**
+   - 技術ブログ投稿管理 (11プラットフォーム対応)
+   - Zenn, Qiita, はてな, note, Medium, dev.to, Hashnode, Substack, GitHub Pages, Notion, X Article
+   - GET: 投稿一覧・プラットフォーム別統計・今日の投稿数
+   - POST: 下書き作成 / PATCH: ステータス更新
+
+3. **edge-function-coverage Edge Function**
+   - 全 47 Edge Functions の UI 連携状況を返す
+   - 各関数の操作手順・ナビゲーションパスを含む
+   - カバレッジ率算出 (UI あり / なし)
+
+4. **user-profile-manager Edge Function**
+   - プロフィール完成度計算 (7フィールド・重み付きスコア)
+   - プロフィール更新 API (許可フィールドのみ)
+   - 管理者向け全ユーザー一覧 + 完成度付き
+
+5. **ai-secretary Edge Function**
+   - AI 秘書: ルールベース提案生成 (ユーザー獲得・CS・開発・マーケティング)
+   - 会話ログ記録 (ai_secretary_logs テーブル)
+   - ダッシュボード用コンテキスト情報提供
+
+6. **team-task-manager Edge Function**
+   - 12部署20人仮想AI組織のタスク CRUD
+   - 部署別・ステータス別フィルタ
+   - エージェント自動アサイン (部署指定時)
+   - サマリービュー (部署数・タスク数・ステータス別集計)
+
+7. **マイグレーション・デプロイ設定**
+   - `20260331000090_create_schedule_blog_secretary_tables.sql`: 5テーブル + RPC関数 + RLS
+   - deploy-prod.yml: 7関数追加 (get-public-memo-ogp 含む)
 
 ### Session 2026-03-31 — VSCode フロントエンド (ユーザー獲得強化・ナビゲーション修正)
 
