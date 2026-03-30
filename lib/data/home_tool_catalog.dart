@@ -65,9 +65,11 @@ import '../pages/growth_weekly_digest_page.dart';
 import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
+import '../pages/categories_page.dart';
 import '../pages/embedding_lab_page.dart';
 import '../pages/feedback_page.dart';
 import '../pages/health_page.dart';
+import '../pages/medical_notes_page.dart';
 import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/stats_page.dart';
@@ -516,6 +518,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const MentalCheckPage()),
     ),
     HomeToolEntry(
+      id: 'medical-notes',
+      sectionId: 'office',
+      title: '医療メモ',
+      subtitle: '服薬・通院・症状の記録を管理する',
+      icon: Icons.medication_outlined,
+      color: Colors.red,
+      keywords: const <String>['医療', '通院', '服薬', '症状', '病院'],
+      onOpen: (context) => _pushPage(context, const MedicalNotesPage()),
+    ),
+    HomeToolEntry(
       id: 'cmo-office',
       sectionId: 'knowledge',
       title: '市場分析 (CMO)',
@@ -622,6 +634,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.teal,
       keywords: const <String>['カンバン', 'タスク', 'board'],
       onOpen: (context) => _pushPage(context, const KanbanBoardPage()),
+    ),
+    HomeToolEntry(
+      id: 'categories',
+      sectionId: 'knowledge',
+      title: 'カテゴリ管理',
+      subtitle: 'メモ・タスクのカテゴリを整理・編集する',
+      icon: Icons.category_outlined,
+      color: Colors.blueGrey,
+      keywords: const <String>['カテゴリ', 'タグ', '分類', '整理'],
+      onOpen: (context) => _pushPage(context, const CategoriesPage()),
     ),
     HomeToolEntry(
       id: 'personality-test',

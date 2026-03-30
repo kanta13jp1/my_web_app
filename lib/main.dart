@@ -67,9 +67,11 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
+import 'package:my_web_app/pages/categories_page.dart';
 import 'package:my_web_app/pages/embedding_lab_page.dart';
 import 'package:my_web_app/pages/feedback_page.dart';
 import 'package:my_web_app/pages/health_page.dart';
+import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/stats_page.dart';
@@ -516,6 +518,14 @@ class MyApp extends StatelessWidget {
           case '/admin-feedback':
             return MaterialPageRoute(
               builder: (_) => const FeedbackListPage(),
+            );
+          case '/categories':
+            return MaterialPageRoute(
+              builder: (_) => const CategoriesPage(),
+            );
+          case '/medical-notes':
+            return MaterialPageRoute(
+              builder: (_) => const MedicalNotesPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
