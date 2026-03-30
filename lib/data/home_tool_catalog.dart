@@ -67,6 +67,7 @@ import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
 import '../pages/api_playground_page.dart';
 import '../pages/categories_page.dart';
+import '../pages/emergency_meeting_page.dart';
 import '../pages/embedding_lab_page.dart';
 import '../pages/financial_report_page.dart';
 import '../pages/payment_channel_ledger_page.dart';
@@ -277,6 +278,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const ElectionVictoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'emergency-meeting',
+      sectionId: 'special',
+      title: '緊急取締役会',
+      subtitle: 'AI役員が即席の経営会議を開催・PDCA判断を下す',
+      icon: Icons.groups_outlined,
+      color: Colors.deepOrange,
+      keywords: const <String>['緊急', '取締役会', 'AI', '会議', 'PDCA', '経営'],
+      onOpen: (context) => _pushPage(context, const EmergencyMeetingPage()),
     ),
     HomeToolEntry(
       id: 'settings',

@@ -69,6 +69,7 @@ import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
+import 'package:my_web_app/pages/emergency_meeting_page.dart';
 import 'package:my_web_app/pages/embedding_lab_page.dart';
 import 'package:my_web_app/pages/financial_report_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
@@ -541,6 +542,10 @@ class MyApp extends StatelessWidget {
           case '/payment-channel-ledger':
             return MaterialPageRoute(
               builder: (_) => const PaymentChannelLedgerPage(),
+            );
+          case '/emergency-meeting':
+            return MaterialPageRoute(
+              builder: (_) => const EmergencyMeetingPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
