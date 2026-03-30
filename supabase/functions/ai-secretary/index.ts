@@ -46,8 +46,29 @@ serve(async (req) => {
       const recentAchievements = achievementsRes.data ?? [];
       const openTickets = ticketsRes.data ?? [];
 
-      // AI 秘書の提案を生成 (ルールベース)
-      const suggestions: Array<{ priority: string; category: string; title: string; description: string; action: string }> = [];
+      // 部署別タスク状況
+      const { data: agentTasks } = await adminClient
+        .from("agent_tasks")
+        .select("department, status")
+        .in("status", ["pending", "in_progress"]);
+
+      const deptTaskCounts: Record<string, number> = {};
+      for (const t of agentTasks ?? []) {
+        const dept = (t.department as string) ?? "未所属";
+        deptTaskCounts[dept] = (deptTaskCounts[dept] ?? 0) + 1;
+      }
+
+      // Schedule ヘルス
+      const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
+      const { data: scheduleRuns } = await adminClient
+        .from("schedule_task_runs")
+        .select("task_name, status")
+        .gte("started_at", oneDayAgo);
+
+      const failedSchedules = (scheduleRuns ?? []).filter((r) => r.status === "failure");
+
+      // AI 秘書の提案を生成 (ルールベース — 12部署対応)
+      const suggestions: Array<{ priority: string; category: string; title: string; description: string; action: string; department?: string }> = [];
 
       // ユーザー数に基づく提案
       if (totalUsers < 10) {
@@ -101,6 +122,35 @@ serve(async (req) => {
         });
       }
 
+      // Schedule 失敗タスク
+      if (failedSchedules.length > 0) {
+        const uniqueFailed = [...new Set(failedSchedules.map((r) => r.task_name))];
+        suggestions.push({
+          priority: "high",
+          category: "infrastructure",
+          title: `Schedule 失敗タスク: ${uniqueFailed.length} 種`,
+          description: `失敗: ${uniqueFailed.join(", ")}`,
+          action: "Schedule ヘルスチェック画面で詳細を確認し修正",
+          department: "インフラ・運用",
+        });
+      }
+
+      // 部署別タスク負荷
+      const highLoadDepts = Object.entries(deptTaskCounts)
+        .filter(([, count]) => count >= 5)
+        .sort(([, a], [, b]) => b - a);
+
+      if (highLoadDepts.length > 0) {
+        suggestions.push({
+          priority: "medium",
+          category: "organization",
+          title: `高負荷部署: ${highLoadDepts.map(([d]) => d).join(", ")}`,
+          description: highLoadDepts.map(([d, c]) => `${d}: ${c}件`).join(" / "),
+          action: "タスクの優先度を見直し、エージェントの再アサインを検討",
+          department: "経営企画",
+        });
+      }
+
       // 開発実績の連続記録
       suggestions.push({
         priority: "low",
@@ -108,6 +158,7 @@ serve(async (req) => {
         title: `直近の開発実績: ${recentAchievements.length} 件`,
         description: recentAchievements.map((a) => a.title).join(" / "),
         action: "次の実装タスクに取り掛かる",
+        department: "開発",
       });
 
       return new Response(
@@ -120,6 +171,8 @@ serve(async (req) => {
             topFeatureRequests: topRequests.length,
             todayBlogPosts: blogCount ?? 0,
             recentAchievements: recentAchievements.length,
+            failedScheduleTasks: failedSchedules.length,
+            activeDepartmentTasks: deptTaskCounts,
           },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
