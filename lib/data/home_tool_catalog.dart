@@ -66,6 +66,7 @@ import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
 import '../pages/embedding_lab_page.dart';
+import '../pages/settings_page.dart';
 import '../pages/team_workspace_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
@@ -267,6 +268,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const ElectionVictoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'settings',
+      sectionId: 'personal',
+      title: '設定',
+      subtitle: 'テーマ・プロフィール・資産・フィードバックを管理する',
+      icon: Icons.settings_outlined,
+      color: Colors.grey,
+      keywords: const <String>['設定', 'settings', 'テーマ', 'プロフィール', 'フィードバック'],
+      onOpen: (context) => _pushPage(context, const SettingsPage()),
     ),
     HomeToolEntry(
       id: 'my-struggle',

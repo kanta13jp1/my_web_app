@@ -67,6 +67,7 @@ import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/embedding_lab_page.dart';
+import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -486,6 +487,10 @@ class MyApp extends StatelessWidget {
           case '/embedding-lab':
             return MaterialPageRoute(
               builder: (_) => const EmbeddingLabPage(),
+            );
+          case '/settings':
+            return MaterialPageRoute(
+              builder: (_) => const SettingsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
