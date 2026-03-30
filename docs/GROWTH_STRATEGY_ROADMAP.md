@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-30 daily-development #2 (B2Bエンタープライズページ・コードブロックコピーボタン・RadioListTile deprecated修正)
+最終更新: 2026-03-30 PowerShell全体管理セッション (管理者ユーザー管理強化・Schedule自己修復タスク登録・4インスタンス並列開発体制確立)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -117,6 +117,9 @@
 - **get-growth-roadmap-progress** (2026-03-25 新規作成): user_profiles からユーザー数、growth_plans テーブルから計画データを取得して返す Edge Function。GrowthRoadmapProgressCard が呼び出す。growth_plans が空の場合は16項目のデフォルトデータを自動シードする。
 - growth-weekly-digest (2026-03-25 追加)
 - import 画面の backend-first execution result 表示
+- **PowerShell 4インスタンス並列開発体制** (2026-03-30): VSCode(lib/) / Web(supabase/functions/) / Windows(docs/) / PowerShell(全体管理) の4並列体制を確立。git pull --rebase による競合防止
+- **管理者ユーザー管理強化** (2026-03-30): user_profiles に is_admin・profile_completeness・last_login_at を追加。管理者が全ユーザーのプロフィール完成度を管理可能に
+- **Schedule 自己修復タスク** (2026-03-30): cs-check に GitHub Issue の自動修正フロー統合。daily-report に schedule_task_runs 記録とヘルスモニター統合。失敗タスクの自動リトライを実現
 - **ScheduleTaskMonitorCard** (2026-03-26): 管理者ダッシュボードに Schedule タスク実行状況モニター追加。9 タスクの名前・スケジュール・最終実行・ステータスを表示
 - **SeoMetaHelper + 公開メモ SEO/OGP 強化** (2026-03-26): 公開メモ詳細ページで og:title/og:description/og:url/Twitter Card を動的に設定。離脱時リセット
 - **health-check Edge Function** (2026-03-26): DB 接続性・レイテンシ・必須 6 テーブルの可用性チェック
