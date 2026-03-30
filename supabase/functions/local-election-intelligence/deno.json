@@ -1,3 +1,8 @@
 {
-  "imports": {}
+  "imports": {},
+  "lint": {
+    "rules": {
+      "exclude": ["no-import-prefix"]
+    }
+  }
 }
