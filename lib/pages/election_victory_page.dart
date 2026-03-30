@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/local_election_plan.dart';
@@ -110,6 +112,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
   String _memberSearchQuery = '';
   int _visibleMemberCount = _memberPageSize;
+  List<LocalElectionRealityHistoryPoint> _realityHistory =
+      const <LocalElectionRealityHistoryPoint>[];
+  CalendarFormat _scheduleCalendarFormat = CalendarFormat.month;
+  DateTime _scheduleFocusedDay = DateTime.now();
+  DateTime? _selectedScheduleDay;
 
   bool get _isPublicView => widget.publicView;
 
@@ -123,6 +130,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final results = await Future.wait<dynamic>([
       _service.loadPlan(),
       _realityService.loadCachedSnapshot(),
+      _realityService.loadSnapshotHistory(),
     ]);
     if (!mounted) {
       return;
@@ -130,15 +138,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     final plan = results[0] as LocalElectionPlanDashboard;
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
+    final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
+      _realityHistory = cachedHistory;
       _publishedRealityMemo = null;
       if (!plan.regionLabels.contains(_selectedRegion)) {
         _selectedRegion = _allLabel;
       }
       _syncMemberSelection(cachedSnapshot);
+      _syncScheduleSelection(cachedSnapshot);
       _isLoading = false;
     });
 
@@ -194,6 +205,49 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!prefectureLabels.contains(_selectedMemberPrefecture)) {
       _selectedMemberPrefecture = _allLabel;
     }
+  }
+
+  void _syncScheduleSelection(LocalElectionRealitySnapshot? snapshot) {
+    final selectedDay = _bestScheduleSelection(snapshot);
+    _selectedScheduleDay = selectedDay;
+    _scheduleFocusedDay = selectedDay ?? _normalizeDate(DateTime.now());
+  }
+
+  DateTime? _bestScheduleSelection(LocalElectionRealitySnapshot? snapshot) {
+    if (snapshot == null || snapshot.upcomingSchedules.isEmpty) {
+      return null;
+    }
+
+    final normalizedCurrent = _selectedScheduleDay == null
+        ? null
+        : _normalizeDate(_selectedScheduleDay!);
+    if (normalizedCurrent != null &&
+        _scheduleEventsForDay(snapshot, normalizedCurrent).isNotEmpty) {
+      return normalizedCurrent;
+    }
+
+    final now = _normalizeDate(DateTime.now());
+    final upcoming = _sortedScheduleEntries(snapshot);
+    for (final item in upcoming) {
+      final voteDate = item.parsedVoteDate;
+      if (voteDate == null) {
+        continue;
+      }
+      final normalized = _normalizeDate(voteDate.toLocal());
+      if (!normalized.isBefore(now)) {
+        return normalized;
+      }
+    }
+
+    final firstDate = upcoming.first.parsedVoteDate;
+    if (firstDate == null) {
+      return now;
+    }
+    return _normalizeDate(firstDate.toLocal());
+  }
+
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   List<String> _memberPrefectureOptions(LocalElectionRealitySnapshot snapshot) {
@@ -381,14 +435,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     try {
       final snapshot = await _realityService.fetchLatestSnapshot();
+      final history = await _realityService.loadSnapshotHistory();
       if (!mounted) {
         return;
       }
       setState(() {
         _realitySnapshot = snapshot;
+        _realityHistory = history;
         _realityError = null;
         _publishedRealityMemo = null;
         _syncMemberSelection(snapshot);
+        _syncScheduleSelection(snapshot);
       });
       unawaited(_loadPublishedRealityMemo(snapshot));
       if (showSnackBar) {
@@ -1330,6 +1387,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ],
               ),
               const SizedBox(height: 20),
+              _buildRealityHistorySection(realitySnapshot),
+              const SizedBox(height: 20),
               _buildAiInsightSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildRealityPrefectureSection(realitySnapshot),
@@ -1370,6 +1429,263 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             '公式ソースから地方議員数と2023年実績を再取得すると、'
             '計画値と実数のズレ、上位県、AI要約がここに表示されます。',
             style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<LocalElectionRealityHistoryPoint> _historyPointsForDisplay(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final history = List<LocalElectionRealityHistoryPoint>.from(_realityHistory)
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+
+    if (!snapshot.hasData) {
+      return history;
+    }
+
+    final currentPoint = LocalElectionRealityHistoryPoint(
+      fetchedAt: snapshot.fetchedAt,
+      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+    );
+    final currentDay = _normalizeDate(currentPoint.fetchedAt.toLocal());
+
+    if (history.isEmpty) {
+      return <LocalElectionRealityHistoryPoint>[currentPoint];
+    }
+
+    final hasCurrentDay = history.any(
+      (item) => _normalizeDate(item.fetchedAt.toLocal()) == currentDay,
+    );
+    if (!hasCurrentDay) {
+      history.add(currentPoint);
+      history.sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    }
+
+    return history;
+  }
+
+  Widget _buildRealityHistorySection(LocalElectionRealitySnapshot snapshot) {
+    final history = _historyPointsForDisplay(snapshot);
+    final latestPoint = history.isEmpty ? null : history.last;
+    final maxCount = history.isEmpty
+        ? snapshot.officialCurrentLocalMembers
+        : history
+            .map((item) => item.officialCurrentLocalMembers)
+            .reduce((left, right) => left > right ? left : right);
+    final minCount = history.isEmpty
+        ? snapshot.officialCurrentLocalMembers
+        : history
+            .map((item) => item.officialCurrentLocalMembers)
+            .reduce((left, right) => left < right ? left : right);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '地方議員数推移',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'ネット取得した公式地方議員数をこの端末で日次履歴として蓄積し、時系列で表示します。取得回数が増えるほど推移グラフが育ちます。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusChip(
+              '履歴 ${_formatInt(history.length)} 点',
+              color: Colors.blueGrey,
+            ),
+            if (latestPoint != null)
+              _buildStatusChip(
+                '最新 ${_formatInt(latestPoint.officialCurrentLocalMembers)} 人',
+                color: const Color(0xFF0891B2),
+              ),
+            _buildStatusChip(
+              '最大 ${_formatInt(maxCount)} 人',
+              color: const Color(0xFF0F766E),
+            ),
+            _buildStatusChip(
+              '最小 ${_formatInt(minCount)} 人',
+              color: const Color(0xFF7C3AED),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (history.isEmpty)
+          _buildInlineNotice(
+            '履歴グラフを描くためのデータがまだありません。最新実データの取得を続けると、ここに地方議員数の推移が蓄積されます。',
+            color: Colors.blueGrey,
+            icon: Icons.show_chart,
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 240,
+                  child: _buildRealityHistoryChart(history),
+                ),
+                if (history.length < 2) ...[
+                  const SizedBox(height: 12),
+                  _buildInlineNotice(
+                    '履歴がまだ1点です。次回以降の取得で時系列の線が伸びます。',
+                    color: Colors.blueGrey,
+                    icon: Icons.timeline,
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRealityHistoryChart(
+    List<LocalElectionRealityHistoryPoint> history,
+  ) {
+    final spots = history.asMap().entries.map((entry) {
+      return FlSpot(
+        entry.key.toDouble(),
+        entry.value.officialCurrentLocalMembers.toDouble(),
+      );
+    }).toList(growable: false);
+    final minCount = history
+        .map((item) => item.officialCurrentLocalMembers)
+        .reduce((left, right) => left < right ? left : right);
+    final maxCount = history
+        .map((item) => item.officialCurrentLocalMembers)
+        .reduce((left, right) => left > right ? left : right);
+    final minY = minCount <= 10 ? 0.0 : (minCount - 5).toDouble();
+    final maxY = (maxCount + 5).toDouble();
+    final maxX = history.length <= 1 ? 1.0 : (history.length - 1).toDouble();
+
+    return LineChart(
+      LineChartData(
+        minX: 0.0,
+        maxX: maxX,
+        minY: minY,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.blueGrey.withValues(alpha: 0.15),
+            strokeWidth: 1,
+          ),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border(
+            left: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index < 0 || index >= history.length) {
+                  return const SizedBox.shrink();
+                }
+                final point = history[index];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    DateFormat('M/d').format(point.fetchedAt.toLocal()),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 46,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: Theme.of(context).textTheme.labelSmall,
+                );
+              },
+            ),
+          ),
+        ),
+        lineTouchData: LineTouchData(
+          enabled: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (spots) {
+              return spots.map((spot) {
+                final index = spot.x.toInt();
+                if (index < 0 || index >= history.length) {
+                  return null;
+                }
+                final point = history[index];
+                return LineTooltipItem(
+                  '${_dateOnlyFormat.format(point.fetchedAt.toLocal())}\n'
+                  '${_formatInt(point.officialCurrentLocalMembers)} 人',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: history.length > 2,
+            color: const Color(0xFF0891B2),
+            barWidth: 3,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: const Color(0xFF0891B2),
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: const Color(0xFF0891B2).withValues(alpha: 0.12),
+            ),
           ),
         ],
       ),
@@ -1803,6 +2119,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ],
         ),
         const SizedBox(height: 12),
+        _buildScheduleCalendar(snapshot),
+        const SizedBox(height: 16),
         if (schedules.isEmpty)
           _buildInlineNotice(
             '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。',
@@ -1815,8 +2133,207 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildScheduleCalendar(LocalElectionRealitySnapshot snapshot) {
+    final calendarEvents = _scheduleEventMap(snapshot);
+    final selectedDay = _selectedScheduleDay ??
+        _bestScheduleSelection(snapshot) ??
+        _normalizeDate(DateTime.now());
+    final selectedEvents = _scheduleEventsForDay(snapshot, selectedDay);
+    final firstDay = _scheduleCalendarFirstDay(snapshot, selectedDay);
+    final lastDay = _scheduleCalendarLastDay(snapshot, selectedDay);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: TableCalendar<LocalElectionScheduleEntry>(
+            locale: 'ja_JP',
+            firstDay: firstDay,
+            lastDay: lastDay,
+            focusedDay: _scheduleFocusedDay,
+            calendarFormat: _scheduleCalendarFormat,
+            selectedDayPredicate: (day) => isSameDay(day, selectedDay),
+            eventLoader: (day) =>
+                calendarEvents[_normalizeDate(day)] ??
+                const <LocalElectionScheduleEntry>[],
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            availableCalendarFormats: const {
+              CalendarFormat.month: '月',
+              CalendarFormat.twoWeeks: '2週',
+              CalendarFormat.week: '週',
+            },
+            onFormatChanged: (format) {
+              if (_scheduleCalendarFormat == format) {
+                return;
+              }
+              setState(() {
+                _scheduleCalendarFormat = format;
+              });
+            },
+            onDaySelected: (selected, focused) {
+              setState(() {
+                _selectedScheduleDay = _normalizeDate(selected);
+                _scheduleFocusedDay = _normalizeDate(focused);
+              });
+            },
+            onPageChanged: (focused) {
+              setState(() {
+                _scheduleFocusedDay = _normalizeDate(focused);
+              });
+            },
+            calendarStyle: CalendarStyle(
+              outsideDaysVisible: false,
+              canMarkersOverflow: false,
+              markersMaxCount: 1,
+              todayDecoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: const BoxDecoration(
+                color: Color(0xFF1D4ED8),
+                shape: BoxShape.circle,
+              ),
+              markerDecoration: BoxDecoration(
+                color: Colors.blueGrey.shade400,
+                shape: BoxShape.circle,
+              ),
+            ),
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, day, events) {
+                if (events.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final severity = events
+                    .map(_scheduleSeverity)
+                    .reduce((left, right) => left < right ? left : right);
+                final color = switch (severity) {
+                  0 => Theme.of(context).colorScheme.error,
+                  1 => Colors.amber.shade800,
+                  _ => const Color(0xFF0F766E),
+                };
+                final countLabel =
+                    events.length > 9 ? '9+' : '${events.length}';
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      countLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '選択日 ${_dateOnlyFormat.format(selectedDay)}',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        if (selectedEvents.isEmpty)
+          _buildInlineNotice(
+            '選択日に該当する地方選挙はありません。',
+            color: Colors.blueGrey,
+            icon: Icons.event_available,
+          )
+        else
+          ...selectedEvents.map(_buildScheduleCard),
+        const SizedBox(height: 12),
+        Text(
+          '日程一覧',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+
+  Map<DateTime, List<LocalElectionScheduleEntry>> _scheduleEventMap(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final map = <DateTime, List<LocalElectionScheduleEntry>>{};
+    for (final item in _sortedScheduleEntries(snapshot)) {
+      final voteDate = item.parsedVoteDate;
+      if (voteDate == null) {
+        continue;
+      }
+      final key = _normalizeDate(voteDate.toLocal());
+      map.putIfAbsent(key, () => <LocalElectionScheduleEntry>[]).add(item);
+    }
+    return map;
+  }
+
+  List<LocalElectionScheduleEntry> _scheduleEventsForDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime day,
+  ) {
+    return _scheduleEventMap(snapshot)[_normalizeDate(day)] ??
+        const <LocalElectionScheduleEntry>[];
+  }
+
+  DateTime _scheduleCalendarFirstDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime fallback,
+  ) {
+    final dates = snapshot.upcomingSchedules
+        .map((item) => item.parsedVoteDate)
+        .whereType<DateTime>()
+        .map((item) => _normalizeDate(item.toLocal()))
+        .toList();
+    if (dates.isEmpty) {
+      return DateTime(fallback.year, fallback.month, 1);
+    }
+    dates.sort();
+    final first = dates.first;
+    return DateTime(first.year, first.month, 1);
+  }
+
+  DateTime _scheduleCalendarLastDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime fallback,
+  ) {
+    final dates = snapshot.upcomingSchedules
+        .map((item) => item.parsedVoteDate)
+        .whereType<DateTime>()
+        .map((item) => _normalizeDate(item.toLocal()))
+        .toList();
+    if (dates.isEmpty) {
+      return DateTime(fallback.year, fallback.month + 3, 0);
+    }
+    dates.sort();
+    final last = dates.last;
+    return DateTime(last.year, last.month + 1, 0);
+  }
+
   List<Widget> _buildScheduleGroups(
-      List<LocalElectionScheduleEntry> schedules,) {
+    List<LocalElectionScheduleEntry> schedules,
+  ) {
     final widgets = <Widget>[];
     String? previousDate;
 

@@ -66,7 +66,10 @@ import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
 import '../pages/embedding_lab_page.dart';
+import '../pages/health_page.dart';
+import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
+import '../pages/stats_page.dart';
 import '../pages/team_workspace_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
@@ -280,6 +283,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SettingsPage()),
     ),
     HomeToolEntry(
+      id: 'stats',
+      sectionId: 'personal',
+      title: '統計 & 実績',
+      subtitle: 'ゲーミフィケーション進捗とバッジを確認する',
+      icon: Icons.emoji_events_outlined,
+      color: Colors.amber,
+      keywords: const <String>['統計', '実績', 'バッジ', 'ゲーミフィケーション', 'レベル'],
+      onOpen: (context) => _pushPage(context, const StatsPage()),
+    ),
+    HomeToolEntry(
       id: 'my-struggle',
       sectionId: 'personal',
       title: '我が闘争',
@@ -480,6 +493,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.indigo,
       keywords: const <String>['人事', '福利厚生', 'CHRO'],
       onOpen: (context) => _pushPage(context, const ChroOfficePage()),
+    ),
+    HomeToolEntry(
+      id: 'health',
+      sectionId: 'office',
+      title: '健康ログ',
+      subtitle: '体調・睡眠・運動の記録を蓄積する',
+      icon: Icons.monitor_heart_outlined,
+      color: Colors.teal,
+      keywords: const <String>['健康', '体調', '睡眠', '運動', 'ログ'],
+      onOpen: (context) => _pushPage(context, const HealthPage()),
+    ),
+    HomeToolEntry(
+      id: 'mental-check',
+      sectionId: 'office',
+      title: 'メンタルチェック',
+      subtitle: 'ストレス・気分・モチベーションを定期記録',
+      icon: Icons.self_improvement_outlined,
+      color: Colors.purple,
+      keywords: const <String>['メンタル', 'ストレス', '気分', 'セルフケア'],
+      onOpen: (context) => _pushPage(context, const MentalCheckPage()),
     ),
     HomeToolEntry(
       id: 'cmo-office',

@@ -373,6 +373,49 @@ class LocalElectionScheduleEntry {
   }
 }
 
+class LocalElectionRealityHistoryPoint {
+  final DateTime fetchedAt;
+  final int officialCurrentLocalMembers;
+  final int actualNetIncreaseRequired;
+
+  const LocalElectionRealityHistoryPoint({
+    required this.fetchedAt,
+    required this.officialCurrentLocalMembers,
+    required this.actualNetIncreaseRequired,
+  });
+
+  factory LocalElectionRealityHistoryPoint.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return LocalElectionRealityHistoryPoint(
+      fetchedAt: DateTime.tryParse(json['fetchedAt'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      officialCurrentLocalMembers:
+          _readHistoryInt(json['officialCurrentLocalMembers']),
+      actualNetIncreaseRequired:
+          _readHistoryInt(json['actualNetIncreaseRequired']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'fetchedAt': fetchedAt.toIso8601String(),
+      'officialCurrentLocalMembers': officialCurrentLocalMembers,
+      'actualNetIncreaseRequired': actualNetIncreaseRequired,
+    };
+  }
+
+  static int _readHistoryInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse('$value') ?? 0;
+  }
+}
+
 class LocalElectionRealitySnapshot {
   final DateTime fetchedAt;
   final int baselineCurrentLocalMembers;

@@ -102,6 +102,11 @@ void main() {
     expect(loaded.scheduleAiAlerts, isNotEmpty);
     expect(loaded.upcomingSchedules, hasLength(1));
     expect(loaded.redAlertScheduleCount, 1);
+
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(1));
+    expect(history.single.officialCurrentLocalMembers, 352);
+    expect(history.single.actualNetIncreaseRequired, 348);
   });
 
   test('caches and reloads member profile details', () async {
@@ -170,5 +175,29 @@ void main() {
     expect(merged.kana, 'roster kana');
     expect(merged.age, 54);
     expect(merged.profile, 'Former labor union leader in Oita.');
+  });
+
+  test('keeps only the latest history point for the same day', () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+
+    final first = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-03-28T01:00:00.000Z',
+      'officialCurrentLocalMembers': 345,
+      'actualNetIncreaseRequired': 355,
+    });
+    final second = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-03-28T12:00:00.000Z',
+      'officialCurrentLocalMembers': 347,
+      'actualNetIncreaseRequired': 353,
+    });
+
+    await service.cacheSnapshot(first, prefs: prefs);
+    await service.cacheSnapshot(second, prefs: prefs);
+
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(1));
+    expect(history.single.officialCurrentLocalMembers, 347);
+    expect(history.single.actualNetIncreaseRequired, 353);
   });
 }
