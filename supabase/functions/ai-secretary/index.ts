@@ -222,22 +222,133 @@ serve(async (req) => {
         created_at: new Date().toISOString(),
       });
 
-      // ルールベースの回答生成
+      // データ収集 (回答の精度向上のため)
+      const [usersCountRes, ticketsCountRes, requestsCountRes, blogCountRes, schedFailRes] = await Promise.all([
+        adminClient.from("user_profiles").select("*", { count: "exact", head: true }),
+        adminClient.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "new"),
+        adminClient.from("feature_requests").select("*", { count: "exact", head: true }).eq("status", "open"),
+        adminClient.from("blog_posts").select("*", { count: "exact", head: true }).eq("status", "posted").gte("posted_at", `${new Date().toISOString().slice(0, 10)}T00:00:00`),
+        adminClient.from("schedule_task_runs").select("*", { count: "exact", head: true }).eq("status", "failure").gte("started_at", new Date(Date.now() - 86400000).toISOString()),
+      ]);
+
+      const stats = {
+        users: usersCountRes.count ?? 0,
+        tickets: ticketsCountRes.count ?? 0,
+        requests: requestsCountRes.count ?? 0,
+        todayBlogs: blogCountRes.count ?? 0,
+        failedSchedules: schedFailRes.count ?? 0,
+      };
+
+      // ルールベースの回答生成 (12部署対応 + 詳細な知識)
       const lowerMsg = message.toLowerCase();
       let reply = "";
+      let department = "";
 
-      if (lowerMsg.includes("今日") && lowerMsg.includes("やる")) {
-        reply = "今日のおすすめタスク:\n1. 未対応 CS チケットの確認・返信\n2. 技術ブログの投稿\n3. 機能リクエストのトップ投票項目の実装\n4. SNS での進捗共有";
-      } else if (lowerMsg.includes("ユーザー") && lowerMsg.includes("増")) {
-        reply = "ユーザー獲得のための施策:\n1. 技術ブログを毎日投稿 (Zenn, Qiita 等)\n2. X で #buildinpublic タグで進捗共有\n3. リファラルプログラムの活用\n4. SEO 最適化 (メタタグ、サイトマップ)\n5. Product Hunt への掲載";
-      } else if (lowerMsg.includes("競合")) {
-        reply = "競合分析のポイント:\n21 社の競合に対し、AI 統合が最大の差別化要因です。\n特に Notion / Evernote ユーザーのインポート機能と、\nAI 秘書による自動化が他社にない価値を提供します。";
-      } else {
-        reply = `承知しました。「${message}」について調査・検討します。\n管理ダッシュボードで詳細な分析結果を確認できます。`;
+      // 今日やること / タスク関連
+      if (lowerMsg.includes("今日") && (lowerMsg.includes("やる") || lowerMsg.includes("タスク") || lowerMsg.includes("何"))) {
+        const tasks: string[] = [];
+        if (stats.tickets > 0) tasks.push(`CS チケット ${stats.tickets} 件に返信 (CS部)`);
+        if (stats.todayBlogs === 0) tasks.push("技術ブログを投稿 (広報部)");
+        if (stats.requests > 0) tasks.push(`機能リクエスト ${stats.requests} 件を確認・優先順位付け (企画部)`);
+        if (stats.failedSchedules > 0) tasks.push(`Schedule 失敗 ${stats.failedSchedules} 件を修正 (開発部)`);
+        tasks.push("SNS で進捗共有 — X に #buildinpublic 投稿 (CMO室)");
+        tasks.push("競合動向チェック — 21社のアップデート確認 (企画部)");
+        reply = `今日のおすすめタスク (${tasks.length} 件):\n` + tasks.map((t, i) => `${i + 1}. ${t}`).join("\n");
+        department = "CEO室";
+      }
+      // ユーザー獲得
+      else if (lowerMsg.includes("ユーザー") && (lowerMsg.includes("増") || lowerMsg.includes("獲得"))) {
+        reply = `現在のユーザー数: ${stats.users} 人\n\nユーザー獲得の施策 (営業部・CMO室):\n` +
+          "1. 技術ブログを毎日投稿 — Zenn, Qiita, note, はてな, Medium, dev.to (11プラットフォーム)\n" +
+          "2. X で #buildinpublic タグで毎日進捗共有 (@kanta13jp1)\n" +
+          "3. リファラルプログラムの活用 — 既存ユーザーに紹介を依頼\n" +
+          "4. SEO 最適化 — メタタグ、サイトマップ (43 URL)\n" +
+          "5. Product Hunt への掲載申請\n" +
+          "6. ウェイトリスト通知 — 登録者への機能更新通知メール\n" +
+          "7. 競合サービスからのインポート機能で乗り換えを促進";
+        department = "CMO室";
+      }
+      // 競合分析
+      else if (lowerMsg.includes("競合")) {
+        reply = "競合分析 (企画部):\n" +
+          "21社の競合に対し、AI統合が最大の差別化要因です。\n\n" +
+          "【重点攻略先】\n" +
+          "- Notion/Evernote: ノートインポート機能で乗り換え促進\n" +
+          "- MoneyForward: 家計管理 + AI 分析で差別化\n" +
+          "- Slack/Chatwork: AI エージェントによるチーム管理\n" +
+          "- X: コンテンツ配信 + 自動投稿機能\n\n" +
+          "【技術的優位性】\n" +
+          "- 52 Edge Functions による豊富なバックエンド API\n" +
+          "- 12部署20人の仮想AI組織による運営自動化\n" +
+          "- Claude Code Schedule による完全自動化開発";
+        department = "企画部";
+      }
+      // 部署・組織
+      else if (lowerMsg.includes("部署") || lowerMsg.includes("組織") || lowerMsg.includes("エージェント")) {
+        reply = "仮想AI組織 (CHRO室):\n" +
+          "12部署20人体制で運営中。各部署の役割:\n\n" +
+          "1. CEO室 — 全社戦略・意思決定\n" +
+          "2. CFO室 — 財務・予算・経理\n" +
+          "3. CMO室 — マーケティング・広告・宣伝\n" +
+          "4. CHO室 — 健康・ウェルネス管理\n" +
+          "5. CHRO室 — 人事・採用・組織開発\n" +
+          "6. 企画部 — 企画立案・プロダクト管理\n" +
+          "7. 開発部 — 技術開発・実装\n" +
+          "8. 営業部 — 顧客獲得・営業活動\n" +
+          "9. CS部 — カスタマーサポート\n" +
+          "10. 法務部 — 法務・コンプライアンス\n" +
+          "11. 広報部 — 広報・PR・ブログ\n" +
+          "12. 調達部 — 調達・ベンダー管理\n\n" +
+          "各部署のタスク状況は AI 組織 OS で確認できます。";
+        department = "CHRO室";
+      }
+      // ブログ
+      else if (lowerMsg.includes("ブログ") || lowerMsg.includes("記事")) {
+        reply = `技術ブログ状況 (広報部):\n` +
+          `今日の投稿数: ${stats.todayBlogs} 件\n\n` +
+          "投稿先 (11プラットフォーム):\n" +
+          "Zenn, Qiita, はてなブログ, note, Medium, dev.to, Hashnode, Substack, GitHub Pages, Notion, X Article\n\n" +
+          "おすすめネタ:\n" +
+          "1. 「Claude Code で 52 Edge Functions を自動生成した話」\n" +
+          "2. 「12部署20人の仮想AI組織でプロダクト開発」\n" +
+          "3. 「Flutter Web + Supabase で21競合を超えるアプリを作る」";
+        department = "広報部";
+      }
+      // 事業計画
+      else if (lowerMsg.includes("事業") || lowerMsg.includes("計画") || lowerMsg.includes("戦略")) {
+        reply = "事業計画概要 (CEO室):\n\n" +
+          "【短期 (〜2026/06)】ユーザー100人突破・MVP強化\n" +
+          "【中期 (〜2027/03)】ユーザー10,000人・機能充実\n" +
+          "【長期 (〜2028/12)】エンタープライズ対応・グローバル展開\n\n" +
+          "全21競合を上回る機能を実装し、AI統合による差別化で\n" +
+          "知的生産・資産管理・SNS統合プラットフォームのNo.1を目指します。";
+        department = "CEO室";
+      }
+      // デフォルト
+      else {
+        reply = `承知しました。「${message}」について各部署に指示を出します。\n\n` +
+          "関連する部署:\n" +
+          "- 開発部: 技術的な実装・修正\n" +
+          "- 企画部: 機能の企画・優先順位\n" +
+          "- CS部: ユーザー対応\n\n" +
+          "管理ダッシュボードで詳細な分析結果を確認できます。";
+        department = "CEO室";
       }
 
+      // 会話ログに回答も記録
+      await adminClient.from("ai_secretary_logs").update({
+        reply,
+        context: { ...((context ?? {}) as Record<string, unknown>), department, stats },
+      }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
+
       return new Response(
-        JSON.stringify({ success: true, reply, timestamp: new Date().toISOString() }),
+        JSON.stringify({
+          success: true,
+          reply,
+          department,
+          stats,
+          timestamp: new Date().toISOString(),
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
