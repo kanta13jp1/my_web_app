@@ -24,6 +24,7 @@ class _GrowthAcquisitionSignalPageState
     'touch_import',
     'touch_public_memo',
     'touch_referral',
+    'touch_comparison',
     'import_preview_notion',
     'import_preview_evernote',
     'import_preview_markdown',
@@ -33,6 +34,7 @@ class _GrowthAcquisitionSignalPageState
     'signup_submit_import',
     'signup_submit_public_memo',
     'signup_submit_referral',
+    'signup_submit_comparison',
   ];
 
   static const Map<String, String> _signalLabels = {
@@ -40,6 +42,7 @@ class _GrowthAcquisitionSignalPageState
     'touch_import': 'インポート到達',
     'touch_public_memo': '公開メモ到達',
     'touch_referral': '紹介経由到達',
+    'touch_comparison': '比較ページ到達',
     'import_preview_notion': 'Notionプレビュー',
     'import_preview_evernote': 'Evernoteプレビュー',
     'import_preview_markdown': 'Markdownプレビュー',
@@ -49,6 +52,7 @@ class _GrowthAcquisitionSignalPageState
     'signup_submit_import': 'インポート登録送信',
     'signup_submit_public_memo': '公開メモ登録送信',
     'signup_submit_referral': '紹介登録送信',
+    'signup_submit_comparison': '比較ページ登録送信',
   };
 
   Future<void> _record() async {

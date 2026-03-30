@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 VSCode (LPにLiveGrowthBanner・ホームにProfileProgressCard・ユーザーマニュアルQUICK ACCESS修正・選挙ページGemini AI分析UI・EdgeFunctionSummaryCard 41関数体制)
+最終更新: 2026-03-31 daily-development #2 (比較ページCVRトラッキング完成・Admin CVRカード・残課題「比較ページ経由CVR」解消)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -356,6 +356,10 @@
 - **ユーザーマニュアルホーム画面説明更新** (daily-development 2026-03-31): `user_manual_page.dart` のホーム画面ナビゲーション説明をQUICK ACCESSベースの実際のUIに更新。OFFICE KPI SNAPSHOT・KPI SUMMARY・OPERATIONS CALENDAR・SPECIAL PROJECT・QUICK ACCESS・RECENT TOOLSの各セクション説明を正確化。
 - **local-election-intelligence BOM修正** (daily-development 2026-03-31): `index.ts` 先頭のBOM文字 (`\uFEFF`) を削除。Dart formatter の trailing comma 修正も適用。deno lint 0件維持。
 
+### 2026-03-31 daily-development #2 実装済み (自動)
+
+- **比較ページCVRトラッキング完成** (daily-development #2 2026-03-31): 残課題「比較ページ経由の登録CVRトラッキング」を完全解消。`touch_comparison` / `signup_submit_comparison` シグナルを `growth_acquisition_signal_page.dart` (シグナル一覧・ラベル) と `admin_analytics_page.dart` (シグナル名・カラー設定) に追加。管理者ダッシュボードに `_buildComparisonCvrCard()` を新設。`app_analytics.source_details` JSONB から `touch_comparison_{key}` を全日付集計し、競合別到達数バー・総CVR%をリアルタイム表示。残課題リストから削除。flutter analyze 0件維持。
+
 ### 競合動向ログ (2026-03-30)
 
 - **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務
@@ -397,7 +401,7 @@
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
 - Google Search Console へのサイトマップ再送信（24 URLs）
 - ~~各比較ページへの個別OGP画像生成~~ ✅ 2026-03-30 個別OGPメタタグ (og:title/og:description) を14社分SEOシェルに追加完了
-- 比較ページ経由の登録CVRトラッキング
+- ~~比較ページ経由の登録CVRトラッキング~~ ✅ 2026-03-31 touch_comparison/signup_submit_comparison シグナル + AdminダッシュボードCVRカード実装完了
 
 ---
 
