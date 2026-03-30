@@ -67,8 +67,11 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
+import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
 import 'package:my_web_app/pages/embedding_lab_page.dart';
+import 'package:my_web_app/pages/financial_report_page.dart';
+import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import 'package:my_web_app/pages/feedback_page.dart';
 import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
@@ -526,6 +529,18 @@ class MyApp extends StatelessWidget {
           case '/medical-notes':
             return MaterialPageRoute(
               builder: (_) => const MedicalNotesPage(),
+            );
+          case '/api-playground':
+            return MaterialPageRoute(
+              builder: (_) => const ApiPlaygroundPage(),
+            );
+          case '/financial-report':
+            return MaterialPageRoute(
+              builder: (_) => const FinancialReportPage(),
+            );
+          case '/payment-channel-ledger':
+            return MaterialPageRoute(
+              builder: (_) => const PaymentChannelLedgerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

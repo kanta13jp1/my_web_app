@@ -65,8 +65,11 @@ import '../pages/growth_weekly_digest_page.dart';
 import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
+import '../pages/api_playground_page.dart';
 import '../pages/categories_page.dart';
 import '../pages/embedding_lab_page.dart';
+import '../pages/financial_report_page.dart';
+import '../pages/payment_channel_ledger_page.dart';
 import '../pages/feedback_page.dart';
 import '../pages/health_page.dart';
 import '../pages/medical_notes_page.dart';
@@ -528,6 +531,27 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const MedicalNotesPage()),
     ),
     HomeToolEntry(
+      id: 'financial-report',
+      sectionId: 'office',
+      title: '財務レポート',
+      subtitle: '収支・残高・予算達成率をグラフで確認する',
+      icon: Icons.bar_chart_outlined,
+      color: Colors.teal,
+      keywords: const <String>['財務', '収支', 'レポート', '予算', 'グラフ'],
+      onOpen: (context) => _pushPage(context, const FinancialReportPage()),
+    ),
+    HomeToolEntry(
+      id: 'payment-channel-ledger',
+      sectionId: 'office',
+      title: '支払いチャネル台帳',
+      subtitle: '支払い手段ごとの残高・履歴を一覧管理',
+      icon: Icons.account_balance_wallet_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['支払い', 'チャネル', '残高', '台帳', 'ledger'],
+      onOpen: (context) =>
+          _pushPage(context, const PaymentChannelLedgerPage()),
+    ),
+    HomeToolEntry(
       id: 'cmo-office',
       sectionId: 'knowledge',
       title: '市場分析 (CMO)',
@@ -929,6 +953,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.deepPurple,
       keywords: const <String>['embedding', '埋め込み', 'Gemini', '類似度', 'ベクトル'],
       onOpen: (context) => _pushPage(context, const EmbeddingLabPage()),
+    ),
+    HomeToolEntry(
+      id: 'api-playground',
+      sectionId: 'knowledge',
+      title: 'API プレイグラウンド',
+      subtitle: 'Gemini API を直接呼び出してモデルを試す',
+      icon: Icons.terminal_outlined,
+      color: Colors.deepOrange,
+      keywords: const <String>['API', 'Gemini', 'プレイグラウンド', 'テスト', 'モデル'],
+      onOpen: (context) => _pushPage(context, const ApiPlaygroundPage()),
     ),
     HomeToolEntry(
       id: 'growth-acquisition-signal',
