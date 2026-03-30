@@ -1161,6 +1161,64 @@ $input
 
 
 
+  Widget _buildEnterpriseCta() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF3949AB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.business, color: Colors.white70, size: 36),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '🏢 チームで使う',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Slack・Chatwork・ジョブカンを1つに統合。法人導入無料。',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pushNamed('/enterprise'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Text('詳しく見る'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUniqueValueSection() {
     const features = [
       (Icons.account_tree, '0xFF4F46E5', 'AI組織OS (12部署20人)', '自然言語でタスクを入力するだけで最適な部署が自動受付。ゴールを12部署に自動分解・配布。SlackもJiraも不要。'),
@@ -2062,7 +2120,10 @@ $input
                   const SizedBox(height: 20),
                   // 11. 21社との機能比較
                   _buildComparisonLinksSection(),
-                  // 12. 紹介（紹介コードがある場合のみ表示）
+                  // 12. B2B エンタープライズ CTA
+                  _buildEnterpriseCta(),
+                  const SizedBox(height: 20),
+                  // 13. 紹介（紹介コードがある場合のみ表示）
                   _buildReferralInviteSection(),
                   if (_pendingReferralCode != null) const SizedBox(height: 20),
                 ],
