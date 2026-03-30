@@ -157,6 +157,11 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final c = _comments[index];
+                          final currentUserId =
+                              _supabase.auth.currentUser?.id;
+                          final isOwner =
+                              currentUserId != null &&
+                              c['user_id'] == currentUserId;
                           return ListTile(
                             title: Text(c['content']?.toString() ?? ''),
                             subtitle: Text(
@@ -164,19 +169,21 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                                   '',
                               style: const TextStyle(fontSize: 12),
                             ),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                              ),
-                              tooltip: 'コメントを削除',
-                              onPressed: () {
-                                final id = c['id'];
-                                if (id is String && id.isNotEmpty) {
-                                  _deleteComment(id);
-                                }
-                              },
-                            ),
+                            trailing: isOwner
+                                ? IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                    ),
+                                    tooltip: 'コメントを削除',
+                                    onPressed: () {
+                                      final id = c['id'];
+                                      if (id is String && id.isNotEmpty) {
+                                        _deleteComment(id);
+                                      }
+                                    },
+                                  )
+                                : null,
                           );
                         },
                       ),
