@@ -66,6 +66,7 @@ import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
 import '../pages/embedding_lab_page.dart';
+import '../pages/feedback_page.dart';
 import '../pages/health_page.dart';
 import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
@@ -927,6 +928,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.indigo,
       keywords: const <String>['チーム', 'team', 'ワークスペース', '招待', '共有', 'コラボ'],
       onOpen: (context) => _pushPage(context, const TeamWorkspacePage()),
+    ),
+    HomeToolEntry(
+      id: 'feedback',
+      sectionId: 'growth',
+      title: 'フィードバック送信',
+      subtitle: '機能アイデア・バグ報告・改善要望を送る',
+      icon: Icons.feedback_outlined,
+      color: Colors.blue,
+      keywords: const <String>['フィードバック', 'バグ報告', '機能要望', '改善'],
+      onOpen: (context) => _pushPage(context, const FeedbackPage()),
     ),
   ];
 }
