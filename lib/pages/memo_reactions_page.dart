@@ -20,6 +20,14 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
 
   static const List<String> _allowedReactions = ['👍', '❤️', '🔥', '💡', '🎉'];
 
+  static const Map<String, String> _reactionLabels = {
+    '👍': 'いいね',
+    '❤️': 'ハート',
+    '🔥': '炎',
+    '💡': 'ひらめき',
+    '🎉': '祝い',
+  };
+
   @override
   void dispose() {
     _memoIdController.dispose();
@@ -133,39 +141,45 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                 children: _allowedReactions.map((r) {
                   final count = _reactions![r] ?? 0;
                   final isActive = _userReactions.contains(r);
-                  return GestureDetector(
-                    onTap: () => _toggle(r),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? Colors.amber.shade100
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isActive ? Colors.amber : Colors.grey.shade300,
-                          width: 1.5,
+                  return Semantics(
+                    label:
+                        '${_reactionLabels[r] ?? r} $count件${isActive ? " 選択中" : ""}',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => _toggle(r),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(r, style: const TextStyle(fontSize: 20)),
-                          const SizedBox(width: 6),
-                          Text(
-                            count.toString(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isActive
-                                  ? Colors.amber.shade800
-                                  : Colors.grey.shade700,
-                            ),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? Colors.amber.shade100
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color:
+                                isActive ? Colors.amber : Colors.grey.shade300,
+                            width: 1.5,
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(r, style: const TextStyle(fontSize: 20)),
+                            const SizedBox(width: 6),
+                            Text(
+                              count.toString(),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isActive
+                                    ? Colors.amber.shade800
+                                    : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

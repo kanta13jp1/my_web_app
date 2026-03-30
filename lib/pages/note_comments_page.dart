@@ -101,7 +101,11 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
         foregroundColor: Colors.white,
         actions: [
           if (_loadedNoteId != null)
-            IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: '更新',
+              onPressed: _load,
+            ),
         ],
       ),
       body: Padding(
@@ -165,6 +169,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                                 Icons.delete_outline,
                                 color: Colors.red,
                               ),
+                              tooltip: 'コメントを削除',
                               onPressed: () {
                                 final id = c['id'];
                                 if (id is String && id.isNotEmpty) {

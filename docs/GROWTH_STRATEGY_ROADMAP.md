@@ -332,6 +332,14 @@
 
 - **ノートコメント機能** (daily-development 2026-03-30): Notion風のノートコメント機能を完全実装。`note_comments` テーブル（RLS付き）を新設 (`20260328000019_create_note_comments.sql`)。`note-comments` Edge Function (GET/POST/DELETE) でノート所有権チェックを二重実装（RLS + JWT user_id検証）。`NoteEditorPage` の AppBar にコメントアイコン・バッジカウント表示を追加。`DraggableScrollableSheet` でコメント一覧+入力フォームのボトムシートUI。`supabase/config.toml` と `deploy-prod.yml` CI/CD に追加。flutter analyze 0件維持
 - **landing_page.dart デッドコード除去** (daily-development 2026-03-30): 削除済みセクション（`_buildBuildInPublicSection`/`_buildPublicMemoSection`/`_buildShareSection`）の残骸（未使用フィールド11件・未使用メソッド4件・未使用インポート4件）を一括削除。flutter analyze 0件維持
+- **アクセシビリティ修正** (daily-report 2026-03-30): `note_comments_page.dart` の refreshボタン・deleteボタンに tooltip を追加 (`tooltip: '更新'` / `tooltip: 'コメントを削除'`)。`memo_reactions_page.dart` に `_reactionLabels` マップを追加し、リアクションボタンを `Semantics(label: ..., button: true)` でラップ。GitHub Issues #243〜#248 (auto-review アクセシビリティ) を全てクローズ。
+
+### 競合動向ログ (2026-03-30)
+
+- **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務
+- **GitHub Copilot**: エージェントモード・Workspace が拡充 → Claude Schedule との差別化は「個人ライフマネジメント統合」に集中
+- **Slack AI**: ハドル自動要約・エージェント統合が拡大 → ai-assistant Edge Function との連携強化で対抗
+- **Evernote**: 機能縮小傾向継続 → インポート機能改善で移行先として訴求するチャンス
 
 ### 2026-03-28 Session8 実装済み
 
