@@ -77,6 +77,8 @@ import '../pages/medical_notes_page.dart';
 import '../pages/mental_check_page.dart';
 import '../pages/settings_page.dart';
 import '../pages/stats_page.dart';
+import '../pages/asset_management_page.dart';
+import '../pages/cmo_page.dart';
 import '../pages/team_workspace_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
@@ -1005,6 +1007,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.blue,
       keywords: const <String>['フィードバック', 'バグ報告', '機能要望', '改善'],
       onOpen: (context) => _pushPage(context, const FeedbackPage()),
+    ),
+    HomeToolEntry(
+      id: 'cmo',
+      sectionId: 'growth',
+      title: 'プレスリリース生成 (CMO)',
+      subtitle: 'SNS・Zenn・note 向けの広報文をAIが生成',
+      icon: Icons.campaign_outlined,
+      color: Colors.purple,
+      keywords: const <String>['プレスリリース', '広報', 'SNS', 'CMO', '発信'],
+      onOpen: (context) => _pushPage(context, const CmoPage()),
+    ),
+    HomeToolEntry(
+      id: 'asset-management',
+      sectionId: 'office',
+      title: '資産管理',
+      subtitle: '投資・貯蓄・資産ポートフォリオを一元管理',
+      icon: Icons.pie_chart_outline,
+      color: Colors.teal,
+      keywords: const <String>['資産', '投資', '貯蓄', 'ポートフォリオ', '資産管理'],
+      onOpen: (context) => _pushPage(context, const AssetManagementPage()),
     ),
   ];
 }

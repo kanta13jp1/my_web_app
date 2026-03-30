@@ -80,6 +80,19 @@ import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
+import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/pages/cfo_office_page.dart';
+import 'package:my_web_app/pages/cho_office_page.dart';
+import 'package:my_web_app/pages/chro_office_page.dart';
+import 'package:my_web_app/pages/cmo_office_page.dart';
+import 'package:my_web_app/pages/cmo_page.dart';
+import 'package:my_web_app/pages/election_strategy_page.dart';
+import 'package:my_web_app/pages/mind_map_page.dart';
+import 'package:my_web_app/pages/mindless_task_page.dart';
+import 'package:my_web_app/pages/real_world_danshari_page.dart';
+import 'package:my_web_app/pages/stock_tasks_page.dart';
+import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -546,6 +559,60 @@ class MyApp extends StatelessWidget {
           case '/emergency-meeting':
             return MaterialPageRoute(
               builder: (_) => const EmergencyMeetingPage(),
+            );
+          case '/ai-status':
+            return MaterialPageRoute(
+              builder: (_) => const AiStatusPage(),
+            );
+          case '/asset-management':
+            return MaterialPageRoute(
+              builder: (_) => const AssetManagementPage(),
+            );
+          case '/cfo-office':
+            return MaterialPageRoute(
+              builder: (_) => const CfoOfficePage(),
+            );
+          case '/cho-office':
+            return MaterialPageRoute(
+              builder: (_) => const ChoOfficePage(),
+            );
+          case '/chro-office':
+            return MaterialPageRoute(
+              builder: (_) => const ChroOfficePage(),
+            );
+          case '/cmo-office':
+            return MaterialPageRoute(
+              builder: (_) => const CmoOfficePage(),
+            );
+          case '/cmo':
+            return MaterialPageRoute(
+              builder: (_) => const CmoPage(),
+            );
+          case '/election-strategy':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionStrategyPage(),
+            );
+          case '/mind-map':
+            return MaterialPageRoute(
+              builder: (_) => const MindMapPage(),
+            );
+          case '/mindless-task':
+            return MaterialPageRoute(
+              builder: (_) => const MindlessTaskPage(),
+            );
+          case '/real-world-danshari':
+            return MaterialPageRoute(
+              builder: (_) => RealWorldDanshariPage(
+                supabaseClient: supabase,
+              ),
+            );
+          case '/stock-tasks':
+            return MaterialPageRoute(
+              builder: (_) => const StockTasksPage(),
+            );
+          case '/wardrobe':
+            return MaterialPageRoute(
+              builder: (_) => const WardrobePage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
