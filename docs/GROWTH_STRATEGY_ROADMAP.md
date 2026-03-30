@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 daily-development (21社OGP全社対応・Gemini選挙分析Edge Function・ユーザーマニュアル更新)
+最終更新: 2026-03-31 VSCode (LPにLiveGrowthBanner・ホームにProfileProgressCard・ユーザーマニュアルQUICK ACCESS修正・選挙ページGemini AI分析UI・EdgeFunctionSummaryCard 41関数体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -944,6 +944,30 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 2026-03-31 — VSCode フロントエンド (ユーザー獲得強化・ナビゲーション修正)
+
+**実施内容:**
+
+1. **LP ユーザー獲得強化**
+   - ランディングページに `LiveGrowthBanner` を追加（ソーシャルプルーフの直下に配置）
+   - 登録者数・閲覧者数・今日の登録・Notion/Evernote超えまでの差分をリアルタイム表示
+   - LP のソーシャルプルーフ閾値を `>10` → `>0` に変更済み（4人でも表示）
+
+2. **ホーム画面プロフィール促進**
+   - `ProfileProgressCard` をホーム画面の ProfileCompletionBanner の直下に追加
+   - LinkedIn 型の完成度バーで未設定項目を明示し、プロフィール設定への誘導を強化
+
+3. **ユーザーマニュアル QUICK ACCESS ナビゲーション修正**
+   - セクション1・2・4の全ナビゲーション手順を現行UI（QUICK ACCESS方式）に合わせて修正
+   - 旧セクション名（CFO/CHO/CHRO OFFICE、CMO/CKO OFFICE、CSO OFFICE、GROWTH/成長導線）→ QUICK ACCESS サブカテゴリ方式に更新
+
+4. **選挙ページ Gemini AI 分析 UI 追加**
+   - `ElectionVictoryPage` の AppBar に Gemini AI 分析ボタン（Icons.auto_awesome）を追加
+   - `gemini-election-analysis` Edge Function を呼び出し、取得議員数と残り人数を AI 整理メモセクションに表示
+   - `EdgeFunctionSummaryCard` に登録 → 41 関数体制へ
+
+**flutter analyze:** 0 エラー維持確認済み
 
 ### Session 2026-03-28 — PowerShell 全体管理セッション
 
