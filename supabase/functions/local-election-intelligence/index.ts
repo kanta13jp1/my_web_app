@@ -146,6 +146,11 @@ interface ScheduleOverviewEntry {
   detailUrl: string;
 }
 
+interface PrefectureDirectoryEntry {
+  prefecture: string;
+  sourceUrl: string;
+}
+
 interface SnapshotRequest {
   action: "snapshot";
   includeAiSummary: boolean;
@@ -183,17 +188,18 @@ serve(async (req) => {
 
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
-    const prefectureLinkMap = parsePrefectureLinks(memberPageHtml);
+    const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
+      memberPageHtml,
+    );
     const officialElectionPrefectureLinks =
       parseOfficialElectionPrefectureLinks(
         officialElectionHtml,
       );
     const prefectureResults = await mapWithConcurrency(
-      [...PREFECTURES],
+      prefectureDirectoryEntries,
       6,
-      async (prefecture) => {
-        const sourceUrl = prefectureLinkMap.get(prefecture) ?? "";
-        return await fetchPrefectureReality(prefecture, sourceUrl);
+      async (entry) => {
+        return await fetchPrefectureReality(entry.prefecture, entry.sourceUrl);
       },
     );
 
