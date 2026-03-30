@@ -20,7 +20,6 @@ import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
-import '../pages/election_management_dashboard.dart';
 import '../pages/election_strategy_page.dart';
 import '../pages/election_victory_page.dart';
 import '../pages/email_cleanup_page.dart';
@@ -267,7 +266,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'alert',
       ],
       onOpen: (context) =>
-          _pushPage(context, const ElectionManagementDashboard()),
+          _pushPage(context, const ElectionVictoryPage()),
     ),
     HomeToolEntry(
       id: 'my-struggle',
