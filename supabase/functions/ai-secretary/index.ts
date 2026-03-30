@@ -335,11 +335,13 @@ serve(async (req) => {
         department = "CEO室";
       }
 
-      // 会話ログに回答も記録
-      await adminClient.from("ai_secretary_logs").update({
-        reply,
-        context: { ...((context ?? {}) as Record<string, unknown>), department, stats },
-      }).eq("user_id", user.id).order("created_at", { ascending: false }).limit(1);
+      // 会話ログに回答も記録 (別レコードとして INSERT)
+      await adminClient.from("ai_secretary_logs").insert({
+        user_id: user.id,
+        message: `[AI回答] ${reply.slice(0, 500)}`,
+        context: { department, stats, original_message: message },
+        created_at: new Date().toISOString(),
+      }).catch(() => { /* ログ記録の失敗は無視 */ });
 
       return new Response(
         JSON.stringify({

@@ -76,6 +76,9 @@ const FUNCTION_REGISTRY = [
   // Session 424 追加
   { name: "agent-personality", description: "エージェント性格管理・記憶・学習", has_ui: true, ui_path: "/agents", ui_navigation: "ホーム > QUICK ACCESS > AI 組織 OS > エージェント詳細" },
   { name: "agent-department-manager", description: "部署管理・自動作成・ルール設計", has_ui: true, ui_path: "/agents", ui_navigation: "ホーム > QUICK ACCESS > AI 組織 OS > 部署管理" },
+  // Session 425 追加
+  { name: "notification-center", description: "通知センター", has_ui: true, ui_path: "/notifications", ui_navigation: "ホーム > ベルアイコン > 通知一覧" },
+  { name: "onboarding-flow", description: "オンボーディング管理", has_ui: true, ui_path: "/onboarding", ui_navigation: "初回ログイン時に自動表示" },
 ] as const;
 
 serve(async (req) => {

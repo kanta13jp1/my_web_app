@@ -146,6 +146,8 @@ jobs:
           supabase functions deploy development-stats --no-verify-jwt
           supabase functions deploy agent-personality --no-verify-jwt
           supabase functions deploy agent-department-manager --no-verify-jwt
+          supabase functions deploy notification-center --no-verify-jwt
+          supabase functions deploy onboarding-flow --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
