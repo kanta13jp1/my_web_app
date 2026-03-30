@@ -12,4 +12,4 @@ VALUES
     'web/sitemap.xml に /public-memos・/local-election-700・/local-election-schedule・/referral を追加し36→40URLに拡充。main.dart に /local-election-schedule・/embedding-lab ルートを追加。home_tool_catalog.dart に対応エントリを登録。flutter analyze 0件維持。',
     '2026-03-31'
   )
-ON CONFLICT (title) DO NOTHING;
+ON CONFLICT DO NOTHING;
