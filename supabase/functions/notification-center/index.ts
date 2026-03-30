@@ -126,6 +126,16 @@ serve(async (req) => {
       const { action } = body;
 
       if (action === "create") {
+        // service_role のみ通知作成を許可
+        const authHeader = req.headers.get("Authorization");
+        const token = authHeader?.replace("Bearer ", "") ?? "";
+        if (token !== SERVICE_ROLE_KEY) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Service role required" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
         // 通知を作成 (service_role)
         const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
           auth: { persistSession: false },
@@ -211,10 +221,23 @@ serve(async (req) => {
           );
         }
 
+        // 所有者確認: 自分の通知のみ既読にできる
+        const userClientSingle = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user: singleUser } } = await userClientSingle.auth.getUser();
+        if (!singleUser) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Unauthorized" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
         const { error } = await adminClient
           .from("app_notifications")
           .update({ is_read: true })
-          .eq("id", notification_id);
+          .eq("id", notification_id)
+          .eq("user_id", singleUser.id);
 
         if (error) throw error;
 
