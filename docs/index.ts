@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,51 +11,122 @@ serve(async (req) => {
   }
 
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiApiKey) {
+      throw new Error("GEMINI_API_KEY is not set in environment variables.");
+    }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const prompt = `
+あなたは優秀な政治アナリスト・リサーチャーです。
+国民民主党の統一地方選に向けた「700人必達」目標（現状約340人、純増目標約360人）の月次KPI管理、および現在の所属地方議員の最新情報を調査・整理してください。
 
-    // 1. 登録ユーザー数の取得 (ダミーデータ排除・実データ集計)
-    const { count: totalUsers, error: userError } = await admin
-      .from("user_profiles")
-      .select("*", { count: "exact", head: true });
-    if (userError) throw userError;
+必ず以下のJSONスキーマに従った形式で出力してください。JSON以外のテキストは含めないでください。
 
-    // 2. システム全体の総メモ数の取得
-    const { count: totalNotes, error: notesError } = await admin
-      .from("notes")
-      .select("*", { count: "exact", head: true });
-    if (notesError) throw notesError;
+{
+  "type": "object",
+  "properties": {
+    "politicians": {
+      "type": "array",
+      "description": "現在ネット上で確認できる国民民主党の所属地方議員のリスト（代表的な数名〜10名程度をピックアップしてください）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "region": { "type": "string", "description": "都道府県" },
+          "municipality": { "type": "string", "description": "市区町村（県議の場合は空文字または県名）" },
+          "type": { "type": "string", "description": "県議、市議、区議、町議など" },
+          "gender": { "type": "string", "description": "男性 または 女性" },
+          "age": { "type": "number", "description": "年齢が不明な場合は推測値または0" },
+          "profile": { "type": "string", "description": "簡易プロフィール" }
+        },
+        "required": ["id", "name", "region", "municipality", "type", "gender", "age", "profile"]
+      }
+    },
+    "monthlyKpi": {
+      "type": "object",
+      "description": "統一地方選700人倍増に向けた工程管理KPI（都道府県連ごとの配分シミュレーション）",
+      "properties": {
+        "targetTotal": { "type": "number", "description": "700" },
+        "currentTotal": { "type": "number", "description": "340" },
+        "requiredAddition": { "type": "number", "description": "360" },
+        "message": { "type": "string", "description": "「700という看板だけではなく、各県連に“何人積むか”を割り振る管理型選挙にしないと、最後は雰囲気目標で終わります。倍増は“勢い”ではなく“工程管理”の勝負です。万が一達成できなければ解党しなければなりません」という趣旨のメッセージ" },
+        "regions": {
+          "type": "array",
+          "description": "重点都道府県のKPI配分（東京都、愛知県、大阪府など数県）",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "current": { "type": "number", "description": "現在の現職維持目標数" },
+              "target": { "type": "number", "description": "必達目標数" },
+              "newCandidates": { "type": "number", "description": "新人擁立数" },
+              "supportCount": { "type": "number", "description": "接戦区支援回数" },
+              "expectedEndorsement": { "type": "string", "description": "公認内定時期 (YYYY-MM)" }
+            },
+            "required": ["name", "current", "target", "newCandidates", "supportCount", "expectedEndorsement"]
+          }
+        }
+      },
+      "required": ["targetTotal", "currentTotal", "requiredAddition", "message", "regions"]
+    }
+  },
+  "required": ["politicians", "monthlyKpi"]
+}
+`;
 
-    // 3. 本日の新規登録者数の取得
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const { count: todaySignups, error: signupError } = await admin
-      .from("user_profiles")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", today.toISOString());
-    if (signupError) throw signupError;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2,
+          },
+        }),
+      }
+    );
 
-    // KPIダッシュボード用データを集約して返却
-    const dashboardData = {
-      totalUsers: totalUsers || 0,
-      totalNotes: totalNotes || 0,
-      todaySignups: todaySignups || 0,
-      // 今後必要に応じて、週間アクティブユーザー(WAU)や収益データ等を追加
-      lastUpdatedAt: new Date().toISOString(),
-    };
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("Gemini API Error:", errorBody);
+      throw new Error(`Gemini API returned status: ${response.status}`);
+    }
 
-    return new Response(JSON.stringify({ data: dashboardData }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const responseData = await response.json();
+    const generatedText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!generatedText) {
+      throw new Error("Failed to extract content from Gemini API response.");
+    }
+
+    const parsedData = JSON.parse(generatedText);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        politicians: parsedData.politicians || [],
+        monthlyKpi: parsedData.monthlyKpi || {},
+        generatedAt: new Date().toISOString()
+      }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
+  } catch (error) {
+    console.error("Function error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ success: false, error: errorMessage }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
   }
 });
