@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 daily-development #2 (比較ページCVRトラッキング完成・Admin CVRカード・残課題「比較ページ経由CVR」解消)
+最終更新: 2026-03-31 PowerShell (サイトマップ40URL更新・選挙/公開メモ/紹介ページ追加・AdminダッシュボードCVRカード統合・docs/index.ts選挙スケジュールDB保存)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -359,6 +359,12 @@
 ### 2026-03-31 daily-development #2 実装済み (自動)
 
 - **比較ページCVRトラッキング完成** (daily-development #2 2026-03-31): 残課題「比較ページ経由の登録CVRトラッキング」を完全解消。`touch_comparison` / `signup_submit_comparison` シグナルを `growth_acquisition_signal_page.dart` (シグナル一覧・ラベル) と `admin_analytics_page.dart` (シグナル名・カラー設定) に追加。管理者ダッシュボードに `_buildComparisonCvrCard()` を新設。`app_analytics.source_details` JSONB から `touch_comparison_{key}` を全日付集計し、競合別到達数バー・総CVR%をリアルタイム表示。残課題リストから削除。flutter analyze 0件維持。
+
+### 2026-03-31 PowerShell全体管理セッション #2 実装済み
+
+- **サイトマップ40URL更新** (PowerShell 2026-03-31): `web/sitemap.xml` にサイトマップURL漏れを補完。`/public-memos`・`/local-election-700`・`/local-election-schedule`・`/referral` を新規追加 (36→40URL)。LP・ユーザーマニュアルのlastmodを2026-03-31に更新。SEOクロール優先度を調整。
+- **AdminダッシュボードCVRカード・選挙スケジュールDB保存統合** (PowerShell 2026-03-31): VSCode/Windows/Web各インスタンスの変更 (`admin_analytics_page.dart` CVRカード, `docs/index.ts` 選挙スケジュールUpsert) を統括コミット。flutter analyze 0件確認。
+- **4インスタンス競合防止継続** (PowerShell 2026-03-31): git stash/pull --rebase/stash pop サイクルで全インスタンスの変更を衝突なく統合。
 
 ### 競合動向ログ (2026-03-30)
 

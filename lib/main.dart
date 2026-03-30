@@ -44,6 +44,7 @@ import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
+import 'package:my_web_app/pages/election_management_dashboard.dart';
 import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
@@ -66,6 +67,7 @@ import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
+import 'package:my_web_app/pages/embedding_lab_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -263,6 +265,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const ElectionVictoryPage(),
               settings: const RouteSettings(name: '/local-election-700'),
+            );
+          case '/local-election-schedule':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionManagementDashboard(),
+              settings: const RouteSettings(name: '/local-election-schedule'),
             );
           case '/public/local-election-700':
             return MaterialPageRoute(

@@ -20,6 +20,7 @@ import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
+import '../pages/election_management_dashboard.dart';
 import '../pages/election_strategy_page.dart';
 import '../pages/election_victory_page.dart';
 import '../pages/email_cleanup_page.dart';
@@ -65,6 +66,7 @@ import '../pages/growth_weekly_digest_page.dart';
 import '../pages/memo_reactions_page.dart';
 import '../pages/note_comments_page.dart';
 import '../pages/growth_acquisition_signal_page.dart';
+import '../pages/embedding_lab_page.dart';
 import '../pages/team_workspace_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
@@ -250,6 +252,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.green,
       keywords: const <String>['統一地方選', '700', '地方議員'],
       onOpen: (context) => _pushPage(context, const ElectionVictoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'local-election-schedule',
+      sectionId: 'special',
+      title: 'Local Election Schedule Room',
+      subtitle: 'Review AI-fetched schedules and candidate alert colors',
+      icon: Icons.event_note,
+      color: Colors.orange,
+      keywords: const <String>[
+        'local election',
+        'schedule',
+        'candidate',
+        'alert',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ElectionManagementDashboard()),
     ),
     HomeToolEntry(
       id: 'my-struggle',
@@ -835,6 +853,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.teal,
       keywords: const <String>['コメント', 'ノート', 'comment', 'note'],
       onOpen: (context) => _pushPage(context, const NoteCommentsPage()),
+    ),
+    HomeToolEntry(
+      id: 'embedding-lab',
+      sectionId: 'knowledge',
+      title: 'Embedding ラボ',
+      subtitle: 'Gemini Embedding API でテキスト類似度を実験する',
+      icon: Icons.science_outlined,
+      color: Colors.deepPurple,
+      keywords: const <String>['embedding', '埋め込み', 'Gemini', '類似度', 'ベクトル'],
+      onOpen: (context) => _pushPage(context, const EmbeddingLabPage()),
     ),
     HomeToolEntry(
       id: 'growth-acquisition-signal',
