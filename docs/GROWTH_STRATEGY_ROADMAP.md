@@ -391,6 +391,12 @@
 - **/admin-feedbackルート追加** (daily-development #4 2026-03-31): `main.dart` に `/admin-feedback` ルートを追加。`FeedbackListPage` をインポート。ディープリンクからの管理者フィードバック画面アクセスを有効化。
 - **ブログ下書き作成** (daily-development #4 2026-03-31): `docs/blog-drafts/2026-03-31-app-feedback.md` — RLS無限再帰回避パターンとフィードバック収集実装解説記事を作成。flutter analyze 0件維持。
 
+### 2026-03-31 daily-development #5 実装済み (自動)
+
+- **カテゴリ管理機能実装** (daily-development #5 2026-03-31): `CategoriesPage` を新規作成。`categories` テーブル（RLS付き、uuid PK、user_id外部キー）をマイグレーション (`20260331000090_create_categories_table.sql`) で新設。ユーザー別カテゴリの作成・一覧・削除が可能。業務メニューカタログ (`knowledge` セクション) に追加し、キーワード検索 (カテゴリ/タグ/分類/整理) で発見可能に。`/categories` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **医療メモ機能実装** (daily-development #5 2026-03-31): `MedicalNotesPage` を新規作成。新テーブルを作らず既存 `notes` テーブルを流用し、タイトルに `[Medical]` プレフィックスを付けることで医療メモを識別するシンプル設計。通院記録・処方薬・健康診断・手術処置・その他の5カテゴリ対応。業務メニューカタログ (`office` セクション) に追加。`/medical-notes` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development #5 2026-03-31): `docs/blog-drafts/2026-03-31-categories-medical-notes.md` — カテゴリ管理・医療メモ実装解説記事（Supabase RLS設計・既存テーブル流用パターン）を作成。
+
 ### 競合動向ログ (2026-03-30)
 
 - **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務

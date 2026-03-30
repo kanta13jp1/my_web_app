@@ -18,9 +18,9 @@ serve(async (req) => {
 
     const prompt = `
 あなたは優秀な政治アナリスト・リサーチャーです。
-国民民主党の統一地方選に向けた「700人必達」目標（現状約340人、純増目標約360人）の月次KPI管理、および現在の所属地方議員の最新情報を調査・整理してください。
+国民民主党の統一地方選に向けた「700人必達」目標（現状約340人、純増目標約360人）の月次KPI管理、現在の所属地方議員の最新情報、直近の地方選挙スケジュール、および地方議員数の時系列推移データを調査・整理してください。
 
-必ず以下のJSONスキーマに従った形式で出力してください。JSON以外のテキストは含めないでください。
+必ず以下のJSONスキーマに従った形式で出力してください。Markdownのコードブロック（\`\`\`json）は使用せず、純粋なJSON文字列のみを出力してください。
 
 {
   "type": "object",
@@ -69,9 +69,36 @@ serve(async (req) => {
         }
       },
       "required": ["targetTotal", "currentTotal", "requiredAddition", "message", "regions"]
+    },
+    "electionSchedules": {
+      "type": "array",
+      "description": "直近の地方選挙のスケジュール情報（数件ピックアップ）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "electionName": { "type": "string", "description": "選挙名（例: 〇〇市議会議員選挙）" },
+          "date": { "type": "string", "description": "投票日 (YYYY-MM-DD)" },
+          "dppCandidateCount": { "type": "number", "description": "国民民主党の擁立候補者数" },
+          "location": { "type": "string", "description": "自治体名・場所" }
+        },
+        "required": ["id", "electionName", "date", "dppCandidateCount", "location"]
+      }
+    },
+    "timeSeriesData": {
+      "type": "array",
+      "description": "国民民主党の地方議員数の時系列推移（過去の統一地方選〜現在〜2027年目標）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string", "description": "時期（例: 2023年4月, 現在, 2027年4月(目標)）" },
+          "count": { "type": "number", "description": "議員数" }
+        },
+        "required": ["label", "count"]
+      }
     }
   },
-  "required": ["politicians", "monthlyKpi"]
+  "required": ["politicians", "monthlyKpi", "electionSchedules", "timeSeriesData"]
 }
 `;
 
@@ -112,6 +139,8 @@ serve(async (req) => {
         success: true,
         politicians: parsedData.politicians || [],
         monthlyKpi: parsedData.monthlyKpi || {},
+        electionSchedules: parsedData.electionSchedules || [],
+        timeSeriesData: parsedData.timeSeriesData || [],
         generatedAt: new Date().toISOString()
       }),
       { 
