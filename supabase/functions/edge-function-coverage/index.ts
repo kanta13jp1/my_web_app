@@ -176,6 +176,11 @@ const FUNCTION_REGISTRY = [
   { name: "recipe-meal-planner", description: "レシピ・献立 (レシピ管理/週間献立/買い物リスト/栄養計算)", has_ui: true, ui_path: "/recipes", ui_navigation: "ホーム > レシピ" },
   { name: "fitness-health-tracker", description: "フィットネス・健康 (ワークアウト/体重/健康メトリクス/目標)", has_ui: true, ui_path: "/fitness", ui_navigation: "ホーム > フィットネス" },
   { name: "travel-itinerary-planner", description: "旅行プランナー (日程管理/予約/パッキングリスト/予算管理)", has_ui: true, ui_path: "/travel", ui_navigation: "ホーム > 旅行" },
+  { name: "event-ticketing", description: "イベント・チケット管理 (イベント作成/QRチケット/チェックイン/統計)", has_ui: true, ui_path: "/events", ui_navigation: "ホーム > イベント" },
+  { name: "pet-care-manager", description: "ペットケア管理 (ペット情報/健康記録/食事/散歩ログ)", has_ui: true, ui_path: "/pets", ui_navigation: "ホーム > ペット" },
+  { name: "language-learning", description: "語学学習 (単語帳/フラッシュカード/間隔反復/ストリーク/統計)", has_ui: true, ui_path: "/language", ui_navigation: "ホーム > 語学学習" },
+  { name: "home-iot-manager", description: "スマートホームIoT (デバイス管理/センサーデータ/自動化ルール/シーン)", has_ui: true, ui_path: "/iot", ui_navigation: "ホーム > IoT" },
+  { name: "news-rss-aggregator", description: "ニュースRSS (フィード管理/記事/ブックマーク/カテゴリ/統計)", has_ui: true, ui_path: "/news", ui_navigation: "ホーム > ニュース" },
 ] as const;
 
 serve(async (req) => {

@@ -239,6 +239,11 @@ jobs:
           supabase functions deploy recipe-meal-planner --no-verify-jwt
           supabase functions deploy fitness-health-tracker --no-verify-jwt
           supabase functions deploy travel-itinerary-planner --no-verify-jwt
+          supabase functions deploy event-ticketing --no-verify-jwt
+          supabase functions deploy pet-care-manager --no-verify-jwt
+          supabase functions deploy language-learning --no-verify-jwt
+          supabase functions deploy home-iot-manager --no-verify-jwt
+          supabase functions deploy news-rss-aggregator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

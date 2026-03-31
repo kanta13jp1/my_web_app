@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432g-web (35本追加 → 145 Functions 体制)
+最終更新: 2026-04-01 session432h-web (40本追加 → 150 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1012,6 +1012,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432h (Web版) — 2026-03-31
+
+**Edge Functions 145→150本 (5本追加) — プラットフォーム拡張 (イベント/ペット/語学/IoT/ニュース)**
+
+1. **event-ticketing**: イベント・チケット管理 — Facebook Events/LINE競合、QRチケット発行、チェックイン、参加者管理、収益統計
+2. **pet-care-manager**: ペットケア管理 — ペット登録(8種類)、健康記録(ワクチン/通院)、食事・散歩ログ、体重管理
+3. **language-learning**: 語学学習 — Duolingo競合、単語帳、フラッシュカード(SM-2間隔反復)、12言語対応、学習ストリーク
+4. **home-iot-manager**: スマートホームIoT — Google Home/Alexa競合、デバイス管理(10種類)、センサーデータ、自動化ルール、シーン管理
+5. **news-rss-aggregator**: ニュースRSSアグリゲーター — Google News/Feedly競合、フィード管理、記事ブックマーク、カテゴリ分類
 
 ### Session 432g (Web版) — 2026-03-31
 
