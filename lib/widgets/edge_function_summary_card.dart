@@ -134,6 +134,16 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('scheduled-notifications', 'スケジュール通知', true, '/settings', '設定 > 通知スケジュール'),
     _FnDef('video-audio-manager', '動画・音声ファイル管理', true, '/admin', '管理者ダッシュボード > メディア管理'),
     _FnDef('wiki-database', 'Wiki データベース', true, '/knowledge-base', 'ナレッジベース > Wiki'),
+    _FnDef('ci-cd-pipeline', 'CI/CD パイプライン管理', false, null, 'Schedule専用 (自動ビルド・デプロイ)'),
+    _FnDef('compensation-manager', '給与・報酬管理', true, '/chro-office', 'QUICK ACCESS > 財務・健康・人事 > 人事厚生(CHRO)'),
+    _FnDef('financial-report', '財務レポート生成', true, '/financial-report', 'QUICK ACCESS > 財務・健康・人事 > 財務レポート'),
+    _FnDef('inventory-manager', '在庫管理', true, '/admin', '管理者ダッシュボード > 在庫管理'),
+    _FnDef('oauth-sso-provider', 'OAuth/SSO プロバイダー', false, null, 'サーバーサイド専用 (認証フロー)'),
+    _FnDef('ocr-document-scanner', 'OCR ドキュメントスキャナー', true, '/real-world-danshari', 'QUICK ACCESS > 生活・整理 > 断捨離(リアル)'),
+    _FnDef('order-tracker', '注文トラッカー', true, '/financial-report', '財務レポート > 注文管理'),
+    _FnDef('push-notification-manager', 'プッシュ通知管理', true, '/settings', '設定 > 通知設定'),
+    _FnDef('realtime-presence', 'リアルタイムプレゼンス', true, '/team', 'チームワーク > オンライン状態'),
+    _FnDef('voice-memo-transcriber', '音声メモ文字起こし', true, '/note-editor', 'ノートエディタ > 音声入力'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
