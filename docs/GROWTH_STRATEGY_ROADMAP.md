@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session428-web (9本追加 → 72 Functions 体制)
+最終更新: 2026-03-31 session428-web (12本追加 → 75 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1040,7 +1040,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ---
 
-### Session 2026-03-31 #428 — Web版 9本追加 (72 Functions体制)
+### Session 2026-03-31 #428 — Web版 12本追加 (75 Functions体制)
 
 **実施内容:**
 
@@ -1088,11 +1088,21 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - ブレークイーブンポイント算出
    - コスト構造管理
 
-10. **インフラ更新**
-   - subscription_plan / subscription_expires_at カラム追加
-   - edge-function-coverage レジストリ 72 Functions
-   - deploy-prod.yml: 9関数追加
-   - 実績シード9件
+10. **content-moderation Edge Function 新規作成**
+    - 禁止ワード検出、スパム判定、不適切コンテンツフラグ
+
+11. **api-rate-limiter Edge Function 新規作成**
+    - プラン別レートリミット (Free:10/min, Pro:30/min, Premium:60/min)
+    - X-RateLimit ヘッダー対応
+
+12. **notification-preferences Edge Function 新規作成**
+    - 9種通知タイプ×メール/プッシュ/頻度設定
+
+13. **インフラ更新**
+    - subscription_plan / subscription_expires_at カラム追加
+    - edge-function-coverage レジストリ 75 Functions
+    - deploy-prod.yml: 12関数追加
+    - 実績シード12件
 
 ### Session 2026-03-31 #427 — Web版 7本追加 (63 Functions体制)
 

@@ -100,6 +100,9 @@ const FUNCTION_REGISTRY = [
   { name: "team-collaboration-sync", description: "チーム協業・アクティビティフィード・メンション通知", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > アクティビティ" },
   { name: "user-feedback-collector", description: "NPS・機能満足度・フィードバック収集", has_ui: true, ui_path: "/feedback", ui_navigation: "設定 > フィードバック" },
   { name: "revenue-forecaster", description: "収益予測・事業計画シミュレーション", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 収益予測" },
+  { name: "content-moderation", description: "コンテンツモデレーション・安全性チェック", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > モデレーション" },
+  { name: "api-rate-limiter", description: "APIレートリミット・利用制限管理", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > API制限" },
+  { name: "notification-preferences", description: "通知設定管理 (タイプ別/頻度/メール/プッシュ)", has_ui: true, ui_path: "/settings", ui_navigation: "設定 > 通知設定" },
 ] as const;
 
 serve(async (req) => {

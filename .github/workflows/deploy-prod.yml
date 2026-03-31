@@ -166,6 +166,9 @@ jobs:
           supabase functions deploy team-collaboration-sync --no-verify-jwt
           supabase functions deploy user-feedback-collector --no-verify-jwt
           supabase functions deploy revenue-forecaster --no-verify-jwt
+          supabase functions deploy content-moderation --no-verify-jwt
+          supabase functions deploy api-rate-limiter --no-verify-jwt
+          supabase functions deploy notification-preferences --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
