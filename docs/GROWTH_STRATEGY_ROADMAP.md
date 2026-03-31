@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432i-web (45本追加 → 155 Functions 体制)
+最終更新: 2026-04-01 PowerShell#8 (schedule-task-monitor schema修正・task_id統一 / 155 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,11 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #8 実装済み
+
+- **schedule-task-monitor スキーマ完全修正** (PowerShell 2026-04-01): `task_name` → `task_id` カラム名修正、`failure` → `error` ステータス正規化、存在しない `get_schedule_task_stats()` RPC を削除しクライアント側統計計算に変更。Edge Function が `schedule_task_runs` テーブルと正しく連携するよう修正。deno lint 0件・flutter analyze 0件維持。
+- **cs-check / daily-report トリガー schema修正** (PowerShell 2026-04-01): RemoteTrigger API で `cs-check`・`daily-report` 両トリガーのプロンプトを更新。`schedule_task_runs` への POST 時に `task_id` カラムと `error` ステータスを使用するよう修正し、次回 Schedule 実行からリアルデータ記録が開始される状態を確立。
 
 ### 2026-04-01 PowerShell全体管理セッション #7 実装済み
 

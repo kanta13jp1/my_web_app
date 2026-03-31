@@ -3,6 +3,8 @@
 //
 // GET  → 実行ログ一覧取得 (最新50件)
 // POST → 実行ログ記録 (Schedule から呼び出し)
+//
+// schema: schedule_task_runs (task_id, status: running|success|error|skipped, ...)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -27,9 +29,8 @@ serve(async (req) => {
     });
 
     if (req.method === "GET") {
-      // 実行ログ一覧を取得
       const url = new URL(req.url);
-      const taskName = url.searchParams.get("task");
+      const taskId = url.searchParams.get("task");
       const status = url.searchParams.get("status");
       const limit = parseInt(url.searchParams.get("limit") ?? "50", 10);
 
@@ -39,46 +40,51 @@ serve(async (req) => {
         .order("started_at", { ascending: false })
         .limit(limit);
 
-      if (taskName) query = query.eq("task_name", taskName);
+      if (taskId) query = query.eq("task_id", taskId);
       if (status) query = query.eq("status", status);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // サマリー統計
-      const { data: stats } = await supabase.rpc("get_schedule_task_stats").single();
+      // 集計統計 (RPC なしでクライアント側で計算)
+      const runs = data ?? [];
+      const stats = {
+        total_runs: runs.length,
+        success_count: runs.filter((r) => r.status === "success").length,
+        error_count: runs.filter((r) => r.status === "error").length,
+        last_run_at: runs.length > 0 ? runs[0].started_at : null,
+      };
 
       return new Response(
-        JSON.stringify({
-          success: true,
-          runs: data ?? [],
-          stats: stats ?? {
-            total_runs: 0,
-            success_count: 0,
-            failure_count: 0,
-            last_run_at: null,
-          },
-        }),
+        JSON.stringify({ success: true, runs, stats }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     if (req.method === "POST") {
-      // 実行ログを記録
       const body = await req.json();
       const {
-        task_name,
+        task_id,
         status,
         started_at,
         finished_at,
-        duration_ms,
-        output,
+        summary,
         error_message,
       } = body;
 
-      if (!task_name || !status) {
+      if (!task_id || !status) {
         return new Response(
-          JSON.stringify({ success: false, error: "task_name and status are required" }),
+          JSON.stringify({ success: false, error: "task_id and status are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // status を許容値に正規化 (failure → error)
+      const normalizedStatus = status === "failure" ? "error" : status;
+      const validStatuses = ["running", "success", "error", "skipped"];
+      if (!validStatuses.includes(normalizedStatus)) {
+        return new Response(
+          JSON.stringify({ success: false, error: `Invalid status: ${status}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -86,12 +92,12 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from("schedule_task_runs")
         .insert({
-          task_name,
-          status, // 'success' | 'failure' | 'running' | 'skipped'
+          task_id,
+          status: normalizedStatus,
           started_at: started_at ?? new Date().toISOString(),
-          finished_at: finished_at ?? (status !== "running" ? new Date().toISOString() : null),
-          duration_ms: duration_ms ?? null,
-          output: output ?? null,
+          finished_at: finished_at ??
+            (normalizedStatus !== "running" ? new Date().toISOString() : null),
+          summary: summary ?? null,
           error_message: error_message ?? null,
         })
         .select()
