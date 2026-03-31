@@ -204,6 +204,11 @@ jobs:
           supabase functions deploy video-audio-manager --no-verify-jwt
           supabase functions deploy semantic-search --no-verify-jwt
           supabase functions deploy performance-review --no-verify-jwt
+          supabase functions deploy wiki-database --no-verify-jwt
+          supabase functions deploy api-key-manager --no-verify-jwt
+          supabase functions deploy scheduled-notifications --no-verify-jwt
+          supabase functions deploy cohort-analysis --no-verify-jwt
+          supabase functions deploy integration-connector --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

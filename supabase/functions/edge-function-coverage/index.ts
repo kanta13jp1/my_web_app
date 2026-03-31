@@ -141,6 +141,11 @@ const FUNCTION_REGISTRY = [
   { name: "video-audio-manager", description: "動画・音声管理 (メディア/プレイリスト/文字起こし)", has_ui: true, ui_path: "/media", ui_navigation: "ホーム > メディア" },
   { name: "semantic-search", description: "セマンティック検索 (全文横断/フィルタ/保存検索)", has_ui: true, ui_path: "/search", ui_navigation: "ホーム > 検索" },
   { name: "performance-review", description: "人事評価 (OKR/自己評価/360度FB)", has_ui: true, ui_path: "/reviews", ui_navigation: "ホーム > パフォーマンス" },
+  { name: "wiki-database", description: "Wiki・データベース (階層ページ/テーブル/Notion競合)", has_ui: true, ui_path: "/wiki", ui_navigation: "ホーム > Wiki" },
+  { name: "api-key-manager", description: "APIキー管理 (生成/権限/無効化)", has_ui: true, ui_path: "/api-keys", ui_navigation: "設定 > APIキー" },
+  { name: "scheduled-notifications", description: "通知スケジューリング (リマインダー/定期通知)", has_ui: true, ui_path: "/notifications/schedule", ui_navigation: "通知 > スケジュール" },
+  { name: "cohort-analysis", description: "コホート分析 (リテンション/ファネル/イベント)", has_ui: true, ui_path: "/admin/cohort", ui_navigation: "管理 > コホート分析" },
+  { name: "integration-connector", description: "外部サービス連携 (Slack/Discord/LINE等10サービス)", has_ui: true, ui_path: "/integrations", ui_navigation: "設定 > 連携" },
 ] as const;
 
 serve(async (req) => {
