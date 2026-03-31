@@ -224,6 +224,11 @@ jobs:
           supabase functions deploy whiteboard-canvas --no-verify-jwt
           supabase functions deploy form-builder --no-verify-jwt
           supabase functions deploy meeting-manager --no-verify-jwt
+          supabase functions deploy schedule-result-tracker --no-verify-jwt
+          supabase functions deploy blog-auto-publisher --no-verify-jwt
+          supabase functions deploy virtual-organization --no-verify-jwt
+          supabase functions deploy edge-function-ui-checker --no-verify-jwt
+          supabase functions deploy issue-auto-resolver --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

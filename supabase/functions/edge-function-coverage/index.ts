@@ -161,6 +161,11 @@ const FUNCTION_REGISTRY = [
   { name: "whiteboard-canvas", description: "ホワイトボード (図形/テキスト/コネクター/テンプレート)", has_ui: true, ui_path: "/whiteboard", ui_navigation: "ホーム > ホワイトボード" },
   { name: "form-builder", description: "フォームビルダー (多種フィールド/条件分岐/公開URL/集計)", has_ui: true, ui_path: "/forms", ui_navigation: "ホーム > フォーム" },
   { name: "meeting-manager", description: "ミーティング管理 (RSVP/アジェンダ/議事録/アクションアイテム)", has_ui: true, ui_path: "/meetings", ui_navigation: "ホーム > ミーティング" },
+  { name: "schedule-result-tracker", description: "Schedule実行結果追跡 (タスク結果/失敗検出/統計)", has_ui: true, ui_path: "/admin/schedule", ui_navigation: "管理 > Schedule結果" },
+  { name: "blog-auto-publisher", description: "ブログ自動投稿管理 (11プラットフォーム/投稿追跡/統計)", has_ui: true, ui_path: "/blog/publish", ui_navigation: "ブログ > 投稿管理" },
+  { name: "virtual-organization", description: "仮想AI組織 (12部署/エージェント配置/タスク割振り/性格管理)", has_ui: true, ui_path: "/organization", ui_navigation: "ホーム > AI組織" },
+  { name: "edge-function-ui-checker", description: "Edge Function UI連携チェッカー (未連携検出/タスク生成)", has_ui: false, ui_path: null, ui_navigation: "Schedule自動実行" },
+  { name: "issue-auto-resolver", description: "Issue自動修正管理 (Issue追跡/修正記録/統計)", has_ui: true, ui_path: "/admin/issues", ui_navigation: "管理 > Issue修正" },
 ] as const;
 
 serve(async (req) => {
