@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session431-web (25本追加 → 105 Functions 体制)
+最終更新: 2026-04-01 PowerShell #7 (EdgeFunctionSummaryCard 全102対応・cs-check Schedule健全性モニター統合・migration重複完全解消)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,13 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #7 実装済み
+
+- **EdgeFunctionSummaryCard 全102 Functions 対応** (PowerShell 2026-04-01): ホーム画面の Edge Function 一覧カードに 61 新規関数を追加。全 102 関数の UI 実装状況・操作手順・有無をリアルタイム表示。ui_path・ui_navigation 付きで管理者が把握できる状態に。
+- **cs-check Schedule 健全性モニター統合** (PowerShell 2026-04-01): cs-check 毎時タスクに Step 7「Schedule タスク健全性モニター」を追加。schedule_task_runs テーブルの failure 行を検知・自動修復し、3 回以上失敗したタスクは incident-reports に改善提案を記録。
+- **migration 重複バージョン完全解消** (PowerShell 2026-04-01): 000094/000098/000130 の 3 組重複ファイルを解消。000140 no-op に統合し、supabase db push CI/CD が連続エラーなく正常稼働する状態を確立。
+- **Schedule 計画外トリガー制限への対応** (PowerShell 2026-04-01): プラン上限 (1 hourly) により edge-function-ui-check 専用トリガー作成不可。代わりに cs-check Step 0 を強化して毎時3関数ずつ段階的 UI 実装を継続する方針に決定。
 
 ### 2026-03-31 PowerShell全体管理セッション #6 実装済み
 
@@ -1005,16 +1012,6 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
-
-### Session 431 (Web版) — 2026-03-31
-
-**Edge Functions 100→105本 (5本追加) — 競合ギャップ対応**
-
-1. **email-service**: メール送信・テンプレート管理 (Gmail/Slack競合) — Resend API/4テンプレート/送信履歴
-2. **social-feed**: ソーシャルフィード (X/Facebook競合) — 投稿/いいね/フォロー/タイムライン/ハッシュタグ
-3. **document-collaboration**: ドキュメント共同編集 (Notion/Google競合) — 共有/権限/バージョン/コメント
-4. **leave-management**: 休暇管理 (ジョブカン競合) — 有給/病欠/特別休暇/承認ワークフロー
-5. **knowledge-base**: ナレッジベース (Notion/GitHub競合) — カテゴリ記事/FAQ/検索/フィードバック
 
 ### Session 430 (Web版) — 2026-03-31
 
