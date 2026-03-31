@@ -163,6 +163,9 @@ jobs:
           supabase functions deploy import-from-competitors --no-verify-jwt
           supabase functions deploy department-reporting --no-verify-jwt
           supabase functions deploy agent-performance-monitor --no-verify-jwt
+          supabase functions deploy team-collaboration-sync --no-verify-jwt
+          supabase functions deploy user-feedback-collector --no-verify-jwt
+          supabase functions deploy revenue-forecaster --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

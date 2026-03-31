@@ -97,6 +97,9 @@ const FUNCTION_REGISTRY = [
   { name: "import-from-competitors", description: "競合製品からのデータインポート (8形式)", has_ui: true, ui_path: "/import", ui_navigation: "インポートページ" },
   { name: "department-reporting", description: "部署別KPIレポート・効率スコア", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > 部署レポート" },
   { name: "agent-performance-monitor", description: "エージェントパフォーマンス監視・ランキング", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > パフォーマンス" },
+  { name: "team-collaboration-sync", description: "チーム協業・アクティビティフィード・メンション通知", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > アクティビティ" },
+  { name: "user-feedback-collector", description: "NPS・機能満足度・フィードバック収集", has_ui: true, ui_path: "/feedback", ui_navigation: "設定 > フィードバック" },
+  { name: "revenue-forecaster", description: "収益予測・事業計画シミュレーション", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 収益予測" },
 ] as const;
 
 serve(async (req) => {
