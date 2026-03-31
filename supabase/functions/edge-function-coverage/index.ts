@@ -109,6 +109,12 @@ const FUNCTION_REGISTRY = [
   { name: "kanban-board", description: "カンバンボード・プロジェクト管理", has_ui: true, ui_path: "/kanban", ui_navigation: "ホーム > プロジェクト管理" },
   { name: "chat-messaging", description: "チャット・メッセージング (チャンネル/DM/スレッド)", has_ui: true, ui_path: "/chat", ui_navigation: "ホーム > チャット" },
   { name: "automation-workflows", description: "ワークフロー自動化 (トリガー/アクション)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
+  // Session 430 追加
+  { name: "time-tracker", description: "勤怠・時間追跡 (出退勤/プロジェクト別/残業アラート)", has_ui: true, ui_path: "/time-tracker", ui_navigation: "ホーム > 勤怠管理" },
+  { name: "expense-tracker", description: "家計簿・経費管理 (収支/カテゴリ/予算/年次)", has_ui: true, ui_path: "/expenses", ui_navigation: "ホーム > 家計簿" },
+  { name: "ai-summarizer", description: "AIテキスト要約・キーポイント・感情分析", has_ui: true, ui_path: "/ai-tools", ui_navigation: "ホーム > AI ツール > 要約" },
+  { name: "template-library", description: "テンプレートライブラリ (8組込+カスタム)", has_ui: true, ui_path: "/templates", ui_navigation: "ホーム > テンプレート" },
+  { name: "tag-manager", description: "タグ管理・統計・マージ・一括操作", has_ui: true, ui_path: "/tags", ui_navigation: "ホーム > タグ管理" },
 ] as const;
 
 serve(async (req) => {
