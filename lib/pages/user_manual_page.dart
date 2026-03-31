@@ -35,14 +35,11 @@ class UserManualPage extends StatelessWidget {
             '・「開発・成長実績」カード: 右上のドロップダウンで「今日・今週・今月・直近3ヶ月」などを選択すると開発実績一覧を表示します。\n'
             '・「今日の名言」カード: 哲学者の名言が毎日更新されます。X へのシェアや画像URLのコピーが可能です。\n\n'
             '【スクロールすると表示されるセクション（主なもの）】\n'
-            '・CEO OFFICE — 朝のブリーフィング・毎日の習慣\n'
-            '・OFFICE KPI SNAPSHOT — CFO(財務)・CMO(成長)・CHO(健康)・CHRO(人事) の指標一覧\n'
-            '・KPI SUMMARY — 月次収支・タスク達成率などの総合グラフ\n'
-            '・OPERATIONS CALENDAR — 支払い・締切の月次カレンダー\n'
-            '・SPECIAL PROJECT — 期限付き重要プロジェクト（選挙戦略室など）\n'
             '・QUICK ACCESS — 全ツールをセクション別に表示（今日の運用/特別案件/生活・整理/財務・健康・人事/知識・意思決定/成長・発信）\n'
-            '・RECENT TOOLS — 最近使ったツールへのクイックリンク\n'
-            '・開発・成長実績 — 実装済み機能の履歴（期間フィルタあり）\n\n'
+            '・OFFICE KPI SNAPSHOT — CFO(財務)・CMO(成長)・CHO(健康)・CHRO(人事) の指標一覧\n'
+            '・開発・成長実績 — 実装済み機能の履歴（期間フィルタあり）\n'
+            '・競合機能比較カード — 21競合との機能比較をタブで表示\n'
+            '・Edge Functions 実装状況 — バックエンド API の UI 連携状況\n\n'
             '※ QUICK ACCESS セクションのグリッドボタンをタップして各機能を開きます。\n\n'
             '【性格診断バナー】\n'
             '画面上部にあなたの性格タイプが表示されます（MBTI 16タイプ診断済みの場合）。\n'
@@ -50,10 +47,10 @@ class UserManualPage extends StatelessWidget {
             '未診断の場合は「性格診断を受ける」ボタンが表示されます。\n\n'
             '【ロックアイコン（🔒）が表示される場合】\n'
             '以下の条件をすべて満たすと、一部の探索的機能のロックが解除されます:\n'
-            '1. 「CEO OFFICE」→「モーニング・ブリーフィング」を当日中に開く\n'
+            '1. 「QUICK ACCESS」→「今日の運用」→「モーニングブリーフィング」を当日中に開く\n'
             '2. 未完了の緊急タスク（赤いアラート）がない\n'
             '3. 禁欲ガード逸脱カウントが0\n'
-            '新規ユーザーの方は まず「CEO OFFICE」→「モーニング・ブリーフィング」から始めてください。',
+            '新規ユーザーの方は まず「QUICK ACCESS」→「今日の運用」→「モーニングブリーフィング」から始めてください。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -161,7 +158,7 @@ class UserManualPage extends StatelessWidget {
             '1. .md ファイルまたは .txt ファイルを用意\n'
             '2. インポート画面で「ファイルを選択」→ファイルを選択\n'
             '3.「インポート開始」をタップ\n\n'
-            '※ インポート後は「CMO/CKO OFFICE」→「メモ一覧 (CKO)」でデータを確認できます。',
+            '※ インポート後は「QUICK ACCESS」→「知識・意思決定」→「メモ一覧」でデータを確認できます。',
             subColor,
           ),
           const SizedBox(height: 24),
@@ -264,7 +261,7 @@ class UserManualPage extends StatelessWidget {
             '3. エディタ右上の「🌐（公開）」アイコンをタップ → 確認ダイアログで「公開する」をタップ\n'
             '4. 「/public-memos で確認できます」というメッセージが表示されれば公開完了です\n\n'
             '【公開メモの一覧】\n'
-            'ホーム画面「GROWTH / 成長導線」セクション →「公開メモ一覧」をタップ。\n'
+            'ホーム画面「QUICK ACCESS」→「成長・発信」→「公開メモ一覧」をタップ。\n'
             'またはアドレスバーに /public-memos を入力。\n\n'
             '【SNS シェア時の表示】\n'
             '公開リンクを X(Twitter) などで共有すると、メモのタイトルと要約がカードで表示されます（OGP対応）。',
@@ -435,7 +432,7 @@ class UserManualPage extends StatelessWidget {
             '【管理者ダッシュボードへのアクセス】\n'
             '・アドレスバーに /admin を直接入力（最速）\n'
             '・ホーム画面「QUICK ACCESS」→「成長・発信」→「管理者ダッシュボード」\n'
-            '・ホーム画面「OFFICE KPI SNAPSHOT」セクション →「分析を見る」をタップ',
+            '・ホーム画面「OFFICE KPI SNAPSHOT」→「分析を見る」をタップ',
             subColor,
           ),
           _buildSectionTitle('13. Edge Functions 実装状況', textColor),
@@ -457,7 +454,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('14. プロフィール完成度', textColor),
           _buildContent(
             '「成長・支援ダッシュボード」の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n'
-            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」からアクセス）\n\n'
+            '（ホーム画面「QUICK ACCESS」→「成長・発信」→「成長・支援ダッシュボード」からアクセス）\n\n'
             '【完成度の計算対象（7項目）】\n'
             '表示名 / アイコン画像 / 自己紹介 / 場所 / Twitter / GitHub / Web サイト URL\n\n'
             '【色の意味】\n'
@@ -476,7 +473,7 @@ class UserManualPage extends StatelessWidget {
           _buildSectionTitle('15. 成長・支援ダッシュボード', textColor),
           _buildContent(
             'ホーム画面から退避した補助カードをまとめて確認できるダッシュボードです。\n'
-            '（ホーム画面「GROWTH / 成長導線」→「成長・支援ダッシュボード」、または業務メニューからアクセス）\n\n'
+            '（ホーム画面「QUICK ACCESS」→「成長・発信」→「成長・支援ダッシュボード」、または業務メニューからアクセス）\n\n'
             '【AI アシスト】\n'
             '・ノート検索 / クイックタスク入力 / AI ゴール分解 / プロフィール完成度\n\n'
             '【成長シグナル】\n'
@@ -511,7 +508,7 @@ class UserManualPage extends StatelessWidget {
             '・週次 SNS 投稿ドラフト生成\n'
             '・依存パッケージの脆弱性チェック\n\n'
             '【管理者ダッシュボードでの確認方法】\n'
-            'ホーム → GROWTH / 成長導線 →「管理者ダッシュボード」をタップ\n'
+            'ホーム → QUICK ACCESS」→「成長・発信 →「管理者ダッシュボード」をタップ\n'
             '→「Schedule タスク実行状況」カードで最終実行日時・ステータスを確認できます。',
             subColor,
           ),
