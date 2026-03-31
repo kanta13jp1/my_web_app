@@ -999,6 +999,40 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### Claude Schedule — 日次レポート 2026-03-31 (daily-report自動実行)
+
+**実施内容:**
+
+1. **日次レポート生成** (`docs/daily-reports/2026-03-31.md`)
+   - Supabase API はプロキシブロックのため git log フォールバック
+   - 総ユーザー数 4名 (継続)、Edge Functions 66本 (前日比 +9本) を記録
+   - AI分析3点提案: ユーザー獲得加速 / UI未接続 Edge Function 接続 / 自動テスト強化
+
+2. **セキュリティ修正 — note-comments JWT バイパス脆弱性 (Issue #249)**
+   - `SERVICE_ROLE_KEY` を廃止し `SUPABASE_ANON_KEY` + ユーザー JWT で DB クライアントを生成
+   - `note_comments` テーブルの RLS ポリシーが DB レベルで適用されるよう修正
+   - Issue #249 クローズ完了
+
+3. **重複 GitHub Issue クローズ** — Edge Function UI 導線チェック重複 Issue (#252, #253, #255) を #256 の重複としてクローズ
+
+4. **競合モニタリング** (`docs/competitor-reports/2026-03-31.md`)
+   - Notion: カスタムスキル & カスタムエージェント (最高脅威度) — 無料トライアル 5/3 まで
+   - Slack: パーソナル AI エージェント Slackbot (Business+/Enterprise+, 3/25 ロールアウト)
+   - GitHub: Copilot in Pull Requests でワークフロー自動修正拡張
+
+5. **Schedule ヘルスチェック**
+   - cs-check: ✅ 5回/24h 正常実行
+   - blog-draft: ✅ 正常 (2026-03-31 ドラフト存在確認)
+   - weekly-sns-draft: — (月曜のみ)
+   - Supabase schedule_task_runs: ⚠️ プロキシブロックにより書き込み不可
+
+**競合動向ログ (2026-03-31):**
+- Notion カスタムエージェント無料トライアル (〜5/3): 当社 AI タスク自動化 UX の強化を今月中に着手推奨
+- Slack パーソナル AI Slackbot: 「個人ライフ管理の深さ」で差別化継続
+- GitHub Copilot PR 自動修正: 当社 Claude Schedule cs-check と同方向 — 継続強化
+
+---
+
 ### Session 2026-03-31 #427 — Web版 7本追加 (63 Functions体制)
 
 **実施内容:**
