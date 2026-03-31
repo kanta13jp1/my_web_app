@@ -214,6 +214,11 @@ jobs:
           supabase functions deploy voice-memo-transcriber --no-verify-jwt
           supabase functions deploy ocr-document-scanner --no-verify-jwt
           supabase functions deploy oauth-sso-provider --no-verify-jwt
+          supabase functions deploy inventory-manager --no-verify-jwt
+          supabase functions deploy order-tracker --no-verify-jwt
+          supabase functions deploy ci-cd-pipeline --no-verify-jwt
+          supabase functions deploy compensation-manager --no-verify-jwt
+          supabase functions deploy financial-report --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

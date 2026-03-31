@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432b-web (10本追加 → 120 Functions 体制)
+最終更新: 2026-04-01 session432c-web (15本追加 → 125 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1012,6 +1012,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432c (Web版) — 2026-03-31
+
+**Edge Functions 120→125本 (5本追加) — eコマース・財務・CI/CD強化**
+
+1. **inventory-manager**: 在庫・資産管理 (Amazon/MoneyForward競合) — 物品登録/入出庫/アラート/カテゴリ
+2. **order-tracker**: 注文・配送追跡 (Amazon競合) — 注文管理/ステータス追跡/ウィッシュリスト
+3. **ci-cd-pipeline**: CI/CDパイプライン (GitHub Actions/Claude Code競合) — ビルド記録/デプロイ統計/ロールバック
+4. **compensation-manager**: 給与・報酬管理 (ジョブカン/MoneyForward競合) — 給与計算/賞与/明細履歴
+5. **financial-report**: 財務レポート (MoneyForward/Microsoft競合) — P/L/キャッシュフロー/カテゴリ分析/年次比較
 
 ### Session 432b (Web版) — 2026-03-31
 

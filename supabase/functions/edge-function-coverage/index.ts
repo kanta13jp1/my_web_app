@@ -151,6 +151,11 @@ const FUNCTION_REGISTRY = [
   { name: "voice-memo-transcriber", description: "音声メモ・文字起こし (録音/文字起こし/ノート変換)", has_ui: true, ui_path: "/voice-memos", ui_navigation: "ホーム > 音声メモ" },
   { name: "ocr-document-scanner", description: "OCR文書スキャン (レシート/名刺/ドキュメント)", has_ui: true, ui_path: "/scanner", ui_navigation: "ホーム > スキャナー" },
   { name: "oauth-sso-provider", description: "SSO/OAuth管理 (Google/GitHub/Microsoft/SAML)", has_ui: true, ui_path: "/settings/sso", ui_navigation: "設定 > SSO" },
+  { name: "inventory-manager", description: "在庫・資産管理 (物品/デジタル資産/入出庫/アラート)", has_ui: true, ui_path: "/inventory", ui_navigation: "ホーム > 在庫管理" },
+  { name: "order-tracker", description: "注文・配送追跡 (注文/ステータス/ウィッシュリスト)", has_ui: true, ui_path: "/orders", ui_navigation: "ホーム > 注文" },
+  { name: "ci-cd-pipeline", description: "CI/CDパイプライン (ビルド/デプロイ/ロールバック)", has_ui: true, ui_path: "/pipelines", ui_navigation: "開発 > パイプライン" },
+  { name: "compensation-manager", description: "給与・報酬管理 (給与/賞与/明細)", has_ui: true, ui_path: "/compensation", ui_navigation: "ホーム > 給与" },
+  { name: "financial-report", description: "財務レポート (P/L/キャッシュフロー/カテゴリ分析)", has_ui: true, ui_path: "/finance/reports", ui_navigation: "家計簿 > レポート" },
 ] as const;
 
 serve(async (req) => {
