@@ -152,9 +152,10 @@ serve(async (req) => {
       }
 
       if (view === "revenue") {
-        // 管理者向け: service_role 認証チェック
+        // 管理者向け: service_role 認証チェック (完全一致)
         const serviceAuth = req.headers.get("Authorization");
-        if (!serviceAuth || !serviceAuth.includes(SERVICE_ROLE_KEY.slice(0, 20))) {
+        const bearerToken = serviceAuth?.replace(/^Bearer\s+/i, "") ?? "";
+        if (!bearerToken || bearerToken !== SERVICE_ROLE_KEY) {
           return new Response(
             JSON.stringify({ error: "管理者権限が必要です" }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
