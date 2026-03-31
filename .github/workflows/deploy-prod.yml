@@ -154,6 +154,9 @@ jobs:
           supabase functions deploy competitor-feature-sync --no-verify-jwt
           supabase functions deploy data-export-manager --no-verify-jwt
           supabase functions deploy ab-testing-manager --no-verify-jwt
+          supabase functions deploy seo-optimizer --no-verify-jwt
+          supabase functions deploy search-analytics --no-verify-jwt
+          supabase functions deploy webhook-manager --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

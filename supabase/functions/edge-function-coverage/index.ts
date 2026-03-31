@@ -87,6 +87,9 @@ const FUNCTION_REGISTRY = [
   { name: "competitor-feature-sync", description: "競合機能パリティ動的管理・進捗トラッキング", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 競合機能同期" },
   { name: "data-export-manager", description: "GDPR対応データエクスポート (JSON/CSV)", has_ui: true, ui_path: "/settings", ui_navigation: "設定 > データエクスポート" },
   { name: "ab-testing-manager", description: "A/Bテスト実験管理・バリアント割り当て", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > A/Bテスト" },
+  { name: "seo-optimizer", description: "SEO分析・メタタグ管理・スコア算出", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > SEO" },
+  { name: "search-analytics", description: "検索クエリ分析・トレンド・品質スコア", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 検索分析" },
+  { name: "webhook-manager", description: "外部連携Webhook管理・配信ログ", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > Webhook" },
 ] as const;
 
 serve(async (req) => {
