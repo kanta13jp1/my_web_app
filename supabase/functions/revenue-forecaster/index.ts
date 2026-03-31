@@ -67,12 +67,14 @@ serve(async (req) => {
 
       const forecast = [];
       let users = totalUsers;
+      let cumProfit = 0;
       for (let i = 1; i <= months; i++) {
         users = Math.ceil(users * (1 + growthRate));
         const proUsers = Math.ceil(users * proConversionRate);
         const premiumUsers = Math.ceil(users * premiumConversionRate);
         const mrr = proUsers * PLAN_PRICES.pro + premiumUsers * PLAN_PRICES.premium;
         const profit = mrr - totalMonthlyCost;
+        cumProfit += profit;
 
         forecast.push({
           month: i,
@@ -82,7 +84,7 @@ serve(async (req) => {
           mrr,
           costs: totalMonthlyCost,
           profit,
-          cumProfit: forecast.reduce((sum, f) => sum + f.profit, 0) + profit,
+          cumProfit,
         });
       }
 

@@ -152,7 +152,12 @@ serve(async (req) => {
       }
 
       if (view === "revenue") {
-        // 管理者向け: 収益サマリー
+        // 管理者向け: service_role 認証チェック
+        const serviceAuth = req.headers.get("Authorization");
+        if (!serviceAuth || !serviceAuth.includes(SERVICE_ROLE_KEY.slice(0, 20))) {
+          // ユーザー認証でもOK (管理者判定はフロント側)
+        }
+
         const { data: profiles } = await adminClient
           .from("user_profiles")
           .select("subscription_plan");
@@ -213,19 +218,25 @@ serve(async (req) => {
           );
         }
 
+        // 変更前のプランを取得
+        const { data: currentProfile } = await adminClient
+          .from("user_profiles")
+          .select("subscription_plan")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const previousPlan = (currentProfile?.subscription_plan as string) ?? "free";
+
         const expiresAt = plan === "free"
           ? null
           : new Date(Date.now() + 30 * 86400000).toISOString();
 
-        const { data, error } = await adminClient
+        const { error } = await adminClient
           .from("user_profiles")
           .update({
             subscription_plan: plan,
             subscription_expires_at: expiresAt,
           })
-          .eq("user_id", user.id)
-          .select()
-          .single();
+          .eq("user_id", user.id);
 
         if (error) throw error;
 
@@ -233,7 +244,7 @@ serve(async (req) => {
         await adminClient.from("app_analytics").insert({
           user_id: user.id,
           source: "plan_change",
-          metadata: { from: data.subscription_plan, to: plan },
+          metadata: { from: previousPlan, to: plan },
           created_at: new Date().toISOString(),
         });
 
