@@ -169,6 +169,11 @@ jobs:
           supabase functions deploy content-moderation --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
           supabase functions deploy notification-preferences --no-verify-jwt
+          supabase functions deploy file-storage-manager --no-verify-jwt
+          supabase functions deploy calendar-events --no-verify-jwt
+          supabase functions deploy kanban-board --no-verify-jwt
+          supabase functions deploy chat-messaging --no-verify-jwt
+          supabase functions deploy automation-workflows --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

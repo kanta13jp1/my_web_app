@@ -103,6 +103,12 @@ const FUNCTION_REGISTRY = [
   { name: "content-moderation", description: "コンテンツモデレーション・安全性チェック", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > モデレーション" },
   { name: "api-rate-limiter", description: "APIレートリミット・利用制限管理", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > API制限" },
   { name: "notification-preferences", description: "通知設定管理 (タイプ別/頻度/メール/プッシュ)", has_ui: true, ui_path: "/settings", ui_navigation: "設定 > 通知設定" },
+  // Session 429 追加
+  { name: "file-storage-manager", description: "ファイルストレージ管理・アップロード・共有", has_ui: true, ui_path: "/files", ui_navigation: "ホーム > ファイル管理" },
+  { name: "calendar-events", description: "カレンダー・イベント管理 (日/週/月ビュー)", has_ui: true, ui_path: "/calendar", ui_navigation: "ホーム > カレンダー" },
+  { name: "kanban-board", description: "カンバンボード・プロジェクト管理", has_ui: true, ui_path: "/kanban", ui_navigation: "ホーム > プロジェクト管理" },
+  { name: "chat-messaging", description: "チャット・メッセージング (チャンネル/DM/スレッド)", has_ui: true, ui_path: "/chat", ui_navigation: "ホーム > チャット" },
+  { name: "automation-workflows", description: "ワークフロー自動化 (トリガー/アクション)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
 ] as const;
 
 serve(async (req) => {

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session428-web (12本追加 → 75 Functions 体制)
+最終更新: 2026-03-31 session429-web (5本追加 → 80 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1039,6 +1039,18 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - GitHub Copilot PR 自動修正: 当社 Claude Schedule cs-check と同方向 — 継続強化
 
 ---
+
+### Session 2026-03-31 #429 — Web版 5本追加 (80 Functions体制)
+
+**実施内容:**
+
+1. **file-storage-manager** — ファイルストレージ管理・アップロード・共有URL・プラン別容量制限
+2. **calendar-events** — カレンダー・イベントCRUD・日/週/月ビュー・リマインダー・繰り返し
+3. **kanban-board** — カンバンボード・プロジェクト管理・5カラム・カード移動・ラベル
+4. **chat-messaging** — チャット・メッセージング・チャンネル・DM・スレッド返信・未読
+5. **automation-workflows** — ワークフロー自動化・IF-THENルール・5テンプレート・実行ログ
+
+**インフラ更新:** registry 80, deploy-prod.yml +5, 実績シード5件
 
 ### Session 2026-03-31 #428 — Web版 12本追加 (75 Functions体制)
 
