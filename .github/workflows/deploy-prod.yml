@@ -157,6 +157,12 @@ jobs:
           supabase functions deploy seo-optimizer --no-verify-jwt
           supabase functions deploy search-analytics --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
+          supabase functions deploy subscription-management --no-verify-jwt
+          supabase functions deploy gamification-engine --no-verify-jwt
+          supabase functions deploy agent-task-router --no-verify-jwt
+          supabase functions deploy import-from-competitors --no-verify-jwt
+          supabase functions deploy department-reporting --no-verify-jwt
+          supabase functions deploy agent-performance-monitor --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

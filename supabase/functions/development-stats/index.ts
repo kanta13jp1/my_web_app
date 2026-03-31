@@ -153,7 +153,7 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true });
 
       // Edge Function 数
-      const edgeFunctionCount = 63; // 60 + 3 (session427: seo-optimizer, search-analytics, webhook-manager)
+      const edgeFunctionCount = 69; // 63 + 6 (session428: subscription, gamification, task-router, import, dept-reporting, agent-perf)
 
       return new Response(
         JSON.stringify({

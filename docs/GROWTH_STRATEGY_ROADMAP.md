@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 daily-development (過去選挙結果UI・未擁立CSVコピー・Geminiスキーマ拡張・63 Functions)
+最終更新: 2026-03-31 session428-web (6本追加 → 69 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1039,6 +1039,45 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - GitHub Copilot PR 自動修正: 当社 Claude Schedule cs-check と同方向 — 継続強化
 
 ---
+
+### Session 2026-03-31 #428 — Web版 6本追加 (69 Functions体制)
+
+**実施内容:**
+
+1. **subscription-management Edge Function 新規作成**
+   - Free / Pro (¥480/月) / Premium (¥980/月) プラン管理
+   - 利用量クォータ追跡 (ノート数, AI呼び出し, エクスポート)
+   - 収益サマリー (MRR/ARR/プラン別ユーザー数)
+
+2. **gamification-engine Edge Function 新規作成**
+   - デイリーログインストリーク + ポイント付与
+   - 13種バッジ (first_note, streak_7/30/100, ai_explorer 等)
+   - リーダーボード (ポイントランキング上位20名)
+
+3. **agent-task-router Edge Function 新規作成**
+   - 12部署のスキルマッチングによる自動タスク割り当て
+   - 部署別負荷分散 (ラウンドロビン)
+   - CEO へのエスカレーション機能
+
+4. **import-from-competitors Edge Function 新規作成**
+   - 8形式対応: Notion JSON, Evernote ENEX, MoneyForward CSV, Google Keep, Slack, Chatwork, Markdown, 汎用CSV
+   - 各競合製品からの具体的なエクスポート手順ガイド付き
+
+5. **department-reporting Edge Function 新規作成**
+   - 部署別KPI (完了率・効率スコア)
+   - エージェント別タスク数の集計
+   - 全社サマリー
+
+6. **agent-performance-monitor Edge Function 新規作成**
+   - エージェント別パフォーマンススコア (0-100)
+   - 部署内ランキング
+   - 低パフォーマンスアラート
+
+7. **インフラ更新**
+   - subscription_plan / subscription_expires_at カラム追加
+   - edge-function-coverage レジストリ 69 Functions
+   - deploy-prod.yml: 6関数追加
+   - 実績シード6件
 
 ### Session 2026-03-31 #427 — Web版 7本追加 (63 Functions体制)
 

@@ -90,6 +90,13 @@ const FUNCTION_REGISTRY = [
   { name: "seo-optimizer", description: "SEO分析・メタタグ管理・スコア算出", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > SEO" },
   { name: "search-analytics", description: "検索クエリ分析・トレンド・品質スコア", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 検索分析" },
   { name: "webhook-manager", description: "外部連携Webhook管理・配信ログ", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > Webhook" },
+  // Session 428 追加
+  { name: "subscription-management", description: "サブスクリプション管理・プラン制御・利用量追跡", has_ui: true, ui_path: "/settings", ui_navigation: "設定 > プラン管理" },
+  { name: "gamification-engine", description: "ストリーク・バッジ・ポイント・リーダーボード", has_ui: true, ui_path: "/home", ui_navigation: "ホーム > ゲーミフィケーションカード" },
+  { name: "agent-task-router", description: "AIエージェント間タスク自動割り振り・負荷分散", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > タスクルーター" },
+  { name: "import-from-competitors", description: "競合製品からのデータインポート (8形式)", has_ui: true, ui_path: "/import", ui_navigation: "インポートページ" },
+  { name: "department-reporting", description: "部署別KPIレポート・効率スコア", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > 部署レポート" },
+  { name: "agent-performance-monitor", description: "エージェントパフォーマンス監視・ランキング", has_ui: true, ui_path: "/agents", ui_navigation: "AI組織OS > パフォーマンス" },
 ] as const;
 
 serve(async (req) => {
