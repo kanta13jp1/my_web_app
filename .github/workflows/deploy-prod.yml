@@ -184,6 +184,11 @@ jobs:
           supabase functions deploy poll-survey --no-verify-jwt
           supabase functions deploy invoice-generator --no-verify-jwt
           supabase functions deploy contact-manager --no-verify-jwt
+          supabase functions deploy goal-tracker --no-verify-jwt
+          supabase functions deploy reading-list --no-verify-jwt
+          supabase functions deploy password-generator --no-verify-jwt
+          supabase functions deploy clipboard-history --no-verify-jwt
+          supabase functions deploy quick-note --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

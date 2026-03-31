@@ -120,6 +120,11 @@ const FUNCTION_REGISTRY = [
   { name: "poll-survey", description: "アンケート・投票 (作成/回答/集計)", has_ui: true, ui_path: "/polls", ui_navigation: "ホーム > アンケート" },
   { name: "invoice-generator", description: "請求書生成 (作成/ステータス管理/売上集計)", has_ui: true, ui_path: "/invoices", ui_navigation: "ホーム > 請求書" },
   { name: "contact-manager", description: "連絡先管理 (CRUD/グループ/インタラクション)", has_ui: true, ui_path: "/contacts", ui_navigation: "ホーム > 連絡先" },
+  { name: "goal-tracker", description: "目標管理 (短中長期/マイルストーン/進捗追跡)", has_ui: true, ui_path: "/goals", ui_navigation: "ホーム > 目標管理" },
+  { name: "reading-list", description: "読書管理 (書籍登録/ステータス/メモ/統計)", has_ui: true, ui_path: "/reading", ui_navigation: "ホーム > 読書リスト" },
+  { name: "password-generator", description: "パスワード生成・強度チェック", has_ui: true, ui_path: "/tools", ui_navigation: "ホーム > ツール > パスワード" },
+  { name: "clipboard-history", description: "クリップボード履歴 (保存/ピン/検索)", has_ui: true, ui_path: "/clipboard", ui_navigation: "ホーム > クリップボード" },
+  { name: "quick-note", description: "クイックメモ (色分け/チェックリスト/ピン)", has_ui: true, ui_path: "/quick-notes", ui_navigation: "ホーム > クイックメモ" },
 ] as const;
 
 serve(async (req) => {
