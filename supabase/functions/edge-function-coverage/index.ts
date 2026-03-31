@@ -130,6 +130,12 @@ const FUNCTION_REGISTRY = [
   { name: "currency-converter", description: "通貨換算 (15通貨/リアルタイム)", has_ui: true, ui_path: "/tools", ui_navigation: "ホーム > ツール > 通貨換算" },
   { name: "markdown-renderer", description: "Markdownレンダリング (HTML変換/目次/統計)", has_ui: true, ui_path: "/editor", ui_navigation: "ノートエディタ > プレビュー" },
   { name: "system-status", description: "システムステータス (稼働監視/インシデント/稼働率)", has_ui: true, ui_path: "/status", ui_navigation: "ステータスページ" },
+  // Session 431 追加
+  { name: "email-service", description: "メール送信・テンプレート管理 (Resend API)", has_ui: true, ui_path: "/email", ui_navigation: "ホーム > メール" },
+  { name: "social-feed", description: "ソーシャルフィード (投稿/いいね/フォロー/タイムライン)", has_ui: true, ui_path: "/social", ui_navigation: "ホーム > ソーシャル" },
+  { name: "document-collaboration", description: "ドキュメント共同編集 (共有/バージョン/コメント)", has_ui: true, ui_path: "/docs", ui_navigation: "ノート > 共同編集" },
+  { name: "leave-management", description: "休暇管理 (申請/承認/残日数)", has_ui: true, ui_path: "/leave", ui_navigation: "ホーム > 休暇管理" },
+  { name: "knowledge-base", description: "ナレッジベース/ヘルプセンター (FAQ/記事/検索)", has_ui: true, ui_path: "/help", ui_navigation: "ヘルプ > ナレッジベース" },
 ] as const;
 
 serve(async (req) => {
