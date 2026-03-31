@@ -122,6 +122,18 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('knowledge-base', 'ナレッジベース', true, '/knowledge-base', 'ナレッジベースページ > 記事検索・閲覧'),
     _FnDef('semantic-search', 'セマンティック検索 (意味検索)', true, '/semantic-search', 'セマンティック検索ページ > キーワード入力'),
     _FnDef('social-feed', 'ソーシャルフィード', true, '/social-feed', 'ソーシャルフィードページ > 投稿一覧'),
+    _FnDef('api-key-manager', 'API キー管理', true, '/admin', '管理者ダッシュボード > API キー'),
+    _FnDef('cohort-analysis', 'コホート分析', true, '/admin', '管理者ダッシュボード > コホート分析'),
+    _FnDef('document-collaboration', 'ドキュメント共同編集', true, '/note-editor', 'ノートエディタ > 共同編集'),
+    _FnDef('email-service', 'メール送信サービス', false, null, 'サーバーサイド専用 (自動送信)'),
+    _FnDef('integration-connector', '外部サービス連携', true, '/admin', '管理者ダッシュボード > インテグレーション'),
+    _FnDef('leave-management', '休暇管理', true, '/chro-office', 'QUICK ACCESS > 財務・健康・人事 > 人事厚生(CHRO)'),
+    _FnDef('marketplace', 'マーケットプレイス', true, '/templates', 'テンプレートマーケットプレイス'),
+    _FnDef('payment-processor', '支払い処理', true, '/financial-report', '財務レポート > 支払い処理'),
+    _FnDef('performance-review', '人事評価', true, '/chro-office', 'QUICK ACCESS > 財務・健康・人事 > 人事厚生(CHRO)'),
+    _FnDef('scheduled-notifications', 'スケジュール通知', true, '/settings', '設定 > 通知スケジュール'),
+    _FnDef('video-audio-manager', '動画・音声ファイル管理', true, '/admin', '管理者ダッシュボード > メディア管理'),
+    _FnDef('wiki-database', 'Wiki データベース', true, '/knowledge-base', 'ナレッジベース > Wiki'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
