@@ -99,7 +99,10 @@ import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
+import 'package:my_web_app/pages/meeting_manager_page.dart';
+import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
+import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -633,6 +636,18 @@ class MyApp extends StatelessWidget {
           case '/notifications':
             return MaterialPageRoute(
               builder: (_) => const NotificationsPage(),
+            );
+          case '/meeting-manager':
+            return MaterialPageRoute(
+              builder: (_) => const MeetingManagerPage(),
+            );
+          case '/news-rss':
+            return MaterialPageRoute(
+              builder: (_) => const NewsRssAggregatorPage(),
+            );
+          case '/smart-inbox':
+            return MaterialPageRoute(
+              builder: (_) => const SmartInboxTriagePage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
