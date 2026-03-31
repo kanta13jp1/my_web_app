@@ -97,6 +97,9 @@ import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:my_web_app/pages/knowledge_base_page.dart';
+import 'package:my_web_app/pages/semantic_search_page.dart';
+import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -613,6 +616,18 @@ class MyApp extends StatelessWidget {
           case '/wardrobe':
             return MaterialPageRoute(
               builder: (_) => const WardrobePage(),
+            );
+          case '/knowledge-base':
+            return MaterialPageRoute(
+              builder: (_) => const KnowledgeBasePage(),
+            );
+          case '/semantic-search':
+            return MaterialPageRoute(
+              builder: (_) => const SemanticSearchPage(),
+            );
+          case '/social-feed':
+            return MaterialPageRoute(
+              builder: (_) => const SocialFeedPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

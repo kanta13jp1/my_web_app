@@ -119,6 +119,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('weather-widget', '天気ウィジェット', true, '/home', 'ホーム > ダッシュボード'),
     _FnDef('system-status', 'システムステータス', true, '/admin', '管理者ダッシュボード > システム状態'),
     _FnDef('automation-workflows', '自動化ワークフロー', true, '/home', 'ホーム > 自動化設定'),
+    _FnDef('knowledge-base', 'ナレッジベース', true, '/knowledge-base', 'ナレッジベースページ > 記事検索・閲覧'),
+    _FnDef('semantic-search', 'セマンティック検索 (意味検索)', true, '/semantic-search', 'セマンティック検索ページ > キーワード入力'),
+    _FnDef('social-feed', 'ソーシャルフィード', true, '/social-feed', 'ソーシャルフィードページ > 投稿一覧'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
