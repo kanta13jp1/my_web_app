@@ -136,6 +136,11 @@ const FUNCTION_REGISTRY = [
   { name: "document-collaboration", description: "ドキュメント共同編集 (共有/バージョン/コメント)", has_ui: true, ui_path: "/docs", ui_navigation: "ノート > 共同編集" },
   { name: "leave-management", description: "休暇管理 (申請/承認/残日数)", has_ui: true, ui_path: "/leave", ui_navigation: "ホーム > 休暇管理" },
   { name: "knowledge-base", description: "ナレッジベース/ヘルプセンター (FAQ/記事/検索)", has_ui: true, ui_path: "/help", ui_navigation: "ヘルプ > ナレッジベース" },
+  { name: "payment-processor", description: "決済処理 (支払い記録/履歴/売上レポート)", has_ui: true, ui_path: "/payments", ui_navigation: "ホーム > 支払い" },
+  { name: "marketplace", description: "マーケットプレイス (プラグイン/インストール/レビュー)", has_ui: true, ui_path: "/marketplace", ui_navigation: "ホーム > マーケットプレイス" },
+  { name: "video-audio-manager", description: "動画・音声管理 (メディア/プレイリスト/文字起こし)", has_ui: true, ui_path: "/media", ui_navigation: "ホーム > メディア" },
+  { name: "semantic-search", description: "セマンティック検索 (全文横断/フィルタ/保存検索)", has_ui: true, ui_path: "/search", ui_navigation: "ホーム > 検索" },
+  { name: "performance-review", description: "人事評価 (OKR/自己評価/360度FB)", has_ui: true, ui_path: "/reviews", ui_navigation: "ホーム > パフォーマンス" },
 ] as const;
 
 serve(async (req) => {

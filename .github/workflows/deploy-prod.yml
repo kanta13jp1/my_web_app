@@ -199,6 +199,11 @@ jobs:
           supabase functions deploy document-collaboration --no-verify-jwt
           supabase functions deploy leave-management --no-verify-jwt
           supabase functions deploy knowledge-base --no-verify-jwt
+          supabase functions deploy payment-processor --no-verify-jwt
+          supabase functions deploy marketplace --no-verify-jwt
+          supabase functions deploy video-audio-manager --no-verify-jwt
+          supabase functions deploy semantic-search --no-verify-jwt
+          supabase functions deploy performance-review --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
