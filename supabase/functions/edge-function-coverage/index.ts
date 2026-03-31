@@ -166,6 +166,11 @@ const FUNCTION_REGISTRY = [
   { name: "virtual-organization", description: "仮想AI組織 (12部署/エージェント配置/タスク割振り/性格管理)", has_ui: true, ui_path: "/organization", ui_navigation: "ホーム > AI組織" },
   { name: "edge-function-ui-checker", description: "Edge Function UI連携チェッカー (未連携検出/タスク生成)", has_ui: false, ui_path: null, ui_navigation: "Schedule自動実行" },
   { name: "issue-auto-resolver", description: "Issue自動修正管理 (Issue追跡/修正記録/統計)", has_ui: true, ui_path: "/admin/issues", ui_navigation: "管理 > Issue修正" },
+  { name: "horse-racing-predictor", description: "競馬予想・分析 (レース登録/AIスコアリング/回収率統計)", has_ui: true, ui_path: "/horse-racing", ui_navigation: "ホーム > 競馬予想" },
+  { name: "recruitment-job-board", description: "採用・求人管理 (ATS/選考パイプライン/面接管理)", has_ui: true, ui_path: "/recruitment", ui_navigation: "ホーム > 採用管理" },
+  { name: "legal-compliance-manager", description: "法務・コンプライアンス (契約管理/GDPR・個人情報保護/監査)", has_ui: true, ui_path: "/legal", ui_navigation: "ホーム > 法務管理" },
+  { name: "elearning-course-manager", description: "eラーニング (コース作成/進捗追跡/修了証/スキルギャップ分析)", has_ui: true, ui_path: "/elearning", ui_navigation: "ホーム > eラーニング" },
+  { name: "crm-sales-pipeline", description: "CRM営業パイプライン (リード管理/商談ステージ/活動ログ/売上予測)", has_ui: true, ui_path: "/crm", ui_navigation: "ホーム > CRM" },
 ] as const;
 
 serve(async (req) => {

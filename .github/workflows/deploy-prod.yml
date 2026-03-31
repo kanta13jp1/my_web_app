@@ -229,6 +229,11 @@ jobs:
           supabase functions deploy virtual-organization --no-verify-jwt
           supabase functions deploy edge-function-ui-checker --no-verify-jwt
           supabase functions deploy issue-auto-resolver --no-verify-jwt
+          supabase functions deploy horse-racing-predictor --no-verify-jwt
+          supabase functions deploy recruitment-job-board --no-verify-jwt
+          supabase functions deploy legal-compliance-manager --no-verify-jwt
+          supabase functions deploy elearning-course-manager --no-verify-jwt
+          supabase functions deploy crm-sales-pipeline --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
