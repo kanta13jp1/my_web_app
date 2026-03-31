@@ -150,6 +150,7 @@ jobs:
           supabase functions deploy onboarding-flow --no-verify-jwt
           supabase functions deploy feature-request-manager --no-verify-jwt
           supabase functions deploy app-analytics-dashboard --no-verify-jwt
+          supabase functions deploy user-activity-tracker --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

@@ -82,6 +82,8 @@ const FUNCTION_REGISTRY = [
   // Session 426 追加
   { name: "feature-request-manager", description: "機能リクエスト CRUD+投票", has_ui: true, ui_path: "/feature-requests", ui_navigation: "ホーム > QUICK ACCESS > 機能リクエスト" },
   { name: "app-analytics-dashboard", description: "アプリ分析ダッシュボード", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > 分析" },
+  // Session 427 追加
+  { name: "user-activity-tracker", description: "ユーザーアクティビティ記録・リテンション分析", has_ui: true, ui_path: "/admin", ui_navigation: "管理者ダッシュボード > ユーザーアクティビティ" },
 ] as const;
 
 serve(async (req) => {
