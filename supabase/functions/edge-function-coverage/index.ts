@@ -125,6 +125,11 @@ const FUNCTION_REGISTRY = [
   { name: "password-generator", description: "パスワード生成・強度チェック", has_ui: true, ui_path: "/tools", ui_navigation: "ホーム > ツール > パスワード" },
   { name: "clipboard-history", description: "クリップボード履歴 (保存/ピン/検索)", has_ui: true, ui_path: "/clipboard", ui_navigation: "ホーム > クリップボード" },
   { name: "quick-note", description: "クイックメモ (色分け/チェックリスト/ピン)", has_ui: true, ui_path: "/quick-notes", ui_navigation: "ホーム > クイックメモ" },
+  { name: "pomodoro-timer", description: "ポモドーロタイマー (セッション記録/統計/設定)", has_ui: true, ui_path: "/pomodoro", ui_navigation: "ホーム > ポモドーロ" },
+  { name: "weather-widget", description: "天気ウィジェット (日本8都市/7日予報)", has_ui: true, ui_path: "/home", ui_navigation: "ホーム > 天気ウィジェット" },
+  { name: "currency-converter", description: "通貨換算 (15通貨/リアルタイム)", has_ui: true, ui_path: "/tools", ui_navigation: "ホーム > ツール > 通貨換算" },
+  { name: "markdown-renderer", description: "Markdownレンダリング (HTML変換/目次/統計)", has_ui: true, ui_path: "/editor", ui_navigation: "ノートエディタ > プレビュー" },
+  { name: "system-status", description: "システムステータス (稼働監視/インシデント/稼働率)", has_ui: true, ui_path: "/status", ui_navigation: "ステータスページ" },
 ] as const;
 
 serve(async (req) => {

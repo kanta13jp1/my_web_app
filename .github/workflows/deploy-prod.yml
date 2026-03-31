@@ -189,6 +189,11 @@ jobs:
           supabase functions deploy password-generator --no-verify-jwt
           supabase functions deploy clipboard-history --no-verify-jwt
           supabase functions deploy quick-note --no-verify-jwt
+          supabase functions deploy pomodoro-timer --no-verify-jwt
+          supabase functions deploy weather-widget --no-verify-jwt
+          supabase functions deploy currency-converter --no-verify-jwt
+          supabase functions deploy markdown-renderer --no-verify-jwt
+          supabase functions deploy system-status --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
