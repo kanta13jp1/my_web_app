@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session427-web (user-activity-tracker → 57 Functions 体制)
+最終更新: 2026-03-31 session427-web (user-activity-tracker + competitor-feature-sync → 58 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -992,7 +992,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
-### Session 2026-03-31 #427 — Web版 user-activity-tracker (57 Functions体制)
+### Session 2026-03-31 #427 — Web版 user-activity-tracker + competitor-feature-sync (58 Functions体制)
 
 **実施内容:**
 
@@ -1003,16 +1003,27 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - GET summary: ソース別イベント集計
    - POST: アクティビティイベント記録 (認証オプション、user_id 自動取得)
 
-2. **全56 Edge Functions 自己レビュー実施**
+2. **competitor-feature-sync Edge Function 新規作成**
+   - 競合機能パリティの動的管理・進捗トラッキング
+   - GET progress: 競合別の実装進捗率
+   - GET gaps: 未実装機能一覧 (全体 or 競合指定)
+   - GET category: カテゴリ別実装状況
+   - GET priority: 複数競合共通の未実装機能優先リスト
+   - POST update_status: 個別機能ステータス更新 (done/partial/notYet)
+   - POST cache_features: 静的データのキャッシュ保存
+   - competitor_feature_status テーブル新規作成
+
+3. **全56 Edge Functions 自己レビュー実施**
    - テーブル名・カラム名の整合性確認 (ai_agents/assigned_agent_id 参照なし確認)
    - CORS ヘッダー・エラーハンドリングの統一性確認
    - 認証パターンの一貫性確認
 
-3. **インフラ更新**
-   - edge-function-coverage レジストリ 57 Functions
-   - development-stats カウント 57 に更新
-   - deploy-prod.yml: user-activity-tracker 追加
-   - 実績シード1件
+4. **インフラ更新**
+   - edge-function-coverage レジストリ 58 Functions
+   - development-stats カウント 58 に更新
+   - app-analytics-dashboard カウント 58 に更新
+   - deploy-prod.yml: 2関数追加
+   - 実績シード2件 + competitor_feature_status テーブル作成
 
 ### Session 2026-03-31 #426 — Web版 機能リクエスト + 分析ダッシュボード (56 Functions体制)
 

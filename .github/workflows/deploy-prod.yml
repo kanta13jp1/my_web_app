@@ -151,6 +151,7 @@ jobs:
           supabase functions deploy feature-request-manager --no-verify-jwt
           supabase functions deploy app-analytics-dashboard --no-verify-jwt
           supabase functions deploy user-activity-tracker --no-verify-jwt
+          supabase functions deploy competitor-feature-sync --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
