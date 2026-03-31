@@ -181,6 +181,11 @@ const FUNCTION_REGISTRY = [
   { name: "language-learning", description: "語学学習 (単語帳/フラッシュカード/間隔反復/ストリーク/統計)", has_ui: true, ui_path: "/language", ui_navigation: "ホーム > 語学学習" },
   { name: "home-iot-manager", description: "スマートホームIoT (デバイス管理/センサーデータ/自動化ルール/シーン)", has_ui: true, ui_path: "/iot", ui_navigation: "ホーム > IoT" },
   { name: "news-rss-aggregator", description: "ニュースRSS (フィード管理/記事/ブックマーク/カテゴリ/統計)", has_ui: true, ui_path: "/news", ui_navigation: "ホーム > ニュース" },
+  { name: "ai-workflow-automation", description: "AIワークフロー自動化 (トリガー/AI判定/アクション/テンプレート)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
+  { name: "document-esignature", description: "電子署名 (署名リクエスト/監査証跡/テンプレート/署名統計)", has_ui: true, ui_path: "/esign", ui_navigation: "ホーム > 電子署名" },
+  { name: "social-media-scheduler", description: "SNSスケジューラー (8プラットフォーム/コンテンツカレンダー/パフォーマンス)", has_ui: true, ui_path: "/social-scheduler", ui_navigation: "ホーム > SNS管理" },
+  { name: "smart-inbox-triage", description: "スマート受信トレイ (8チャネル統合/AI優先度/自動ラベル/スヌーズ)", has_ui: true, ui_path: "/inbox", ui_navigation: "ホーム > 受信トレイ" },
+  { name: "video-meeting-manager", description: "ビデオ会議 (ルーム/参加者管理/AI議事録/アクションアイテム)", has_ui: true, ui_path: "/video-meeting", ui_navigation: "ホーム > ビデオ会議" },
 ] as const;
 
 serve(async (req) => {

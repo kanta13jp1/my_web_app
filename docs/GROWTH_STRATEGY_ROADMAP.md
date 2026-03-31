@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432h-web (40本追加 → 150 Functions 体制)
+最終更新: 2026-04-01 session432i-web (45本追加 → 155 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1012,6 +1012,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432i (Web版) — 2026-03-31
+
+**Edge Functions 150→155本 (5本追加) — AI・エンタープライズ強化 (ワークフロー/電子署名/SNS/受信箱/ビデオ会議)**
+
+1. **ai-workflow-automation**: AIワークフロー自動化 — Zapier/Power Automate競合、トリガー→AI判定→アクション、5テンプレート、実行履歴・成功率統計
+2. **document-esignature**: 電子署名管理 — DocuSign/Adobe Sign競合、署名リクエスト(複数署名者)、監査証跡、テンプレート、完了率統計
+3. **social-media-scheduler**: SNS一括スケジューラー — Buffer/Hootsuite競合、8プラットフォーム(X/Facebook/Instagram/LINE等)、コンテンツカレンダー、パフォーマンス分析
+4. **smart-inbox-triage**: スマート受信トレイ — Gmail/Slack統合競合、8チャネル統合、AI優先度分類、自動ラベル、スヌーズ・リマインダー
+5. **video-meeting-manager**: ビデオ会議管理 — Zoom/Google Meet/Teams競合、ルーム作成(参加コード)、AI議事録・要約、アクションアイテム抽出
 
 ### Session 432h (Web版) — 2026-03-31
 
