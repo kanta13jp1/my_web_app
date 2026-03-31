@@ -21,6 +21,7 @@ import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
 
 // Pages
+import 'notifications_page.dart';
 import 'abstinence_guard_page.dart';
 import 'emergency_meeting_page.dart';
 import 'landing_page.dart';
@@ -70,6 +71,7 @@ class _HomePageState extends State<HomePage> {
       _CalendarTaskPreviewFilter.all;
   DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
+  int _notifUnreadCount = 0;
 
   @override
   void initState() {
@@ -78,6 +80,23 @@ class _HomePageState extends State<HomePage> {
     _calendarMonthAnchor = DateTime(today.year, today.month, 1);
     _selectedCalendarDate = today;
     _reloadHomeSignals();
+    _fetchNotifUnreadCount();
+  }
+
+  Future<void> _fetchNotifUnreadCount() async {
+    try {
+      final res = await Supabase.instance.client.functions.invoke(
+        'notification-center',
+        queryParameters: {'mode': 'user', 'filter': 'unread', 'limit': '1'},
+      );
+      final data = res.data;
+      if (data is Map<String, dynamic>) {
+        final count = (data['unreadCount'] as num?)?.toInt() ?? 0;
+        if (mounted) setState(() => _notifUnreadCount = count);
+      }
+    } catch (_) {
+      // silent
+    }
   }
 
   DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
@@ -3857,6 +3876,47 @@ abstinence_slip_details: $slipDetailsText
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                tooltip: '通知',
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsPage(),
+                    ),
+                  );
+                  _fetchNotifUnreadCount();
+                },
+              ),
+              if (_notifUnreadCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeService.toggleTheme(),

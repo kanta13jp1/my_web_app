@@ -92,6 +92,7 @@ import 'package:my_web_app/pages/mind_map_page.dart';
 import 'package:my_web_app/pages/mindless_task_page.dart';
 import 'package:my_web_app/pages/real_world_danshari_page.dart';
 import 'package:my_web_app/pages/stock_tasks_page.dart';
+import 'package:my_web_app/pages/notifications_page.dart';
 import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -628,6 +629,10 @@ class MyApp extends StatelessWidget {
           case '/social-feed':
             return MaterialPageRoute(
               builder: (_) => const SocialFeedPage(),
+            );
+          case '/notifications':
+            return MaterialPageRoute(
+              builder: (_) => const NotificationsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

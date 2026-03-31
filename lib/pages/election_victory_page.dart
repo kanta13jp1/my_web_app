@@ -1,5 +1,7 @@
 import 'dart:async';
-
+import 'dart:convert';
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -119,6 +121,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   int _visibleMemberCount = _memberPageSize;
   List<LocalElectionRealityHistoryPoint> _realityHistory =
       const <LocalElectionRealityHistoryPoint>[];
+  List<Map<String, dynamic>> _pastElectionResults =
+      const <Map<String, dynamic>>[];
   CalendarFormat _scheduleCalendarFormat = CalendarFormat.month;
   DateTime _scheduleFocusedDay = DateTime.now();
   DateTime? _selectedScheduleDay;
@@ -519,7 +523,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (data is Map) {
         final politicians =
             (data['politicians'] as List<dynamic>?)?.length ?? 0;
-        final total = (data['total_local_members'] as num?)?.toInt();
+        final raw = data as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _pastElectionResults =
+                (raw['pastElectionResults'] as List<dynamic>? ?? [])
+                    .whereType<Map<String, dynamic>>()
+                    .toList();
+          });
+        }
+        final total = ((raw['monthlyKpi'] as Map<String, dynamic>?)?['currentTotal'] as num?)?.toInt();
         result = 'Gemini AI 分析完了\n'
             '取得議員数: $politicians 人${total != null ? ' / 目標700 残り${700 - total}人' : ''}';
       } else {
@@ -2129,43 +2142,93 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return Colors.amber.shade900;
   }
 
-  Future<void> _copyAlertSchedulesCsv(LocalElectionRealitySnapshot snapshot) async {
+  Future<void> _downloadElectionDataCsv(
+    LocalElectionRealitySnapshot snapshot,
+  ) async {
     // 未擁立 (Red) または 単騎 (Yellow) のスケジュールを抽出
     final alertSchedules = snapshot.upcomingSchedules.where((s) {
       return s.isAlertRed || s.isAlertYellow;
     }).toList();
 
-    if (alertSchedules.isEmpty) {
+    final pastResults = _pastElectionResults;
+
+    if (alertSchedules.isEmpty && pastResults.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未擁立または単騎の選挙情報はありません')),
+        const SnackBar(content: Text('エクスポート対象の選挙情報がありません')),
       );
       return;
     }
 
-    alertSchedules.sort((a, b) {
-      final aDate = a.parsedVoteDate;
-      final bDate = b.parsedVoteDate;
-      if (aDate != null && bDate != null) {
-        return aDate.compareTo(bDate);
-      }
-      return a.voteDate.compareTo(b.voteDate);
-    });
-
     final buffer = StringBuffer();
-    buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数');
-    for (final s in alertSchedules) {
-      final date = s.voteDate.replaceAll(',', '、');
-      final pref = s.prefecture.replaceAll(',', '、');
-      final muni = s.municipality.replaceAll(',', '、');
-      final name = s.electionName.replaceAll(',', '、');
-      final count = s.kokuminCandidateCount.toString();
-      buffer.writeln('$date,$pref,$muni,$name,$count');
+
+    if (alertSchedules.isNotEmpty) {
+      alertSchedules.sort((a, b) {
+        final aDate = a.parsedVoteDate;
+        final bDate = b.parsedVoteDate;
+        if (aDate != null && bDate != null) {
+          return aDate.compareTo(bDate);
+        }
+        return a.voteDate.compareTo(b.voteDate);
+      });
+      buffer.writeln('--- 未擁立・単騎の選挙 ---');
+      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数');
+      for (final s in alertSchedules) {
+        final date = s.voteDate.replaceAll(',', '、');
+        final pref = s.prefecture.replaceAll(',', '、');
+        final muni = s.municipality.replaceAll(',', '、');
+        final name = s.electionName.replaceAll(',', '、');
+        final count = s.kokuminCandidateCount.toString();
+        buffer.writeln('$date,$pref,$muni,$name,$count');
+      }
+      buffer.writeln('');
     }
 
-    await Clipboard.setData(ClipboardData(text: buffer.toString()));
+    if (pastResults.isNotEmpty) {
+      buffer.writeln('--- 過去の選挙結果 (AI取得) ---');
+      buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
+      for (final result in pastResults) {
+        final date = result['date']?.toString() ?? '';
+        final location = result['location']?.toString().replaceAll(',', '、') ?? '';
+        final electionName =
+            result['electionName']?.toString().replaceAll(',', '、') ?? '';
+        final candidates = (result['dppCandidates'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .toList();
+
+        if (candidates.isEmpty) {
+          buffer.writeln('$date,$location,$electionName,候補者情報なし,N/A,0');
+        } else {
+          for (final candidate in candidates) {
+            final name = candidate['name']?.toString() ?? '';
+            final status = candidate['status']?.toString() ?? '';
+            final votes = (candidate['votes'] as num?)?.toString() ?? '0';
+            buffer.writeln('$date,$location,$electionName,$name,$status,$votes');
+          }
+        }
+      }
+    }
+
+    final csvData = buffer.toString();
+    final csvBytes = Uint8List.fromList(utf8.encode('\uFEFF$csvData'));
+    final blob = web.Blob(
+      [csvBytes.toJS].toJS,
+      web.BlobPropertyBag(type: 'text/csv;charset=utf-8'),
+    );
+    final url = web.URL.createObjectURL(blob);
+    web.HTMLAnchorElement()
+      ..href = url
+      ..download =
+          'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv'
+      ..click();
+    web.URL.revokeObjectURL(url);
+
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('未擁立・単騎の選挙情報（${alertSchedules.length}件）をCSVでコピーしました')),
+      SnackBar(
+        content: Text(
+          '選挙情報（${alertSchedules.length + pastResults.length}件分）をCSVファイルとしてダウンロードしました',
+        ),
+      ),
     );
   }
 
@@ -2188,9 +2251,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
             TextButton.icon(
-              onPressed: () => _copyAlertSchedulesCsv(snapshot),
-              icon: const Icon(Icons.file_copy, size: 16),
-              label: const Text('未擁立・単騎をCSVコピー'),
+              onPressed: () => _downloadElectionDataCsv(snapshot),
+              icon: const Icon(Icons.download, size: 16),
+              label: const Text('選挙データCSVダウンロード'),
             ),
           ],
         ),

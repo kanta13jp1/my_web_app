@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 PowerShell#8 (schedule-task-monitor schema修正・task_id統一 / 155 Functions 体制)
+最終更新: 2026-04-01 daily-development (通知センターUI・dart:html廃止対応・NotificationsPage実装・155 Functions体制・schedule-task-monitor schema修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -428,6 +428,12 @@
 - **カテゴリ管理機能実装** (daily-development #5 2026-03-31): `CategoriesPage` を新規作成。`categories` テーブル（RLS付き、uuid PK、user_id外部キー）をマイグレーション (`20260331000090_create_categories_table.sql`) で新設。ユーザー別カテゴリの作成・一覧・削除が可能。業務メニューカタログ (`knowledge` セクション) に追加し、キーワード検索 (カテゴリ/タグ/分類/整理) で発見可能に。`/categories` ルートを `main.dart` に追加。flutter analyze 0件維持。
 - **医療メモ機能実装** (daily-development #5 2026-03-31): `MedicalNotesPage` を新規作成。新テーブルを作らず既存 `notes` テーブルを流用し、タイトルに `[Medical]` プレフィックスを付けることで医療メモを識別するシンプル設計。通院記録・処方薬・健康診断・手術処置・その他の5カテゴリ対応。業務メニューカタログ (`office` セクション) に追加。`/medical-notes` ルートを `main.dart` に追加。flutter analyze 0件維持。
 - **ブログ下書き作成** (daily-development #5 2026-03-31): `docs/blog-drafts/2026-03-31-categories-medical-notes.md` — カテゴリ管理・医療メモ実装解説記事（Supabase RLS設計・既存テーブル流用パターン）を作成。
+
+### 2026-03-31 daily-development #6 実装済み (自動)
+
+- **アプリ内通知センター実装** (daily-development #6 2026-03-31): `NotificationsPage` を新規作成。`notification-center` Edge Function と連携し、未読/既読/すべてフィルター・7カテゴリ対応通知カードUI (アイコン・カラー・相対時刻表示)・既読マーク・全既読ボタン・RefreshIndicatorを実装。ホーム画面AppBarに未読カウントバッジ付きベルアイコンを追加（通知ページから戻った際に自動再取得）。業務メニューカタログ (`growth` セクション) に通知センターエントリを追加。`/notifications` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **election_victory_page.dart dart:html廃止対応** (daily-development #6 2026-03-31): CSV ダウンロードで使用していた `dart:html` (Blob/AnchorElement/URL) を `dart:js_interop` + `package:web/web.dart` に完全移行。`Uint8List.fromList()` で `List<int>→Uint8List` 変換して `.toJS` を適用するパターンを確立。`avoid_dynamic_calls` (monthlyKpi の Map cast) と `unused_local_variable` (anchor 変数) も同時修正。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development #6 2026-03-31): `docs/blog-drafts/2026-03-31-notification-center.md` — Flutter WebでSupabaseを使ったアプリ内通知センター実装 + `dart:html` → `package:web` 移行パターン解説記事を作成。
 
 ### 競合動向ログ (2026-03-30)
 

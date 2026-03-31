@@ -72,6 +72,7 @@ import '../pages/embedding_lab_page.dart';
 import '../pages/financial_report_page.dart';
 import '../pages/payment_channel_ledger_page.dart';
 import '../pages/feedback_page.dart';
+import '../pages/notifications_page.dart';
 import '../pages/health_page.dart';
 import '../pages/medical_notes_page.dart';
 import '../pages/mental_check_page.dart';
@@ -997,6 +998,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.indigo,
       keywords: const <String>['チーム', 'team', 'ワークスペース', '招待', '共有', 'コラボ'],
       onOpen: (context) => _pushPage(context, const TeamWorkspacePage()),
+    ),
+    HomeToolEntry(
+      id: 'notifications',
+      sectionId: 'growth',
+      title: '通知センター',
+      subtitle: '新機能・実績・CS返信などの通知を確認',
+      icon: Icons.notifications_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['通知', 'お知らせ', '既読', '未読', '新機能'],
+      onOpen: (context) => _pushPage(context, const NotificationsPage()),
     ),
     HomeToolEntry(
       id: 'feedback',
