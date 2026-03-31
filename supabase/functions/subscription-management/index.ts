@@ -155,7 +155,10 @@ serve(async (req) => {
         // 管理者向け: service_role 認証チェック
         const serviceAuth = req.headers.get("Authorization");
         if (!serviceAuth || !serviceAuth.includes(SERVICE_ROLE_KEY.slice(0, 20))) {
-          // ユーザー認証でもOK (管理者判定はフロント側)
+          return new Response(
+            JSON.stringify({ error: "管理者権限が必要です" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
         }
 
         const { data: profiles } = await adminClient
