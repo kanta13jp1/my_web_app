@@ -209,6 +209,11 @@ jobs:
           supabase functions deploy scheduled-notifications --no-verify-jwt
           supabase functions deploy cohort-analysis --no-verify-jwt
           supabase functions deploy integration-connector --no-verify-jwt
+          supabase functions deploy push-notification-manager --no-verify-jwt
+          supabase functions deploy realtime-presence --no-verify-jwt
+          supabase functions deploy voice-memo-transcriber --no-verify-jwt
+          supabase functions deploy ocr-document-scanner --no-verify-jwt
+          supabase functions deploy oauth-sso-provider --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

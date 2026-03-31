@@ -146,6 +146,11 @@ const FUNCTION_REGISTRY = [
   { name: "scheduled-notifications", description: "通知スケジューリング (リマインダー/定期通知)", has_ui: true, ui_path: "/notifications/schedule", ui_navigation: "通知 > スケジュール" },
   { name: "cohort-analysis", description: "コホート分析 (リテンション/ファネル/イベント)", has_ui: true, ui_path: "/admin/cohort", ui_navigation: "管理 > コホート分析" },
   { name: "integration-connector", description: "外部サービス連携 (Slack/Discord/LINE等10サービス)", has_ui: true, ui_path: "/integrations", ui_navigation: "設定 > 連携" },
+  { name: "push-notification-manager", description: "Web Push通知管理 (購読/配信/統計)", has_ui: true, ui_path: "/notifications/push", ui_navigation: "通知 > Push設定" },
+  { name: "realtime-presence", description: "リアルタイムプレゼンス (カーソル共有/編集ロック/オンライン)", has_ui: true, ui_path: "/docs", ui_navigation: "ドキュメント > 共同編集" },
+  { name: "voice-memo-transcriber", description: "音声メモ・文字起こし (録音/文字起こし/ノート変換)", has_ui: true, ui_path: "/voice-memos", ui_navigation: "ホーム > 音声メモ" },
+  { name: "ocr-document-scanner", description: "OCR文書スキャン (レシート/名刺/ドキュメント)", has_ui: true, ui_path: "/scanner", ui_navigation: "ホーム > スキャナー" },
+  { name: "oauth-sso-provider", description: "SSO/OAuth管理 (Google/GitHub/Microsoft/SAML)", has_ui: true, ui_path: "/settings/sso", ui_navigation: "設定 > SSO" },
 ] as const;
 
 serve(async (req) => {
