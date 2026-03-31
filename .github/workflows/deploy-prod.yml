@@ -219,6 +219,11 @@ jobs:
           supabase functions deploy ci-cd-pipeline --no-verify-jwt
           supabase functions deploy compensation-manager --no-verify-jwt
           supabase functions deploy financial-report --no-verify-jwt
+          supabase functions deploy spreadsheet-database --no-verify-jwt
+          supabase functions deploy gantt-timeline-manager --no-verify-jwt
+          supabase functions deploy whiteboard-canvas --no-verify-jwt
+          supabase functions deploy form-builder --no-verify-jwt
+          supabase functions deploy meeting-manager --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

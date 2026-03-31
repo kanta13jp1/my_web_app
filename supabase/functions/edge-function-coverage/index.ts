@@ -156,6 +156,11 @@ const FUNCTION_REGISTRY = [
   { name: "ci-cd-pipeline", description: "CI/CDパイプライン (ビルド/デプロイ/ロールバック)", has_ui: true, ui_path: "/pipelines", ui_navigation: "開発 > パイプライン" },
   { name: "compensation-manager", description: "給与・報酬管理 (給与/賞与/明細)", has_ui: true, ui_path: "/compensation", ui_navigation: "ホーム > 給与" },
   { name: "financial-report", description: "財務レポート (P/L/キャッシュフロー/カテゴリ分析)", has_ui: true, ui_path: "/finance/reports", ui_navigation: "家計簿 > レポート" },
+  { name: "spreadsheet-database", description: "スプレッドシート・DB (列定義/行CRUD/フィルタ/ビュー切替)", has_ui: true, ui_path: "/spreadsheet", ui_navigation: "ホーム > スプレッドシート" },
+  { name: "gantt-timeline-manager", description: "ガントチャート (タスク依存/マイルストーン/クリティカルパス)", has_ui: true, ui_path: "/gantt", ui_navigation: "プロジェクト > ガントチャート" },
+  { name: "whiteboard-canvas", description: "ホワイトボード (図形/テキスト/コネクター/テンプレート)", has_ui: true, ui_path: "/whiteboard", ui_navigation: "ホーム > ホワイトボード" },
+  { name: "form-builder", description: "フォームビルダー (多種フィールド/条件分岐/公開URL/集計)", has_ui: true, ui_path: "/forms", ui_navigation: "ホーム > フォーム" },
+  { name: "meeting-manager", description: "ミーティング管理 (RSVP/アジェンダ/議事録/アクションアイテム)", has_ui: true, ui_path: "/meetings", ui_navigation: "ホーム > ミーティング" },
 ] as const;
 
 serve(async (req) => {
