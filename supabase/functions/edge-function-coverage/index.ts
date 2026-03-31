@@ -115,6 +115,11 @@ const FUNCTION_REGISTRY = [
   { name: "ai-summarizer", description: "AIテキスト要約・キーポイント・感情分析", has_ui: true, ui_path: "/ai-tools", ui_navigation: "ホーム > AI ツール > 要約" },
   { name: "template-library", description: "テンプレートライブラリ (8組込+カスタム)", has_ui: true, ui_path: "/templates", ui_navigation: "ホーム > テンプレート" },
   { name: "tag-manager", description: "タグ管理・統計・マージ・一括操作", has_ui: true, ui_path: "/tags", ui_navigation: "ホーム > タグ管理" },
+  { name: "habit-tracker", description: "習慣トラッカー (チェックイン/ストリーク/達成率)", has_ui: true, ui_path: "/habits", ui_navigation: "ホーム > 習慣管理" },
+  { name: "bookmark-manager", description: "ブックマーク管理 (URL保存/フォルダ/検索)", has_ui: true, ui_path: "/bookmarks", ui_navigation: "ホーム > ブックマーク" },
+  { name: "poll-survey", description: "アンケート・投票 (作成/回答/集計)", has_ui: true, ui_path: "/polls", ui_navigation: "ホーム > アンケート" },
+  { name: "invoice-generator", description: "請求書生成 (作成/ステータス管理/売上集計)", has_ui: true, ui_path: "/invoices", ui_navigation: "ホーム > 請求書" },
+  { name: "contact-manager", description: "連絡先管理 (CRUD/グループ/インタラクション)", has_ui: true, ui_path: "/contacts", ui_navigation: "ホーム > 連絡先" },
 ] as const;
 
 serve(async (req) => {

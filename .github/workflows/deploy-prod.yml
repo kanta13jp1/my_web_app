@@ -179,6 +179,11 @@ jobs:
           supabase functions deploy ai-summarizer --no-verify-jwt
           supabase functions deploy template-library --no-verify-jwt
           supabase functions deploy tag-manager --no-verify-jwt
+          supabase functions deploy habit-tracker --no-verify-jwt
+          supabase functions deploy bookmark-manager --no-verify-jwt
+          supabase functions deploy poll-survey --no-verify-jwt
+          supabase functions deploy invoice-generator --no-verify-jwt
+          supabase functions deploy contact-manager --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

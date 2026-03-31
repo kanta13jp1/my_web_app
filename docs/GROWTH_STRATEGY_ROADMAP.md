@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-31 session430-web (5本追加 → 85 Functions 体制)
+最終更新: 2026-03-31 session430-web (10本追加 → 90 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1008,13 +1008,18 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ### Session 430 (Web版) — 2026-03-31
 
-**Edge Functions 80→85本 (5本追加)**
+**Edge Functions 80→90本 (10本追加)**
 
 1. **time-tracker**: 勤怠・時間追跡 (ジョブカン競合) — 出退勤打刻/プロジェクト別/残業アラート
 2. **expense-tracker**: 家計簿・経費管理 (MoneyForward競合) — 収支/12カテゴリ/予算管理/年次レポート
 3. **ai-summarizer**: AIテキスト要約 — 要約/キーポイント抽出/感情分析/アクションアイテム
 4. **template-library**: テンプレートライブラリ (Notion競合) — 8組込+カスタム/カテゴリ管理
 5. **tag-manager**: タグ管理 (Notion/Evernote競合) — 統計/提案/マージ/一括操作
+6. **habit-tracker**: 習慣トラッカー (Liven競合) — チェックイン/ストリーク/達成率
+7. **bookmark-manager**: ブックマーク管理 (Google競合) — URL保存/フォルダ/検索
+8. **poll-survey**: アンケート・投票 (Google Forms競合) — 作成/回答/集計
+9. **invoice-generator**: 請求書生成 (MoneyForward競合) — 作成/税計算/ステータス/売上
+10. **contact-manager**: 連絡先管理 (Google/Microsoft競合) — CRUD/グループ/履歴
 
 ### Claude Schedule — 日次レポート 2026-03-31 (daily-report自動実行)
 
