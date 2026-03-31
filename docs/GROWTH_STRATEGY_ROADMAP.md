@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432f-web (30本追加 → 140 Functions 体制)
+最終更新: 2026-04-01 session432g-web (35本追加 → 145 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1012,6 +1012,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432g (Web版) — 2026-03-31
+
+**Edge Functions 140→145本 (5本追加) — ライフスタイル (写真/音楽/レシピ/フィットネス/旅行)**
+
+1. **photo-gallery-manager**: 写真ギャラリー管理 — Google Photos/Facebook/LINE競合、アルバム、AI自動タグ、タイムライン、共有
+2. **music-playlist-manager**: 音楽プレイリスト管理 — Amazon Music/Liven競合、楽曲管理、再生履歴、ジャンルレコメンド
+3. **recipe-meal-planner**: レシピ・献立プランナー — Amazon Fresh/Liven競合、レシピ管理、週間献立、買い物リスト自動生成、栄養計算
+4. **fitness-health-tracker**: フィットネス・健康管理 — Google Fit競合、ワークアウト記録、体重・体組成、健康メトリクス、目標設定
+5. **travel-itinerary-planner**: 旅行プランナー — Google Maps/Notion競合、日程管理、予約管理、パッキングリスト、予算管理
 
 ### Session 432f (Web版) — 2026-03-31
 

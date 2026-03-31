@@ -234,6 +234,11 @@ jobs:
           supabase functions deploy legal-compliance-manager --no-verify-jwt
           supabase functions deploy elearning-course-manager --no-verify-jwt
           supabase functions deploy crm-sales-pipeline --no-verify-jwt
+          supabase functions deploy photo-gallery-manager --no-verify-jwt
+          supabase functions deploy music-playlist-manager --no-verify-jwt
+          supabase functions deploy recipe-meal-planner --no-verify-jwt
+          supabase functions deploy fitness-health-tracker --no-verify-jwt
+          supabase functions deploy travel-itinerary-planner --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

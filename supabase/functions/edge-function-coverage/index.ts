@@ -171,6 +171,11 @@ const FUNCTION_REGISTRY = [
   { name: "legal-compliance-manager", description: "法務・コンプライアンス (契約管理/GDPR・個人情報保護/監査)", has_ui: true, ui_path: "/legal", ui_navigation: "ホーム > 法務管理" },
   { name: "elearning-course-manager", description: "eラーニング (コース作成/進捗追跡/修了証/スキルギャップ分析)", has_ui: true, ui_path: "/elearning", ui_navigation: "ホーム > eラーニング" },
   { name: "crm-sales-pipeline", description: "CRM営業パイプライン (リード管理/商談ステージ/活動ログ/売上予測)", has_ui: true, ui_path: "/crm", ui_navigation: "ホーム > CRM" },
+  { name: "photo-gallery-manager", description: "写真ギャラリー (アルバム/AI自動タグ/タイムライン/共有)", has_ui: true, ui_path: "/photos", ui_navigation: "ホーム > フォト" },
+  { name: "music-playlist-manager", description: "音楽プレイリスト (楽曲管理/再生履歴/レコメンド/統計)", has_ui: true, ui_path: "/music", ui_navigation: "ホーム > 音楽" },
+  { name: "recipe-meal-planner", description: "レシピ・献立 (レシピ管理/週間献立/買い物リスト/栄養計算)", has_ui: true, ui_path: "/recipes", ui_navigation: "ホーム > レシピ" },
+  { name: "fitness-health-tracker", description: "フィットネス・健康 (ワークアウト/体重/健康メトリクス/目標)", has_ui: true, ui_path: "/fitness", ui_navigation: "ホーム > フィットネス" },
+  { name: "travel-itinerary-planner", description: "旅行プランナー (日程管理/予約/パッキングリスト/予算管理)", has_ui: true, ui_path: "/travel", ui_navigation: "ホーム > 旅行" },
 ] as const;
 
 serve(async (req) => {
