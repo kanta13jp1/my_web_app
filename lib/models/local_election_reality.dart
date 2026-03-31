@@ -373,6 +373,94 @@ class LocalElectionScheduleEntry {
   }
 }
 
+class PastElectionCandidate {
+  final String name;
+  final String status;
+  final int votes;
+
+  const PastElectionCandidate({
+    required this.name,
+    required this.status,
+    this.votes = 0,
+  });
+
+  factory PastElectionCandidate.fromJson(Map<String, dynamic> json) {
+    return PastElectionCandidate(
+      name: (json['name'] as String? ?? '').trim(),
+      status: (json['status'] as String? ?? '').trim(),
+      votes: _readInt(json['votes']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'status': status,
+      'votes': votes,
+    };
+  }
+
+  bool get isWin => status.contains('当選');
+
+  static int _readInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
+}
+
+class PastElectionResult {
+  final int id;
+  final String electionName;
+  final String date;
+  final String location;
+  final List<PastElectionCandidate> dppCandidates;
+
+  const PastElectionResult({
+    required this.id,
+    required this.electionName,
+    required this.date,
+    required this.location,
+    required this.dppCandidates,
+  });
+
+  factory PastElectionResult.fromJson(Map<String, dynamic> json) {
+    final candidates = json['dppCandidates'];
+    return PastElectionResult(
+      id: _readInt(json['id']),
+      electionName: (json['electionName'] as String? ?? '').trim(),
+      date: (json['date'] as String? ?? '').trim(),
+      location: (json['location'] as String? ?? '').trim(),
+      dppCandidates: (candidates is List)
+          ? candidates.whereType<Map>().map((item) {
+              return PastElectionCandidate.fromJson(
+                Map<String, dynamic>.from(item),
+              );
+            }).toList()
+          : const <PastElectionCandidate>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'electionName': electionName,
+      'date': date,
+      'location': location,
+      'dppCandidates': dppCandidates.map((c) => c.toJson()).toList(),
+    };
+  }
+
+  int get winCount => dppCandidates.where((c) => c.isWin).length;
+  int get totalCount => dppCandidates.length;
+
+  static int _readInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
+}
+
 class LocalElectionRealityHistoryPoint {
   final DateTime fetchedAt;
   final int officialCurrentLocalMembers;
@@ -435,6 +523,7 @@ class LocalElectionRealitySnapshot {
   final List<LocalElectionPrefectureReality> prefectures;
   final List<LocalElectionLegislatorProfile> members;
   final List<LocalElectionScheduleEntry> upcomingSchedules;
+  final List<PastElectionResult> pastElectionResults;
 
   const LocalElectionRealitySnapshot({
     required this.fetchedAt,
@@ -455,6 +544,7 @@ class LocalElectionRealitySnapshot {
     required this.prefectures,
     required this.members,
     required this.upcomingSchedules,
+    this.pastElectionResults = const <PastElectionResult>[],
   });
 
   LocalElectionRealitySnapshot.empty()
@@ -475,7 +565,8 @@ class LocalElectionRealitySnapshot {
         sources = const <LocalElectionRealitySource>[],
         prefectures = const <LocalElectionPrefectureReality>[],
         members = const <LocalElectionLegislatorProfile>[],
-        upcomingSchedules = const <LocalElectionScheduleEntry>[];
+        upcomingSchedules = const <LocalElectionScheduleEntry>[],
+        pastElectionResults = const <PastElectionResult>[];
 
   factory LocalElectionRealitySnapshot.fromJson(Map<String, dynamic> json) {
     return LocalElectionRealitySnapshot(
@@ -517,6 +608,7 @@ class LocalElectionRealitySnapshot {
       prefectures: _readPrefectures(json['prefectures']),
       members: _readMembers(json['members']),
       upcomingSchedules: _readSchedules(json['upcomingSchedules']),
+      pastElectionResults: _readPastResults(json['pastElectionResults']),
     );
   }
 
@@ -541,6 +633,8 @@ class LocalElectionRealitySnapshot {
       'members': members.map((item) => item.toJson()).toList(),
       'upcomingSchedules':
           upcomingSchedules.map((item) => item.toJson()).toList(),
+      'pastElectionResults':
+          pastElectionResults.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -680,6 +774,15 @@ class LocalElectionRealitySnapshot {
       return LocalElectionScheduleEntry.fromJson(
         Map<String, dynamic>.from(item),
       );
+    }).toList();
+  }
+
+  static List<PastElectionResult> _readPastResults(Object? value) {
+    if (value is! List) {
+      return const <PastElectionResult>[];
+    }
+    return value.whereType<Map>().map((item) {
+      return PastElectionResult.fromJson(Map<String, dynamic>.from(item));
     }).toList();
   }
 

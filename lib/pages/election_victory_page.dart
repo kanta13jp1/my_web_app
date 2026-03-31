@@ -1423,6 +1423,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               _buildRealityPrefectureSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildScheduleSection(realitySnapshot),
+              if (realitySnapshot.pastElectionResults.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                _buildPastElectionResultsSection(realitySnapshot),
+              ],
               const SizedBox(height: 20),
               _buildMemberRosterSection(realitySnapshot),
               const SizedBox(height: 20),
@@ -2125,6 +2129,46 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return Colors.amber.shade900;
   }
 
+  Future<void> _copyAlertSchedulesCsv(LocalElectionRealitySnapshot snapshot) async {
+    // 未擁立 (Red) または 単騎 (Yellow) のスケジュールを抽出
+    final alertSchedules = snapshot.upcomingSchedules.where((s) {
+      return s.isAlertRed || s.isAlertYellow;
+    }).toList();
+
+    if (alertSchedules.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未擁立または単騎の選挙情報はありません')),
+      );
+      return;
+    }
+
+    alertSchedules.sort((a, b) {
+      final aDate = a.parsedVoteDate;
+      final bDate = b.parsedVoteDate;
+      if (aDate != null && bDate != null) {
+        return aDate.compareTo(bDate);
+      }
+      return a.voteDate.compareTo(b.voteDate);
+    });
+
+    final buffer = StringBuffer();
+    buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数');
+    for (final s in alertSchedules) {
+      final date = s.voteDate.replaceAll(',', '、');
+      final pref = s.prefecture.replaceAll(',', '、');
+      final muni = s.municipality.replaceAll(',', '、');
+      final name = s.electionName.replaceAll(',', '、');
+      final count = s.kokuminCandidateCount.toString();
+      buffer.writeln('$date,$pref,$muni,$name,$count');
+    }
+
+    await Clipboard.setData(ClipboardData(text: buffer.toString()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('未擁立・単騎の選挙情報（${alertSchedules.length}件）をCSVでコピーしました')),
+    );
+  }
+
   Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
     final schedules = _sortedScheduleEntries(snapshot);
     final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
@@ -2133,11 +2177,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       key: _scheduleSectionKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '地方選挙スケジュール',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '地方選挙スケジュール',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
               ),
+            ),
+            TextButton.icon(
+              onPressed: () => _copyAlertSchedulesCsv(snapshot),
+              icon: const Icon(Icons.file_copy, size: 16),
+              label: const Text('未擁立・単騎をCSVコピー'),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         Text(
@@ -2720,6 +2775,120 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return normalized;
     }
     return _dateOnlyFormat.format(parsed.toLocal());
+  }
+
+  Widget _buildPastElectionResultsSection(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final results = snapshot.pastElectionResults;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '過去の選挙結果',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '国民民主党候補の当落情報（Gemini AI取得）',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+        ),
+        const SizedBox(height: 10),
+        ...results.map((result) => _buildPastElectionCard(result)),
+      ],
+    );
+  }
+
+  Widget _buildPastElectionCard(PastElectionResult result) {
+    final winCount = result.winCount;
+    final totalCount = result.totalCount;
+    final hasWin = winCount > 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: hasWin
+            ? Colors.green.withValues(alpha: 0.06)
+            : Colors.red.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasWin
+              ? Colors.green.withValues(alpha: 0.25)
+              : Colors.red.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  result.electionName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: hasWin ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$winCount/$totalCount 当選',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${result.location}  ${result.date}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          if (result.dppCandidates.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: result.dppCandidates.map((c) {
+                final isWin = c.isWin;
+                return Chip(
+                  label: Text(
+                    '${c.name} ${c.status}${c.votes > 0 ? ' (${c.votes}票)' : ''}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isWin ? Colors.green.shade800 : Colors.red.shade800,
+                    ),
+                  ),
+                  backgroundColor: isWin
+                      ? Colors.green.withValues(alpha: 0.12)
+                      : Colors.red.withValues(alpha: 0.10),
+                  side: BorderSide(
+                    color: isWin
+                        ? Colors.green.withValues(alpha: 0.35)
+                        : Colors.red.withValues(alpha: 0.28),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: EdgeInsets.zero,
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildMemberRosterSection(LocalElectionRealitySnapshot snapshot) {

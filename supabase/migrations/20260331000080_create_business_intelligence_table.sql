@@ -1,74 +1,84 @@
--- Business Intelligence: 競合・参入市場トラッキングテーブル
--- Real Value YouTube等で取り上げられるビジネスカテゴリを管理する
+-- Business intelligence tracker for competitor and market monitoring
 
 CREATE TABLE IF NOT EXISTS business_intelligence (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  category      text NOT NULL,           -- ビジネスカテゴリ (e.g. 'saas', 'fintech', 'edtech')
-  competitor    text NOT NULL,           -- 競合名
-  source        text,                    -- 情報ソース ('real_value_youtube', 'direct', 'news')
-  market_size   text,                    -- 市場規模の概算 (e.g. '1兆円規模')
-  our_feature   text,                    -- 当社の対抗機能
-  gap_analysis  text,                    -- 差分分析
-  priority      int NOT NULL DEFAULT 5,  -- 優先度 1-10 (10が最高)
-  status        text NOT NULL DEFAULT 'tracking', -- tracking / competing / won / paused
-  updated_at    timestamptz NOT NULL DEFAULT now(),
-  created_at    timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category text NOT NULL,
+  competitor text NOT NULL,
+  source text,
+  market_size text,
+  our_feature text,
+  gap_analysis text,
+  priority int NOT NULL DEFAULT 5,
+  status text NOT NULL DEFAULT 'tracking',
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 ALTER TABLE business_intelligence ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは読み取り可能
+DROP POLICY IF EXISTS "Authenticated can read business_intelligence" ON business_intelligence;
 CREATE POLICY "Authenticated can read business_intelligence"
   ON business_intelligence FOR SELECT
   TO authenticated
   USING (true);
 
--- service_role は全操作可能
+DROP POLICY IF EXISTS "service_role_business_intelligence" ON business_intelligence;
 CREATE POLICY "service_role_business_intelligence"
   ON business_intelligence FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
--- 管理者は全操作可能
+DROP POLICY IF EXISTS "admin_all_business_intelligence" ON business_intelligence;
 CREATE POLICY "admin_all_business_intelligence"
   ON business_intelligence FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM user_profiles up
+      SELECT 1
+      FROM user_profiles up
       WHERE up.user_id = auth.uid() AND up.is_admin = true
     )
   )
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM user_profiles up
+      SELECT 1
+      FROM user_profiles up
       WHERE up.user_id = auth.uid() AND up.is_admin = true
     )
   );
 
-CREATE INDEX IF NOT EXISTS idx_business_intelligence_category ON business_intelligence(category);
-CREATE INDEX IF NOT EXISTS idx_business_intelligence_priority ON business_intelligence(priority DESC);
+CREATE INDEX IF NOT EXISTS idx_business_intelligence_category
+  ON business_intelligence(category);
+CREATE INDEX IF NOT EXISTS idx_business_intelligence_priority
+  ON business_intelligence(priority DESC);
 
--- 既存21競合のシードデータ
-INSERT INTO business_intelligence (category, competitor, source, market_size, our_feature, priority, status) VALUES
-  ('knowledge_management', 'Notion', 'direct', 'グローバル1000億円超', 'AI統合ノート・タスク・Wiki', 10, 'competing'),
-  ('knowledge_management', 'Evernote', 'direct', '日本市場縮小中', 'インポート移行・AI強化ノート', 8, 'competing'),
-  ('finance', 'MoneyForward', 'direct', '日本フィンテック最大手', '支出追跡・予算管理統合', 9, 'competing'),
-  ('sns', 'X (Twitter)', 'direct', 'グローバルSNS大手', '公開メモ・SNSシェア・X投稿自動化', 8, 'competing'),
-  ('ai_tools', 'Animaworks', 'direct', 'AI特化ニッチ市場', 'マルチAIエージェント統合', 6, 'competing'),
-  ('ai_dev_tools', 'Claude Code', 'direct', 'AI開発ツール急成長', 'AI秘書・開発支援統合', 9, 'competing'),
-  ('ai_dev_tools', 'Codex', 'direct', 'AI開発ツール', 'コード生成・タスク自動化', 7, 'competing'),
-  ('horse_racing', 'netkeiba', 'direct', '競馬情報No.1', 'AI予測・レース分析', 5, 'tracking'),
-  ('project_management', 'OpenClaw', 'direct', 'プロジェクト管理ニッチ', 'AI組織管理・エージェントOS', 6, 'competing'),
-  ('remote_work', 'Claude Cowork', 'direct', 'AI協働ツール', 'チームワークスペース・AI会議', 7, 'competing'),
-  ('business_chat', 'Chatwork', 'direct', '日本BizChat市場', 'チャット+タスク+AI統合', 8, 'competing'),
-  ('business_chat', 'Slack', 'direct', 'グローバルBizChat', 'AI統合チャネル・ワークフロー', 9, 'competing'),
-  ('hr_payroll', 'ジョブカン', 'direct', '日本HR SaaS', '勤怠・給与・人事AI統合', 7, 'competing'),
-  ('ecommerce', 'Amazon', 'direct', 'グローバルEC最大手', 'ショッピングリスト・価格追跡', 6, 'tracking'),
-  ('platform', 'Google', 'direct', 'グローバルプラットフォーム', 'AI検索・Workspace代替', 10, 'competing'),
-  ('platform', 'Microsoft', 'direct', 'エンタープライズ最大手', 'Office代替・Teams統合', 9, 'competing'),
-  ('gaming_community', 'Discord', 'direct', 'コミュニティプラットフォーム', 'チームコミュニティ・音声会議', 7, 'competing'),
-  ('sns_messaging', 'LINE', 'direct', '日本メッセージングNo.1', 'AI通知・メッセージ統合', 9, 'competing'),
-  ('sns', 'Facebook', 'direct', 'グローバルSNS', 'コミュニティ・グループ管理', 7, 'competing'),
-  ('lifestyle', 'Liven', 'direct', 'ライフスタイルアプリ', '健康・習慣・ライフマネジメント', 6, 'competing'),
-  ('developer_tools', 'GitHub', 'direct', 'コード管理No.1', 'プロジェクト追跡・CI/CD統合', 8, 'competing')
+INSERT INTO business_intelligence (
+  category,
+  competitor,
+  source,
+  market_size,
+  our_feature,
+  priority,
+  status
+) VALUES
+  ('knowledge_management', 'Notion', 'direct', 'Global productivity software market', 'AI note + task + wiki', 10, 'competing'),
+  ('knowledge_management', 'Evernote', 'direct', 'Japan productivity market', 'AI capture and organization', 8, 'competing'),
+  ('finance', 'MoneyForward', 'direct', 'Japan fintech market', 'Personal finance automation', 9, 'competing'),
+  ('sns', 'X (Twitter)', 'direct', 'Global SNS market', 'Public memo + social publishing', 8, 'competing'),
+  ('ai_tools', 'Animaworks', 'direct', 'AI niche tools market', 'Multi-agent workflow system', 6, 'competing'),
+  ('ai_dev_tools', 'Claude Code', 'direct', 'AI developer tools', 'Repository-aware autonomous coding', 9, 'competing'),
+  ('ai_dev_tools', 'Codex', 'direct', 'AI developer tools', 'Coding assistant with task execution', 7, 'competing'),
+  ('horse_racing', 'netkeiba', 'direct', 'Horse racing media market', 'AI prediction and race analysis', 5, 'tracking'),
+  ('project_management', 'OpenClaw', 'direct', 'Project management tools', 'AI-driven execution workflows', 6, 'competing'),
+  ('remote_work', 'Claude Cowork', 'direct', 'AI cowork market', 'Team workspace + AI assistants', 7, 'competing'),
+  ('business_chat', 'Chatwork', 'direct', 'Japan business chat market', 'Chat + task + AI operations', 8, 'competing'),
+  ('business_chat', 'Slack', 'direct', 'Global business chat market', 'AI-first collaboration workspace', 9, 'competing'),
+  ('hr_payroll', 'Jobcan', 'direct', 'Japan HR SaaS market', 'Labor and payroll intelligence', 7, 'competing'),
+  ('ecommerce', 'Amazon', 'direct', 'Global ecommerce market', 'Shopping intelligence and tracking', 6, 'tracking'),
+  ('platform', 'Google', 'direct', 'Global platform market', 'AI search and workspace integration', 10, 'competing'),
+  ('platform', 'Microsoft', 'direct', 'Enterprise platform market', 'Office and Teams integration', 9, 'competing'),
+  ('gaming_community', 'Discord', 'direct', 'Community platform market', 'Community + voice + AI support', 7, 'competing'),
+  ('sns_messaging', 'LINE', 'direct', 'Japan messaging market', 'AI messaging workflows', 9, 'competing'),
+  ('sns', 'Facebook', 'direct', 'Global SNS market', 'Community and group operations', 7, 'competing'),
+  ('lifestyle', 'Liven', 'direct', 'Lifestyle app market', 'Life management automation', 6, 'competing'),
+  ('developer_tools', 'GitHub', 'direct', 'Coding platform market', 'Project execution and CI support', 8, 'competing')
 ON CONFLICT DO NOTHING;

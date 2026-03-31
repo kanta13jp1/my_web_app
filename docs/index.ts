@@ -18,7 +18,7 @@ serve(async (req) => {
 
     const prompt = `
 あなたは優秀な政治アナリスト・リサーチャーです。
-国民民主党の統一地方選に向けた「700人必達」目標（現状約340人、純増目標約360人）の月次KPI管理、現在の所属地方議員の最新情報、直近の地方選挙スケジュール、および地方議員数の時系列推移データを調査・整理してください。
+国民民主党の統一地方選に向けた「700人必達」目標（現状約340人、純増目標約360人）の月次KPI管理、現在の所属地方議員の最新情報、直近の地方選挙スケジュール、地方議員数の時系列推移データ、および過去の主要な地方選挙結果（2023年統一地方選など）を調査・整理してください。
 
 必ず以下のJSONスキーマに従った形式で出力してください。Markdownのコードブロック（\`\`\`json）は使用せず、純粋なJSON文字列のみを出力してください。
 
@@ -96,9 +96,36 @@ serve(async (req) => {
         },
         "required": ["label", "count"]
       }
+    },
+    "pastElectionResults": {
+      "type": "array",
+      "description": "過去の主要な地方選挙の結果（例: 2023年統一地方選など）。国民民主党の候補者の当落情報を含めてください。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "electionName": { "type": "string", "description": "選挙名（例: 2023年 〇〇市議会議員選挙）" },
+          "date": { "type": "string", "description": "投票日 (YYYY-MM-DD)" },
+          "location": { "type": "string", "description": "自治体名・場所" },
+          "dppCandidates": {
+            "type": "array",
+            "description": "国民民主党の候補者リスト",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "status": { "type": "string", "description": "当選, 落選" },
+                "votes": { "type": "number", "description": "得票数（不明な場合は0）" }
+              },
+              "required": ["name", "status"]
+            }
+          }
+        },
+        "required": ["id", "electionName", "date", "location", "dppCandidates"]
+      }
     }
   },
-  "required": ["politicians", "monthlyKpi", "electionSchedules", "timeSeriesData"]
+  "required": ["politicians", "monthlyKpi", "electionSchedules", "timeSeriesData", "pastElectionResults"]
 }
 `;
 
@@ -132,7 +159,21 @@ serve(async (req) => {
       throw new Error("Failed to extract content from Gemini API response.");
     }
 
-    const parsedData = JSON.parse(generatedText);
+    // AIのレスポンスからMarkdownのコードブロックを安全に除去
+    let jsonText = generatedText.trim();
+    if (jsonText.startsWith("```")) {
+      const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (match) {
+        jsonText = match[1];
+      }
+    }
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(jsonText);
+    } catch (e) {
+      throw new Error("AI returned invalid JSON format: " + (e as Error).message);
+    }
 
     return new Response(
       JSON.stringify({
@@ -141,6 +182,7 @@ serve(async (req) => {
         monthlyKpi: parsedData.monthlyKpi || {},
         electionSchedules: parsedData.electionSchedules || [],
         timeSeriesData: parsedData.timeSeriesData || [],
+        pastElectionResults: parsedData.pastElectionResults || [],
         generatedAt: new Date().toISOString()
       }),
       { 
