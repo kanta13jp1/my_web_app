@@ -1,28 +1,224 @@
-// X Media Post Edge Function
-// X メディア投稿 (動画/画像付きツイート)
-// - メディアアップロード (X API v1.1 media/upload)
-// - 動画付きツイート
-// - スレッド投稿
-// - 予約投稿
-// - 投稿パフォーマンス追跡
+// x-media-post — X API v1.1 media upload + v2 tweet with media
+//
+// POST body:
+//   { "text": "tweet text", "mediaBase64": "base64string", "mediaType": "image/png" }
+//   or
+//   { "text": "tweet text", "mediaUrl": "https://..." }  ← fetch image from URL
+//
+// Media pipeline:
+//   1. X API v1.1 POST media/upload (INIT → APPEND → FINALIZE)
+//   2. X API v2 POST tweets with media.media_ids
+//
+// Supports: image/png, image/jpeg, image/gif, video/mp4 (≤ 15 MB chunked)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
 const X_API_KEY = Deno.env.get("X_API_KEY") ?? "";
 const X_API_SECRET = Deno.env.get("X_API_SECRET") ?? "";
 const X_ACCESS_TOKEN = Deno.env.get("X_ACCESS_TOKEN") ?? "";
 const X_ACCESS_TOKEN_SECRET = Deno.env.get("X_ACCESS_TOKEN_SECRET") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
-function pctEncode(str: string): string {
-  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+const CHUNK_SIZE = 1024 * 1024; // 1 MB per chunk
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+  if (req.method !== "POST") {
+    return jsonResp({ success: false, error: "POST only" }, 405);
+  }
+
+  // Simple auth: Bearer SERVICE_ROLE_KEY
+  const auth = req.headers.get("authorization") ?? "";
+  if (!auth.includes(SERVICE_ROLE_KEY) || SERVICE_ROLE_KEY === "") {
+    return jsonResp({ success: false, error: "Unauthorized" }, 401);
+  }
+  if (!X_API_KEY || !X_API_SECRET || !X_ACCESS_TOKEN || !X_ACCESS_TOKEN_SECRET) {
+    return jsonResp({ success: false, error: "X API credentials not configured" }, 500);
+  }
+
+  try {
+    const body = await req.json() as {
+      text?: string;
+      mediaBase64?: string;
+      mediaType?: string;
+      mediaUrl?: string;
+      dryRun?: boolean;
+    };
+
+    const { text, mediaBase64, mediaType, mediaUrl, dryRun = false } = body;
+    if (!text) return jsonResp({ success: false, error: "text is required" }, 400);
+    if (text.length > 280) return jsonResp({ success: false, error: "text exceeds 280 chars" }, 400);
+
+    // --- Resolve media bytes ---
+    let mediaBytes: Uint8Array | null = null;
+    let mimeType = mediaType ?? "image/png";
+
+    if (mediaBase64) {
+      // Strip data URI prefix if present
+      const b64 = mediaBase64.replace(/^data:[^;]+;base64,/, "");
+      mediaBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    } else if (mediaUrl) {
+      const r = await fetch(mediaUrl);
+      if (!r.ok) throw new Error(`Failed to fetch mediaUrl: ${r.status}`);
+      mimeType = r.headers.get("content-type") ?? mimeType;
+      mediaBytes = new Uint8Array(await r.arrayBuffer());
+    }
+
+    if (dryRun) {
+      return jsonResp({
+        success: true,
+        dryRun: true,
+        text,
+        mediaBytes: mediaBytes?.length ?? 0,
+        mimeType,
+      });
+    }
+
+    // --- Upload media if provided ---
+    let mediaId: string | null = null;
+    if (mediaBytes) {
+      mediaId = await uploadMedia(mediaBytes, mimeType);
+    }
+
+    // --- Post tweet ---
+    const tweetUrl = "https://api.twitter.com/2/tweets";
+    const tweetBody: Record<string, unknown> = { text };
+    if (mediaId) tweetBody.media = { media_ids: [mediaId] };
+
+    const oauthHeader = await buildOAuthHeader("POST", tweetUrl);
+    const resp = await fetch(tweetUrl, {
+      method: "POST",
+      headers: { Authorization: oauthHeader, "Content-Type": "application/json" },
+      body: JSON.stringify(tweetBody),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`X API v2 error ${resp.status}: ${errText}`);
+    }
+
+    const result = await resp.json() as { data?: { id?: string } };
+    return jsonResp({
+      success: true,
+      tweetId: result?.data?.id ?? null,
+      mediaId,
+      account: "@kanta13jp1",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("x-media-post error:", err);
+    return jsonResp({ success: false, error: msg }, 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// X API v1.1 chunked media upload (INIT → APPEND → FINALIZE → STATUS)
+// ---------------------------------------------------------------------------
+async function uploadMedia(bytes: Uint8Array, mimeType: string): Promise<string> {
+  const uploadUrl = "https://upload.twitter.com/1.1/media/upload.json";
+
+  // INIT
+  const initParams = new URLSearchParams({
+    command: "INIT",
+    total_bytes: String(bytes.length),
+    media_type: mimeType,
+    media_category: mimeType.startsWith("video") ? "tweet_video" : "tweet_image",
+  });
+  const initOauth = await buildOAuthHeader("POST", uploadUrl, Object.fromEntries(initParams));
+  const initResp = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { Authorization: initOauth, "Content-Type": "application/x-www-form-urlencoded" },
+    body: initParams.toString(),
+  });
+  if (!initResp.ok) throw new Error(`Media INIT failed: ${await initResp.text()}`);
+  const initData = await initResp.json() as { media_id_string: string };
+  const mediaId = initData.media_id_string;
+
+  // APPEND in chunks
+  let segmentIndex = 0;
+  for (let offset = 0; offset < bytes.length; offset += CHUNK_SIZE) {
+    const chunk = bytes.slice(offset, offset + CHUNK_SIZE);
+    const b64 = btoa(String.fromCharCode(...chunk));
+
+    const appendParams = new URLSearchParams({
+      command: "APPEND",
+      media_id: mediaId,
+      segment_index: String(segmentIndex),
+    });
+    const appendOauth = await buildOAuthHeader("POST", uploadUrl, Object.fromEntries(appendParams));
+
+    // Send as multipart form
+    const form = new FormData();
+    form.append("command", "APPEND");
+    form.append("media_id", mediaId);
+    form.append("segment_index", String(segmentIndex));
+    form.append("media_data", b64);
+
+    const appendResp = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { Authorization: appendOauth },
+      body: form,
+    });
+    if (!appendResp.ok && appendResp.status !== 204) {
+      throw new Error(`Media APPEND seg ${segmentIndex} failed: ${await appendResp.text()}`);
+    }
+    segmentIndex++;
+  }
+
+  // FINALIZE
+  const finalizeParams = new URLSearchParams({ command: "FINALIZE", media_id: mediaId });
+  const finalizeOauth = await buildOAuthHeader("POST", uploadUrl, Object.fromEntries(finalizeParams));
+  const finalizeResp = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { Authorization: finalizeOauth, "Content-Type": "application/x-www-form-urlencoded" },
+    body: finalizeParams.toString(),
+  });
+  if (!finalizeResp.ok) throw new Error(`Media FINALIZE failed: ${await finalizeResp.text()}`);
+  const finalizeData = await finalizeResp.json() as {
+    media_id_string: string;
+    processing_info?: { state: string; check_after_secs?: number };
+  };
+
+  // Poll STATUS if video processing
+  if (finalizeData.processing_info) {
+    await pollMediaStatus(mediaId, finalizeData.processing_info.check_after_secs ?? 5);
+  }
+
+  return mediaId;
 }
 
-async function buildOAuth(method: string, url: string, extraParams: Record<string, string> = {}): Promise<string> {
+async function pollMediaStatus(mediaId: string, waitSecs: number): Promise<void> {
+  const statusUrl = `https://upload.twitter.com/1.1/media/upload.json?command=STATUS&media_id=${mediaId}`;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await new Promise((r) => setTimeout(r, waitSecs * 1000));
+    const oauthHeader = await buildOAuthHeader("GET", statusUrl);
+    const r = await fetch(statusUrl, { headers: { Authorization: oauthHeader } });
+    if (!r.ok) throw new Error(`Media STATUS failed: ${await r.text()}`);
+    const data = await r.json() as { processing_info?: { state: string; check_after_secs?: number } };
+    const state = data.processing_info?.state;
+    if (state === "succeeded") return;
+    if (state === "failed") throw new Error("X media processing failed");
+    waitSecs = data.processing_info?.check_after_secs ?? 5;
+  }
+  throw new Error("X media processing timed out");
+}
+
+// ---------------------------------------------------------------------------
+// OAuth 1.0a helpers (same as post-x-update but accepts extra params)
+// ---------------------------------------------------------------------------
+async function buildOAuthHeader(
+  method: string,
+  url: string,
+  extraParams: Record<string, string> = {},
+): Promise<string> {
   const oauthParams: Record<string, string> = {
     oauth_consumer_key: X_API_KEY,
     oauth_nonce: crypto.randomUUID().replace(/-/g, ""),
@@ -31,178 +227,55 @@ async function buildOAuth(method: string, url: string, extraParams: Record<strin
     oauth_token: X_ACCESS_TOKEN,
     oauth_version: "1.0",
   };
-  const allParams = { ...oauthParams, ...extraParams };
-  const paramStr = Object.entries(allParams).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${pctEncode(k)}=${pctEncode(v)}`).join("&");
-  const baseString = [method.toUpperCase(), pctEncode(url), pctEncode(paramStr)].join("&");
-  const signingKey = `${pctEncode(X_API_SECRET)}&${pctEncode(X_ACCESS_TOKEN_SECRET)}`;
-  const keyData = new TextEncoder().encode(signingKey);
-  const msgData = new TextEncoder().encode(baseString);
-  const cryptoKey = await crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, msgData);
-  oauthParams["oauth_signature"] = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  return "OAuth " + Object.entries(oauthParams).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${pctEncode(k)}="${pctEncode(v)}"`).join(", ");
+
+  const signature = await computeOAuthSignature(method, url, { ...oauthParams, ...extraParams });
+  oauthParams["oauth_signature"] = signature;
+
+  return "OAuth " +
+    Object.entries(oauthParams)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${pctEncode(k)}="${pctEncode(v)}"`)
+      .join(", ");
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  try {
-    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ success: false, error: "Authorization required" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+async function computeOAuthSignature(
+  method: string,
+  url: string,
+  allParams: Record<string, string>,
+): Promise<string> {
+  const urlObj = new URL(url);
+  const queryParams: Record<string, string> = {};
+  urlObj.searchParams.forEach((v, k) => { queryParams[k] = v; });
 
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      const view = url.searchParams.get("view");
+  const merged = { ...allParams, ...queryParams };
+  const paramStr = Object.entries(merged)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${pctEncode(k)}=${pctEncode(v)}`)
+    .join("&");
 
-      if (view === "posts") {
-        const { data: posts } = await adminClient.from("app_analytics").select("metadata, created_at")
-          .eq("user_id", user.id).eq("source", "x_media_post").order("created_at", { ascending: false }).limit(30);
-        return new Response(JSON.stringify({ success: true, posts: (posts ?? []).map((p) => ({ ...(p.metadata as Record<string, unknown>), createdAt: p.created_at })) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+  const baseUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+  const baseString = [method.toUpperCase(), pctEncode(baseUrl), pctEncode(paramStr)].join("&");
+  const signingKey = `${pctEncode(X_API_SECRET)}&${pctEncode(X_ACCESS_TOKEN_SECRET)}`;
 
-      if (view === "scheduled") {
-        const { data: scheduled } = await adminClient.from("app_analytics").select("metadata, created_at")
-          .eq("user_id", user.id).eq("source", "x_scheduled_post").eq("metadata->>status", "scheduled").order("created_at", { ascending: true });
-        return new Response(JSON.stringify({ success: true, scheduled: (scheduled ?? []).map((s) => ({ ...(s.metadata as Record<string, unknown>), createdAt: s.created_at })) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(signingKey),
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"],
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(baseString));
+  return btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+}
 
-      if (view === "analytics") {
-        const { data: posts } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "x_media_post");
-        let totalImpressions = 0;
-        let totalLikes = 0;
-        let totalRetweets = 0;
-        let totalReplies = 0;
-        for (const p of posts ?? []) {
-          const m = p.metadata as Record<string, unknown>;
-          totalImpressions += (m.impressions as number) ?? 0;
-          totalLikes += (m.likes as number) ?? 0;
-          totalRetweets += (m.retweets as number) ?? 0;
-          totalReplies += (m.replies as number) ?? 0;
-        }
-        const engagementRate = totalImpressions > 0 ? Math.round(((totalLikes + totalRetweets + totalReplies) / totalImpressions) * 10000) / 100 : 0;
-        return new Response(JSON.stringify({
-          success: true, analytics: { totalPosts: (posts ?? []).length, totalImpressions, totalLikes, totalRetweets, totalReplies, engagementRate },
-        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+function pctEncode(s: string): string {
+  return encodeURIComponent(s).replace(/[!'()*]/g, (c) =>
+    `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+}
 
-      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    if (req.method === "POST") {
-      const body = await req.json();
-      const { action } = body;
-
-      if (action === "post_with_media") {
-        const { text, media_url, media_type } = body;
-        if (!text) return new Response(JSON.stringify({ success: false, error: "text required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (!X_API_KEY) return new Response(JSON.stringify({ success: false, error: "X API credentials not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-        let tweetPayload: Record<string, unknown> = { text };
-
-        // If media_url is provided, try to upload it via X media upload
-        if (media_url) {
-          try {
-            // INIT media upload
-            const initUrl = "https://upload.twitter.com/1.1/media/upload.json";
-            const initParams = { command: "INIT", media_type: media_type ?? "video/mp4", total_bytes: "5000000" };
-            const initAuth = await buildOAuth("POST", initUrl, initParams);
-            const initResp = await fetch(initUrl, {
-              method: "POST",
-              headers: { Authorization: initAuth, "Content-Type": "application/x-www-form-urlencoded" },
-              body: new URLSearchParams(initParams).toString(),
-            });
-            if (initResp.ok) {
-              const initData = await initResp.json();
-              const mediaId = initData.media_id_string;
-              if (mediaId) tweetPayload = { text, media: { media_ids: [mediaId] } };
-            }
-          } catch (_e) {
-            // If media upload fails, post text-only with link
-            console.error("Media upload failed, posting text only");
-          }
-        }
-
-        // Post tweet
-        const tweetUrl = "https://api.twitter.com/2/tweets";
-        const oauthHeader = await buildOAuth("POST", tweetUrl);
-        const resp = await fetch(tweetUrl, {
-          method: "POST",
-          headers: { Authorization: oauthHeader, "Content-Type": "application/json" },
-          body: JSON.stringify(tweetPayload),
-        });
-
-        const postId = crypto.randomUUID();
-        let tweetId = null;
-        let postStatus = "failed";
-
-        if (resp.ok) {
-          const result = await resp.json();
-          tweetId = result?.data?.id ?? null;
-          postStatus = "posted";
-        }
-
-        // Record the post
-        await adminClient.from("app_analytics").insert({
-          user_id: user.id, source: "x_media_post",
-          metadata: { post_id: postId, tweet_id: tweetId, text, media_url: media_url ?? null, media_type: media_type ?? null, status: postStatus, impressions: 0, likes: 0, retweets: 0, replies: 0 },
-          created_at: new Date().toISOString(),
-        });
-        return new Response(JSON.stringify({ success: postStatus === "posted", postId, tweetId, status: postStatus }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      if (action === "post_thread") {
-        const { tweets } = body;
-        if (!tweets || !Array.isArray(tweets) || tweets.length === 0) return new Response(JSON.stringify({ success: false, error: "tweets array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (!X_API_KEY) return new Response(JSON.stringify({ success: false, error: "X API credentials not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const threadId = crypto.randomUUID();
-        const results: Array<{ text: string; tweetId: string | null; success: boolean }> = [];
-        let replyToId: string | null = null;
-        for (const tweet of tweets as string[]) {
-          const tweetUrl = "https://api.twitter.com/2/tweets";
-          const oauthHeader = await buildOAuth("POST", tweetUrl);
-          const payload: Record<string, unknown> = { text: tweet };
-          if (replyToId) payload.reply = { in_reply_to_tweet_id: replyToId };
-          const resp = await fetch(tweetUrl, {
-            method: "POST",
-            headers: { Authorization: oauthHeader, "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (resp.ok) {
-            const result = await resp.json();
-            const tid = result?.data?.id ?? null;
-            results.push({ text: tweet, tweetId: tid, success: true });
-            if (tid) replyToId = tid;
-          } else {
-            results.push({ text: tweet, tweetId: null, success: false });
-            break;
-          }
-        }
-        await adminClient.from("app_analytics").insert({
-          user_id: user.id, source: "x_media_post",
-          metadata: { post_id: threadId, type: "thread", tweets: results, tweet_count: results.length, status: results.every((r) => r.success) ? "posted" : "partial" },
-          created_at: new Date().toISOString(),
-        });
-        return new Response(JSON.stringify({ success: true, threadId, results }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      if (action === "schedule_post") {
-        const { text, media_url, scheduled_at } = body;
-        if (!text || !scheduled_at) return new Response(JSON.stringify({ success: false, error: "text and scheduled_at required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const scheduleId = crypto.randomUUID();
-        await adminClient.from("app_analytics").insert({
-          user_id: user.id, source: "x_scheduled_post",
-          metadata: { schedule_id: scheduleId, text, media_url: media_url ?? null, scheduled_at, status: "scheduled" },
-          created_at: new Date().toISOString(),
-        });
-        return new Response(JSON.stringify({ success: true, scheduleId }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      return new Response(JSON.stringify({ success: false, error: "Unknown action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (err) { return new Response(JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
-});
+function jsonResp(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
