@@ -238,6 +238,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('focus-timer', '集中タイマー・フォーカスモード (Forest競合)', true, '/focus-mode', 'ホーム > 集中タイマーカード'),
     _FnDef('task-dependency', 'タスク依存関係管理 (Asana競合)', true, '/kanban', 'カンバンボード > タスク依存'),
     _FnDef('ai-writing-assistant', 'AI文章作成支援 (Grammarly/Notion AI競合)', true, '/note-editor', 'ノートエディタ > AI文章支援'),
+    _FnDef('ai-image-generator', 'AI 画像生成', true, '/ai-image-generator', 'AI 画像生成ページ'),
+    _FnDef('virtual-pet', 'バーチャルペット', true, '/virtual-pet', 'バーチャルペットページ'),
+    _FnDef('affiliate-marketing', 'アフィリエイト・マーケティング', true, '/affiliate-marketing', 'アフィリエイト・マーケティングページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
