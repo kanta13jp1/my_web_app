@@ -221,6 +221,11 @@ const FUNCTION_REGISTRY = [
   { name: "workflow-templates", description: "ワークフローテンプレート (承認フロー/ステップ管理/ギャラリー)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
   { name: "status-page", description: "ステータスページ (サービス状態/インシデント/稼働率)", has_ui: true, ui_path: "/status", ui_navigation: "ホーム > ステータス" },
   { name: "address-book", description: "アドレス帳 (連絡先/グループ/vCard/重複検出)", has_ui: true, ui_path: "/address-book", ui_navigation: "ホーム > アドレス帳" },
+  { name: "multi-language", description: "多言語対応 (10言語/翻訳管理/言語切替/進捗)", has_ui: true, ui_path: "/settings/language", ui_navigation: "設定 > 言語" },
+  { name: "data-pipeline", description: "データパイプライン (ETL/変換/スケジュール/実行ログ)", has_ui: true, ui_path: "/data-pipeline", ui_navigation: "管理 > データパイプライン" },
+  { name: "subscription-billing", description: "サブスクリプション課金 (プラン/請求書/クーポン/使用量)", has_ui: true, ui_path: "/billing", ui_navigation: "設定 > プラン・課金" },
+  { name: "feature-flags", description: "フィーチャーフラグ (フラグ管理/ロールアウト/評価)", has_ui: true, ui_path: "/admin/feature-flags", ui_navigation: "管理 > フィーチャーフラグ" },
+  { name: "audit-trail", description: "監査ログ (アクション記録/コンプライアンス/検索)", has_ui: true, ui_path: "/admin/audit", ui_navigation: "管理 > 監査ログ" },
 ] as const;
 
 serve(async (req) => {

@@ -284,6 +284,11 @@ jobs:
           supabase functions deploy workflow-templates --no-verify-jwt
           supabase functions deploy status-page --no-verify-jwt
           supabase functions deploy address-book --no-verify-jwt
+          supabase functions deploy multi-language --no-verify-jwt
+          supabase functions deploy data-pipeline --no-verify-jwt
+          supabase functions deploy subscription-billing --no-verify-jwt
+          supabase functions deploy feature-flags --no-verify-jwt
+          supabase functions deploy audit-trail --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
