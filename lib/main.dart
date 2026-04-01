@@ -131,6 +131,8 @@ import 'package:my_web_app/pages/affiliate_marketing_page.dart';
 import 'package:my_web_app/pages/calendar_events_page.dart';
 import 'package:my_web_app/pages/expense_tracker_page.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
+import 'package:my_web_app/pages/ar_navigation_page.dart';
+import 'package:my_web_app/pages/dns_domain_manager_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -783,6 +785,14 @@ class MyApp extends StatelessWidget {
           case '/reading-list':
             return MaterialPageRoute(
               builder: (_) => const ReadingListPage(),
+            );
+          case '/ar-navigation':
+            return MaterialPageRoute(
+              builder: (_) => const ArNavigationPage(),
+            );
+          case '/dns-domain-manager':
+            return MaterialPageRoute(
+              builder: (_) => const DnsDomainManagerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

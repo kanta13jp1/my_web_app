@@ -183,6 +183,8 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('auction-marketplace', 'オークション・マーケットプレイス', true, '/auction-marketplace', 'オークション・マーケットプレイスページ'),
     _FnDef('qr-code-generator', 'QR コード生成', true, '/qr-code-generator', 'QR コード生成ページ'),
     _FnDef('parking-reservation', '駐車場予約', true, '/parking-reservation', '駐車場予約ページ'),
+    _FnDef('ar-navigation', 'AR ナビゲーション', true, '/ar-navigation', 'AR ナビゲーションページ'),
+    _FnDef('dns-domain-manager', 'DNS・ドメイン管理', true, '/dns-domain-manager', '管理者ダッシュボード > DNS・ドメイン'),
     // 追加 (session432o)
     _FnDef('access-control', 'アクセス制御・権限管理', false, null, '未実装'),
     _FnDef('appointment-scheduler', '予約スケジューラー', true, '/appointment-scheduler', '予約スケジューラーページ'),
