@@ -138,6 +138,9 @@ import 'package:my_web_app/pages/focus_timer_page.dart';
 import 'package:my_web_app/pages/digital_wallet_page.dart';
 import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
+import 'package:my_web_app/pages/growth_automation_controller_page.dart';
+import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -818,6 +821,18 @@ class MyApp extends StatelessWidget {
           case '/viral-ad-generator':
             return MaterialPageRoute(
               builder: (_) => const ViralAdGeneratorPage(),
+            );
+          case '/growth-automation':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAutomationControllerPage(),
+            );
+          case '/landing-ab-test':
+            return MaterialPageRoute(
+              builder: (_) => const LandingAbTestPage(),
+            );
+          case '/video-ad-generator':
+            return MaterialPageRoute(
+              builder: (_) => const VideoAdGeneratorPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
