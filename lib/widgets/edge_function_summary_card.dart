@@ -177,6 +177,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('carbon-footprint-tracker', 'カーボンフットプリント', true, '/carbon-footprint', 'カーボンフットプリントページ'),
     _FnDef('donation-crowdfunding', '寄付・クラウドファンディング', true, '/donation', '寄付・クラウドファンディングページ'),
     _FnDef('emergency-contacts', '緊急連絡先', true, '/emergency-contacts', '緊急連絡先ページ'),
+    _FnDef('family-sharing-manager', 'ファミリー共有管理', true, '/family-sharing', 'ファミリー共有管理ページ'),
+    _FnDef('gift-registry', 'ギフトレジストリ', true, '/gift-registry', 'ギフトレジストリページ'),
+    _FnDef('mindmap-diagram', 'マインドマップ・ダイアグラム', true, '/mindmap', 'マインドマップページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

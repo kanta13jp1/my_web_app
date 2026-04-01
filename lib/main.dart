@@ -107,6 +107,9 @@ import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
+import 'package:my_web_app/pages/family_sharing_manager_page.dart';
+import 'package:my_web_app/pages/gift_registry_page.dart';
+import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -663,6 +666,18 @@ class MyApp extends StatelessWidget {
           case '/emergency-contacts':
             return MaterialPageRoute(
               builder: (_) => const EmergencyContactsPage(),
+            );
+          case '/family-sharing':
+            return MaterialPageRoute(
+              builder: (_) => const FamilySharingManagerPage(),
+            );
+          case '/gift-registry':
+            return MaterialPageRoute(
+              builder: (_) => const GiftRegistryPage(),
+            );
+          case '/mindmap':
+            return MaterialPageRoute(
+              builder: (_) => const MindmapDiagramPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
