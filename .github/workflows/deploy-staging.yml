@@ -66,7 +66,7 @@ jobs:
           echo "Running Supabase migrations for staging..."
           # 修正: シークレット名を _STAGING に変更
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
-          supabase db push
+          supabase db push --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           # 修正: シークレット名を _STAGING に変更

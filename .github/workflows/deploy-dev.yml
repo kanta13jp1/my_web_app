@@ -58,7 +58,7 @@ jobs:
         run: |
           echo "Running Supabase migrations for development..."
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_DEV }}
-          supabase db push
+          supabase db push --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_DEV }}
