@@ -228,6 +228,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('notification-digest', '通知ダイジェスト', false, null, '未実装'),
     _FnDef('smart-search', 'スマート検索', false, null, '未実装'),
     _FnDef('status-page', 'ステータスページ', false, null, '未実装'),
+    _FnDef('analytics-export', 'アナリティクスデータエクスポート', true, '/analytics-export', 'ホーム > アナリティクスエクスポート'),
+    _FnDef('feature-flags', 'フィーチャーフラグ管理', true, '/feature-flags', 'ホーム > フィーチャーフラグ'),
+    _FnDef('referral-program', '紹介プログラム管理', true, '/referral-program', 'ホーム > 紹介プログラム'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
