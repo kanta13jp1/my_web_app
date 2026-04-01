@@ -25,6 +25,9 @@ import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/ai_suggest_tags_page.dart';
 import 'package:my_web_app/pages/generate_daily_challenges_page.dart';
+import 'package:my_web_app/pages/address_book_page.dart';
+import 'package:my_web_app/pages/appointment_scheduler_page.dart';
+import 'package:my_web_app/pages/customer_feedback_page.dart';
 import 'package:my_web_app/pages/growth_achievement_summary_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
@@ -251,6 +254,18 @@ class MyApp extends StatelessWidget {
               builder: (_) => ComparisonPage(
                 competitorKey: uri.path.replaceFirst('/vs-', ''),
               ),
+            );
+          case '/address-book':
+            return MaterialPageRoute(
+              builder: (_) => const AddressBookPage(),
+            );
+          case '/appointment-scheduler':
+            return MaterialPageRoute(
+              builder: (_) => const AppointmentSchedulerPage(),
+            );
+          case '/customer-feedback':
+            return MaterialPageRoute(
+              builder: (_) => const CustomerFeedbackPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
