@@ -125,8 +125,17 @@ import 'package:my_web_app/pages/feature_flags_page.dart';
 import 'package:my_web_app/pages/workflow_automation_page.dart';
 import 'package:my_web_app/pages/social_media_scheduler_page.dart';
 import 'package:my_web_app/pages/video_meeting_page.dart';
+import 'package:my_web_app/pages/ai_image_generator_page.dart';
+import 'package:my_web_app/pages/virtual_pet_page.dart';
+import 'package:my_web_app/pages/affiliate_marketing_page.dart';
+import 'package:my_web_app/pages/calendar_events_page.dart';
+import 'package:my_web_app/pages/expense_tracker_page.dart';
+import 'package:my_web_app/pages/reading_list_page.dart';
+import 'package:my_web_app/pages/ar_navigation_page.dart';
+import 'package:my_web_app/pages/dns_domain_manager_page.dart';
 import 'package:my_web_app/pages/focus_timer_page.dart';
-import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
+import 'package:my_web_app/pages/digital_wallet_page.dart';
+import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -757,13 +766,49 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const VideoMeetingPage(),
             );
+          case '/ai-image-generator':
+            return MaterialPageRoute(
+              builder: (_) => const AiImageGeneratorPage(),
+            );
+          case '/virtual-pet':
+            return MaterialPageRoute(
+              builder: (_) => const VirtualPetPage(),
+            );
+          case '/affiliate-marketing':
+            return MaterialPageRoute(
+              builder: (_) => const AffiliateMarketingPage(),
+            );
+          case '/calendar-events':
+            return MaterialPageRoute(
+              builder: (_) => const CalendarEventsPage(),
+            );
+          case '/expense-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const ExpenseTrackerPage(),
+            );
+          case '/reading-list':
+            return MaterialPageRoute(
+              builder: (_) => const ReadingListPage(),
+            );
+          case '/ar-navigation':
+            return MaterialPageRoute(
+              builder: (_) => const ArNavigationPage(),
+            );
+          case '/dns-domain-manager':
+            return MaterialPageRoute(
+              builder: (_) => const DnsDomainManagerPage(),
+            );
           case '/focus-timer':
             return MaterialPageRoute(
               builder: (_) => const FocusTimerPage(),
             );
-          case '/ai-writing-assistant':
+          case '/digital-wallet':
             return MaterialPageRoute(
-              builder: (_) => const AiWritingAssistantPage(),
+              builder: (_) => const DigitalWalletPage(),
+            );
+          case '/loyalty-points':
+            return MaterialPageRoute(
+              builder: (_) => const LoyaltyPointsPage(),
             );
           case '/viral-ad-generator':
             return MaterialPageRoute(

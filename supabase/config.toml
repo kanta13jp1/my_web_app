@@ -160,23 +160,3 @@ entrypoint = "./functions/local-election-intelligence/index.ts"
 [functions.gemini-election-analysis]
 enabled = true
 verify_jwt = false
-
-[functions.focus-timer]
-enabled = true
-verify_jwt = true
-
-[functions.ai-writing-assistant]
-enabled = true
-verify_jwt = true
-
-[functions.bookmark-sync]
-enabled = true
-verify_jwt = true
-
-[functions.task-dependency]
-enabled = true
-verify_jwt = true
-
-[functions.note-sharing-enhanced]
-enabled = true
-verify_jwt = true

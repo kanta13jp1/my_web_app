@@ -30,9 +30,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('get-support-tickets', 'CS チケット一覧', true, '/admin', '管理者ダッシュボード > CS セクション'),
     _FnDef('reply-support-request', 'CS チケット返信', true, '/admin', '管理者ダッシュボード > CS 返信'),
     _FnDef('post-x-update', 'X 自動投稿', true, '/admin', '管理者ダッシュボード > X 投稿'),
-    _FnDef('viral-video-generator', 'Viral video brief / render queue', false, null, 'Server-only automation'),
-    _FnDef('viral-share-engine', 'Share pack / viral metrics', false, null, 'Server-only automation'),
-    _FnDef('growth-automation-controller', 'Video to X pipeline controller', false, null, 'Server-only automation'),
     _FnDef('growth-share-signal', 'シェアイベント記録', true, '/public-memos', '公開メモ > シェアボタン'),
     _FnDef('growth-referral', '紹介コード処理', true, '/referral', '紹介プログラムページ'),
     _FnDef('growth-acquisition-signal', '獲得イベント記録', true, '/', 'ランディングページ経由で自動'),
@@ -188,10 +185,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('parking-reservation', '駐車場予約', true, '/parking-reservation', '駐車場予約ページ'),
     _FnDef('ar-navigation', 'AR ナビゲーション', true, '/ar-navigation', 'AR ナビゲーションページ'),
     _FnDef('dns-domain-manager', 'DNS・ドメイン管理', true, '/dns-domain-manager', '管理者ダッシュボード > DNS・ドメイン'),
-    // バイラル成長機能 (session432o VSCode 2026-04-02)
-    _FnDef('viral-video-ad-generator', 'バイラル動画広告生成', true, '/viral-ad-generator', 'バイラル広告ジェネレーター > 生成タブ'),
-    _FnDef('x-media-post', 'X 画像/動画付き投稿', true, '/viral-ad-generator', 'バイラル広告ジェネレーター > Xに投稿'),
-    _FnDef('viral-growth-engine', 'バイラル成長エンジン', true, '/viral-ad-generator', 'バイラル広告ジェネレーター > 指標タブ'),
     // 追加 (session432o)
     _FnDef('access-control', 'アクセス制御・権限管理', false, null, '未実装'),
     _FnDef('appointment-scheduler', '予約スケジューラー', true, '/appointment-scheduler', '予約スケジューラーページ'),

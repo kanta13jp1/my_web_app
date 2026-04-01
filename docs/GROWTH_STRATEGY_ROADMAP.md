@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 daily-development (集中タイマーページ/AI文章アシスタントページ実装・浪費耐性トレーニングカードをホームに統合・新規Edge Function 5本CI/CD追加・flutter analyze 0件維持)
+最終更新: 2026-04-01 session432v-web (225 Edge Functions体制: バイラル成長エンジン — video-ad-generator, viral-share-engine, x-media-post, growth-automation-controller, landing-ab-test追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,15 +378,6 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
-
-### 2026-04-01 daily-development 実装済み (自動)
-
-- **集中タイマーページ実装** (daily-development 2026-04-01): `focus_timer_page.dart` を新規作成。`focus-timer` Edge Function と連携。ポモドーロ式タイマー (5/15/25/50分プリセット)・CircularProgressIndicator カウントダウン・セッション開始/完了/キャンセル・週次統計 (完了数/集中分数/連続日数/集中スコア) を実装。Forest/Focusmate 競合の「ポモドーロ+ストリーク管理」を自前実装。`/focus-timer` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに追加。
-- **AI文章アシスタントページ実装** (daily-development 2026-04-01): `ai_writing_assistant_page.dart` を新規作成。`ai-writing-assistant` Edge Function と連携し6機能 (文章改善/要約/続きを書く/翻訳/トーン変換/タイトル提案) を提供。Dart 3 レコード構文でアクション定義を圧縮。コピーボタン付き結果表示。Grammarly/Notion AI 競合。`/ai-writing-assistant` ルートを追加。業務メニューカタログ `growth` セクションに追加。
-- **浪費耐性トレーニングカードをホーム画面に統合** (daily-development 2026-04-01): `AbstinenceDisciplineSnapshot` の5プロパティ (repCount/moneySaved/timeSavedMinutes/streakDays/stageLabel) を `HomeSnapshot` に追加。ホーム禁欲ガードパネルに「浪費耐性トレーニング」カードを実装。テスト2件追加。型不一致エラー (`int→double`) を修正し flutter analyze 0件維持。
-- **Edge Function 5本をCI/CDに追加** (daily-development 2026-04-01): `focus-timer`/`ai-writing-assistant`/`bookmark-sync`/`task-dependency`/`note-sharing-enhanced` を `supabase/config.toml` と `deploy-prod.yml` に追加し本番自動デプロイを整備。
-- **ユーザーマニュアル更新** (daily-development 2026-04-01): 集中タイマー・AI文章アシスタントの詳細操作手順を追記。
-- **ブログ下書き作成** (daily-development 2026-04-01): `docs/blog-drafts/2026-04-01-focus-timer-ai-writing.md` — 集中タイマー実装 (CircularProgressIndicator + Timer.periodic) と AI文章アシスタント (Dart3レコード構文) の技術解説記事。
 
 ### 2026-04-01 PowerShell全体管理セッション #10 実装済み
 
@@ -1053,6 +1044,18 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432v (Web版) — 2026-04-01
+
+**Edge Functions 220→225本 (5本追加) — バイラル成長・動画広告・シェア最適化**
+
+登録者数が4人から増えない問題に対し、シェア・バイラル施策に特化した5つのEdge Functionsを構築:
+
+1. **video-ad-generator**: 動画広告生成エンジン — Dark War風広告テンプレート5種(緊急性訴求/比較キラー/AIデモ/FOMOカウントダウン/ミームバイラル)、AIスクリプト生成(pain_point/social_proof/feature_showcase)、9:16縦動画仕様、シーン構成エディタ、キャンペーン管理、パフォーマンス追跡
+2. **viral-share-engine**: バイラルシェアエンジン — UTMパラメータ付きシェアリンク自動生成、8チャンネル対応(X/Facebook/LINE/Discord/Email/QR/直リンク/埋め込み)、バイラル係数(k-factor)リアルタイム計算、A/Bテスト文言(X用4種/LINE用2種/Email用1種)、紹介報酬(プレミアム7日間)自動付与
+3. **x-media-post**: Xメディア投稿 — X API v2/v1.1完全対応OAuth 1.0a署名、動画/画像付きツイート(media/upload INIT対応)、スレッド投稿(in_reply_to自動チェーン)、予約投稿、投稿パフォーマンス(インプレッション/いいね/RT/リプライ/エンゲージメント率)
+4. **growth-automation-controller**: 成長自動化コントローラー — 競合10社(Notion/Evernote/MoneyForward/Slack/Chatwork/X/Discord/LINE/Amazon/GitHub)比較広告コピー自動生成、毎日3投稿自動生成(異なる競合ターゲット)、成長KPIダッシュボード(ユーザー数/シェア数/広告閲覧/X投稿/ブログ)、7つの成長戦略定義
+5. **landing-ab-test**: LP A/Bテスト — CTA 6バリアント(無料/即時/節約/AI訴求)×見出し5バリアント、ランダム割り当て、コンバージョン追跡、統計的有意差に基づく自動勝者選定、ヒートマップデータ収集
 
 ### Session 432o (VSCode版) — 2026-04-01
 
