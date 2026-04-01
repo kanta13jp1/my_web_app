@@ -206,6 +206,11 @@ const FUNCTION_REGISTRY = [
   { name: "habit-gamification", description: "習慣ゲーミフィケーション (チャレンジ/バッジ/レベル/ランキング/ストリーク)", has_ui: true, ui_path: "/gamification", ui_navigation: "ホーム > ゲーミフィケーション" },
   { name: "inventory-barcode", description: "在庫バーコード管理 (スキャン/入出庫/棚卸し/アラート/レポート)", has_ui: true, ui_path: "/inventory", ui_navigation: "ホーム > 在庫管理" },
   { name: "customer-feedback", description: "顧客フィードバック・NPS (収集/感情分析/分類/トレンド)", has_ui: true, ui_path: "/feedback", ui_navigation: "ホーム > フィードバック" },
+  { name: "email-template-builder", description: "メールテンプレートビルダー (テンプレート/変数置換/キャンペーン/開封率)", has_ui: true, ui_path: "/email-templates", ui_navigation: "ホーム > メールテンプレート" },
+  { name: "sitemap-analytics", description: "Web分析 (ページビュー/リファラー/デバイス/コンバージョン)", has_ui: true, ui_path: "/web-analytics", ui_navigation: "管理 > Web分析" },
+  { name: "two-factor-auth", description: "二要素認証管理 (TOTP/バックアップコード/デバイス/認証ログ)", has_ui: true, ui_path: "/security/2fa", ui_navigation: "設定 > セキュリティ > 2FA" },
+  { name: "changelog-manager", description: "チェンジログ・リリースノート (バージョン/変更点/Markdown生成)", has_ui: true, ui_path: "/changelog", ui_navigation: "ホーム > チェンジログ" },
+  { name: "access-control", description: "アクセス制御・権限管理 (ロール/リソース/招待/アクセスログ)", has_ui: true, ui_path: "/access-control", ui_navigation: "管理 > アクセス制御" },
 ] as const;
 
 serve(async (req) => {

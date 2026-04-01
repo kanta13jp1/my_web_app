@@ -269,6 +269,11 @@ jobs:
           supabase functions deploy habit-gamification --no-verify-jwt
           supabase functions deploy inventory-barcode --no-verify-jwt
           supabase functions deploy customer-feedback --no-verify-jwt
+          supabase functions deploy email-template-builder --no-verify-jwt
+          supabase functions deploy sitemap-analytics --no-verify-jwt
+          supabase functions deploy two-factor-auth --no-verify-jwt
+          supabase functions deploy changelog-manager --no-verify-jwt
+          supabase functions deploy access-control --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
