@@ -183,6 +183,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('auction-marketplace', 'オークション・マーケットプレイス', true, '/auction-marketplace', 'オークション・マーケットプレイスページ'),
     _FnDef('qr-code-generator', 'QR コード生成', true, '/qr-code-generator', 'QR コード生成ページ'),
     _FnDef('parking-reservation', '駐車場予約', true, '/parking-reservation', '駐車場予約ページ'),
+    _FnDef('referral-program', '紹介プログラム (ユーザー獲得)', true, '/referral-program', '紹介プログラムページ > 紹介コード・報酬'),
+    _FnDef('analytics-export', '分析データエクスポート', true, '/analytics-export', '管理者ダッシュボード > データエクスポート'),
+    _FnDef('workflow-templates', 'ワークフローテンプレート', true, '/workflow-templates', 'ワークフローテンプレートページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
