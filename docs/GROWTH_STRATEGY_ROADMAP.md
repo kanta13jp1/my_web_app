@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 PowerShell#10 (migration 000140重複修正 / 210 Edge Functions / Schedule cs-check自動UI追加稼働中)
+最終更新: 2026-04-01 session432u-web (50本追加 → 215 Edge Functions 体制: +dns-domain-manager, affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1053,6 +1053,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
   two-factor-auth, vehicle-fleet-manager) → 全180関数カバレッジ達成
 - Schedule制限確認: 現行プランは4トリガー上限。cs-check(毎時)内に
   edge-function-ui-check/code-review/issue-fixを統合済みで対応完了。
+
+### Session 432u (Web版) — 2026-04-01
+
+**Edge Functions 210→215本 (5本追加) — DNS・アフィリエイト・ペット・AR・AI画像**
+
+1. **dns-domain-manager**: ドメイン・DNS管理 — Google Domains/Cloudflare/Route53競合、DNSレコード、SSL監視
+2. **affiliate-marketing**: アフィリエイトマーケティング — Amazon Associates/A8.net競合、リンク管理、クリック/コンバージョン追跡、報酬計算
+3. **virtual-pet**: バーチャルペット — たまごっち/ポケモン競合、8種ペット育成、エサ/アクティビティ、レベルアップ
+4. **ar-navigation**: ARナビゲーション — Google Maps/Pokémon GO競合、ルート/マーカー、歩数/移動記録
+5. **ai-image-generator**: AI画像生成 — DALL-E/Midjourney/Canva競合、10スタイル、6テンプレート、日次制限
 
 ### Session 432t (Web版) — 2026-04-01
 

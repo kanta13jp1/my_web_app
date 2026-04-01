@@ -241,6 +241,11 @@ const FUNCTION_REGISTRY = [
   { name: "marketplace-reviews", description: "マーケットプレイスレビュー (星評価/画像/役立った/分析)", has_ui: true, ui_path: "/reviews", ui_navigation: "マーケット > レビュー" },
   { name: "smart-home-automation", description: "スマートホームオートメーション (デバイス/シーン/自動化/エネルギー)", has_ui: true, ui_path: "/smart-home", ui_navigation: "IoT > スマートホーム" },
   { name: "digital-wallet", description: "デジタルウォレット (残高/送金/QR決済/支出分析)", has_ui: true, ui_path: "/wallet", ui_navigation: "ファイナンス > ウォレット" },
+  { name: "dns-domain-manager", description: "ドメイン・DNS管理 (ドメイン/レコード/SSL/監視)", has_ui: true, ui_path: "/admin/dns", ui_navigation: "管理 > DNS管理" },
+  { name: "affiliate-marketing", description: "アフィリエイトマーケティング (リンク/クリック/コンバージョン/報酬)", has_ui: true, ui_path: "/marketing/affiliate", ui_navigation: "マーケティング > アフィリエイト" },
+  { name: "virtual-pet", description: "バーチャルペット (育成/エサ/アクティビティ/レベルアップ)", has_ui: true, ui_path: "/pet", ui_navigation: "エンタメ > バーチャルペット" },
+  { name: "ar-navigation", description: "ARナビゲーション (ルート/マーカー/歩数/移動記録)", has_ui: true, ui_path: "/ar-nav", ui_navigation: "ナビ > ARナビ" },
+  { name: "ai-image-generator", description: "AI画像生成 (プロンプト/ギャラリー/テンプレート/スタイル)", has_ui: true, ui_path: "/ai/image", ui_navigation: "AI > 画像生成" },
 ] as const;
 
 serve(async (req) => {

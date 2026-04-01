@@ -304,6 +304,11 @@ jobs:
           supabase functions deploy marketplace-reviews --no-verify-jwt
           supabase functions deploy smart-home-automation --no-verify-jwt
           supabase functions deploy digital-wallet --no-verify-jwt
+          supabase functions deploy dns-domain-manager --no-verify-jwt
+          supabase functions deploy affiliate-marketing --no-verify-jwt
+          supabase functions deploy virtual-pet --no-verify-jwt
+          supabase functions deploy ar-navigation --no-verify-jwt
+          supabase functions deploy ai-image-generator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
