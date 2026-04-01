@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 sessionPS#10 (228 Edge Functions体制: バイラル成長パイプライン完成 — x-media-post(本実装), viral-ad-generator, viral-growth-pipeline追加・ViralAdCampaignPage実装)
+最終更新: 2026-04-02 session432w-web (228 Edge Functions体制: Supabase 100関数制限対策 — deploy-prod.yml をTier 1/Tier 2に分割し、最重要100関数のみデプロイ)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1044,6 +1044,24 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432w (Web版) — 2026-04-02
+
+**Supabase 100関数制限対策 — deploy-prod.yml CI/CDデプロイ修正**
+
+CI/CDがemail-serviceデプロイ時にHTTP 402 "Max number of functions reached for project" で失敗していた問題を修正:
+
+- **原因**: Supabaseプロジェクトに100関数上限が存在。225関数を順次デプロイしようとして101番目で失敗
+- **対策**: deploy-prod.ymlを7ティアに再構成し、最重要100関数のみデプロイ
+  - Tier 1A: Core Frontend & Dashboard (15関数)
+  - Tier 1B: Growth & Viral Engine (20関数) ← バイラル成長系を最優先
+  - Tier 1C: AI & Agent System (12関数)
+  - Tier 1D: Schedule & Automation (10関数)
+  - Tier 1E: Admin & Support (8関数)
+  - Tier 1F: Core App Features (20関数)
+  - Tier 1G: Secondary Features (15関数)
+- **Tier 2 (コードのみ)**: 残り128+関数はコードベースに存在するが未デプロイ。Supabaseプラン上限緩和後に順次有効化
+- **優先判断**: viral-share-engine, x-media-post, video-ad-generator, growth-automation-controller, landing-ab-testは全てTier 1Bに配置し、登録者増加施策を最優先
 
 ### Session PS#10 (PowerShell版) — 2026-04-02
 
