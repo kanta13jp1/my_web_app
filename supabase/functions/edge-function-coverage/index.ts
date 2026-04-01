@@ -216,6 +216,11 @@ const FUNCTION_REGISTRY = [
   { name: "backup-restore", description: "バックアップ・リストア管理 (バックアップ/エクスポート/スケジュール)", has_ui: true, ui_path: "/backup", ui_navigation: "設定 > バックアップ" },
   { name: "notification-digest", description: "通知ダイジェスト (集約/優先度/チャネル/静音時間)", has_ui: true, ui_path: "/notifications/digest", ui_navigation: "ホーム > 通知ダイジェスト" },
   { name: "smart-search", description: "スマート検索 (全文検索/フィルタ/保存/サジェスト)", has_ui: true, ui_path: "/search", ui_navigation: "ホーム > 検索" },
+  { name: "referral-program", description: "紹介プログラム (紹介コード/追跡/報酬/リーダーボード)", has_ui: true, ui_path: "/referral", ui_navigation: "ホーム > 紹介プログラム" },
+  { name: "analytics-export", description: "分析データエクスポート (レポート/CSV/スケジュール)", has_ui: true, ui_path: "/analytics/export", ui_navigation: "管理 > エクスポート" },
+  { name: "workflow-templates", description: "ワークフローテンプレート (承認フロー/ステップ管理/ギャラリー)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
+  { name: "status-page", description: "ステータスページ (サービス状態/インシデント/稼働率)", has_ui: true, ui_path: "/status", ui_navigation: "ホーム > ステータス" },
+  { name: "address-book", description: "アドレス帳 (連絡先/グループ/vCard/重複検出)", has_ui: true, ui_path: "/address-book", ui_navigation: "ホーム > アドレス帳" },
 ] as const;
 
 serve(async (req) => {

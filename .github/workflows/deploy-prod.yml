@@ -279,6 +279,11 @@ jobs:
           supabase functions deploy backup-restore --no-verify-jwt
           supabase functions deploy notification-digest --no-verify-jwt
           supabase functions deploy smart-search --no-verify-jwt
+          supabase functions deploy referral-program --no-verify-jwt
+          supabase functions deploy analytics-export --no-verify-jwt
+          supabase functions deploy workflow-templates --no-verify-jwt
+          supabase functions deploy status-page --no-verify-jwt
+          supabase functions deploy address-book --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
