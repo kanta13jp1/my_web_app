@@ -249,6 +249,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('calendar-events', 'カレンダーイベント管理', true, '/calendar-events', 'カレンダーイベントページ'),
     _FnDef('expense-tracker', '支出トラッカー', true, '/expense-tracker', '支出トラッカーページ'),
     _FnDef('reading-list', '読書リスト管理', true, '/reading-list', '読書リストページ'),
+    _FnDef('x-media-post', 'X メディア投稿 (画像/動画付き)', true, '/viral-ad-campaign', 'バイラルキャンペーン > X投稿'),
+    _FnDef('viral-ad-generator', 'バイラル広告SVG生成', true, '/viral-ad-campaign', 'バイラルキャンペーン > 広告プレビュー'),
+    _FnDef('viral-growth-pipeline', 'バイラル成長パイプライン', true, '/viral-ad-campaign', 'バイラルキャンペーン > キャンペーン実行'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

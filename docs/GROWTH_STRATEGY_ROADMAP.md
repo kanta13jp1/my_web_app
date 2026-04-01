@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432v-web (225 Edge Functions体制: バイラル成長エンジン — video-ad-generator, viral-share-engine, x-media-post, growth-automation-controller, landing-ab-test追加)
+最終更新: 2026-04-02 sessionPS#10 (228 Edge Functions体制: バイラル成長パイプライン完成 — x-media-post(本実装), viral-ad-generator, viral-growth-pipeline追加・ViralAdCampaignPage実装)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1044,6 +1044,22 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session PS#10 (PowerShell版) — 2026-04-02
+
+**Edge Functions 225→228本 (3本追加) — バイラル成長パイプライン完成・X投稿自動化**
+
+登録者数ゼロ増問題への対策として、Dark War風広告 → X自動投稿パイプラインを構築:
+
+1. **x-media-post** (本実装): X API v1.1チャンク媒体アップロード (INIT→APPEND→FINALIZE→STATUS) + X API v2ツイート。OAuth 1.0a署名完全実装。PNG/JPEG/GIF/MP4対応 (≤15MB)。`mediaBase64` or `mediaUrl`でメディア指定。dryRunモード付き。
+2. **viral-ad-generator**: 純SVG 1200×630px広告カード生成。6テンプレート: `growth_stats`(統計グラデーション)・`dark_war`(黒/赤【衝撃】スタイル)・`vs_notion`(比較表)・`ai_secretary`(ターミナル風)・`feature_highlight`・`milestone`。外部APIゼロ。280字ツイート文も自動生成。
+3. **viral-growth-pipeline**: オーケストレーター。`run_campaign`→`track_result`→`get_stats`の3アクション。stats取得→広告生成→X投稿→`viral_pipeline_runs`テーブルへ記録。`imageBase64`受取によりフロントCanvas PNG変換フローも対応。
+
+**フロントエンド**: `ViralAdCampaignPage` (/viral-ad-campaign) 追加。テンプレート選択・プレビュー・ドライラン/本番投稿・実行履歴表示。
+
+**DB**: `viral_pipeline_runs` テーブル (RLS: service_role ALL + admin SELECT)
+
+**`flutter analyze` / `deno lint`**: 0エラー維持確認
 
 ### Session 432v (Web版) — 2026-04-01
 

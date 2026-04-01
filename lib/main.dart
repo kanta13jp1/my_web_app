@@ -126,6 +126,7 @@ import 'package:my_web_app/pages/workflow_automation_page.dart';
 import 'package:my_web_app/pages/social_media_scheduler_page.dart';
 import 'package:my_web_app/pages/video_meeting_page.dart';
 import 'package:my_web_app/pages/ai_image_generator_page.dart';
+import 'package:my_web_app/pages/viral_ad_campaign_page.dart';
 import 'package:my_web_app/pages/virtual_pet_page.dart';
 import 'package:my_web_app/pages/affiliate_marketing_page.dart';
 import 'package:my_web_app/pages/calendar_events_page.dart';
@@ -769,6 +770,10 @@ class MyApp extends StatelessWidget {
           case '/ai-image-generator':
             return MaterialPageRoute(
               builder: (_) => const AiImageGeneratorPage(),
+            );
+          case '/viral-ad-campaign':
+            return MaterialPageRoute(
+              builder: (_) => const ViralAdCampaignPage(),
             );
           case '/virtual-pet':
             return MaterialPageRoute(
