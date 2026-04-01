@@ -122,6 +122,9 @@ import 'package:my_web_app/pages/subscription_billing_page.dart';
 import 'package:my_web_app/pages/appointment_scheduler_page.dart';
 import 'package:my_web_app/pages/budget_financial_planner_page.dart';
 import 'package:my_web_app/pages/feature_flags_page.dart';
+import 'package:my_web_app/pages/workflow_automation_page.dart';
+import 'package:my_web_app/pages/social_media_scheduler_page.dart';
+import 'package:my_web_app/pages/video_meeting_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -738,6 +741,18 @@ class MyApp extends StatelessWidget {
           case '/feature-flags':
             return MaterialPageRoute(
               builder: (_) => const FeatureFlagsPage(),
+            );
+          case '/workflow-automation':
+            return MaterialPageRoute(
+              builder: (_) => const WorkflowAutomationPage(),
+            );
+          case '/social-scheduler':
+            return MaterialPageRoute(
+              builder: (_) => const SocialMediaSchedulerPage(),
+            );
+          case '/video-meeting':
+            return MaterialPageRoute(
+              builder: (_) => const VideoMeetingPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

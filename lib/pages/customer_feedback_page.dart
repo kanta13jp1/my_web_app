@@ -128,7 +128,7 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
             ],
             const SizedBox(height: 16),
             const Text('フィードバック一覧',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),),
             const Divider(),
             Expanded(
               child: _isLoading

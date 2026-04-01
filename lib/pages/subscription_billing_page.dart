@@ -73,7 +73,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),),
                     ),
                   Card(
                     child: Padding(
@@ -83,16 +83,16 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         children: [
                           const Text('現在のプラン',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                                  fontSize: 16, fontWeight: FontWeight.bold,),),
                           const SizedBox(height: 8),
                           if (_billingInfo != null) ...[
                             _infoRow('プラン',
-                                _billingInfo!['plan']?.toString() ?? 'Free'),
+                                _billingInfo!['plan']?.toString() ?? 'Free',),
                             _infoRow('ステータス',
-                                _billingInfo!['status']?.toString() ?? '-'),
+                                _billingInfo!['status']?.toString() ?? '-',),
                             _infoRow('次回更新日',
                                 _billingInfo!['next_billing_date']?.toString() ??
-                                    '-'),
+                                    '-',),
                           ] else
                             const Text('プラン情報なし'),
                         ],
@@ -102,14 +102,14 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                   const SizedBox(height: 16),
                   const Text('請求履歴',
                       style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),),
                   const Divider(),
                   if (_invoices.isEmpty)
                     const Center(
                         child: Padding(
                       padding: EdgeInsets.all(16),
                       child: Text('請求履歴はありません'),
-                    ))
+                    ),)
                   else
                     ListView.builder(
                       shrinkWrap: true,
@@ -157,7 +157,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
           SizedBox(
             width: 100,
             child: Text(label,
-                style: const TextStyle(color: Colors.grey)),
+                style: const TextStyle(color: Colors.grey),),
           ),
           Expanded(child: Text(value)),
         ],

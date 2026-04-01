@@ -71,11 +71,11 @@ class _BudgetFinancialPlannerPageState
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 12),
                       Text(_errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchBudgets,
@@ -90,11 +90,11 @@ class _BudgetFinancialPlannerPageState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.account_balance_wallet_outlined,
-                              size: 64, color: Colors.grey),
+                              size: 64, color: Colors.grey,),
                           SizedBox(height: 16),
                           Text('予算データがありません',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
+                                  fontSize: 16, color: Colors.grey,),),
                         ],
                       ),
                     )
@@ -102,7 +102,7 @@ class _BudgetFinancialPlannerPageState
                       padding: const EdgeInsets.all(16),
                       itemCount: _budgets.length,
                       itemBuilder: (context, index) {
-                        final item = _budgets[index];
+                        final item = _budgets[index] as Map<String, dynamic>;
                         final name = item['name']?.toString() ??
                             item['category']?.toString() ??
                             'カテゴリ ${index + 1}';
@@ -114,7 +114,7 @@ class _BudgetFinancialPlannerPageState
                           child: ListTile(
                             leading: const Icon(
                                 Icons.account_balance_wallet,
-                                color: Color(0xFF6366F1)),
+                                color: Color(0xFF6366F1),),
                             title: Text(name),
                             subtitle: amount.isNotEmpty
                                 ? Text('¥$amount')

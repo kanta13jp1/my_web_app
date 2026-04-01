@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432u-web (50本追加 → 215 Edge Functions 体制: +dns-domain-manager, affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator)
+最終更新: 2026-04-01 session432u (215 Edge Functions体制: AIワークフロー自動化・SNSスケジューラー・ビデオ会議3ページ実装・bookmark-sync/focus-timer/ai-writing-assistant追加・EdgeFunctionSummaryCard同期)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -390,6 +390,15 @@
 - **migration 重複バージョン修正 (000020)** (PowerShell 2026-04-01): VSCode インスタンスと PowerShell#8 が同時に `20260401000020_` ファイルを作成して重複。PS#8 ファイルを `20260401000040_` にリナンバーし CI/CD 正常稼働を回復。supabase db push の重複キーエラーを防止。
 - **flutter analyze 0 errors / deno lint 0 errors 確認** (PowerShell 2026-04-01): 並列インスタンスの変更を取り込んだ後も lint 0件を維持確認。158 Edge Functions 体制でのコード品質を担保。
 - **Schedule 3タスク正常稼働確認** (PowerShell 2026-04-01): cs-check (毎時) / daily-report (毎日 09:00 JST) / blog-draft (毎日 08:00 JST) の全タスクが schedule_task_runs テーブルへ正しい task_id でログを記録する状態を確認。次回 Schedule 実行から管理者ダッシュボードで実行状況をリアルタイム確認可能。
+
+### 2026-04-01 daily-development session432u 実装済み
+
+- **AIワークフロー自動化ページ実装** (session432u): `workflow_automation_page.dart` を新規作成。`ai-workflow-automation` Edge Function と連携。TabController 3タブ構成 (ワークフロー一覧/テンプレート/統計)。ワークフロー有効/無効切替・テンプレートからワンクリック作成。`/workflow-automation` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに追加。Zapier/Power Automate競合の「ワークフロー自動化」を自前実装。
+- **SNS投稿スケジューラーページ実装** (session432u): `social_media_scheduler_page.dart` を新規作成。`social-media-scheduler` Edge Function と連携。X/LinkedIn/Instagram/Facebook 4プラットフォーム対応。予定/投稿済/下書き 3タブ + 新規投稿作成ダイアログ (プラットフォーム選択・280字制限)。`/social-scheduler` ルートを追加。業務メニューカタログ `growth` セクションに追加。Hootsuite/Buffer 競合。
+- **ビデオ会議管理ページ実装** (session432u): `video_meeting_page.dart` を新規作成。`video-meeting-manager` Edge Function と連携。会議ルーム作成・議事録・アクションアイテム・統計の 4タブ構成。会議タイプ別カラー/アイコン (video/audio/webinar/screen_share)。LIVE バッジで進行中会議を強調表示。`/video-meeting` ルートを追加。業務メニューカタログ `office` セクションに追加。Zoom/Google Meet 競合。
+- **Edge Function 5本追加 (210→215)** (session432u): `bookmark-sync` (Pocket競合・タグ付きブックマーク同期)・`note-sharing-enhanced` (パスワード保護/期限付き共有リンク)・`focus-timer` (Forest競合・ポモドーロ+ストリーク計算)・`task-dependency` (Asana競合・タスク依存グラフ管理)・`ai-writing-assistant` (Grammarly/Notion AI競合・文章改善/要約/翻訳/タイトル提案)。全函数 deno lint 0件。
+- **EdgeFunctionSummaryCard 215本完全同期** (session432u): session432p-432t で追加された30関数 + session432u新規5関数を一括追加。address-book/analytics-export/compliance-checker/loyalty-points/live-streaming/geo-checkin/social-stories/encrypted-messaging/cloud-storage-sync/virtual-whiteboard/marketplace-reviews/smart-home-automation/digital-wallet 等を追加。UI実装有無の可視化率が向上。
+- **ブログ下書き作成** (session432u): `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md` — Flutter Webで3競合SaaS (Zapier/Zoom/Hootsuite) を同時実装 + 215 Edge Functions 達成の解説記事。
 
 ### 2026-04-01 PowerShell全体管理セッション #8 実装済み
 

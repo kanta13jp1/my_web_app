@@ -81,6 +81,9 @@ import '../pages/stats_page.dart';
 import '../pages/asset_management_page.dart';
 import '../pages/cmo_page.dart';
 import '../pages/team_workspace_page.dart';
+import '../pages/workflow_automation_page.dart';
+import '../pages/social_media_scheduler_page.dart';
+import '../pages/video_meeting_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1038,6 +1041,42 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.teal,
       keywords: const <String>['資産', '投資', '貯蓄', 'ポートフォリオ', '資産管理'],
       onOpen: (context) => _pushPage(context, const AssetManagementPage()),
+    ),
+    HomeToolEntry(
+      id: 'workflow-automation',
+      sectionId: 'growth',
+      title: 'AIワークフロー自動化',
+      subtitle: 'Zapier/Power Automate競合。AIでタスクを自動化',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF6366F1),
+      keywords: const <String>[
+        'ワークフロー', '自動化', 'Zapier', 'AI', 'トリガー', 'アクション',
+      ],
+      onOpen: (context) => _pushPage(context, const WorkflowAutomationPage()),
+    ),
+    HomeToolEntry(
+      id: 'social-scheduler',
+      sectionId: 'growth',
+      title: 'SNS投稿スケジューラー',
+      subtitle: 'X・LinkedIn・Instagram・Facebookへの投稿を一元管理',
+      icon: Icons.schedule_send,
+      color: const Color(0xFF1DA1F2),
+      keywords: const <String>[
+        'SNS', 'X', 'Twitter', 'Instagram', '投稿', 'スケジュール', 'ソーシャル',
+      ],
+      onOpen: (context) => _pushPage(context, const SocialMediaSchedulerPage()),
+    ),
+    HomeToolEntry(
+      id: 'video-meeting',
+      sectionId: 'office',
+      title: 'ビデオ会議',
+      subtitle: 'Zoom/Google Meet競合。AI議事録・アクションアイテム自動抽出',
+      icon: Icons.videocam_outlined,
+      color: const Color(0xFF2D8CFF),
+      keywords: const <String>[
+        'ビデオ', '会議', 'Zoom', 'Meet', '議事録', 'オンライン会議', 'ミーティング',
+      ],
+      onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
     ),
   ];
 }

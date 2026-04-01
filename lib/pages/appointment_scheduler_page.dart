@@ -70,11 +70,11 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 12),
                       Text(_errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchAppointments,
@@ -89,11 +89,11 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.calendar_today_outlined,
-                              size: 64, color: Colors.grey),
+                              size: 64, color: Colors.grey,),
                           SizedBox(height: 16),
                           Text('予約はありません',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
+                                  fontSize: 16, color: Colors.grey,),),
                         ],
                       ),
                     )
@@ -101,7 +101,7 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _appointments.length,
                       itemBuilder: (context, index) {
-                        final item = _appointments[index];
+                        final item = _appointments[index] as Map<String, dynamic>;
                         final title = item['title']?.toString() ??
                             item['name']?.toString() ??
                             '予約 ${index + 1}';
@@ -112,7 +112,7 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: const Icon(Icons.event,
-                                color: Color(0xFF6366F1)),
+                                color: Color(0xFF6366F1),),
                             title: Text(title),
                             subtitle: subtitle.isNotEmpty
                                 ? Text(subtitle)

@@ -163,7 +163,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                               item['type']?.toString() ?? item['report_type']?.toString() ?? 'レポート',
                             ),
                             subtitle: Text(
-                              item['format']?.toString()?.toUpperCase() ?? '',
+                              item['format']?.toString().toUpperCase() ?? '',
                             ),
                             trailing: Text(
                               item['createdAt']?.toString().substring(0, 10) ?? '',
