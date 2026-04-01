@@ -174,6 +174,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('video-meeting-manager', 'ビデオ会議管理', false, null, '未実装'),
     _FnDef('virtual-organization', 'バーチャル組織', false, null, '未実装'),
     _FnDef('whiteboard-canvas', 'ホワイトボードキャンバス', false, null, '未実装'),
+    _FnDef('carbon-footprint-tracker', 'カーボンフットプリント', true, '/carbon-footprint', 'カーボンフットプリントページ'),
+    _FnDef('donation-crowdfunding', '寄付・クラウドファンディング', true, '/donation', '寄付・クラウドファンディングページ'),
+    _FnDef('emergency-contacts', '緊急連絡先', true, '/emergency-contacts', '緊急連絡先ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

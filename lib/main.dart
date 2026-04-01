@@ -98,6 +98,9 @@ import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:my_web_app/pages/carbon_footprint_tracker_page.dart';
+import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
+import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
@@ -648,6 +651,18 @@ class MyApp extends StatelessWidget {
           case '/smart-inbox':
             return MaterialPageRoute(
               builder: (_) => const SmartInboxTriagePage(),
+            );
+          case '/carbon-footprint':
+            return MaterialPageRoute(
+              builder: (_) => const CarbonFootprintTrackerPage(),
+            );
+          case '/donation':
+            return MaterialPageRoute(
+              builder: (_) => const DonationCrowdfundingPage(),
+            );
+          case '/emergency-contacts':
+            return MaterialPageRoute(
+              builder: (_) => const EmergencyContactsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
