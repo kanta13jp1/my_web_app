@@ -201,6 +201,11 @@ const FUNCTION_REGISTRY = [
   { name: "code-playground", description: "コードプレイグラウンド (スニペット/テンプレート/共有/コレクション)", has_ui: true, ui_path: "/code-playground", ui_navigation: "ホーム > コードプレイグラウンド" },
   { name: "screen-recorder", description: "画面録画・スクリーンショット管理 (録画/スクショ/アノテーション/共有)", has_ui: true, ui_path: "/screen-recorder", ui_navigation: "ホーム > 画面録画" },
   { name: "qr-code-generator", description: "QRコード生成・管理 (URL/WiFi/連絡先/動的QR/解析)", has_ui: true, ui_path: "/qr-code", ui_navigation: "ホーム > QRコード" },
+  { name: "appointment-scheduler", description: "予約スケジューラー (予約枠/受付/リマインダー/キャンセル/統計)", has_ui: true, ui_path: "/appointments", ui_navigation: "ホーム > 予約管理" },
+  { name: "password-vault", description: "パスワード管理 (保存/強度チェック/セキュリティ監査/生成)", has_ui: true, ui_path: "/vault", ui_navigation: "ホーム > パスワード管理" },
+  { name: "habit-gamification", description: "習慣ゲーミフィケーション (チャレンジ/バッジ/レベル/ランキング/ストリーク)", has_ui: true, ui_path: "/gamification", ui_navigation: "ホーム > ゲーミフィケーション" },
+  { name: "inventory-barcode", description: "在庫バーコード管理 (スキャン/入出庫/棚卸し/アラート/レポート)", has_ui: true, ui_path: "/inventory", ui_navigation: "ホーム > 在庫管理" },
+  { name: "customer-feedback", description: "顧客フィードバック・NPS (収集/感情分析/分類/トレンド)", has_ui: true, ui_path: "/feedback", ui_navigation: "ホーム > フィードバック" },
 ] as const;
 
 serve(async (req) => {
