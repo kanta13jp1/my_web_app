@@ -110,6 +110,9 @@ import 'package:my_web_app/pages/social_feed_page.dart';
 import 'package:my_web_app/pages/family_sharing_manager_page.dart';
 import 'package:my_web_app/pages/gift_registry_page.dart';
 import 'package:my_web_app/pages/mindmap_diagram_page.dart';
+import 'package:my_web_app/pages/auction_marketplace_page.dart';
+import 'package:my_web_app/pages/qr_code_generator_page.dart';
+import 'package:my_web_app/pages/parking_reservation_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -678,6 +681,18 @@ class MyApp extends StatelessWidget {
           case '/mindmap':
             return MaterialPageRoute(
               builder: (_) => const MindmapDiagramPage(),
+            );
+          case '/auction-marketplace':
+            return MaterialPageRoute(
+              builder: (_) => const AuctionMarketplacePage(),
+            );
+          case '/qr-code-generator':
+            return MaterialPageRoute(
+              builder: (_) => const QrCodeGeneratorPage(),
+            );
+          case '/parking-reservation':
+            return MaterialPageRoute(
+              builder: (_) => const ParkingReservationPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

@@ -180,6 +180,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('family-sharing-manager', 'ファミリー共有管理', true, '/family-sharing', 'ファミリー共有管理ページ'),
     _FnDef('gift-registry', 'ギフトレジストリ', true, '/gift-registry', 'ギフトレジストリページ'),
     _FnDef('mindmap-diagram', 'マインドマップ・ダイアグラム', true, '/mindmap', 'マインドマップページ'),
+    _FnDef('auction-marketplace', 'オークション・マーケットプレイス', true, '/auction-marketplace', 'オークション・マーケットプレイスページ'),
+    _FnDef('qr-code-generator', 'QR コード生成', true, '/qr-code-generator', 'QR コード生成ページ'),
+    _FnDef('parking-reservation', '駐車場予約', true, '/parking-reservation', '駐車場予約ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
