@@ -259,6 +259,11 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('landing-ab-test', 'LP A/Bテスト', true, '/landing-ab-test', 'LP A/Bテストページ'),
     _FnDef('video-ad-generator', '動画広告ジェネレーター', true, '/video-ad-generator', '動画広告ジェネレーターページ'),
     _FnDef('viral-share-engine', 'バイラルシェアエンジン (UTMリンク・シェア係数)', true, '/viral-ad-campaign', 'バイラルキャンペーン > シェアリンク生成'),
+    _FnDef('schedule-execution-logger', 'Schedule 実行ログ詳細', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
+    _FnDef('user-growth-analytics', 'ユーザー成長分析', true, '/admin', '管理者ダッシュボード > 成長分析'),
+    _FnDef('social-proof-generator', 'ソーシャルプルーフ生成', true, '/admin', '管理者ダッシュボード > ソーシャルプルーフ'),
+    _FnDef('admin-notification-hub', '管理者通知ハブ', true, '/admin', '管理者ダッシュボード > 通知'),
+    _FnDef('edge-function-test-runner', 'Edge Function テストランナー', true, '/admin', '管理者ダッシュボード > API ステータス'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
