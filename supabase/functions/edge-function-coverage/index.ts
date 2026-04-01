@@ -226,6 +226,11 @@ const FUNCTION_REGISTRY = [
   { name: "subscription-billing", description: "サブスクリプション課金 (プラン/請求書/クーポン/使用量)", has_ui: true, ui_path: "/billing", ui_navigation: "設定 > プラン・課金" },
   { name: "feature-flags", description: "フィーチャーフラグ (フラグ管理/ロールアウト/評価)", has_ui: true, ui_path: "/admin/feature-flags", ui_navigation: "管理 > フィーチャーフラグ" },
   { name: "audit-trail", description: "監査ログ (アクション記録/コンプライアンス/検索)", has_ui: true, ui_path: "/admin/audit", ui_navigation: "管理 > 監査ログ" },
+  { name: "compliance-checker", description: "コンプライアンスチェッカー (GDPR/PIPA/CCPA/HIPAA/SOX/ISO27001)", has_ui: true, ui_path: "/admin/compliance", ui_navigation: "管理 > コンプライアンス" },
+  { name: "user-onboarding", description: "ユーザーオンボーディング (ステップ管理/進捗/チュートリアル)", has_ui: true, ui_path: "/onboarding", ui_navigation: "ホーム > オンボーディング" },
+  { name: "rate-limiter-enhanced", description: "レートリミッター強化版 (プラン別制限/使用量/チェック)", has_ui: true, ui_path: "/admin/rate-limits", ui_navigation: "管理 > レートリミット" },
+  { name: "content-versioning", description: "コンテンツバージョン管理 (履歴/差分/復元/ロック)", has_ui: true, ui_path: "/content/versions", ui_navigation: "コンテンツ > バージョン管理" },
+  { name: "custom-dashboard-builder", description: "カスタムダッシュボードビルダー (ウィジェット/テンプレート/共有)", has_ui: true, ui_path: "/dashboard/builder", ui_navigation: "ホーム > ダッシュボードビルダー" },
 ] as const;
 
 serve(async (req) => {

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432q-web (30本追加 → 195 Edge Functions 体制: +multi-language, data-pipeline, subscription-billing, feature-flags, audit-trail)
+最終更新: 2026-04-01 session432r-web (35本追加 → 200 Edge Functions 体制: +compliance-checker, user-onboarding, rate-limiter-enhanced, content-versioning, custom-dashboard-builder)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1029,6 +1029,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432r (Web版) — 2026-04-01
+
+**Edge Functions 195→200本 (5本追加) — コンプライアンス・オンボーディング・インフラ強化**
+
+1. **compliance-checker**: コンプライアンスチェッカー — GDPR/PIPA/CCPA/HIPAA/SOX/ISO27001対応、自動アセスメント、同意管理、データ処理記録
+2. **user-onboarding**: ユーザーオンボーディング — 6ステップフロー(プロフィール/メモ/AI/タスク/探索/招待)、進捗追跡、完了率分析
+3. **rate-limiter-enhanced**: レートリミッター強化版 — プラン別API制限(Free:10/min, Starter:30, Pro:60, Enterprise:120)、使用量ダッシュボード
+4. **content-versioning**: コンテンツバージョン管理 — バージョン履歴、差分表示、復元(新バージョン作成)、共同編集ロック(5分期限)
+5. **custom-dashboard-builder**: カスタムダッシュボードビルダー — 11種ウィジェット、3テンプレート(エグゼクティブ/開発者/マーケティング)、レイアウト管理
 
 ### Session 432k (Web版) — 2026-04-01
 

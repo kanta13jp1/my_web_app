@@ -289,6 +289,11 @@ jobs:
           supabase functions deploy subscription-billing --no-verify-jwt
           supabase functions deploy feature-flags --no-verify-jwt
           supabase functions deploy audit-trail --no-verify-jwt
+          supabase functions deploy compliance-checker --no-verify-jwt
+          supabase functions deploy user-onboarding --no-verify-jwt
+          supabase functions deploy rate-limiter-enhanced --no-verify-jwt
+          supabase functions deploy content-versioning --no-verify-jwt
+          supabase functions deploy custom-dashboard-builder --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
