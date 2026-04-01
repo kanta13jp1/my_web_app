@@ -939,6 +939,16 @@ class _HomePageState extends State<HomePage> {
       abstinencePrimaryLabel: primaryInterference?.item.label,
       abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
       abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
+      abstinenceDisciplineRepCount:
+          abstinenceSnapshot.disciplineSnapshot.totalRepCount,
+      abstinenceDisciplineMoneySaved:
+          abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
+      abstinenceDisciplineTimeSavedMinutes:
+          abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
+      abstinenceDisciplineStreakDays:
+          abstinenceSnapshot.disciplineSnapshot.streakDays,
+      abstinenceDisciplineStageLabel:
+          abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
       completionGoalSnapshot: completionGoalSnapshot,
       calendarDays: calendarDays,
       monthlyCashflowSummary: monthlyCashflowSummary,
@@ -1062,6 +1072,9 @@ class _HomePageState extends State<HomePage> {
 
     if (!hasProtection) {
       return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
+    }
+    if (abstinence.disciplineSnapshot.totalRepCount == 0) {
+      return '今日はまだ我慢の実績がありません。買わない・開かないを1回記録する。';
     }
     if (!morningDone) {
       return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
@@ -2218,6 +2231,7 @@ abstinence_slip_details: $slipDetailsText
     final primaryAction = snapshot.abstinencePrimaryAction;
 
     return Container(
+      key: const Key('home_abstinence_guard_panel'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2282,6 +2296,16 @@ abstinence_slip_details: $slipDetailsText
                     ? Colors.orange
                     : Colors.green,
               ),
+              _buildStatusPill(
+                label: '我慢',
+                value: '${snapshot.abstinenceDisciplineRepCount}回',
+                color: Colors.indigo,
+              ),
+              _buildStatusPill(
+                label: '連続',
+                value: '${snapshot.abstinenceDisciplineStreakDays}日',
+                color: Colors.brown,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -2293,6 +2317,76 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            key: const Key('home_abstinence_discipline_card'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.indigo.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '浪費耐性トレーニング',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        snapshot.abstinenceDisciplineStageLabel,
+                        style: const TextStyle(
+                          color: Colors.indigo,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  snapshot.abstinenceDisciplineRepCount == 0
+                      ? '今日はまだ我慢の実績がありません。買わない・開かない・不便に耐えるを1回だけ積みます。'
+                      : '今日の我慢 ${snapshot.abstinenceDisciplineRepCount}回 / 防いだ出費 ${_formatYen(snapshot.abstinenceDisciplineMoneySaved.toDouble())}円 / 取り戻した時間 ${snapshot.abstinenceDisciplineTimeSavedMinutes}分',
+                  key: const Key('home_abstinence_discipline_summary'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonalIcon(
+                    key: const Key('home_abstinence_open_training_button'),
+                    onPressed: () => _openAbstinenceGuard(context),
+                    icon: const Icon(Icons.fitness_center),
+                    label: Text(
+                      snapshot.abstinenceDisciplineRepCount == 0
+                          ? '最初の我慢を記録'
+                          : '浪費耐性を更新',
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (primaryLabel != null &&
@@ -6415,6 +6509,11 @@ class _HomeOpsSnapshot {
   final String? abstinencePrimaryLabel;
   final String? abstinencePrimarySignal;
   final String? abstinencePrimaryAction;
+  final int abstinenceDisciplineRepCount;
+  final int abstinenceDisciplineMoneySaved;
+  final int abstinenceDisciplineTimeSavedMinutes;
+  final int abstinenceDisciplineStreakDays;
+  final String abstinenceDisciplineStageLabel;
   final List<_HomeCalendarDay> calendarDays;
 
   const _HomeOpsSnapshot({
@@ -6434,6 +6533,11 @@ class _HomeOpsSnapshot {
     this.abstinencePrimaryLabel,
     this.abstinencePrimarySignal,
     this.abstinencePrimaryAction,
+    this.abstinenceDisciplineRepCount = 0,
+    this.abstinenceDisciplineMoneySaved = 0,
+    this.abstinenceDisciplineTimeSavedMinutes = 0,
+    this.abstinenceDisciplineStreakDays = 0,
+    this.abstinenceDisciplineStageLabel = '未着手',
     this.calendarDays = const [],
   });
 }

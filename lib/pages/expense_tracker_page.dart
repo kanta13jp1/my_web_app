@@ -97,7 +97,7 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
                                     : null,
                                 trailing: amount.toString().isNotEmpty
                                     ? Text(
-                                        '¥${amount}',
+                                        '¥$amount',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,

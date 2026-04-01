@@ -309,6 +309,11 @@ jobs:
           supabase functions deploy virtual-pet --no-verify-jwt
           supabase functions deploy ar-navigation --no-verify-jwt
           supabase functions deploy ai-image-generator --no-verify-jwt
+          supabase functions deploy focus-timer --no-verify-jwt
+          supabase functions deploy ai-writing-assistant --no-verify-jwt
+          supabase functions deploy bookmark-sync --no-verify-jwt
+          supabase functions deploy task-dependency --no-verify-jwt
+          supabase functions deploy note-sharing-enhanced --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
