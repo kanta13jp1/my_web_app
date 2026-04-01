@@ -15,7 +15,7 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _history = [];
+  List<Map<String, dynamic>> _history = [];
   String? _generatedUrl;
 
   @override
@@ -42,9 +42,9 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(() => _history = data['history'] as List);
+        setState(() => _history = (data['history'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _history = data);
+        setState(() => _history = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _history = []);
       }
@@ -118,14 +118,18 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 8),
-              Text(_errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
             ],
             if (_generatedUrl != null) ...[
               const SizedBox(height: 12),
-              const Text('生成された QR コード:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                '生成された QR コード:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Center(
                 child: Container(
@@ -134,8 +138,10 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_generatedUrl!,
-                      style: const TextStyle(fontSize: 12)),
+                  child: Text(
+                    _generatedUrl!,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -143,21 +149,25 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
             else if (_history.isNotEmpty) ...[
-              const Text('生成履歴',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                '生成履歴',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               Expanded(
                 child: ListView.builder(
                   itemCount: _history.length,
                   itemBuilder: (context, index) {
                     final item = _history[index];
+                    final url = item['url']?.toString() ?? 'URL ${index + 1}';
+                    final createdAt = item['created_at']?.toString();
                     return ListTile(
                       leading: const Icon(Icons.qr_code_2),
-                      title: Text(item['url']?.toString() ?? 'URL ${index + 1}'),
-                      subtitle: item['created_at'] != null
-                          ? Text(item['created_at'].toString())
-                          : null,
+                      title: Text(url),
+                      subtitle: createdAt != null ? Text(createdAt) : null,
                     );
                   },
                 ),

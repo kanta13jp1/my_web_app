@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/abstinence_guard_store.dart';
@@ -44,6 +45,20 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  DateTime _selectedMoment() {
+    final now = _currentDate();
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      now.hour,
+      now.minute,
+      now.second,
+      now.millisecond,
+      now.microsecond,
+    );
+  }
 
   _DailyGuardStatus _resolveDailyStatus(AbstinenceGuardSnapshot snapshot) {
     if (snapshot.totalSlipCount > 0) {
@@ -155,6 +170,135 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       now: _selectedDate,
     );
     await _loadSnapshot();
+  }
+
+  Future<void> _recordDisciplineRep(
+    AbstinenceDisciplineCategory category,
+  ) async {
+    final moneyController = TextEditingController(
+      text: category.defaultMoneySaved.toString(),
+    );
+    final timeController = TextEditingController(
+      text: category.defaultTimeSavedMinutes.toString(),
+    );
+    final noteController = TextEditingController();
+
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(category.label),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(category.description),
+                  const SizedBox(height: 8),
+                  Text(
+                    category.principle,
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: moneyController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: '防いだ出費 (円)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: timeController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: '取り戻した時間 (分)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    decoration: const InputDecoration(
+                      labelText: '何を我慢したか (任意)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('記録する'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSave != true) {
+      return;
+    }
+
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: category.id,
+      moneySaved:
+          int.tryParse(moneyController.text.trim()) ??
+          category.defaultMoneySaved,
+      timeSavedMinutes:
+          int.tryParse(timeController.text.trim()) ??
+          category.defaultTimeSavedMinutes,
+      note: noteController.text.trim(),
+      now: _selectedMoment(),
+    );
+    await _loadSnapshot();
+
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${category.label} を記録しました'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _removeDisciplineRep(String entryId) async {
+    await AbstinenceGuardStore.removeDisciplineRep(
+      entryId: entryId,
+      now: _selectedDate,
+    );
+    await _loadSnapshot();
+
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('我慢記録を取り消しました'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _moveDay(int offset) async {
@@ -351,6 +495,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  _buildDisciplinePanel(snapshot.disciplineSnapshot),
                   _buildPriorityPanel(snapshot),
                   _buildAbsoluteQuitPanel(snapshot),
                   _buildPresetPanel(),
@@ -381,6 +526,271 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       ),
     );
   }
+
+  Widget _buildDisciplinePanel(AbstinenceDisciplineSnapshot snapshot) {
+    final stageColor = switch (snapshot.mindsetStageLabel) {
+      '浪費を断れる' => Colors.green,
+      '我慢が定着中' => Colors.deepOrange,
+      '一拍置ける' => Colors.indigo,
+      _ => Colors.blueGrey,
+    };
+
+    return Container(
+      key: const Key('abstinence_guard_discipline_panel'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: stageColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: stageColor.withValues(alpha: 0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '浪費耐性トレーニング',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: stageColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  snapshot.mindsetStageLabel,
+                  style: TextStyle(
+                    color: stageColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '「買わなかった」「開かなかった」「不便に耐えた」を記録して、衝動より原則を強くする。',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            snapshot.mindsetStageDetail,
+            style: TextStyle(
+              color: stageColor.withValues(alpha: 0.92),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMetricChip(
+                label: '我慢回数',
+                value: '${snapshot.totalRepCount}回',
+                color: Colors.indigo,
+              ),
+              _buildMetricChip(
+                label: '防いだ出費',
+                value: '${_formatYen(snapshot.totalMoneySaved)}円',
+                color: Colors.green,
+              ),
+              _buildMetricChip(
+                label: '取り戻した時間',
+                value: '${snapshot.totalTimeSavedMinutes}分',
+                color: Colors.deepOrange,
+              ),
+              _buildMetricChip(
+                label: '連続日数',
+                value: '${snapshot.streakDays}日',
+                color: Colors.brown,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...snapshot.summaries.map(_buildDisciplineCategoryCard),
+          const SizedBox(height: 4),
+          const Text(
+            '最近の我慢',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (snapshot.recentEntries.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blueGrey.withValues(alpha: 0.18),
+                ),
+              ),
+              child: const Text(
+                'まだ我慢記録がありません。小さな1回から積み上げます。',
+              ),
+            )
+          else
+            ...snapshot.recentEntries.take(4).map(_buildDisciplineEntryTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisciplineCategoryCard(
+    AbstinenceDisciplineCategorySummary summary,
+  ) {
+    final category = summary.category;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  category.label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${summary.count}回',
+                  style: const TextStyle(
+                    color: Colors.indigo,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(category.description),
+          const SizedBox(height: 4),
+          Text(
+            category.principle,
+            style: TextStyle(
+              color: Colors.blueGrey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMetricChip(
+                label: '累計出費防止',
+                value: '${_formatYen(summary.totalMoneySaved)}円',
+                color: Colors.green,
+              ),
+              _buildMetricChip(
+                label: '累計時間回収',
+                value: '${summary.totalTimeSavedMinutes}分',
+                color: Colors.deepOrange,
+              ),
+              _buildMetricChip(
+                label: '既定値',
+                value:
+                    '${_formatYen(category.defaultMoneySaved)}円 / ${category.defaultTimeSavedMinutes}分',
+                color: Colors.blueGrey,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(
+            key: Key('abstinence_guard_discipline_record_${category.id}'),
+            onPressed: () => _recordDisciplineRep(category),
+            icon: const Icon(Icons.fitness_center),
+            label: const Text('我慢を記録する'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisciplineEntryTile(AbstinenceDisciplineEntry entry) {
+    final category = AbstinenceGuardStore.disciplineCategories.firstWhere(
+      (candidate) => candidate.id == entry.categoryId,
+      orElse: () => const AbstinenceDisciplineCategory(
+        id: 'unknown',
+        label: '我慢記録',
+        description: '',
+        principle: '',
+        defaultMoneySaved: 0,
+        defaultTimeSavedMinutes: 0,
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.16)),
+      ),
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        title: Text(
+          category.label,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              '防いだ出費 ${_formatYen(entry.moneySaved)}円 / 取り戻した時間 ${entry.timeSavedMinutes}分 / ${DateFormat('HH:mm').format(entry.recordedAt)}',
+            ),
+            if (entry.note.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(entry.note),
+            ],
+          ],
+        ),
+        trailing: IconButton(
+          key: Key('abstinence_guard_discipline_delete_${entry.id}'),
+          tooltip: '取り消す',
+          onPressed: () => _removeDisciplineRep(entry.id),
+          icon: const Icon(Icons.undo_outlined),
+        ),
+      ),
+    );
+  }
+
+  String _formatYen(int amount) => NumberFormat('#,##0').format(amount);
 
   Widget _buildPresetPanel() {
     return Container(

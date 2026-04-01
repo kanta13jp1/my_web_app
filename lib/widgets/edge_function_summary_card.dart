@@ -183,6 +183,23 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('auction-marketplace', 'オークション・マーケットプレイス', true, '/auction-marketplace', 'オークション・マーケットプレイスページ'),
     _FnDef('qr-code-generator', 'QR コード生成', true, '/qr-code-generator', 'QR コード生成ページ'),
     _FnDef('parking-reservation', '駐車場予約', true, '/parking-reservation', '駐車場予約ページ'),
+    // 追加 (session432o)
+    _FnDef('access-control', 'アクセス制御・権限管理', false, null, '未実装'),
+    _FnDef('appointment-scheduler', '予約スケジューラー', false, null, '未実装'),
+    _FnDef('budget-financial-planner', '予算・家計プランナー', false, null, '未実装'),
+    _FnDef('changelog-manager', 'チェンジログ・リリースノート', false, null, '未実装'),
+    _FnDef('code-playground', 'コードプレイグラウンド', false, null, '未実装'),
+    _FnDef('customer-feedback', '顧客フィードバック・NPS', false, null, '未実装'),
+    _FnDef('email-template-builder', 'メールテンプレートビルダー', false, null, '未実装'),
+    _FnDef('habit-gamification', '習慣ゲーミフィケーション', false, null, '未実装'),
+    _FnDef('inventory-barcode', '在庫バーコード管理', false, null, '未実装'),
+    _FnDef('password-vault', 'パスワード管理', false, null, '未実装'),
+    _FnDef('podcast-manager', 'ポッドキャスト管理', false, null, '未実装'),
+    _FnDef('real-estate-tracker', '不動産管理', false, null, '未実装'),
+    _FnDef('screen-recorder', '画面録画・スクリーンショット管理', false, null, '未実装'),
+    _FnDef('sitemap-analytics', 'サイトマップ・Web分析', false, null, '未実装'),
+    _FnDef('two-factor-auth', '二要素認証管理', false, null, '未実装'),
+    _FnDef('vehicle-fleet-manager', '車両・フリート管理', false, null, '未実装'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

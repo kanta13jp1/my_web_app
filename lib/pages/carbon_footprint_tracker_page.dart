@@ -16,7 +16,7 @@ class _CarbonFootprintTrackerPageState
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _records = [];
+  List<Map<String, dynamic>> _records = [];
 
   @override
   void initState() {
@@ -36,9 +36,9 @@ class _CarbonFootprintTrackerPageState
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['records'] is List) {
-        setState(() => _records = data['records'] as List);
+        setState(() => _records = (data['records'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _records = data);
+        setState(() => _records = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _records = []);
       }
@@ -72,12 +72,14 @@ class _CarbonFootprintTrackerPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                           onPressed: _fetchRecords,
-                          child: const Text('再試行')),
+                          child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -87,21 +89,25 @@ class _CarbonFootprintTrackerPageState
                       padding: const EdgeInsets.all(16),
                       itemCount: _records.length,
                       itemBuilder: (context, index) {
-                        final record = _records[index] as Map<String, dynamic>;
+                        final record = _records[index];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: const Icon(Icons.eco,
-                                color: Colors.green),
-                            title: Text(record['category']?.toString() ??
-                                'カテゴリ不明'),
+                            leading: const Icon(
+                                Icons.eco,
+                                color: Colors.green,
+                              ),
+                            title: Text(
+                                record['category']?.toString() ?? 'カテゴリ不明',
+                              ),
                             subtitle: Text(
-                                record['description']?.toString() ?? ''),
+                                record['description']?.toString() ?? '',
+                              ),
                             trailing: Text(
                               '${record['co2_kg']?.toString() ?? '?'} kg',
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green),
+                                  color: Colors.green,),
                             ),
                           ),
                         );

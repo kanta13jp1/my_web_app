@@ -14,7 +14,7 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _items = [];
+  List<Map<String, dynamic>> _items = [];
 
   @override
   void initState() {
@@ -34,9 +34,9 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(() => _items = data['items'] as List);
+        setState(() => _items = (data['items'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _items = data);
+        setState(() => _items = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _items = []);
       }
@@ -68,12 +68,17 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
+                      Text(
+                          _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchItems,
@@ -89,24 +94,27 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
                         final item = _items[index];
+                        final title = item['title']?.toString() ?? 'アイテム ${index + 1}';
+                        final currentPrice = item['current_price'];
+                        final description = item['description']?.toString() ?? '';
+                        final endAt = item['end_at'];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading:
-                                const Icon(Icons.gavel, color: Colors.amber),
+                            leading: const Icon(Icons.gavel, color: Colors.amber),
                             title: Text(
-                              item['title']?.toString() ?? 'アイテム ${index + 1}',
+                              title,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.bold,),
                             ),
                             subtitle: Text(
-                              item['current_price'] != null
-                                  ? '現在価格: ¥${item['current_price']}'
-                                  : item['description']?.toString() ?? '',
+                              currentPrice != null
+                                  ? '現在価格: ¥$currentPrice'
+                                  : description,
                             ),
-                            trailing: item['end_at'] != null
+                            trailing: endAt != null
                                 ? Text(
-                                    '終了: ${item['end_at']}',
+                                    '終了: $endAt',
                                     style: const TextStyle(fontSize: 12),
                                   )
                                 : null,

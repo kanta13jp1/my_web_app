@@ -14,7 +14,7 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _reservations = [];
+  List<Map<String, dynamic>> _reservations = [];
 
   @override
   void initState() {
@@ -34,9 +34,9 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['reservations'] is List) {
-        setState(() => _reservations = data['reservations'] as List);
+        setState(() => _reservations = (data['reservations'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _reservations = data);
+        setState(() => _reservations = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _reservations = []);
       }
@@ -68,12 +68,17 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchReservations,
@@ -89,30 +94,31 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                       itemCount: _reservations.length,
                       itemBuilder: (context, index) {
                         final res = _reservations[index];
+                        final spotName = res['spot_name']?.toString() ?? 'スポット ${index + 1}';
+                        final reservedAt = res['reserved_at']?.toString();
+                        final status = res['status']?.toString() ?? '予約済み';
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading: const Icon(Icons.local_parking,
-                                color: Colors.blue),
+                            leading: const Icon(
+                              Icons.local_parking,
+                              color: Colors.blue,
+                            ),
                             title: Text(
-                              res['spot_name']?.toString() ??
-                                  'スポット ${index + 1}',
+                              spotName,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            subtitle: Text(
-                              res['reserved_at']?.toString() ??
-                                  res['status']?.toString() ?? '',
-                            ),
+                            subtitle: Text(reservedAt ?? status),
                             trailing: Chip(
                               label: Text(
-                                res['status']?.toString() ?? '予約済み',
+                                status,
                                 style: const TextStyle(fontSize: 12),
                               ),
-                              backgroundColor:
-                                  res['status'] == 'active'
-                                      ? Colors.green.shade100
-                                      : Colors.grey.shade200,
+                              backgroundColor: status == 'active'
+                                  ? Colors.green.shade100
+                                  : Colors.grey.shade200,
                             ),
                           ),
                         );

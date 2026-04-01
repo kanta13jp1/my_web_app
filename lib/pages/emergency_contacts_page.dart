@@ -70,12 +70,14 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                           onPressed: _fetchContacts,
-                          child: const Text('再試行')),
+                          child: const Text('再試行'),),
                     ],
                   ),
                 )

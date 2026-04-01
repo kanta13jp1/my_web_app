@@ -14,7 +14,7 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _gifts = [];
+  List<Map<String, dynamic>> _gifts = [];
 
   @override
   void initState() {
@@ -34,9 +34,9 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['gifts'] is List) {
-        setState(() => _gifts = data['gifts'] as List);
+        setState(() => _gifts = (data['gifts'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _gifts = data);
+        setState(() => _gifts = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _gifts = []);
       }
@@ -68,12 +68,17 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
+                      Text(
+                          _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchGifts,
@@ -87,12 +92,17 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.card_giftcard,
-                              size: 64, color: Colors.grey),
+                          Icon(
+                              Icons.card_giftcard,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
                           SizedBox(height: 16),
-                          Text('ギフトリストが空です',
+                          Text(
+                              'ギフトリストが空です',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
+                                  fontSize: 16, color: Colors.grey,),
+                            ),
                         ],
                       ),
                     )
@@ -101,23 +111,17 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                       itemCount: _gifts.length,
                       itemBuilder: (context, index) {
                         final gift = _gifts[index];
-                        final title = gift is Map
-                            ? (gift['title'] ?? gift['name'] ?? 'ギフト $index')
-                            : gift.toString();
-                        final price = gift is Map
-                            ? (gift['price'] ?? gift['amount'] ?? '')
-                            : '';
-                        final reserved = gift is Map
-                            ? (gift['reserved'] == true)
-                            : false;
+                        final title = (gift['title'] ?? gift['name'] ?? 'ギフト $index').toString();
+                        final price = (gift['price'] ?? gift['amount'] ?? '').toString();
+                        final reserved = gift['reserved'] == true;
                         return Card(
                           child: ListTile(
                             leading: Icon(
                               Icons.card_giftcard,
                               color: reserved ? Colors.grey : Colors.pink,
                             ),
-                            title: Text(title.toString()),
-                            subtitle: price.toString().isNotEmpty
+                            title: Text(title),
+                            subtitle: price.isNotEmpty
                                 ? Text('¥$price')
                                 : null,
                             trailing: reserved

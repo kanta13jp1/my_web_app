@@ -15,7 +15,7 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _members = [];
+  List<Map<String, dynamic>> _members = [];
 
   @override
   void initState() {
@@ -35,9 +35,9 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['members'] is List) {
-        setState(() => _members = data['members'] as List);
+        setState(() => _members = (data['members'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _members = data);
+        setState(() => _members = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _members = []);
       }
@@ -69,12 +69,17 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
+                      Text(
+                          _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchMembers,
@@ -88,12 +93,17 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.family_restroom,
-                              size: 64, color: Colors.grey),
+                          Icon(
+                              Icons.family_restroom,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
                           SizedBox(height: 16),
-                          Text('ファミリーメンバーがいません',
+                          Text(
+                              'ファミリーメンバーがいません',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
+                                  fontSize: 16, color: Colors.grey,),
+                            ),
                         ],
                       ),
                     )
@@ -102,12 +112,8 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                       itemCount: _members.length,
                       itemBuilder: (context, index) {
                         final member = _members[index];
-                        final name = member is Map
-                            ? (member['name'] ?? member['email'] ?? 'メンバー $index')
-                            : member.toString();
-                        final role = member is Map
-                            ? (member['role'] ?? 'member')
-                            : 'member';
+                        final name = (member['name'] ?? member['email'] ?? 'メンバー $index').toString();
+                        final role = (member['role'] ?? 'member').toString();
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
@@ -117,8 +123,8 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                                     : 'M',
                               ),
                             ),
-                            title: Text(name.toString()),
-                            subtitle: Text(role.toString()),
+                            title: Text(name),
+                            subtitle: Text(role),
                             trailing:
                                 const Icon(Icons.chevron_right),
                           ),

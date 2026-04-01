@@ -14,7 +14,7 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _diagrams = [];
+  List<Map<String, dynamic>> _diagrams = [];
 
   @override
   void initState() {
@@ -34,9 +34,9 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['diagrams'] is List) {
-        setState(() => _diagrams = data['diagrams'] as List);
+        setState(() => _diagrams = (data['diagrams'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _diagrams = data);
+        setState(() => _diagrams = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _diagrams = []);
       }
@@ -68,12 +68,17 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchDiagrams,
@@ -87,12 +92,19 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.account_tree,
-                              size: 64, color: Colors.grey),
+                          Icon(
+                            Icons.account_tree,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 16),
-                          Text('マインドマップがありません',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
+                          Text(
+                            'マインドマップがありません',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -101,20 +113,19 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                       itemCount: _diagrams.length,
                       itemBuilder: (context, index) {
                         final diagram = _diagrams[index];
-                        final title = diagram is Map
-                            ? (diagram['title'] ?? diagram['name'] ??
-                                'マインドマップ $index')
-                            : diagram.toString();
-                        final updatedAt = diagram is Map
-                            ? (diagram['updated_at'] ??
-                                diagram['created_at'] ?? '')
-                            : '';
+                        final title = diagram['title']?.toString() ??
+                            diagram['name']?.toString() ??
+                            'マインドマップ $index';
+                        final updatedAt = diagram['updated_at']?.toString() ??
+                            diagram['created_at']?.toString() ?? '';
                         return Card(
                           child: ListTile(
-                            leading: const Icon(Icons.account_tree,
-                                color: Color(0xFF6366F1)),
-                            title: Text(title.toString()),
-                            subtitle: updatedAt.toString().isNotEmpty
+                            leading: const Icon(
+                              Icons.account_tree,
+                              color: Color(0xFF6366F1),
+                            ),
+                            title: Text(title),
+                            subtitle: updatedAt.isNotEmpty
                                 ? Text('更新: $updatedAt')
                                 : null,
                             trailing: const Icon(Icons.chevron_right),

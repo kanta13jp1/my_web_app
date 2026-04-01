@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,13 +78,161 @@ class AbstinenceQuitProtocolStatus {
       isEnabled && totalCount > 0 && completedCount == totalCount;
 }
 
+class AbstinenceDisciplineCategory {
+  final String id;
+  final String label;
+  final String description;
+  final String principle;
+  final int defaultMoneySaved;
+  final int defaultTimeSavedMinutes;
+  final int weight;
+
+  const AbstinenceDisciplineCategory({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.principle,
+    required this.defaultMoneySaved,
+    required this.defaultTimeSavedMinutes,
+    this.weight = 1,
+  });
+}
+
+class AbstinenceDisciplineEntry {
+  final String id;
+  final String categoryId;
+  final int moneySaved;
+  final int timeSavedMinutes;
+  final String note;
+  final DateTime recordedAt;
+
+  const AbstinenceDisciplineEntry({
+    required this.id,
+    required this.categoryId,
+    required this.moneySaved,
+    required this.timeSavedMinutes,
+    required this.note,
+    required this.recordedAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'categoryId': categoryId,
+      'moneySaved': moneySaved,
+      'timeSavedMinutes': timeSavedMinutes,
+      'note': note,
+      'recordedAt': recordedAt.toIso8601String(),
+    };
+  }
+
+  static AbstinenceDisciplineEntry? fromJson(Map<String, dynamic> json) {
+    final id = json['id']?.toString();
+    final categoryId = json['categoryId']?.toString();
+    final recordedAt = DateTime.tryParse(json['recordedAt']?.toString() ?? '');
+    if (id == null || id.isEmpty || categoryId == null || categoryId.isEmpty) {
+      return null;
+    }
+    if (recordedAt == null) {
+      return null;
+    }
+
+    return AbstinenceDisciplineEntry(
+      id: id,
+      categoryId: categoryId,
+      moneySaved: AbstinenceGuardStore.parseIntValue(json['moneySaved']),
+      timeSavedMinutes:
+          AbstinenceGuardStore.parseIntValue(json['timeSavedMinutes']),
+      note: json['note']?.toString() ?? '',
+      recordedAt: recordedAt,
+    );
+  }
+}
+
+class AbstinenceDisciplineCategorySummary {
+  final AbstinenceDisciplineCategory category;
+  final List<AbstinenceDisciplineEntry> entries;
+
+  const AbstinenceDisciplineCategorySummary({
+    required this.category,
+    required this.entries,
+  });
+
+  int get count => entries.length;
+
+  int get totalMoneySaved =>
+      entries.fold(0, (sum, entry) => sum + entry.moneySaved);
+
+  int get totalTimeSavedMinutes =>
+      entries.fold(0, (sum, entry) => sum + entry.timeSavedMinutes);
+}
+
+class AbstinenceDisciplineSnapshot {
+  final List<AbstinenceDisciplineEntry> entries;
+  final List<AbstinenceDisciplineCategorySummary> summaries;
+  final int streakDays;
+
+  const AbstinenceDisciplineSnapshot({
+    this.entries = const <AbstinenceDisciplineEntry>[],
+    this.summaries = const <AbstinenceDisciplineCategorySummary>[],
+    this.streakDays = 0,
+  });
+
+  int get totalRepCount => entries.length;
+
+  int get totalMoneySaved =>
+      entries.fold(0, (sum, entry) => sum + entry.moneySaved);
+
+  int get totalTimeSavedMinutes =>
+      entries.fold(0, (sum, entry) => sum + entry.timeSavedMinutes);
+
+  int get disciplineScore => summaries.fold(
+        streakDays * 2,
+        (sum, summary) => sum + (summary.count * summary.category.weight),
+      );
+
+  String get mindsetStageLabel {
+    if (totalRepCount == 0) {
+      return '未着手';
+    }
+    if (streakDays >= 7 || disciplineScore >= 20) {
+      return '浪費を断れる';
+    }
+    if (streakDays >= 3 || disciplineScore >= 8) {
+      return '我慢が定着中';
+    }
+    return '一拍置ける';
+  }
+
+  String get mindsetStageDetail {
+    if (totalRepCount == 0) {
+      return '欲望に勝つより前に、我慢できた事実を先に積み上げます。';
+    }
+    if (streakDays >= 7 || disciplineScore >= 20) {
+      return '衝動より原則が前に出ています。この調子で浪費の入口を細らせます。';
+    }
+    if (streakDays >= 3 || disciplineScore >= 8) {
+      return '我慢が偶然ではなく習慣に変わり始めています。';
+    }
+    return '止まって選び直す力が生まれています。まずは小さな我慢を増やします。';
+  }
+
+  List<AbstinenceDisciplineEntry> get recentEntries {
+    final sorted = entries.toList()
+      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    return sorted;
+  }
+}
+
 class AbstinenceGuardSnapshot {
   final List<AbstinenceGuardState> states;
   final List<AbstinenceQuitProtocolStatus> quitProtocolStatuses;
+  final AbstinenceDisciplineSnapshot disciplineSnapshot;
 
   const AbstinenceGuardSnapshot({
     required this.states,
     this.quitProtocolStatuses = const <AbstinenceQuitProtocolStatus>[],
+    this.disciplineSnapshot = const AbstinenceDisciplineSnapshot(),
   });
 
   int get enabledCount => states.where((state) => state.isEnabled).length;
@@ -171,6 +321,37 @@ class AbstinenceGuardStore {
       ),
     ],
   };
+
+  static const List<AbstinenceDisciplineCategory> disciplineCategories =
+      <AbstinenceDisciplineCategory>[
+    AbstinenceDisciplineCategory(
+      id: 'no_buy',
+      label: '買わずに耐えた',
+      description: '予定外の買い物、課金、外食、コンビニを見送る。',
+      principle: '欲しいかではなく、本当に必要かで止まる。',
+      defaultMoneySaved: 1500,
+      defaultTimeSavedMinutes: 15,
+      weight: 3,
+    ),
+    AbstinenceDisciplineCategory(
+      id: 'no_scroll',
+      label: '開かずに戻った',
+      description: 'SNS・動画・ゲームを開く前に手を止める。',
+      principle: '刺激に飛ぶ前に、今の目的へ戻す。',
+      defaultMoneySaved: 0,
+      defaultTimeSavedMinutes: 15,
+      weight: 2,
+    ),
+    AbstinenceDisciplineCategory(
+      id: 'accept_discomfort',
+      label: '不便を受け入れた',
+      description: '歩く、自炊する、待つ、片づけるなどを選ぶ。',
+      principle: '楽を買う前に、不便に耐える筋力をつける。',
+      defaultMoneySaved: 500,
+      defaultTimeSavedMinutes: 10,
+      weight: 1,
+    ),
+  ];
 
   static const List<AbstinenceGuardItem> items = [
     AbstinenceGuardItem(
@@ -300,6 +481,20 @@ class AbstinenceGuardStore {
   ) =>
       'abstinence_quit_step_${todayKey(now)}_${itemId}_$stepId';
 
+  static String _disciplineEntriesKey(DateTime now) =>
+      'abstinence_discipline_entries_${todayKey(now)}';
+
+  static AbstinenceDisciplineCategory? _disciplineCategoryById(
+    String categoryId,
+  ) {
+    for (final category in disciplineCategories) {
+      if (category.id == categoryId) {
+        return category;
+      }
+    }
+    return null;
+  }
+
   static String? _currentUserId() {
     try {
       return Supabase.instance.client.auth.currentUser?.id;
@@ -346,10 +541,15 @@ class AbstinenceGuardStore {
         )
         .whereType<AbstinenceQuitProtocolStatus>()
         .toList();
+    final disciplineSnapshot = _loadDisciplineSnapshot(
+      date: date,
+      prefs: protocolPrefs,
+    );
 
     return AbstinenceGuardSnapshot(
       states: states,
       quitProtocolStatuses: quitProtocolStatuses,
+      disciplineSnapshot: disciplineSnapshot,
     );
   }
 
@@ -496,6 +696,53 @@ class AbstinenceGuardStore {
     );
   }
 
+  static Future<void> recordDisciplineRep({
+    required String categoryId,
+    int? moneySaved,
+    int? timeSavedMinutes,
+    String note = '',
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {
+    final date = _startOfDay(now ?? DateTime.now());
+    final category = _disciplineCategoryById(categoryId);
+    if (category == null) {
+      throw ArgumentError.value(categoryId, 'categoryId', 'Unknown category');
+    }
+
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final entries = _loadDisciplineEntriesFromPrefs(store, date).toList();
+    entries.add(
+      AbstinenceDisciplineEntry(
+        id:
+            '${todayKey(date)}_${categoryId}_${DateTime.now().microsecondsSinceEpoch}',
+        categoryId: categoryId,
+        moneySaved: (moneySaved ?? category.defaultMoneySaved).clamp(
+          0,
+          1 << 31,
+        ),
+        timeSavedMinutes: (timeSavedMinutes ?? category.defaultTimeSavedMinutes)
+            .clamp(0, 1 << 31),
+        note: note.trim(),
+        recordedAt: now ?? DateTime.now(),
+      ),
+    );
+    await _writeDisciplineEntries(store, date, entries);
+  }
+
+  static Future<void> removeDisciplineRep({
+    required String entryId,
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {
+    final date = _startOfDay(now ?? DateTime.now());
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final entries = _loadDisciplineEntriesFromPrefs(store, date)
+        .where((entry) => entry.id != entryId)
+        .toList();
+    await _writeDisciplineEntries(store, date, entries);
+  }
+
   static Future<Map<String, _StoredAbstinenceState>> _loadStatesForDate({
     required DateTime date,
     SharedPreferences? prefs,
@@ -585,6 +832,12 @@ class AbstinenceGuardStore {
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
+  static int parseIntValue(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
   static Future<void> _setEnabledInPrefs({
     required SharedPreferences store,
     required DateTime date,
@@ -642,6 +895,88 @@ class AbstinenceGuardStore {
       slipCount: state.slipCount,
       steps: stepStates,
     );
+  }
+
+  static AbstinenceDisciplineSnapshot _loadDisciplineSnapshot({
+    required DateTime date,
+    required SharedPreferences prefs,
+  }) {
+    final entries = _loadDisciplineEntriesFromPrefs(prefs, date);
+    final summaries = disciplineCategories.map((category) {
+      final categoryEntries = entries
+          .where((entry) => entry.categoryId == category.id)
+          .toList()
+        ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+      return AbstinenceDisciplineCategorySummary(
+        category: category,
+        entries: categoryEntries,
+      );
+    }).toList();
+
+    return AbstinenceDisciplineSnapshot(
+      entries: entries,
+      summaries: summaries,
+      streakDays: _computeDisciplineStreak(date: date, prefs: prefs),
+    );
+  }
+
+  static int _computeDisciplineStreak({
+    required DateTime date,
+    required SharedPreferences prefs,
+  }) {
+    var streak = 0;
+    for (var offset = 0; offset < 365; offset += 1) {
+      final candidate = date.subtract(Duration(days: offset));
+      final entries = _loadDisciplineEntriesFromPrefs(prefs, candidate);
+      if (entries.isEmpty) {
+        break;
+      }
+      streak += 1;
+    }
+    return streak;
+  }
+
+  static List<AbstinenceDisciplineEntry> _loadDisciplineEntriesFromPrefs(
+    SharedPreferences store,
+    DateTime date,
+  ) {
+    final rawEntries = store.getStringList(_disciplineEntriesKey(date)) ??
+        const <String>[];
+    final entries = <AbstinenceDisciplineEntry>[];
+
+    for (final rawEntry in rawEntries) {
+      try {
+        final decoded = jsonDecode(rawEntry);
+        if (decoded is! Map<String, dynamic>) {
+          continue;
+        }
+        final entry = AbstinenceDisciplineEntry.fromJson(decoded);
+        if (entry != null && _disciplineCategoryById(entry.categoryId) != null) {
+          entries.add(entry);
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+
+    entries.sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    return entries;
+  }
+
+  static Future<void> _writeDisciplineEntries(
+    SharedPreferences store,
+    DateTime date,
+    List<AbstinenceDisciplineEntry> entries,
+  ) async {
+    if (entries.isEmpty) {
+      await store.remove(_disciplineEntriesKey(date));
+      return;
+    }
+
+    final encodedEntries = entries
+        .map((entry) => jsonEncode(entry.toJson()))
+        .toList(growable: false);
+    await store.setStringList(_disciplineEntriesKey(date), encodedEntries);
   }
 
   static Future<_StoredAbstinenceState?> _loadSupabaseItemState({

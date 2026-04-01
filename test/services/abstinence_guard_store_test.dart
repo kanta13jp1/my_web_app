@@ -139,4 +139,103 @@ void main() {
     );
     expect(lockedAlcoholProtocol.isLockedForToday, isTrue);
   });
+
+  test('loadSnapshot includes discipline training totals and streak', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final previousDay = DateTime(2026, 3, 20, 21);
+    final now = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'no_buy',
+      moneySaved: 2200,
+      timeSavedMinutes: 5,
+      note: 'コンビニを見送った',
+      prefs: prefs,
+      now: previousDay,
+    );
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'no_scroll',
+      moneySaved: 0,
+      timeSavedMinutes: 15,
+      note: 'SNSを開かなかった',
+      prefs: prefs,
+      now: now,
+    );
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'accept_discomfort',
+      moneySaved: 500,
+      timeSavedMinutes: 10,
+      note: '歩いて帰った',
+      prefs: prefs,
+      now: now.add(const Duration(minutes: 30)),
+    );
+
+    final snapshot = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: now,
+    );
+    final discipline = snapshot.disciplineSnapshot;
+
+    expect(discipline.totalRepCount, 2);
+    expect(discipline.totalMoneySaved, 500);
+    expect(discipline.totalTimeSavedMinutes, 25);
+    expect(discipline.streakDays, 2);
+    expect(
+      discipline.recentEntries.map((entry) => entry.note),
+      containsAll(<String>['SNSを開かなかった', '歩いて帰った']),
+    );
+
+    final noScrollSummary = discipline.summaries.firstWhere(
+      (summary) => summary.category.id == 'no_scroll',
+    );
+    expect(noScrollSummary.count, 1);
+    expect(noScrollSummary.totalTimeSavedMinutes, 15);
+  });
+
+  test('removeDisciplineRep removes only the selected discipline record',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'no_scroll',
+      note: 'Xを開かなかった',
+      prefs: prefs,
+      now: now,
+    );
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'accept_discomfort',
+      note: '自炊した',
+      prefs: prefs,
+      now: now.add(const Duration(minutes: 5)),
+    );
+
+    final before = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: now,
+    );
+    final targetEntry = before.disciplineSnapshot.recentEntries.firstWhere(
+      (entry) => entry.note == '自炊した',
+    );
+
+    await AbstinenceGuardStore.removeDisciplineRep(
+      entryId: targetEntry.id,
+      prefs: prefs,
+      now: now,
+    );
+
+    final after = await AbstinenceGuardStore.loadSnapshot(
+      prefs: prefs,
+      now: now,
+    );
+    expect(after.disciplineSnapshot.totalRepCount, 1);
+    expect(
+      after.disciplineSnapshot.recentEntries.map((entry) => entry.note),
+      isNot(contains('自炊した')),
+    );
+    expect(
+      after.disciplineSnapshot.recentEntries.map((entry) => entry.note),
+      contains('Xを開かなかった'),
+    );
+  });
 }

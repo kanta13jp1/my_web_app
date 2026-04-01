@@ -15,7 +15,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _projects = [];
+  List<Map<String, dynamic>> _projects = [];
 
   @override
   void initState() {
@@ -35,9 +35,9 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(() => _projects = data['projects'] as List);
+        setState(() => _projects = (data['projects'] as List).cast<Map<String, dynamic>>());
       } else if (data is List) {
-        setState(() => _projects = data);
+        setState(() => _projects = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _projects = []);
       }
@@ -71,12 +71,14 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                           onPressed: _fetchProjects,
-                          child: const Text('再試行')),
+                          child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -86,8 +88,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _projects.length,
                       itemBuilder: (context, index) {
-                        final project =
-                            _projects[index] as Map<String, dynamic>;
+                        final project = _projects[index];
                         final goal =
                             (project['goal_amount'] as num?)?.toDouble() ?? 0;
                         final raised =
@@ -104,7 +105,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                   project['title']?.toString() ?? 'タイトル不明',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16),
+                                      fontSize: 16,),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(project['description']?.toString() ?? ''),
@@ -114,7 +115,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                   backgroundColor: Colors.grey[200],
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                          Colors.pink),
+                                          Colors.pink,),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
