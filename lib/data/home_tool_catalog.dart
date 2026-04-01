@@ -84,6 +84,8 @@ import '../pages/team_workspace_page.dart';
 import '../pages/workflow_automation_page.dart';
 import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
+import '../pages/focus_timer_page.dart';
+import '../pages/ai_writing_assistant_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1077,6 +1079,31 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ビデオ', '会議', 'Zoom', 'Meet', '議事録', 'オンライン会議', 'ミーティング',
       ],
       onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
+    ),
+    HomeToolEntry(
+      id: 'focus-timer',
+      sectionId: 'growth',
+      title: '集中タイマー',
+      subtitle: 'Forest/Focusmate競合。ポモドーロ+ストリーク管理で集中力を鍛える',
+      icon: Icons.timer_outlined,
+      color: const Color(0xFF10B981),
+      keywords: const <String>[
+        '集中', 'タイマー', 'ポモドーロ', 'Forest', 'フォーカス', '作業', 'ストリーク',
+      ],
+      onOpen: (context) => _pushPage(context, const FocusTimerPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-writing-assistant',
+      sectionId: 'growth',
+      title: 'AI文章アシスタント',
+      subtitle: 'Grammarly/Notion AI競合。文章改善・要約・翻訳・タイトル提案',
+      icon: Icons.auto_fix_high_outlined,
+      color: const Color(0xFF8B5CF6),
+      keywords: const <String>[
+        'AI', '文章', 'Grammarly', '校正', '要約', '翻訳', 'ライティング', 'Notion AI',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const AiWritingAssistantPage()),
     ),
   ];
 }

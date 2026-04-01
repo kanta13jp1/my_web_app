@@ -112,6 +112,14 @@ void main() {
         find.byKey(const Key('home_calendar_task_preview_empty')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const Key('home_abstinence_guard_panel')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_abstinence_discipline_card')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Feature: HomePage prioritizes morning briefing before noon',
@@ -332,6 +340,61 @@ void main() {
         find.byKey(const Key('home_calendar_month_label')),
       );
       expect(monthLabel.data, '2026年2月');
+    });
+
+    testWidgets('Feature: HomePage shows abstinence discipline prompt by default',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final panel = find.byKey(const Key('home_abstinence_guard_panel'));
+      await tester.ensureVisible(panel);
+
+      expect(
+        find.byKey(const Key('home_abstinence_discipline_summary')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('今日はまだ我慢の実績がありません'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home_abstinence_open_training_button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Feature: HomePage surfaces abstinence discipline totals',
+        (WidgetTester tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await AbstinenceGuardStore.recordDisciplineRep(
+        categoryId: 'no_buy',
+        moneySaved: 1800,
+        timeSavedMinutes: 20,
+        note: 'コンビニ回避',
+        prefs: prefs,
+        now: DateTime(2026, 2, 26, 8, 0),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final panel = find.byKey(const Key('home_abstinence_guard_panel'));
+      await tester.ensureVisible(panel);
+
+      expect(
+        find.textContaining('今日の我慢 1回 / 防いだ出費 1,800円 / 取り戻した時間 20分'),
+        findsOneWidget,
+      );
+      expect(find.text('一拍置ける'), findsWidgets);
     });
 
     testWidgets('Feature: EmergencyMeetingPage renders correctly',
