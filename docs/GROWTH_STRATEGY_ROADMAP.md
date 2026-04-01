@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432j-web (50本追加 → 160 Functions 体制)
+最終更新: 2026-04-01 session432k-web (55本追加 → 165 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1023,6 +1023,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432k (Web版) — 2026-04-01
+
+**Edge Functions 160→165本 (5本追加) — 生活インフラ・安全機能**
+
+1. **parking-reservation**: 駐車場・予約管理 — akippa/タイムズ競合、スペース管理、予約、料金計算、空き状況確認、収益統計
+2. **carbon-footprint-tracker**: カーボンフットプリント管理 — ESG/SDGs対応、CO2排出量記録(7カテゴリ)、CO2係数計算、削減目標、オフセット記録
+3. **gift-registry**: ギフトレジストリ — Amazon/楽天競合、ウィッシュリスト、イベント紐付け(8タイプ)、購入追跡、共有コード
+4. **vehicle-fleet-manager**: 車両・フリート管理 — 車両登録(8タイプ)、走行記録、燃費管理、メンテナンス予定、コスト統計
+5. **emergency-contacts**: 緊急連絡先・安否確認 — 連絡先登録、医療情報(血液型/アレルギー/服薬)、安否確認送信・回答
 
 ### Session 432j (Web版) — 2026-04-01
 

@@ -191,6 +191,11 @@ const FUNCTION_REGISTRY = [
   { name: "real-estate-tracker", description: "不動産管理 (物件/賃貸収支/メンテナンス/テナント/ROI)", has_ui: true, ui_path: "/real-estate", ui_navigation: "ホーム > 不動産" },
   { name: "podcast-manager", description: "ポッドキャスト管理 (番組/エピソード/購読/再生統計/ランキング)", has_ui: true, ui_path: "/podcast", ui_navigation: "ホーム > ポッドキャスト" },
   { name: "mindmap-diagram", description: "マインドマップ・ダイアグラム (6種類/ノード・エッジ/Mermaidエクスポート/テンプレート)", has_ui: true, ui_path: "/mindmap", ui_navigation: "ホーム > マインドマップ" },
+  { name: "parking-reservation", description: "駐車場・予約管理 (スペース/予約/料金計算/空き状況/収益統計)", has_ui: true, ui_path: "/parking", ui_navigation: "ホーム > 駐車場" },
+  { name: "carbon-footprint-tracker", description: "カーボンフットプリント (CO2排出量/削減目標/オフセット/月次レポート)", has_ui: true, ui_path: "/carbon", ui_navigation: "ホーム > CO2管理" },
+  { name: "gift-registry", description: "ギフトレジストリ (ウィッシュリスト/イベント紐付け/購入追跡/共有)", has_ui: true, ui_path: "/gifts", ui_navigation: "ホーム > ギフト" },
+  { name: "vehicle-fleet-manager", description: "車両・フリート管理 (車両登録/走行記録/燃費/メンテナンス/コスト)", has_ui: true, ui_path: "/vehicles", ui_navigation: "ホーム > 車両管理" },
+  { name: "emergency-contacts", description: "緊急連絡先・安否確認 (連絡先/医療情報/安否確認/防災)", has_ui: true, ui_path: "/emergency", ui_navigation: "ホーム > 緊急連絡先" },
 ] as const;
 
 serve(async (req) => {

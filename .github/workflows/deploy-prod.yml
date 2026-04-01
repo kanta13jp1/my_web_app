@@ -254,6 +254,11 @@ jobs:
           supabase functions deploy real-estate-tracker --no-verify-jwt
           supabase functions deploy podcast-manager --no-verify-jwt
           supabase functions deploy mindmap-diagram --no-verify-jwt
+          supabase functions deploy parking-reservation --no-verify-jwt
+          supabase functions deploy carbon-footprint-tracker --no-verify-jwt
+          supabase functions deploy gift-registry --no-verify-jwt
+          supabase functions deploy vehicle-fleet-manager --no-verify-jwt
+          supabase functions deploy emergency-contacts --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
