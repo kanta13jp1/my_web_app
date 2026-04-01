@@ -244,6 +244,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('knowledge-base', 'ナレッジベース検索', true, '/knowledge-base', 'ホーム > ナレッジベース'),
     _FnDef('social-feed', 'ソーシャルフィード', true, '/social-feed', 'ソーシャルフィードページ'),
     _FnDef('semantic-search', 'セマンティック検索 (埋め込み)', true, '/semantic-search', 'セマンティック検索ページ'),
+    _FnDef('calendar-events', 'カレンダーイベント管理', true, '/calendar-events', 'カレンダーイベントページ'),
+    _FnDef('expense-tracker', '支出トラッカー', true, '/expense-tracker', '支出トラッカーページ'),
+    _FnDef('reading-list', '読書リスト管理', true, '/reading-list', '読書リストページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

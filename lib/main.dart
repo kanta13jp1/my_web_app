@@ -128,6 +128,9 @@ import 'package:my_web_app/pages/video_meeting_page.dart';
 import 'package:my_web_app/pages/ai_image_generator_page.dart';
 import 'package:my_web_app/pages/virtual_pet_page.dart';
 import 'package:my_web_app/pages/affiliate_marketing_page.dart';
+import 'package:my_web_app/pages/calendar_events_page.dart';
+import 'package:my_web_app/pages/expense_tracker_page.dart';
+import 'package:my_web_app/pages/reading_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -768,6 +771,18 @@ class MyApp extends StatelessWidget {
           case '/affiliate-marketing':
             return MaterialPageRoute(
               builder: (_) => const AffiliateMarketingPage(),
+            );
+          case '/calendar-events':
+            return MaterialPageRoute(
+              builder: (_) => const CalendarEventsPage(),
+            );
+          case '/expense-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const ExpenseTrackerPage(),
+            );
+          case '/reading-list':
+            return MaterialPageRoute(
+              builder: (_) => const ReadingListPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
