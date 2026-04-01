@@ -32,6 +32,22 @@ git stash pop
 - `git add -A` や `git add .` は使わず、ファイル指定でステージング
 - プッシュ前に `git status` で余分なファイルが含まれていないか確認
 
+### マイグレーションファイルの番号帯 (重複防止)
+
+同日に複数インスタンスが seed ファイルを作成すると version 番号が衝突する。
+**各インスタンスは以下の番号帯を使用すること**:
+
+| インスタンス | 番号帯 | 例 |
+|------------|--------|---|
+| **Web / Schedule (自動)** | `000010` ~ `000499` | `20260401000040_seed_session432j.sql` |
+| **VSCode** | `000500` ~ `000699` | `20260401000500_seed_vscode.sql` |
+| **Windows** | `000700` ~ `000899` | `20260401000700_seed_windows.sql` |
+| **PowerShell (全体管理)** | `000900` ~ `000999` | `20260401000900_seed_ps8_ps9.sql` |
+
+> **注意**: `supabase/migrations/` の version は `schema_migrations` テーブルの PK。
+> 重複があると `supabase db push` が `duplicate key value` エラーで失敗する。
+> 衝突を発見したら PowerShell インスタンスが高い番号帯へリナンバーして即コミット。
+
 ### 競合が発生した場合
 
 ```bash
