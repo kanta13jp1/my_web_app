@@ -186,6 +186,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('referral-program', '紹介プログラム (ユーザー獲得)', true, '/referral-program', '紹介プログラムページ > 紹介コード・報酬'),
     _FnDef('analytics-export', '分析データエクスポート', true, '/analytics-export', '管理者ダッシュボード > データエクスポート'),
     _FnDef('workflow-templates', 'ワークフローテンプレート', true, '/workflow-templates', 'ワークフローテンプレートページ'),
+    _FnDef('customer-feedback', 'カスタマーフィードバック', true, '/customer-feedback', 'カスタマーフィードバックページ'),
+    _FnDef('address-book', 'アドレス帳', true, '/address-book', 'アドレス帳ページ'),
+    _FnDef('subscription-billing', 'サブスクリプション請求', true, '/subscription-billing', 'サブスクリプション・請求ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
