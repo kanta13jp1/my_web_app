@@ -226,6 +226,21 @@ const FUNCTION_REGISTRY = [
   { name: "subscription-billing", description: "サブスクリプション課金 (プラン/請求書/クーポン/使用量)", has_ui: true, ui_path: "/billing", ui_navigation: "設定 > プラン・課金" },
   { name: "feature-flags", description: "フィーチャーフラグ (フラグ管理/ロールアウト/評価)", has_ui: true, ui_path: "/admin/feature-flags", ui_navigation: "管理 > フィーチャーフラグ" },
   { name: "audit-trail", description: "監査ログ (アクション記録/コンプライアンス/検索)", has_ui: true, ui_path: "/admin/audit", ui_navigation: "管理 > 監査ログ" },
+  { name: "compliance-checker", description: "コンプライアンスチェッカー (GDPR/PIPA/CCPA/HIPAA/SOX/ISO27001)", has_ui: true, ui_path: "/admin/compliance", ui_navigation: "管理 > コンプライアンス" },
+  { name: "user-onboarding", description: "ユーザーオンボーディング (ステップ管理/進捗/チュートリアル)", has_ui: true, ui_path: "/onboarding", ui_navigation: "ホーム > オンボーディング" },
+  { name: "rate-limiter-enhanced", description: "レートリミッター強化版 (プラン別制限/使用量/チェック)", has_ui: true, ui_path: "/admin/rate-limits", ui_navigation: "管理 > レートリミット" },
+  { name: "content-versioning", description: "コンテンツバージョン管理 (履歴/差分/復元/ロック)", has_ui: true, ui_path: "/content/versions", ui_navigation: "コンテンツ > バージョン管理" },
+  { name: "custom-dashboard-builder", description: "カスタムダッシュボードビルダー (ウィジェット/テンプレート/共有)", has_ui: true, ui_path: "/dashboard/builder", ui_navigation: "ホーム > ダッシュボードビルダー" },
+  { name: "loyalty-points", description: "ロイヤルティポイント (ポイント付与/消費/ランク/特典交換)", has_ui: true, ui_path: "/loyalty", ui_navigation: "ホーム > ポイント" },
+  { name: "live-streaming", description: "ライブストリーミング (配信/チャット/視聴者分析/アーカイブ)", has_ui: true, ui_path: "/live", ui_navigation: "ソーシャル > ライブ" },
+  { name: "geo-checkin", description: "位置情報チェックイン (スポット/レビュー/ランキング/近くのスポット)", has_ui: true, ui_path: "/checkin", ui_navigation: "ソーシャル > チェックイン" },
+  { name: "social-stories", description: "ソーシャルストーリーズ (24時間投稿/リアクション/ハイライト)", has_ui: true, ui_path: "/stories", ui_navigation: "ソーシャル > ストーリー" },
+  { name: "encrypted-messaging", description: "暗号化メッセージング (チャンネル/自動削除/既読管理)", has_ui: true, ui_path: "/secure-chat", ui_navigation: "メッセージ > セキュアチャット" },
+  { name: "cloud-storage-sync", description: "クラウドストレージ同期 (ファイル管理/共有/バージョン/使用量)", has_ui: true, ui_path: "/storage", ui_navigation: "ファイル > クラウドストレージ" },
+  { name: "virtual-whiteboard", description: "バーチャルホワイトボード (キャンバス/付箋/テンプレート/コラボ)", has_ui: true, ui_path: "/whiteboard", ui_navigation: "ツール > ホワイトボード" },
+  { name: "marketplace-reviews", description: "マーケットプレイスレビュー (星評価/画像/役立った/分析)", has_ui: true, ui_path: "/reviews", ui_navigation: "マーケット > レビュー" },
+  { name: "smart-home-automation", description: "スマートホームオートメーション (デバイス/シーン/自動化/エネルギー)", has_ui: true, ui_path: "/smart-home", ui_navigation: "IoT > スマートホーム" },
+  { name: "digital-wallet", description: "デジタルウォレット (残高/送金/QR決済/支出分析)", has_ui: true, ui_path: "/wallet", ui_navigation: "ファイナンス > ウォレット" },
 ] as const;
 
 serve(async (req) => {

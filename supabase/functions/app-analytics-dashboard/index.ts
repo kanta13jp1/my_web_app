@@ -120,7 +120,7 @@ serve(async (req) => {
             totalTickets: ticketsRes.count ?? 0,
             totalBlogPosts: blogsRes.count ?? 0,
             totalNotifications: notificationsRes.count ?? 0,
-            totalEdgeFunctions: 195, // current count
+            totalEdgeFunctions: 210, // current count
             trackedFunctions: funcStatus?.count ?? 0,
           },
           userGrowth,
