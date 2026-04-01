@@ -241,6 +241,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('ai-image-generator', 'AI 画像生成', true, '/ai-image-generator', 'AI 画像生成ページ'),
     _FnDef('virtual-pet', 'バーチャルペット', true, '/virtual-pet', 'バーチャルペットページ'),
     _FnDef('affiliate-marketing', 'アフィリエイト・マーケティング', true, '/affiliate-marketing', 'アフィリエイト・マーケティングページ'),
+    _FnDef('knowledge-base', 'ナレッジベース検索', true, '/knowledge-base', 'ホーム > ナレッジベース'),
+    _FnDef('social-feed', 'ソーシャルフィード', true, '/social-feed', 'ソーシャルフィードページ'),
+    _FnDef('semantic-search', 'セマンティック検索 (埋め込み)', true, '/semantic-search', 'セマンティック検索ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
