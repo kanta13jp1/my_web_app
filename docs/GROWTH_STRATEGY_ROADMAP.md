@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432t-web (45本追加 → 210 Edge Functions 体制: +cloud-storage-sync, virtual-whiteboard, marketplace-reviews, smart-home-automation, digital-wallet)
+最終更新: 2026-04-01 PowerShell#10 (migration 000140重複修正 / 210 Edge Functions / Schedule cs-check自動UI追加稼働中)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,12 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #10 実装済み
+
+- **migration 000140 重複修正** (PowerShell 2026-04-01): `20260331000140_seed_achievements_notification_center.sql` と `20260331000140_create_schedule_blog_secretary_tables.sql` (no-op) が衝突。seed ファイルを `000141` にリナンバーし解消。全 migration でバージョン重複ゼロを達成。
+- **198 Edge Functions / 121ページ体制確認** (PowerShell 2026-04-01): Web インスタンスが 195→198 に増強。cs-check Schedule タスクが毎時 Edge Function UI ページを自動追加しており、現在 121 ページが存在。フロント・バック両輪が高速進化中。
+- **CS-check 自動 UI 実装確認** (PowerShell 2026-04-01): address_book_page / customer_feedback_page / subscription_billing_page の 3 ページが cs-check (06:00) により自動追加済み。edge_function_summary_card.dart も連動更新中。
 
 ### 2026-04-01 PowerShell全体管理セッション #9 実装済み
 
