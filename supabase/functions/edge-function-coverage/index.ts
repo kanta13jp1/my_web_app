@@ -246,6 +246,16 @@ const FUNCTION_REGISTRY = [
   { name: "virtual-pet", description: "バーチャルペット (育成/エサ/アクティビティ/レベルアップ)", has_ui: true, ui_path: "/pet", ui_navigation: "エンタメ > バーチャルペット" },
   { name: "ar-navigation", description: "ARナビゲーション (ルート/マーカー/歩数/移動記録)", has_ui: true, ui_path: "/ar-nav", ui_navigation: "ナビ > ARナビ" },
   { name: "ai-image-generator", description: "AI画像生成 (プロンプト/ギャラリー/テンプレート/スタイル)", has_ui: true, ui_path: "/ai/image", ui_navigation: "AI > 画像生成" },
+  { name: "ai-writing-assistant", description: "AIライティングアシスタント", has_ui: true, ui_path: "/ai/writing", ui_navigation: "AI > ライティング" },
+  { name: "bookmark-sync", description: "ブックマーク同期", has_ui: true, ui_path: "/bookmarks", ui_navigation: "ツール > ブックマーク" },
+  { name: "focus-timer", description: "フォーカスタイマー", has_ui: true, ui_path: "/focus-timer", ui_navigation: "生産性 > フォーカスタイマー" },
+  { name: "note-sharing-enhanced", description: "ノート共有強化版", has_ui: true, ui_path: "/notes/share", ui_navigation: "メモ > 共有" },
+  { name: "task-dependency", description: "タスク依存関係管理", has_ui: true, ui_path: "/tasks/dependencies", ui_navigation: "タスク > 依存関係" },
+  { name: "video-ad-generator", description: "動画広告生成 (Dark War風/比較キラー/FOMO/ミーム/AIスクリプト)", has_ui: true, ui_path: "/marketing/video-ads", ui_navigation: "マーケティング > 動画広告" },
+  { name: "viral-share-engine", description: "バイラルシェアエンジン (UTMリンク/k-factor/インセンティブ/A/Bテスト)", has_ui: true, ui_path: "/growth/share", ui_navigation: "グロース > シェア" },
+  { name: "x-media-post", description: "Xメディア投稿 (動画/画像付きツイート/スレッド/予約投稿)", has_ui: true, ui_path: "/marketing/x-post", ui_navigation: "マーケティング > X投稿" },
+  { name: "growth-automation-controller", description: "成長自動化コントローラー (自動投稿/競合広告/KPI/A/Bテスト)", has_ui: true, ui_path: "/growth/automation", ui_navigation: "グロース > 自動化" },
+  { name: "landing-ab-test", description: "LP A/Bテスト (CTA/見出し/コンバージョン/ヒートマップ)", has_ui: true, ui_path: "/growth/ab-test", ui_navigation: "グロース > A/Bテスト" },
 ] as const;
 
 serve(async (req) => {
