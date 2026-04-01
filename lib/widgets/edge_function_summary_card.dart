@@ -258,6 +258,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('growth-automation-controller', '成長自動化コントローラー', true, '/growth-automation', '成長自動化コントローラーページ'),
     _FnDef('landing-ab-test', 'LP A/Bテスト', true, '/landing-ab-test', 'LP A/Bテストページ'),
     _FnDef('video-ad-generator', '動画広告ジェネレーター', true, '/video-ad-generator', '動画広告ジェネレーターページ'),
+    _FnDef('viral-share-engine', 'バイラルシェアエンジン (UTMリンク・シェア係数)', true, '/viral-ad-campaign', 'バイラルキャンペーン > シェアリンク生成'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
