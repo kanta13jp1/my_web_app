@@ -153,7 +153,7 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true });
 
       // Edge Function 数
-      const edgeFunctionCount = 165; // 160 + 5 (session432k: parking-reservation, carbon-footprint-tracker, gift-registry, vehicle-fleet-manager, emergency-contacts)
+      const edgeFunctionCount = 170; // 165 + 5 (session432l: auction-marketplace, budget-financial-planner, code-playground, screen-recorder, qr-code-generator)
 
       return new Response(
         JSON.stringify({

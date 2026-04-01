@@ -196,6 +196,11 @@ const FUNCTION_REGISTRY = [
   { name: "gift-registry", description: "ギフトレジストリ (ウィッシュリスト/イベント紐付け/購入追跡/共有)", has_ui: true, ui_path: "/gifts", ui_navigation: "ホーム > ギフト" },
   { name: "vehicle-fleet-manager", description: "車両・フリート管理 (車両登録/走行記録/燃費/メンテナンス/コスト)", has_ui: true, ui_path: "/vehicles", ui_navigation: "ホーム > 車両管理" },
   { name: "emergency-contacts", description: "緊急連絡先・安否確認 (連絡先/医療情報/安否確認/防災)", has_ui: true, ui_path: "/emergency", ui_navigation: "ホーム > 緊急連絡先" },
+  { name: "auction-marketplace", description: "オークション・マーケットプレイス (出品/入札/取引/評価)", has_ui: true, ui_path: "/auction", ui_navigation: "ホーム > オークション" },
+  { name: "budget-financial-planner", description: "予算・家計プランナー (月次予算/支出管理/貯蓄目標/家計診断)", has_ui: true, ui_path: "/budget", ui_navigation: "ホーム > 予算プランナー" },
+  { name: "code-playground", description: "コードプレイグラウンド (スニペット/テンプレート/共有/コレクション)", has_ui: true, ui_path: "/code-playground", ui_navigation: "ホーム > コードプレイグラウンド" },
+  { name: "screen-recorder", description: "画面録画・スクリーンショット管理 (録画/スクショ/アノテーション/共有)", has_ui: true, ui_path: "/screen-recorder", ui_navigation: "ホーム > 画面録画" },
+  { name: "qr-code-generator", description: "QRコード生成・管理 (URL/WiFi/連絡先/動的QR/解析)", has_ui: true, ui_path: "/qr-code", ui_navigation: "ホーム > QRコード" },
 ] as const;
 
 serve(async (req) => {

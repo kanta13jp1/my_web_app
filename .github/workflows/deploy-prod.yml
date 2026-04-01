@@ -259,6 +259,11 @@ jobs:
           supabase functions deploy gift-registry --no-verify-jwt
           supabase functions deploy vehicle-fleet-manager --no-verify-jwt
           supabase functions deploy emergency-contacts --no-verify-jwt
+          supabase functions deploy auction-marketplace --no-verify-jwt
+          supabase functions deploy budget-financial-planner --no-verify-jwt
+          supabase functions deploy code-playground --no-verify-jwt
+          supabase functions deploy screen-recorder --no-verify-jwt
+          supabase functions deploy qr-code-generator --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
