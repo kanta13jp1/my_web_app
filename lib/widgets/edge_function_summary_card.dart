@@ -252,6 +252,12 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('x-media-post', 'X メディア投稿 (画像/動画付き)', true, '/viral-ad-campaign', 'バイラルキャンペーン > X投稿'),
     _FnDef('viral-ad-generator', 'バイラル広告SVG生成', true, '/viral-ad-campaign', 'バイラルキャンペーン > 広告プレビュー'),
     _FnDef('viral-growth-pipeline', 'バイラル成長パイプライン', true, '/viral-ad-campaign', 'バイラルキャンペーン > キャンペーン実行'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('viral-video-ad-generator', 'バイラル動画広告生成', true, '/viral-ad-generator', 'バイラル広告ジェネレーターページ'),
+    _FnDef('viral-growth-engine', 'バイラル成長エンジン', true, '/viral-ad-generator', 'バイラル広告ジェネレーターページ > 成長実行'),
+    _FnDef('growth-automation-controller', '成長自動化コントローラー', true, '/growth-automation', '成長自動化コントローラーページ'),
+    _FnDef('landing-ab-test', 'LP A/Bテスト', true, '/landing-ab-test', 'LP A/Bテストページ'),
+    _FnDef('video-ad-generator', '動画広告ジェネレーター', true, '/video-ad-generator', '動画広告ジェネレーターページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
