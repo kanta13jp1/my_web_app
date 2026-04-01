@@ -153,7 +153,7 @@ serve(async (req) => {
         .select("*", { count: "exact", head: true });
 
       // Edge Function 数
-      const edgeFunctionCount = 225; // 215 + 5 (VSCode: ai-writing-assistant, bookmark-sync, focus-timer, note-sharing-enhanced, task-dependency) + 5 (session432v: video-ad-generator, viral-share-engine, x-media-post, growth-automation-controller, landing-ab-test)
+      const edgeFunctionCount = 234; // 225 + 4 (PS#10: viral-ad-generator, viral-growth-pipeline, viral-video-ad-generator, viral-growth-engine) + 5 (session432x: schedule-execution-logger, edge-function-test-runner, admin-notification-hub, user-growth-analytics, social-proof-generator)
 
       return new Response(
         JSON.stringify({

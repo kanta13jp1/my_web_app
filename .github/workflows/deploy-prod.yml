@@ -158,10 +158,12 @@ jobs:
           supabase functions deploy agent-performance-monitor --no-verify-jwt
           supabase functions deploy virtual-organization --no-verify-jwt
 
-          # --- Tier 1D: Schedule & Automation (10) ---
+          # --- Tier 1D: Schedule & Monitoring (12) ---
           supabase functions deploy schedule-daily-digest --no-verify-jwt
           supabase functions deploy schedule-task-monitor --no-verify-jwt
           supabase functions deploy schedule-health-check --no-verify-jwt
+          supabase functions deploy schedule-execution-logger --no-verify-jwt
+          supabase functions deploy edge-function-test-runner --no-verify-jwt
           supabase functions deploy post-x-update --no-verify-jwt
           supabase functions deploy blog-post-manager --no-verify-jwt
           supabase functions deploy blog-auto-publisher --no-verify-jwt
@@ -170,8 +172,11 @@ jobs:
           supabase functions deploy get-competitor-monitoring --no-verify-jwt
           supabase functions deploy edge-function-coverage --no-verify-jwt
 
-          # --- Tier 1E: Admin & Support (8) ---
+          # --- Tier 1E: Admin & Support (11) ---
           supabase functions deploy get-admin-users --no-verify-jwt
+          supabase functions deploy admin-notification-hub --no-verify-jwt
+          supabase functions deploy user-growth-analytics --no-verify-jwt
+          supabase functions deploy social-proof-generator --no-verify-jwt
           supabase functions deploy notify-feature-request --no-verify-jwt
           supabase functions deploy get-support-tickets --no-verify-jwt
           supabase functions deploy reply-support-request --no-verify-jwt
@@ -202,19 +207,12 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Secondary Features (12) ---
+          # --- Tier 1G: Secondary Features (5) ---
           supabase functions deploy ab-testing-manager --no-verify-jwt
           supabase functions deploy search-analytics --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
-          supabase functions deploy notification-preferences --no-verify-jwt
-          supabase functions deploy revenue-forecaster --no-verify-jwt
           supabase functions deploy generate-daily-challenges --no-verify-jwt
-          supabase functions deploy tag-manager --no-verify-jwt
-          supabase functions deploy template-library --no-verify-jwt
-          supabase functions deploy habit-tracker --no-verify-jwt
-          supabase functions deploy bookmark-manager --no-verify-jwt
-          supabase functions deploy invoice-generator --no-verify-jwt
 
           # Total: 100 functions deployed
           # ---

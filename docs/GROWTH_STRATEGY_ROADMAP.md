@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 session432w-web (228 Edge Functions体制: Supabase 100関数制限対策 — deploy-prod.yml をTier 1/Tier 2に分割し、最重要100関数のみデプロイ)
+最終更新: 2026-04-02 session432x-web (234 Edge Functions体制: Schedule監視・Edge Functionテスト・管理者通知・成長分析・ソーシャルプルーフ追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1044,6 +1044,20 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432x (Web版) — 2026-04-02
+
+**Edge Functions 228→234本 (5本追加+1修正) — Schedule監視・管理基盤強化**
+
+管理者ダッシュボードからScheduleタスク実行結果やEdge Function健全性を確認できるようにする基盤を構築:
+
+1. **schedule-execution-logger**: Scheduleタスク実行ログ — 8タスク定義(daily-report/cs-check/weekly-sns-draft/pr-auto-review/competitor-monitoring/infra-health-check/dependency-audit/blog-draft)、成功/失敗/部分/スキップの4ステータス、タスク別成功率・最終実行・最終エラー、24hヘルスサマリー
+2. **edge-function-test-runner**: Edge Function一括テスト — デプロイ済み100関数をGETリクエストで並行テスト(10バッチ×8秒タイムアウト)、UI接続確認(app_analyticsからの呼び出し記録照合)、テスト履歴、ヘルススコア(pass率%)
+3. **admin-notification-hub**: 管理者通知ハブ — 4段階重要度(critical/warning/info/success)×10カテゴリ(schedule_failure/health_check/security_alert/user_milestone等)、既読・却下管理、カテゴリ/重要度フィルタ、バッジカウント
+4. **user-growth-analytics**: ユーザー成長分析 — auth.admin.listUsersから実データ取得、30日間日次登録トレンド、登録ファネル(LP閲覧→登録開始→完了→オンボーディング→初回アクション)、リテンション(DAU/WAU/スティッキネス)、週次コホート、月次成長率、k-factor
+5. **social-proof-generator**: ソーシャルプルーフ生成 — 5カテゴリテンプレート(登録数/機能数228/最近の活動/開発速度/競合比較)、X/LINE/Emailプラットフォーム別シェアカード、競合7社月額合計¥6,380との比較文言、テスティモニアル収集プロンプト5種
+
+**deploy-prod.yml更新**: schedule-execution-logger/edge-function-test-runner/admin-notification-hub/user-growth-analytics/social-proof-generatorをTier 1D/1Eに追加、revenue-forecaster/template-library/habit-tracker/bookmark-manager/invoice-generatorをTier 2へ移動（合計100関数維持）
 
 ### Session 432w (Web版) — 2026-04-02
 

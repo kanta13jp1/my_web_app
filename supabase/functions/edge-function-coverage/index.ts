@@ -256,6 +256,17 @@ const FUNCTION_REGISTRY = [
   { name: "x-media-post", description: "Xメディア投稿 (動画/画像付きツイート/スレッド/予約投稿)", has_ui: true, ui_path: "/marketing/x-post", ui_navigation: "マーケティング > X投稿" },
   { name: "growth-automation-controller", description: "成長自動化コントローラー (自動投稿/競合広告/KPI/A/Bテスト)", has_ui: true, ui_path: "/growth/automation", ui_navigation: "グロース > 自動化" },
   { name: "landing-ab-test", description: "LP A/Bテスト (CTA/見出し/コンバージョン/ヒートマップ)", has_ui: true, ui_path: "/growth/ab-test", ui_navigation: "グロース > A/Bテスト" },
+  // PS#10: viral pipeline functions
+  { name: "viral-ad-generator", description: "SVG広告カード生成 (6テンプレート: growth_stats/dark_war/vs_notion/ai_secretary/feature_highlight/milestone)", has_ui: true, ui_path: "/viral-ad-campaign", ui_navigation: "バイラル広告キャンペーン" },
+  { name: "viral-growth-pipeline", description: "バイラル成長パイプライン (キャンペーン実行/結果追跡/統計)", has_ui: true, ui_path: "/viral-ad-campaign", ui_navigation: "バイラル広告キャンペーン" },
+  { name: "viral-video-ad-generator", description: "動画広告生成 (Dark War風/競合比較/AIデモ/FOMOカウントダウン)", has_ui: true, ui_path: "/viral-ad-campaign", ui_navigation: "バイラル広告キャンペーン" },
+  { name: "viral-growth-engine", description: "バイラル成長エンジン (拡散最適化/インセンティブ/シェア追跡)", has_ui: true, ui_path: "/growth/viral", ui_navigation: "グロース > バイラル" },
+  // Session 432x: monitoring & analytics
+  { name: "schedule-execution-logger", description: "Scheduleタスク実行ログ (成功/失敗/実行時間/成果物追跡)", has_ui: true, ui_path: "/admin/schedule", ui_navigation: "管理者 > Scheduleダッシュボード" },
+  { name: "edge-function-test-runner", description: "Edge Function一括テスト (100関数ヘルスチェック/UI接続確認/履歴)", has_ui: true, ui_path: "/admin/edge-functions", ui_navigation: "管理者 > Edge Functions" },
+  { name: "admin-notification-hub", description: "管理者通知ハブ (緊急/警告/情報/成功/カテゴリ別/既読管理)", has_ui: true, ui_path: "/admin/notifications", ui_navigation: "管理者 > 通知" },
+  { name: "user-growth-analytics", description: "ユーザー成長分析 (登録ファネル/リテンション/コホート/k-factor)", has_ui: true, ui_path: "/admin/growth", ui_navigation: "管理者 > 成長分析" },
+  { name: "social-proof-generator", description: "ソーシャルプルーフ生成 (登録数/機能数/競合比較/シェアカード/テスティモニアル)", has_ui: true, ui_path: "/growth/social-proof", ui_navigation: "グロース > ソーシャルプルーフ" },
 ] as const;
 
 serve(async (req) => {
