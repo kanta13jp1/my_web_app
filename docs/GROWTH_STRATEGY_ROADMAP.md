@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432r-web (35本追加 → 200 Edge Functions 体制: +compliance-checker, user-onboarding, rate-limiter-enhanced, content-versioning, custom-dashboard-builder)
+最終更新: 2026-04-01 session432s-web (40本追加 → 205 Edge Functions 体制: +loyalty-points, live-streaming, geo-checkin, social-stories, encrypted-messaging)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1029,6 +1029,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432s (Web版) — 2026-04-01
+
+**Edge Functions 200→205本 (5本追加) — ソーシャル・ポイント・メッセージング強化**
+
+1. **loyalty-points**: ロイヤルティポイント — Amazon/LINE/楽天競合、12種アクション、5段階ランク(ブロンズ→ダイヤモンド)、倍率付与、6種特典交換
+2. **live-streaming**: ライブストリーミング — YouTube/Discord/Facebook Live競合、配信管理、リアルタイムチャット、視聴者分析、スケジュール配信
+3. **geo-checkin**: 位置情報チェックイン — Facebook/LINE/Google Maps競合、13種スポットカテゴリ、Haversine距離計算、レビュー、ランキング
+4. **social-stories**: ソーシャルストーリーズ — X/Facebook/LINE/Instagram競合、24時間限定投稿、7種リアクション、投票、ハイライト保存
+5. **encrypted-messaging**: 暗号化メッセージング — LINE/Discord/Slack/Signal競合、4チャンネルタイプ、自動削除(5分〜1週間)、既読管理
 
 ### Session 432r (Web版) — 2026-04-01
 

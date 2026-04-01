@@ -231,6 +231,11 @@ const FUNCTION_REGISTRY = [
   { name: "rate-limiter-enhanced", description: "レートリミッター強化版 (プラン別制限/使用量/チェック)", has_ui: true, ui_path: "/admin/rate-limits", ui_navigation: "管理 > レートリミット" },
   { name: "content-versioning", description: "コンテンツバージョン管理 (履歴/差分/復元/ロック)", has_ui: true, ui_path: "/content/versions", ui_navigation: "コンテンツ > バージョン管理" },
   { name: "custom-dashboard-builder", description: "カスタムダッシュボードビルダー (ウィジェット/テンプレート/共有)", has_ui: true, ui_path: "/dashboard/builder", ui_navigation: "ホーム > ダッシュボードビルダー" },
+  { name: "loyalty-points", description: "ロイヤルティポイント (ポイント付与/消費/ランク/特典交換)", has_ui: true, ui_path: "/loyalty", ui_navigation: "ホーム > ポイント" },
+  { name: "live-streaming", description: "ライブストリーミング (配信/チャット/視聴者分析/アーカイブ)", has_ui: true, ui_path: "/live", ui_navigation: "ソーシャル > ライブ" },
+  { name: "geo-checkin", description: "位置情報チェックイン (スポット/レビュー/ランキング/近くのスポット)", has_ui: true, ui_path: "/checkin", ui_navigation: "ソーシャル > チェックイン" },
+  { name: "social-stories", description: "ソーシャルストーリーズ (24時間投稿/リアクション/ハイライト)", has_ui: true, ui_path: "/stories", ui_navigation: "ソーシャル > ストーリー" },
+  { name: "encrypted-messaging", description: "暗号化メッセージング (チャンネル/自動削除/既読管理)", has_ui: true, ui_path: "/secure-chat", ui_navigation: "メッセージ > セキュアチャット" },
 ] as const;
 
 serve(async (req) => {

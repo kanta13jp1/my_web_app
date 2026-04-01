@@ -294,6 +294,11 @@ jobs:
           supabase functions deploy rate-limiter-enhanced --no-verify-jwt
           supabase functions deploy content-versioning --no-verify-jwt
           supabase functions deploy custom-dashboard-builder --no-verify-jwt
+          supabase functions deploy loyalty-points --no-verify-jwt
+          supabase functions deploy live-streaming --no-verify-jwt
+          supabase functions deploy geo-checkin --no-verify-jwt
+          supabase functions deploy social-stories --no-verify-jwt
+          supabase functions deploy encrypted-messaging --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
