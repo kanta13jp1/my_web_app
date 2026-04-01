@@ -211,6 +211,11 @@ const FUNCTION_REGISTRY = [
   { name: "two-factor-auth", description: "二要素認証管理 (TOTP/バックアップコード/デバイス/認証ログ)", has_ui: true, ui_path: "/security/2fa", ui_navigation: "設定 > セキュリティ > 2FA" },
   { name: "changelog-manager", description: "チェンジログ・リリースノート (バージョン/変更点/Markdown生成)", has_ui: true, ui_path: "/changelog", ui_navigation: "ホーム > チェンジログ" },
   { name: "access-control", description: "アクセス制御・権限管理 (ロール/リソース/招待/アクセスログ)", has_ui: true, ui_path: "/access-control", ui_navigation: "管理 > アクセス制御" },
+  { name: "data-visualization", description: "データ可視化・チャート生成 (チャート/ダッシュボード/カラーパレット)", has_ui: true, ui_path: "/charts", ui_navigation: "ホーム > チャート" },
+  { name: "api-docs-generator", description: "APIドキュメント自動生成 (エンドポイント/OpenAPI/バージョン)", has_ui: true, ui_path: "/api-docs", ui_navigation: "管理 > APIドキュメント" },
+  { name: "backup-restore", description: "バックアップ・リストア管理 (バックアップ/エクスポート/スケジュール)", has_ui: true, ui_path: "/backup", ui_navigation: "設定 > バックアップ" },
+  { name: "notification-digest", description: "通知ダイジェスト (集約/優先度/チャネル/静音時間)", has_ui: true, ui_path: "/notifications/digest", ui_navigation: "ホーム > 通知ダイジェスト" },
+  { name: "smart-search", description: "スマート検索 (全文検索/フィルタ/保存/サジェスト)", has_ui: true, ui_path: "/search", ui_navigation: "ホーム > 検索" },
 ] as const;
 
 serve(async (req) => {
