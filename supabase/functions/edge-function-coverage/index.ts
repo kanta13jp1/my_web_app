@@ -211,6 +211,21 @@ const FUNCTION_REGISTRY = [
   { name: "two-factor-auth", description: "二要素認証管理 (TOTP/バックアップコード/デバイス/認証ログ)", has_ui: true, ui_path: "/security/2fa", ui_navigation: "設定 > セキュリティ > 2FA" },
   { name: "changelog-manager", description: "チェンジログ・リリースノート (バージョン/変更点/Markdown生成)", has_ui: true, ui_path: "/changelog", ui_navigation: "ホーム > チェンジログ" },
   { name: "access-control", description: "アクセス制御・権限管理 (ロール/リソース/招待/アクセスログ)", has_ui: true, ui_path: "/access-control", ui_navigation: "管理 > アクセス制御" },
+  { name: "data-visualization", description: "データ可視化・チャート生成 (チャート/ダッシュボード/カラーパレット)", has_ui: true, ui_path: "/charts", ui_navigation: "ホーム > チャート" },
+  { name: "api-docs-generator", description: "APIドキュメント自動生成 (エンドポイント/OpenAPI/バージョン)", has_ui: true, ui_path: "/api-docs", ui_navigation: "管理 > APIドキュメント" },
+  { name: "backup-restore", description: "バックアップ・リストア管理 (バックアップ/エクスポート/スケジュール)", has_ui: true, ui_path: "/backup", ui_navigation: "設定 > バックアップ" },
+  { name: "notification-digest", description: "通知ダイジェスト (集約/優先度/チャネル/静音時間)", has_ui: true, ui_path: "/notifications/digest", ui_navigation: "ホーム > 通知ダイジェスト" },
+  { name: "smart-search", description: "スマート検索 (全文検索/フィルタ/保存/サジェスト)", has_ui: true, ui_path: "/search", ui_navigation: "ホーム > 検索" },
+  { name: "referral-program", description: "紹介プログラム (紹介コード/追跡/報酬/リーダーボード)", has_ui: true, ui_path: "/referral", ui_navigation: "ホーム > 紹介プログラム" },
+  { name: "analytics-export", description: "分析データエクスポート (レポート/CSV/スケジュール)", has_ui: true, ui_path: "/analytics/export", ui_navigation: "管理 > エクスポート" },
+  { name: "workflow-templates", description: "ワークフローテンプレート (承認フロー/ステップ管理/ギャラリー)", has_ui: true, ui_path: "/workflows", ui_navigation: "ホーム > ワークフロー" },
+  { name: "status-page", description: "ステータスページ (サービス状態/インシデント/稼働率)", has_ui: true, ui_path: "/status", ui_navigation: "ホーム > ステータス" },
+  { name: "address-book", description: "アドレス帳 (連絡先/グループ/vCard/重複検出)", has_ui: true, ui_path: "/address-book", ui_navigation: "ホーム > アドレス帳" },
+  { name: "multi-language", description: "多言語対応 (10言語/翻訳管理/言語切替/進捗)", has_ui: true, ui_path: "/settings/language", ui_navigation: "設定 > 言語" },
+  { name: "data-pipeline", description: "データパイプライン (ETL/変換/スケジュール/実行ログ)", has_ui: true, ui_path: "/data-pipeline", ui_navigation: "管理 > データパイプライン" },
+  { name: "subscription-billing", description: "サブスクリプション課金 (プラン/請求書/クーポン/使用量)", has_ui: true, ui_path: "/billing", ui_navigation: "設定 > プラン・課金" },
+  { name: "feature-flags", description: "フィーチャーフラグ (フラグ管理/ロールアウト/評価)", has_ui: true, ui_path: "/admin/feature-flags", ui_navigation: "管理 > フィーチャーフラグ" },
+  { name: "audit-trail", description: "監査ログ (アクション記録/コンプライアンス/検索)", has_ui: true, ui_path: "/admin/audit", ui_navigation: "管理 > 監査ログ" },
 ] as const;
 
 serve(async (req) => {

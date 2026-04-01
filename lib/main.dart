@@ -113,6 +113,12 @@ import 'package:my_web_app/pages/mindmap_diagram_page.dart';
 import 'package:my_web_app/pages/auction_marketplace_page.dart';
 import 'package:my_web_app/pages/qr_code_generator_page.dart';
 import 'package:my_web_app/pages/parking_reservation_page.dart';
+import 'package:my_web_app/pages/referral_program_page.dart';
+import 'package:my_web_app/pages/analytics_export_page.dart';
+import 'package:my_web_app/pages/workflow_templates_page.dart';
+import 'package:my_web_app/pages/customer_feedback_page.dart';
+import 'package:my_web_app/pages/address_book_page.dart';
+import 'package:my_web_app/pages/subscription_billing_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -693,6 +699,30 @@ class MyApp extends StatelessWidget {
           case '/parking-reservation':
             return MaterialPageRoute(
               builder: (_) => const ParkingReservationPage(),
+            );
+          case '/referral-program':
+            return MaterialPageRoute(
+              builder: (_) => const ReferralProgramPage(),
+            );
+          case '/analytics-export':
+            return MaterialPageRoute(
+              builder: (_) => const AnalyticsExportPage(),
+            );
+          case '/workflow-templates':
+            return MaterialPageRoute(
+              builder: (_) => const WorkflowTemplatesPage(),
+            );
+          case '/customer-feedback':
+            return MaterialPageRoute(
+              builder: (_) => const CustomerFeedbackPage(),
+            );
+          case '/address-book':
+            return MaterialPageRoute(
+              builder: (_) => const AddressBookPage(),
+            );
+          case '/subscription-billing':
+            return MaterialPageRoute(
+              builder: (_) => const SubscriptionBillingPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
