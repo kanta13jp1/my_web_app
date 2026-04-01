@@ -161,7 +161,7 @@ entrypoint = "./functions/local-election-intelligence/index.ts"
 enabled = true
 verify_jwt = false
 
-[functions.focus-timer]
+functions.focus-timer]
 enabled = true
 verify_jwt = true
 
@@ -180,3 +180,9 @@ verify_jwt = true
 [functions.note-sharing-enhanced]
 enabled = true
 verify_jwt = true
+
+
+[functions.viral-video-generator]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/viral-video-generator/index.ts"

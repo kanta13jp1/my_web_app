@@ -19,7 +19,6 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 const BACKUP_TYPES = ["full", "incremental", "selective"];
 const EXPORT_FORMATS = ["json", "csv", "sql", "markdown"];
-const BACKUP_STATUSES = ["pending", "in_progress", "completed", "failed"];
 const DATA_CATEGORIES = ["notes", "tasks", "calendar", "contacts", "finances", "settings", "all"];
 
 serve(async (req) => {

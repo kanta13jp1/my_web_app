@@ -16,7 +16,6 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 const STREAM_STATUSES = ["scheduled", "live", "ended", "archived"];
 const STREAM_CATEGORIES = ["tech", "gaming", "education", "music", "talk", "coding", "news", "other"];
-const CHAT_TYPES = ["message", "donation", "system", "mod_action"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });

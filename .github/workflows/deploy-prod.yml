@@ -277,7 +277,7 @@ jobs:
           # affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator,
           # ai-writing-assistant, bookmark-sync, focus-timer, note-sharing-enhanced,
           # task-dependency, gemini-election-analysis, poll-survey,
-          # viral-growth-engine, viral-video-ad-generator
+          # viral-growth-engine, viral-video-ad-generator, viral-video-generator
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

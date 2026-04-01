@@ -22,7 +22,6 @@ const LISTING_CATEGORIES = [
   "toys", "automotive", "collectibles", "handmade", "other",
 ];
 
-const LISTING_STATUSES = ["draft", "active", "sold", "cancelled", "expired"];
 const CONDITION_TYPES = ["new", "like_new", "good", "fair", "poor"];
 
 serve(async (req) => {

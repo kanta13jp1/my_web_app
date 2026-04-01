@@ -44,7 +44,7 @@ serve(async (req) => {
 
       // competitor_feature_status テーブルから動的データを取得
       // テーブルがない場合は get-competitor-features の静的データにフォールバック
-      const { data: overrides, error: overrideErr } = await adminClient
+      const { data: overrides, error: _overrideErr } = await adminClient
         .from("competitor_feature_status")
         .select("*");
 

@@ -532,7 +532,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     .toList();
           });
         }
-        final total = ((raw['monthlyKpi'] as Map<String, dynamic>?)?['currentTotal'] as num?)?.toInt();
+        final total = ((raw['monthlyKpi']
+                as Map<String, dynamic>?)?['currentTotal'] as num?)
+            ?.toInt();
         result = 'Gemini AI 分析完了\n'
             '取得議員数: $politicians 人${total != null ? ' / 目標700 残り${700 - total}人' : ''}';
       } else {
@@ -2171,14 +2173,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return a.voteDate.compareTo(b.voteDate);
       });
       buffer.writeln('--- 未擁立・単騎の選挙 ---');
-      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数');
+      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数,候補者一覧,Xハンドル');
       for (final s in alertSchedules) {
         final date = s.voteDate.replaceAll(',', '、');
         final pref = s.prefecture.replaceAll(',', '、');
         final muni = s.municipality.replaceAll(',', '、');
         final name = s.electionName.replaceAll(',', '、');
         final count = s.kokuminCandidateCount.toString();
-        buffer.writeln('$date,$pref,$muni,$name,$count');
+        final candidates =
+            _buildScheduleCandidateSummary(s).replaceAll(',', '、');
+        final handles = _candidateHandles(s)
+            .map((handle) => '@$handle')
+            .join(' / ')
+            .replaceAll(',', '、');
+        buffer.writeln('$date,$pref,$muni,$name,$count,$candidates,$handles');
       }
       buffer.writeln('');
     }
@@ -2188,7 +2196,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
       for (final result in pastResults) {
         final date = result['date']?.toString() ?? '';
-        final location = result['location']?.toString().replaceAll(',', '、') ?? '';
+        final location =
+            result['location']?.toString().replaceAll(',', '、') ?? '';
         final electionName =
             result['electionName']?.toString().replaceAll(',', '、') ?? '';
         final candidates = (result['dppCandidates'] as List<dynamic>? ?? [])
@@ -2202,7 +2211,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             final name = candidate['name']?.toString() ?? '';
             final status = candidate['status']?.toString() ?? '';
             final votes = (candidate['votes'] as num?)?.toString() ?? '0';
-            buffer.writeln('$date,$location,$electionName,$name,$status,$votes');
+            buffer
+                .writeln('$date,$location,$electionName,$name,$status,$votes');
           }
         }
       }
@@ -2612,17 +2622,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildScheduleCard(LocalElectionScheduleEntry item) {
-    final candidateSummary = item.kokuminCandidateNames.isEmpty
-        ? '党公式候補予定者ページで該当候補を確認できていません。'
-        : item.kokuminCandidateNames.asMap().entries.map((entry) {
-            final status = entry.key < item.kokuminCandidateStatuses.length
-                ? item.kokuminCandidateStatuses[entry.key]
-                : '';
-            if (status.trim().isEmpty) {
-              return entry.value;
-            }
-            return '${entry.value}（$status）';
-          }).join(' / ');
+    final candidateSummary = _buildScheduleCandidateSummary(item);
+    final candidateHandles = _candidateHandles(item);
 
     return Card(
       color: _scheduleCardBackgroundColor(context, item),
@@ -2738,6 +2739,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               candidateSummary,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (candidateHandles.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: candidateHandles.map((handle) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.alternate_email, size: 16),
+                    label: Text('@$handle'),
+                    onPressed: () => _openUrl('https://x.com/$handle'),
+                  );
+                }).toList(),
+              ),
+            ],
           ],
         ),
       ),
@@ -2752,6 +2767,39 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return 1;
     }
     return 2;
+  }
+
+  String _buildScheduleCandidateSummary(LocalElectionScheduleEntry item) {
+    if (item.kokuminCandidateNames.isEmpty) {
+      return '党公式候補予定者ページで該当候補を確認できていません。';
+    }
+    return item.kokuminCandidateNames.asMap().entries.map((entry) {
+      final status = entry.key < item.kokuminCandidateStatuses.length
+          ? item.kokuminCandidateStatuses[entry.key].trim()
+          : '';
+      final handle = entry.key < item.kokuminCandidateXHandles.length
+          ? _normalizeXHandle(item.kokuminCandidateXHandles[entry.key])
+          : '';
+      final suffixes = <String>[
+        if (status.isNotEmpty) status,
+        if (handle.isNotEmpty) '@$handle',
+      ];
+      if (suffixes.isEmpty) {
+        return entry.value;
+      }
+      return '${entry.value}（${suffixes.join(' / ')}）';
+    }).join(' / ');
+  }
+
+  List<String> _candidateHandles(LocalElectionScheduleEntry item) {
+    return item.kokuminCandidateXHandles
+        .map(_normalizeXHandle)
+        .where((handle) => handle.isNotEmpty)
+        .toList();
+  }
+
+  String _normalizeXHandle(String raw) {
+    return raw.trim().replaceFirst(RegExp(r'^@+'), '');
   }
 
   Color _scheduleCardBackgroundColor(
@@ -2932,7 +2980,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     '${c.name} ${c.status}${c.votes > 0 ? ' (${c.votes}票)' : ''}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isWin ? Colors.green.shade800 : Colors.red.shade800,
+                      color:
+                          isWin ? Colors.green.shade800 : Colors.red.shade800,
                     ),
                   ),
                   backgroundColor: isWin

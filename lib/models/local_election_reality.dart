@@ -270,6 +270,7 @@ class LocalElectionScheduleEntry {
   final int kokuminCandidateCount;
   final List<String> kokuminCandidateNames;
   final List<String> kokuminCandidateStatuses;
+  final List<String> kokuminCandidateXHandles;
 
   const LocalElectionScheduleEntry({
     required this.electionName,
@@ -285,6 +286,7 @@ class LocalElectionScheduleEntry {
     required this.kokuminCandidateCount,
     required this.kokuminCandidateNames,
     required this.kokuminCandidateStatuses,
+    required this.kokuminCandidateXHandles,
   });
 
   factory LocalElectionScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -304,6 +306,8 @@ class LocalElectionScheduleEntry {
       kokuminCandidateNames: _readStringList(json['kokuminCandidateNames']),
       kokuminCandidateStatuses:
           _readStringList(json['kokuminCandidateStatuses']),
+      kokuminCandidateXHandles:
+          _readStringList(json['kokuminCandidateXHandles']),
     );
   }
 
@@ -322,6 +326,7 @@ class LocalElectionScheduleEntry {
       'kokuminCandidateCount': kokuminCandidateCount,
       'kokuminCandidateNames': kokuminCandidateNames,
       'kokuminCandidateStatuses': kokuminCandidateStatuses,
+      'kokuminCandidateXHandles': kokuminCandidateXHandles,
     };
   }
 

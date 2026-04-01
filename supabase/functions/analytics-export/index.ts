@@ -57,7 +57,7 @@ serve(async (req) => {
       const { action } = body;
 
       if (action === "generate_report") {
-        const { type, time_range, format, date_from, date_to } = body;
+        const { type, time_range, format, date_from } = body;
         if (!type) return new Response(JSON.stringify({ success: false, error: "type required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         const now = new Date();
         let since: string;

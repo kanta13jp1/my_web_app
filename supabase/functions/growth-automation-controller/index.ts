@@ -56,7 +56,7 @@ serve(async (req) => {
       if (view === "growth_kpi") {
         // Aggregate key growth metrics
         const { count: totalUsers } = await adminClient.from("user_profiles").select("*", { count: "exact", head: true });
-        const today = new Date().toISOString().split("T")[0];
+        const _today = new Date().toISOString().split("T")[0];
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
         const { count: newUsersThisWeek } = await adminClient.from("user_profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo);
         const { count: totalShares } = await adminClient.from("app_analytics").select("*", { count: "exact", head: true }).eq("source", "viral_share");

@@ -74,7 +74,7 @@ serve(async (req) => {
         // Calculate overall viral coefficient (k-factor)
         const { data: allShares } = await adminClient.from("app_analytics").select("metadata").eq("source", "viral_share");
         const { count: totalUsers } = await adminClient.from("app_analytics").select("*", { count: "exact", head: true }).eq("source", "user_signup");
-        let totalInviteSent = (allShares ?? []).length;
+        const totalInviteSent = (allShares ?? []).length;
         let totalConversions = 0;
         for (const s of allShares ?? []) totalConversions += ((s.metadata as Record<string, unknown>).signups_from_share as number) ?? 0;
         const kFactor = totalInviteSent > 0 ? Math.round((totalConversions / totalInviteSent) * 100) / 100 : 0;

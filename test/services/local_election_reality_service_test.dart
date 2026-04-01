@@ -84,6 +84,24 @@ void main() {
           'kokuminCandidateCount': 0,
           'kokuminCandidateNames': <String>[],
           'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[],
+        },
+        <String, dynamic>{
+          'electionName': 'Nerima mayoral election',
+          'prefecture': 'Tokyo',
+          'municipality': 'Nerima',
+          'electionCategory': 'chief',
+          'voteDate': '2026-04-12',
+          'announcementDate': '2026-04-05',
+          'detailUrl': '',
+          'officialCandidateSourceUrl':
+              'https://new-kokumin.jp/?post_type=election&prefectures=Tokyo',
+          'seatCount': 1,
+          'totalCandidateCount': 3,
+          'kokuminCandidateCount': 1,
+          'kokuminCandidateNames': <String>['おじま紘平'],
+          'kokuminCandidateStatuses': <String>['推薦'],
+          'kokuminCandidateXHandles': <String>['ojimakohei'],
         },
       ],
     });
@@ -100,8 +118,12 @@ void main() {
     expect(loaded.members.single.name, 'Sample Member');
     expect(loaded.ageAvailableCount, 1);
     expect(loaded.scheduleAiAlerts, isNotEmpty);
-    expect(loaded.upcomingSchedules, hasLength(1));
+    expect(loaded.upcomingSchedules, hasLength(2));
     expect(loaded.redAlertScheduleCount, 1);
+    expect(
+      loaded.upcomingSchedules.last.kokuminCandidateXHandles,
+      <String>['ojimakohei'],
+    );
 
     final history = await service.loadSnapshotHistory(prefs: prefs);
     expect(history, hasLength(1));

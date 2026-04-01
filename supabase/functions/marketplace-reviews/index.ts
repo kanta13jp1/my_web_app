@@ -38,7 +38,7 @@ serve(async (req) => {
         const sort = url.searchParams.get("sort") ?? "newest";
         const { data: reviews } = await adminClient.from("app_analytics").select("metadata, created_at")
           .eq("source", "marketplace_review").eq("metadata->>item_id", itemId).order("created_at", { ascending: false }).limit(50);
-        let sorted = (reviews ?? []).map((r) => ({ ...(r.metadata as Record<string, unknown>), createdAt: r.created_at }));
+        const sorted = (reviews ?? []).map((r) => ({ ...(r.metadata as Record<string, unknown>), createdAt: r.created_at }));
         if (sort === "highest_rated") sorted.sort((a, b) => ((b.rating as number) ?? 0) - ((a.rating as number) ?? 0));
         else if (sort === "lowest_rated") sorted.sort((a, b) => ((a.rating as number) ?? 0) - ((b.rating as number) ?? 0));
         else if (sort === "most_helpful") sorted.sort((a, b) => ((b.helpful_count as number) ?? 0) - ((a.helpful_count as number) ?? 0));

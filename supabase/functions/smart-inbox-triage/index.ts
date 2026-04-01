@@ -80,7 +80,7 @@ serve(async (req) => {
       }
 
       if (view === "snoozed") {
-        const now = new Date().toISOString();
+        const _now = new Date().toISOString();
         const { data: msgs } = await adminClient.from("app_analytics").select("metadata, created_at")
           .eq("user_id", user.id).eq("source", "inbox_message").eq("metadata->>is_snoozed", "true")
           .order("metadata->>snooze_until", { ascending: true });
