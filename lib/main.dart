@@ -133,6 +133,9 @@ import 'package:my_web_app/pages/expense_tracker_page.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
 import 'package:my_web_app/pages/ar_navigation_page.dart';
 import 'package:my_web_app/pages/dns_domain_manager_page.dart';
+import 'package:my_web_app/pages/focus_timer_page.dart';
+import 'package:my_web_app/pages/digital_wallet_page.dart';
+import 'package:my_web_app/pages/loyalty_points_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -793,6 +796,18 @@ class MyApp extends StatelessWidget {
           case '/dns-domain-manager':
             return MaterialPageRoute(
               builder: (_) => const DnsDomainManagerPage(),
+            );
+          case '/focus-timer':
+            return MaterialPageRoute(
+              builder: (_) => const FocusTimerPage(),
+            );
+          case '/digital-wallet':
+            return MaterialPageRoute(
+              builder: (_) => const DigitalWalletPage(),
+            );
+          case '/loyalty-points':
+            return MaterialPageRoute(
+              builder: (_) => const LoyaltyPointsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
