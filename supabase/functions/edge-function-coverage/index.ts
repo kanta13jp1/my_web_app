@@ -186,6 +186,11 @@ const FUNCTION_REGISTRY = [
   { name: "social-media-scheduler", description: "SNSスケジューラー (8プラットフォーム/コンテンツカレンダー/パフォーマンス)", has_ui: true, ui_path: "/social-scheduler", ui_navigation: "ホーム > SNS管理" },
   { name: "smart-inbox-triage", description: "スマート受信トレイ (8チャネル統合/AI優先度/自動ラベル/スヌーズ)", has_ui: true, ui_path: "/inbox", ui_navigation: "ホーム > 受信トレイ" },
   { name: "video-meeting-manager", description: "ビデオ会議 (ルーム/参加者管理/AI議事録/アクションアイテム)", has_ui: true, ui_path: "/video-meeting", ui_navigation: "ホーム > ビデオ会議" },
+  { name: "family-sharing-manager", description: "ファミリー共有 (グループ/共有カレンダー/支出共有/メンバー管理)", has_ui: true, ui_path: "/family", ui_navigation: "ホーム > ファミリー" },
+  { name: "donation-crowdfunding", description: "寄付・クラウドファンディング (キャンペーン/リワード/支援者統計)", has_ui: true, ui_path: "/crowdfunding", ui_navigation: "ホーム > クラウドファンディング" },
+  { name: "real-estate-tracker", description: "不動産管理 (物件/賃貸収支/メンテナンス/テナント/ROI)", has_ui: true, ui_path: "/real-estate", ui_navigation: "ホーム > 不動産" },
+  { name: "podcast-manager", description: "ポッドキャスト管理 (番組/エピソード/購読/再生統計/ランキング)", has_ui: true, ui_path: "/podcast", ui_navigation: "ホーム > ポッドキャスト" },
+  { name: "mindmap-diagram", description: "マインドマップ・ダイアグラム (6種類/ノード・エッジ/Mermaidエクスポート/テンプレート)", has_ui: true, ui_path: "/mindmap", ui_navigation: "ホーム > マインドマップ" },
 ] as const;
 
 serve(async (req) => {

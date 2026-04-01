@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 daily-report (競合モニタリング: Notion Workers発表・Slack MCP GA・GitHub Workflows拡張 / 158 Edge Functions体制 / 通知センターUI完成)
+最終更新: 2026-04-01 session432j-web (50本追加 → 160 Functions 体制)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1023,6 +1023,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432j (Web版) — 2026-04-01
+
+**Edge Functions 155→160本 (5本追加) — ライフスタイル・資産・コンテンツ拡張**
+
+1. **family-sharing-manager**: ファミリー共有管理 — Apple/Google Family競合、グループ作成、共有カレンダー、支出共有・割り勘、メンバーロール管理
+2. **donation-crowdfunding**: 寄付・クラウドファンディング — GoFundMe/CAMPFIRE競合、キャンペーン作成(8カテゴリ)、リワード管理、支援者統計、目標達成自動検知
+3. **real-estate-tracker**: 不動産管理 — MoneyForward/Suumo競合、物件登録(7タイプ)、賃貸収支管理、メンテナンス記録、テナント管理、ROI自動計算
+4. **podcast-manager**: ポッドキャスト管理 — Spotify/Apple Podcasts競合、番組・エピソード管理、購読、再生統計、ランキング
+5. **mindmap-diagram**: マインドマップ・ダイアグラム — Notion/Miro競合、6ダイアグム種類、ノード・エッジ管理、6テンプレート、Mermaidエクスポート
 
 ### daily-report 自動実行 — 2026-04-01
 

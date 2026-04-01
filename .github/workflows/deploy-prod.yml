@@ -249,6 +249,11 @@ jobs:
           supabase functions deploy social-media-scheduler --no-verify-jwt
           supabase functions deploy smart-inbox-triage --no-verify-jwt
           supabase functions deploy video-meeting-manager --no-verify-jwt
+          supabase functions deploy family-sharing-manager --no-verify-jwt
+          supabase functions deploy donation-crowdfunding --no-verify-jwt
+          supabase functions deploy real-estate-tracker --no-verify-jwt
+          supabase functions deploy podcast-manager --no-verify-jwt
+          supabase functions deploy mindmap-diagram --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
