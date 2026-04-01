@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432s-web (40本追加 → 205 Edge Functions 体制: +loyalty-points, live-streaming, geo-checkin, social-stories, encrypted-messaging)
+最終更新: 2026-04-01 session432t-web (45本追加 → 210 Edge Functions 体制: +cloud-storage-sync, virtual-whiteboard, marketplace-reviews, smart-home-automation, digital-wallet)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1029,6 +1029,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### Session 432t (Web版) — 2026-04-01
+
+**Edge Functions 205→210本 (5本追加) — ストレージ・ホワイトボード・決済・IoT**
+
+1. **cloud-storage-sync**: クラウドストレージ同期 — Google Drive/Dropbox/OneDrive競合、ファイル管理、フォルダ構造、共有リンク、使用量追跡
+2. **virtual-whiteboard**: バーチャルホワイトボード — Miro/Figma/Microsoft Whiteboard競合、9種図形、付箋、4テンプレート(ブレスト/カンバン/KPT/マインドマップ)
+3. **marketplace-reviews**: マーケットプレイスレビュー — Amazon/Google/食べログ競合、星評価、画像付きレビュー、役立った投票、分析
+4. **smart-home-automation**: スマートホームオートメーション — Google Home/Alexa/HomeKit競合、10種デバイス、シーンプリセット、自動化ルール、エネルギーモニタ
+5. **digital-wallet**: デジタルウォレット — Amazon Pay/LINE Pay/PayPay競合、残高管理、送金/受取、QR決済、1%キャッシュバック、支出分析
 
 ### Session 432s (Web版) — 2026-04-01
 

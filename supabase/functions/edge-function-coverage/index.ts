@@ -236,6 +236,11 @@ const FUNCTION_REGISTRY = [
   { name: "geo-checkin", description: "位置情報チェックイン (スポット/レビュー/ランキング/近くのスポット)", has_ui: true, ui_path: "/checkin", ui_navigation: "ソーシャル > チェックイン" },
   { name: "social-stories", description: "ソーシャルストーリーズ (24時間投稿/リアクション/ハイライト)", has_ui: true, ui_path: "/stories", ui_navigation: "ソーシャル > ストーリー" },
   { name: "encrypted-messaging", description: "暗号化メッセージング (チャンネル/自動削除/既読管理)", has_ui: true, ui_path: "/secure-chat", ui_navigation: "メッセージ > セキュアチャット" },
+  { name: "cloud-storage-sync", description: "クラウドストレージ同期 (ファイル管理/共有/バージョン/使用量)", has_ui: true, ui_path: "/storage", ui_navigation: "ファイル > クラウドストレージ" },
+  { name: "virtual-whiteboard", description: "バーチャルホワイトボード (キャンバス/付箋/テンプレート/コラボ)", has_ui: true, ui_path: "/whiteboard", ui_navigation: "ツール > ホワイトボード" },
+  { name: "marketplace-reviews", description: "マーケットプレイスレビュー (星評価/画像/役立った/分析)", has_ui: true, ui_path: "/reviews", ui_navigation: "マーケット > レビュー" },
+  { name: "smart-home-automation", description: "スマートホームオートメーション (デバイス/シーン/自動化/エネルギー)", has_ui: true, ui_path: "/smart-home", ui_navigation: "IoT > スマートホーム" },
+  { name: "digital-wallet", description: "デジタルウォレット (残高/送金/QR決済/支出分析)", has_ui: true, ui_path: "/wallet", ui_navigation: "ファイナンス > ウォレット" },
 ] as const;
 
 serve(async (req) => {
