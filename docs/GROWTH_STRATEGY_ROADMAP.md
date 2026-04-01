@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-01 session432k-web (55本追加 → 165 Functions 体制)
+最終更新: 2026-04-01 PowerShell#9 (migration競合修正 / 165 Edge Functions体制 / flutter analyze 0 / Schedule 3タスク稼働中)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,12 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #9 実装済み
+
+- **migration 重複バージョン修正 (000020)** (PowerShell 2026-04-01): VSCode インスタンスと PowerShell#8 が同時に `20260401000020_` ファイルを作成して重複。PS#8 ファイルを `20260401000040_` にリナンバーし CI/CD 正常稼働を回復。supabase db push の重複キーエラーを防止。
+- **flutter analyze 0 errors / deno lint 0 errors 確認** (PowerShell 2026-04-01): 並列インスタンスの変更を取り込んだ後も lint 0件を維持確認。158 Edge Functions 体制でのコード品質を担保。
+- **Schedule 3タスク正常稼働確認** (PowerShell 2026-04-01): cs-check (毎時) / daily-report (毎日 09:00 JST) / blog-draft (毎日 08:00 JST) の全タスクが schedule_task_runs テーブルへ正しい task_id でログを記録する状態を確認。次回 Schedule 実行から管理者ダッシュボードで実行状況をリアルタイム確認可能。
 
 ### 2026-04-01 PowerShell全体管理セッション #8 実装済み
 
