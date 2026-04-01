@@ -189,6 +189,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('customer-feedback', 'カスタマーフィードバック', true, '/customer-feedback', 'カスタマーフィードバックページ'),
     _FnDef('address-book', 'アドレス帳', true, '/address-book', 'アドレス帳ページ'),
     _FnDef('subscription-billing', 'サブスクリプション請求', true, '/subscription-billing', 'サブスクリプション・請求ページ'),
+    _FnDef('appointment-scheduler', '予約スケジューラー', true, '/appointment-scheduler', '予約スケジューラーページ'),
+    _FnDef('budget-financial-planner', '予算・財務プランナー', true, '/budget-financial-planner', '予算・財務プランナーページ'),
+    _FnDef('feature-flags', 'フィーチャーフラグ管理', true, '/feature-flags', '管理者ダッシュボード > フィーチャーフラグ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

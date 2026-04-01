@@ -119,6 +119,9 @@ import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
 import 'package:my_web_app/pages/address_book_page.dart';
 import 'package:my_web_app/pages/subscription_billing_page.dart';
+import 'package:my_web_app/pages/appointment_scheduler_page.dart';
+import 'package:my_web_app/pages/budget_financial_planner_page.dart';
+import 'package:my_web_app/pages/feature_flags_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -723,6 +726,18 @@ class MyApp extends StatelessWidget {
           case '/subscription-billing':
             return MaterialPageRoute(
               builder: (_) => const SubscriptionBillingPage(),
+            );
+          case '/appointment-scheduler':
+            return MaterialPageRoute(
+              builder: (_) => const AppointmentSchedulerPage(),
+            );
+          case '/budget-financial-planner':
+            return MaterialPageRoute(
+              builder: (_) => const BudgetFinancialPlannerPage(),
+            );
+          case '/feature-flags':
+            return MaterialPageRoute(
+              builder: (_) => const FeatureFlagsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
