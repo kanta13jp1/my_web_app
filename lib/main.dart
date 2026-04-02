@@ -145,15 +145,17 @@ import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
+import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
-import 'package:my_web_app/pages/form_builder_page.dart';
-import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
 import 'package:my_web_app/pages/wiki_database_page.dart';
 import 'package:my_web_app/pages/time_tracker_page.dart';
 import 'package:my_web_app/pages/voice_memo_transcriber_page.dart';
+import 'package:my_web_app/pages/form_builder_page.dart';
+import 'package:my_web_app/pages/music_playlist_manager_page.dart';
+import 'package:my_web_app/pages/virtual_organization_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -876,13 +878,21 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const FormBuilderPage(),
             );
+          case '/event-ticketing':
+            return MaterialPageRoute(
+              builder: (_) => const EventTicketingPage(),
+            );
+          case '/music-playlist-manager':
+            return MaterialPageRoute(
+              builder: (_) => const MusicPlaylistManagerPage(),
+            );
           case '/fitness-health-tracker':
             return MaterialPageRoute(
               builder: (_) => const FitnessHealthTrackerPage(),
             );
-          case '/event-ticketing':
+          case '/virtual-organization':
             return MaterialPageRoute(
-              builder: (_) => const EventTicketingPage(),
+              builder: (_) => const VirtualOrganizationPage(),
             );
           case '/ai-writing-assistant':
             return MaterialPageRoute(

@@ -1,0 +1,408 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// 仮想AI組織マネージャー
+/// 12部署20エージェントの仮想組織を管理する。
+/// virtual-organization Edge Function と連携。
+class VirtualOrganizationPage extends StatefulWidget {
+  const VirtualOrganizationPage({super.key});
+
+  @override
+  State<VirtualOrganizationPage> createState() =>
+      _VirtualOrganizationPageState();
+}
+
+class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
+    with SingleTickerProviderStateMixin {
+  final _supabase = Supabase.instance.client;
+  late final TabController _tabController;
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<Map<String, dynamic>> _departments = [];
+  List<Map<String, dynamic>> _agents = [];
+  List<Map<String, dynamic>> _tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _fetchOrganization();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchOrganization() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final deptRes = await _supabase.functions.invoke(
+        'virtual-organization',
+        queryParameters: {'view': 'departments'},
+      );
+      final agentRes = await _supabase.functions.invoke(
+        'virtual-organization',
+        queryParameters: {'view': 'agents'},
+      );
+      final taskRes = await _supabase.functions.invoke(
+        'virtual-organization',
+        queryParameters: {'view': 'tasks'},
+      );
+
+      final deptData = deptRes.data;
+      final agentData = agentRes.data;
+      final taskData = taskRes.data;
+
+      setState(() {
+        if (deptData is Map<String, dynamic>) {
+          final list = deptData['departments'];
+          if (list is List) {
+            _departments =
+                list.map((d) => d as Map<String, dynamic>).toList();
+          }
+        }
+        if (agentData is Map<String, dynamic>) {
+          final list = agentData['agents'];
+          if (list is List) {
+            _agents =
+                list.map((a) => a as Map<String, dynamic>).toList();
+          }
+        }
+        if (taskData is Map<String, dynamic>) {
+          final list = taskData['tasks'];
+          if (list is List) {
+            _tasks = list.map((t) => t as Map<String, dynamic>).toList();
+          }
+        }
+      });
+    } catch (e) {
+      setState(() => _errorMessage = '$e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _assignTask(String goal) async {
+    try {
+      await _supabase.functions.invoke(
+        'virtual-organization',
+        body: {'action': 'assign_task', 'goal': goal},
+      );
+      await _fetchOrganization();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('タスクを割り振りました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
+  void _showAssignTaskDialog() {
+    final controller = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('タスクをAIに割り振る'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: '例: ユーザー獲得施策を考えて実行する',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final goal = controller.text.trim();
+              Navigator.pop(ctx);
+              if (goal.isNotEmpty) _assignTask(goal);
+            },
+            child: const Text('割り振る'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('仮想AI組織'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchOrganization,
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.apartment), text: '部署'),
+            Tab(icon: Icon(Icons.smart_toy), text: 'エージェント'),
+            Tab(icon: Icon(Icons.task_alt), text: 'タスク'),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAssignTaskDialog,
+        icon: const Icon(Icons.add),
+        label: const Text('タスク割振り'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildDepartmentsTab(),
+                    _buildAgentsTab(),
+                    _buildTasksTab(),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 12),
+          Text(_errorMessage!),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: _fetchOrganization,
+            child: const Text('再試行'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDepartmentsTab() {
+    if (_departments.isEmpty) {
+      return const Center(
+        child: Text(
+          '部署がまだありません\n仮想組織を初期化してください',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _departments.length,
+      itemBuilder: (ctx, i) {
+        final d = _departments[i];
+        final icon = d['icon'] as String? ?? '🏢';
+        final name = d['name'] as String? ?? '';
+        final desc = d['description'] as String? ?? '';
+        final agentCount = d['agentCount'] as int? ?? 0;
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              child: Text(icon, style: const TextStyle(fontSize: 20)),
+            ),
+            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(desc),
+            trailing: Chip(
+              label: Text('$agentCount 人'),
+              backgroundColor:
+                  Theme.of(context).colorScheme.secondaryContainer,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAgentsTab() {
+    if (_agents.isEmpty) {
+      return const Center(
+        child: Text(
+          'エージェントがいません',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _agents.length,
+      itemBuilder: (ctx, i) {
+        final a = _agents[i];
+        final name = a['name'] as String? ?? 'Agent ${i + 1}';
+        final role = a['role'] as String? ?? '';
+        final dept = a['department'] as String? ?? '';
+        final personality = a['personality'] as String? ?? '';
+        final status = a['status'] as String? ?? 'idle';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: _statusColor(status).withValues(alpha: 0.2),
+              child: Icon(Icons.smart_toy, color: _statusColor(status)),
+            ),
+            title: Text(name),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$dept • $role'),
+                if (personality.isNotEmpty)
+                  Text(
+                    personality,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                  ),
+              ],
+            ),
+            trailing: _statusChip(status),
+            isThreeLine: personality.isNotEmpty,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTasksTab() {
+    if (_tasks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.assignment, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
+            const Text(
+              'タスクがありません',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _showAssignTaskDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('最初のタスクを割り振る'),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _tasks.length,
+      itemBuilder: (ctx, i) {
+        final t = _tasks[i];
+        final goal = t['goal'] as String? ?? '';
+        final dept = t['department'] as String? ?? '';
+        final status = t['status'] as String? ?? 'pending';
+        final assignedTo = t['assignedTo'] as String? ?? '';
+        final createdAt = t['createdAt'] as String? ?? '';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Icon(
+              _taskStatusIcon(status),
+              color: _statusColor(status),
+            ),
+            title: Text(goal),
+            subtitle: Text(
+              '$dept${assignedTo.isNotEmpty ? " → $assignedTo" : ""}',
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _statusChip(status),
+                if (createdAt.length >= 10)
+                  Text(
+                    createdAt.substring(0, 10),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+              ],
+            ),
+            isThreeLine: false,
+          ),
+        );
+      },
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'active':
+      case 'running':
+      case 'in_progress':
+        return Colors.blue;
+      case 'completed':
+      case 'done':
+        return Colors.green;
+      case 'error':
+      case 'failed':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  Widget _statusChip(String status) {
+    const labels = <String, String>{
+      'active': '稼働中',
+      'running': '実行中',
+      'in_progress': '進行中',
+      'idle': '待機',
+      'completed': '完了',
+      'done': '完了',
+      'pending': '未開始',
+      'error': 'エラー',
+      'failed': '失敗',
+    };
+    return Chip(
+      label: Text(
+        labels[status] ?? status,
+        style: const TextStyle(fontSize: 11),
+      ),
+      backgroundColor: _statusColor(status).withValues(alpha: 0.15),
+      side: BorderSide(color: _statusColor(status).withValues(alpha: 0.4)),
+      padding: EdgeInsets.zero,
+    );
+  }
+
+  IconData _taskStatusIcon(String status) {
+    switch (status) {
+      case 'completed':
+      case 'done':
+        return Icons.check_circle;
+      case 'in_progress':
+      case 'running':
+        return Icons.play_circle;
+      case 'error':
+      case 'failed':
+        return Icons.error;
+      default:
+        return Icons.radio_button_unchecked;
+    }
+  }
+}
