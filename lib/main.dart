@@ -150,6 +150,10 @@ import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:my_web_app/pages/form_builder_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
+import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
+import 'package:my_web_app/pages/wiki_database_page.dart';
+import 'package:my_web_app/pages/time_tracker_page.dart';
+import 'package:my_web_app/pages/voice_memo_transcriber_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -879,6 +883,22 @@ class MyApp extends StatelessWidget {
           case '/event-ticketing':
             return MaterialPageRoute(
               builder: (_) => const EventTicketingPage(),
+            );
+          case '/ai-writing-assistant':
+            return MaterialPageRoute(
+              builder: (_) => const AiWritingAssistantPage(),
+            );
+          case '/wiki-database':
+            return MaterialPageRoute(
+              builder: (_) => const WikiDatabasePage(),
+            );
+          case '/time-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const TimeTrackerPage(),
+            );
+          case '/voice-memo':
+            return MaterialPageRoute(
+              builder: (_) => const VoiceMemoTranscriberPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

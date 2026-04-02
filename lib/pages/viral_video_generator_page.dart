@@ -185,8 +185,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              _result!['message']?.toString() ??
-                                  '生成が完了しました',
+                              _result!['message']?.toString() ?? '生成が完了しました',
                             ),
                           ],
                         ),

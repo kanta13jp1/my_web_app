@@ -88,6 +88,9 @@ import '../pages/video_meeting_page.dart';
 import '../pages/gantt_timeline_page.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
+import '../pages/wiki_database_page.dart';
+import '../pages/time_tracker_page.dart';
+import '../pages/voice_memo_transcriber_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1130,6 +1133,45 @@ List<HomeToolEntry> buildHomeToolCatalog({
       ],
       onOpen: (context) =>
           _pushPage(context, const AiWritingAssistantPage()),
+    ),
+    HomeToolEntry(
+      id: 'wiki-database',
+      sectionId: 'knowledge',
+      title: 'Wiki・データベース',
+      subtitle: 'Notion/Confluence競合。階層型ページ・テーブルビュー・リンク参照',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF4F46E5),
+      keywords: const <String>[
+        'Wiki', 'データベース', 'Notion', 'Confluence', 'ページ', '階層', '知識管理',
+        'ドキュメント', 'テーブル',
+      ],
+      onOpen: (context) => _pushPage(context, const WikiDatabasePage()),
+    ),
+    HomeToolEntry(
+      id: 'time-tracker',
+      sectionId: 'office',
+      title: '勤怠・時間追跡',
+      subtitle: 'ジョブカン/Toggl/Clockify競合。出退勤打刻・プロジェクト別時間管理',
+      icon: Icons.punch_clock_outlined,
+      color: const Color(0xFF0EA5E9),
+      keywords: const <String>[
+        '勤怠', '時間', 'タイムトラッキング', 'ジョブカン', 'Toggl', 'Clockify',
+        '出退勤', '打刻', 'プロジェクト', '残業',
+      ],
+      onOpen: (context) => _pushPage(context, const TimeTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'voice-memo',
+      sectionId: 'knowledge',
+      title: '音声メモ・文字起こし',
+      subtitle: 'Google Keep/LINE/Discord競合。音声メモ登録・AI要約・ノート変換',
+      icon: Icons.mic_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '音声', 'メモ', '文字起こし', 'Google Keep', 'ボイスメモ', 'AI要約',
+        '録音', 'トランスクリプト', '変換',
+      ],
+      onOpen: (context) => _pushPage(context, const VoiceMemoTranscriberPage()),
     ),
   ];
 }

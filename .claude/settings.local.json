@@ -63,7 +63,9 @@
       "Bash(git -C \"c:/Users/kanta/GitHub/my_web_app\" log --oneline -5)",
       "Bash(node -e \":*)",
       "Bash(python3 -c \":*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }

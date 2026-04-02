@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 Web版#2 (notification-center 500エラー修正 + Flutter POST+queryParams問題を6 Edge Functionsで修正 — notification-center/referral-program/workflow-templates/analytics-export/guitar-recording-studio/get-competitor-monitoring)
+最終更新: 2026-04-02 daily-development #3 + Web版#2 (Wiki/勤怠/音声メモUI + notification-center修正 + 6 Edge Functions POST修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -383,6 +383,15 @@
 
 - **ギターレコーディングスタジオ完成 (PS#11)**: `GuitarRecordingStudioPage` を `package:web` + `dart:js_interop` を使用した本格録音機能に全面リライト。ブラウザ `MediaRecorder API` でマイク録音 (開始/一時停止/停止/再生/破棄)、Web Audio API メトロノーム (30-300BPM/拍子2-6/ビジュアルビート)、コード辞典 (15コード + ダイアグラム CustomPainter)、ジャンルプリセット8種、録音履歴タブ。`guitar-recording-studio` Edge Function と全アクション連携 (save_recording/recordings/chord/dashboard)。LP に黒背景ギタースタジオバナー追加でメイン機能として訴求。flutter analyze 0エラー維持。
 - **flutter analyze 既存エラー修正**: `viral_video_generator_page.dart` (trailing comma 5件・deprecated `value→initialValue`)、`music_collaboration_page.dart` (trailing comma 1件)、`abstinence_guard_store.dart` (merge conflict解消) を修正。全プロジェクト 0エラー達成。
+
+### 2026-04-02 daily-development #3 実装済み (自動)
+
+- **Wiki・データベースページ実装** (daily-development #3 2026-04-02): `wiki_database_page.dart` を新規作成。`wiki-database` Edge Function と連携。階層型Wikiページ一覧・サブページ作成・テーブルデータ閲覧・ページ詳細表示を TabBarView 2タブ構成で実装。`/wiki-database` ルートを `main.dart` に追加。`home_tool_catalog.dart` の `knowledge` セクションに追加。Notion/Confluence競合の中核機能。flutter analyze 0件維持。
+- **勤怠・時間追跡ページ実装** (daily-development #3 2026-04-02): `time_tracker_page.dart` を新規作成。`time-tracker` Edge Function と連携。出退勤打刻・プロジェクト別作業時間記録・`SegmentedButton` による今日/今週/今月切り替え・プロジェクト別 `LinearProgressIndicator` バーグラフ・残業アラートバナーを TabBarView 3タブで実装。`/time-tracker` ルートを `main.dart` に追加。`home_tool_catalog.dart` の `office` セクションに追加。ジョブカン/Toggl/Clockify競合。flutter analyze 0件維持。
+- **音声メモ・文字起こしページ実装** (daily-development #3 2026-04-02): `voice_memo_transcriber_page.dart` を新規作成。`voice-memo-transcriber` Edge Function と連携。音声メモ追加（タイトル/文字起こし/AI要約）・`ExpansionTile` で詳細展開・検索機能・ノートへの変換機能を実装。`/voice-memo` ルートを `main.dart` に追加。`home_tool_catalog.dart` の `knowledge` セクションに追加。Google Keep/LINE/Discord競合。flutter analyze 0件維持。
+- **/ai-writing-assistant ルート修正** (daily-development #3 2026-04-02): `home_tool_catalog.dart` に `AiWritingAssistantPage` が追加済みだったが `main.dart` にルートとimportが未定義だった問題を修正。flutter analyze 0件維持。
+- **viral_video_generator_page.dart lint修正** (daily-development #3 2026-04-02): `require_trailing_commas` エラー10件と `DropdownButtonFormField.value` deprecated警告を修正。`initialValue` に移行。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development #3 2026-04-02): `docs/blog-drafts/2026-04-02-wiki-timetracker-voicememo.md` — Flutter WebでWiki・勤怠管理・音声メモを同時実装。Edge Function First パターン・trailing comma対応・DropdownButtonFormField移行の解説記事。
 
 ### 2026-04-02 daily-development #2 実装済み (自動)
 
