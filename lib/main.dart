@@ -158,6 +158,9 @@ import 'package:my_web_app/pages/music_playlist_manager_page.dart';
 import 'package:my_web_app/pages/virtual_organization_page.dart';
 import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
 import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
+import 'package:my_web_app/pages/spreadsheet_database_page.dart';
+import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
+import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -919,6 +922,18 @@ class MyApp extends StatelessWidget {
           case '/horse-racing':
             return MaterialPageRoute(
               builder: (_) => const HorseRacingPredictorPage(),
+            );
+          case '/spreadsheet-database':
+            return MaterialPageRoute(
+              builder: (_) => const SpreadsheetDatabasePage(),
+            );
+          case '/travel-itinerary':
+            return MaterialPageRoute(
+              builder: (_) => const TravelItineraryPlannerPage(),
+            );
+          case '/changelog':
+            return MaterialPageRoute(
+              builder: (_) => const ChangelogManagerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
