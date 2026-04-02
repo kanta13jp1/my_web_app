@@ -126,6 +126,7 @@ import 'package:my_web_app/pages/feature_flags_page.dart';
 import 'package:my_web_app/pages/workflow_automation_page.dart';
 import 'package:my_web_app/pages/social_media_scheduler_page.dart';
 import 'package:my_web_app/pages/video_meeting_page.dart';
+import 'package:my_web_app/pages/gantt_timeline_page.dart';
 import 'package:my_web_app/pages/ai_image_generator_page.dart';
 import 'package:my_web_app/pages/viral_ad_campaign_page.dart';
 import 'package:my_web_app/pages/virtual_pet_page.dart';
@@ -776,6 +777,10 @@ class MyApp extends StatelessWidget {
           case '/video-meeting':
             return MaterialPageRoute(
               builder: (_) => const VideoMeetingPage(),
+            );
+          case '/gantt-timeline':
+            return MaterialPageRoute(
+              builder: (_) => const GanttTimelinePage(),
             );
           case '/ai-image-generator':
             return MaterialPageRoute(

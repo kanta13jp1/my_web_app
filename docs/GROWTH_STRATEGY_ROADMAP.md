@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 daily-development (候補者Xハンドル統合・バイラル動画パイプライン基盤・deno lint 0件修正・選挙管理ダッシュボードルート追加)
+最終更新: 2026-04-02 daily-development #2 (ガントチャート・タイムライン実装・EdgeFunctionSummaryCard UI更新・Notion機能カバー率向上)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -379,6 +379,12 @@
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
 
+### 2026-04-02 daily-development #2 実装済み (自動)
+
+- **ガントチャート・タイムライン実装** (daily-development #2 2026-04-02): `GanttTimelinePage` を新規作成。`gantt-timeline-manager` Edge Function と連携し、プロジェクト作成・タスク追加・マイルストーン設定・クリティカルパス分析 (最遅完了タスクのランキング) を実装。3タブ構成 (プロジェクト/タイムライン/クリティカルパス)。`LinearProgressIndicator` でGanttバーを表示し、ステータス別カラー (完了=緑/進行中=青/ブロック=赤) でビジュアル管理。`/gantt-timeline` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに追加。`growth_roadmap_progress_card.dart` でガントチャートを `notYet→done` に更新。Notion機能カバー率がさらに向上。flutter analyze 0件維持。
+- **EdgeFunctionSummaryCard UI実装マーク更新** (daily-development #2 2026-04-02): `gantt-timeline-manager` → `/gantt-timeline` ページ実装済みにマーク。`video-meeting-manager` → `/video-meeting` ページ実装済みにマーク。UI実装有無の可視化精度向上。
+- **ブログ下書き作成** (daily-development #2 2026-04-02): `docs/blog-drafts/2026-04-02-gantt-timeline.md` — Flutter WebでガントチャートをLinearProgressIndicatorで実装 + `avoid_dynamic_calls` 対応解説記事。
+
 ### 2026-04-02 daily-development 実装済み
 
 - **候補者Xハンドル統合** (daily-development 2026-04-02): `LocalElectionScheduleEntry` に `kokuminCandidateXHandles` フィールドを追加。選挙スケジュールカードに `ActionChip` でXハンドルを表示し、タップで `https://x.com/{handle}` を開く機能を実装。CSVエクスポートに候補者名・Xハンドル列を追加。`_buildScheduleCandidateSummary()` / `_candidateHandles()` ヘルパーメソッドを抽出し重複コードを解消。テストも同期更新。
@@ -687,7 +693,8 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 - **リレーション/ロールアップ**: 本格 DB 機能
 - **オフライン対応**: PWA + IndexedDB
-- **カレンダー/ガントビュー**
+- ~~**ガントチャートビュー**~~ ✅ 2026-04-02 GanttTimelinePage実装完了 (プロジェクト・タスク・マイルストーン・クリティカルパス分析)
+- **カレンダービュー**: DBエントリの日付プロパティをカレンダー形式で表示
 - **Web クリッパー**: ブラウザ拡張
 
 ### 自分株式会社 独自優位点 (Notion にない機能)

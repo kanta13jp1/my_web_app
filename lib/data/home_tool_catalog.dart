@@ -85,6 +85,7 @@ import '../pages/team_workspace_page.dart';
 import '../pages/workflow_automation_page.dart';
 import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
+import '../pages/gantt_timeline_page.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
 
@@ -1091,6 +1092,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ビデオ', '会議', 'Zoom', 'Meet', '議事録', 'オンライン会議', 'ミーティング',
       ],
       onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
+    ),
+    HomeToolEntry(
+      id: 'gantt-timeline',
+      sectionId: 'growth',
+      title: 'ガントチャート',
+      subtitle: 'Notion Timeline/Microsoft Project競合。タスク依存・マイルストーン・クリティカルパス管理',
+      icon: Icons.view_timeline_outlined,
+      color: const Color(0xFF8B5CF6),
+      keywords: const <String>[
+        'ガント', 'タイムライン', 'プロジェクト管理', 'スケジュール', 'マイルストーン',
+        'クリティカルパス', 'WBS', '進捗管理', 'Notion',
+      ],
+      onOpen: (context) => _pushPage(context, const GanttTimelinePage()),
     ),
     HomeToolEntry(
       id: 'focus-timer',
