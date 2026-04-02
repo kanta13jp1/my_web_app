@@ -235,7 +235,7 @@ class _GuitarRecordingStudioPageState
         'autoGainControl': false,
         'sampleRate': 48000,
         'channelCount': 2,
-      }.jsify();
+      }.jsify()!;
       final constraints = web.MediaStreamConstraints(
         audio: audioConstraints,
       );
