@@ -142,6 +142,7 @@ import 'package:my_web_app/pages/viral_ad_generator_page.dart';
 import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
+import 'package:my_web_app/pages/viral_video_generator_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -839,6 +840,10 @@ class MyApp extends StatelessWidget {
           case '/video-ad-generator':
             return MaterialPageRoute(
               builder: (_) => const VideoAdGeneratorPage(),
+            );
+          case '/viral-video-generator':
+            return MaterialPageRoute(
+              builder: (_) => const ViralVideoGeneratorPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

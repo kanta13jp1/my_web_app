@@ -264,6 +264,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('social-proof-generator', 'ソーシャルプルーフ生成', true, '/admin', '管理者ダッシュボード > ソーシャルプルーフ'),
     _FnDef('admin-notification-hub', '管理者通知ハブ', true, '/admin', '管理者ダッシュボード > 通知'),
     _FnDef('edge-function-test-runner', 'Edge Function テストランナー', true, '/admin', '管理者ダッシュボード > API ステータス'),
+    _FnDef('viral-video-generator', 'バイラル動画ジェネレーター', true, '/viral-video-generator', 'バイラル動画ジェネレーターページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
