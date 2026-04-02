@@ -265,6 +265,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('admin-notification-hub', '管理者通知ハブ', true, '/admin', '管理者ダッシュボード > 通知'),
     _FnDef('edge-function-test-runner', 'Edge Function テストランナー', true, '/admin', '管理者ダッシュボード > API ステータス'),
     _FnDef('viral-video-generator', 'バイラル動画ジェネレーター', true, '/viral-video-generator', 'バイラル動画ジェネレーターページ'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('audio-effects-processor', 'オーディオエフェクトプロセッサー', true, '/audio-effects-processor', 'オーディオエフェクトページ'),
+    _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ', true, '/guitar-recording-studio', 'ギターレコーディングスタジオページ'),
+    _FnDef('music-collaboration', '音楽コラボレーション', true, '/music-collaboration', '音楽コラボレーションページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

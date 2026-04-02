@@ -144,6 +144,9 @@ import 'package:my_web_app/pages/growth_automation_controller_page.dart';
 import 'package:my_web_app/pages/landing_ab_test_page.dart';
 import 'package:my_web_app/pages/video_ad_generator_page.dart';
 import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/pages/audio_effects_processor_page.dart';
+import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
+import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -849,6 +852,18 @@ class MyApp extends StatelessWidget {
           case '/viral-video-generator':
             return MaterialPageRoute(
               builder: (_) => const ViralVideoGeneratorPage(),
+            );
+          case '/audio-effects-processor':
+            return MaterialPageRoute(
+              builder: (_) => const AudioEffectsProcessorPage(),
+            );
+          case '/guitar-recording-studio':
+            return MaterialPageRoute(
+              builder: (_) => const GuitarRecordingStudioPage(),
+            );
+          case '/music-collaboration':
+            return MaterialPageRoute(
+              builder: (_) => const MusicCollaborationPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
