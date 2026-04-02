@@ -21,6 +21,7 @@ import '../pages/decision_check_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
 import '../pages/election_strategy_page.dart';
+import '../pages/election_management_dashboard.dart';
 import '../pages/election_victory_page.dart';
 import '../pages/email_cleanup_page.dart';
 import '../pages/gemini_university_v2_page.dart';
@@ -260,6 +261,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.indigo,
       keywords: const <String>['選挙', '衆院選', '戦略'],
       onOpen: (context) => _pushPage(context, const ElectionStrategyPage()),
+    ),
+    HomeToolEntry(
+      id: 'election-dashboard',
+      sectionId: 'special',
+      title: '選挙管理ダッシュボード',
+      subtitle: 'AI分析・議員KPI・スケジュール時系列を統合管理',
+      icon: Icons.dashboard,
+      color: Colors.teal,
+      keywords: const <String>['選挙', 'ダッシュボード', 'KPI', '議員', '統一地方選'],
+      onOpen: (context) =>
+          _pushPage(context, const ElectionManagementDashboard()),
     ),
     HomeToolEntry(
       id: 'local-election-700',

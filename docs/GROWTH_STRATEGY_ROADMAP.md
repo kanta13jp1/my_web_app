@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 session432x-web (234 Edge Functions体制: Schedule監視・Edge Functionテスト・管理者通知・成長分析・ソーシャルプルーフ追加)
+最終更新: 2026-04-02 daily-development (候補者Xハンドル統合・バイラル動画パイプライン基盤・deno lint 0件修正・選挙管理ダッシュボードルート追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,14 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-02 daily-development 実装済み
+
+- **候補者Xハンドル統合** (daily-development 2026-04-02): `LocalElectionScheduleEntry` に `kokuminCandidateXHandles` フィールドを追加。選挙スケジュールカードに `ActionChip` でXハンドルを表示し、タップで `https://x.com/{handle}` を開く機能を実装。CSVエクスポートに候補者名・Xハンドル列を追加。`_buildScheduleCandidateSummary()` / `_candidateHandles()` ヘルパーメソッドを抽出し重複コードを解消。テストも同期更新。
+- **deno lint 0件達成** (daily-development 2026-04-02): 240ファイルのEdge Function群で12件→0件に修正。`no-unused-vars` (9件: SUPABASE_ANON_KEY/BACKUP_STATUSES/CHAT_TYPES/overrideErr/date_to/LISTING_STATUSES/now/_lastCheck/UI_STATUS_CACHE) / `prefer-const` (2件: sorted/totalInviteSent) / `no-explicit-any` (1件: AdminClient) を一括対応。
+- **バイラル動画生成パイプライン基盤** (daily-development 2026-04-02): `supabase/functions/_shared/edge.ts` (共通CORS・JSON・型変換ヘルパー) / `_shared/viral-growth.ts` (バイラルブリーフ生成・レンダリングキュー) / `_shared/x-client.ts` (X OAuth 1.0a署名・メディアアップロード) の共有ユーティリティを整備。`viral-video-generator` Edge Function新規作成・config.toml追加。
+- **選挙管理ダッシュボード ルート追加** (daily-development 2026-04-02): `ElectionManagementDashboard` を `/election-dashboard` ルートとして `main.dart` に追加。`home_tool_catalog.dart` の `special` セクションにエントリ追加し業務メニューから直接アクセス可能に。
+- **ブログ下書き作成** (daily-development 2026-04-02): `docs/blog-drafts/2026-04-02-election-x-handles-viral-video.md` — 候補者Xハンドル統合・deno lint修正・バイラル動画パイプライン実装解説記事。
 
 ### 2026-04-01 PowerShell全体管理セッション #10 実装済み
 

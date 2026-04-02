@@ -44,6 +44,7 @@ const DEPLOYED_FUNCTIONS = [
 ];
 
 // Functions known to need UI connectivity (no frontend page exists)
+// deno-lint-ignore no-unused-vars
 const UI_STATUS_CACHE: Record<string, boolean> = {};
 
 serve(async (req: Request) => {
@@ -176,7 +177,7 @@ serve(async (req: Request) => {
         .order("created_at", { ascending: false })
         .limit(1);
 
-      const lastCheck = uiCalls?.[0]?.event_data ?? null;
+      const _lastCheck = uiCalls?.[0]?.event_data ?? null;
 
       // Also check user-activity-tracker for actual function calls from UI
       const { data: activityLogs } = await supabase
