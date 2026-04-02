@@ -136,7 +136,28 @@ class AIService {
       );
 
       // 正常系のレスポンスをマップとして扱う
-      final data = response.data as Map<String, dynamic>;
+      // Supabase SDK は Content-Type: application/json がないと
+      // String を返す場合があるため、安全に変換する
+      final dynamic rawData = response.data;
+      final Map<String, dynamic> data;
+      if (rawData is Map<String, dynamic>) {
+        data = rawData;
+      } else if (rawData is Map) {
+        data = Map<String, dynamic>.from(rawData);
+      } else if (rawData is String) {
+        try {
+          final parsed = jsonDecode(rawData);
+          data = parsed is Map<String, dynamic>
+              ? parsed
+              : Map<String, dynamic>.from(parsed as Map);
+        } catch (_) {
+          throw AIServiceException('AI応答の解析に失敗しました: 不正なレスポンス形式');
+        }
+      } else {
+        throw AIServiceException(
+          'AI応答の解析に失敗しました: 予期しない型 ${rawData.runtimeType}',
+        );
+      }
 
       AppLogger.debug('Supabase Function Response ($functionName): $data');
 
